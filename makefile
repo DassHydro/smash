@@ -56,6 +56,10 @@ clean:
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
 	@$(RM) -rf *egg-info
+	@$(RM) -rf $(PYSRC)/$(SHAREDLIB)/m_*
+	@$(RM) -rf $(PYSRC)/$(SHAREDLIB)/_$(SHAREDLIB)*
+	@$(RM) -rf $(F90SRC)/$(SHAREDLIB)
+
 
 $(TARGET): \
  obj/m_common.o \
