@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from smash.wrapping.m_setup import SetupDT
-from smash.wrapping.m_mesh import MeshDT
+from smash.solver.m_setup import SetupDT
+from smash.solver.m_mesh import MeshDT
 
 from smash.io._configuration import _read_yaml_configuration
 
-from smash.core._utils import _derived_type_parser, _build_setup
+from smash.core._build_derived_type import _derived_type_parser, _build_setup, _build_mesh
 
 __all__ = ["Model"]
 
@@ -19,10 +19,16 @@ class Model(object):
 
     def __init__(
         self,
+        mesh: (dict),
         configuration: (str, None) = None,
-        setup: (dict, None) = None,
+        setup: (dict, None) = None
     ):
-
+        
+        if configuration is None and setup is None:
+            raise ValueError(
+                    f"At least one of configuration or setup argument must be specified"
+                )
+            
         self.setup = SetupDT()
 
         if configuration is not None:
@@ -47,7 +53,16 @@ class Model(object):
 
         _build_setup(self.setup)
         
-        self.mesh = MeshDT(self.setup, 10, 10, 1)
+        if isinstance(mesh, dict):
+            
+            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+            
+            _derived_type_parser(self.mesh, mesh)
+            
+        else:
+           raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
+           
+        _build_mesh(self.setup, self.mesh)
 
     @property
     def setup(self):
@@ -64,3 +79,20 @@ class Model(object):
             raise TypeError(
                 f"setup attribute must be set with {type(SetupDT())}, not {type(value)}"
             )
+    
+    @property
+    def mesh(self):
+        
+        return self._mesh
+        
+    @mesh.setter
+    def mesh(self, value):
+        
+        if isinstance(value, MeshDT):
+            self._mesh = value
+
+        else:
+            raise TypeError(
+                f"mesh attribute must be set with {type(MeshDT())}, not {type(value)}"
+            )
+        

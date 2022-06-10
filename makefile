@@ -3,19 +3,20 @@ TARGETDIR := bin
 BUILDDIR := obj
 TARGET := SMASH
 
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
-F90SRC := smash/f90
-F90EXT := f90
+FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+SOLVERSRC := smash/solver
+MESHINGSRC := smash/meshing
+FEXT := f90
 OBJEXT := o
-PYSRC := smash
+SMASHDIR := smash
 
 INC := -I$(BUILDDIR)
 MOD := -J$(BUILDDIR)
 
-SHAREDLIB := wrapping
-F90MODWRAP := $(F90SRC)/wrapped_module/*.f90
+SHAREDLIB := solver
+SOLVERMODWRAP := $(SOLVERSRC)/wrapped_module/*.f90
 OBJWRAP := $(BUILDDIR)/*.o
-F90WRAPPERS := $(F90SRC)/$(SHAREDLIB)/*.f90
+SOLVERWRAPPERS := $(SOLVERSRC)/*.f90
 
 all: directories $(TARGET) wrappers module
 
@@ -27,8 +28,6 @@ directories:
 	@echo "********************************************"
 	@mkdir -p $(TARGETDIR)
 	@mkdir -p $(BUILDDIR)
-	@mkdir -p $(F90SRC)/$(SHAREDLIB)
-	@mkdir -p $(PYSRC)/$(SHAREDLIB)
 
 wrappers:
 	@echo "********************************************"
@@ -36,8 +35,8 @@ wrappers:
 	@echo " Making wrappers "
 	@echo ""
 	@echo "********************************************"
-	f90wrap -m $(SHAREDLIB) $(F90MODWRAP) -k kind_map --package
-	mv f90wrap_*.f90 $(F90SRC)/$(SHAREDLIB)/.
+	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package
+	mv f90wrap_*.f90 $(SOLVERSRC)/.
 	
 module:
 	@echo "********************************************"
@@ -45,10 +44,11 @@ module:
 	@echo " Making module extension "
 	@echo ""
 	@echo "********************************************"
-	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fPIC -fmax-errors=1 -Iobj -Jobj' --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(F90WRAPPERS)
-	mv $(SHAREDLIB)/m_* $(PYSRC)/$(SHAREDLIB)/.
-	mv _$(SHAREDLIB)* $(PYSRC)/$(SHAREDLIB)/.
+	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fPIC -fmax-errors=1 -Iobj -Jobj' --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
+	mv $(SHAREDLIB)/m_* $(SOLVERSRC)/.
+	mv _$(SHAREDLIB)* $(SOLVERSRC)/.
 	rm -rf $(SHAREDLIB)
+	cd $(MESHINGSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
 
 clean:
 	@$(RM) -rf $(TARGETDIR)
@@ -56,18 +56,16 @@ clean:
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
 	@$(RM) -rf *egg-info
-	@$(RM) -rf $(PYSRC)/$(SHAREDLIB)/m_*
-	@$(RM) -rf $(PYSRC)/$(SHAREDLIB)/_$(SHAREDLIB)*
-	@$(RM) -rf $(F90SRC)/$(SHAREDLIB)
+	@$(RM) -rf $(SOLVERSRC)/m_*
+	@$(RM) -rf $(SOLVERSRC)/_$(SHAREDLIB)*
+	@$(RM) -rf $(SOLVERSRC)/f90wrap_*
 
 
 $(TARGET): \
  obj/m_common.o \
  obj/m_setup.o \
  obj/m_mesh.o \
- $(F90SRC)/main.f90
-	$(FC) $(F90FLAGS) $(MOD) $(INC) -o $(TARGETDIR)/$(TARGET) $^
 
-$(BUILDDIR)/%.$(OBJEXT): $(F90SRC)/*/%.$(F90EXT)
+$(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
 	@mkdir -p $(dir $@)
-	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
+	$(FC) $(FFLAGS) $(MOD) $(INC) -c -o $@ $<

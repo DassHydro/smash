@@ -7,11 +7,15 @@ from . import core
 from .core import *
 from .core.model import *
 
-from . import wrapping
-from .wrapping import *
-from .wrapping.m_setup import *
+from . import solver
+from .solver import *
+from .solver.m_setup import *
+from .solver.m_mesh import *
+
+from . import meshing
+from .meshing import *
 
 from . import io
 from .io import *
 
-__all__ = ["core", "wrapping", "io"]
+__all__ = ["core", "solver", "meshing", "io"]
