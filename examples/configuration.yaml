@@ -1,5 +1,11 @@
 dt: 3600
-start_time: 202001010000
-optim_start_time: 202001010000
-end_time: 202001010100
-only_active_cell: True
+start_time: 2012-01-01 00:00
+optim_start_time: 2012-01-01 00:00
+end_time: 2013-01-01 00:00
+
+active_cell_only: True
+sparse_forcing: True
+
+simulation_only: False
+read_qobs: True
+qobs_directory: qobs

@@ -71,6 +71,7 @@ module m_mesh
             
         end subroutine MeshDT_initialise
         
+        ! Deprecated subroutine (see numpy argsort)
         subroutine compute_mesh_path(mesh)
         
             implicit none
@@ -79,7 +80,7 @@ module m_mesh
             
             logical, dimension(mesh%nrow, mesh%ncol) :: mask
             integer :: max_da, da, k, i, j 
-            
+
             max_da = maxval(mesh%drained_area)
             da = 0
             k = 0
@@ -120,7 +121,6 @@ module m_mesh
             end do
             
         end subroutine compute_mesh_path
-        
         
         recursive subroutine mask_upstream_cells(row, col, mesh, mask)
         
@@ -168,7 +168,7 @@ module m_mesh
             
             integer :: i, row, col
             
-            if (setup%only_active_cell) then
+            if (setup%active_cell_only) then
             
                 do i=1, mesh%ng
                 

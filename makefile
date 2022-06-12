@@ -1,9 +1,9 @@
 FC := gfortran
-TARGETDIR := bin
 BUILDDIR := obj
 TARGET := SMASH
 
-FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+#FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+FFLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 SOLVERSRC := smash/solver
 MESHINGSRC := smash/meshing
 FEXT := f90
@@ -26,7 +26,6 @@ directories:
 	@echo " Making directories "
 	@echo ""
 	@echo "********************************************"
-	@mkdir -p $(TARGETDIR)
 	@mkdir -p $(BUILDDIR)
 
 wrappers:
@@ -51,7 +50,6 @@ module:
 	cd $(MESHINGSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
 
 clean:
-	@$(RM) -rf $(TARGETDIR)
 	@$(RM) -rf $(EXTDIR)
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
@@ -65,6 +63,7 @@ $(TARGET): \
  obj/m_common.o \
  obj/m_setup.o \
  obj/m_mesh.o \
+ obj/m_input_data.o \
 
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
 	@mkdir -p $(dir $@)

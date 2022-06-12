@@ -11,6 +11,7 @@ from . import solver
 from .solver import *
 from .solver.m_setup import *
 from .solver.m_mesh import *
+from .solver.m_input_data import *
 
 from . import meshing
 from .meshing import *
