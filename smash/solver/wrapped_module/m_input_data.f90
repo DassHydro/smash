@@ -37,7 +37,7 @@ module m_input_data
             type(MeshDT), intent(in) :: mesh
             
             integer :: n
-            
+
             if (.not. setup%simulation_only) then
             
                 allocate(input_data%qobs(mesh%ng, setup%nb_time_step))

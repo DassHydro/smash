@@ -173,7 +173,7 @@ def _compute_mesh_path(mesh: MeshDT):
     
     ind = np.unravel_index(np.argsort(mesh.drained_area, axis=None), mesh.drained_area.shape)
     
-    # Transform from Python to Fortran array indexing
+    # Transform from Python to FORTRAN index
     mesh.path[0,:] = ind[0][:] + 1
     mesh.path[1,:] = ind[1][:] + 1
     
@@ -192,6 +192,8 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     st = pd.Timestamp(setup.start_time.decode())
 
     code = mesh.code.tobytes(order="F").decode("utf-8").split()
+    
+    print(code)
 
     for i, c in enumerate(code):
 
@@ -220,31 +222,34 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 if time_diff > 0:
 
                     k = 0
+                    
+                    print(input_data.qobs)
+                    print(input_data.qobs.shape)
 
-                    for j, line in enumerate(f):
+                    # ~ for j, line in enumerate(f):
 
-                        if j >= time_diff:
+                        # ~ if j >= time_diff:
 
-                            try:
-                                input_data.qobs[i, k] = float(line)
+                            # ~ try:
+                                # ~ input_data.qobs[i, k] = float(line)
 
-                                k += 1
+                                # ~ k += 1
 
-                            except:
-                                break
-                else:
+                            # ~ except:
+                                # ~ break
+                # ~ else:
 
-                    k = -time_diff
+                    # ~ k = -time_diff
 
-                    for line in f:
+                    # ~ for line in f:
 
-                        try:
-                            input_data.qobs[i, k] = float(line)
+                        # ~ try:
+                            # ~ input_data.qobs[i, k] = float(line)
 
-                            k += 1
+                            # ~ k += 1
 
-                        except:
-                            break
+                        # ~ except:
+                            # ~ break
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
