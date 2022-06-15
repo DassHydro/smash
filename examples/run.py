@@ -12,27 +12,22 @@ start_t = time.time()
     # ~ flow_path, x=772_363, y=6_274_166, area=168.6 * 1e6, code="Y3204040"
 # ~ )
 
-# ~ mesh = smash.generate_meshing(
-    # ~ flow_path, x=467_516, y=6_689_246, area=81_314 * 1e6, code="L8000020"
-# ~ )
+mesh = smash.generate_meshing(
+    flow_path, x=467_516, y=6_689_246, area=81_314 * 1e6, code="L8000020"
+)
 
 # ~ mesh = smash.generate_meshing(
     # ~ flow_path, x=[467_516, 772_363], y=[6_689_246, 6_274_166], area=[81_314 * 1e6, 168.6 * 1e6], code=["L8000020", "Y3204040"]
 # ~ )
-mesh = smash.generate_meshing(
-    flow_path, 
-    x=[770_249, 772_363, 769_922], 
-    y=[6_283_974, 6_274_166, 6_292_568], 
-    area=[113.8 * 1e6, 168.6 * 1e6, 84.6 * 1e6], 
-    code=["Y3204040", "Y3204010", "Y3205010"]
-)
+# ~ mesh = smash.generate_meshing(
+    # ~ flow_path, 
+    # ~ x=[770_249, 772_363, 769_922], 
+    # ~ y=[6_283_974, 6_274_166, 6_292_568], 
+    # ~ area=[113.8 * 1e6, 168.6 * 1e6, 84.6 * 1e6], 
+    # ~ code=["Y3204040", "Y3204010", "Y3205010"]
+# ~ )
 
 meshing_t = time.time()
-
-# ~ plt.imshow(mesh["drained_area"])
-# ~ plt.show()
-
-# ~ print(mesh)
 
 print("MESHING", meshing_t - start_t)
 

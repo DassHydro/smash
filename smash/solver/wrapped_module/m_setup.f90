@@ -1,7 +1,7 @@
 !%    This module `m_setup` encapsulates all SMASH setup (type, subroutines, functions)
 module m_setup
     
-    use m_common, only: dp, lchar
+    use m_common, only: sp, dp, lchar
     
     implicit none
     
@@ -23,14 +23,14 @@ module m_setup
     
     type :: SetupDT
     
-        real(dp) :: dt = 3600._dp
-        real(dp) :: dx = 1000._dp
+        real(sp) :: dt = 3600._sp
+        real(sp) :: dx = 1000._sp
         
         character(lchar) :: start_time = "..."
         character(lchar) :: end_time = "..."
         character(lchar) :: optim_start_time = "..."
         
-        integer :: nb_time_step = 0
+        integer :: ntime_step = 0
         integer :: optim_start_step = 1
         
         logical :: active_cell_only = .true.
@@ -39,6 +39,11 @@ module m_setup
         
         logical :: read_qobs = .true.
         character(lchar) :: qobs_directory = "..."
+        
+        logical :: read_prcp = .true.
+        character(lchar) :: prcp_format = "tiff"
+        real(sp) :: prcp_conversion_factor = 1._sp
+        character(lchar) :: prcp_directory = "..."
         
     end type SetupDT
 

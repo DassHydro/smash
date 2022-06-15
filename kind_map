@@ -2,6 +2,7 @@
     "real": {
         "": "float",
         "4": "float",
+        "sp": "float",
         "isp": "float",
         "8": "double",
         "dp": "double",

@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import warnings
 import glob
+import os
+import errno
 import time
 
 from typing import TYPE_CHECKING
@@ -13,8 +15,7 @@ if TYPE_CHECKING:
 
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-
+import rasterio as rio
 
 def _derived_type_parser(derived_type, data: dict):
 
@@ -108,12 +109,34 @@ def _standardize_setup(setup: SetupDT):
     if setup.simulation_only:
         setup.read_qobs = False
 
-    else:
-        if setup.read_qobs and setup.qobs_directory.decode() == "...":
-            raise ValueError(
-                "argument simulation_only of SetupDT is False, read_qobs of SetupDT is True and qobs_directory of SetupDT is not defined"
-            )
-
+    if setup.read_qobs and setup.qobs_directory.decode() == "...":
+        raise ValueError(
+            "argument simulation_only of SetupDT is False, read_qobs of SetupDT is True and qobs_directory of SetupDT is not defined"
+        )
+            
+    if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode()):
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), setup.qobs_directory.decode()
+        )
+    
+    if setup.read_prcp and setup.prcp_directory.decode() == "...":
+        raise ValueError(
+            "argument read_prcp of SetupDT is True and prcp_directory of SetupDT is not defined"
+        )
+    
+    if setup.read_prcp and not os.path.exists(setup.prcp_directory.decode()):
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), setup.prcp_directory.decode()
+        )
+    
+    if not setup.prcp_format.decode() in ["tiff", "netcdf"]:
+        raise ValueError(
+            f"argument prpc_format of SetupDT must be one of {['tiff', 'netcdf']} not {setup.prcp_format.decode()}"
+        )
+        
+    if setup.prcp_conversion_factor < 0:
+        raise ValueError("argument prcp_conversion_factor of SetupDT is lower than 0")
+        
     # TODO, check for better warning/error callbacks
 
 
@@ -164,10 +187,9 @@ def _build_setup(setup: SetupDT):
     ost = pd.Timestamp(setup.optim_start_time.decode())
     et = pd.Timestamp(setup.end_time.decode())
 
-    setup.nb_time_step = (et - st).total_seconds() / setup.dt
+    setup.ntime_step = (et - st).total_seconds() / setup.dt
 
     setup.optim_start_step = (ost - st).total_seconds() / setup.dt + 1
-
 
 def _compute_mesh_path(mesh: MeshDT):
     
@@ -193,8 +215,6 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     code = mesh.code.tobytes(order="F").decode("utf-8").split()
     
-    print(code)
-
     for i, c in enumerate(code):
 
         path = glob.glob(
@@ -222,35 +242,101 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 if time_diff > 0:
 
                     k = 0
-                    
-                    print(input_data.qobs)
-                    print(input_data.qobs.shape)
 
-                    # ~ for j, line in enumerate(f):
+                    for j, line in enumerate(f):
 
-                        # ~ if j >= time_diff:
+                        if j >= time_diff:
 
-                            # ~ try:
-                                # ~ input_data.qobs[i, k] = float(line)
+                            try:
+                                input_data.qobs[i, k] = float(line)
 
-                                # ~ k += 1
+                                k += 1
 
-                            # ~ except:
-                                # ~ break
-                # ~ else:
+                            except:
+                                break
+                else:
 
-                    # ~ k = -time_diff
+                    k = -time_diff
 
-                    # ~ for line in f:
+                    for line in f:
 
-                        # ~ try:
-                            # ~ input_data.qobs[i, k] = float(line)
+                        try:
+                            input_data.qobs[i, k] = float(line)
 
-                            # ~ k += 1
+                            k += 1
 
-                        # ~ except:
-                            # ~ break
+                        except:
+                            break
 
+def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
+
+    array = np.copy(array)
+    array[np.isnan(array)] = no_data_val
+    header = (
+        f"NCOLS {array.shape[1]} \nNROWS {array.shape[0]}"
+        f"\nXLLCENTER {xll} \nYLLCENTER {yll} \nCELLSIZE {cellsize} \nNODATA_value {no_data_val}\n"
+    )
+
+    with open(path, "w") as f:
+
+        f.write(header)
+        np.savetxt(f, array, "%5.2f")
+
+def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    
+    # ~ date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")
+    
+    # ~ print(date_range)
+    
+    if setup.prcp_format.decode() == "tiff":
+        
+        start_find = time.time()
+        
+        files = glob.iglob(f"{setup.prcp_directory.decode()}/2012/01/01/*tif", recursive=True)
+        
+        for i, f in enumerate(files):
+            
+            if i == 0:
+            
+                ds = rio.open(f)
+                
+                transform = ds.transform
+                
+                ds_xll = transform[2]
+                ds_yll = transform[5]
+                ds_xres = transform[0]
+                ds_yres = -transform[4]
+                ds_ncol = ds.width
+                ds_nrow = ds.height
+                
+                col_off = (mesh.xll - ds_xll) / ds_xres - 0.5
+                # ~ row_off = (mesh.yll - ds_yll) / - ds_yres
+                row_off = ds_nrow - (ds_yll - mesh.yll) / ds_yres + 11
+                # ~ row_off = ((ds_yll + ds_nrow * ds_yres) - mesh.yll) / ds_yres
+                
+                print(col_off, row_off)
+                
+                window = rio.windows.Window(col_off=col_off, row_off=row_off, width=mesh.ncol, height=mesh.nrow)
+                
+                prcp = ds.read(1, window=window)
+                
+                print(prcp.shape)
+                # ~ print(mesh.flow.shape)
+                
+                _array_to_ascii(prcp, "exemple.asc", mesh.xll, mesh.yll, setup.dx, 65535)
+                # ~ _array_to_ascii(mesh.flow, "exemple_flow.asc", mesh.xll, mesh.yll, setup.dx, -99)
+                
+            
+            # ~ with rasterio.open('tests/data/RGB.byte.tif') as src:
+
+            # ~ w = src.read(1, window=Window(0, 0, 512, 256))
+        
+        # ~ print("TIME FINDING ", time.time() - start_find)
+        
+        # ~ print(files)
+        
+        
+    print("reading_prcp")
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
@@ -261,3 +347,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_qobs:
 
         _read_qobs(setup, mesh, input_data)
+        
+    if setup.read_prcp:
+        
+        _read_prcp(setup, mesh, input_data)

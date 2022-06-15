@@ -1,7 +1,7 @@
 !%    This module `m_mesh` encapsulates all SMASH mesh (type, subroutines, functions)
 module m_mesh
     
-    use m_common, only: dp, lchar
+    use m_common, only: sp, dp, lchar
     use m_setup, only: SetupDT
     
     implicit none
@@ -32,7 +32,7 @@ module m_mesh
         integer, dimension(:,:), allocatable :: gauge_pos
         integer, dimension(:), allocatable :: gauge_optim
         character(20), dimension(:), allocatable :: code
-        real(dp), dimension(:), allocatable :: area
+        real(sp), dimension(:), allocatable :: area
         integer, dimension(:,:), allocatable :: global_active_cell
         integer, dimension(:,:), allocatable :: local_active_cell
         
@@ -131,7 +131,7 @@ module m_mesh
             integer, dimension(mesh%nrow, mesh%ncol), intent(inout) &
             & :: mask
             
-            integer :: i, row_s, col_s
+            integer :: i, row_imd, col_imd
             integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
             integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
             integer, dimension(8) :: dkind = [1, 2, 3, 4, 5, 6, 7, 8]
@@ -139,16 +139,16 @@ module m_mesh
             mask(row, col) = 1
     
             do i=1, 8
-            
-                row_s = row + drow(i)
-                col_s = col + dcol(i)
                 
-                if (col_s .gt. 0 .and. col_s .le. mesh%ncol .and. &
-                &   row_s .gt. 0 .and. row_s .le. mesh%nrow) then
+                col_imd = col + dcol(i)
+                row_imd = row + drow(i)
                 
-                    if (mesh%flow(row_s, col_s) .eq. dkind(i)) then
+                if (col_imd .gt. 0 .and. col_imd .le. mesh%ncol .and. &
+                &   row_imd .gt. 0 .and. row_imd .le. mesh%nrow) then
+                
+                    if (mesh%flow(row_imd, col_imd) .eq. dkind(i)) then
                         
-                        call mask_upstream_cells(row_s, col_s, &
+                        call mask_upstream_cells(row_imd, col_imd, &
                         & mesh, mask)
                     
                     end if
@@ -159,6 +159,7 @@ module m_mesh
                     
         end subroutine mask_upstream_cells
         
+        ! Deprecated subroutine (see meshing in Python)
         subroutine compute_global_active_cell(setup, mesh)
         
             implicit none

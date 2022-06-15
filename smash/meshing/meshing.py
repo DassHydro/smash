@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 import os
 import numpy as np
-import rasterio
+import rasterio as rio
 
 from . import _meshing
 
@@ -66,7 +66,7 @@ def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
         f.write(header)
         np.savetxt(f, array, "%5.2f")
 
-def _standardize_generate_meshing(x, y, area, name):
+def _standardize_generate_meshing(x, y, area, code):
     
     x_array = np.array(x, dtype=np.float32, ndmin=1)
     y_array = np.array(y, dtype=np.float32, ndmin=1)
@@ -74,27 +74,28 @@ def _standardize_generate_meshing(x, y, area, name):
 
     # TODO Add check for size
     
-    name_array = np.zeros(shape=(20, len(x_array)), dtype="uint8")
+    code_array = np.zeros(shape=(20, len(x_array)), dtype="uint8")
     
-    if name is None:
+    if code is None:
         
         for i in range(len(x_array)):
             
-            name_ord = [ord(l) for l in ["_", "c", str(i)]]
+            code_ord = [ord(l) for l in ["_", "c", str(i)]]
             
-            name_array[0:3, i] = name_ord
-            name_array[3:, i] = 32
+            code_array[0:3, i] = code_ord
+            code_array[3:, i] = 32
             
-    else:
+    elif isinstance(code, (str, list)):
         
-        for i in range(len(x_array)):
-            
-            name_array[0:len(name[i]), i] = [ord(l) for l in name[i]]
-            name_array[len(name[i]):, i] = 32
-            
-    return x_array, y_array, area_array, name_array
+        code = np.array(code, ndmin=1)
 
-# TODO update for multi-gauge
+        for i in range(len(x_array)):
+            
+            code_array[0:len(code[i]), i] = [ord(l) for l in code[i]]
+            code_array[len(code[i]):, i] = 32
+            
+    return x_array, y_array, area_array, code_array
+
 def generate_meshing(
     path: str,
     x: (float, list[float]),
@@ -106,7 +107,7 @@ def generate_meshing(
 ):
 
     if os.path.isfile(path):
-        ds_flow = rasterio.open(path)
+        ds_flow = rio.open(path)
 
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
