@@ -1,4 +1,4 @@
-!%    This module `m_data` encapsulates all SMASH data (type, subroutines, functions)
+!%    This module `m_data` encapsulates all SMASH data
 module m_input_data
 
     use m_common, only: sp, dp, lchar
@@ -35,8 +35,6 @@ module m_input_data
             type(Input_DataDT), intent(inout) :: input_data
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
-            
-            integer :: n
 
             if (.not. setup%simulation_only) then
             
@@ -45,13 +43,13 @@ module m_input_data
                 
             end if
             
-            if (setup%sparse_forcing) then
+            if (setup%sparse_storage) then
             
-                n = count(mesh%global_active_cell .eq. 1)
-            
-                allocate(input_data%prcp_sparse(n, setup%ntime_step))
+                allocate(input_data%prcp_sparse(mesh%nac, &
+                & setup%ntime_step))
                 input_data%prcp_sparse = -99._sp
-                allocate(input_data%pet_sparse(n, setup%ntime_step))
+                allocate(input_data%pet_sparse(mesh%nac, &
+                & setup%ntime_step))
                 input_data%pet_sparse = -99._sp
                 
             else

@@ -5,7 +5,7 @@ TARGET := SMASH
 #FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
 FFLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 SOLVERSRC := smash/solver
-MESHINGSRC := smash/meshing
+MESHSRC := smash/mesh
 FEXT := f90
 OBJEXT := o
 SMASHDIR := smash
@@ -47,7 +47,8 @@ module:
 	mv $(SHAREDLIB)/m_* $(SOLVERSRC)/.
 	mv _$(SHAREDLIB)* $(SOLVERSRC)/.
 	rm -rf $(SHAREDLIB)
-	cd $(MESHINGSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+	cd $(MESHSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+	bash sed_f90wrap.sh
 
 clean:
 	@$(RM) -rf $(EXTDIR)
@@ -64,7 +65,8 @@ $(TARGET): \
  obj/m_setup.o \
  obj/m_mesh.o \
  obj/m_input_data.o \
-
+ obj/m_interface.o \
+ 
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
 	@mkdir -p $(dir $@)
 	$(FC) $(FFLAGS) $(MOD) $(INC) -c -o $@ $<

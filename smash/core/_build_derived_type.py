@@ -13,9 +13,12 @@ if TYPE_CHECKING:
     from smash.solver.m_mesh import MeshDT
     from smash.solver.m_input_data import Input_DataDT
 
+from smash.solver.m_interface import sparse_mesh
+
 import pandas as pd
 import numpy as np
 import rasterio as rio
+
 
 def _derived_type_parser(derived_type, data: dict):
 
@@ -96,14 +99,14 @@ def _standardize_setup(setup: SetupDT):
             "argument optim_start_time of SetupDT corresponds to a later date than end_time"
         )
 
-    if not setup.active_cell_only and setup.sparse_forcing:
+    if not setup.active_cell_only and setup.sparse_storage:
         raise ValueError(
-            "argument sparse_forcing of SetupDT can not be True if active_cell_only of SetupDT is False"
+            "argument sparse_storage of SetupDT can not be True if active_cell_only of SetupDT is False"
         )
 
-    if setup.active_cell_only and not setup.sparse_forcing:
+    if setup.active_cell_only and not setup.sparse_storage:
         warnings.warn(
-            "argument sparse_forcing of SetupDT is False but active_cell_only of SetupDT is True"
+            "argument sparse_storage of SetupDT is False but active_cell_only of SetupDT is True"
         )
 
     if setup.simulation_only:
@@ -113,30 +116,30 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError(
             "argument simulation_only of SetupDT is False, read_qobs of SetupDT is True and qobs_directory of SetupDT is not defined"
         )
-            
+
     if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode()):
         raise FileNotFoundError(
             errno.ENOENT, os.strerror(errno.ENOENT), setup.qobs_directory.decode()
         )
-    
+
     if setup.read_prcp and setup.prcp_directory.decode() == "...":
         raise ValueError(
             "argument read_prcp of SetupDT is True and prcp_directory of SetupDT is not defined"
         )
-    
+
     if setup.read_prcp and not os.path.exists(setup.prcp_directory.decode()):
         raise FileNotFoundError(
             errno.ENOENT, os.strerror(errno.ENOENT), setup.prcp_directory.decode()
         )
-    
+
     if not setup.prcp_format.decode() in ["tiff", "netcdf"]:
         raise ValueError(
             f"argument prpc_format of SetupDT must be one of {['tiff', 'netcdf']} not {setup.prcp_format.decode()}"
         )
-        
+
     if setup.prcp_conversion_factor < 0:
         raise ValueError("argument prcp_conversion_factor of SetupDT is lower than 0")
-        
+
     # TODO, check for better warning/error callbacks
 
 
@@ -191,14 +194,18 @@ def _build_setup(setup: SetupDT):
 
     setup.optim_start_step = (ost - st).total_seconds() / setup.dt + 1
 
+
 def _compute_mesh_path(mesh: MeshDT):
-    
-    ind = np.unravel_index(np.argsort(mesh.drained_area, axis=None), mesh.drained_area.shape)
-    
+
+    ind = np.unravel_index(
+        np.argsort(mesh.drained_area, axis=None), mesh.drained_area.shape
+    )
+
     # Transform from Python to FORTRAN index
-    mesh.path[0,:] = ind[0][:] + 1
-    mesh.path[1,:] = ind[1][:] + 1
-    
+    mesh.path[0, :] = ind[0][:] + 1
+    mesh.path[1, :] = ind[1][:] + 1
+
+
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
     """
@@ -206,15 +213,20 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     """
 
     _standardize_mesh(setup, mesh)
-    
+
     _compute_mesh_path(mesh)
+
+    if setup.sparse_storage:
+
+        sparse_mesh(mesh)
+
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     st = pd.Timestamp(setup.start_time.decode())
 
     code = mesh.code.tobytes(order="F").decode("utf-8").split()
-    
+
     for i, c in enumerate(code):
 
         path = glob.glob(
@@ -268,6 +280,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         except:
                             break
 
+
 def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
 
     array = np.copy(array)
@@ -282,61 +295,70 @@ def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
         f.write(header)
         np.savetxt(f, array, "%5.2f")
 
+
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     
+    
+    ...
+
     # ~ date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")
-    
+
     # ~ print(date_range)
-    
-    if setup.prcp_format.decode() == "tiff":
-        
-        start_find = time.time()
-        
-        files = glob.iglob(f"{setup.prcp_directory.decode()}/2012/01/01/*tif", recursive=True)
-        
-        for i, f in enumerate(files):
-            
-            if i == 0:
-            
-                ds = rio.open(f)
-                
-                transform = ds.transform
-                
-                ds_xll = transform[2]
-                ds_yll = transform[5]
-                ds_xres = transform[0]
-                ds_yres = -transform[4]
-                ds_ncol = ds.width
-                ds_nrow = ds.height
-                
-                col_off = (mesh.xll - ds_xll) / ds_xres - 0.5
+
+    # ~ if setup.prcp_format.decode() == "tiff":
+
+        # ~ start_find = time.time()
+
+        # ~ files = glob.iglob(
+            # ~ f"{setup.prcp_directory.decode()}/2012/01/01/*tif", recursive=True
+        # ~ )
+
+        # ~ for i, f in enumerate(files):
+
+            # ~ if i == 0:
+
+                # ~ ds = rio.open(f)
+
+                # ~ transform = ds.transform
+
+                # ~ ds_xll = transform[2]
+                # ~ ds_yll = transform[5]
+                # ~ ds_xres = transform[0]
+                # ~ ds_yres = -transform[4]
+                # ~ ds_ncol = ds.width
+                # ~ ds_nrow = ds.height
+
+                # ~ col_off = (mesh.xll - ds_xll) / ds_xres - 0.5
                 # ~ row_off = (mesh.yll - ds_yll) / - ds_yres
-                row_off = ds_nrow - (ds_yll - mesh.yll) / ds_yres + 11
+                # ~ row_off = ds_nrow - (ds_yll - mesh.yll) / ds_yres + 11
                 # ~ row_off = ((ds_yll + ds_nrow * ds_yres) - mesh.yll) / ds_yres
-                
-                print(col_off, row_off)
-                
-                window = rio.windows.Window(col_off=col_off, row_off=row_off, width=mesh.ncol, height=mesh.nrow)
-                
-                prcp = ds.read(1, window=window)
-                
-                print(prcp.shape)
+
+                # ~ print(col_off, row_off)
+
+                # ~ window = rio.windows.Window(
+                    # ~ col_off=col_off, row_off=row_off, width=mesh.ncol, height=mesh.nrow
+                # ~ )
+
+                # ~ prcp = ds.read(1, window=window)
+
+                # ~ print(prcp.shape)
                 # ~ print(mesh.flow.shape)
-                
-                _array_to_ascii(prcp, "exemple.asc", mesh.xll, mesh.yll, setup.dx, 65535)
+
+                # ~ _array_to_ascii(
+                    # ~ prcp, "exemple.asc", mesh.xll, mesh.yll, setup.dx, 65535
+                # ~ )
                 # ~ _array_to_ascii(mesh.flow, "exemple_flow.asc", mesh.xll, mesh.yll, setup.dx, -99)
-                
-            
+
             # ~ with rasterio.open('tests/data/RGB.byte.tif') as src:
 
             # ~ w = src.read(1, window=Window(0, 0, 512, 256))
-        
+
         # ~ print("TIME FINDING ", time.time() - start_find)
-        
+
         # ~ print(files)
-        
-        
+
     print("reading_prcp")
+
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
@@ -347,7 +369,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_qobs:
 
         _read_qobs(setup, mesh, input_data)
-        
+
     if setup.read_prcp:
-        
+
         _read_prcp(setup, mesh, input_data)

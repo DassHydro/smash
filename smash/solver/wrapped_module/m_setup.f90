@@ -1,4 +1,4 @@
-!%    This module `m_setup` encapsulates all SMASH setup (type, subroutines, functions)
+!%    This module `m_setup` encapsulates all SMASH setup
 module m_setup
     
     use m_common, only: sp, dp, lchar
@@ -35,7 +35,7 @@ module m_setup
         
         logical :: active_cell_only = .true.
         logical :: simulation_only = .false.
-        logical :: sparse_forcing = .false.
+        logical :: sparse_storage = .false.
         
         logical :: read_qobs = .true.
         character(lchar) :: qobs_directory = "..."

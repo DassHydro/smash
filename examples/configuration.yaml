@@ -4,7 +4,7 @@ optim_start_time: 2012-01-01 00:00
 end_time: 2012-01-31 00:00
 
 active_cell_only: True
-sparse_forcing: True
+sparse_storage: True
 
 simulation_only: False
 

@@ -4,7 +4,7 @@ from smash.solver.m_setup import SetupDT
 from smash.solver.m_mesh import MeshDT
 from smash.solver.m_input_data import Input_DataDT
 
-from smash.io._configuration import _read_yaml_configuration
+from smash.io.yaml import _read_yaml_configuration
 
 from smash.core._build_derived_type import (
     _derived_type_parser,
