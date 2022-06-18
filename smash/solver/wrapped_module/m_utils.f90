@@ -1,5 +1,5 @@
-!%    This module `m_interface` encapsulates all SMASH mesh (type, subroutines, functions)
-module m_interface
+!%    This module `m_utils` encapsulates all SMASH utils (type, subroutines, functions)
+module m_utils
     
     use m_common, only: sp, dp, lchar
     use m_setup, only: SetupDT
@@ -253,4 +253,4 @@ module m_interface
         
         end subroutine input_data_derived_type_copy
         
-end module m_interface
+end module m_utils

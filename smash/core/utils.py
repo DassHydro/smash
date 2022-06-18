@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash.solver.m_mesh import MeshDT
 
-from smash.solver.m_interface import (
+from smash.solver.m_utils import (
     sparse_matrix_to_vector_r,
     sparse_matrix_to_vector_i,
     sparse_vector_to_matrix_r,
@@ -13,6 +13,7 @@ from smash.solver.m_interface import (
 )
 
 import numpy as np
+
 
 def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
 
@@ -30,6 +31,7 @@ def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
 
     return vector
 
+
 def sparse_vector_to_matrix(mesh: MeshDT, vector: np.ndarray) -> np.ndarray:
 
     if np.issubdtype(vector.dtype, np.integer):
@@ -43,7 +45,7 @@ def sparse_vector_to_matrix(mesh: MeshDT, vector: np.ndarray) -> np.ndarray:
         matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
 
         sparse_vector_to_matrix_r(mesh, vector, matrix)
-        
+
     matrix = np.where(matrix == -99, np.nan, matrix)
 
     return matrix

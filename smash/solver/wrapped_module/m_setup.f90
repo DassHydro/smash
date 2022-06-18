@@ -45,6 +45,12 @@ module m_setup
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..."
         
+        logical :: read_pet = .true.
+        character(lchar) :: pet_format = "tiff"
+        real(sp) :: pet_conversion_factor = 1._sp
+        character(lchar) :: pet_directory = "..."
+        logical :: daily_interannual_pet = .false.
+        
     end type SetupDT
 
 end module m_setup

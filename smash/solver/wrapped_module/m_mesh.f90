@@ -22,8 +22,8 @@ module m_mesh
         integer :: ncol
         integer :: ng
         integer :: nac
-        integer :: xll
-        integer :: yll
+        integer :: xmin
+        integer :: ymax
         
         integer, dimension(:,:), allocatable :: flow
         integer, dimension(:,:), allocatable :: drained_area

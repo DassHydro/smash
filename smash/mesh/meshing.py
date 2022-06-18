@@ -10,18 +10,18 @@ from . import _meshing
 __all__ = ["generate_meshing"]
 
 
-def _xy_to_colrow(x, y, xll, yll, xres, yres):
+def _xy_to_colrow(x, y, xmin, ymax, xres, yres):
 
-    col = int((x - xll) / xres)
-    row = int((yll - y) / yres)
+    col = int((x - xmin) / xres)
+    row = int((ymax - y) / yres)
 
     return col, row
 
 
-def _colrow_to_xy(col, row, xll, yll, xres, yres):
+def _colrow_to_xy(col, row, xmin, ymax, xres, yres):
 
-    x = int(col * xres + xll)
-    y = int(yll - row * yres)
+    x = int(col * xres + xmin)
+    y = int(ymax - row * yres)
 
     return x, y
 
@@ -55,13 +55,13 @@ def _trim_zeros_2D(array, shift_value=False):
         return array
 
 
-def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
+def _array_to_ascii(array, path, xmin, ymin, cellsize, no_data_val):
 
     array = np.copy(array)
     array[np.isnan(array)] = no_data_val
     header = (
         f"NCOLS {array.shape[1]} \nNROWS {array.shape[0]}"
-        f"\nXLLCENTER {xll} \nYLLCENTER {yll} \nCELLSIZE {cellsize} \nNODATA_value {no_data_val}\n"
+        f"\nXLLCENTER {xmin} \nYLLCENTER {ymin} \nCELLSIZE {cellsize} \nNODATA_value {no_data_val}\n"
     )
 
     with open(path, "w") as f:
@@ -126,8 +126,8 @@ def generate_meshing(
 
     transform = ds_flow.transform
 
-    xll = transform[2]
-    yll = transform[5]
+    xmin = transform[2]
+    ymax = transform[5]
     xres = transform[0]
     yres = -transform[4]
 
@@ -138,7 +138,7 @@ def generate_meshing(
 
     for ind in range(len(x)):
 
-        col, row = _xy_to_colrow(x[ind], y[ind], xll, yll, xres, yres)
+        col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
 
         mask_dln, col_otl[ind], row_otl[ind] = _meshing.catchment_dln(
             flow, col, row, xres, yres, area[ind], dkind, max_depth
@@ -152,9 +152,9 @@ def generate_meshing(
 
     flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
     global_mask_dln = _trim_zeros_2D(global_mask_dln)
-
-    xll_shifted = xll + scol * xres
-    yll_shifted = yll - erow * yres
+    
+    xmin_shifted = xmin + scol * xres
+    ymax_shifted = ymax - srow * yres
 
     col_otl = col_otl - scol
     row_otl = row_otl - srow
@@ -172,8 +172,8 @@ def generate_meshing(
         "ncol": flow.shape[1],
         "ng": len(x),
         "nac": np.count_nonzero(global_active_cell),
-        "xll": xll_shifted,
-        "yll": yll_shifted,
+        "xmin": xmin_shifted,
+        "ymax": ymax_shifted,
         "flow": flow,
         "drained_area": drained_area,
         "global_active_cell": global_active_cell,

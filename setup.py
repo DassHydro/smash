@@ -7,6 +7,6 @@ setup(
     url="/",
     author="INRAE/Hydris Hydrologie",
     packages=["smash", "smash.core", "smash.solver", "smash.mesh", "smash.io"],
-    install_requires=["numpy>=1.21.2", "pandas>=1.4.2"],
+    install_requires=["numpy>=1.21.2", "pandas>=1.4.2", "h5py>=3.7.0"],
     zip_safe=False,
 )

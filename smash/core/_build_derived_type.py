@@ -5,6 +5,7 @@ import glob
 import os
 import errno
 import time
+from tqdm import tqdm
 
 from typing import TYPE_CHECKING
 
@@ -13,12 +14,16 @@ if TYPE_CHECKING:
     from smash.solver.m_mesh import MeshDT
     from smash.solver.m_input_data import Input_DataDT
 
-from smash.solver.m_interface import sparse_mesh
+from smash.solver.m_utils import sparse_mesh
+from smash.core.utils import sparse_matrix_to_vector
+from smash.io.raster import read_windowed_raster
 
 import pandas as pd
 import numpy as np
 import rasterio as rio
+import datetime
 
+RATIO_PET_HOURLY = [0, 0, 0, 0, 0, 0, 0, 0.035, 0.062, 0.079, 0.097, 0.11, 0.117, 0.117, 0.11, 0.097, 0.079, 0.062, 0.035,0, 0, 0, 0, 0]
 
 def _derived_type_parser(derived_type, data: dict):
 
@@ -140,6 +145,24 @@ def _standardize_setup(setup: SetupDT):
     if setup.prcp_conversion_factor < 0:
         raise ValueError("argument prcp_conversion_factor of SetupDT is lower than 0")
 
+    if setup.read_pet and setup.pet_directory.decode() == "...":
+        raise ValueError(
+            "argument read_pet of SetupDT is True and pet_directory of SetupDT is not defined"
+        )
+
+    if setup.read_pet and not os.path.exists(setup.pet_directory.decode()):
+        raise FileNotFoundError(
+            errno.ENOENT, os.strerror(errno.ENOENT), setup.pet_directory.decode()
+        )
+
+    if not setup.pet_format.decode() in ["tiff", "netcdf"]:
+        raise ValueError(
+            f"argument pet_format of SetupDT must be one of {['tiff', 'netcdf']} not {setup.pet_format.decode()}"
+        )
+
+    if setup.pet_conversion_factor < 0:
+        raise ValueError("argument pet_conversion_factor of SetupDT is lower than 0")
+
     # TODO, check for better warning/error callbacks
 
 
@@ -158,11 +181,11 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if mesh.ng < 0:
         raise ValueError("argument ng of MeshDT is lower than 0")
 
-    if mesh.xll < 0:
-        raise ValueError("argument xll of MeshDT is lower than 0")
+    if mesh.xmin < 0:
+        raise ValueError("argument xmin of MeshDT is lower than 0")
 
-    if mesh.yll < 0:
-        raise ValueError("argument yll of MeshDT is lower than 0")
+    if mesh.ymax < 0:
+        raise ValueError("argument ymax of MeshDT is lower than 0")
 
     if np.any(mesh.area < 0):
         raise ValueError(
@@ -215,6 +238,11 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     _standardize_mesh(setup, mesh)
 
     _compute_mesh_path(mesh)
+    
+    if not setup.active_cell_only:
+        
+        mesh.global_active_cell = np.where(mesh.flow > 0, 1, mesh.global_active_cell)
+        mesh.local_active_cell = mesh.global_active_cell.copy()
 
     if setup.sparse_storage:
 
@@ -281,83 +309,151 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             break
 
 
-def _array_to_ascii(array, path, xll, yll, cellsize, no_data_val):
-
-    array = np.copy(array)
-    array[np.isnan(array)] = no_data_val
-    header = (
-        f"NCOLS {array.shape[1]} \nNROWS {array.shape[0]}"
-        f"\nXLLCENTER {xll} \nYLLCENTER {yll} \nCELLSIZE {cellsize} \nNODATA_value {no_data_val}\n"
-    )
-
-    with open(path, "w") as f:
-
-        f.write(header)
-        np.savetxt(f, array, "%5.2f")
+def _index_containing_substring(the_list, substring):
+    
+    for i, s in enumerate(the_list):
+        if substring in s:
+              return i
+    return -1
 
 
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+
+    date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")[1:]
     
+    if setup.prcp_format.decode() == "tiff":
+        
+        files = sorted(glob.glob(f"{setup.prcp_directory.decode()}/**/*tif*", recursive=True))
+        
+    elif setup.prcp_format.decode() == "netcdf":
+        
+        files = sorted(glob.glob(f"{setup.prcp_directory.decode()}/**/*nc", recursive=True))
+        
+    for i, date in enumerate(tqdm(date_range, desc="reading precipitation")):
+        
+        date_strf = date.strftime("%Y%m%d%H%M")
+        
+        ind = _index_containing_substring(files, date_strf)
+        
+        if ind == - 1:
+            
+            if setup.sparse_storage:
+                
+                input_data.prcp_sparse[:, i] = -99.
+                
+            else:
+                
+                input_data.prcp[..., i] = -99.
+            
+            warnings.warn(f"Missing precipitation file for date {date}")
+        
+        else:
+            
+            matrix = read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+            
+            if setup.sparse_storage:
+                
+                input_data.prcp_sparse[:, i] = sparse_matrix_to_vector(mesh, matrix)
+                
+            else:
+                
+                input_data.prcp[..., i] = matrix
+        
+        files.pop(ind)
+
+
+def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     
-    ...
+    date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")[1:]
+    
+    if setup.pet_format.decode() == "tiff":
+        
+        files = sorted(glob.glob(f"{setup.pet_directory.decode()}/**/*tif*", recursive=True))
+        
+    elif setup.pet_format.decode() == "netcdf":
+        
+        files = sorted(glob.glob(f"{setup.pet_directory.decode()}/**/*nc", recursive=True))
 
-    # ~ date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")
+    
+    if setup.daily_interannual_pet:
+        
+        leap_year_days = pd.date_range(start="202001010000", end="202012310000", freq="1D")
+        nstep_per_day = int(86_400 / setup.dt)
+        
+        if nstep_per_day == 1:
+            
+            ratio = [1]
+        
+        else:
+            
+            ratio = np.repeat(RATIO_PET_HOURLY, 3_600 / setup.dt) / (3_600 / setup.dt)
+        
+        for i, day in enumerate(tqdm(leap_year_days, desc="reading daily interannual pet")):
+            
+            day_strf = day.strftime("%m%d")
+            
+            ind = _index_containing_substring(files, day_strf)
+            
+            if ind == - 1:
+            
+                if setup.sparse_storage:
+                    
+                    input_data.pet_sparse[:, i] = -99.
+                    
+                else:
+                    
+                    input_data.pet[..., i] = -99.
+                
+                warnings.warn(f"Missing daily interannual pet file for date {date}")
+                
+            else:
+            
+                matrix = read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
+                
+                for j in range(nstep_per_day):
+                    
+                    time = day + j * datetime.timedelta(seconds=setup.dt)
+                    
+                    ind_time = date_range.indexer_at_time(time)
+                    
+                    input_data.pet[..., ind_time] = np.repeat(matrix[..., np.newaxis], len(ind_time), axis=2) * ratio[j]
 
-    # ~ print(date_range)
-
-    # ~ if setup.prcp_format.decode() == "tiff":
-
-        # ~ start_find = time.time()
-
-        # ~ files = glob.iglob(
-            # ~ f"{setup.prcp_directory.decode()}/2012/01/01/*tif", recursive=True
-        # ~ )
-
-        # ~ for i, f in enumerate(files):
-
-            # ~ if i == 0:
-
-                # ~ ds = rio.open(f)
-
-                # ~ transform = ds.transform
-
-                # ~ ds_xll = transform[2]
-                # ~ ds_yll = transform[5]
-                # ~ ds_xres = transform[0]
-                # ~ ds_yres = -transform[4]
-                # ~ ds_ncol = ds.width
-                # ~ ds_nrow = ds.height
-
-                # ~ col_off = (mesh.xll - ds_xll) / ds_xres - 0.5
-                # ~ row_off = (mesh.yll - ds_yll) / - ds_yres
-                # ~ row_off = ds_nrow - (ds_yll - mesh.yll) / ds_yres + 11
-                # ~ row_off = ((ds_yll + ds_nrow * ds_yres) - mesh.yll) / ds_yres
-
-                # ~ print(col_off, row_off)
-
-                # ~ window = rio.windows.Window(
-                    # ~ col_off=col_off, row_off=row_off, width=mesh.ncol, height=mesh.nrow
-                # ~ )
-
-                # ~ prcp = ds.read(1, window=window)
-
-                # ~ print(prcp.shape)
-                # ~ print(mesh.flow.shape)
-
-                # ~ _array_to_ascii(
-                    # ~ prcp, "exemple.asc", mesh.xll, mesh.yll, setup.dx, 65535
-                # ~ )
-                # ~ _array_to_ascii(mesh.flow, "exemple_flow.asc", mesh.xll, mesh.yll, setup.dx, -99)
-
-            # ~ with rasterio.open('tests/data/RGB.byte.tif') as src:
-
-            # ~ w = src.read(1, window=Window(0, 0, 512, 256))
-
-        # ~ print("TIME FINDING ", time.time() - start_find)
-
-        # ~ print(files)
-
-    print("reading_prcp")
+            
+            
+            
+    # ~ else:
+        
+        # ~ for i, date in enumerate(tqdm(date_range, desc="reading pet")):
+        
+        # ~ date_strf = date.strftime("%Y%m%d%H%M")
+        
+        # ~ ind = _index_containing_substring(files, date_strf)
+        
+        # ~ if ind == - 1:
+            
+            # ~ if setup.sparse_storage:
+                
+                # ~ input_data.prcp_sparse[:, i] = -99.
+                
+            # ~ else:
+                
+                # ~ input_data.prcp[..., i] = -99.
+            
+            # ~ warnings.warn(f"Missing pet file for date {date}")
+        
+        # ~ else:
+            
+            # ~ matrix = read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
+            
+            # ~ if setup.sparse_storage:
+                
+                # ~ input_data.pet_sparse[:, i] = sparse_matrix_to_vector(mesh, matrix)
+                
+            # ~ else:
+                
+                # ~ input_data.pet[..., i] = matrix
+        
+        # ~ files.pop(ind)
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -373,3 +469,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_prcp:
 
         _read_prcp(setup, mesh, input_data)
+        
+    if setup.read_pet:
+        
+        _read_pet(setup, mesh, input_data)

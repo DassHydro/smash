@@ -65,7 +65,7 @@ $(TARGET): \
  obj/m_setup.o \
  obj/m_mesh.o \
  obj/m_input_data.o \
- obj/m_interface.o \
+ obj/m_utils.o \
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
 	@mkdir -p $(dir $@)

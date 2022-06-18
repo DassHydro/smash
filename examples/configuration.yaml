@@ -1,20 +1,23 @@
-dt: 3600
+dt: 86400
 start_time: 2012-01-01 00:00
 optim_start_time: 2012-01-01 00:00
 end_time: 2012-01-31 00:00
 
-active_cell_only: True
-sparse_storage: True
+active_cell_only: False
+sparse_storage: False
 
 simulation_only: False
 
 read_qobs: True
 qobs_directory: qobs
 
-read_prcp: True
+read_prcp: False
 prcp_format: tiff
 prcp_conversion_factor: 1
 prcp_directory: prcp_tiff
 
-#~ read_pet: True
-#~ pet_directory: pet
+read_pet: True
+pet_format: tiff
+pet_conversion_factor: 1
+pet_directory: pet_tiff
+daily_interannual_pet: True
