@@ -65,6 +65,8 @@ $(TARGET): \
  obj/m_setup.o \
  obj/m_mesh.o \
  obj/m_input_data.o \
+ obj/m_parameters.o \
+ obj/m_states.o \
  obj/m_utils.o \
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)

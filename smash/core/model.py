@@ -3,6 +3,8 @@ from __future__ import annotations
 from smash.solver.m_setup import SetupDT
 from smash.solver.m_mesh import MeshDT
 from smash.solver.m_input_data import Input_DataDT
+from smash.solver.m_parameters import ParametersDT
+from smash.solver.m_states import StatesDT
 
 from smash.io.yaml import read_yaml_configuration
 
@@ -36,43 +38,46 @@ class Model(object):
             )
 
         self.setup = SetupDT()
+        
+        read_yaml_configuration(configuration)
 
-        if configuration is not None:
+        # ~ if configuration is not None:
 
-            if isinstance(configuration, str):
-                _derived_type_parser(
-                    self.setup, read_yaml_configuration(configuration)
-                )
+            # ~ if isinstance(configuration, str):
+                # ~ _derived_type_parser(self.setup, read_yaml_configuration(configuration))
 
-            else:
-                raise TypeError(
-                    f"configuration argument must be string, not {type(configuration)}"
-                )
+            # ~ else:
+                # ~ raise TypeError(
+                    # ~ f"configuration argument must be string, not {type(configuration)}"
+                # ~ )
 
-        if setup is not None:
+        # ~ if setup is not None:
 
-            if isinstance(setup, dict):
-                _derived_type_parser(self.setup, setup)
+            # ~ if isinstance(setup, dict):
+                # ~ _derived_type_parser(self.setup, setup)
 
-            else:
-                raise TypeError(f"setup argument must be dictionary, not {type(setup)}")
+            # ~ else:
+                # ~ raise TypeError(f"setup argument must be dictionary, not {type(setup)}")
 
-        _build_setup(self.setup)
+        # ~ _build_setup(self.setup)
 
-        if isinstance(mesh, dict):
+        # ~ if isinstance(mesh, dict):
 
-            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+            # ~ self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
 
-            _derived_type_parser(self.mesh, mesh)
+            # ~ _derived_type_parser(self.mesh, mesh)
 
-        else:
-            raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
+        # ~ else:
+            # ~ raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
 
-        _build_mesh(self.setup, self.mesh)
+        # ~ _build_mesh(self.setup, self.mesh)
 
-        self.input_data = Input_DataDT(self.setup, self.mesh)
+        # ~ self.input_data = Input_DataDT(self.setup, self.mesh)
 
-        _build_input_data(self.setup, self.mesh, self.input_data)
+        # ~ _build_input_data(self.setup, self.mesh, self.input_data)
+
+        # ~ self.parameters = ParametersDT(self.setup, self.mesh)
+        # ~ self.states = StatesDT(self.setup, self.mesh)
 
     @property
     def setup(self):
@@ -120,4 +125,38 @@ class Model(object):
         else:
             raise TypeError(
                 f"input_data attribute must be set with {type(Input_DataDT())}, not {type(value)}"
+            )
+
+    @property
+    def parameters(self):
+
+        return self._parameters
+
+    @parameters.setter
+    def parameters(self, value):
+
+        if isinstance(value, ParametersDT):
+
+            self._parameters = value
+
+        else:
+            raise TypeError(
+                f"parameters attribute must be set with {type(ParametersDT())}, not {type(value)}"
+            )
+
+    @property
+    def states(self):
+
+        return self._states
+
+    @states.setter
+    def states(self, value):
+
+        if isinstance(value, StatesDT):
+
+            self._states = value
+
+        else:
+            raise TypeError(
+                f"states attribute must be set with {type(StatesDT())}, not {type(value)}"
             )

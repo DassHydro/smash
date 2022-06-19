@@ -8,7 +8,7 @@ sed_copy () {
 	sed -i 's/\t/    /g' ./smash/solver/m_$1.py
 }
 
-derived_type=("setup" "mesh" "input_data")
+derived_type=("setup" "mesh" "input_data" "parameters" "states")
 
 for dt in ${derived_type[@]}; do
   

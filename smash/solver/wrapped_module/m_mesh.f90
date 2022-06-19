@@ -28,9 +28,6 @@ module m_mesh
         integer, dimension(:,:), allocatable :: flow
         integer, dimension(:,:), allocatable :: drained_area
         
-        integer, dimension(:), allocatable :: flow_sparse
-        integer, dimension(:), allocatable :: drained_area_sparse
-        
         integer, dimension(:,:), allocatable :: path
         
         integer, dimension(:,:), allocatable :: gauge_pos

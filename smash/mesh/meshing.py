@@ -152,7 +152,7 @@ def generate_meshing(
 
     flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
     global_mask_dln = _trim_zeros_2D(global_mask_dln)
-    
+
     xmin_shifted = xmin + scol * xres
     ymax_shifted = ymax - srow * yres
 

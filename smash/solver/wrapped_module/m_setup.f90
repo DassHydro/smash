@@ -1,7 +1,7 @@
 !%    This module `m_setup` encapsulates all SMASH setup
 module m_setup
     
-    use m_common, only: sp, dp, lchar
+    use m_common, only: sp, dp, lchar, np, ns
     
     implicit none
     
@@ -50,6 +50,9 @@ module m_setup
         real(sp) :: pet_conversion_factor = 1._sp
         character(lchar) :: pet_directory = "..."
         logical :: daily_interannual_pet = .false.
+        
+        real(sp), dimension(np) :: default_parameters = (/200._sp, 500._sp, 5._sp/)
+        real(sp), dimension(ns) :: default_states = (/0.5_sp, 0.01_sp, 0.01_sp/)
         
     end type SetupDT
 

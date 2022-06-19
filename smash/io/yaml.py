@@ -12,4 +12,10 @@ def read_yaml_configuration(path: str) -> dict:
 
     with open(path, "r") as f:
 
-        return yaml.safe_load(f)
+        config = yaml.safe_load(f)
+        
+        if "default_parameters" in config.keys():
+            
+            print("IN")
+        
+        print(config)

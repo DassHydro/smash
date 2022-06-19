@@ -14,7 +14,6 @@ if TYPE_CHECKING:
     from smash.solver.m_mesh import MeshDT
     from smash.solver.m_input_data import Input_DataDT
 
-from smash.solver.m_utils import sparse_mesh
 from smash.core.utils import sparse_matrix_to_vector
 from smash.io.raster import read_windowed_raster
 
@@ -23,7 +22,35 @@ import numpy as np
 import rasterio as rio
 import datetime
 
-RATIO_PET_HOURLY = [0, 0, 0, 0, 0, 0, 0, 0.035, 0.062, 0.079, 0.097, 0.11, 0.117, 0.117, 0.11, 0.097, 0.079, 0.062, 0.035,0, 0, 0, 0, 0]
+RATIO_PET_HOURLY = np.array(
+    [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.035,
+        0.062,
+        0.079,
+        0.097,
+        0.11,
+        0.117,
+        0.117,
+        0.11,
+        0.097,
+        0.079,
+        0.062,
+        0.035,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ]
+)
+
 
 def _derived_type_parser(derived_type, data: dict):
 
@@ -238,15 +265,11 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     _standardize_mesh(setup, mesh)
 
     _compute_mesh_path(mesh)
-    
+
     if not setup.active_cell_only:
-        
+
         mesh.global_active_cell = np.where(mesh.flow > 0, 1, mesh.global_active_cell)
         mesh.local_active_cell = mesh.global_active_cell.copy()
-
-    if setup.sparse_storage:
-
-        sparse_mesh(mesh)
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -310,150 +333,200 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
 
 def _index_containing_substring(the_list, substring):
-    
+
     for i, s in enumerate(the_list):
         if substring in s:
-              return i
+            return i
     return -1
 
 
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
-    date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")[1:]
-    
+    date_range = pd.date_range(
+        start=setup.start_time.decode(),
+        end=setup.end_time.decode(),
+        freq=f"{int(setup.dt)}s",
+    )[1:]
+
     if setup.prcp_format.decode() == "tiff":
-        
-        files = sorted(glob.glob(f"{setup.prcp_directory.decode()}/**/*tif*", recursive=True))
-        
+
+        files = sorted(
+            glob.glob(f"{setup.prcp_directory.decode()}/**/*tif*", recursive=True)
+        )
+
     elif setup.prcp_format.decode() == "netcdf":
-        
-        files = sorted(glob.glob(f"{setup.prcp_directory.decode()}/**/*nc", recursive=True))
-        
+
+        files = sorted(
+            glob.glob(f"{setup.prcp_directory.decode()}/**/*nc", recursive=True)
+        )
+
     for i, date in enumerate(tqdm(date_range, desc="reading precipitation")):
-        
+
         date_strf = date.strftime("%Y%m%d%H%M")
-        
+
         ind = _index_containing_substring(files, date_strf)
-        
-        if ind == - 1:
-            
+
+        if ind == -1:
+
             if setup.sparse_storage:
-                
-                input_data.prcp_sparse[:, i] = -99.
-                
+
+                input_data.sparse_prcp[:, i] = -99.0
+
             else:
-                
-                input_data.prcp[..., i] = -99.
-            
+
+                input_data.prcp[..., i] = -99.0
+
             warnings.warn(f"Missing precipitation file for date {date}")
-        
+
         else:
-            
-            matrix = read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
-            
+
+            matrix = (
+                read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+            )
+
             if setup.sparse_storage:
-                
-                input_data.prcp_sparse[:, i] = sparse_matrix_to_vector(mesh, matrix)
-                
+
+                input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
+
             else:
-                
+
                 input_data.prcp[..., i] = matrix
-        
-        files.pop(ind)
+
+            files.pop(ind)
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-    
-    date_range = pd.date_range(start=setup.start_time.decode(), end=setup.end_time.decode(), freq=f"{int(setup.dt)}s")[1:]
-    
+
+    date_range = pd.date_range(
+        start=setup.start_time.decode(),
+        end=setup.end_time.decode(),
+        freq=f"{int(setup.dt)}s",
+    )[1:]
+
     if setup.pet_format.decode() == "tiff":
-        
-        files = sorted(glob.glob(f"{setup.pet_directory.decode()}/**/*tif*", recursive=True))
-        
+
+        files = sorted(
+            glob.glob(f"{setup.pet_directory.decode()}/**/*tif*", recursive=True)
+        )
+
     elif setup.pet_format.decode() == "netcdf":
-        
-        files = sorted(glob.glob(f"{setup.pet_directory.decode()}/**/*nc", recursive=True))
 
-    
+        files = sorted(
+            glob.glob(f"{setup.pet_directory.decode()}/**/*nc", recursive=True)
+        )
+
     if setup.daily_interannual_pet:
-        
-        leap_year_days = pd.date_range(start="202001010000", end="202012310000", freq="1D")
-        nstep_per_day = int(86_400 / setup.dt)
-        
-        if nstep_per_day == 1:
-            
-            ratio = [1]
-        
-        else:
-            
-            ratio = np.repeat(RATIO_PET_HOURLY, 3_600 / setup.dt) / (3_600 / setup.dt)
-        
-        for i, day in enumerate(tqdm(leap_year_days, desc="reading daily interannual pet")):
-            
-            day_strf = day.strftime("%m%d")
-            
-            ind = _index_containing_substring(files, day_strf)
-            
-            if ind == - 1:
-            
-                if setup.sparse_storage:
-                    
-                    input_data.pet_sparse[:, i] = -99.
-                    
-                else:
-                    
-                    input_data.pet[..., i] = -99.
-                
-                warnings.warn(f"Missing daily interannual pet file for date {date}")
-                
-            else:
-            
-                matrix = read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
-                
-                for j in range(nstep_per_day):
-                    
-                    time = day + j * datetime.timedelta(seconds=setup.dt)
-                    
-                    ind_time = date_range.indexer_at_time(time)
-                    
-                    input_data.pet[..., ind_time] = np.repeat(matrix[..., np.newaxis], len(ind_time), axis=2) * ratio[j]
 
-            
-            
-            
-    # ~ else:
-        
-        # ~ for i, date in enumerate(tqdm(date_range, desc="reading pet")):
-        
-        # ~ date_strf = date.strftime("%Y%m%d%H%M")
-        
-        # ~ ind = _index_containing_substring(files, date_strf)
-        
-        # ~ if ind == - 1:
-            
-            # ~ if setup.sparse_storage:
-                
-                # ~ input_data.prcp_sparse[:, i] = -99.
-                
-            # ~ else:
-                
-                # ~ input_data.prcp[..., i] = -99.
-            
-            # ~ warnings.warn(f"Missing pet file for date {date}")
-        
-        # ~ else:
-            
-            # ~ matrix = read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
-            
-            # ~ if setup.sparse_storage:
-                
-                # ~ input_data.pet_sparse[:, i] = sparse_matrix_to_vector(mesh, matrix)
-                
-            # ~ else:
-                
-                # ~ input_data.pet[..., i] = matrix
-        
-        # ~ files.pop(ind)
+        leap_year_days = pd.date_range(
+            start="202001010000", end="202012310000", freq="1D"
+        )
+        nstep_per_day = int(86_400 / setup.dt)
+        hourly_ratio = 3_600 / setup.dt
+
+        if hourly_ratio >= 1:
+
+            ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
+
+        else:
+
+            ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
+
+        for i, day in enumerate(
+            tqdm(leap_year_days, desc="reading daily interannual pet")
+        ):
+
+            if day.day_of_year in date_range.day_of_year:
+
+                day_strf = day.strftime("%m%d")
+
+                ind = _index_containing_substring(files, day_strf)
+
+                ind_day = np.where(day.day_of_year == date_range.day_of_year)
+
+                if ind == -1:
+
+                    if setup.sparse_storage:
+
+                        input_data.sparse_pet[:, ind_day] = -99.0
+
+                    else:
+
+                        input_data.pet[..., ind_day] = -99.0
+
+                    warnings.warn(
+                        f"Missing daily interannual pet file for date {day_strf}"
+                    )
+
+                else:
+
+                    subset_date_range = date_range[ind_day]
+
+                    matrix = (
+                        read_windowed_raster(files[ind], mesh)
+                        * setup.pet_conversion_factor
+                    )
+
+                    for j in range(nstep_per_day):
+
+                        step = day + j * datetime.timedelta(seconds=setup.dt)
+
+                        ind_step = subset_date_range.indexer_at_time(step)
+
+                        if setup.sparse_storage:
+
+                            vector = sparse_matrix_to_vector(mesh, matrix)
+
+                            input_data.sparse_pet[:, ind_day[0][ind_step]] = (
+                                np.repeat(vector[:, np.newaxis], len(ind_step), axis=1)
+                                * ratio[j]
+                            )
+
+                        else:
+
+                            input_data.pet[..., ind_day[0][ind_step]] = (
+                                np.repeat(
+                                    matrix[..., np.newaxis], len(ind_step), axis=2
+                                )
+                                * ratio[j]
+                            )
+
+                    files.pop(ind)
+
+    else:
+
+        for i, date in enumerate(tqdm(date_range, desc="reading pet")):
+
+            date_strf = date.strftime("%Y%m%d%H%M")
+
+            ind = _index_containing_substring(files, date_strf)
+
+            if ind == -1:
+
+                if setup.sparse_storage:
+
+                    input_data.sparse_prcp[:, i] = -99.0
+
+                else:
+
+                    input_data.prcp[..., i] = -99.0
+
+                warnings.warn(f"Missing pet file for date {date}")
+
+            else:
+
+                matrix = (
+                    read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
+                )
+
+                if setup.sparse_storage:
+
+                    input_data.sparse_pet[:, i] = sparse_matrix_to_vector(mesh, matrix)
+
+                else:
+
+                    input_data.pet[..., i] = matrix
+
+                files.pop(ind)
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -469,7 +542,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_prcp:
 
         _read_prcp(setup, mesh, input_data)
-        
+
     if setup.read_pet:
-        
+
         _read_pet(setup, mesh, input_data)

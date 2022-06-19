@@ -21,8 +21,8 @@ module m_input_data
         real(sp), dimension(:,:,:), allocatable :: prcp
         real(sp), dimension(:,:,:), allocatable :: pet
         
-        real(sp), dimension(:,:), allocatable :: prcp_sparse
-        real(sp), dimension(:,:), allocatable :: pet_sparse
+        real(sp), dimension(:,:), allocatable :: sparse_prcp
+        real(sp), dimension(:,:), allocatable :: sparse_pet
     
     end type Input_DataDT
     
@@ -45,12 +45,12 @@ module m_input_data
             
             if (setup%sparse_storage) then
             
-                allocate(input_data%prcp_sparse(mesh%nac, &
+                allocate(input_data%sparse_prcp(mesh%nac, &
                 & setup%ntime_step))
-                input_data%prcp_sparse = -99._sp
-                allocate(input_data%pet_sparse(mesh%nac, &
+                input_data%sparse_prcp = -99._sp
+                allocate(input_data%sparse_pet(mesh%nac, &
                 & setup%ntime_step))
-                input_data%pet_sparse = -99._sp
+                input_data%sparse_pet = -99._sp
                 
             else
             
