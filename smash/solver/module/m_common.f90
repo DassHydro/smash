@@ -8,10 +8,5 @@ module m_common
 
     integer, parameter :: np = 3
     integer, parameter :: ns = 3
-    
-    character(len=10), dimension(np), parameter :: list_parameters = [&
-    "cp        ",&
-    "cft       ",&
-    "lr        "]
 
 end module m_common

@@ -1,29 +1,25 @@
-dt: 86_400
+dt: 3_600
 start_time: 2012-01-01 00:00
 optim_start_time: 2012-01-01 10:00
-end_time: 2012-01-31 23:00
+end_time: 2013-01-01 00:00
 
-active_cell_only: False
-sparse_storage: False
+active_cell_only: True
+sparse_storage: True
 
-simulation_only: True
+simulation_only: False
 
-read_qobs: False
+read_qobs: True
 qobs_directory: qobs
 
-read_prcp: False
+read_prcp: True
 prcp_format: tiff
 prcp_conversion_factor: 1
 prcp_directory: prcp_tiff
 
-read_pet: False
+read_pet: True
 pet_format: tiff
 pet_conversion_factor: 1
 pet_directory: pet_tiff
 daily_interannual_pet: True
 
-default_parameters:
-    
-    cp: 198
-    cft: 102
-    lr: 62
+#~ default_parameters: {lr: 198, cp: 102}

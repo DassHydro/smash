@@ -3,7 +3,7 @@ from __future__ import annotations
 import errno
 import os
 import numpy as np
-import rasterio as rio
+from osgeo import gdal
 
 from . import _meshing
 
@@ -112,24 +112,24 @@ def generate_meshing(
 ) -> dict:
 
     if os.path.isfile(path):
-        ds_flow = rio.open(path)
+        ds_flow = gdal.Open(path)
 
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
     (x, y, area, code) = _standardize_generate_meshing(x, y, area, code)
 
-    flow = ds_flow.read(1)
+    flow = ds_flow.GetRasterBand(1).ReadAsArray()
 
-    ncol = ds_flow.width
-    nrow = ds_flow.height
+    ncol = ds_flow.RasterXSize
+    nrow = ds_flow.RasterYSize
 
-    transform = ds_flow.transform
+    transform = ds_flow.GetGeoTransform()
 
-    xmin = transform[2]
-    ymax = transform[5]
-    xres = transform[0]
-    yres = -transform[4]
+    xmin = transform[0]
+    ymax = transform[3]
+    xres = transform[1]
+    yres = -transform[5]
 
     col_otl = np.zeros(shape=x.shape, dtype=np.int32)
     row_otl = np.zeros(shape=x.shape, dtype=np.int32)

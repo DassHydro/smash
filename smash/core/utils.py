@@ -14,7 +14,6 @@ from smash.solver.m_utils import (
 
 import numpy as np
 
-
 def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
 
     if np.issubdtype(matrix.dtype, np.integer):
