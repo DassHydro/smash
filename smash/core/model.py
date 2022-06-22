@@ -5,6 +5,7 @@ from smash.solver.m_mesh import MeshDT
 from smash.solver.m_input_data import Input_DataDT
 from smash.solver.m_parameters import ParametersDT
 from smash.solver.m_states import StatesDT
+from smash.solver.m_output import OutputDT
 
 from smash.io.yaml import read_yaml_configuration
 
@@ -27,56 +28,61 @@ class Model(object):
 
     def __init__(
         self,
-        mesh: (dict),
         configuration: (str, None) = None,
         setup: (dict, None) = None,
+        mesh: (dict, None) = None,
+        build: bool = True
     ):
+        
+        if build:
 
-        if configuration is None and setup is None:
-            raise ValueError(
-                f"At least one of configuration or setup argument must be specified"
-            )
-
-        self.setup = SetupDT()
-
-        if configuration is not None:
-
-            if isinstance(configuration, str):
-                _derived_type_parser(self.setup, read_yaml_configuration(configuration))
-
-            else:
-                raise TypeError(
-                    f"configuration argument must be string, not {type(configuration)}"
+            if configuration is None and setup is None:
+                raise ValueError(
+                    f"At least one of configuration or setup argument must be specified"
                 )
 
-        if setup is not None:
+            self.setup = SetupDT()
 
-            if isinstance(setup, dict):
-                _derived_type_parser(self.setup, setup)
+            if configuration is not None:
+
+                if isinstance(configuration, str):
+                    _derived_type_parser(self.setup, read_yaml_configuration(configuration))
+
+                else:
+                    raise TypeError(
+                        f"configuration argument must be string, not {type(configuration)}"
+                    )
+
+            if setup is not None:
+
+                if isinstance(setup, dict):
+                    _derived_type_parser(self.setup, setup)
+
+                else:
+                    raise TypeError(f"setup argument must be dictionary, not {type(setup)}")
+
+            _build_setup(self.setup)
+
+            if isinstance(mesh, dict):
+
+                self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+
+                _derived_type_parser(self.mesh, mesh)
 
             else:
-                raise TypeError(f"setup argument must be dictionary, not {type(setup)}")
+                raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
 
-        _build_setup(self.setup)
+            _build_mesh(self.setup, self.mesh)
 
-        if isinstance(mesh, dict):
+            self.input_data = Input_DataDT(self.setup, self.mesh)
 
-            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+            _build_input_data(self.setup, self.mesh, self.input_data)
 
-            _derived_type_parser(self.mesh, mesh)
+            self.parameters = ParametersDT(self.setup, self.mesh)
 
-        else:
-            raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
-
-        _build_mesh(self.setup, self.mesh)
-
-        self.input_data = Input_DataDT(self.setup, self.mesh)
-
-        _build_input_data(self.setup, self.mesh, self.input_data)
-
-        self.parameters = ParametersDT(self.setup, self.mesh)
-        
-        self.states = StatesDT(self.setup, self.mesh)
+            self.states = StatesDT(self.setup, self.mesh)
+            
+            self.output = OutputDT(self.setup, self.mesh)
 
     @property
     def setup(self):
@@ -159,3 +165,32 @@ class Model(object):
             raise TypeError(
                 f"states attribute must be set with {type(StatesDT())}, not {type(value)}"
             )
+    @property
+    def output(self):
+
+        return self._output
+
+    @output.setter
+    def output(self, value):
+
+        if isinstance(value, OutputDT):
+
+            self._output = value
+
+        else:
+            raise TypeError(
+                f"output attribute must be set with {type(OutputDT())}, not {type(value)}"
+            )
+
+
+    def copy(self):
+        
+        copy = Model(build=False)
+        copy.setup = self.setup.copy()
+        copy.mesh = self.mesh.copy()
+        copy.input_data = self.input_data.copy()
+        copy.paramters = self.parameters.copy()
+        copy.states = self.states.copy()
+        copy.output = self.output.copy()
+        
+        return copy

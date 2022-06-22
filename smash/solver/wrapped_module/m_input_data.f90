@@ -23,6 +23,9 @@ module m_input_data
         
         real(sp), dimension(:,:), allocatable :: sparse_prcp
         real(sp), dimension(:,:), allocatable :: sparse_pet
+        
+        real(sp), dimension(:,:), allocatable :: mean_prcp
+        real(sp), dimension(:,:), allocatable :: mean_pet
     
     end type Input_DataDT
     
@@ -61,6 +64,16 @@ module m_input_data
                 & setup%ntime_step))
                 input_data%pet = -99._sp
             
+            end if
+            
+            if (setup%mean_forcing) then
+            
+                allocate(input_data%mean_prcp(mesh%ng, &
+                & setup%ntime_step))
+                input_data%mean_prcp = -99._sp
+                allocate(input_data%mean_pet(mesh%ng, setup%ntime_step))
+                input_data%mean_pet = -99._sp
+                
             end if
             
         end subroutine Input_DataDT_initialise

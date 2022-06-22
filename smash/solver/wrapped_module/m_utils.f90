@@ -7,6 +7,7 @@ module m_utils
     use m_input_data, only: Input_DataDT
     use m_parameters, only: ParametersDT
     use m_states, only: StatesDT
+    use m_output, only: OutputDT
     
     implicit none
     
@@ -17,7 +18,7 @@ module m_utils
             implicit none
             
             integer, intent(in) :: row, col
-            type(MeshDT), intent(inout) :: mesh
+            type(MeshDT), intent(in) :: mesh
             integer, dimension(mesh%nrow, mesh%ncol), intent(inout) &
             & :: mask
             
@@ -200,6 +201,86 @@ module m_utils
         end subroutine sparse_vector_to_matrix_i
         
         
+        subroutine compute_mean_forcing(setup, mesh, input_data)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(Input_DataDT), intent(inout) :: input_data
+            
+            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: &
+            & mask_gauge
+            real(sp), dimension(mesh%ng) :: cml_prcp, cml_pet
+            integer :: t, col, row, g, k, n
+            
+            mask_gauge = 0
+            
+            do g=1, mesh%ng
+            
+                call mask_upstream_cells(mesh%gauge_pos(1, g), &
+                & mesh%gauge_pos(2, g), mesh, mask_gauge(:, : ,g))
+            
+            end do
+
+            do t=1, setup%ntime_step
+            
+                k = 0
+                cml_prcp = 0._sp
+                cml_pet = 0._sp
+                
+                do col=1, mesh%ncol
+                
+                    do row=1, mesh%nrow
+                    
+                        if (mesh%global_active_cell(row, col) .eq. 1) then
+                        
+                            k = k + 1
+                            
+                            do g=1, mesh%ng
+                            
+                                if (mask_gauge(row, col, g) .eq. 1) then
+                                
+                                    if (setup%sparse_storage) then
+                                    
+                                        cml_prcp(g) = cml_prcp(g) + &
+                                        & input_data%sparse_prcp(k, t)
+                                        cml_pet(g) = cml_pet(g) + &
+                                        & input_data%sparse_pet(k, t)
+                                        
+                                    else
+                                    
+                                        cml_prcp(g) = cml_prcp(g) + &
+                                        & input_data%prcp(row, col, t)
+                                        cml_pet(g) = cml_pet(g) + &
+                                        & input_data%pet(row, col, t)
+                                        
+                                    end if
+                                
+                                end if
+                            
+                            end do
+                        
+                        end if
+                    
+                    end do
+                
+                end do
+                
+                do g=1, mesh%ng
+                
+                    n = count(mask_gauge(:, :, g) .eq. 1)
+                    
+                    input_data%mean_prcp(g, t) = cml_prcp(g) / n
+                    input_data%mean_pet(g, t) = cml_pet(g) / n
+                
+                end do
+                
+            end do
+        
+        end subroutine compute_mean_forcing
+        
+        
         subroutine setup_derived_type_copy(setup_in, setup_out)
             
             implicit none
@@ -261,6 +342,19 @@ module m_utils
             states_out = states_in
         
         end subroutine states_derived_type_copy
+        
+        
+        subroutine output_derived_type_copy(output_in, &
+        & output_out)
+            
+            implicit none
+            
+            type(OutputDT), intent(in) :: output_in
+            type(OutputDT), intent(out) :: output_out
+            
+            output_out = output_in
+        
+        end subroutine output_derived_type_copy
         
         
 end module m_utils

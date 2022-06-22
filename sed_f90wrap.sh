@@ -15,7 +15,7 @@ sed_DT () {
 	sed -i 's/\t/    /g' ./smash/solver/m_$1.py
 }
 
-derived_type=("setup" "mesh" "input_data" "parameters" "states")
+derived_type=("setup" "mesh" "input_data" "parameters" "states" "output")
 
 for dt in ${derived_type[@]}; do
   

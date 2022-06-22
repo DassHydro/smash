@@ -1,13 +1,13 @@
 recursive subroutine mask_upstream_cells(flow, col, row, ncol, &
-& nrow, dkind, mask)
+& nrow, mask)
     
     integer, intent(in) :: ncol, nrow, col, row
     integer, dimension(nrow, ncol), intent(in) :: flow
-    integer, dimension(8), intent(in) :: dkind
     logical, dimension(nrow, ncol), intent(inout) :: mask
     
     integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
     integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
+    integer, dimension(8) :: dkind = [1, 2, 3, 4, 5, 6, 7, 8]
     integer :: i, col_imd, row_imd
     
     mask(row, col) = .true.
@@ -23,7 +23,7 @@ recursive subroutine mask_upstream_cells(flow, col, row, ncol, &
             if (flow(row_imd, col_imd) .eq. dkind(i)) then
                 
                 call mask_upstream_cells(flow, col_imd, row_imd, &
-                & ncol, nrow, dkind, mask)
+                & ncol, nrow, mask)
             
             end if
             
@@ -33,14 +33,13 @@ recursive subroutine mask_upstream_cells(flow, col, row, ncol, &
     
 end subroutine mask_upstream_cells
 
-subroutine catchment_dln(flow, col, row, xres, yres, area, dkind, &
+subroutine catchment_dln(flow, col, row, xres, yres, area, &
 & max_depth, mask_dln, col_otl, row_otl)
     
     integer, dimension(:,:), intent(in) :: flow
     integer, intent(inout) :: col, row
     integer, intent(in) :: max_depth
     real(4), intent(in) :: xres, yres, area
-    integer, dimension(8), intent(in) :: dkind
     logical, dimension(size(flow, 1), size(flow, 2)), intent(out) :: &
     & mask_dln
     integer, intent(out) :: col_otl, row_otl
@@ -71,7 +70,7 @@ subroutine catchment_dln(flow, col, row, xres, yres, area, dkind, &
             &   row_imd .gt. 0 .and. row_imd .le. nrow) then
         
                 call mask_upstream_cells(flow, col_imd, row_imd, ncol, &
-                & nrow, dkind, mask_dln_imd)
+                & nrow, mask_dln_imd)
                 
                 tol = abs(area - count(mask_dln_imd) &
                 & * xres * yres) / area

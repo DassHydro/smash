@@ -13,13 +13,15 @@ if TYPE_CHECKING:
     from smash.solver.m_mesh import MeshDT
     from smash.solver.m_input_data import Input_DataDT
 
+from smash.solver.m_utils import compute_mean_forcing
 from smash.core.utils import sparse_matrix_to_vector
 from smash.core.common import RATIO_PET_HOURLY
-from smash.io.raster import read_windowed_raster, read_windowed_raster_gdal
+from smash.io.raster import read_windowed_raster
 
 import pandas as pd
 import numpy as np
 import datetime
+
 
 def _derived_type_parser(derived_type, data: dict):
 
@@ -28,7 +30,7 @@ def _derived_type_parser(derived_type, data: dict):
     """
 
     for key, value in data.items():
-        
+
         # ~ key = key.lower()
 
         if hasattr(derived_type, key):
@@ -122,7 +124,9 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode().strip()):
         raise FileNotFoundError(
-            errno.ENOENT, os.strerror(errno.ENOENT), setup.qobs_directory.decode().strip()
+            errno.ENOENT,
+            os.strerror(errno.ENOENT),
+            setup.qobs_directory.decode().strip(),
         )
 
     if setup.read_prcp and setup.prcp_directory.decode().strip() == "...":
@@ -132,7 +136,9 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_prcp and not os.path.exists(setup.prcp_directory.decode().strip()):
         raise FileNotFoundError(
-            errno.ENOENT, os.strerror(errno.ENOENT), setup.prcp_directory.decode().strip()
+            errno.ENOENT,
+            os.strerror(errno.ENOENT),
+            setup.prcp_directory.decode().strip(),
         )
 
     if not setup.prcp_format.decode().strip() in ["tiff", "netcdf"]:
@@ -150,7 +156,9 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_pet and not os.path.exists(setup.pet_directory.decode().strip()):
         raise FileNotFoundError(
-            errno.ENOENT, os.strerror(errno.ENOENT), setup.pet_directory.decode().strip()
+            errno.ENOENT,
+            os.strerror(errno.ENOENT),
+            setup.pet_directory.decode().strip(),
         )
 
     if not setup.pet_format.decode().strip() in ["tiff", "netcdf"]:
@@ -322,7 +330,9 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.prcp_format.decode().strip() == "tiff":
 
         files = sorted(
-            glob.glob(f"{setup.prcp_directory.decode().strip()}/**/*tif*", recursive=True)
+            glob.glob(
+                f"{setup.prcp_directory.decode().strip()}/**/*tif*", recursive=True
+            )
         )
 
     elif setup.prcp_format.decode().strip() == "netcdf":
@@ -330,13 +340,13 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         files = sorted(
             glob.glob(f"{setup.prcp_directory.decode().strip()}/**/*nc", recursive=True)
         )
-    
+
     for i, date in enumerate(tqdm(date_range, desc="reading precipitation")):
-        
+
         date_strf = date.strftime("%Y%m%d%H%M")
 
         ind = _index_containing_substring(files, date_strf)
-        
+
         if ind == -1:
 
             if setup.sparse_storage:
@@ -350,9 +360,9 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             warnings.warn(f"Missing precipitation file for date {date}")
 
         else:
-            
+
             matrix = (
-                read_windowed_raster_gdal(files[ind], mesh) * setup.prcp_conversion_factor
+                read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -377,7 +387,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.pet_format.decode().strip() == "tiff":
 
         files = sorted(
-            glob.glob(f"{setup.pet_directory.decode().strip()}/**/*tif*", recursive=True)
+            glob.glob(
+                f"{setup.pet_directory.decode().strip()}/**/*tif*", recursive=True
+            )
         )
 
     elif setup.pet_format.decode().strip() == "netcdf":
@@ -433,7 +445,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        read_windowed_raster_gdal(files[ind], mesh)
+                        read_windowed_raster(files[ind], mesh)
                         * setup.pet_conversion_factor
                     )
 
@@ -486,7 +498,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             else:
 
                 matrix = (
-                    read_windowed_raster_gdal(files[ind], mesh) * setup.pet_conversion_factor
+                    read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
                 )
 
                 if setup.sparse_storage:
@@ -517,3 +529,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_pet:
 
         _read_pet(setup, mesh, input_data)
+
+    if setup.mean_forcing:
+
+        compute_mean_forcing(setup, mesh, input_data)

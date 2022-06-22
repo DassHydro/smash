@@ -106,7 +106,6 @@ def generate_meshing(
     x: (float, list[float]),
     y: (float, list[float]),
     area: (float, list[float]),
-    dkind: list[int] = [1, 2, 3, 4, 5, 6, 7, 8],
     max_depth: int = 1,
     code: (None, str) = None,
 ) -> dict:
@@ -141,7 +140,7 @@ def generate_meshing(
         col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
 
         mask_dln, col_otl[ind], row_otl[ind] = _meshing.catchment_dln(
-            flow, col, row, xres, yres, area[ind], dkind, max_depth
+            flow, col, row, xres, yres, area[ind], max_depth
         )
 
         area_otl[ind] = np.count_nonzero(mask_dln == 1)

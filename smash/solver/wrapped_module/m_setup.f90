@@ -51,6 +51,8 @@ module m_setup
         character(lchar) :: pet_directory = "..."
         logical :: daily_interannual_pet = .false.
         
+        logical :: mean_forcing = .false.
+        
         real(sp), dimension(np) :: default_parameters = (/200._sp, 500._sp, 5._sp/)
         real(sp), dimension(ns) :: default_states = (/0.5_sp, 0.01_sp, 0.01_sp/)
         
