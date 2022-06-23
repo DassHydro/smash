@@ -1,8 +1,8 @@
-!%    This module `m_mesh` encapsulates all SMASH mesh
-module m_mesh
+!%    This module (wrap) `mw_mesh` encapsulates all SMASH mesh
+module mw_mesh
     
     use m_common, only: sp, dp, lchar
-    use m_setup, only: SetupDT
+    use mw_setup, only: SetupDT
     
     implicit none
     
@@ -77,4 +77,4 @@ module m_mesh
             
         end subroutine MeshDT_initialise
         
-end module m_mesh
+end module mw_mesh

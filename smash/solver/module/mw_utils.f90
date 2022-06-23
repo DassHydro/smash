@@ -1,13 +1,13 @@
-!%    This module `m_utils` encapsulates all SMASH utils (type, subroutines, functions)
-module m_utils
+!%    This module (wrap) `mw_utils` encapsulates all SMASH utils (type, subroutines, functions)
+module mw_utils
     
     use m_common, only: sp, dp, lchar, np, ns
-    use m_setup, only: SetupDT
-    use m_mesh, only: MeshDT
-    use m_input_data, only: Input_DataDT
-    use m_parameters, only: ParametersDT
-    use m_states, only: StatesDT
-    use m_output, only: OutputDT
+    use mw_setup, only: SetupDT
+    use mw_mesh, only: MeshDT
+    use mw_input_data, only: Input_DataDT
+    use mw_parameters, only: ParametersDT
+    use mw_states, only: StatesDT
+    use mw_output, only: OutputDT
     
     implicit none
     
@@ -357,4 +357,4 @@ module m_utils
         end subroutine output_derived_type_copy
         
         
-end module m_utils
+end module mw_utils

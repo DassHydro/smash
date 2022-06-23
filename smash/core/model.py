@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from smash.solver.m_setup import SetupDT
-from smash.solver.m_mesh import MeshDT
-from smash.solver.m_input_data import Input_DataDT
-from smash.solver.m_parameters import ParametersDT
-from smash.solver.m_states import StatesDT
-from smash.solver.m_output import OutputDT
+from smash.solver.mw_setup import SetupDT
+from smash.solver.mw_mesh import MeshDT
+from smash.solver.mw_input_data import Input_DataDT
+from smash.solver.mw_parameters import ParametersDT
+from smash.solver.mw_states import StatesDT
+from smash.solver.mw_output import OutputDT
 
 from smash.io.yaml import read_yaml_configuration
 

@@ -5,7 +5,7 @@ TAPENADE=./tapenade_3.16/
 all: b
 
 b: $(FILES)
-	$(TAPENADE)/bin/tapenade -backward -fixinterface -msglevel 100 -o ADJ -head m_run.run_direct "parameters" "cost"\
+	$(TAPENADE)/bin/tapenade -backward -fixinterface -msglevel 100 -o ADJ -head m_run.run_direct \
 	-vars "parameters" \
 	-outvars "cost" \
 	-O $(PWD)/backward $(FILES)

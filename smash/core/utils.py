@@ -3,9 +3,9 @@ from __future__ import annotations
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver.m_mesh import MeshDT
+    from smash.solver.mw_mesh import MeshDT
 
-from smash.solver.m_utils import (
+from smash.solver.mw_utils import (
     sparse_matrix_to_vector_r,
     sparse_matrix_to_vector_i,
     sparse_vector_to_matrix_r,

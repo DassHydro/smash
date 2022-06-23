@@ -9,11 +9,11 @@ from tqdm import tqdm
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver.m_setup import SetupDT
-    from smash.solver.m_mesh import MeshDT
-    from smash.solver.m_input_data import Input_DataDT
+    from smash.solver.mw_setup import SetupDT
+    from smash.solver.mw_mesh import MeshDT
+    from smash.solver.mw_input_data import Input_DataDT
 
-from smash.solver.m_utils import compute_mean_forcing
+from smash.solver.mw_utils import compute_mean_forcing
 from smash.core.utils import sparse_matrix_to_vector
 from smash.core.common import RATIO_PET_HOURLY
 from smash.io.raster import read_windowed_raster

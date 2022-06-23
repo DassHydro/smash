@@ -11,10 +11,10 @@ from .core.common import *
 
 from . import solver
 from .solver import *
-from .solver.m_setup import *
-from .solver.m_mesh import *
-from .solver.m_input_data import *
-from .solver.m_utils import *
+from .solver.mw_setup import *
+from .solver.mw_mesh import *
+from .solver.mw_input_data import *
+from .solver.mw_utils import *
 
 from . import mesh
 from .mesh import *

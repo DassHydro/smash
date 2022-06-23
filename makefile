@@ -14,7 +14,7 @@ INC := -I$(BUILDDIR)
 MOD := -J$(BUILDDIR)
 
 SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERSRC)/wrapped_module/*.f90
+SOLVERMODWRAP := $(SOLVERSRC)/module/mw_*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := $(SOLVERSRC)/*.f90
 
@@ -44,7 +44,7 @@ module:
 	@echo ""
 	@echo "********************************************"
 	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fPIC -fmax-errors=1 -Iobj -Jobj' --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
-	mv $(SHAREDLIB)/m_* $(SOLVERSRC)/.
+	mv $(SHAREDLIB)/mw_* $(SOLVERSRC)/.
 	mv _$(SHAREDLIB)* $(SOLVERSRC)/.
 	rm -rf $(SHAREDLIB)
 	cd $(MESHSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
@@ -55,21 +55,20 @@ clean:
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
 	@$(RM) -rf *egg-info
-	@$(RM) -rf $(SOLVERSRC)/m_*
+	@$(RM) -rf $(SOLVERSRC)/mw_*
 	@$(RM) -rf $(SOLVERSRC)/_$(SHAREDLIB)*
 	@$(RM) -rf $(SOLVERSRC)/f90wrap_*
 
 
 $(TARGET): \
  obj/m_common.o \
- obj/m_setup.o \
- obj/m_mesh.o \
- obj/m_input_data.o \
- obj/m_parameters.o \
- obj/m_states.o \
- obj/m_output.o \
- obj/m_run.o \
- obj/m_utils.o \
+ obj/mw_setup.o \
+ obj/mw_mesh.o \
+ obj/mw_input_data.o \
+ obj/mw_parameters.o \
+ obj/mw_states.o \
+ obj/mw_output.o \
+ obj/mw_utils.o \
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
 	@mkdir -p $(dir $@)

@@ -1,5 +1,5 @@
-!%    This module `m_setup` encapsulates all SMASH setup
-module m_setup
+!%    This module `mw_setup` (wrap) encapsulates all SMASH setup
+module mw_setup
     
     use m_common, only: sp, dp, lchar, np, ns
     
@@ -58,4 +58,4 @@ module m_setup
         
     end type SetupDT
 
-end module m_setup
+end module mw_setup

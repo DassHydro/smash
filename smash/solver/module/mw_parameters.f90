@@ -1,9 +1,9 @@
-!%    This module `m_parameters` encapsulates all SMASH parameters
-module m_parameters
+!%    This module (wrap) `mw_parameters` encapsulates all SMASH parameters
+module mw_parameters
 
     use m_common, only: sp, dp, lchar, np, ns
-    use m_setup, only: SetupDT
-    use m_mesh, only: MeshDT
+    use mw_setup, only: SetupDT
+    use mw_mesh, only: MeshDT
     
     implicit none
     
@@ -87,4 +87,4 @@ module m_parameters
         
         end subroutine vector_to_parameters_derived_type
 
-end module m_parameters
+end module mw_parameters

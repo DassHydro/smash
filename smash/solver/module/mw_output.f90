@@ -1,9 +1,9 @@
-!%    This module `m_output` encapsulates all SMASH output
-module m_output
+!%    This module (wrap) `mw_output` encapsulates all SMASH output
+module mw_output
     
     use m_common, only: sp, dp, lchar, np, ns
-    use m_setup, only: SetupDT
-    use m_mesh, only: MeshDT
+    use mw_setup, only: SetupDT
+    use mw_mesh, only: MeshDT
     
     
     implicit none
@@ -61,4 +61,4 @@ module m_output
         
         end subroutine OutputDT_initialise
 
-end module m_output
+end module mw_output

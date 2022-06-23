@@ -1,9 +1,9 @@
-!%    This module `m_data` encapsulates all SMASH data
-module m_input_data
+!%    This module (wrap) `mw_input_data` encapsulates all SMASH data
+module mw_input_data
 
     use m_common, only: sp, dp, lchar
-    use m_setup, only: SetupDT
-    use m_mesh, only: MeshDT
+    use mw_setup, only: SetupDT
+    use mw_mesh, only: MeshDT
     
     implicit none
     
@@ -78,6 +78,4 @@ module m_input_data
             
         end subroutine Input_DataDT_initialise
     
-    
-
-end module m_input_data
+end module mw_input_data
