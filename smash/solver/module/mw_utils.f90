@@ -9,6 +9,8 @@ module mw_utils
     use mw_states, only: StatesDT
     use mw_output, only: OutputDT
     
+    use, intrinsic :: omp_lib
+    
     implicit none
     
     contains
@@ -60,21 +62,26 @@ module mw_utils
             & :: matrix
             real(sp), dimension(mesh%nac), intent(inout) :: vector
             
-            integer :: i, j, k
+            integer :: i, row, col, k
             
             k = 0
-            do i=1, mesh%ncol
             
-                do j=1, mesh%nrow
-                
-                    if (mesh%global_active_cell(j, i) .eq. 1) then
+            do i=1, mesh%nrow * mesh%ncol
+            
+                if (mesh%path(1, i) .gt. 0 .and. &
+                & mesh%path(2, i) .gt. 0) then
+                    
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    
+                    if (mesh%global_active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
-                        vector(k) = matrix(j, i)
-
+                        vector(k) = matrix(row, col)
+                        
                     end if
                 
-                end do
+                end if
             
             end do
         
@@ -90,21 +97,26 @@ module mw_utils
             & :: matrix
             integer, dimension(mesh%nac), intent(inout) :: vector
             
-            integer :: i, j, k
+            integer :: i, row, col, k
             
             k = 0
-            do i=1, mesh%ncol
             
-                do j=1, mesh%nrow
-                
-                    if (mesh%global_active_cell(j, i) .eq. 1) then
+            do i=1, mesh%nrow * mesh%ncol
+            
+                if (mesh%path(1, i) .gt. 0 .and. &
+                & mesh%path(2, i) .gt. 0) then
+                    
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    
+                    if (mesh%global_active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
-                        vector(k) = matrix(j, i)
-
+                        vector(k) = matrix(row, col)
+                        
                     end if
                 
-                end do
+                end if
             
             end do
         
@@ -122,35 +134,39 @@ module mw_utils
             & :: matrix
             real(sp), optional, intent(in) :: na_value
             
-            integer :: i, j, k
+            integer :: i, row, col, k
             
             k = 0
             
-            do i=1, mesh%ncol
-            
-                do j=1, mesh%nrow
+            do i=1, mesh%nrow * mesh%ncol
                 
-                    if (mesh%global_active_cell(j, i) .eq. 1) then
+                if (mesh%path(1, i) .gt. 0 .and. &
+                & mesh%path(2, i) .gt. 0) then
                     
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    
+                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                        
                         k = k + 1
-                        matrix(j, i) = vector(k)
+                        matrix(row, col) = vector(k)
                         
                     else
                     
-                        if (present(na_value)) then
+                         if (present(na_value)) then
                         
-                            matrix(j, i) = na_value
+                            matrix(row, col) = na_value
                             
                         else
                         
-                            matrix(j, i) = -99._sp
+                            matrix(row, col) = -99._sp
                         
                         end if
                     
                     end if
+                    
+                end if
                 
-                end do
-            
             end do
         
         end subroutine sparse_vector_to_matrix_r
@@ -167,35 +183,39 @@ module mw_utils
             & :: matrix
             integer, optional, intent(in) :: na_value
             
-            integer :: i, j, k
-            
+            integer :: i, row, col, k
+                
             k = 0
             
-            do i=1, mesh%ncol
-            
-                do j=1, mesh%nrow
+            do i=1, mesh%nrow * mesh%ncol
                 
-                    if (mesh%global_active_cell(j, i) .eq. 1) then
+                if (mesh%path(1, i) .gt. 0 .and. &
+                & mesh%path(2, i) .gt. 0) then
                     
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    
+                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                        
                         k = k + 1
-                        matrix(j, i) = vector(k)
+                        matrix(row, col) = vector(k)
                         
                     else
                     
-                        if (present(na_value)) then
+                         if (present(na_value)) then
                         
-                            matrix(j, i) = na_value
+                            matrix(row, col) = na_value
                             
                         else
                         
-                            matrix(j, i) = -99
-                        
+                            matrix(row, col) = -99._sp
+                            
                         end if
                     
                     end if
+                    
+                end if
                 
-                end do
-            
             end do
         
         end subroutine sparse_vector_to_matrix_i
@@ -212,7 +232,7 @@ module mw_utils
             integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: &
             & mask_gauge
             real(sp), dimension(mesh%ng) :: cml_prcp, cml_pet
-            integer :: t, col, row, g, k, n
+            integer :: t, col, row, g, k, n, i
             
             mask_gauge = 0
             
@@ -229,20 +249,25 @@ module mw_utils
                 cml_prcp = 0._sp
                 cml_pet = 0._sp
                 
-                do col=1, mesh%ncol
+                do i=1, mesh%nrow * mesh%ncol
                 
-                    do row=1, mesh%nrow
+                    if (mesh%path(1, i) .gt. 0 .and. &
+                    & mesh%path(2, i) .gt. 0) then
                     
-                        if (mesh%global_active_cell(row, col) .eq. 1) then
+                        row = mesh%path(1, i)
+                        col = mesh%path(2, i)
+                        
+                        if (mesh%global_active_cell(row, col) .eq. &
+                        & 1) then
                         
                             k = k + 1
                             
                             do g=1, mesh%ng
-                            
+                                
                                 if (mask_gauge(row, col, g) .eq. 1) then
                                 
                                     if (setup%sparse_storage) then
-                                    
+                                        
                                         cml_prcp(g) = cml_prcp(g) + &
                                         & input_data%sparse_prcp(k, t)
                                         cml_pet(g) = cml_pet(g) + &
@@ -254,26 +279,26 @@ module mw_utils
                                         & input_data%prcp(row, col, t)
                                         cml_pet(g) = cml_pet(g) + &
                                         & input_data%pet(row, col, t)
-                                        
+                                    
                                     end if
-                                
+                                    
                                 end if
                             
                             end do
                         
                         end if
+                        
+                    end if
                     
-                    end do
-                
                 end do
-                
+                    
                 do g=1, mesh%ng
-                
+            
                     n = count(mask_gauge(:, :, g) .eq. 1)
                     
                     input_data%mean_prcp(g, t) = cml_prcp(g) / n
                     input_data%mean_pet(g, t) = cml_pet(g) / n
-                
+            
                 end do
                 
             end do
@@ -356,5 +381,69 @@ module mw_utils
         
         end subroutine output_derived_type_copy
         
+    
+        subroutine test_opm()
+            
+            implicit none
+            
+            integer :: i, j, k
+            integer, parameter :: n = 200
+            real(sp), dimension(n,n) :: a, b, c
+            real(dp) :: t1, t2
+            
+            call omp_set_num_threads(4)
+            
+            a = 1._sp
+            b = 2._sp
+            
+            c = 0._sp
+            
+            print*, a, b, c
+            t1 = omp_get_wtime()
+
+!~             ! Calculate C = AB sequentially.
+            do j = 1, n
+                do k = 1, n
+                    do i = 1, n
+                        c(i, j) = c(i, j) + a(i, k) * b(k, j)
+                    end do
+                end do
+            end do
+
+            t2 = omp_get_wtime()
+            
+            print*, 'single: ', t2 - t1, ' s'
+            
+            c = 0.0_sp
+            
+            t1 = omp_get_wtime()
+
+!~             ! Calculate C = AB in parallel with OpenMP, using static scheduling.
+            !$omp parallel shared(a, b, c) private(i, j, k)
+            !$omp do schedule(static)
+
+                do j = 1, n
+                    do k = 1, n
+                        do i = 1, n
+                            c(i, j) = c(i, j) + a(i, k) * b(k, j)
+                        end do
+                    end do
+                end do
+
+            !$omp end do
+            !$omp end parallel
+            
+            t2 = omp_get_wtime()
+            print*, 'OpenMP: ', t2 - t1, ' s'
+            
+!~             call omp_set_num_threads(2)
+            
+!~             !$omp parallel
+                
+!~                 print, '(a, i0)', 'Thread: ', omp_get_thread_num()
+                
+!~             !$omp end parallel
+        
+        end subroutine test_opm
         
 end module mw_utils

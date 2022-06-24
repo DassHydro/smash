@@ -39,6 +39,8 @@ mesh = smash.read_mesh("mesh_Y3204040.hdf5")
 
 model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
+model.direct_run(inplace=True)
+
 model_t = time.time()
 
 print("MODEL", model_t - meshing_t)

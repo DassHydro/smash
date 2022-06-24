@@ -6,6 +6,7 @@ from smash.solver.mw_input_data import Input_DataDT
 from smash.solver.mw_parameters import ParametersDT
 from smash.solver.mw_states import StatesDT
 from smash.solver.mw_output import OutputDT
+from smash.solver.mw_run import direct_model
 
 from smash.io.yaml import read_yaml_configuration
 
@@ -165,6 +166,7 @@ class Model(object):
             raise TypeError(
                 f"states attribute must be set with {type(StatesDT())}, not {type(value)}"
             )
+    
     @property
     def output(self):
 
@@ -194,3 +196,20 @@ class Model(object):
         copy.output = self.output.copy()
         
         return copy
+        
+        
+    def direct_run(self, inplace: bool = False):
+        
+        if inplace:
+            
+            instance = self
+            
+        else:
+            
+            instance = self.copy()
+            
+        
+        cost = direct_model(self.setup, self.mesh, self.input_data, self.parameters, self.states, self.output)
+            
+    
+    

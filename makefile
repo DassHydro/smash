@@ -2,8 +2,8 @@ FC := gfortran
 BUILDDIR := obj
 TARGET := SMASH
 
-#FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
-FFLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+#FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
+FFLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 SOLVERSRC := smash/solver
 MESHSRC := smash/mesh
 FEXT := f90
@@ -43,7 +43,7 @@ module:
 	@echo " Making module extension "
 	@echo ""
 	@echo "********************************************"
-	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fPIC -fmax-errors=1 -Iobj -Jobj' --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
+	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
 	mv $(SHAREDLIB)/mw_* $(SOLVERSRC)/.
 	mv _$(SHAREDLIB)* $(SOLVERSRC)/.
 	rm -rf $(SHAREDLIB)
@@ -57,17 +57,20 @@ clean:
 	@$(RM) -rf *egg-info
 	@$(RM) -rf $(SOLVERSRC)/mw_*
 	@$(RM) -rf $(SOLVERSRC)/_$(SHAREDLIB)*
-	@$(RM) -rf $(SOLVERSRC)/f90wrap_*
+	@$(RM) -rf $(SOLVERSRC)/*f90
+	@$(RM) -rf $(SOLVERSRC)/*o
 
 
 $(TARGET): \
  obj/m_common.o \
+ obj/m_operator.o \
  obj/mw_setup.o \
  obj/mw_mesh.o \
  obj/mw_input_data.o \
  obj/mw_parameters.o \
  obj/mw_states.o \
  obj/mw_output.o \
+ obj/mw_run.o \
  obj/mw_utils.o \
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)
