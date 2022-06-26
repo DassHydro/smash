@@ -14,6 +14,11 @@ from .solver import *
 from .solver.mw_setup import *
 from .solver.mw_mesh import *
 from .solver.mw_input_data import *
+from .solver.mw_parameters import *
+from .solver.mw_states import *
+from .solver.mw_output import *
+from .solver.mw_run import *
+from .solver.mw_cost import *
 from .solver.mw_utils import *
 
 from . import mesh

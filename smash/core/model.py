@@ -7,6 +7,7 @@ from smash.solver.mw_parameters import ParametersDT
 from smash.solver.mw_states import StatesDT
 from smash.solver.mw_output import OutputDT
 from smash.solver.mw_run import direct_model
+from smash.solver.mw_optimize import optimize_sbs
 
 from smash.io.yaml import read_yaml_configuration
 
@@ -32,9 +33,9 @@ class Model(object):
         configuration: (str, None) = None,
         setup: (dict, None) = None,
         mesh: (dict, None) = None,
-        build: bool = True
+        build: bool = True,
     ):
-        
+
         if build:
 
             if configuration is None and setup is None:
@@ -47,7 +48,9 @@ class Model(object):
             if configuration is not None:
 
                 if isinstance(configuration, str):
-                    _derived_type_parser(self.setup, read_yaml_configuration(configuration))
+                    _derived_type_parser(
+                        self.setup, read_yaml_configuration(configuration)
+                    )
 
                 else:
                     raise TypeError(
@@ -60,7 +63,9 @@ class Model(object):
                     _derived_type_parser(self.setup, setup)
 
                 else:
-                    raise TypeError(f"setup argument must be dictionary, not {type(setup)}")
+                    raise TypeError(
+                        f"setup argument must be dictionary, not {type(setup)}"
+                    )
 
             _build_setup(self.setup)
 
@@ -82,7 +87,7 @@ class Model(object):
             self.parameters = ParametersDT(self.setup, self.mesh)
 
             self.states = StatesDT(self.setup, self.mesh)
-            
+
             self.output = OutputDT(self.setup, self.mesh)
 
     @property
@@ -166,7 +171,7 @@ class Model(object):
             raise TypeError(
                 f"states attribute must be set with {type(StatesDT())}, not {type(value)}"
             )
-    
+
     @property
     def output(self):
 
@@ -184,9 +189,8 @@ class Model(object):
                 f"output attribute must be set with {type(OutputDT())}, not {type(value)}"
             )
 
-
     def copy(self):
-        
+
         copy = Model(build=False)
         copy.setup = self.setup.copy()
         copy.mesh = self.mesh.copy()
@@ -194,22 +198,43 @@ class Model(object):
         copy.paramters = self.parameters.copy()
         copy.states = self.states.copy()
         copy.output = self.output.copy()
-        
+
         return copy
-        
-        
+
     def direct_run(self, inplace: bool = False):
-        
+
         if inplace:
-            
+
             instance = self
-            
+
         else:
-            
+
             instance = self.copy()
-            
-        
-        cost = direct_model(self.setup, self.mesh, self.input_data, self.parameters, self.states, self.output)
-            
-    
-    
+
+        cost = direct_model(
+            self.setup,
+            self.mesh,
+            self.input_data,
+            self.parameters,
+            self.states,
+            self.output,
+        )
+
+    def optimize(self, solver: str = "sbs", inplace: bool = False):
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        cost = optimize_sbs(
+            self.setup,
+            self.mesh,
+            self.input_data,
+            self.parameters,
+            self.states,
+            self.output,
+        )

@@ -39,6 +39,8 @@ module mw_mesh
         integer, dimension(:,:), allocatable :: global_active_cell
         integer, dimension(:,:), allocatable :: local_active_cell
         
+        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse
+        
     end type MeshDT
     
     contains
@@ -74,6 +76,13 @@ module mw_mesh
             mesh%global_active_cell = 0
             allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
             mesh%local_active_cell = 0
+            
+            if (setup%sparse_storage) then
+                
+                allocate(mesh%rowcol_to_ind_sparse(mesh%nrow, mesh%ncol))
+                mesh%rowcol_to_ind_sparse = -99
+                
+            end if
             
         end subroutine MeshDT_initialise
         

@@ -56,8 +56,6 @@ module mw_output
                 output%gradient_parameters = 0._sp
             
             end if
-            
-            output%cost = - 99._sp
         
         end subroutine OutputDT_initialise
 

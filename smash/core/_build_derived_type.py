@@ -13,9 +13,9 @@ if TYPE_CHECKING:
     from smash.solver.mw_mesh import MeshDT
     from smash.solver.mw_input_data import Input_DataDT
 
-from smash.solver.mw_utils import compute_mean_forcing
+from smash.solver.mw_utils import compute_rowcol_to_ind_sparse, compute_mean_forcing
 from smash.core.utils import sparse_matrix_to_vector
-from smash.core.common import RATIO_PET_HOURLY
+from smash.core.common import SMASH_RATIO_PET_HOURLY
 from smash.io.raster import read_windowed_raster
 
 import pandas as pd
@@ -102,11 +102,6 @@ def _standardize_setup(setup: SetupDT):
     if (et - ost).total_seconds() < 0:
         raise ValueError(
             "argument optim_start_time of SetupDT corresponds to a later date than end_time"
-        )
-
-    if not setup.active_cell_only and setup.sparse_storage:
-        raise ValueError(
-            "argument sparse_storage of SetupDT can not be True if active_cell_only of SetupDT is False"
         )
 
     if setup.active_cell_only and not setup.sparse_storage:
@@ -249,6 +244,11 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
         mesh.global_active_cell = np.where(mesh.flow > 0, 1, mesh.global_active_cell)
         mesh.local_active_cell = mesh.global_active_cell.copy()
+        mesh.nac = np.count_nonzero(mesh.global_active_cell)
+
+    if setup.sparse_storage:
+
+        compute_rowcol_to_ind_sparse(mesh)
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -408,11 +408,11 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         if hourly_ratio >= 1:
 
-            ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
+            ratio = np.repeat(SMASH_RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
 
         else:
 
-            ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
+            ratio = np.sum(SMASH_RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
         for i, day in enumerate(
             tqdm(leap_year_days, desc="reading daily interannual pet")

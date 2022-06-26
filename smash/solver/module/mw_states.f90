@@ -12,8 +12,10 @@ module mw_states
     
     type StatesDT
         
+        real(sp), dimension(:,:), allocatable :: hi
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
+        real(sp), dimension(:,:), allocatable :: hst
         real(sp), dimension(:,:), allocatable :: hr
         
     end type StatesDT
@@ -33,8 +35,10 @@ module mw_states
             nrow = mesh%nrow
             ncol = mesh%ncol
             
+            allocate(states%hi(nrow, ncol))
             allocate(states%hp(nrow, ncol))
             allocate(states%hft(nrow, ncol))
+            allocate(states%hst(nrow, ncol))
             allocate(states%hr(nrow, ncol))
             
             call vector_to_states_derived_type(&
@@ -51,9 +55,11 @@ module mw_states
             real(sp), dimension(size(states%hp, 1), &
             & size(states%hp, 2), ns), intent(inout) :: matrix
             
-            matrix(:,:,1) = states%hp(:,:)
-            matrix(:,:,2) = states%hft(:,:)
-            matrix(:,:,3) = states%hr(:,:)
+            matrix(:,:,1) = states%hi(:,:)
+            matrix(:,:,2) = states%hp(:,:)
+            matrix(:,:,3) = states%hft(:,:)
+            matrix(:,:,4) = states%hst(:,:)
+            matrix(:,:,5) = states%hr(:,:)
         
         end subroutine states_derived_type_to_matrix
         
@@ -66,9 +72,11 @@ module mw_states
             real(sp), dimension(size(states%hp, 1), &
             & size(states%hp, 2), ns), intent(in) :: matrix
             
-            states%hp(:,:) = matrix(:,:,1)
-            states%hft(:,:) = matrix(:,:,2)
-            states%hr(:,:) = matrix(:,:,3)
+            states%hi(:,:) = matrix(:,:,1)
+            states%hp(:,:) = matrix(:,:,2)
+            states%hft(:,:) = matrix(:,:,3)
+            states%hst(:,:) = matrix(:,:,4)
+            states%hr(:,:) = matrix(:,:,5)
         
         end subroutine matrix_to_states_derived_type
         
@@ -78,11 +86,13 @@ module mw_states
             implicit none
             
             type(StatesDT), intent(inout) :: states
-            real(sp), dimension(np), intent(in) :: vector
+            real(sp), dimension(ns), intent(in) :: vector
             
-            states%hp = vector(1)
-            states%hft = vector(2)
-            states%hr = vector(3)
+            states%hi = vector(1)
+            states%hp = vector(2)
+            states%hft = vector(3)
+            states%hst = vector(4)
+            states%hr = vector(5)
         
         end subroutine vector_to_states_derived_type
 

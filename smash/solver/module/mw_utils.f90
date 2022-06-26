@@ -53,6 +53,38 @@ module mw_utils
         end subroutine mask_upstream_cells
         
         
+        subroutine compute_rowcol_to_ind_sparse(mesh)
+        
+            implicit none
+            
+            type(MeshDT), intent(inout) :: mesh
+            
+            integer :: i, row, col, k
+            
+            k = 0
+            
+            do i=1, mesh%nrow * mesh%ncol
+            
+                if (mesh%path(1, i) .gt. 0 .and. &
+                & mesh%path(2, i) .gt. 0) then
+                    
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    
+                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                        
+                        k = k + 1
+                        mesh%rowcol_to_ind_sparse(row, col) = k
+                        
+                    end if
+                
+                end if
+            
+            end do
+        
+        end subroutine compute_rowcol_to_ind_sparse
+        
+        
         subroutine sparse_matrix_to_vector_r(mesh, matrix, vector)
         
             implicit none

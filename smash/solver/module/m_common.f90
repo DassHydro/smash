@@ -6,7 +6,7 @@ module m_common
     integer, parameter :: dp = 8
     integer, parameter :: lchar = 128
 
-    integer, parameter :: np = 3
-    integer, parameter :: ns = 3
+    integer, parameter :: np = 8
+    integer, parameter :: ns = 5
 
 end module m_common

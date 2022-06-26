@@ -63,14 +63,16 @@ clean:
 
 $(TARGET): \
  obj/m_common.o \
- obj/m_operator.o \
  obj/mw_setup.o \
  obj/mw_mesh.o \
  obj/mw_input_data.o \
  obj/mw_parameters.o \
  obj/mw_states.o \
  obj/mw_output.o \
+ obj/mw_cost.o \
+ obj/m_operator.o \
  obj/mw_run.o \
+ obj/mw_optimize.o \
  obj/mw_utils.o \
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(FEXT)

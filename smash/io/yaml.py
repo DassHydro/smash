@@ -4,11 +4,26 @@ import yaml
 import numpy as np
 
 from smash.core.common import (
-    SMASH_PARAMETERS,
-    SMASH_DEFAULT_PARAMETERS,
-    SMASH_STATES,
-    SMASH_DEFAULT_STATES,
+
+    SMASH_CONFIGURATION_DICT,
 )
+
+
+def _standardize_configuration_dict(configuration, smash_key, smash_value):
+
+    tmp = dict(zip(smash_value[0], smash_value[1]))
+
+    for key, value in configuration[smash_key].items():
+
+        if key in tmp.keys():
+
+            tmp.update({key: value})
+
+        else:
+
+            raise ValueError(f"Invalid key '{key}' in '{smash_key}'")
+            
+    return list(tmp.values())
 
 
 def read_yaml_configuration(path: str) -> dict:
@@ -20,26 +35,12 @@ def read_yaml_configuration(path: str) -> dict:
 
     with open(path, "r") as f:
 
-        config = yaml.safe_load(f)
+        configuration = yaml.safe_load(f)
+        
+        for smash_key, smash_value in SMASH_CONFIGURATION_DICT.items():
+            
+            if smash_key in configuration.keys():
+            
+                configuration[smash_key] = _standardize_configuration_dict(configuration, smash_key, smash_value)
 
-        if "default_parameters" in config.keys():
-
-            tmp = dict(zip(SMASH_PARAMETERS, SMASH_DEFAULT_PARAMETERS))
-
-            for key, value in config["default_parameters"].items():
-
-                tmp.update({key: value})
-
-            config["default_parameters"] = list(tmp.values())
-
-        if "default_states" in config.keys():
-
-            tmp = dict(zip(SMASH_STATES, SMASH_DEFAULT_STATES))
-
-            for key, value in config["default_states"].items():
-
-                tmp.update({key: value})
-
-            config["default_states"] = list(tmp.values())
-
-    return config
+    return configuration

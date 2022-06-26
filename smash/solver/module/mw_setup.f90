@@ -53,8 +53,56 @@ module mw_setup
         
         logical :: mean_forcing = .false.
         
-        real(sp), dimension(np) :: default_parameters = (/200._sp, 500._sp, 5._sp/)
-        real(sp), dimension(ns) :: default_states = (/0.5_sp, 0.01_sp, 0.01_sp/)
+        real(sp), dimension(np) :: default_parameters = &
+        
+        & (/1._sp    ,& !% ci
+        &   200._sp  ,& !% cp
+        &   1000._sp ,& !% beta
+        &   500._sp  ,& !% cft
+        &   500._sp  ,& !% cst
+        &   0.9_sp   ,& !% alpha
+        &   0._sp    ,& !% exc
+        &   5._sp/)     !% lr
+        
+        real(sp), dimension(ns) :: default_states = &
+        
+        & (/0.01_sp ,& !% hi
+        &   0.01_sp ,& !% hp
+        &   0.01_sp ,& !% hft
+        &   0.01_sp ,& !% hst
+        &   0.01_sp/)  !% hr
+        
+        integer :: interception_module = 0
+        integer :: production_module = 0
+        integer :: transfer_module = 0
+        integer :: exchange_module = 0
+        integer :: routing_module = 0
+        
+        integer, dimension(np) :: optim_parameters = 0
+        
+        real(sp), dimension(np) :: lb_parameters = &
+        
+        & (/1e-6_sp ,& !% ci
+        &   1e-6_sp ,& !% cp
+        &   1e-6_sp ,& !% beta
+        &   1e-6_sp ,& !% cft
+        &   1e-6_sp ,& !% cst
+        &   1e-6_sp ,& !% alpha
+        &   -50._sp ,& !% exc
+        &   1e-6_sp/)  !% lr
+        
+        real(sp), dimension(np) :: ub_parameters = &
+        
+        & (/1e2_sp     ,& !% ci
+        &   1e3_sp     ,& !% cp
+        &   1e3_sp     ,& !% beta
+        &   1e3_sp     ,& !% cft
+        &   1e4_sp     ,& !% cst
+        &   0.999999_sp ,& !% alpha
+        &   50._sp      ,& !% exc
+        &   1e3_sp/)      !% lr
+        
+        integer :: maxiter = 10
         
     end type SetupDT
 
