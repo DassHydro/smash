@@ -31,8 +31,6 @@ def _derived_type_parser(derived_type, data: dict):
 
     for key, value in data.items():
 
-        # ~ key = key.lower()
-
         if hasattr(derived_type, key):
             setattr(derived_type, key, value)
 
@@ -136,9 +134,9 @@ def _standardize_setup(setup: SetupDT):
             setup.prcp_directory.decode().strip(),
         )
 
-    if not setup.prcp_format.decode().strip() in ["tiff", "netcdf"]:
+    if not setup.prcp_format.decode().strip() in ["tiff", "nc"]:
         raise ValueError(
-            f"argument prpc_format of SetupDT must be one of {['tiff', 'netcdf']} not {setup.prcp_format.decode().strip()}"
+            f"argument prpc_format of SetupDT must be one of {['tiff', 'nc']} not {setup.prcp_format.decode().strip()}"
         )
 
     if setup.prcp_conversion_factor < 0:
@@ -335,7 +333,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
         )
 
-    elif setup.prcp_format.decode().strip() == "netcdf":
+    elif setup.prcp_format.decode().strip() == "nc":
 
         files = sorted(
             glob.glob(f"{setup.prcp_directory.decode().strip()}/**/*nc", recursive=True)
@@ -392,7 +390,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
         )
 
-    elif setup.pet_format.decode().strip() == "netcdf":
+    elif setup.pet_format.decode().strip() == "nc":
 
         files = sorted(
             glob.glob(f"{setup.pet_directory.decode().strip()}/**/*nc", recursive=True)

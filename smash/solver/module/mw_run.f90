@@ -13,8 +13,6 @@ module mw_run
     & GR_transferN, upstream_discharge, sparse_upstream_discharge
     use mw_cost, only: compute_jobs
     
-!~     use :: omp_lib
-    
     implicit none
     
     contains
@@ -31,11 +29,11 @@ module mw_run
             type(OutputDT), intent(inout) :: output
             real(sp), intent(out) :: cost
             
+!~             integer, external :: omp_get_max_threads
+            
             integer :: t, i, row, col, k, g, row_g, col_g, k_g
             real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
             & qd, qr, ql, qt, qup
-            
-!~             real(sp) :: jobs
             
             real(sp), dimension(:,:,:), allocatable :: q
             real(sp), dimension(:,:), allocatable :: sparse_q
@@ -207,8 +205,8 @@ module mw_run
             
         end subroutine direct_model
       
-!~         subroutine adjoint_model()
-        
+!~         subroutine adjoint_model(a)
+
 !~         end subroutine adjoint_model
         
 !~         subroutine tangent_linear_model()

@@ -5,7 +5,5 @@ TAPENADE=./tapenade_3.16/
 all: b
 
 b: $(FILES)
-	$(TAPENADE)/bin/tapenade -backward -fixinterface -msglevel 100 -o ADJ -head mw_run.direct_model \
-	-vars "parameters" \
-	-outvars "cost" \
+	$(TAPENADE)/bin/tapenade -backward -openmp -context -fixinterface -msglevel 100 -o ADJ -head "mw_run.direct_model(parameters, states, cost)\(cost)" \
 	-O $(PWD)/backward $(FILES)

@@ -3,7 +3,8 @@ from __future__ import annotations
 import errno
 import os
 import numpy as np
-from osgeo import gdal
+from osgeo import gdal, osr
+import matplotlib.pyplot as plt
 
 from . import _meshing
 
@@ -124,11 +125,19 @@ def generate_meshing(
     nrow = ds_flow.RasterYSize
 
     transform = ds_flow.GetGeoTransform()
-
+    
+    projection = ds_flow.GetProjection()
+    srs = osr.SpatialReference(wkt=projection)
+    
     xmin = transform[0]
     ymax = transform[3]
     xres = transform[1]
     yres = -transform[5]
+    
+    #% Approximate area from square meter to square degree
+    if srs.GetAttrValue("geogcs") == "WGS 84":
+        
+        area = area * (xres * yres)
 
     col_otl = np.zeros(shape=x.shape, dtype=np.int32)
     row_otl = np.zeros(shape=x.shape, dtype=np.int32)
@@ -146,7 +155,7 @@ def generate_meshing(
         area_otl[ind] = np.count_nonzero(mask_dln == 1)
 
         global_mask_dln = np.where(mask_dln == 1, 1, global_mask_dln)
-
+        
     flow = np.ma.masked_array(flow, mask=(1 - global_mask_dln))
 
     flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
