@@ -13,7 +13,7 @@ module mw_run
     & GR_transferN, upstream_discharge, sparse_upstream_discharge
     use mw_cost, only: compute_jobs
     
-    use, intrinsic :: omp_lib
+!~     use :: omp_lib
     
     implicit none
     
