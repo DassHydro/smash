@@ -1,9 +1,9 @@
 !%    This module (wrap) `mw_input_data` encapsulates all SMASH data
 module mw_input_data
 
-    use m_common, only: sp, dp, lchar
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
+    use m_common !% only: sp, dp, lchar
+    use mw_setup !% only: SetupDT
+    use mw_mesh  !% only: MeshDT
     
     implicit none
     

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
+import numpy as np
+
 from smash.solver.mw_setup import SetupDT
 from smash.solver.mw_mesh import MeshDT
 from smash.solver.mw_input_data import Input_DataDT
 from smash.solver.mw_parameters import ParametersDT
 from smash.solver.mw_states import StatesDT
 from smash.solver.mw_output import OutputDT
-from smash.solver.mw_run import direct_model
+from smash.solver.mw_run import forward_run, adjoint_run, tangent_linear_run
 from smash.solver.mw_optimize import optimize_sbs
 
 from smash.io.yaml import read_yaml_configuration
@@ -200,25 +202,47 @@ class Model(object):
         copy.output = self.output.copy()
 
         return copy
-
-    def direct_run(self, inplace: bool = False):
-
+        
+    
+    def run(self, kind: str = "forward", inplace: bool = False):
+        
         if inplace:
-
+            
             instance = self
-
+            
         else:
-
+            
             instance = self.copy()
+            
+        
+        if kind == "forward":
+            
+            cost = np.float32(0.0)
+            
+            forward_run(
+                self.setup,
+                self.mesh,
+                self.input_data, 
+                self.parameters,
+                self.states,
+                self.output,
+                cost)
+                
+        elif kind == "adjoint":
+            
+            cost = np.float32(0.0)
+            
+            adjoint_run(
+                self.setup,
+                self.mesh,
+                self.input_data, 
+                self.parameters,
+                self.states,
+                self.output,
+                cost)
+                
+            
 
-        cost = direct_model(
-            self.setup,
-            self.mesh,
-            self.input_data,
-            self.parameters,
-            self.states,
-            self.output,
-        )
 
     def optimize(self, solver: str = "sbs", inplace: bool = False):
 

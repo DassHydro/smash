@@ -1,12 +1,10 @@
 !%    This module (wrap) `mw_mesh` encapsulates all SMASH mesh
 module mw_mesh
     
-    use m_common, only: sp, dp, lchar
-    use mw_setup, only: SetupDT
+    use m_common !% only: sp, dp, lchar
+    use mw_setup !% only: SetupDT
     
     implicit none
-    
-    public :: MeshDT
     
     !%      MeshDT type:
     !%

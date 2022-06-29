@@ -1,14 +1,11 @@
 !%    This module `mw_states` encapsulates all SMASH states
 module mw_states
 
-    use m_common, only: sp, dp, lchar, np, ns
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
+    use m_common !% only: sp, dp, lchar, np, ns
+    use mw_setup !% only: SetupDT
+    use mw_mesh  !% only: MeshDT
     
     implicit none
-    
-    public :: StatesDT, states_derived_type_to_matrix, &
-    & matrix_to_states_derived_type, vector_to_states_derived_type
     
     type StatesDT
         

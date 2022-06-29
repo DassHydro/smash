@@ -1,13 +1,13 @@
 !%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
 module m_operator
     
-    use m_common, only: sp, dp, lchar, np, ns
+    use m_common   !% only : sp
 
     implicit none
     
     contains
 
-        elemental subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
+        subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
         
             implicit none
             
@@ -24,7 +24,7 @@ module m_operator
         end subroutine GR_interception
     
     
-        elemental subroutine GR_production(pn, en, cp, beta, hp, pr, perc)
+        subroutine GR_production(pn, en, cp, beta, hp, pr, perc)
         
             implicit none
             
@@ -58,7 +58,7 @@ module m_operator
         end subroutine GR_production
         
         
-        elemental subroutine GR_exchange(exc, hft, l)
+        subroutine GR_exchange(exc, hft, l)
         
             implicit none
             
@@ -71,7 +71,7 @@ module m_operator
         end subroutine GR_exchange
 
         
-        elemental subroutine GR_transferN(n, prcp, pr, ct, ht, q)
+        subroutine GR_transferN(n, prcp, pr, ct, ht, q)
         
             implicit none
             

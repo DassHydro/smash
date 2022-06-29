@@ -5,11 +5,11 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 # ~ flow_path = "FLOW_fr1km_Leblois_v1_L93.asc"
-flow_path = "30sec_flwdir_SA.tif"
+# ~ flow_path = "30sec_flwdir_SA.tif"
 
-start_t = time.time()
+# ~ start_t = time.time()
 
-mesh = smash.generate_meshing(flow_path, x=-54.15439, y=5.35428, area=76_135 * 1e6, code='MARONI')
+# ~ mesh = smash.generate_meshing(flow_path, x=-54.15439, y=5.35428, area=76_135 * 1e6, code='MARONI')
 
 # ~ mesh = smash.generate_meshing(
     # ~ flow_path, x=772_363, y=6_274_166, area=168.6 * 1e6, code="Y3204040"
@@ -35,23 +35,18 @@ mesh = smash.generate_meshing(flow_path, x=-54.15439, y=5.35428, area=76_135 * 1
 # ~ smash.save_mesh(mesh, "mesh_L8000020.hdf5")
 
 meshing_t = time.time()
-plt.figure()
-plt.imshow(mesh["flow"])
 
-plt.figure()
-plt.imshow(mesh["drained_area"])
-plt.show()
+# ~ print("MESHING", meshing_t - start_t)
 
-print(mesh)
-
-print("MESHING", meshing_t - start_t)
-
-# ~ mesh = smash.read_mesh("mesh_Y3204040.hdf5")
+mesh = smash.read_mesh("mesh_Y3204040.hdf5")
 # ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
 
-# ~ model = smash.Model(configuration="configuration.yaml", mesh=mesh)
+model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
-# ~ model.direct_run(inplace=True)
+model.run("adjoint", inplace=True)
+
+plt.imshow(model.output.parameters_gradient[...,1])
+
 # ~ model.optimize(solver="sbs", inplace=True)
 
 # ~ plt.imshow(model.parameters.cp)
@@ -60,8 +55,8 @@ print("MESHING", meshing_t - start_t)
 # ~ plt.plot(model.output.qsim[0,:])
 # ~ plt.plot(model.input_data.qobs[0,:])
 
-# ~ model_t = time.time()
+model_t = time.time()
 
-# ~ plt.show()
+plt.show()
 
-# ~ print("MODEL", model_t - meshing_t)
+print("MODEL", model_t - meshing_t)

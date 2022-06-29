@@ -1,22 +1,22 @@
 !%    This module `mw_optimize` encapsulates all SMASH optimize (type, subroutines, functions)
 module mw_optimize
     
-    use m_common, only: sp, dp, lchar, np, ns
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
-    use mw_input_data, only: Input_DataDT
-    use mw_parameters, only: ParametersDT, &
-    & parameters_derived_type_to_matrix, matrix_to_parameters_derived_type
-    use mw_states, only: StatesDT
-    use mw_output, only: OutputDT
+    use m_common !% only: sp, dp, lchar, np, ns
+    use mw_setup !% only: SetupDT
+    use mw_mesh !% only: MeshDT
+    use mw_input_data !% only: Input_DataDT
+    use mw_parameters !% only: ParametersDT, &
+    !% & parameters_derived_type_to_matrix, matrix_to_parameters_derived_type
+    use mw_states !% only: StatesDT
+    use mw_output !% only: OutputDT
     
-    use mw_run, only: direct_model
+    use mw_run, only: forward_run
     
     implicit none
     
     public :: optimize_sbs
     
-    private :: transformation
+    private :: transformation, inv_transformation
     
     contains
     
@@ -54,7 +54,7 @@ module mw_optimize
             
             init_states = states
             
-            call direct_model(setup, mesh, input_data, parameters, states, output, cost)
+            call forward_run(setup, mesh, input_data, parameters, states, output, cost)
             
             call parameters_derived_type_to_matrix(parameters, parameters_matrix)
             
@@ -117,7 +117,7 @@ module mw_optimize
                             
                             states = init_states
                             
-                            call direct_model(setup, mesh, input_data, parameters, states, output, cost)
+                            call forward_run(setup, mesh, input_data, parameters, states, output, cost)
                             
                             f = cost
                             nfg = nfg + 1
@@ -212,7 +212,7 @@ module mw_optimize
                     
                     states = init_states
                     
-                    call direct_model(setup, mesh, input_data, parameters, states, output, cost)
+                    call forward_run(setup, mesh, input_data, parameters, states, output, cost)
                     
                     f = cost
                     

@@ -1,11 +1,9 @@
 !%    This module `mw_setup` (wrap) encapsulates all SMASH setup
 module mw_setup
     
-    use m_common, only: sp, dp, lchar, np, ns
+    use m_common !% only: sp, dp, lchar, np, ns
     
     implicit none
-    
-    public :: SetupDT
     
     !%      SetupDT type:
     !%

@@ -1,14 +1,11 @@
 !%    This module (wrap) `mw_output` encapsulates all SMASH output
 module mw_output
     
-    use m_common, only: sp, dp, lchar, np, ns
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
-    
+    use m_common   !% only: sp, dp, lchar, np, ns
+    use mw_setup   !% only: SetupDT
+    use mw_mesh    !%only: MeshDT
     
     implicit none
-    
-    public :: OutputDT
     
     !%      OutputDT type:
     !%
@@ -22,7 +19,7 @@ module mw_output
         real(sp), dimension(:,:), allocatable :: qsim
         real(sp), dimension(:,:,:), allocatable :: qsim_grid
         
-        real(sp), dimension(:,:,:), allocatable :: gradient_parameters
+        real(sp), dimension(:,:,:), allocatable :: parameters_gradient
         
         real(sp) :: cost
         
@@ -51,9 +48,9 @@ module mw_output
             
             if (.not. setup%simulation_only) then
             
-                allocate(output%gradient_parameters(mesh%nrow, &
+                allocate(output%parameters_gradient(mesh%nrow, &
                 & mesh%ncol, np))
-                output%gradient_parameters = 0._sp
+                output%parameters_gradient = 0._sp
             
             end if
         

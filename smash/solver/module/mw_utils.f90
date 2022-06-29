@@ -1,13 +1,13 @@
 !%    This module (wrap) `mw_utils` encapsulates all SMASH utils (type, subroutines, functions)
 module mw_utils
     
-    use m_common, only: sp, dp, lchar, np, ns
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
-    use mw_input_data, only: Input_DataDT
-    use mw_parameters, only: ParametersDT
-    use mw_states, only: StatesDT
-    use mw_output, only: OutputDT
+    use m_common !% only: sp, dp, lchar, np, ns
+    use mw_setup !% only: SetupDT
+    use mw_mesh !% only: MeshDT
+    use mw_input_data !% only: Input_DataDT
+    use mw_parameters !% only: ParametersDT
+    use mw_states !% only: StatesDT
+    use mw_output !% only: OutputDT
     
     use, intrinsic :: omp_lib
     

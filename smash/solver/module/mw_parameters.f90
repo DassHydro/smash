@@ -1,15 +1,11 @@
 !%    This module (wrap) `mw_parameters` encapsulates all SMASH parameters
 module mw_parameters
 
-    use m_common, only: sp, dp, lchar, np, ns
-    use mw_setup, only: SetupDT
-    use mw_mesh, only: MeshDT
+    use m_common !% only: sp, dp, lchar, np, ns
+    use mw_setup !% only: SetupDT
+    use mw_mesh  !% only: MeshDT
     
     implicit none
-    
-    public :: ParametersDT, parameters_derived_type_to_matrix, &
-    & matrix_to_parameters_derived_type, &
-    & vector_to_parameters_derived_type
     
     type ParametersDT
         
