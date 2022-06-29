@@ -43,17 +43,19 @@ mesh = smash.read_mesh("mesh_Y3204040.hdf5")
 
 model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
-model.run("adjoint", inplace=True)
+# ~ model.run("fwd", inplace=True)
 
-plt.imshow(model.output.parameters_gradient[...,1])
+model.optimize(solver="l-bfgs-b", inplace=True)
 
-# ~ model.optimize(solver="sbs", inplace=True)
+plt.figure()
+plt.imshow(model.parameters.cp)
 
-# ~ plt.imshow(model.parameters.cp)
-# ~ plt.show()
+plt.figure()
+plt.imshow(model.parameters.cft)
 
-# ~ plt.plot(model.output.qsim[0,:])
-# ~ plt.plot(model.input_data.qobs[0,:])
+plt.figure()
+plt.plot(model.output.qsim[0,:])
+plt.plot(model.input_data.qobs[0,:])
 
 model_t = time.time()
 

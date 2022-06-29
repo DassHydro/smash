@@ -9,9 +9,9 @@ module mw_run
     use mw_states !% only: StatesDT
     use mw_output !% only: OutputDT
     
-    use m_operator, only: GR_interception, GR_production, GR_exchange, &
-    & GR_transferN, upstream_discharge, sparse_upstream_discharge
-    use mw_cost, only: compute_jobs
+    use m_operator !% only: GR_interception, GR_production, GR_exchange, &
+    !% & GR_transferN, upstream_discharge, sparse_upstream_discharge
+    use mw_cost !% only: compute_jobs
     
     implicit none
     
@@ -60,7 +60,8 @@ module mw_run
             cost_b = 1._sp
             cost = 0._sp
             
-            call forward_b(setup, mesh, input_data, parameters, parameters_b, states, states_b, output, output_b, cost, cost_b)
+            call forward_b(setup, mesh, input_data, parameters, &
+            & parameters_b, states, states_b, output, output_b, cost, cost_b)
             
             call parameters_derived_type_to_matrix(parameters_b, parameters_b_matrix)
             
@@ -87,7 +88,8 @@ module mw_run
             type(OutputDT) :: output_d
             real(sp) :: cost_d
             
-            call forward_d(setup, mesh, input_data, parameters, parameters_d, states, states_d, output, output_d, cost, cost_d)
+            call forward_d(setup, mesh, input_data, parameters, &
+            & parameters_d, states, states_d, output, output_d, cost, cost_d)
             
         end subroutine tangent_linear_run
         

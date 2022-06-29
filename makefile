@@ -3,10 +3,10 @@ CC := gcc
 BUILDDIR := obj
 TARGET := SMASH
 
-#FFLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
-F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC
-CFLAGS := -g -O3 -march=native -ffast-math -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
+#F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
+CFLAGS := -g -O3 -march=native -ffast-math -fPIC -fopenmp
 
 F90EXT := f90
 F77EXT := f
@@ -40,16 +40,15 @@ directories:
 	
 	
 cpp: \
- obj/adStack.o
+ obj/adStack.o \
  
  
 f77: \
- obj/adBuffer.o
+ obj/adBuffer.o \
+ obj/lbfgsb.o
  
  
 f90: \
- obj/adStack.o \
- obj/adBuffer.o \
  obj/m_common.o \
  obj/mw_setup.o \
  obj/mw_mesh.o \
@@ -63,8 +62,9 @@ f90: \
  obj/mw_optimize.o \
  obj/mw_utils.o \
  obj/forward.o \
- obj/forward_b.o \
  obj/forward_d.o \
+ obj/forward_b.o \
+ 
  
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(CEXT)
 	$(CC) $(CFLAGS) $(MOD) $(INC) -c -o $@ $<
@@ -74,7 +74,6 @@ $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F77EXT)
 
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F90EXT)
 	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
- 
  
 wrappers:
 	@echo "********************************************"

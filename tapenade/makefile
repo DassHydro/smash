@@ -13,5 +13,6 @@ d:
 
 finalize:
 	sed -i "/.*DIFF/ s/DIFF/DIFF_B/g" forward_b.f90
+	sed -i 's/.*CALL.*COMPUTE\_JOBS\_B.*/  CALL COMPUTE\_JOBS(setup, mesh, input_data, output, cost)\n&/' forward_b.f90
 	sed -i "/.*DIFF/ s/DIFF/DIFF_D/g" forward_d.f90
 	mv forward_*.f90 $(SRC)/forward/.

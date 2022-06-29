@@ -1283,6 +1283,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
       CALL PUSHCONTROL1B(0)
     END IF
   END DO
+  CALL COMPUTE_JOBS(setup, mesh, input_data, output, cost)
   CALL COMPUTE_JOBS_B(setup, mesh, input_data, output, output_b, cost, &
 &               cost_b)
   DO g=mesh%ng,1,-1

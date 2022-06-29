@@ -9,7 +9,7 @@ from smash.solver.mw_parameters import ParametersDT
 from smash.solver.mw_states import StatesDT
 from smash.solver.mw_output import OutputDT
 from smash.solver.mw_run import forward_run, adjoint_run, tangent_linear_run
-from smash.solver.mw_optimize import optimize_sbs
+from smash.solver.mw_optimize import optimize_sbs, optimize_lbfgsb
 
 from smash.io.yaml import read_yaml_configuration
 
@@ -33,52 +33,49 @@ class Model(object):
     def __init__(
         self,
         configuration: (str, None) = None,
-        setup: (dict, None) = None,
         mesh: (dict, None) = None,
         build: bool = True,
     ):
 
         if build:
-
-            if configuration is None and setup is None:
-                raise ValueError(
-                    f"At least one of configuration or setup argument must be specified"
-                )
-
+            
             self.setup = SetupDT()
 
-            if configuration is not None:
-
+            if configuration is None:
+                
+                raise ValueError(
+                        f"configuration argument must be defined, if build is True"
+                    )
+            else:
+                
                 if isinstance(configuration, str):
                     _derived_type_parser(
                         self.setup, read_yaml_configuration(configuration)
                     )
 
                 else:
+                    
                     raise TypeError(
                         f"configuration argument must be string, not {type(configuration)}"
                     )
 
-            if setup is not None:
+            _build_setup(self.setup)
+            
+            if mesh is None:
+                
+                raise ValueError(
+                        f"mesh argument must be defined, if build is True"
+                    )
+            else:
+                
+                if isinstance(mesh, dict):
 
-                if isinstance(setup, dict):
-                    _derived_type_parser(self.setup, setup)
+                    self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+
+                    _derived_type_parser(self.mesh, mesh)
 
                 else:
-                    raise TypeError(
-                        f"setup argument must be dictionary, not {type(setup)}"
-                    )
-
-            _build_setup(self.setup)
-
-            if isinstance(mesh, dict):
-
-                self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
-
-                _derived_type_parser(self.mesh, mesh)
-
-            else:
-                raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
+                    raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
 
             _build_mesh(self.setup, self.mesh)
 
@@ -204,7 +201,7 @@ class Model(object):
         return copy
         
     
-    def run(self, kind: str = "forward", inplace: bool = False):
+    def run(self, case: str = "fwd", inplace: bool = False):
         
         if inplace:
             
@@ -215,7 +212,7 @@ class Model(object):
             instance = self.copy()
             
         
-        if kind == "forward":
+        if case == "fwd":
             
             cost = np.float32(0.0)
             
@@ -228,7 +225,7 @@ class Model(object):
                 self.output,
                 cost)
                 
-        elif kind == "adjoint":
+        elif case == "adj":
             
             cost = np.float32(0.0)
             
@@ -240,6 +237,10 @@ class Model(object):
                 self.states,
                 self.output,
                 cost)
+                
+        else:
+            
+            raise ValueError(f"case must be one of ['fwd', 'adj', 'tl'] not {case}")
                 
             
 
@@ -253,12 +254,31 @@ class Model(object):
         else:
 
             instance = self.copy()
+            
+        if solver == "sbs":
+            
+            cost = np.float32(0.0)
 
-        cost = optimize_sbs(
-            self.setup,
-            self.mesh,
-            self.input_data,
-            self.parameters,
-            self.states,
-            self.output,
-        )
+            cost = optimize_sbs(
+                self.setup,
+                self.mesh,
+                self.input_data,
+                self.parameters,
+                self.states,
+                self.output,
+                cost,
+            )
+        
+        elif solver == "l-bfgs-b":
+            
+            cost = np.float32(0.0)
+            
+            cost = optimize_lbfgsb(
+                self.setup,
+                self.mesh,
+                self.input_data,
+                self.parameters,
+                self.states,
+                self.output,
+                cost,
+            )

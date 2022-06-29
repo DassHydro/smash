@@ -9,8 +9,6 @@ module mw_utils
     use mw_states !% only: StatesDT
     use mw_output !% only: OutputDT
     
-    use, intrinsic :: omp_lib
-    
     implicit none
     
     contains
@@ -251,7 +249,7 @@ module mw_utils
             end do
         
         end subroutine sparse_vector_to_matrix_i
-        
+
         
         subroutine compute_mean_forcing(setup, mesh, input_data)
         
@@ -412,70 +410,5 @@ module mw_utils
             output_out = output_in
         
         end subroutine output_derived_type_copy
-        
-    
-        subroutine test_opm()
-            
-            implicit none
-            
-            integer :: i, j, k
-            integer, parameter :: n = 200
-            real(sp), dimension(n,n) :: a, b, c
-            real(dp) :: t1, t2
-            
-            call omp_set_num_threads(4)
-            
-            a = 1._sp
-            b = 2._sp
-            
-            c = 0._sp
-            
-            print*, a, b, c
-            t1 = omp_get_wtime()
-
-!~             ! Calculate C = AB sequentially.
-            do j = 1, n
-                do k = 1, n
-                    do i = 1, n
-                        c(i, j) = c(i, j) + a(i, k) * b(k, j)
-                    end do
-                end do
-            end do
-
-            t2 = omp_get_wtime()
-            
-            print*, 'single: ', t2 - t1, ' s'
-            
-            c = 0.0_sp
-            
-            t1 = omp_get_wtime()
-
-!~             ! Calculate C = AB in parallel with OpenMP, using static scheduling.
-            !$omp parallel shared(a, b, c) private(i, j, k)
-            !$omp do schedule(static)
-
-                do j = 1, n
-                    do k = 1, n
-                        do i = 1, n
-                            c(i, j) = c(i, j) + a(i, k) * b(k, j)
-                        end do
-                    end do
-                end do
-
-            !$omp end do
-            !$omp end parallel
-            
-            t2 = omp_get_wtime()
-            print*, 'OpenMP: ', t2 - t1, ' s'
-            
-!~             call omp_set_num_threads(2)
-            
-!~             !$omp parallel
-                
-!~                 print, '(a, i0)', 'Thread: ', omp_get_thread_num()
-                
-!~             !$omp end parallel
-        
-        end subroutine test_opm
         
 end module mw_utils

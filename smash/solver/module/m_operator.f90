@@ -193,7 +193,6 @@ module m_operator
             
             end if
         
-        
         end subroutine sparse_upstream_discharge
         
         

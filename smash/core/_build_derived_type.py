@@ -154,9 +154,9 @@ def _standardize_setup(setup: SetupDT):
             setup.pet_directory.decode().strip(),
         )
 
-    if not setup.pet_format.decode().strip() in ["tiff", "netcdf"]:
+    if not setup.pet_format.decode().strip() in ["tiff", "nc"]:
         raise ValueError(
-            f"argument pet_format of SetupDT must be one of {['tiff', 'netcdf']} not {setup.pet_format.decode().strip()}"
+            f"argument pet_format of SetupDT must be one of {['tiff', 'nc']} not {setup.pet_format.decode().strip()}"
         )
 
     if setup.pet_conversion_factor < 0:
