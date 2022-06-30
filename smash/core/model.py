@@ -9,6 +9,7 @@ from smash.solver.mw_parameters import ParametersDT
 from smash.solver.mw_states import StatesDT
 from smash.solver.mw_output import OutputDT
 from smash.solver.mw_run import forward_run, adjoint_run, tangent_linear_run
+from smash.solver.mw_validate import scalar_product_test, gradient_test_adj
 from smash.solver.mw_optimize import optimize_sbs, optimize_lbfgsb
 
 from smash.io.yaml import read_yaml_configuration
@@ -243,7 +244,37 @@ class Model(object):
             raise ValueError(f"case must be one of ['fwd', 'adj', 'tl'] not {case}")
                 
             
-
+    def validate(self, case: str = "spt"):
+        
+        if case == "spt":
+            
+            cost = np.float32(0.0)
+            
+            scalar_product_test(
+                self.setup,
+                self.mesh,
+                self.input_data,
+                self.parameters,
+                self.states,
+                self.output,
+                cost
+            )
+            
+        elif case == "gt_adj":
+            
+            cost = np.float32(0.0)
+            
+            gradient_test_adj(
+                self.setup,
+                self.mesh,
+                self.input_data,
+                self.parameters,
+                self.states,
+                self.output,
+                cost
+            )
+    
+    
 
     def optimize(self, solver: str = "sbs", inplace: bool = False):
 
@@ -259,7 +290,7 @@ class Model(object):
             
             cost = np.float32(0.0)
 
-            cost = optimize_sbs(
+            optimize_sbs(
                 self.setup,
                 self.mesh,
                 self.input_data,
@@ -273,7 +304,7 @@ class Model(object):
             
             cost = np.float32(0.0)
             
-            cost = optimize_lbfgsb(
+            optimize_lbfgsb(
                 self.setup,
                 self.mesh,
                 self.input_data,

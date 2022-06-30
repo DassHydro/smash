@@ -1,10 +1,10 @@
 dt: 3_600
-start_time: 2008-02-04 00:00
-#~ start_time: 2008-09-01 00:00
-optim_start_time: 2008-02-04 00:00
-#~ optim_start_time: 2008-09-01 00:00
-end_time: 2008-12-31 23:00
-#~ end_time: 2009-09-01 00:00
+#~ start_time: 2008-02-04 00:00
+start_time: 2008-09-01 00:00
+#~ optim_start_time: 2008-02-04 00:00
+optim_start_time: 2008-09-01 00:00
+#~ end_time: 2008-12-31 23:00
+end_time: 2008-12-01 00:00
 
 active_cell_only: True
 sparse_storage: True
@@ -17,12 +17,12 @@ qobs_directory: qobs
 read_prcp: True
 prcp_format: tiff
 prcp_conversion_factor: 0.1
-prcp_directory: ../../prcp_tiff
+prcp_directory: prcp_tiff
 
 read_pet: True
 pet_format: tiff
 pet_conversion_factor: 1
-pet_directory: ../../pet_tiff
+pet_directory: pet_tiff
 daily_interannual_pet: True
 
 mean_forcing: False

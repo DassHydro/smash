@@ -44,21 +44,9 @@ mesh = smash.read_mesh("mesh_Y3204040.hdf5")
 model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
 # ~ model.run("fwd", inplace=True)
-
-model.optimize(solver="l-bfgs-b", inplace=True)
-
-plt.figure()
-plt.imshow(model.parameters.cp)
-
-plt.figure()
-plt.imshow(model.parameters.cft)
-
-plt.figure()
-plt.plot(model.output.qsim[0,:])
-plt.plot(model.input_data.qobs[0,:])
+# ~ model.optimize(solver="l-bfgs-b", inplace=True)
+model.validate("gt_adj")
 
 model_t = time.time()
-
-plt.show()
 
 print("MODEL", model_t - meshing_t)

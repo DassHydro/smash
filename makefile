@@ -3,8 +3,8 @@ CC := gcc
 BUILDDIR := obj
 TARGET := SMASH
 
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
-#F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+#~ F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
+F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
 CFLAGS := -g -O3 -march=native -ffast-math -fPIC -fopenmp
 
@@ -59,6 +59,7 @@ f90: \
  obj/mw_cost.o \
  obj/m_operator.o \
  obj/mw_run.o \
+ obj/mw_validate.o \
  obj/mw_optimize.o \
  obj/mw_utils.o \
  obj/forward.o \

@@ -18,6 +18,8 @@ from .solver.mw_parameters import *
 from .solver.mw_states import *
 from .solver.mw_output import *
 from .solver.mw_run import *
+from .solver.mw_validate import *
+from .solver.mw_optimize import *
 from .solver.mw_cost import *
 from .solver.mw_utils import *
 
