@@ -6,7 +6,7 @@ module m_operator
     implicit none
     
     contains
-
+        !% TODO Renommer argument pour etre global
         subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
         
             implicit none
@@ -195,5 +195,24 @@ module m_operator
         
         end subroutine sparse_upstream_discharge
         
+        
+        subroutine GR_transfer1(dt, qup, lr, hr, qrout)
+            
+            implicit none
+            
+            real(sp), intent(in) :: dt
+            real(sp), intent(in) :: qup, lr
+            real(sp), intent(inout) :: hr
+            real(sp), intent(out) :: qrout
+            
+            real(sp) :: hr_imd
+            
+            hr_imd = hr + qup
+            
+            hr = hr_imd * exp(- dt / (lr * 60._sp))
+            
+            qrout = hr_imd - hr
+        
+        end subroutine GR_transfer1
         
 end module m_operator

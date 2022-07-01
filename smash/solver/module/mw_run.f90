@@ -25,9 +25,9 @@ module mw_run
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
-            
+
             call forward(setup, mesh, input_data, parameters, states, output, cost)
-        
+
         end subroutine forward_run
         
         !% Calling forward_b from forward/forward_b.f90

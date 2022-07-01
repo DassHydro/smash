@@ -3,6 +3,7 @@ import smash
 import time
 import numpy as np
 import matplotlib.pyplot as plt
+from memory_profiler import profile
 
 # ~ flow_path = "FLOW_fr1km_Leblois_v1_L93.asc"
 # ~ flow_path = "30sec_flwdir_SA.tif"
@@ -34,19 +35,22 @@ import matplotlib.pyplot as plt
 # ~ smash.save_mesh(mesh, "mesh_Y3204040.hdf5")
 # ~ smash.save_mesh(mesh, "mesh_L8000020.hdf5")
 
-meshing_t = time.time()
+@profile
+def main():
 
-# ~ print("MESHING", meshing_t - start_t)
+    meshing_t = time.time()
 
-mesh = smash.read_mesh("mesh_Y3204040.hdf5")
-# ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
+    # ~ print("MESHING", meshing_t - start_t)
 
-model = smash.Model(configuration="configuration.yaml", mesh=mesh)
+    mesh = smash.read_mesh("mesh_Y3204040.hdf5")
+    # ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
 
-# ~ model.run("fwd", inplace=True)
-# ~ model.optimize(solver="l-bfgs-b", inplace=True)
-model.validate("gt_adj")
+    model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
-model_t = time.time()
+    model.run("fwd", inplace=True)
 
-print("MODEL", model_t - meshing_t)
+    model_t = time.time()
+
+    print("MODEL", model_t - meshing_t)
+    
+main()

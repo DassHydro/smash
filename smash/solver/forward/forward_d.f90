@@ -221,6 +221,7 @@ CONTAINS
 !  Differentiation of gr_interception in forward (tangent) mode (with options OpenMP context fixinterface):
 !   variations   of useful results: hi ei pn
 !   with respect to varying inputs: hi ci
+!% TODO Renommer argument pour etre global
   SUBROUTINE GR_INTERCEPTION_D(prcp, pet, ci, ci_d, hi, hi_d, pn, pn_d, &
 &   ei, ei_d)
     IMPLICIT NONE
@@ -252,6 +253,7 @@ CONTAINS
     hi = hi + temp
   END SUBROUTINE GR_INTERCEPTION_D
 
+!% TODO Renommer argument pour etre global
   SUBROUTINE GR_INTERCEPTION(prcp, pet, ci, hi, pn, ei)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: prcp, pet, ci
@@ -676,6 +678,52 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
 
+!  Differentiation of gr_transfer1 in forward (tangent) mode (with options OpenMP context fixinterface):
+!   variations   of useful results: hr qrout
+!   with respect to varying inputs: qup hr lr
+  SUBROUTINE GR_TRANSFER1_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout, &
+&   qrout_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(IN) :: qup, lr
+    REAL(sp), INTENT(IN) :: qup_d, lr_d
+    REAL(sp), INTENT(INOUT) :: hr
+    REAL(sp), INTENT(INOUT) :: hr_d
+    REAL(sp), INTENT(OUT) :: qrout
+    REAL(sp), INTENT(OUT) :: qrout_d
+    REAL(sp) :: hr_imd
+    REAL(sp) :: hr_imd_d
+    INTRINSIC EXP
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: temp
+    hr_imd_d = hr_d + qup_d
+    hr_imd = hr + qup
+    temp = dt/(60._sp*lr)
+    arg1_d = temp*lr_d/lr
+    arg1 = -temp
+    temp = EXP(arg1)
+    hr_d = temp*hr_imd_d + hr_imd*EXP(arg1)*arg1_d
+    hr = hr_imd*temp
+    qrout_d = hr_imd_d - hr_d
+    qrout = hr_imd - hr
+  END SUBROUTINE GR_TRANSFER1_D
+
+  SUBROUTINE GR_TRANSFER1(dt, qup, lr, hr, qrout)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(IN) :: qup, lr
+    REAL(sp), INTENT(INOUT) :: hr
+    REAL(sp), INTENT(OUT) :: qrout
+    REAL(sp) :: hr_imd
+    INTRINSIC EXP
+    REAL(sp) :: arg1
+    hr_imd = hr + qup
+    arg1 = -(dt/(lr*60._sp))
+    hr = hr_imd*EXP(arg1)
+    qrout = hr_imd - hr
+  END SUBROUTINE GR_TRANSFER1
+
 END MODULE M_OPERATOR_DIFF_D
 
 !%    This module `mw_states` encapsulates all SMASH states
@@ -844,21 +892,22 @@ END MODULE MW_PARAMETERS_DIFF_D
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.alpha)
-!                *(parameters.exc) *(states.hi) *(states.hp) *(states.hft)
+!                *(parameters.exc) *(parameters.lr) *(states.hi)
+!                *(states.hp) *(states.hft) *(states.hr)
 !   RW status of diff variables: parameters.ci:(loc) *(parameters.ci):in
 !                parameters.cp:(loc) *(parameters.cp):in parameters.beta:(loc)
 !                *(parameters.beta):in parameters.cft:(loc) *(parameters.cft):in
 !                parameters.cst:(loc) *(parameters.cst):(loc) parameters.alpha:(loc)
 !                *(parameters.alpha):in parameters.exc:(loc) *(parameters.exc):in
-!                parameters.lr:(loc) *(parameters.lr):(loc) *(output.qsim):(loc)
+!                parameters.lr:(loc) *(parameters.lr):in *(output.qsim):(loc)
 !                states.hi:(loc) *(states.hi):in-killed states.hp:(loc)
 !                *(states.hp):in-killed states.hft:(loc) *(states.hft):in-killed
 !                states.hst:(loc) *(states.hst):(loc) states.hr:(loc)
-!                *(states.hr):(loc) cost:out
+!                *(states.hr):in-killed cost:out
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.alpha:in
-!                parameters.exc:in output.qsim:in states.hi:in
-!                states.hp:in states.hft:in
+!                parameters.exc:in parameters.lr:in output.qsim:in
+!                states.hi:in states.hp:in states.hft:in states.hr:in
 SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 & states, states_d, output, output_d, cost, cost_d)
 !% only: sp
@@ -877,7 +926,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   USE MW_OUTPUT_DIFF_D
 !% only: GR_interception, GR_production, GR_exchange, &
   USE M_OPERATOR_DIFF_D
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge
+!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
 !% only: compute_jobs
   USE MW_COST_DIFF_D
   IMPLICIT NONE
@@ -894,9 +943,9 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   REAL(sp), INTENT(INOUT) :: cost_d
   INTEGER :: t, i, row, col, k, g, row_g, col_g, k_g
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
-& qt, qup
+& qt, qup, qrout
   REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qd_d, &
-& qr_d, qt_d, qup_d
+& qr_d, qt_d, qup_d, qrout_d
   REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q
   REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_d
   REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_q
@@ -928,6 +977,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
       qr = 0._sp
       ql = 0._sp
       qup = 0._sp
+      qrout = 0._sp
 !% {end if: path}
       IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
         row = mesh%path(1, i)
@@ -1054,6 +1104,37 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
               q_d(row, col, t) = temp*(qt_d+temp0*qup_d)/setup%dt
               q(row, col, t) = temp*((qt+temp0*qup)/setup%dt)
             END IF
+          CASE (1) 
+            IF (setup%sparse_storage) THEN
+              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup&
+&                                        %ntime_step, mesh%nrow, mesh%&
+&                                        ncol, mesh%nac, mesh%flow, mesh&
+&                                        %drained_area, mesh%&
+&                                        rowcol_to_ind_sparse, row, col&
+&                                        , t, sparse_q, sparse_q_d, qup&
+&                                        , qup_d)
+              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hr(row, col), states_d%hr(row, col), qrout&
+&                           , qrout_d)
+              temp = 0.001_sp*(setup%dx*setup%dx)
+              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              sparse_q_d(k, t) = temp*(qt_d+temp0*qrout_d)/setup%dt
+              sparse_q(k, t) = temp*((qt+temp0*qrout)/setup%dt)
+            ELSE
+              CALL UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup%&
+&                                 ntime_step, mesh%nrow, mesh%ncol, mesh&
+&                                 %flow, mesh%drained_area, row, col, t&
+&                                 , q, q_d, qup, qup_d)
+              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hr(row, col), states_d%hr(row, col), qrout&
+&                           , qrout_d)
+              temp = 0.001_sp*(setup%dx*setup%dx)
+              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              q_d(row, col, t) = temp*(qt_d+temp0*qrout_d)/setup%dt
+              q(row, col, t) = temp*((qt+temp0*qrout)/setup%dt)
+            END IF
           END SELECT
         END IF
       END IF
@@ -1096,7 +1177,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
   USE MW_OUTPUT_DIFF_D
 !% only: GR_interception, GR_production, GR_exchange, &
   USE M_OPERATOR_DIFF_D
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge
+!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
 !% only: compute_jobs
   USE MW_COST_DIFF_D
   IMPLICIT NONE
@@ -1109,7 +1190,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
   REAL(sp), INTENT(INOUT) :: cost
   INTEGER :: t, i, row, col, k, g, row_g, col_g, k_g
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
-& qt, qup
+& qt, qup, qrout
   REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q
   REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_q
   INTRINSIC MIN
@@ -1135,6 +1216,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
       qr = 0._sp
       ql = 0._sp
       qup = 0._sp
+      qrout = 0._sp
 !% {end if: path}
       IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
         row = mesh%path(1, i)
@@ -1220,6 +1302,28 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
 &                               , qup)
               q(row, col, t) = (qt+qup*REAL(mesh%drained_area(row, col)-&
 &               1))*setup%dx*setup%dx*0.001_sp/setup%dt
+            END IF
+          CASE (1) 
+            IF (setup%sparse_storage) THEN
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
+&                                      ntime_step, mesh%nrow, mesh%ncol&
+&                                      , mesh%nac, mesh%flow, mesh%&
+&                                      drained_area, mesh%&
+&                                      rowcol_to_ind_sparse, row, col, t&
+&                                      , sparse_q, qup)
+              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hr(row, col), qrout)
+              sparse_q(k, t) = (qt+qrout*REAL(mesh%drained_area(row, col&
+&               )-1))*setup%dx*setup%dx*0.001_sp/setup%dt
+            ELSE
+              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
+&                               ntime_step, mesh%nrow, mesh%ncol, mesh%&
+&                               flow, mesh%drained_area, row, col, t, q&
+&                               , qup)
+              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hr(row, col), qrout)
+              q(row, col, t) = (qt+qrout*REAL(mesh%drained_area(row, col&
+&               )-1))*setup%dx*setup%dx*0.001_sp/setup%dt
             END IF
           END SELECT
         END IF

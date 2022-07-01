@@ -9,9 +9,9 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     use mw_output !% only: OutputDT
     
     use m_operator !% only: GR_interception, GR_production, GR_exchange, &
-    !% & GR_transferN, upstream_discharge, sparse_upstream_discharge
+    !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
     use mw_cost !% only: compute_jobs
-    
+
     implicit none
 
     type(SetupDT), intent(in) :: setup
@@ -24,7 +24,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     
     integer :: t, i, row, col, k, g, row_g, col_g, k_g
     real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-    & qd, qr, ql, qt, qup
+    & qd, qr, ql, qt, qup, qrout
     
     real(sp), dimension(:,:,:), allocatable :: q
     real(sp), dimension(:,:), allocatable :: sparse_q
@@ -57,6 +57,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
             qr = 0._sp
             ql = 0._sp
             qup = 0._sp
+            qrout = 0._sp
             
             if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then
             
@@ -158,6 +159,31 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                             &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, q, qup)
                         
                             q(row, col, t) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
+                            & * setup%dx * setup%dx * 0.001_sp / setup%dt
+                    
+                        end if
+                        
+                    case(1)
+                        
+                        if (setup%sparse_storage) then
+                    
+                            call sparse_upstream_discharge(setup%dt, setup%dx, setup%ntime_step, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flow, mesh%drained_area, &
+                            & mesh%rowcol_to_ind_sparse, row, col, t, sparse_q, qup)
+                            
+                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hr(row, col), qrout)
+
+                            sparse_q(k, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            & * setup%dx * setup%dx * 0.001_sp / setup%dt
+
+                        else
+
+                            call upstream_discharge(setup%dt, setup%dx, setup%ntime_step, mesh%nrow,&
+                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, q, qup)
+                            
+                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hr(row, col), qrout)
+                        
+                            q(row, col, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * setup%dx * setup%dx * 0.001_sp / setup%dt
                     
                         end if

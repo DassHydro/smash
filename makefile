@@ -1,34 +1,52 @@
+# % ====================================================================
+# % .
+# % .  SMASH: Spatially distributed Modelling and ASsimilation for Hydrology
+# % .
+# % .   Portions of this code were written by
+# % .     François Colleoni ...
+# % .
+# % ====================================================================
+
+#% Compiler
 FC := gfortran
 CC := gcc
-BUILDDIR := obj
-TARGET := SMASH
 
-#~ F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
-F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -fopenmp -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC -fopenmp
-CFLAGS := -g -O3 -march=native -ffast-math -fPIC -fopenmp
+#% Compiler flags
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC
+CFLAGS := -g -O3 -march=native -ffast-math -fPIC
 
+#% Files extension
 F90EXT := f90
 F77EXT := f
 CEXT := c
-
 OBJEXT := o
 
+#% Directories
+BUILDDIR := obj
 SMASHDIR := smash
 TAPENADEDIR := tapenade
-SOLVERSRC := smash/solver
-MESHSRC := smash/mesh
+SOLVERDIR := smash/solver
+MESHDIR := smash/mesh
 
+#% INC and MOD for obj
 INC := -I$(BUILDDIR)
 MOD := -J$(BUILDDIR)
 
+#% F90WRAP information
 SHAREDLIB := solver
 SOLVERMODWRAP := $(SOLVERSRC)/module/mw_*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
+#% Classic `make` call
 all: directories cpp f77 f90 wrappers module meshing finalize
 
+#% Debug mode `make debug` (Developper)
+debug: directories cpp f77 f90 wrappers module meshing finalize
+
+#% Making directories
 directories:
 	@echo "********************************************"
 	@echo ""
@@ -37,17 +55,17 @@ directories:
 	@echo "********************************************"
 	@mkdir -p $(BUILDDIR)
 	@mkdir -p $(SOLVERSRC)/f90wrap/
-	
-	
+
+#% cpp file(s)
 cpp: \
  obj/adStack.o \
  
- 
+#% f77 files
 f77: \
  obj/adBuffer.o \
  obj/lbfgsb.o
  
- 
+#% f90 files
 f90: \
  obj/m_common.o \
  obj/mw_setup.o \
@@ -66,16 +84,19 @@ f90: \
  obj/forward_d.o \
  obj/forward_b.o \
  
- 
+#% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(CEXT)
 	$(CC) $(CFLAGS) $(MOD) $(INC) -c -o $@ $<
-	
+
+#% f77 compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F77EXT)
 	$(FC) $(F77FLAGS) $(MOD) $(INC) -c -o $@ $<
 
+#% f90 compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F90EXT)
 	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
  
+#% Making wrappers (f90wrap)
 wrappers:
 	@echo "********************************************"
 	@echo ""
@@ -84,7 +105,7 @@ wrappers:
 	@echo "********************************************"
 	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package
 	
-	
+#% Making module extension (f2py-f90wrap)
 module:
 	@echo "********************************************"
 	@echo ""
@@ -93,11 +114,16 @@ module:
 	@echo "********************************************"
 	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
 
-
+#% Making meshing extension (f2py)
 meshing:
-	cd $(MESHSRC) ; python3 -m numpy.f2py -c -m _meshing _meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+	@echo "********************************************"
+	@echo ""
+	@echo " Making meshing extension "
+	@echo ""
+	@echo "********************************************"
+	cd $(MESHSRC) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
 	
-
+#% Finalize compilation with mv, rm and sed
 finalize:
 	mv f90wrap_* $(SOLVERSRC)/f90wrap/.
 	mv $(SHAREDLIB)/mw_* $(SOLVERSRC)/.
@@ -105,11 +131,11 @@ finalize:
 	rm -rf $(SHAREDLIB)
 	bash sed_f90wrap.sh
 	
-	
+#% Generating tapenade files (adjoint and tangent linear models)
 tap:
 	cd $(TAPENADEDIR) ; make
-
-
+	
+#% Clean
 clean:
 	@$(RM) -rf $(EXTDIR)
 	@$(RM) -rf $(BUILDDIR)
@@ -118,3 +144,4 @@ clean:
 	@$(RM) -rf $(SOLVERSRC)/mw_*
 	@$(RM) -rf $(SOLVERSRC)/_$(SHAREDLIB)*
 	@$(RM) -rf $(SOLVERSRC)/f90wrap
+	@$(RM) -rf $(MESHSRC)/*.so

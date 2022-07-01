@@ -38,7 +38,7 @@ module mw_mesh
         integer, dimension(:,:), allocatable :: local_active_cell
         
         integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse
-        
+
     end type MeshDT
     
     contains
@@ -83,5 +83,6 @@ module mw_mesh
             end if
             
         end subroutine MeshDT_initialise
+        
         
 end module mw_mesh
