@@ -1,9 +1,9 @@
 !%    This module `mw_states` encapsulates all SMASH states
-module mw_states
+module mwd_states
 
-    use m_common !% only: sp, dp, lchar, np, ns
-    use mw_setup !% only: SetupDT
-    use mw_mesh  !% only: MeshDT
+    use md_common !% only: sp, dp, lchar, np, ns
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh  !% only: MeshDT
     
     implicit none
     
@@ -93,4 +93,4 @@ module mw_states
         
         end subroutine vector_to_states_derived_type
 
-end module mw_states
+end module mwd_states

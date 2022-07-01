@@ -1,18 +1,35 @@
-!%    This module (wrap) `mw_mesh` encapsulates all SMASH mesh
-module mw_mesh
+!%      This module `mwd_mesh` encapsulates all SMASH mesh.
+!%      This module is wrapped and differentiated.
+
+!%      mwd_mesh MeshDT type:
+!%      
+!%      ======================== =======================================
+!%      `variables`              Description
+!%      ======================== =======================================
+!%      ``nrow``                 Number of row
+!%      ``ncol``                 Number of column
+!%      ``ng``                   Number of gauge
+!%      ``nac``                  Number of active cell
+!%      ``xmin``                 CRS x mininimum value [m] (x left)
+!%      ``ymax``                 CRS y maximum value [m] (y upper)
+!%      ``flow``                 Flow directions
+!%      ``drained_area``         Drained area [nb of cell]
+!%      ``path``                 Solver path (i.e. ascending sort of drained area)
+!%      ``gauge_pos``            Gauge position (row, col)
+!%      ``gauge_optim``          Gauge to optimize
+!%      ``code``                 Gauge code
+!%      ``area``                 Drained area at gauge position [km2]
+!%      ``global_active_cell``   Mask of global active cell (i.e. cells that contribute to any gauge)
+!%      ``local_active_cell``    Mask of local active cell (i.e.  equal to or a subset of global active cell) 
+!%      ``rowcol_to_ind_sparse`` Matrix linking any (row, col) couple to his sparse storage indice
+!%      ======================== =======================================
+
+module mwd_mesh
     
-    use m_common !% only: sp, dp, lchar
-    use mw_setup !% only: SetupDT
+    use md_common !% only: sp, dp, lchar
+    use mwd_setup !% only: SetupDT
     
     implicit none
-    
-    !%      MeshDT type:
-    !%
-    !%      ====================    ==========================================================
-    !%      `args`                  Description
-    !%      ====================    ==========================================================
-
-    !%      ====================    ==========================================================
     
     type :: MeshDT
     
@@ -25,12 +42,10 @@ module mw_mesh
         
         integer, dimension(:,:), allocatable :: flow
         integer, dimension(:,:), allocatable :: drained_area
-        
         integer, dimension(:,:), allocatable :: path
         
         integer, dimension(:,:), allocatable :: gauge_pos
         integer, dimension(:), allocatable :: gauge_optim
-        
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
@@ -85,4 +100,4 @@ module mw_mesh
         end subroutine MeshDT_initialise
         
         
-end module mw_mesh
+end module mwd_mesh

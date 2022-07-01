@@ -1,5 +1,5 @@
 SRC=../smash/solver
-NAME=forward.f90 mw_setup.f90 mw_mesh.f90 mw_input_data.f90 mw_parameters.f90 mw_states.f90 mw_output.f90 m_common.f90 m_operator.f90 mw_cost.f90
+NAME=forward.f90 mwd_setup.f90 mwd_mesh.f90 mwd_input_data.f90 mwd_parameters.f90 mwd_states.f90 mwd_output.f90 md_common.f90 md_operator.f90 mwd_cost.f90
 FILES=$(addprefix $(SRC)/*/,$(NAME))
 TAPENADE=./tapenade_3.16/
 

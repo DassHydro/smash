@@ -11,16 +11,17 @@ from .core.common import *
 
 from . import solver
 from .solver import *
-from .solver.mw_setup import *
-from .solver.mw_mesh import *
-from .solver.mw_input_data import *
-from .solver.mw_parameters import *
-from .solver.mw_states import *
-from .solver.mw_output import *
+from .solver.mwd_setup import *
+from .solver.mwd_mesh import *
+from .solver.mwd_input_data import *
+from .solver.mwd_parameters import *
+from .solver.mwd_states import *
+from .solver.mwd_output import *
+from .solver.mwd_cost import *
 from .solver.mw_run import *
-from .solver.mw_validate import *
+from .solver.mw_adjoint_test import *
 from .solver.mw_optimize import *
-from .solver.mw_cost import *
+
 from .solver.mw_utils import *
 
 from . import mesh

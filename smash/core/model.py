@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import numpy as np
 
-from smash.solver.mw_setup import SetupDT
-from smash.solver.mw_mesh import MeshDT
-from smash.solver.mw_input_data import Input_DataDT
-from smash.solver.mw_parameters import ParametersDT
-from smash.solver.mw_states import StatesDT
-from smash.solver.mw_output import OutputDT
+from smash.solver.mwd_setup import SetupDT
+from smash.solver.mwd_mesh import MeshDT
+from smash.solver.mwd_input_data import Input_DataDT
+from smash.solver.mwd_parameters import ParametersDT
+from smash.solver.mwd_states import StatesDT
+from smash.solver.mwd_output import OutputDT
 from smash.solver.mw_run import forward_run, adjoint_run, tangent_linear_run
-from smash.solver.mw_validate import scalar_product_test, gradient_test_adj
+from smash.solver.mw_adjoint_test import scalar_product_test, gradient_test
 from smash.solver.mw_optimize import optimize_sbs, optimize_lbfgsb
 
 from smash.io.yaml import read_yaml_configuration
@@ -37,7 +37,7 @@ class Model(object):
         mesh: (dict, None) = None,
         build: bool = True,
     ):
-
+        
         if build:
             
             self.setup = SetupDT()
@@ -244,7 +244,7 @@ class Model(object):
             raise ValueError(f"case must be one of ['fwd', 'adj', 'tl'] not {case}")
                 
             
-    def validate(self, case: str = "spt"):
+    def adjoint_test(self, case: str = "spt"):
         
         if case == "spt":
             
@@ -260,11 +260,11 @@ class Model(object):
                 cost
             )
             
-        elif case == "gt_adj":
+        elif case == "gt":
             
             cost = np.float32(0.0)
             
-            gradient_test_adj(
+            gradient_test(
                 self.setup,
                 self.mesh,
                 self.input_data,

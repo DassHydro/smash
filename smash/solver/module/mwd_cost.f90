@@ -1,11 +1,11 @@
 !%    This module `mw_cost` encapsulates all SMASH cost (type, subroutines, functions)
-module mw_cost
+module mwd_cost
     
-    use m_common  !% only: sp, dp, lchar, np, ns
-    use mw_setup  !% only: SetupDT
-    use mw_mesh   !%only: MeshDT
-    use mw_input_data !% only: Input_DataDT
-    use mw_output !% only: OutputDT
+    use md_common  !% only: sp, dp, lchar, np, ns
+    use mwd_setup  !% only: SetupDT
+    use mwd_mesh   !%only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_output !% only: OutputDT
 
     implicit none
     
@@ -98,4 +98,4 @@ module mw_cost
         end function nse
 
         
-end module mw_cost
+end module mwd_cost

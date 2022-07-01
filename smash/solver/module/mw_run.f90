@@ -1,13 +1,13 @@
 !%    This module (wrap) `mw_run` encapsulates all SMASH run (type, subroutines, functions)
 module mw_run
     
-    use m_common !% only: sp, dp, lchar, np, np
-    use mw_setup !% only: SetupDT
-    use mw_mesh  !% only: MeshDT
-    use mw_input_data !% only: Input_DataDT
-    use mw_parameters !%  only: ParametersDT, parameters_derived_type_to_matrix
-    use mw_states !% only: StatesDT
-    use mw_output !% only: OutputDT
+    use md_common !% only: sp, dp, lchar, np, np
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh  !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !%  only: ParametersDT, parameters_derived_type_to_matrix
+    use mwd_states !% only: StatesDT
+    use mwd_output !% only: OutputDT
     
     implicit none
     

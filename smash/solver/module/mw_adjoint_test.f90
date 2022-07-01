@@ -1,13 +1,13 @@
 !%    This module (wrap) `mw_validate` encapsulates all SMASH validate (type, subroutines, functions)
-module mw_validate
+module mw_adjoint_test
     
-    use m_common !% only: sp, dp, lchar, np, np
-    use mw_setup !% only: SetupDT
-    use mw_mesh  !% only: MeshDT
-    use mw_input_data !% only: Input_DataDT
-    use mw_parameters !%  only: ParametersDT, parameters_derived_type_to_matrix
-    use mw_states !% only: StatesDT
-    use mw_output !% only: OutputDT
+    use md_common !% only: sp, dp, lchar, np, np
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh  !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !%  only: ParametersDT, parameters_derived_type_to_matrix
+    use mwd_states !% only: StatesDT
+    use mwd_output !% only: OutputDT
     
     implicit none
     
@@ -78,7 +78,7 @@ module mw_validate
         
         !% Calling forward from forward/forward.f90
         !% Calling forward_b from forward/forward_b.f90
-        subroutine gradient_test_adj(setup, mesh, input_data, parameters, states, output, cost)
+        subroutine gradient_test(setup, mesh, input_data, parameters, states, output, cost)
         
             implicit none
             
@@ -141,8 +141,8 @@ module mw_validate
             
             end do
         
-        end subroutine gradient_test_adj
+        end subroutine gradient_test
         
         
 
-end module mw_validate
+end module mw_adjoint_test

@@ -1,7 +1,7 @@
 !%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
-module m_operator
+module md_operator
     
-    use m_common   !% only : sp
+    use md_common   !% only : sp
 
     implicit none
     
@@ -215,4 +215,4 @@ module m_operator
         
         end subroutine GR_transfer1
         
-end module m_operator
+end module md_operator

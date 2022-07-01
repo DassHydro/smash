@@ -2,13 +2,13 @@
 !  Tapenade 3.16 (master) -  9 Oct 2020 17:47
 !
 !%    This module (wrap) `mw_output` encapsulates all SMASH output
-MODULE MW_OUTPUT_DIFF_D
+MODULE MWD_OUTPUT_DIFF_D
 !% only: sp, dp, lchar, np, ns
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !%only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
   IMPLICIT NONE
 !%      OutputDT type:
 !%
@@ -44,20 +44,20 @@ CONTAINS
     END IF
   END SUBROUTINE OUTPUTDT_INITIALISE
 
-END MODULE MW_OUTPUT_DIFF_D
+END MODULE MWD_OUTPUT_DIFF_D
 
 !%    This module `mw_cost` encapsulates all SMASH cost (type, subroutines, functions)
-MODULE MW_COST_DIFF_D
+MODULE MWD_COST_DIFF_D
 !% only: sp, dp, lchar, np, ns
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !%only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
 !% only: Input_DataDT
-  USE MW_INPUT_DATA
+  USE MWD_INPUT_DATA
 !% only: OutputDT
-  USE MW_OUTPUT_DIFF_D
+  USE MWD_OUTPUT_DIFF_D
   IMPLICIT NONE
 
 CONTAINS
@@ -209,12 +209,12 @@ CONTAINS
     res = num/den
   END FUNCTION NSE
 
-END MODULE MW_COST_DIFF_D
+END MODULE MWD_COST_DIFF_D
 
 !%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
-MODULE M_OPERATOR_DIFF_D
+MODULE MD_OPERATOR_DIFF_D
 !% only : sp
-  USE M_COMMON
+  USE MD_COMMON
   IMPLICIT NONE
 
 CONTAINS
@@ -724,16 +724,16 @@ CONTAINS
     qrout = hr_imd - hr
   END SUBROUTINE GR_TRANSFER1
 
-END MODULE M_OPERATOR_DIFF_D
+END MODULE MD_OPERATOR_DIFF_D
 
 !%    This module `mw_states` encapsulates all SMASH states
-MODULE MW_STATES_DIFF_D
+MODULE MWD_STATES_DIFF_D
 !% only: sp, dp, lchar, np, ns
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !% only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
   IMPLICIT NONE
   TYPE STATESDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hi
@@ -797,16 +797,16 @@ CONTAINS
     states%hr = vector(5)
   END SUBROUTINE VECTOR_TO_STATES_DERIVED_TYPE
 
-END MODULE MW_STATES_DIFF_D
+END MODULE MWD_STATES_DIFF_D
 
 !%    This module (wrap) `mw_parameters` encapsulates all SMASH parameters
-MODULE MW_PARAMETERS_DIFF_D
+MODULE MWD_PARAMETERS_DIFF_D
 !% only: sp, dp, lchar, np, ns
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !% only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
   IMPLICIT NONE
   TYPE PARAMETERSDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ci
@@ -886,7 +886,7 @@ CONTAINS
     parameters%lr = vector(8)
   END SUBROUTINE VECTOR_TO_PARAMETERS_DERIVED_TYPE
 
-END MODULE MW_PARAMETERS_DIFF_D
+END MODULE MWD_PARAMETERS_DIFF_D
 
 !  Differentiation of forward in forward (tangent) mode (with options OpenMP context fixinterface):
 !   variations   of useful results: cost
@@ -911,24 +911,24 @@ END MODULE MW_PARAMETERS_DIFF_D
 SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 & states, states_d, output, output_d, cost, cost_d)
 !% only: sp
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !% only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
 !% only: Input_DataDT
-  USE MW_INPUT_DATA
+  USE MWD_INPUT_DATA
 !% only: ParametersDT, parameters_derived_type_to_matrix
-  USE MW_PARAMETERS_DIFF_D
+  USE MWD_PARAMETERS_DIFF_D
 !% only: StatesDT
-  USE MW_STATES_DIFF_D
+  USE MWD_STATES_DIFF_D
 !% only: OutputDT
-  USE MW_OUTPUT_DIFF_D
+  USE MWD_OUTPUT_DIFF_D
 !% only: GR_interception, GR_production, GR_exchange, &
-  USE M_OPERATOR_DIFF_D
+  USE MD_OPERATOR_DIFF_D
 !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
 !% only: compute_jobs
-  USE MW_COST_DIFF_D
+  USE MWD_COST_DIFF_D
   IMPLICIT NONE
   TYPE(SETUPDT), INTENT(IN) :: setup
   TYPE(MESHDT), INTENT(IN) :: mesh
@@ -1162,24 +1162,24 @@ END SUBROUTINE FORWARD_D
 SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
 & output, cost)
 !% only: sp
-  USE M_COMMON
+  USE MD_COMMON
 !% only: SetupDT
-  USE MW_SETUP
+  USE MWD_SETUP
 !% only: MeshDT
-  USE MW_MESH
+  USE MWD_MESH
 !% only: Input_DataDT
-  USE MW_INPUT_DATA
+  USE MWD_INPUT_DATA
 !% only: ParametersDT, parameters_derived_type_to_matrix
-  USE MW_PARAMETERS_DIFF_D
+  USE MWD_PARAMETERS_DIFF_D
 !% only: StatesDT
-  USE MW_STATES_DIFF_D
+  USE MWD_STATES_DIFF_D
 !% only: OutputDT
-  USE MW_OUTPUT_DIFF_D
+  USE MWD_OUTPUT_DIFF_D
 !% only: GR_interception, GR_production, GR_exchange, &
-  USE M_OPERATOR_DIFF_D
+  USE MD_OPERATOR_DIFF_D
 !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
 !% only: compute_jobs
-  USE MW_COST_DIFF_D
+  USE MWD_COST_DIFF_D
   IMPLICIT NONE
   TYPE(SETUPDT), INTENT(IN) :: setup
   TYPE(MESHDT), INTENT(IN) :: mesh

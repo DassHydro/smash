@@ -1,14 +1,14 @@
 !%    This module `mw_optimize` encapsulates all SMASH optimize (type, subroutines, functions)
 module mw_optimize
     
-    use m_common !% only: sp, dp, lchar, np, ns
-    use mw_setup !% only: SetupDT
-    use mw_mesh !% only: MeshDT
-    use mw_input_data !% only: Input_DataDT
-    use mw_parameters !% only: ParametersDT, &
+    use md_common !% only: sp, dp, lchar, np, ns
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !% only: ParametersDT, &
     !% & parameters_derived_type_to_matrix, matrix_to_parameters_derived_type
-    use mw_states !% only: StatesDT
-    use mw_output !% only: OutputDT
+    use mwd_states !% only: StatesDT
+    use mwd_output !% only: OutputDT
     
     use mw_run !% only: forward_run, adjoint_run
     

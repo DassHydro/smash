@@ -34,17 +34,17 @@ MESHDIR := smash/mesh
 INC := -I$(BUILDDIR)
 MOD := -J$(BUILDDIR)
 
-#% F90WRAP information
+#% f90wrap information
 SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERSRC)/module/mw_*.f90
+SOLVERMODWRAP := $(SOLVERDIR)/module/mw*_*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
 #% Classic `make` call
-all: directories cpp f77 f90 wrappers module meshing finalize
+all: directories cpp f77 f90 wrappers module meshing library finalize
 
-#% Debug mode `make debug` (Developper)
-debug: directories cpp f77 f90 wrappers module meshing finalize
+#% Debug mode `make debug` [Dev]
+debug: directories cpp f77 f90 wrappers module meshing library_edit finalize
 
 #% Making directories
 directories:
@@ -54,7 +54,7 @@ directories:
 	@echo ""
 	@echo "********************************************"
 	@mkdir -p $(BUILDDIR)
-	@mkdir -p $(SOLVERSRC)/f90wrap/
+	@mkdir -p $(SOLVERDIR)/f90wrap/
 
 #% cpp file(s)
 cpp: \
@@ -67,17 +67,17 @@ f77: \
  
 #% f90 files
 f90: \
- obj/m_common.o \
- obj/mw_setup.o \
- obj/mw_mesh.o \
- obj/mw_input_data.o \
- obj/mw_parameters.o \
- obj/mw_states.o \
- obj/mw_output.o \
- obj/mw_cost.o \
- obj/m_operator.o \
+ obj/md_common.o \
+ obj/mwd_setup.o \
+ obj/mwd_mesh.o \
+ obj/mwd_input_data.o \
+ obj/mwd_parameters.o \
+ obj/mwd_states.o \
+ obj/mwd_output.o \
+ obj/mwd_cost.o \
+ obj/md_operator.o \
  obj/mw_run.o \
- obj/mw_validate.o \
+ obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
  obj/mw_utils.o \
  obj/forward.o \
@@ -85,15 +85,15 @@ f90: \
  obj/forward_b.o \
  
 #% cpp compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(CEXT)
+$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
 	$(CC) $(CFLAGS) $(MOD) $(INC) -c -o $@ $<
 
 #% f77 compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F77EXT)
+$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F77EXT)
 	$(FC) $(F77FLAGS) $(MOD) $(INC) -c -o $@ $<
 
 #% f90 compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERSRC)/*/%.$(F90EXT)
+$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F90EXT)
 	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
  
 #% Making wrappers (f90wrap)
@@ -121,13 +121,31 @@ meshing:
 	@echo " Making meshing extension "
 	@echo ""
 	@echo "********************************************"
-	cd $(MESHSRC) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+
+#% Making python library (pip3)
+library:
+	@echo "********************************************"
+	@echo ""
+	@echo " Making python library "
+	@echo ""
+	@echo "********************************************"
+	pip3 install --compile .
+
+#% Making python library in editable mode (pip3) [Dev]
+library_edit:
+	@echo "********************************************"
+	@echo ""
+	@echo " Making python library (editable) "
+	@echo ""
+	@echo "********************************************"
+	pip3 install -e .
 	
 #% Finalize compilation with mv, rm and sed
 finalize:
-	mv f90wrap_* $(SOLVERSRC)/f90wrap/.
-	mv $(SHAREDLIB)/mw_* $(SOLVERSRC)/.
-	mv _$(SHAREDLIB)* $(SOLVERSRC)/.
+	mv f90wrap_* $(SOLVERDIR)/f90wrap/.
+	mv $(SHAREDLIB)/mw* $(SOLVERDIR)/.
+	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
 	bash sed_f90wrap.sh
 	
@@ -141,7 +159,8 @@ clean:
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
 	@$(RM) -rf *egg-info
-	@$(RM) -rf $(SOLVERSRC)/mw_*
-	@$(RM) -rf $(SOLVERSRC)/_$(SHAREDLIB)*
-	@$(RM) -rf $(SOLVERSRC)/f90wrap
-	@$(RM) -rf $(MESHSRC)/*.so
+	@$(RM) -rf $(SOLVERDIR)/mw*
+	@$(RM) -rf $(SOLVERDIR)/_$(SHAREDLIB)*
+	@$(RM) -rf $(SOLVERDIR)/f90wrap
+	@$(RM) -rf $(MESHDIR)/*.so
+	@$(RM) -rf build

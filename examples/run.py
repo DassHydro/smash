@@ -35,7 +35,7 @@ from memory_profiler import profile
 # ~ smash.save_mesh(mesh, "mesh_Y3204040.hdf5")
 # ~ smash.save_mesh(mesh, "mesh_L8000020.hdf5")
 
-@profile
+
 def main():
 
     meshing_t = time.time()
@@ -48,6 +48,10 @@ def main():
     model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
     model.run("fwd", inplace=True)
+    # ~ model.adjoint_test("spt")
+    
+    plt.plot(model.output.qsim[0,:])
+    plt.show()
 
     model_t = time.time()
 
