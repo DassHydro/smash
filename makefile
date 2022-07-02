@@ -41,10 +41,10 @@ OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
 #% Classic `make` call
-all: directories cpp f77 f90 wrappers module meshing library finalize
+all: directories cpp f77 f90 wrappers module meshing finalize library
 
 #% Debug mode `make debug` [Dev]
-debug: directories cpp f77 f90 wrappers module meshing library_edit finalize
+debug: directories cpp f77 f90 wrappers module meshing finalize library_edit
 
 #% Making directories
 directories:
@@ -67,7 +67,7 @@ f77: \
  
 #% f90 files
 f90: \
- obj/md_common.o \
+ obj/mwd_common.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \
@@ -79,7 +79,6 @@ f90: \
  obj/mw_run.o \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
- obj/mw_utils.o \
  obj/forward.o \
  obj/forward_d.o \
  obj/forward_b.o \
@@ -103,7 +102,7 @@ wrappers:
 	@echo " Making wrappers "
 	@echo ""
 	@echo "********************************************"
-	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package
+	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package --py-mod-names py_mod_names
 	
 #% Making module extension (f2py-f90wrap)
 module:
@@ -144,7 +143,7 @@ library_edit:
 #% Finalize compilation with mv, rm and sed
 finalize:
 	mv f90wrap_* $(SOLVERDIR)/f90wrap/.
-	mv $(SHAREDLIB)/mw* $(SOLVERDIR)/.
+	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
 	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
 	bash sed_f90wrap.sh
@@ -159,7 +158,7 @@ clean:
 	@$(RM) -rf $(BUILDDIR)
 	@$(RM) -rf src.*
 	@$(RM) -rf *egg-info
-	@$(RM) -rf $(SOLVERDIR)/mw*
+	@$(RM) -rf $(SOLVERDIR)/_mw*
 	@$(RM) -rf $(SOLVERDIR)/_$(SHAREDLIB)*
 	@$(RM) -rf $(SOLVERDIR)/f90wrap
 	@$(RM) -rf $(MESHDIR)/*.so

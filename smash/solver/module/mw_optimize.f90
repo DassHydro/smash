@@ -1,16 +1,13 @@
 !%    This module `mw_optimize` encapsulates all SMASH optimize (type, subroutines, functions)
 module mw_optimize
     
-    use md_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, dp, lchar, np, ns
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !% only: ParametersDT, &
-    !% & parameters_derived_type_to_matrix, matrix_to_parameters_derived_type
+    use mwd_parameters !% only: ParametersDT, parameters_to_matrix, matrix_to_parameters
     use mwd_states !% only: StatesDT
     use mwd_output !% only: OutputDT
-    
-    use mw_run !% only: forward_run, adjoint_run
     
     implicit none
     
@@ -19,7 +16,8 @@ module mw_optimize
     private :: transformation, inv_transformation
     
     contains
-    
+        
+        !% Calling forward from forward/forward.f90
         subroutine optimize_sbs(setup, mesh, input_data, parameters, states, output, cost)
         
             implicit none
@@ -54,9 +52,9 @@ module mw_optimize
             
             init_states = states
             
-            call forward_run(setup, mesh, input_data, parameters, states, output, cost)
+            call forward(setup, mesh, input_data, parameters, states, output, cost)
             
-            call parameters_derived_type_to_matrix(parameters, parameters_matrix)
+            call parameters_to_matrix(parameters, parameters_matrix)
             
             x = parameters_matrix(loc_ac(1), loc_ac(2), :)
             
@@ -113,11 +111,11 @@ module mw_optimize
                                 
                             end do
                             
-                            call matrix_to_parameters_derived_type(parameters_matrix, parameters)
+                            call matrix_to_parameters(parameters_matrix, parameters)
                             
                             states = init_states
                             
-                            call forward_run(setup, mesh, input_data, parameters, states, output, cost)
+                            call forward(setup, mesh, input_data, parameters, states, output, cost)
                             
                             f = cost
                             nfg = nfg + 1
@@ -155,7 +153,7 @@ module mw_optimize
                         
                     end do
                     
-                    call matrix_to_parameters_derived_type(parameters_matrix, parameters)
+                    call matrix_to_parameters(parameters_matrix, parameters)
                     
                     sdx = clg * sdx
                     sdx(ia) = (1._sp - clg) * real(jfa) * ddx + clg * sdx(ia)
@@ -208,11 +206,11 @@ module mw_optimize
                     
                     end do
                     
-                    call matrix_to_parameters_derived_type(parameters_matrix, parameters)
+                    call matrix_to_parameters(parameters_matrix, parameters)
                     
                     states = init_states
                     
-                    call forward_run(setup, mesh, input_data, parameters, states, output, cost)
+                    call forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                     f = cost
                     
@@ -236,7 +234,7 @@ module mw_optimize
                         
                         end do
                         
-                        call matrix_to_parameters_derived_type(parameters_matrix, parameters)
+                        call matrix_to_parameters(parameters_matrix, parameters)
                         
                         if (gx .lt. ga - 2) then
                         
@@ -361,7 +359,7 @@ module mw_optimize
             l = 0._dp
             u = 1._dp
 
-            call parameters_derived_type_to_matrix(parameters, parameters_matrix)
+            call parameters_to_matrix(parameters, parameters_matrix)
             
             call normalize_matrix(setup, mesh, parameters_matrix, norm_parameters_matrix)
             
@@ -403,7 +401,7 @@ module mw_optimize
                 
                 call unnormalize_matrix(setup, mesh, norm_parameters_matrix, parameters_matrix)
                 
-                call matrix_to_parameters_derived_type(parameters_matrix, parameters)
+                call matrix_to_parameters(parameters_matrix, parameters)
                 
                 if (task(1:2) .eq. 'FG') then
                 
@@ -416,7 +414,7 @@ module mw_optimize
         
                     f = real(cost, kind(f))
                     
-                    call parameters_derived_type_to_matrix(parameters_b, parameters_b_matrix)
+                    call parameters_to_matrix(parameters_b, parameters_b_matrix)
                     
                     call matrix_to_vector(setup, mesh, parameters_b_matrix, g)
  

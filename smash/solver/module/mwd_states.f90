@@ -1,7 +1,20 @@
-!%    This module `mw_states` encapsulates all SMASH states
+!%      This module `mwd_states` encapsulates all SMASH states.
+!%      This module is wrapped and differentiated.
+
+!%      StatesDT type:
+!%      
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
+!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
+!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
+!%      ======================== =======================================
 module mwd_states
 
-    use md_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, dp, lchar, np, ns
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     
@@ -13,7 +26,7 @@ module mwd_states
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
         real(sp), dimension(:,:), allocatable :: hst
-        real(sp), dimension(:,:), allocatable :: hr
+        real(sp), dimension(:,:), allocatable :: hlr
         
     end type StatesDT
     
@@ -36,15 +49,29 @@ module mwd_states
             allocate(states%hp(nrow, ncol))
             allocate(states%hft(nrow, ncol))
             allocate(states%hst(nrow, ncol))
-            allocate(states%hr(nrow, ncol))
+            allocate(states%hlr(nrow, ncol))
             
-            call vector_to_states_derived_type(&
-            & setup%default_states, states)
+            call vector_to_states(setup%default_states, states)
 
         end subroutine StatesDT_initialise
         
         
-        subroutine states_derived_type_to_matrix(states, matrix)
+!%      TODO comment       
+        subroutine states_copy(states_in, &
+        & states_out)
+            
+            implicit none
+            
+            type(StatesDT), intent(in) :: states_in
+            type(StatesDT), intent(out) :: states_out
+            
+            states_out = states_in
+        
+        end subroutine states_copy
+        
+        
+!%      TODO comment 
+        subroutine states_to_matrix(states, matrix)
         
             implicit none
             
@@ -56,12 +83,13 @@ module mwd_states
             matrix(:,:,2) = states%hp(:,:)
             matrix(:,:,3) = states%hft(:,:)
             matrix(:,:,4) = states%hst(:,:)
-            matrix(:,:,5) = states%hr(:,:)
+            matrix(:,:,5) = states%hlr(:,:)
         
-        end subroutine states_derived_type_to_matrix
+        end subroutine states_to_matrix
         
         
-        subroutine matrix_to_states_derived_type(matrix, states)
+!%      TODO comment
+        subroutine matrix_to_states(matrix, states)
             
             implicit none
             
@@ -73,12 +101,13 @@ module mwd_states
             states%hp(:,:) = matrix(:,:,2)
             states%hft(:,:) = matrix(:,:,3)
             states%hst(:,:) = matrix(:,:,4)
-            states%hr(:,:) = matrix(:,:,5)
+            states%hlr(:,:) = matrix(:,:,5)
         
-        end subroutine matrix_to_states_derived_type
+        end subroutine matrix_to_states
         
         
-        subroutine vector_to_states_derived_type(vector, states)
+!%      TODO comment
+        subroutine vector_to_states(vector, states)
         
             implicit none
             
@@ -89,8 +118,8 @@ module mwd_states
             states%hp = vector(2)
             states%hft = vector(3)
             states%hst = vector(4)
-            states%hr = vector(5)
+            states%hlr = vector(5)
         
-        end subroutine vector_to_states_derived_type
+        end subroutine vector_to_states
 
 end module mwd_states

@@ -15,14 +15,14 @@ read_qobs: True
 qobs_directory: qobs
 
 read_prcp: True
-prcp_format: tiff
+prcp_format: tif
 prcp_conversion_factor: 0.1
-prcp_directory: ../../../Data/prcp_tiff
+prcp_directory: ../../prcp_tiff
 
 read_pet: True
-pet_format: tiff
+pet_format: tif
 pet_conversion_factor: 1
-pet_directory: ../../../Data/pet_tiff
+pet_directory: ../../pet_tiff
 daily_interannual_pet: True
 
 mean_forcing: False

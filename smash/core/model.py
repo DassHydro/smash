@@ -1,25 +1,26 @@
 from __future__ import annotations
 
-import numpy as np
+from smash.solver._mwd_setup import SetupDT
+from smash.solver._mwd_mesh import MeshDT
+from smash.solver._mwd_input_data import Input_DataDT
+from smash.solver._mwd_parameters import ParametersDT
+from smash.solver._mwd_states import StatesDT
+from smash.solver._mwd_output import OutputDT
+from smash.solver._mw_run import forward_run, adjoint_run, tangent_linear_run
+from smash.solver._mw_adjoint_test import scalar_product_test, gradient_test
+from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
 
-from smash.solver.mwd_setup import SetupDT
-from smash.solver.mwd_mesh import MeshDT
-from smash.solver.mwd_input_data import Input_DataDT
-from smash.solver.mwd_parameters import ParametersDT
-from smash.solver.mwd_states import StatesDT
-from smash.solver.mwd_output import OutputDT
-from smash.solver.mw_run import forward_run, adjoint_run, tangent_linear_run
-from smash.solver.mw_adjoint_test import scalar_product_test, gradient_test
-from smash.solver.mw_optimize import optimize_sbs, optimize_lbfgsb
-
-from smash.io.yaml import read_yaml_configuration
+from smash.io._yaml import _read_yaml_configuration
 
 from smash.core._build_derived_type import (
-    _derived_type_parser,
+    _parse_derived_type,
     _build_setup,
     _build_mesh,
     _build_input_data,
 )
+
+import numpy as np
+
 
 __all__ = ["Model"]
 
@@ -37,46 +38,47 @@ class Model(object):
         mesh: (dict, None) = None,
         build: bool = True,
     ):
-        
+
         if build:
-            
+
             self.setup = SetupDT()
 
             if configuration is None:
-                
-                raise ValueError(
-                        f"configuration argument must be defined, if build is True"
-                    )
+
+                raise ValueError(f"'configuration' argument must be defined")
+
             else:
-                
+
                 if isinstance(configuration, str):
-                    _derived_type_parser(
-                        self.setup, read_yaml_configuration(configuration)
+                    _parse_derived_type(
+                        self.setup, _read_yaml_configuration(configuration)
                     )
 
                 else:
-                    
+
                     raise TypeError(
-                        f"configuration argument must be string, not {type(configuration)}"
+                        f"'configuration' argument must be string, not {type(configuration)}"
                     )
 
             _build_setup(self.setup)
-            
+
             if mesh is None:
-                
-                raise ValueError(
-                        f"mesh argument must be defined, if build is True"
-                    )
+
+                raise ValueError(f"'mesh' argument must be defined")
             else:
-                
+
                 if isinstance(mesh, dict):
 
-                    self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+                    self.mesh = MeshDT(
+                        self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"]
+                    )
 
-                    _derived_type_parser(self.mesh, mesh)
+                    _parse_derived_type(self.mesh, mesh)
 
                 else:
-                    raise TypeError(f"mesh argument must be dictionary, not {type(mesh)}")
+                    raise TypeError(
+                        f"'mesh' argument must be dictionary, not {type(mesh)}"
+                    )
 
             _build_mesh(self.setup, self.mesh)
 
@@ -195,86 +197,90 @@ class Model(object):
         copy.setup = self.setup.copy()
         copy.mesh = self.mesh.copy()
         copy.input_data = self.input_data.copy()
-        copy.paramters = self.parameters.copy()
+        copy.parameters = self.parameters.copy()
         copy.states = self.states.copy()
         copy.output = self.output.copy()
 
         return copy
-        
-    
+
     def run(self, case: str = "fwd", inplace: bool = False):
-        
+
         if inplace:
-            
+
             instance = self
-            
+
         else:
-            
+
             instance = self.copy()
-            
-        
+
         if case == "fwd":
-            
-            cost = np.float32(0.0)
-            
+
             forward_run(
-                self.setup,
-                self.mesh,
-                self.input_data, 
-                self.parameters,
-                self.states,
-                self.output,
-                cost)
-                
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+
         elif case == "adj":
-            
-            cost = np.float32(0.0)
-            
+
             adjoint_run(
-                self.setup,
-                self.mesh,
-                self.input_data, 
-                self.parameters,
-                self.states,
-                self.output,
-                cost)
-                
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+
+        elif case == "tl":
+
+            tangent_linear_run(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+
         else:
-            
+
             raise ValueError(f"case must be one of ['fwd', 'adj', 'tl'] not {case}")
-                
-            
-    def adjoint_test(self, case: str = "spt"):
-        
+
+    def adjoint_test(self, case: str = "spt", inplace: bool = False):
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
         if case == "spt":
-            
-            cost = np.float32(0.0)
-            
+
             scalar_product_test(
-                self.setup,
-                self.mesh,
-                self.input_data,
-                self.parameters,
-                self.states,
-                self.output,
-                cost
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
             )
-            
+
         elif case == "gt":
-            
-            cost = np.float32(0.0)
-            
+
             gradient_test(
-                self.setup,
-                self.mesh,
-                self.input_data,
-                self.parameters,
-                self.states,
-                self.output,
-                cost
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
             )
-    
-    
 
     def optimize(self, solver: str = "sbs", inplace: bool = False):
 
@@ -285,9 +291,9 @@ class Model(object):
         else:
 
             instance = self.copy()
-            
+
         if solver == "sbs":
-            
+
             cost = np.float32(0.0)
 
             optimize_sbs(
@@ -299,11 +305,11 @@ class Model(object):
                 self.output,
                 cost,
             )
-        
+
         elif solver == "l-bfgs-b":
-            
+
             cost = np.float32(0.0)
-            
+
             optimize_lbfgsb(
                 self.setup,
                 self.mesh,

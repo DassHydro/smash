@@ -3,7 +3,7 @@ import smash
 import time
 import numpy as np
 import matplotlib.pyplot as plt
-from memory_profiler import profile
+# ~ from memory_profiler import profile
 
 # ~ flow_path = "FLOW_fr1km_Leblois_v1_L93.asc"
 # ~ flow_path = "30sec_flwdir_SA.tif"
@@ -12,7 +12,7 @@ from memory_profiler import profile
 
 # ~ mesh = smash.generate_meshing(flow_path, x=-54.15439, y=5.35428, area=76_135 * 1e6, code='MARONI')
 
-# ~ mesh = smash.generate_meshing(
+# ~ mesh = smash.generate_mesh(
     # ~ flow_path, x=772_363, y=6_274_166, area=168.6 * 1e6, code="Y3204040"
 # ~ )
 
@@ -32,29 +32,19 @@ from memory_profiler import profile
     # ~ code=["Y3204040", "Y3204010", "Y3205010"]
 # ~ )
 
-# ~ smash.save_mesh(mesh, "mesh_Y3204040.hdf5")
-# ~ smash.save_mesh(mesh, "mesh_L8000020.hdf5")
+# ~ smash.save_mesh("mesh_Y3204040.hdf5")
 
+meshing_t = time.time()
 
-def main():
+# ~ print("MESHING", meshing_t - start_t)
 
-    meshing_t = time.time()
+mesh = smash.read_mesh("mesh_Y3204040.hdf5")
+# ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
 
-    # ~ print("MESHING", meshing_t - start_t)
+model = smash.Model(configuration="configuration.yaml", mesh=mesh)
 
-    mesh = smash.read_mesh("mesh_Y3204040.hdf5")
-    # ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
+# model.run("adj", inplace=True)
+model.adjoint_test("gt", inplace=True)
+# ~ model_t = time.time()
 
-    model = smash.Model(configuration="configuration.yaml", mesh=mesh)
-
-    model.run("fwd", inplace=True)
-    # ~ model.adjoint_test("spt")
-    
-    plt.plot(model.output.qsim[0,:])
-    plt.show()
-
-    model_t = time.time()
-
-    print("MODEL", model_t - meshing_t)
-    
-main()
+# ~ print("MODEL", model_t - meshing_t)

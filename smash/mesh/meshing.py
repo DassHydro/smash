@@ -1,14 +1,13 @@
 from __future__ import annotations
 
+from smash.mesh import _meshing
+
 import errno
 import os
 import numpy as np
 from osgeo import gdal, osr
-import matplotlib.pyplot as plt
 
-from . import _meshing
-
-__all__ = ["generate_meshing"]
+__all__ = ["generate_mesh"]
 
 
 def _xy_to_colrow(x, y, xmin, ymax, xres, yres):
@@ -71,7 +70,7 @@ def _array_to_ascii(array, path, xmin, ymin, cellsize, no_data_val):
         np.savetxt(f, array, "%5.2f")
 
 
-def _standardize_generate_meshing(x, y, area, code):
+def _standardize_generate_mesh(x, y, area, code):
 
     x_array = np.array(x, dtype=np.float32, ndmin=1)
     y_array = np.array(y, dtype=np.float32, ndmin=1)
@@ -102,7 +101,7 @@ def _standardize_generate_meshing(x, y, area, code):
     return x_array, y_array, area_array, code_array
 
 
-def generate_meshing(
+def generate_mesh(
     path: str,
     x: (float, list[float]),
     y: (float, list[float]),
@@ -117,7 +116,7 @@ def generate_meshing(
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-    (x, y, area, code) = _standardize_generate_meshing(x, y, area, code)
+    (x, y, area, code) = _standardize_generate_mesh(x, y, area, code)
 
     flow = ds_flow.GetRasterBand(1).ReadAsArray()
 
@@ -125,18 +124,18 @@ def generate_meshing(
     nrow = ds_flow.RasterYSize
 
     transform = ds_flow.GetGeoTransform()
-    
+
     projection = ds_flow.GetProjection()
     srs = osr.SpatialReference(wkt=projection)
-    
+
     xmin = transform[0]
     ymax = transform[3]
     xres = transform[1]
     yres = -transform[5]
-    
+
     #% Approximate area from square meter to square degree
     if srs.GetAttrValue("geogcs") == "WGS 84":
-        
+
         area = area * (xres * yres)
 
     col_otl = np.zeros(shape=x.shape, dtype=np.int32)
@@ -155,7 +154,7 @@ def generate_meshing(
         area_otl[ind] = np.count_nonzero(mask_dln == 1)
 
         global_mask_dln = np.where(mask_dln == 1, 1, global_mask_dln)
-        
+
     flow = np.ma.masked_array(flow, mask=(1 - global_mask_dln))
 
     flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)

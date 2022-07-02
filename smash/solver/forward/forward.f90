@@ -1,10 +1,14 @@
 subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
+
+    !% =================================================================================================================== %!
+    !%   Module import ('only' commented because of issues in adjoint model)
+    !% =================================================================================================================== %!
     
-    use md_common !% only: sp
+    use mwd_common !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !% only: ParametersDT, parameters_derived_type_to_matrix
+    use mwd_parameters !% only: ParametersDT
     use mwd_states !% only: StatesDT
     use mwd_output !% only: OutputDT
     
@@ -14,6 +18,10 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
 
     implicit none
 
+    !% =================================================================================================================== %!
+    !%   Derived Type Variables (shared)
+    !% =================================================================================================================== %!
+
     type(SetupDT), intent(in) :: setup
     type(MeshDT), intent(in) :: mesh
     type(Input_DataDT), intent(in) :: input_data
@@ -22,28 +30,27 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     type(OutputDT), intent(inout) :: output
     real(sp), intent(inout) :: cost
     
-    integer :: t, i, row, col, k, g, row_g, col_g, k_g
+    !% =================================================================================================================== %!
+    !%   Local Variables (private)
+    !===================================================================================================================== %!
+    
+    integer :: t, i, row, col, k, g
     real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
     & qd, qr, ql, qt, qup, qrout
-    
-    real(sp), dimension(:,:,:), allocatable :: q
-    real(sp), dimension(:,:), allocatable :: sparse_q
-    
-    if (setup%sparse_storage) then
-    
-        allocate(sparse_q(mesh%nac, setup%ntime_step))
-    
-    else
-        
-        allocate(q(mesh%nrow, mesh%ncol, setup%ntime_step))
-    
-    end if
 
     cost = 0._sp
     
-    do t=1, setup%ntime_step
+    !% =================================================================================================================== %!
+    !%   Begin subroutine
+    !% =================================================================================================================== %!
+
+    do t=1, setup%ntime_step !% [ DO TIME ]
     
-        do i=1, mesh%nrow * mesh%ncol
+        do i=1, mesh%nrow * mesh%ncol !% [ DO SPACE ]
+        
+        !% =============================================================================================================== %!
+        !%   Local Variables Initialization for time step (t) and cell (i)
+        !% =============================================================================================================== %!
         
             ei = 0._sp
             pn = 0._sp
@@ -59,13 +66,21 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
             qup = 0._sp
             qrout = 0._sp
             
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then
+            !% =========================================================================================================== %!
+            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+            !% =========================================================================================================== %!
+            
+            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
             
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
                 if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
                 
-                if (mesh%global_active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
+                
+                if (mesh%global_active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
                         
                     if (setup%sparse_storage) then
                     
@@ -79,9 +94,12 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                     end if
                     
-                    if (prcp .ge. 0) then
+                    if (prcp .ge. 0) then !% [ IF PRCP GAP ]
                 
-!% -------------------------------- Interception module case
+                        !% =============================================================================================== %!
+                        !%   Interception module case [ 0 - 1 ]
+                        !% =============================================================================================== %!
+                    
                         select case(setup%interception_module)
                         
                         case(0)
@@ -98,17 +116,23 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                         
                         en = pet - ei
                         
-                        select case(setup%production_module)
+                        !% =============================================================================================== %!
+                        !%   Production module case [ 0 ]
+                        !% =============================================================================================== %!
                         
-!% -------------------------------- Production module case
+                        select case(setup%production_module)
+
                         case(0)
                         
                             call GR_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
                             & states%hp(row, col), pr, perc)
                             
                         end select
-
-!% -------------------------------- Exchange module case
+                            
+                        !% =============================================================================================== %!
+                        !%   Exchange module case [ 0 - 1 ]
+                        !% =============================================================================================== %!
+                    
                         select case(setup%exchange_module)
                         
                         case(0)
@@ -121,9 +145,12 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                         
                         end select
                         
-                    end if !% {end if: prcp ge 0}
+                    end if !% [ END IF PRCP GAP ]
                     
-!% ---------------------------- Transfer module case
+                    !% =================================================================================================== %!
+                    !%   Transfer module case [ 0 ]
+                    !% =================================================================================================== %!
+                    
                     select case(setup%transfer_module)
                     
                     case(0)
@@ -139,7 +166,10 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                     qt = (qd + qr + ql)
                     
-!% ------------------------ Routing module case
+                    !% =================================================================================================== %!
+                    !%   Routing module case [ 0 - 1 ]
+                    !% =================================================================================================== %!
+                    
                     select case(setup%routing_module)
                 
                     case(0)
@@ -148,17 +178,17 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                             call sparse_upstream_discharge(setup%dt, setup%dx, setup%ntime_step, &
                             & mesh%nrow, mesh%ncol, mesh%nac, mesh%flow, mesh%drained_area, &
-                            & mesh%rowcol_to_ind_sparse, row, col, t, sparse_q, qup)
+                            & mesh%rowcol_to_ind_sparse, row, col, t, output%sparse_qsim_domain, qup)
                         
-                            sparse_q(k, t) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
+                            output%sparse_qsim_domain(k, t) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
                             & * setup%dx * setup%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, setup%dx, setup%ntime_step, mesh%nrow,&
-                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, q, qup)
+                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, output%qsim_domain, qup)
                         
-                            q(row, col, t) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
+                            output%qsim_domain(row, col, t) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
                             & * setup%dx * setup%dx * 0.001_sp / setup%dt
                     
                         end if
@@ -169,54 +199,62 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                             call sparse_upstream_discharge(setup%dt, setup%dx, setup%ntime_step, &
                             & mesh%nrow, mesh%ncol, mesh%nac, mesh%flow, mesh%drained_area, &
-                            & mesh%rowcol_to_ind_sparse, row, col, t, sparse_q, qup)
+                            & mesh%rowcol_to_ind_sparse, row, col, t, output%sparse_qsim_domain, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hr(row, col), qrout)
+                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                            sparse_q(k, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            output%sparse_qsim_domain(k, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * setup%dx * setup%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, setup%dx, setup%ntime_step, mesh%nrow,&
-                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, q, qup)
+                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, t, output%qsim_domain, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hr(row, col), qrout)
+                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
-                            q(row, col, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            output%qsim_domain(row, col, t) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * setup%dx * setup%dx * 0.001_sp / setup%dt
                     
                         end if
                 
                     end select
                 
-                end if !% {end if: global active cell}
+                end if !% [ END IF ACTIVE CELL ]
                 
-            end if !% {end if: path}
+            end if !% [ END IF PATH ]
         
-        end do !% {end do: space}
+        end do !% [ END DO SPACE ]
         
-    end do !% {end do: time}
+    end do !% [ END DO TIME ]
+    
+    !% =================================================================================================================== %!
+    !%   Store discharge at gauge
+    !% =================================================================================================================== %!
     
     do g=1, mesh%ng
     
-        row_g = mesh%gauge_pos(1, g)
-        col_g = mesh%gauge_pos(2, g)
+        row = mesh%gauge_pos(1, g)
+        col = mesh%gauge_pos(2, g)
         
         if (setup%sparse_storage) then
             
-            k_g = mesh%rowcol_to_ind_sparse(row_g, col_g)
+            k = mesh%rowcol_to_ind_sparse(row, col)
             
-            output%qsim(g, :) = sparse_q(k_g, :)
+            output%qsim(g, :) = output%sparse_qsim_domain(k, :)
             
         
         else
         
-            output%qsim(g, :) = q(row_g, col_g, :)
+            output%qsim(g, :) = output%qsim_domain(row, col, :)
         
         end if
     
     end do
+    
+    !% =================================================================================================================== %!
+    !%   Compute J
+    !% =================================================================================================================== %!
     
     call compute_jobs(setup, mesh, input_data, output, cost)
     

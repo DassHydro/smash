@@ -1,11 +1,12 @@
 !%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
 module md_operator
     
-    use md_common   !% only : sp
+    use mwd_common   !% only : sp
 
     implicit none
     
     contains
+        
         !% TODO Renommer argument pour etre global
         subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
         
@@ -194,8 +195,8 @@ module md_operator
             end if
         
         end subroutine sparse_upstream_discharge
-        
-        
+
+
         subroutine GR_transfer1(dt, qup, lr, hr, qrout)
             
             implicit none

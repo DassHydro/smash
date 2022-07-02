@@ -1,2 +1,2 @@
-recursive-include smash/solver *.so
-recursive-include smash/mesh *.so
+include smash/solver/_solver*.so
+include smash/mesh/_meshing*.so

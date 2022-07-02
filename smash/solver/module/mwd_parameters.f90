@@ -1,7 +1,24 @@
-!%    This module (wrap) `mw_parameters` encapsulates all SMASH parameters
+!%      This module `mwd_parameters` encapsulates all SMASH parameters.
+!%      This module is wrapped and differentiated.
+
+!%      ParametersDT type:
+!%      
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``ci``                   Interception parameter          [mm]    (default: 1)     ]0, +Inf[
+!%      ``cp``                   Production parameter            [mm]    (default: 200)   ]0, +Inf[
+!%      ``beta``                 Percolation parameter           [-]     (default: 1000)  ]0, +Inf[
+!%      ``cft``                  Fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``cst``                  Slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``alpha``                Transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
+!%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
+!%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
+!%      ======================== =======================================
+
 module mwd_parameters
 
-    use md_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, dp, lchar, np, ns
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     
@@ -44,13 +61,28 @@ module mwd_parameters
             allocate(parameters%exc(nrow, ncol))
             allocate(parameters%lr(nrow, ncol))
             
-            call vector_to_parameters_derived_type(&
+            call vector_to_parameters(&
             & setup%default_parameters, parameters)
 
         end subroutine ParametersDT_initialise
         
         
-        subroutine parameters_derived_type_to_matrix(parameters, matrix)
+!%      TODO comment  
+        subroutine parameters_copy(parameters_in, &
+        & parameters_out)
+            
+            implicit none
+            
+            type(ParametersDT), intent(in) :: parameters_in
+            type(ParametersDT), intent(out) :: parameters_out
+            
+            parameters_out = parameters_in
+        
+        end subroutine parameters_copy
+        
+        
+!%      TODO comment  
+        subroutine parameters_to_matrix(parameters, matrix)
         
             implicit none
             
@@ -67,10 +99,11 @@ module mwd_parameters
             matrix(:,:,7) = parameters%exc(:,:)
             matrix(:,:,8) = parameters%lr(:,:)
         
-        end subroutine parameters_derived_type_to_matrix
+        end subroutine parameters_to_matrix
         
         
-        subroutine matrix_to_parameters_derived_type(matrix, parameters)
+!%      TODO comment  
+        subroutine matrix_to_parameters(matrix, parameters)
             
             implicit none
             
@@ -87,10 +120,11 @@ module mwd_parameters
             parameters%exc(:,:) = matrix(:,:,7)
             parameters%lr(:,:) = matrix(:,:,8)
         
-        end subroutine matrix_to_parameters_derived_type
+        end subroutine matrix_to_parameters
         
         
-        subroutine vector_to_parameters_derived_type(vector, parameters)
+!%      TODO comment  
+        subroutine vector_to_parameters(vector, parameters)
         
             implicit none
             
@@ -106,6 +140,6 @@ module mwd_parameters
             parameters%exc = vector(7)
             parameters%lr = vector(8)
         
-        end subroutine vector_to_parameters_derived_type
+        end subroutine vector_to_parameters
 
 end module mwd_parameters

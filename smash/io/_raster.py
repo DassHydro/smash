@@ -9,7 +9,7 @@ import numpy as np
 from osgeo import gdal
 
 
-def read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
+def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
 
     ds = gdal.Open(path)
 

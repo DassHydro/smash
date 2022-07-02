@@ -1,29 +1,60 @@
 from __future__ import annotations
 
+from smash.solver._mwd_mesh import compute_rowcol_to_ind_sparse
+from smash.solver._mwd_input_data import compute_mean_forcing
+
+from smash.core.utils import sparse_matrix_to_vector
+
+from smash.io._raster import _read_windowed_raster
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.solver._mwd_setup import SetupDT
+    from smash.solver._mwd_mesh import MeshDT
+    from smash.solver._mwd_input_data import Input_DataDT
+
 import warnings
 import glob
 import os
 import errno
 from tqdm import tqdm
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver.mw_setup import SetupDT
-    from smash.solver.mw_mesh import MeshDT
-    from smash.solver.mw_input_data import Input_DataDT
-
-from smash.solver.mw_utils import compute_rowcol_to_ind_sparse, compute_mean_forcing
-from smash.core.utils import sparse_matrix_to_vector
-from smash.core.common import SMASH_RATIO_PET_HOURLY
-from smash.io.raster import read_windowed_raster
-
 import pandas as pd
 import numpy as np
 import datetime
 
+RATION_PET_HOURLY = np.array(
+    [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0.035,
+        0.062,
+        0.079,
+        0.097,
+        0.11,
+        0.117,
+        0.117,
+        0.11,
+        0.097,
+        0.079,
+        0.062,
+        0.035,
+        0,
+        0,
+        0,
+        0,
+        0,
+    ],
+    dtype=np.float32,
+)
 
-def _derived_type_parser(derived_type, data: dict):
+
+def _parse_derived_type(derived_type, data: dict):
 
     """
     Derived type parser
@@ -32,12 +63,12 @@ def _derived_type_parser(derived_type, data: dict):
     for key, value in data.items():
 
         if hasattr(derived_type, key):
+
             setattr(derived_type, key, value)
 
         else:
             warnings.warn(
-                f"'{key}' key does not belong to the derived type {type(derived_type)}",
-                UserWarning,
+                f"'{key}' key does not belong to the derived type '{type(derived_type)}'"
             )
 
 
@@ -48,53 +79,52 @@ def _standardize_setup(setup: SetupDT):
     """
 
     if setup.dt < 0:
-        raise ValueError("argument dt of SetupDT is lower than 0")
+        raise ValueError("argument 'dt' is lower than 0")
 
     if not setup.dt in [900, 3_600, 86_400]:
         warnings.warn(
-            "argument dt of SetupDT is not set to a classical value (900, 3600, 86400 seconds)",
+            "argument 'dt' is not set to a classical value (900, 3600, 86400 seconds)",
             UserWarning,
         )
 
     if setup.dx < 0:
-        raise ValueError("argument dx of SetupDT is lower than 0")
+        raise ValueError("argument 'dx' is lower than 0")
 
     if setup.start_time.decode().strip() == "...":
-        raise ValueError("argument start_time of SetupDT is not defined")
+        raise ValueError("argument 'start_time' is not defined")
 
     if setup.end_time.decode().strip() == "...":
-        raise ValueError("argument end_time of SetupDT is not defined")
+        raise ValueError("argument 'end_time' is not defined")
 
     try:
         st = pd.Timestamp(setup.start_time.decode().strip())
     except:
-        raise ValueError("argument start_time of SetupDT is not a valid date")
+        raise ValueError("argument 'start_time' is not a valid date")
 
     try:
         et = pd.Timestamp(setup.end_time.decode().strip())
     except:
-        raise ValueError("argument end_time of SetupDT is not a valid date")
+        raise ValueError("argument 'end_time' is not a valid date")
 
     if (et - st).total_seconds() < 0:
         raise ValueError(
-            "argument end_time of SetupDT corresponds to an earlier date than start_time"
+            "argument 'end_time' corresponds to an earlier date than 'start_time'"
         )
 
     if setup.optim_start_time.decode().strip() == "...":
         setup.optim_start_time = setup.start_time
         warnings.warn(
-            "argument optim_start_time of SetupDT is not defined. Value set to start_time",
-            UserWarning,
+            f"argument 'optim_start_time' is not defined. Value set to 'start_time': {st}"
         )
 
     try:
         ost = pd.Timestamp(setup.optim_start_time.decode().strip())
     except:
-        raise ValueError("argument optim_start_time of SetupDT is not a valid date")
+        raise ValueError("argument 'optim_start_time' is not a valid date")
 
     if (ost - st).total_seconds() < 0:
         raise ValueError(
-            "argument optim_start_time of SetupDT corresponds to an earlier date than start_time"
+            "argument 'optim_start_time' corresponds to an earlier date than 'start_time'"
         )
 
     if (et - ost).total_seconds() < 0:
@@ -104,7 +134,7 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.active_cell_only and not setup.sparse_storage:
         warnings.warn(
-            "argument sparse_storage of SetupDT is False but active_cell_only of SetupDT is True"
+            "argument 'sparse_storage' is False but 'active_cell_only' is True"
         )
 
     if setup.simulation_only:
@@ -112,7 +142,7 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_qobs and setup.qobs_directory.decode().strip() == "...":
         raise ValueError(
-            "argument simulation_only of SetupDT is False, read_qobs of SetupDT is True and qobs_directory of SetupDT is not defined"
+            "argument 'simulation_only' is False, 'read_qobs' is True and 'qobs_directory' is not defined"
         )
 
     if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode().strip()):
@@ -124,7 +154,7 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_prcp and setup.prcp_directory.decode().strip() == "...":
         raise ValueError(
-            "argument read_prcp of SetupDT is True and prcp_directory of SetupDT is not defined"
+            "argument 'read_prcp' is True and 'prcp_directory' is not defined"
         )
 
     if setup.read_prcp and not os.path.exists(setup.prcp_directory.decode().strip()):
@@ -134,17 +164,17 @@ def _standardize_setup(setup: SetupDT):
             setup.prcp_directory.decode().strip(),
         )
 
-    if not setup.prcp_format.decode().strip() in ["tiff", "nc"]:
+    if not setup.prcp_format.decode().strip() in ["tif", "nc"]:
         raise ValueError(
-            f"argument prpc_format of SetupDT must be one of {['tiff', 'nc']} not {setup.prcp_format.decode().strip()}"
+            f"argument 'prpc_format' must be one of {['tif', 'nc']} not {setup.prcp_format.decode().strip()}"
         )
 
     if setup.prcp_conversion_factor < 0:
-        raise ValueError("argument prcp_conversion_factor of SetupDT is lower than 0")
+        raise ValueError("argument 'prcp_conversion_factor' is lower than 0")
 
     if setup.read_pet and setup.pet_directory.decode().strip() == "...":
         raise ValueError(
-            "argument read_pet of SetupDT is True and pet_directory of SetupDT is not defined"
+            "argument 'read_pet' is True and 'pet_directory' of SetupDT is not defined"
         )
 
     if setup.read_pet and not os.path.exists(setup.pet_directory.decode().strip()):
@@ -154,15 +184,60 @@ def _standardize_setup(setup: SetupDT):
             setup.pet_directory.decode().strip(),
         )
 
-    if not setup.pet_format.decode().strip() in ["tiff", "nc"]:
+    if not setup.pet_format.decode().strip() in ["tif", "nc"]:
         raise ValueError(
-            f"argument pet_format of SetupDT must be one of {['tiff', 'nc']} not {setup.pet_format.decode().strip()}"
+            f"argument 'pet_format' must be one of {['tif', 'nc']} not {setup.pet_format.decode().strip()}"
         )
 
     if setup.pet_conversion_factor < 0:
-        raise ValueError("argument pet_conversion_factor of SetupDT is lower than 0")
+        raise ValueError("argument 'pet_conversion_factor' is lower than 0")
 
-    # TODO, check for better warning/error callbacks
+    if setup.interception_module < 0 or setup.interception_module > 1:
+        raise ValueError(
+            f"argument 'interception_module' must be in [0, 1] not {setup.interception_module}"
+        )
+
+    if setup.production_module < 0 or setup.production_module > 1:
+        raise ValueError(
+            f"argument 'production_module' must be in [0, 1] not {setup.production_module}"
+        )
+
+    if setup.exchange_module < 0 or setup.exchange_module > 2:
+        raise ValueError(
+            f"argument 'exchange_module' must be in [0, 2] not {setup.exchange_module}"
+        )
+
+    if setup.transfer_module < 0 or setup.transfer_module > 3:
+        raise ValueError(
+            f"argument 'transfer_module' must be in [0, 3] not {setup.transfer_module}"
+        )
+
+    if setup.routing_module < 0 or setup.routing_module > 3:
+        raise ValueError(
+            f"argument 'routing_module' must be in [0, 3] not {setup.routing_module}"
+        )
+
+    if setup.maxiter < 0:
+        raise ValueError(f"argument 'maxiter' is lower than 0")
+
+    # TODO, check for better warning/error callbacks for dict/array parameters
+
+
+def _build_setup(setup: SetupDT):
+
+    """
+    Build setup
+    """
+
+    _standardize_setup(setup)
+
+    st = pd.Timestamp(setup.start_time.decode().strip())
+    ost = pd.Timestamp(setup.optim_start_time.decode().strip())
+    et = pd.Timestamp(setup.end_time.decode().strip())
+
+    setup.ntime_step = (et - st).total_seconds() / setup.dt
+
+    setup.optim_start_step = (ost - st).total_seconds() / setup.dt + 1
 
 
 def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
@@ -197,24 +272,7 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if np.all(mesh.drained_area == -99):
         raise ValueError("argument drained_area of MeshDT contains only NaN value")
 
-    # TODO add check for remaining MeshDT attributes
-
-
-def _build_setup(setup: SetupDT):
-
-    """
-    Build setup
-    """
-
-    _standardize_setup(setup)
-
-    st = pd.Timestamp(setup.start_time.decode().strip())
-    ost = pd.Timestamp(setup.optim_start_time.decode().strip())
-    et = pd.Timestamp(setup.end_time.decode().strip())
-
-    setup.ntime_step = (et - st).total_seconds() / setup.dt
-
-    setup.optim_start_step = (ost - st).total_seconds() / setup.dt + 1
+    # TODO add check for remaining MeshDT attributes / or move to mesh
 
 
 def _compute_mesh_path(mesh: MeshDT):
@@ -223,9 +281,9 @@ def _compute_mesh_path(mesh: MeshDT):
         np.argsort(mesh.drained_area, axis=None), mesh.drained_area.shape
     )
 
-    # Transform from Python to FORTRAN index
-    mesh.path[0, :] = ind[0][:] + 1
-    mesh.path[1, :] = ind[1][:] + 1
+    #% Transform from Python to FORTRAN index
+    mesh.path[0, :] = ind[0] + 1
+    mesh.path[1, :] = ind[1] + 1
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
@@ -246,7 +304,7 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
     if setup.sparse_storage:
 
-        compute_rowcol_to_ind_sparse(mesh)
+        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mwd_mesh
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -309,7 +367,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             break
 
 
-def _index_containing_substring(the_list, substring):
+def _index_containing_substring(the_list: list, substring: str):
 
     for i, s in enumerate(the_list):
         if substring in s:
@@ -325,7 +383,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.prcp_format.decode().strip() == "tiff":
+    if setup.prcp_format.decode().strip() == "tif":
 
         files = sorted(
             glob.glob(
@@ -339,7 +397,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             glob.glob(f"{setup.prcp_directory.decode().strip()}/**/*nc", recursive=True)
         )
 
-    for i, date in enumerate(tqdm(date_range, desc="reading precipitation")):
+    for i, date in enumerate(tqdm(date_range, desc="Reading precipitation")):
 
         date_strf = date.strftime("%Y%m%d%H%M")
 
@@ -360,7 +418,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         else:
 
             matrix = (
-                read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -382,7 +440,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.pet_format.decode().strip() == "tiff":
+    if setup.pet_format.decode().strip() == "tif":
 
         files = sorted(
             glob.glob(
@@ -406,14 +464,14 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         if hourly_ratio >= 1:
 
-            ratio = np.repeat(SMASH_RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
+            ratio = np.repeat(RATION_PET_HOURLY, hourly_ratio) / hourly_ratio
 
         else:
 
-            ratio = np.sum(SMASH_RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
+            ratio = np.sum(RATION_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
         for i, day in enumerate(
-            tqdm(leap_year_days, desc="reading daily interannual pet")
+            tqdm(leap_year_days, desc="Reading daily interannual pet")
         ):
 
             if day.day_of_year in date_range.day_of_year:
@@ -443,7 +501,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        read_windowed_raster(files[ind], mesh)
+                        _read_windowed_raster(files[ind], mesh)
                         * setup.pet_conversion_factor
                     )
 
@@ -475,7 +533,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     else:
 
-        for i, date in enumerate(tqdm(date_range, desc="reading pet")):
+        for i, date in enumerate(tqdm(date_range, desc="Reading pet")):
 
             date_strf = date.strftime("%Y%m%d%H%M")
 
@@ -496,7 +554,8 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             else:
 
                 matrix = (
-                    read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
+                    _read_windowed_raster(files[ind], mesh)
+                    * setup.pet_conversion_factor
                 )
 
                 if setup.sparse_storage:

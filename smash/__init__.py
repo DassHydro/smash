@@ -1,37 +1,23 @@
-import os
-import sys
+from smash.core.model import Model
+from smash.core.utils import sparse_matrix_to_vector, sparse_vector_to_matrix
 
-sys.path.append(os.path.dirname(os.path.realpath(__file__)))
+from smash.mesh.meshing import generate_mesh
 
-from . import core
-from .core import *
-from .core.model import *
-from .core.utils import *
-from .core.common import *
+from smash.io.hdf5 import save_mesh, read_mesh
 
-from . import solver
-from .solver import *
-from .solver.mwd_setup import *
-from .solver.mwd_mesh import *
-from .solver.mwd_input_data import *
-from .solver.mwd_parameters import *
-from .solver.mwd_states import *
-from .solver.mwd_output import *
-from .solver.mwd_cost import *
-from .solver.mw_run import *
-from .solver.mw_adjoint_test import *
-from .solver.mw_optimize import *
 
-from .solver.mw_utils import *
+def __getattr__(name):
 
-from . import mesh
-from .mesh import *
-from .mesh.meshing import *
+    import warnings
 
-from . import io
-from .io import *
-from .io.yaml import *
-from .io.hdf5 import *
-from .io.raster import *
+    raise AttributeError(f"module 'smash' has no attribute '{name}'")
 
-__all__ = ["core", "solver", "mesh", "io"]
+
+__all__ = [
+    "Model",
+    "sparse_matrix_to_vector",
+    "sparse_vector_to_matrix",
+    "generate_mesh",
+    "save_mesh",
+    "read_mesh",
+]

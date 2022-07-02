@@ -1,18 +1,20 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver.mw_mesh import MeshDT
-
-from smash.solver.mw_utils import (
+from smash.solver._mwd_mesh import (
     sparse_matrix_to_vector_r,
     sparse_matrix_to_vector_i,
     sparse_vector_to_matrix_r,
     sparse_vector_to_matrix_i,
 )
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.solver._mw_mesh import MeshDT
+
 import numpy as np
+
+__all__ = ["sparse_matrix_to_vector", "sparse_vector_to_matrix"]
 
 
 def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
