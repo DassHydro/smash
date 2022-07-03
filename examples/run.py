@@ -1,14 +1,11 @@
 import smash
 
-import time
 import numpy as np
 import matplotlib.pyplot as plt
-# ~ from memory_profiler import profile
+from memory_profiler import profile
 
 # ~ flow_path = "FLOW_fr1km_Leblois_v1_L93.asc"
 # ~ flow_path = "30sec_flwdir_SA.tif"
-
-# ~ start_t = time.time()
 
 # ~ mesh = smash.generate_meshing(flow_path, x=-54.15439, y=5.35428, area=76_135 * 1e6, code='MARONI')
 
@@ -34,17 +31,21 @@ import matplotlib.pyplot as plt
 
 # ~ smash.save_mesh("mesh_Y3204040.hdf5")
 
-meshing_t = time.time()
+@profile
+def main(name):
+    mesh = smash.read_mesh(f"mesh_{name}.hdf5")
 
-# ~ print("MESHING", meshing_t - start_t)
+    model = smash.Model(configuration="configuration.yaml", mesh=mesh)
+    
+    model.run("fwd", inplace=True)
+    
+    plt.figure()
+    plt.plot(model.output.qsim[0,:])
+    plt.title(f"Simulated discharge {name}")
 
-mesh = smash.read_mesh("mesh_Y3204040.hdf5")
-# ~ mesh = smash.read_mesh("mesh_L8000020.hdf5")
+# name_list = ["Y3204040", "L8000020"]
 
-model = smash.Model(configuration="configuration.yaml", mesh=mesh)
+# for name in name_list:
+main("Y3204040")
 
-# model.run("adj", inplace=True)
-model.adjoint_test("gt", inplace=True)
-# ~ model_t = time.time()
-
-# ~ print("MODEL", model_t - meshing_t)
+plt.show()

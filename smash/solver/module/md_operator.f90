@@ -104,15 +104,15 @@ module md_operator
         end subroutine GR_transferN
         
         
-        subroutine upstream_discharge(dt, dx, ntime_step, nrow, ncol, &
-        & flow, drained_area, row, col, t, q, qup)
+        subroutine upstream_discharge(dt, dx, nrow, ncol, &
+        & flow, drained_area, row, col, q, qup)
         
             implicit none
 
             real(sp), intent(in) :: dt, dx
-            integer, intent(in) :: ntime_step, nrow, ncol, row, col, t
+            integer, intent(in) :: nrow, ncol, row, col
             integer, dimension(nrow, ncol), intent(in) :: flow, drained_area
-            real(sp), dimension(nrow, ncol, ntime_step), intent(in) :: q
+            real(sp), dimension(nrow, ncol), intent(in) :: q
             real(sp), intent(out) :: qup
             
             integer :: i, row_imd, col_imd
@@ -134,7 +134,7 @@ module md_operator
                     
                         if (flow(row_imd, col_imd) .eq. dkind(i)) then
                         
-                            qup = qup + q(row_imd, col_imd, t)
+                            qup = qup + q(row_imd, col_imd)
                             
                         end if
                         
@@ -150,15 +150,15 @@ module md_operator
         end subroutine upstream_discharge
         
         
-        subroutine sparse_upstream_discharge(dt, dx, ntime_step, nrow, ncol, nac, &
-        & flow, drained_area, ind_sparse, row, col, t, q, qup)
+        subroutine sparse_upstream_discharge(dt, dx, nrow, ncol, nac, &
+        & flow, drained_area, ind_sparse, row, col, q, qup)
             
             implicit none
 
             real(sp), intent(in) :: dt, dx
-            integer, intent(in) :: ntime_step, nrow, ncol, nac, row, col, t
+            integer, intent(in) :: nrow, ncol, nac, row, col
             integer, dimension(nrow, ncol), intent(in) :: flow, drained_area, ind_sparse
-            real(sp), dimension(nac, ntime_step), intent(in) :: q
+            real(sp), dimension(nac), intent(in) :: q
             real(sp), intent(out) :: qup
             
             integer :: i, row_imd, col_imd, k
@@ -181,7 +181,7 @@ module md_operator
                         if (flow(row_imd, col_imd) .eq. dkind(i)) then
                             
                             k = ind_sparse(row_imd, col_imd)
-                            qup = qup + q(k, t)
+                            qup = qup + q(k)
                             
                         end if
                         

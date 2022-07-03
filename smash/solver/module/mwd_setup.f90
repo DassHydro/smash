@@ -39,6 +39,7 @@
 !%      ``lb_parameters``          Lower bounds of SMASH parameters                       (default: see below)
 !%      ``ub_parameters``          Upper bounds of SMASH parameters                       (default: see below
 !%      ``maxiter``                Maximum number of optimization iteration               (default: 100)
+!%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      =========================  =====================================
 
 module mwd_setup
@@ -129,6 +130,8 @@ module mwd_setup
         &   1e3_sp/)        !% lr
         
         integer :: maxiter = 100
+        
+        logical :: save_qsim_domain = .false.
         
     end type SetupDT
     

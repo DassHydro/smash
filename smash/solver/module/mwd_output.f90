@@ -10,6 +10,10 @@
 !%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
 !%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
 !%      ``parameters_gradient``  Parameters gradients
+!%      ``sp1``                  Scalar product <dY*, dY>
+!%      ``sp2``                  Scalar product <dk*, dk>
+!%      ``an``                   Alpha gradient test 
+!%      ``Ian``                  Ialpha gradient test
 !%      ======================== =======================================
 module mwd_output
     
@@ -27,6 +31,12 @@ module mwd_output
         
         real(sp), dimension(:,:,:), allocatable :: parameters_gradient
         
+        real(sp) :: sp1
+        real(sp) :: sp2
+        
+        real(sp), dimension(:), allocatable :: an
+        real(sp), dimension(:), allocatable :: ian
+        
     end type OutputDT
     
     contains
@@ -42,18 +52,22 @@ module mwd_output
             allocate(output%qsim(mesh%ng, setup%ntime_step))
             output%qsim = - 99._sp
             
-            if (setup%sparse_storage) then
-            
-                allocate(output%sparse_qsim_domain(mesh%nac, &
-                & setup%ntime_step))
-                output%sparse_qsim_domain = - 99._sp
+            if (setup%save_qsim_domain) then
                 
-            else
+                if (setup%sparse_storage) then
+                
+                    allocate(output%sparse_qsim_domain(mesh%nac, &
+                    & setup%ntime_step))
+                    output%sparse_qsim_domain = - 99._sp
+                    
+                else
 
-                allocate(output%qsim_domain(mesh%nrow, mesh%ncol, &
-                & setup%ntime_step))
-                output%qsim_domain = - 99._sp
-            
+                    allocate(output%qsim_domain(mesh%nrow, mesh%ncol, &
+                    & setup%ntime_step))
+                    output%qsim_domain = - 99._sp
+                
+                end if
+                
             end if
         
         end subroutine OutputDT_initialise

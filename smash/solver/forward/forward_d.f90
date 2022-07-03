@@ -12,6 +12,10 @@
 !%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
 !%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
 !%      ``parameters_gradient``  Parameters gradients
+!%      ``sp1``                  Scalar product <dY*, dY>
+!%      ``sp2``                  Scalar product <dk*, dk>
+!%      ``an``                   Alpha gradient test 
+!%      ``Ian``                  Ialpha gradient test
 !%      ======================== =======================================
 MODULE MWD_OUTPUT_DIFF_D
 !% only: sp, dp, lchar, np, ns
@@ -26,11 +30,13 @@ MODULE MWD_OUTPUT_DIFF_D
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qsim_domain
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_qsim_domain
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: parameters_gradient
+      REAL(sp) :: sp1
+      REAL(sp) :: sp2
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: an
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: ian
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF_D
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qsim
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qsim_domain
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_qsim_domain
   END TYPE OUTPUTDT_DIFF_D
 
 CONTAINS
@@ -41,13 +47,15 @@ CONTAINS
     TYPE(MESHDT), INTENT(INOUT) :: mesh
     ALLOCATE(output%qsim(mesh%ng, setup%ntime_step))
     output%qsim = -99._sp
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(output%sparse_qsim_domain(mesh%nac, setup%ntime_step))
-      output%sparse_qsim_domain = -99._sp
-    ELSE
-      ALLOCATE(output%qsim_domain(mesh%nrow, mesh%ncol, setup%ntime_step&
-&     ))
-      output%qsim_domain = -99._sp
+    IF (setup%save_qsim_domain) THEN
+      IF (setup%sparse_storage) THEN
+        ALLOCATE(output%sparse_qsim_domain(mesh%nac, setup%ntime_step))
+        output%sparse_qsim_domain = -99._sp
+      ELSE
+        ALLOCATE(output%qsim_domain(mesh%nrow, mesh%ncol, setup%&
+&       ntime_step))
+        output%qsim_domain = -99._sp
+      END IF
     END IF
   END SUBROUTINE OUTPUTDT_INITIALISE
 
@@ -552,14 +560,14 @@ CONTAINS
 !  Differentiation of upstream_discharge in forward (tangent) mode (with options OpenMP context fixinterface):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, ntime_step, nrow, ncol, flow, &
-&   drained_area, row, col, t, q, q_d, qup, qup_d)
+  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flow, drained_area&
+&   , row, col, q, q_d, qup, qup_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: ntime_step, nrow, ncol, row, col, t
+    INTEGER, INTENT(IN) :: nrow, ncol, row, col
     INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area
-    REAL(sp), DIMENSION(nrow, ncol, ntime_step), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nrow, ncol, ntime_step), INTENT(IN) :: q_d
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q_d
     REAL(sp), INTENT(OUT) :: qup
     REAL(sp), INTENT(OUT) :: qup_d
     INTEGER :: i, row_imd, col_imd
@@ -577,8 +585,8 @@ CONTAINS
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
           IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
-            qup_d = qup_d + q_d(row_imd, col_imd, t)
-            qup = qup + q(row_imd, col_imd, t)
+            qup_d = qup_d + q_d(row_imd, col_imd)
+            qup = qup + q(row_imd, col_imd)
           END IF
         END IF
       END DO
@@ -590,13 +598,13 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE_D
 
-  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, ntime_step, nrow, ncol, flow, &
-&   drained_area, row, col, t, q, qup)
+  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flow, drained_area, &
+&   row, col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: ntime_step, nrow, ncol, row, col, t
+    INTEGER, INTENT(IN) :: nrow, ncol, row, col
     INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area
-    REAL(sp), DIMENSION(nrow, ncol, ntime_step), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
     INTEGER :: i, row_imd, col_imd
     INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
@@ -611,7 +619,7 @@ CONTAINS
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
           IF (flow(row_imd, col_imd) .EQ. dkind(i)) qup = qup + q(&
-&             row_imd, col_imd, t)
+&             row_imd, col_imd)
         END IF
       END DO
       qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
@@ -621,16 +629,15 @@ CONTAINS
 !  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options OpenMP context fixinterface):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, ntime_step, nrow, ncol&
-&   , nac, flow, drained_area, ind_sparse, row, col, t, q, q_d, qup, &
-&   qup_d)
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flow, &
+&   drained_area, ind_sparse, row, col, q, q_d, qup, qup_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: ntime_step, nrow, ncol, nac, row, col, t
+    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
     INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area, &
 &   ind_sparse
-    REAL(sp), DIMENSION(nac, ntime_step), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nac, ntime_step), INTENT(IN) :: q_d
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q_d
     REAL(sp), INTENT(OUT) :: qup
     REAL(sp), INTENT(OUT) :: qup_d
     INTEGER :: i, row_imd, col_imd, k
@@ -649,8 +656,8 @@ CONTAINS
 &           .AND. row_imd .LE. nrow) THEN
           IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
             k = ind_sparse(row_imd, col_imd)
-            qup_d = qup_d + q_d(k, t)
-            qup = qup + q(k, t)
+            qup_d = qup_d + q_d(k)
+            qup = qup + q(k)
           END IF
         END IF
       END DO
@@ -662,14 +669,14 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D
 
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, ntime_step, nrow, ncol, &
-&   nac, flow, drained_area, ind_sparse, row, col, t, q, qup)
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flow, &
+&   drained_area, ind_sparse, row, col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: ntime_step, nrow, ncol, nac, row, col, t
+    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
     INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area, &
 &   ind_sparse
-    REAL(sp), DIMENSION(nac, ntime_step), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
     INTEGER :: i, row_imd, col_imd, k
     INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
@@ -685,7 +692,7 @@ CONTAINS
 &           .AND. row_imd .LE. nrow) THEN
           IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
             k = ind_sparse(row_imd, col_imd)
-            qup = qup + q(k, t)
+            qup = qup + q(k)
           END IF
         END IF
       END DO
@@ -963,7 +970,6 @@ END MODULE MWD_PARAMETERS_DIFF_D
 !                parameters.cst:(loc) *(parameters.cst):(loc) parameters.alpha:(loc)
 !                *(parameters.alpha):in parameters.exc:(loc) *(parameters.exc):in
 !                parameters.lr:(loc) *(parameters.lr):in *(output.qsim):(loc)
-!                *(output.qsim_domain):(loc) *(output.sparse_qsim_domain):(loc)
 !                states.hi:(loc) *(states.hi):in-killed states.hp:(loc)
 !                *(states.hp):in-killed states.hft:(loc) *(states.hft):in-killed
 !                states.hst:(loc) *(states.hst):(loc) states.hlr:(loc)
@@ -971,7 +977,6 @@ END MODULE MWD_PARAMETERS_DIFF_D
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.alpha:in
 !                parameters.exc:in parameters.lr:in output.qsim:in
-!                output.qsim_domain:in output.sparse_qsim_domain:in
 !                states.hi:in states.hp:in states.hft:in states.hlr:in
 SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 & states, states_d, output, output_d, cost, cost_d)
@@ -1015,19 +1020,30 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !===================================================================================================================== %!
-  INTEGER :: t, i, row, col, k, g
+  REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
+  REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
+  REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+  REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
 & qt, qup, qrout
   REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qd_d, &
 & qr_d, qt_d, qup_d, qrout_d
+  INTEGER :: t, i, row, col, k, g
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
   REAL(sp) :: temp
   REAL :: temp0
   cost = 0._sp
-  IF (.not. setup%sparse_storage)  output_d%qsim_domain = 0.0_4
-  IF (setup%sparse_storage)  output_d%sparse_qsim_domain = 0.0_4
+  IF (setup%sparse_storage) THEN
+    ALLOCATE(sparse_q_d(mesh%nac))
+    ALLOCATE(sparse_q(mesh%nac))
+    output_d%qsim = 0.0_4
+  ELSE
+    ALLOCATE(q_d(mesh%nrow, mesh%ncol))
+    ALLOCATE(q(mesh%nrow, mesh%ncol))
+    output_d%qsim = 0.0_4
+  END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -1175,93 +1191,88 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
           SELECT CASE  (setup%routing_module) 
           CASE (0) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup&
-&                                        %ntime_step, mesh%nrow, mesh%&
-&                                        ncol, mesh%nac, mesh%flow, mesh&
-&                                        %drained_area, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, mesh%&
+&                                        nrow, mesh%ncol, mesh%nac, mesh&
+&                                        %flow, mesh%drained_area, mesh%&
 &                                        rowcol_to_ind_sparse, row, col&
-&                                        , t, output%sparse_qsim_domain&
-&                                        , output_d%sparse_qsim_domain, &
-&                                        qup, qup_d)
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               temp = 0.001_sp*(setup%dx*setup%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
-              output_d%sparse_qsim_domain(k, t) = temp*(qt_d+temp0*qup_d&
-&               )/setup%dt
-              output%sparse_qsim_domain(k, t) = temp*((qt+temp0*qup)/&
-&               setup%dt)
+              sparse_q_d(k) = temp*(qt_d+temp0*qup_d)/setup%dt
+              sparse_q(k) = temp*((qt+temp0*qup)/setup%dt)
             ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup%&
-&                                 ntime_step, mesh%nrow, mesh%ncol, mesh&
-&                                 %flow, mesh%drained_area, row, col, t&
-&                                 , output%qsim_domain, output_d%&
-&                                 qsim_domain, qup, qup_d)
+              CALL UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, mesh%nrow, &
+&                                 mesh%ncol, mesh%flow, mesh%&
+&                                 drained_area, row, col, q, q_d, qup, &
+&                                 qup_d)
               temp = 0.001_sp*(setup%dx*setup%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
-              output_d%qsim_domain(row, col, t) = temp*(qt_d+temp0*qup_d&
-&               )/setup%dt
-              output%qsim_domain(row, col, t) = temp*((qt+temp0*qup)/&
-&               setup%dt)
+              q_d(row, col) = temp*(qt_d+temp0*qup_d)/setup%dt
+              q(row, col) = temp*((qt+temp0*qup)/setup%dt)
             END IF
           CASE (1) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup&
-&                                        %ntime_step, mesh%nrow, mesh%&
-&                                        ncol, mesh%nac, mesh%flow, mesh&
-&                                        %drained_area, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, mesh%&
+&                                        nrow, mesh%ncol, mesh%nac, mesh&
+&                                        %flow, mesh%drained_area, mesh%&
 &                                        rowcol_to_ind_sparse, row, col&
-&                                        , t, output%sparse_qsim_domain&
-&                                        , output_d%sparse_qsim_domain, &
-&                                        qup, qup_d)
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
 &                           row, col), parameters_d%lr(row, col), states&
 &                           %hlr(row, col), states_d%hlr(row, col), &
 &                           qrout, qrout_d)
               temp = 0.001_sp*(setup%dx*setup%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
-              output_d%sparse_qsim_domain(k, t) = temp*(qt_d+temp0*&
-&               qrout_d)/setup%dt
-              output%sparse_qsim_domain(k, t) = temp*((qt+temp0*qrout)/&
-&               setup%dt)
+              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
+              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
             ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, setup%&
-&                                 ntime_step, mesh%nrow, mesh%ncol, mesh&
-&                                 %flow, mesh%drained_area, row, col, t&
-&                                 , output%qsim_domain, output_d%&
-&                                 qsim_domain, qup, qup_d)
+              CALL UPSTREAM_DISCHARGE_D(setup%dt, setup%dx, mesh%nrow, &
+&                                 mesh%ncol, mesh%flow, mesh%&
+&                                 drained_area, row, col, q, q_d, qup, &
+&                                 qup_d)
               CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
 &                           row, col), parameters_d%lr(row, col), states&
 &                           %hlr(row, col), states_d%hlr(row, col), &
 &                           qrout, qrout_d)
               temp = 0.001_sp*(setup%dx*setup%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
-              output_d%qsim_domain(row, col, t) = temp*(qt_d+temp0*&
-&               qrout_d)/setup%dt
-              output%qsim_domain(row, col, t) = temp*((qt+temp0*qrout)/&
-&               setup%dt)
+              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
             END IF
           END SELECT
         END IF
       END IF
     END DO
-  END DO
-  output_d%qsim = 0.0_4
 !% [ END DO SPACE ]
-!% [ END DO TIME ]
-!% =================================================================================================================== %!
-!%   Store discharge at gauge
-!% =================================================================================================================== %!
-  DO g=1,mesh%ng
-    row = mesh%gauge_pos(1, g)
-    col = mesh%gauge_pos(2, g)
-    IF (setup%sparse_storage) THEN
-      k = mesh%rowcol_to_ind_sparse(row, col)
-      output_d%qsim(g, :) = output_d%sparse_qsim_domain(k, :)
-      output%qsim(g, :) = output%sparse_qsim_domain(k, :)
-    ELSE
-      output_d%qsim(g, :) = output_d%qsim_domain(row, col, :)
-      output%qsim(g, :) = output%qsim_domain(row, col, :)
+!% =============================================================================================================== %!
+!%   Store simulated discharge at gauge
+!% =============================================================================================================== %!
+    DO g=1,mesh%ng
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
+      IF (setup%sparse_storage) THEN
+        k = mesh%rowcol_to_ind_sparse(row, col)
+        output_d%qsim(g, t) = sparse_q_d(k)
+        output%qsim(g, t) = sparse_q(k)
+      ELSE
+        output_d%qsim(g, t) = q_d(row, col)
+        output%qsim(g, t) = q(row, col)
+      END IF
+    END DO
+!% =============================================================================================================== %!
+!%   Store simulated discharge at domain (optional)
+!% =============================================================================================================== %!
+    IF (setup%save_qsim_domain) THEN
+      IF (setup%sparse_storage) THEN
+        output%sparse_qsim_domain(:, t) = sparse_q
+      ELSE
+        output%qsim_domain(:, :, t) = q
+      END IF
     END IF
   END DO
+!% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
@@ -1307,13 +1318,20 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !===================================================================================================================== %!
-  INTEGER :: t, i, row, col, k, g
+  REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
+  REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
 & qt, qup, qrout
+  INTEGER :: t, i, row, col, k, g
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
   cost = 0._sp
+  IF (setup%sparse_storage) THEN
+    ALLOCATE(sparse_q(mesh%nac))
+  ELSE
+    ALLOCATE(q(mesh%nrow, mesh%ncol))
+  END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -1426,68 +1444,70 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
           SELECT CASE  (setup%routing_module) 
           CASE (0) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
-&                                      ntime_step, mesh%nrow, mesh%ncol&
-&                                      , mesh%nac, mesh%flow, mesh%&
-&                                      drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, t&
-&                                      , output%sparse_qsim_domain, qup)
-              output%sparse_qsim_domain(k, t) = (qt+qup*REAL(mesh%&
-&               drained_area(row, col)-1))*setup%dx*setup%dx*0.001_sp/&
-&               setup%dt
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+&                                      nrow, mesh%ncol, mesh%nac, mesh%&
+&                                      flow, mesh%drained_area, mesh%&
+&                                      rowcol_to_ind_sparse, row, col, &
+&                                      sparse_q, qup)
+              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
+&               *setup%dx*setup%dx*0.001_sp/setup%dt
             ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
-&                               ntime_step, mesh%nrow, mesh%ncol, mesh%&
-&                               flow, mesh%drained_area, row, col, t, &
-&                               output%qsim_domain, qup)
-              output%qsim_domain(row, col, t) = (qt+qup*REAL(mesh%&
-&               drained_area(row, col)-1))*setup%dx*setup%dx*0.001_sp/&
-&               setup%dt
+              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
+&                               mesh%ncol, mesh%flow, mesh%drained_area&
+&                               , row, col, q, qup)
+              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
+&               *setup%dx*setup%dx*0.001_sp/setup%dt
             END IF
           CASE (1) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
-&                                      ntime_step, mesh%nrow, mesh%ncol&
-&                                      , mesh%nac, mesh%flow, mesh%&
-&                                      drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, t&
-&                                      , output%sparse_qsim_domain, qup)
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+&                                      nrow, mesh%ncol, mesh%nac, mesh%&
+&                                      flow, mesh%drained_area, mesh%&
+&                                      rowcol_to_ind_sparse, row, col, &
+&                                      sparse_q, qup)
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
-              output%sparse_qsim_domain(k, t) = (qt+qrout*REAL(mesh%&
-&               drained_area(row, col)-1))*setup%dx*setup%dx*0.001_sp/&
-&               setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
+&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
             ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, setup%&
-&                               ntime_step, mesh%nrow, mesh%ncol, mesh%&
-&                               flow, mesh%drained_area, row, col, t, &
-&                               output%qsim_domain, qup)
+              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
+&                               mesh%ncol, mesh%flow, mesh%drained_area&
+&                               , row, col, q, qup)
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
-              output%qsim_domain(row, col, t) = (qt+qrout*REAL(mesh%&
-&               drained_area(row, col)-1))*setup%dx*setup%dx*0.001_sp/&
-&               setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
+&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
             END IF
           END SELECT
         END IF
       END IF
     END DO
-  END DO
 !% [ END DO SPACE ]
-!% [ END DO TIME ]
-!% =================================================================================================================== %!
-!%   Store discharge at gauge
-!% =================================================================================================================== %!
-  DO g=1,mesh%ng
-    row = mesh%gauge_pos(1, g)
-    col = mesh%gauge_pos(2, g)
-    IF (setup%sparse_storage) THEN
-      k = mesh%rowcol_to_ind_sparse(row, col)
-      output%qsim(g, :) = output%sparse_qsim_domain(k, :)
-    ELSE
-      output%qsim(g, :) = output%qsim_domain(row, col, :)
+!% =============================================================================================================== %!
+!%   Store simulated discharge at gauge
+!% =============================================================================================================== %!
+    DO g=1,mesh%ng
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
+      IF (setup%sparse_storage) THEN
+        k = mesh%rowcol_to_ind_sparse(row, col)
+        output%qsim(g, t) = sparse_q(k)
+      ELSE
+        output%qsim(g, t) = q(row, col)
+      END IF
+    END DO
+!% =============================================================================================================== %!
+!%   Store simulated discharge at domain (optional)
+!% =============================================================================================================== %!
+    IF (setup%save_qsim_domain) THEN
+      IF (setup%sparse_storage) THEN
+        output%sparse_qsim_domain(:, t) = sparse_q
+      ELSE
+        output%qsim_domain(:, :, t) = q
+      END IF
     END IF
   END DO
+!% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!

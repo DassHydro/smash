@@ -27,7 +27,9 @@ module mw_run
             type(OutputDT), intent(inout) :: output
             
             real(sp) :: cost
-
+            
+            write(*,*) ">>> Forward Model M (k)"
+            
             call forward(setup, mesh, input_data, parameters, states, output, cost)
 
         end subroutine forward_run
@@ -54,6 +56,8 @@ module mw_run
             call ParametersDT_initialise(parameters_b, setup, mesh)
             call StatesDT_initialise(states_b, setup, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
+            
+            write(*,*) ">>> Adjoint Model (dM/dk)* (k)"
         
             cost_b = 1._sp
             
@@ -89,6 +93,8 @@ module mw_run
             type(StatesDT) :: states_d
             type(OutputDT) :: output_d
             real(sp) :: cost, cost_d
+            
+            write(*,*) ">>> Tangent Linear Model (dM/dk) (k)"
             
             call forward_d(setup, mesh, input_data, parameters, &
             & parameters_d, states, states_d, output, output_d, cost, cost_d)

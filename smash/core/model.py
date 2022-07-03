@@ -105,7 +105,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"setup attribute must be set with {type(SetupDT())}, not {type(value)}"
+                f"'setup' attribute must be set with {type(SetupDT())}, not {type(value)}"
             )
 
     @property
@@ -121,7 +121,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"mesh attribute must be set with {type(MeshDT())}, not {type(value)}"
+                f"'mesh' attribute must be set with {type(MeshDT())}, not {type(value)}"
             )
 
     @property
@@ -137,7 +137,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"input_data attribute must be set with {type(Input_DataDT())}, not {type(value)}"
+                f"'input_data' attribute must be set with {type(Input_DataDT())}, not {type(value)}"
             )
 
     @property
@@ -154,7 +154,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"parameters attribute must be set with {type(ParametersDT())}, not {type(value)}"
+                f"'parameters' attribute must be set with {type(ParametersDT())}, not {type(value)}"
             )
 
     @property
@@ -171,7 +171,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"states attribute must be set with {type(StatesDT())}, not {type(value)}"
+                f"'states' attribute must be set with {type(StatesDT())}, not {type(value)}"
             )
 
     @property
@@ -188,7 +188,7 @@ class Model(object):
 
         else:
             raise TypeError(
-                f"output attribute must be set with {type(OutputDT())}, not {type(value)}"
+                f"'output' attribute must be set with {type(OutputDT())}, not {type(value)}"
             )
 
     def copy(self):
@@ -248,7 +248,7 @@ class Model(object):
 
         else:
 
-            raise ValueError(f"case must be one of ['fwd', 'adj', 'tl'] not {case}")
+            raise ValueError(f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'")
 
     def adjoint_test(self, case: str = "spt", inplace: bool = False):
 
@@ -281,6 +281,10 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+        else:
+
+            raise ValueError(f"'case' argument must be one of ['spt', 'gt'] not '{case}'")
 
     def optimize(self, solver: str = "sbs", inplace: bool = False):
 

@@ -10,5 +10,4 @@
 	"mw_run": "_mw_run",
 	"mw_adjoint_test": "_mw_adjoint_test",
 	"mw_optimize": "_mw_optimize",
-	"mw_utils": "_mw_utils",
 }
