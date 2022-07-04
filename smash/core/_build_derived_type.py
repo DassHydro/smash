@@ -275,17 +275,6 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     # TODO add check for remaining MeshDT attributes / or move to mesh
 
 
-def _compute_mesh_path(mesh: MeshDT):
-
-    ind = np.unravel_index(
-        np.argsort(mesh.drained_area, axis=None), mesh.drained_area.shape
-    )
-
-    #% Transform from Python to FORTRAN index
-    mesh.path[0, :] = ind[0] + 1
-    mesh.path[1, :] = ind[1] + 1
-
-
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
     """
@@ -293,8 +282,6 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     """
 
     _standardize_mesh(setup, mesh)
-
-    _compute_mesh_path(mesh)
 
     if not setup.active_cell_only:
 
@@ -304,7 +291,7 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
     if setup.sparse_storage:
 
-        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mwd_mesh
+        compute_rowcol_to_ind_sparse(mesh) #% Fortran subroutine mwd_mesh
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):

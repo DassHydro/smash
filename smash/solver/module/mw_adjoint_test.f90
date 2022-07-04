@@ -27,14 +27,14 @@ module mw_adjoint_test
             type(OutputDT), intent(inout) :: output
             
             type(ParametersDT) :: parameters_d, parameters_b
-            type(StatesDT) :: states_d, states_b, init_states
+            type(StatesDT) :: states_d, states_b, states_bgd
             type(OutputDT) ::  output_d, output_b
             real(sp) :: cost, cost_d, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
             
             write(*,*) "--- Scalar Product Test ---"
             
-            init_states = states
+            states_bgd = states
             
             call ParametersDT_initialise(parameters_d, setup, mesh)
             call ParametersDT_initialise(parameters_b, setup, mesh)
@@ -56,7 +56,7 @@ module mw_adjoint_test
             call forward_d(setup, mesh, input_data, parameters, &
             & parameters_d, states, states_d, output, output_d, cost, cost_d)
             
-            states = init_states
+            states = states_bgd
             cost_b = 1._sp
             
             write(*,*) ">>> Adjoint Model        dk* = (dM/dk)* (k) . dY*"
@@ -91,8 +91,8 @@ module mw_adjoint_test
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            type(ParametersDT) :: parameters_b, init_parameters
-            type(StatesDT) :: states_b, init_states
+            type(ParametersDT) :: parameters_b, parameters_bgd
+            type(StatesDT) :: states_b, states_bgd
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_b_matrix
@@ -105,8 +105,8 @@ module mw_adjoint_test
     
             if (.not. allocated(output%ian)) allocate(output%ian(16))
             
-            init_states = states
-            init_parameters = parameters
+            states_bgd = states
+            parameters_bgd = parameters
             dk = 10._sp
             
             call ParametersDT_initialise(parameters_b, setup, mesh)
@@ -119,7 +119,7 @@ module mw_adjoint_test
             
             yk = cost
             
-            states = init_states
+            states = states_bgd
             cost_b = 1._sp
             
             write(*,*) ">>> Adjoint Model dk*  = (dM/dk)* (k) . dY*"
@@ -135,13 +135,13 @@ module mw_adjoint_test
             
                 output%an(n) = 2._sp ** (- (n - 1))
             
-                call parameters_to_matrix(init_parameters, parameters_matrix)
+                call parameters_to_matrix(parameters_bgd, parameters_matrix)
                 
                 parameters_matrix = parameters_matrix + output%an(n) * dk
                 
                 call matrix_to_parameters(parameters_matrix, parameters)
                 
-                states = init_states
+                states = states_bgd
                 
                 call forward(setup, mesh, input_data, parameters, states, output, cost)
                 

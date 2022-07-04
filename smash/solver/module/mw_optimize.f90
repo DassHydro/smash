@@ -13,7 +13,7 @@ module mw_optimize
     
     public :: optimize_sbs, optimize_lbfgsb
     
-    private :: transformation, inv_transformation
+    private :: transformation, inv_transformation, normalize_matrix, unnormalize_matrix
     
     contains
         
@@ -30,7 +30,7 @@ module mw_optimize
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
             
-            type(StatesDT) :: init_states
+            type(StatesDT) :: states_bgd
             integer, dimension(mesh%nrow, mesh%ncol) :: mask_ac
             integer, dimension(2) :: loc_ac
             integer :: iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, p, pp
@@ -50,7 +50,7 @@ module mw_optimize
         
             loc_ac = maxloc(mask_ac)
             
-            init_states = states
+            states_bgd = states
             
             call forward(setup, mesh, input_data, parameters, states, output, cost)
             
@@ -113,7 +113,7 @@ module mw_optimize
                             
                             call matrix_to_parameters(parameters_matrix, parameters)
                             
-                            states = init_states
+                            states = states_bgd
                             
                             call forward(setup, mesh, input_data, parameters, states, output, cost)
                             
@@ -208,7 +208,7 @@ module mw_optimize
                     
                     call matrix_to_parameters(parameters_matrix, parameters)
                     
-                    states = init_states
+                    states = states_bgd
                     
                     call forward(setup, mesh, input_data, parameters, states, output, cost)
                     
@@ -340,7 +340,7 @@ module mw_optimize
             real(dp) :: dsave(29)
             
             type(ParametersDT) :: parameters_b
-            type(StatesDT) :: states_b, init_states
+            type(StatesDT) :: states_b, states_bgd
             type(OutputDT) :: output_b
             real(sp) :: cost_b
             
@@ -371,7 +371,7 @@ module mw_optimize
             
             call OutputDT_initialise(output_b, setup, mesh)
             
-            init_states = states
+            states_bgd = states
             
             task = 'START'
             iwriteX=0
@@ -407,7 +407,7 @@ module mw_optimize
                 
                     cost_b = 1._sp
                     cost = 0._sp
-                    states = init_states
+                    states = states_bgd
                     
                     call forward_b(setup, mesh, input_data, parameters, &
                     & parameters_b, states, states_b, output, output_b, cost, cost_b)
@@ -428,7 +428,7 @@ module mw_optimize
                     
             end do
 
-        states = init_states
+        states = states_bgd
         
         call forward(setup, mesh, input_data, parameters, states, output, cost)
 

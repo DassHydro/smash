@@ -249,6 +249,8 @@ class Model(object):
         else:
 
             raise ValueError(f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'")
+            
+        return instance
 
     def adjoint_test(self, case: str = "spt", inplace: bool = False):
 
@@ -285,41 +287,49 @@ class Model(object):
         else:
 
             raise ValueError(f"'case' argument must be one of ['spt', 'gt'] not '{case}'")
+            
+        return instance
 
-    def optimize(self, solver: str = "sbs", inplace: bool = False):
+    # def optimize(self, parameters: dict, algorithm: str = "sbs", obj_fun: str = "nse", bounds: (dict, None) = None, gauge_rules: (list, None) = None, options: (dict, None) = None, inplace: bool = False):
 
-        if inplace:
+        # if inplace:
 
-            instance = self
+            # instance = self
 
-        else:
+        # else:
 
-            instance = self.copy()
+            # instance = self.copy()
+            
+        # optimize_setup = _standardize_optimize_setup(instance.setup, instance.mesh, parameters, algorithm, obj_fun, bounds, gauge_rules, options)
 
-        if solver == "sbs":
+        # if algorithm == "sbs":
 
-            cost = np.float32(0.0)
+            # cost = np.float32(0.0)
 
-            optimize_sbs(
-                self.setup,
-                self.mesh,
-                self.input_data,
-                self.parameters,
-                self.states,
-                self.output,
-                cost,
-            )
+            # optimize_sbs(
+                # self.setup,
+                # optimize_setup,
+                # self.mesh,
+                # self.input_data,
+                # self.parameters,
+                # self.states,
+                # self.output,
+                # cost,
+            # )
 
-        elif solver == "l-bfgs-b":
+        # elif algorithm == "l-bfgs-b":
 
-            cost = np.float32(0.0)
+            # cost = np.float32(0.0)
 
-            optimize_lbfgsb(
-                self.setup,
-                self.mesh,
-                self.input_data,
-                self.parameters,
-                self.states,
-                self.output,
-                cost,
-            )
+            # optimize_lbfgsb(
+                # self.setup,
+                # optimize_setup,
+                # self.mesh,
+                # self.input_data,
+                # self.parameters,
+                # self.states,
+                # self.output,
+                # cost,
+            # )
+            
+        # return instance
