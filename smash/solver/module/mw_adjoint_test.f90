@@ -47,7 +47,7 @@ module mw_adjoint_test
             
             call parameters_to_matrix(parameters_d, parameters_d_matrix)
             
-            parameters_d_matrix = 1._sp
+            parameters_d_matrix = 10._sp
             
             call matrix_to_parameters(parameters_d_matrix, parameters_d)
             

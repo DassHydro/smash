@@ -169,19 +169,18 @@ def generate_mesh(
     drained_area = _meshing.drained_area(flow)
 
     drained_area = np.ma.masked_array(drained_area, mask=(1 - global_mask_dln))
-    
-    ind_path = np.unravel_index(
-        np.argsort(drained_area, axis=None), drained_area.shape
-    )
-    
+
+    ind_path = np.unravel_index(np.argsort(drained_area, axis=None), drained_area.shape)
+
     path = np.zeros(shape=(2, flow.shape[0] * flow.shape[1]), dtype=np.int32, order="F")
-    
+
     #% Transform from Python to FORTRAN index
     path[0, :] = ind_path[0] + 1
     path[1, :] = ind_path[1] + 1
 
     global_active_cell = global_mask_dln.astype(np.int32)
 
+    #% Transform from Python to FORTRAN index
     gauge_pos = np.vstack((row_otl + 1, col_otl + 1))
 
     mesh = {

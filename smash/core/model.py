@@ -10,8 +10,6 @@ from smash.solver._mw_run import forward_run, adjoint_run, tangent_linear_run
 from smash.solver._mw_adjoint_test import scalar_product_test, gradient_test
 from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
 
-from smash.io._yaml import _read_yaml_configuration
-
 from smash.core._build_derived_type import (
     _parse_derived_type,
     _build_setup,
@@ -34,7 +32,7 @@ class Model(object):
 
     def __init__(
         self,
-        configuration: (str, None) = None,
+        setup: (str, None) = None,
         mesh: (dict, None) = None,
         build: bool = True,
     ):
@@ -43,21 +41,19 @@ class Model(object):
 
             self.setup = SetupDT()
 
-            if configuration is None:
+            if setup is None:
 
-                raise ValueError(f"'configuration' argument must be defined")
+                raise ValueError(f"'setup' argument must be defined")
 
             else:
 
-                if isinstance(configuration, str):
-                    _parse_derived_type(
-                        self.setup, _read_yaml_configuration(configuration)
-                    )
+                if isinstance(setup, dict):
+                    _parse_derived_type(self.setup, setup)
 
                 else:
 
                     raise TypeError(
-                        f"'configuration' argument must be string, not {type(configuration)}"
+                        f"'setup' argument must be dictionary, not {type(setup)}"
                     )
 
             _build_setup(self.setup)
@@ -91,6 +87,7 @@ class Model(object):
             self.states = StatesDT(self.setup, self.mesh)
 
             self.output = OutputDT(self.setup, self.mesh)
+            
 
     @property
     def setup(self):
@@ -248,8 +245,10 @@ class Model(object):
 
         else:
 
-            raise ValueError(f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'")
-            
+            raise ValueError(
+                f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'"
+            )
+
         return instance
 
     def adjoint_test(self, case: str = "spt", inplace: bool = False):
@@ -283,53 +282,55 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
-            
+
         else:
 
-            raise ValueError(f"'case' argument must be one of ['spt', 'gt'] not '{case}'")
-            
+            raise ValueError(
+                f"'case' argument must be one of ['spt', 'gt'] not '{case}'"
+            )
+        
         return instance
 
     # def optimize(self, parameters: dict, algorithm: str = "sbs", obj_fun: str = "nse", bounds: (dict, None) = None, gauge_rules: (list, None) = None, options: (dict, None) = None, inplace: bool = False):
 
-        # if inplace:
+    # if inplace:
 
-            # instance = self
+    # instance = self
 
-        # else:
+    # else:
 
-            # instance = self.copy()
-            
-        # optimize_setup = _standardize_optimize_setup(instance.setup, instance.mesh, parameters, algorithm, obj_fun, bounds, gauge_rules, options)
+    # instance = self.copy()
 
-        # if algorithm == "sbs":
+    # optimize_setup = _standardize_optimize_setup(instance.setup, instance.mesh, parameters, algorithm, obj_fun, bounds, gauge_rules, options)
 
-            # cost = np.float32(0.0)
+    # if algorithm == "sbs":
 
-            # optimize_sbs(
-                # self.setup,
-                # optimize_setup,
-                # self.mesh,
-                # self.input_data,
-                # self.parameters,
-                # self.states,
-                # self.output,
-                # cost,
-            # )
+    # cost = np.float32(0.0)
 
-        # elif algorithm == "l-bfgs-b":
+    # optimize_sbs(
+    # self.setup,
+    # optimize_setup,
+    # self.mesh,
+    # self.input_data,
+    # self.parameters,
+    # self.states,
+    # self.output,
+    # cost,
+    # )
 
-            # cost = np.float32(0.0)
+    # elif algorithm == "l-bfgs-b":
 
-            # optimize_lbfgsb(
-                # self.setup,
-                # optimize_setup,
-                # self.mesh,
-                # self.input_data,
-                # self.parameters,
-                # self.states,
-                # self.output,
-                # cost,
-            # )
-            
-        # return instance
+    # cost = np.float32(0.0)
+
+    # optimize_lbfgsb(
+    # self.setup,
+    # optimize_setup,
+    # self.mesh,
+    # self.input_data,
+    # self.parameters,
+    # self.states,
+    # self.output,
+    # cost,
+    # )
+
+    # return instance

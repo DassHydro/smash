@@ -5,9 +5,9 @@ recursive subroutine mask_upstream_cells(flow, col, row, ncol, &
     integer, dimension(nrow, ncol), intent(in) :: flow
     logical, dimension(nrow, ncol), intent(inout) :: mask
     
-    integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
-    integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-    integer, dimension(8) :: dkind = [1, 2, 3, 4, 5, 6, 7, 8]
+    integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+    integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
+    integer, dimension(8) :: dkind = (/1, 2, 3, 4, 5, 6, 7, 8/)
     integer :: i, col_imd, row_imd
     
     mask(row, col) = .true.
@@ -106,8 +106,8 @@ recursive subroutine downstream_cell_drained_area(flow, col, row, ncol, &
     integer, dimension(nrow, ncol), intent(in) :: flow
     integer, dimension(nrow, ncol), intent(inout) :: da
     
-    integer, dimension(8) :: dcol = [0, 1, 1, 1, 0, -1, -1, -1]
-    integer, dimension(8) :: drow = [-1, -1, 0, 1, 1, 1, 0, -1]
+    integer, dimension(8) :: dcol = (/0, 1, 1, 1, 0, -1, -1, -1/)
+    integer, dimension(8) :: drow = (/-1, -1, 0, 1, 1, 1, 0, -1/)
     
     integer :: fd
     

@@ -41,10 +41,10 @@ OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
 #% Classic `make` call
-all: directories cpp f77 f90 wrappers module meshing finalize library
+all: directories c f77 f90 wrappers module meshing finalize library
 
 #% Debug mode `make debug` [Dev]
-debug: directories cpp f77 f90 wrappers module meshing finalize library_edit
+debug: directories c f77 f90 wrappers module meshing finalize library_edit
 
 #% Making directories
 directories:
@@ -56,8 +56,8 @@ directories:
 	@mkdir -p $(BUILDDIR)
 	@mkdir -p $(SOLVERDIR)/f90wrap/
 
-#% cpp file(s)
-cpp: \
+#% c file(s)
+c: \
  obj/adStack.o \
  
 #% f77 files

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.solver._mwd_common import name_parameters, name_states
+from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import compute_rowcol_to_ind_sparse
 from smash.solver._mwd_input_data import compute_mean_forcing
 
@@ -10,7 +12,6 @@ from smash.io._raster import _read_windowed_raster
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
 
@@ -53,14 +54,55 @@ RATION_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
+SETUP_DICT = [
+    "default_parameters",
+    "default_states",
+    "lb_parameters",
+    "ub_parameters",
+    "optim_parameters",
+]
+
+
+def _standardize_setup_dict(setup: SetupDT, dname: str, ditem: dict) -> list:
+
+    if "parameters" in dname:
+
+        default_dname = dict(zip(name_parameters, getattr(setup, dname)))
+
+    elif "states" in dname:
+
+        default_dname = dict(zip(name_states, getattr(setup, dname)))
+
+    for key, value in ditem.items():
+
+        if key in default_dname.keys():
+
+            default_dname.update({key: value})
+
+        else:
+
+            raise ValueError(f"Invalid key '{key}' in '{dname}'")
+
+    return list(default_dname.values())
+
 
 def _parse_derived_type(derived_type, data: dict):
 
     """
     Derived type parser
     """
+    
+    datac = data.copy()
 
-    for key, value in data.items():
+    if isinstance(derived_type, SetupDT):
+
+        for dname in SETUP_DICT:
+
+            if dname in datac.keys():
+
+                datac[dname] = _standardize_setup_dict(derived_type, dname, datac[dname])
+
+    for key, value in datac.items():
 
         if hasattr(derived_type, key):
 
@@ -291,7 +333,7 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
     if setup.sparse_storage:
 
-        compute_rowcol_to_ind_sparse(mesh) #% Fortran subroutine mwd_mesh
+        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mwd_mesh
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):

@@ -33,7 +33,7 @@ def save_mesh(mesh: dict, path: str):
                 f.attrs[key] = value
 
 
-def read_mesh(path: str):
+def read_mesh(path: str) -> dict:
 
     mesh = {}
 

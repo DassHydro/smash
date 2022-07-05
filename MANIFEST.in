@@ -1,2 +1,3 @@
 include smash/solver/_solver*.so
 include smash/mesh/_meshing*.so
+recursive-include smash/dataset *
