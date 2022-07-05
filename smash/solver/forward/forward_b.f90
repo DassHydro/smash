@@ -3,6 +3,7 @@
 !
 !%      This module `mwd_output` encapsulates all SMASH output.
 !%      This module is wrapped and differentiated.
+!%
 !%      OutputDT type:
 !%      
 !%      ======================== =======================================
@@ -17,6 +18,10 @@
 !%      ``an``                   Alpha gradient test 
 !%      ``Ian``                  Ialpha gradient test
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] OutputDT_initialise
 MODULE MWD_OUTPUT_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -84,7 +89,7 @@ MODULE MWD_COST_DIFF_B
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of compute_jobs in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of compute_jobs in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: jobs
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
@@ -102,7 +107,7 @@ CONTAINS
 &   , qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
 &   qs_b
-    INTEGER :: g, row_g, col_g
+    INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: result1
@@ -111,13 +116,13 @@ CONTAINS
     DO g=1,mesh%ng
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt*0.001_sp/mesh%area(g)
-      row_g = mesh%gauge_pos(1, g)
-      col_g = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
       CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step &
 &                   + 1)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row_g, col_g))*(setup%&
-&       dx/1000._sp)*(setup%dx/1000._sp))
+&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
+&       1000._sp)*(setup%dx/1000._sp))
       IF (ANY(qo .GE. 0._sp)) THEN
         CALL PUSHCONTROL1B(1)
       ELSE
@@ -152,7 +157,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
 &   , qs
-    INTEGER :: g, row_g, col_g
+    INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: result1
@@ -160,11 +165,11 @@ CONTAINS
     DO g=1,mesh%ng
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt*0.001_sp/mesh%area(g)
-      row_g = mesh%gauge_pos(1, g)
-      col_g = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row_g, col_g))*(setup%&
-&       dx/1000._sp)*(setup%dx/1000._sp))
+&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
+&       1000._sp)*(setup%dx/1000._sp))
       IF (ANY(qo .GE. 0._sp)) THEN
         result1 = NSE(qo, qs)
         jobs = jobs + result1
@@ -172,7 +177,7 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_JOBS
 
-!  Differentiation of nse in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of nse in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
 !~         subroutine compute_jreg
@@ -254,14 +259,25 @@ CONTAINS
 
 END MODULE MWD_COST_DIFF_B
 
-!%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
+!%      This module `md_operator` encapsulates all SMASH operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] GR_interception
+!%      [2] GR_production
+!%      [3] GR_exchange
+!%      [4] GR_transferN
+!%      [5] upstream_discharge
+!%      [6] sparse_upstream_discharge
+!%      [7] GR_transfer1
 MODULE MD_OPERATOR_DIFF_B
 !% only : sp
   USE MWD_COMMON
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of gr_interception in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: hi ei ci pn
 !   with respect to varying inputs: hi ci
 !% TODO Renommer argument pour etre global
@@ -330,7 +346,7 @@ CONTAINS
     hi = hi + (prcp-ei-pn)/ci
   END SUBROUTINE GR_INTERCEPTION
 
-!  Differentiation of gr_production in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: hp beta cp perc pr
 !   with respect to varying inputs: hp en beta cp pn
   SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, beta_b&
@@ -438,7 +454,7 @@ CONTAINS
     hp = hp_imd - perc*inv_cp
   END SUBROUTINE GR_PRODUCTION
 
-!  Differentiation of gr_exchange in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: l hft exc
 !   with respect to varying inputs: hft exc
   SUBROUTINE GR_EXCHANGE_B(exc, exc_b, hft, hft_b, l, l_b)
@@ -461,7 +477,7 @@ CONTAINS
     l = exc*hft**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
-!  Differentiation of gr_transfern in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_transfern in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q ht ct
 !   with respect to varying inputs: ht ct pr
   SUBROUTINE GR_TRANSFERN_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, &
@@ -582,7 +598,7 @@ CONTAINS
     q = (ht_imd-ht)*ct
   END SUBROUTINE GR_TRANSFERN
 
-!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
   SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flow, drained_area&
@@ -658,7 +674,7 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE
 
-!  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
   SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flow, &
@@ -739,7 +755,7 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
 
-!  Differentiation of gr_transfer1 in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_transfer1 in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: hr qrout lr
 !   with respect to varying inputs: qup hr lr
   SUBROUTINE GR_TRANSFER1_B(dt, qup, qup_b, lr, lr_b, hr, hr_b, qrout, &
@@ -782,6 +798,7 @@ END MODULE MD_OPERATOR_DIFF_B
 
 !%      This module `mwd_states` encapsulates all SMASH states.
 !%      This module is wrapped and differentiated.
+!%
 !%      StatesDT type:
 !%      
 !%      ======================== =======================================
@@ -793,6 +810,14 @@ END MODULE MD_OPERATOR_DIFF_B
 !%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
 !%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] StatesDT_initialise
+!%      [2] states_copy
+!%      [3] states_to_matrix
+!%      [4] matrix_to_states
+!%      [5] vector_to_states
 MODULE MWD_STATES_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -878,6 +903,7 @@ END MODULE MWD_STATES_DIFF_B
 
 !%      This module `mwd_parameters` encapsulates all SMASH parameters.
 !%      This module is wrapped and differentiated.
+!%
 !%      ParametersDT type:
 !%      
 !%      ======================== =======================================
@@ -892,6 +918,14 @@ END MODULE MWD_STATES_DIFF_B
 !%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
 !%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] ParametersDT_initialise
+!%      [2] parameters_copy
+!%      [3] parameters_to_matrix
+!%      [4] matrix_to_parameters
+!%      [5] vector_to_parameters
 MODULE MWD_PARAMETERS_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -1050,7 +1084,7 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, states, &
 !% [ DO SPACE ]
     DO i=1,mesh%nrow*mesh%ncol
 !% =============================================================================================================== %!
-!%   Local Variables Initialization for time step (t) and cell (i)
+!%   Local Variables Initialisation for time step (t) and cell (i)
 !% =============================================================================================================== %!
       ei = 0._sp
       pn = 0._sp
@@ -1224,7 +1258,7 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, states, &
   CALL COMPUTE_JOBS(setup, mesh, input_data, output, cost)
 END SUBROUTINE FORWARD_NODIFF_B
 
-!  Differentiation of forward in reverse (adjoint) mode (with options OpenMP context fixinterface):
+!  Differentiation of forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.alpha)
@@ -1320,7 +1354,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 !% [ DO SPACE ]
     DO i=1,mesh%nrow*mesh%ncol
 !% =============================================================================================================== %!
-!%   Local Variables Initialization for time step (t) and cell (i)
+!%   Local Variables Initialisation for time step (t) and cell (i)
 !% =============================================================================================================== %!
       ei = 0._sp
       CALL PUSHREAL4(pn)

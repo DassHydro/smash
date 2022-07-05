@@ -1,6 +1,6 @@
 !%      This module `mwd_output` encapsulates all SMASH output.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      OutputDT type:
 !%      
 !%      ======================== =======================================
@@ -15,6 +15,11 @@
 !%      ``an``                   Alpha gradient test 
 !%      ``Ian``                  Ialpha gradient test
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] OutputDT_initialise
+
 module mwd_output
     
     use mwd_common !% only: sp, dp, lchar, np, ns

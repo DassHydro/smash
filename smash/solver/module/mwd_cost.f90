@@ -22,7 +22,7 @@ module mwd_cost
             real(sp), intent(out) :: jobs
             
             real(sp), dimension(setup%ntime_step - setup%optim_start_step + 1) :: qo, qs
-            integer :: g, row_g, col_g
+            integer :: g, row, col
             
             jobs = 0._sp
             
@@ -31,11 +31,11 @@ module mwd_cost
                 qs = output%qsim(g, setup%optim_start_step:setup%ntime_step) &
                 & * setup%dt * 0.001_sp / mesh%area(g)
                 
-                row_g = mesh%gauge_pos(1, g)
-                col_g = mesh%gauge_pos(2, g)
+                row = mesh%gauge_pos(1, g)
+                col = mesh%gauge_pos(2, g)
                 
                 qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step) &
-                & * setup%dt * 0.001_sp / (real(mesh%drained_area(row_g, col_g)) * &
+                & * setup%dt * 0.001_sp / (real(mesh%drained_area(row, col)) * &
                 & (setup%dx / 1000._sp) * (setup%dx / 1000._sp))
                 
                 if (any(qo .ge. 0._sp)) then

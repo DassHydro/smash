@@ -1,4 +1,12 @@
-!%    This module (wrap) `mw_run` encapsulates all SMASH run (type, subroutines, functions)
+!%      This module `mw_run` encapsulates all SMASH run.
+!%      This module is wrapped.
+!%
+!%      contains
+!%
+!%      [1] forward_run
+!%      [2] adjoint_run
+!%      [3] tangent_linear_run
+
 module mw_run
     
     use mwd_common !% only: sp, dp, lchar, np, np

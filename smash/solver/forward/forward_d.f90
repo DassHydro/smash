@@ -3,6 +3,7 @@
 !
 !%      This module `mwd_output` encapsulates all SMASH output.
 !%      This module is wrapped and differentiated.
+!%
 !%      OutputDT type:
 !%      
 !%      ======================== =======================================
@@ -17,6 +18,10 @@
 !%      ``an``                   Alpha gradient test 
 !%      ``Ian``                  Ialpha gradient test
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] OutputDT_initialise
 MODULE MWD_OUTPUT_DIFF_D
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -84,7 +89,7 @@ MODULE MWD_COST_DIFF_D
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of compute_jobs in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of compute_jobs in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: jobs
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
@@ -102,7 +107,7 @@ CONTAINS
 &   , qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
 &   qs_d
-    INTEGER :: g, row_g, col_g
+    INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: result1
@@ -114,11 +119,11 @@ CONTAINS
 &       setup%ntime_step)/mesh%area(g)
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt*0.001_sp/mesh%area(g)
-      row_g = mesh%gauge_pos(1, g)
-      col_g = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row_g, col_g))*(setup%&
-&       dx/1000._sp)*(setup%dx/1000._sp))
+&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
+&       1000._sp)*(setup%dx/1000._sp))
       IF (ANY(qo .GE. 0._sp)) THEN
         result1_d = NSE_D(qo, qs, qs_d, result1)
         jobs_d = jobs_d + result1_d
@@ -136,7 +141,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
 &   , qs
-    INTEGER :: g, row_g, col_g
+    INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: result1
@@ -144,11 +149,11 @@ CONTAINS
     DO g=1,mesh%ng
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt*0.001_sp/mesh%area(g)
-      row_g = mesh%gauge_pos(1, g)
-      col_g = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row_g, col_g))*(setup%&
-&       dx/1000._sp)*(setup%dx/1000._sp))
+&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
+&       1000._sp)*(setup%dx/1000._sp))
       IF (ANY(qo .GE. 0._sp)) THEN
         result1 = NSE(qo, qs)
         jobs = jobs + result1
@@ -156,7 +161,7 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_JOBS
 
-!  Differentiation of nse in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of nse in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
 !~         subroutine compute_jreg
@@ -234,14 +239,25 @@ CONTAINS
 
 END MODULE MWD_COST_DIFF_D
 
-!%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
+!%      This module `md_operator` encapsulates all SMASH operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] GR_interception
+!%      [2] GR_production
+!%      [3] GR_exchange
+!%      [4] GR_transferN
+!%      [5] upstream_discharge
+!%      [6] sparse_upstream_discharge
+!%      [7] GR_transfer1
 MODULE MD_OPERATOR_DIFF_D
 !% only : sp
   USE MWD_COMMON
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of gr_interception in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_interception in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: hi ei pn
 !   with respect to varying inputs: hi ci
 !% TODO Renommer argument pour etre global
@@ -297,7 +313,7 @@ CONTAINS
     hi = hi + (prcp-ei-pn)/ci
   END SUBROUTINE GR_INTERCEPTION
 
-!  Differentiation of gr_production in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_production in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: hp en beta cp pn
   SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, beta_d&
@@ -380,7 +396,7 @@ CONTAINS
     hp = hp_imd - perc*inv_cp
   END SUBROUTINE GR_PRODUCTION
 
-!  Differentiation of gr_exchange in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: l
 !   with respect to varying inputs: hft exc
   SUBROUTINE GR_EXCHANGE_D(exc, exc_d, hft, hft_d, l, l_d)
@@ -405,7 +421,7 @@ CONTAINS
     l = exc*hft**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
-!  Differentiation of gr_transfern in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_transfern in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: q ht
 !   with respect to varying inputs: ht ct pr
   SUBROUTINE GR_TRANSFERN_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, &
@@ -557,7 +573,7 @@ CONTAINS
     q = (ht_imd-ht)*ct
   END SUBROUTINE GR_TRANSFERN
 
-!  Differentiation of upstream_discharge in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
   SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flow, drained_area&
@@ -626,7 +642,7 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE
 
-!  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
   SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flow, &
@@ -700,7 +716,7 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
 
-!  Differentiation of gr_transfer1 in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of gr_transfer1 in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: hr qrout
 !   with respect to varying inputs: qup hr lr
   SUBROUTINE GR_TRANSFER1_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout, &
@@ -750,6 +766,7 @@ END MODULE MD_OPERATOR_DIFF_D
 
 !%      This module `mwd_states` encapsulates all SMASH states.
 !%      This module is wrapped and differentiated.
+!%
 !%      StatesDT type:
 !%      
 !%      ======================== =======================================
@@ -761,6 +778,14 @@ END MODULE MD_OPERATOR_DIFF_D
 !%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
 !%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] StatesDT_initialise
+!%      [2] states_copy
+!%      [3] states_to_matrix
+!%      [4] matrix_to_states
+!%      [5] vector_to_states
 MODULE MWD_STATES_DIFF_D
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -846,6 +871,7 @@ END MODULE MWD_STATES_DIFF_D
 
 !%      This module `mwd_parameters` encapsulates all SMASH parameters.
 !%      This module is wrapped and differentiated.
+!%
 !%      ParametersDT type:
 !%      
 !%      ======================== =======================================
@@ -860,6 +886,14 @@ END MODULE MWD_STATES_DIFF_D
 !%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
 !%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] ParametersDT_initialise
+!%      [2] parameters_copy
+!%      [3] parameters_to_matrix
+!%      [4] matrix_to_parameters
+!%      [5] vector_to_parameters
 MODULE MWD_PARAMETERS_DIFF_D
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -958,7 +992,7 @@ CONTAINS
 
 END MODULE MWD_PARAMETERS_DIFF_D
 
-!  Differentiation of forward in forward (tangent) mode (with options OpenMP context fixinterface):
+!  Differentiation of forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.alpha)
@@ -1052,7 +1086,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 !% [ DO SPACE ]
     DO i=1,mesh%nrow*mesh%ncol
 !% =============================================================================================================== %!
-!%   Local Variables Initialization for time step (t) and cell (i)
+!%   Local Variables Initialisation for time step (t) and cell (i)
 !% =============================================================================================================== %!
       ei = 0._sp
       pn = 0._sp
@@ -1340,7 +1374,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
 !% [ DO SPACE ]
     DO i=1,mesh%nrow*mesh%ncol
 !% =============================================================================================================== %!
-!%   Local Variables Initialization for time step (t) and cell (i)
+!%   Local Variables Initialisation for time step (t) and cell (i)
 !% =============================================================================================================== %!
       ei = 0._sp
       pn = 0._sp

@@ -1,6 +1,6 @@
 !%      This module `mwd_states` encapsulates all SMASH states.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      StatesDT type:
 !%      
 !%      ======================== =======================================
@@ -12,6 +12,15 @@
 !%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
 !%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] StatesDT_initialise
+!%      [2] states_copy
+!%      [3] states_to_matrix
+!%      [4] matrix_to_states
+!%      [5] vector_to_states
+
 module mwd_states
 
     use mwd_common !% only: sp, dp, lchar, np, ns

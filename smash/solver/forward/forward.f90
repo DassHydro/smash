@@ -61,7 +61,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
         do i=1, mesh%nrow * mesh%ncol !% [ DO SPACE ]
         
         !% =============================================================================================================== %!
-        !%   Local Variables Initialization for time step (t) and cell (i)
+        !%   Local Variables Initialisation for time step (t) and cell (i)
         !% =============================================================================================================== %!
         
             ei = 0._sp

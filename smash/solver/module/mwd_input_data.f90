@@ -1,6 +1,6 @@
 !%      This module `mwd_input_data` encapsulates all SMASH input_data.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      Input_DataDT type:
 !%      
 !%      ======================== =======================================
@@ -14,6 +14,13 @@
 !%      ``mean_prcp``            Mean precipitation at gauge                 [mm]
 !%      ``mean_pet``             Mean potential evapotranspiration at gauge  [mm]
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] Input_DataDT_initialise
+!%      [2] input_data_copy
+!%      [3] compute_mean_forcing
+
 module mwd_input_data
 
     use mwd_common !% only: sp, dp, lchar

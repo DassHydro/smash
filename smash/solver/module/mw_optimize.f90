@@ -1,4 +1,15 @@
-!%    This module `mw_optimize` encapsulates all SMASH optimize (type, subroutines, functions)
+!%      This module `mw_optimize` encapsulates all SMASH optimize.
+!%      This module is wrapped.
+!%
+!%      contains
+!%
+!%      [1] optimize_sbs
+!%      [2] optimize_lbfgsb
+!%      [3] transformation
+!%      [3] inv_transformation
+!%      [3] normalize_matrix
+!%      [3] unnormalize_matrix
+
 module mw_optimize
     
     use mwd_common !% only: sp, dp, lchar, np, ns
@@ -13,7 +24,9 @@ module mw_optimize
     
     public :: optimize_sbs, optimize_lbfgsb
     
-    private :: transformation, inv_transformation, normalize_matrix, unnormalize_matrix
+    private :: transformation, inv_transformation, &
+    & optimize_matrix_to_vector, optimize_vector_to_matrix, &
+    & normalize_matrix, unnormalize_matrix
     
     contains
         
@@ -37,6 +50,12 @@ module mw_optimize
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
             real(sp), dimension(np) :: x, x_tf, y, y_tf, z_tf, sdx, lb_tf, ub_tf
             real(sp) :: gx, ga, clg, ddx, dxn, nop, f
+            
+            write(*,*) "--- Optimize sbs ---"
+            
+            !% =========================================================================================================== %!
+            !%   Initialisation
+            !% =========================================================================================================== %!
             
             where (mesh%global_active_cell .eq. 1)
             
@@ -78,7 +97,79 @@ module mw_optimize
             nop = count(setup%optim_parameters .eq. 1)
             
             do iter=1, int(setup%maxiter * nop + 1)
+            
+                !% ======================================================================================================= %!
+                !%   Convergence DDX < 0.01
+                !% ======================================================================================================= %!
+            
+                if (ddx .lt. 0.01_sp) then
                 
+                    write(*,*) ">>> CONVERGENCE: DDX < 0.01"
+
+                    do p=1, np
+                        
+                        if(setup%optim_parameters(p) .eq. 1) then
+                        
+                            where (mask_ac .eq. 1)
+                            
+                                parameters_matrix(:,:,p) = x(p)
+                            
+                            end where
+                            
+                        end if
+                        
+                    end do
+                    
+                    call matrix_to_parameters(parameters_matrix, parameters)
+                    
+                    states = states_bgd
+                            
+                    call forward(setup, mesh, input_data, parameters, states, output, cost)
+                    
+                    write(*,*) "COST OPTIM SBS", cost
+                    
+                    exit
+                
+                end if
+                
+                !% ======================================================================================================= %!
+                !%   Maximum Number of Iteration
+                !% ======================================================================================================= %!
+                
+                if (iter .eq. int(setup%maxiter * nop + 1)) then
+                
+                    write(*,*) ">>> STOP: TOTAL NO. of iteration EXCEEDS LIMIT"
+            
+                    do p=1, np
+                        
+                        if(setup%optim_parameters(p) .eq. 1) then
+                        
+                            where (mask_ac .eq. 1)
+                            
+                                parameters_matrix(:,:,p) = x(p)
+                            
+                            end where
+                            
+                        end if
+                        
+                    end do
+                    
+                    call matrix_to_parameters(parameters_matrix, parameters)
+                    
+                    states = states_bgd
+                            
+                    call forward(setup, mesh, input_data, parameters, states, output, cost)
+                    
+                    write(*,*) "COST OPTIM SBS", cost
+
+                    exit
+                
+                end if
+                
+                !% ======================================================================================================= %!
+                !%   Optimize
+                !% ======================================================================================================= %!
+
                 if (dxn .gt. ddx) dxn = ddx
                 if (ddx .gt. 2._sp) ddx = dxn
                 
@@ -344,6 +435,8 @@ module mw_optimize
             type(OutputDT) :: output_b
             real(sp) :: cost_b
             
+            write(*,*) "--- Optimize l-bfgs-b ---"
+            
             iprint = 99
             
             n = mesh%nac * count(setup%optim_parameters .eq. 1)
@@ -363,7 +456,7 @@ module mw_optimize
             
             call normalize_matrix(setup, mesh, parameters_matrix, norm_parameters_matrix)
             
-            call matrix_to_vector(setup, mesh, norm_parameters_matrix, x)
+            call optimize_matrix_to_vector(setup, mesh, norm_parameters_matrix, x)
             
             call ParametersDT_initialise(parameters_b, setup, mesh)
             
@@ -397,7 +490,7 @@ module mw_optimize
                             isave   ,&   ! working array
                             dsave)       ! working array
                                 
-                call vector_to_matrix(setup, mesh, x, norm_parameters_matrix)
+                call optimize_vector_to_matrix(setup, mesh, x, norm_parameters_matrix)
                 
                 call unnormalize_matrix(setup, mesh, norm_parameters_matrix, parameters_matrix)
                 
@@ -416,7 +509,7 @@ module mw_optimize
                     
                     call parameters_to_matrix(parameters_b, parameters_b_matrix)
                     
-                    call matrix_to_vector(setup, mesh, parameters_b_matrix, g)
+                    call optimize_matrix_to_vector(setup, mesh, parameters_b_matrix, g)
  
                 end if
                 
@@ -435,7 +528,7 @@ module mw_optimize
         end subroutine optimize_lbfgsb
         
         
-        subroutine matrix_to_vector(setup, mesh, matrix, vector)
+        subroutine optimize_matrix_to_vector(setup, mesh, matrix, vector)
         
             implicit none
             
@@ -471,10 +564,10 @@ module mw_optimize
             
             end do
         
-        end subroutine matrix_to_vector
+        end subroutine optimize_matrix_to_vector
         
         
-        subroutine vector_to_matrix(setup, mesh, vector, matrix)
+        subroutine optimize_vector_to_matrix(setup, mesh, vector, matrix)
         
             implicit none
             
@@ -511,7 +604,7 @@ module mw_optimize
             
             end do
         
-        end subroutine vector_to_matrix
+        end subroutine optimize_vector_to_matrix
         
         
         subroutine normalize_matrix(setup, mesh, matrix, norm_matrix)

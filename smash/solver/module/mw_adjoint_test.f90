@@ -1,4 +1,11 @@
-!%    This module (wrap) `mw_validate` encapsulates all SMASH validate (type, subroutines, functions)
+!%      This module `mw_adjoint_test` encapsulates all SMASH adjoint_test.
+!%      This module is wrapped.
+!%
+!%      contains
+!%
+!%      [1] scalar_product_test
+!%      [2] gradient_test
+
 module mw_adjoint_test
     
     use mwd_common !% only: sp, dp, lchar, np, np
@@ -47,7 +54,7 @@ module mw_adjoint_test
             
             call parameters_to_matrix(parameters_d, parameters_d_matrix)
             
-            parameters_d_matrix = 10._sp
+            parameters_d_matrix = 1._sp
             
             call matrix_to_parameters(parameters_d_matrix, parameters_d)
             
@@ -107,7 +114,7 @@ module mw_adjoint_test
             
             states_bgd = states
             parameters_bgd = parameters
-            dk = 10._sp
+            dk = 1._sp
             
             call ParametersDT_initialise(parameters_b, setup, mesh)
             call StatesDT_initialise(states_b, setup, mesh)

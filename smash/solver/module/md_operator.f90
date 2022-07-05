@@ -1,7 +1,19 @@
-!%    This module `m_operator` encapsulates all SMASH operator (type, subroutines, functions)
+!%      This module `md_operator` encapsulates all SMASH operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] GR_interception
+!%      [2] GR_production
+!%      [3] GR_exchange
+!%      [4] GR_transferN
+!%      [5] upstream_discharge
+!%      [6] sparse_upstream_discharge
+!%      [7] GR_transfer1
+
 module md_operator
     
-    use mwd_common   !% only : sp
+    use mwd_common !% only : sp
 
     implicit none
     
@@ -215,5 +227,6 @@ module md_operator
             qrout = hr_imd - hr
         
         end subroutine GR_transfer1
+        
         
 end module md_operator

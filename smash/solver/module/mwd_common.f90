@@ -1,16 +1,18 @@
 !%      This module `md_common` encapsulates all SMASH common.
-!%      This module is differentiated.
+!%      This module is wrapped and differentiated.
 
-!%      md_common variables
+!%      mwd_common variables
 !%
 !%      ======================= ========================================
-!%      `variables`             Description
+!%      `Variables`             Description
 !%      ======================= ========================================
 !%      ``sp``                  Single precision value
 !%      ``dp``                  Double precision value
 !%      ``lchar``               Characeter length value
 !%      ``np``                  Number of SMASH parameters (ParametersDT)
 !%      ``ns``                  Number of SMASH states (StatesDT)
+!%      ``name_parameters``     Name of SMASH parameters
+!%      ``name_states``         Name of SMASH states
 !%      ======================= ========================================
 
 module mwd_common

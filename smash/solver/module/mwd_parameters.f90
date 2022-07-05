@@ -1,6 +1,6 @@
 !%      This module `mwd_parameters` encapsulates all SMASH parameters.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      ParametersDT type:
 !%      
 !%      ======================== =======================================
@@ -15,6 +15,14 @@
 !%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
 !%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
+!%
+!%      contains
+!%
+!%      [1] ParametersDT_initialise
+!%      [2] parameters_copy
+!%      [3] parameters_to_matrix
+!%      [4] matrix_to_parameters
+!%      [5] vector_to_parameters
 
 module mwd_parameters
 

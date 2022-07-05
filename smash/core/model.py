@@ -291,46 +291,40 @@ class Model(object):
         
         return instance
 
-    # def optimize(self, parameters: dict, algorithm: str = "sbs", obj_fun: str = "nse", bounds: (dict, None) = None, gauge_rules: (list, None) = None, options: (dict, None) = None, inplace: bool = False):
+    def optimize(self, algorithm: str = "sbs", inplace: bool = False):
 
-    # if inplace:
+        if inplace:
 
-    # instance = self
+            instance = self
 
-    # else:
+        else:
 
-    # instance = self.copy()
+            instance = self.copy()
+            
+        cost = np.float32(0.0)
 
-    # optimize_setup = _standardize_optimize_setup(instance.setup, instance.mesh, parameters, algorithm, obj_fun, bounds, gauge_rules, options)
+        if algorithm == "sbs":
 
-    # if algorithm == "sbs":
+            optimize_sbs(
+            self.setup,
+            self.mesh,
+            self.input_data,
+            self.parameters,
+            self.states,
+            self.output,
+            cost,
+            )
 
-    # cost = np.float32(0.0)
+        elif algorithm == "l-bfgs-b":
 
-    # optimize_sbs(
-    # self.setup,
-    # optimize_setup,
-    # self.mesh,
-    # self.input_data,
-    # self.parameters,
-    # self.states,
-    # self.output,
-    # cost,
-    # )
+            optimize_lbfgsb(
+            self.setup,
+            self.mesh,
+            self.input_data,
+            self.parameters,
+            self.states,
+            self.output,
+            cost,
+            )
 
-    # elif algorithm == "l-bfgs-b":
-
-    # cost = np.float32(0.0)
-
-    # optimize_lbfgsb(
-    # self.setup,
-    # optimize_setup,
-    # self.mesh,
-    # self.input_data,
-    # self.parameters,
-    # self.states,
-    # self.output,
-    # cost,
-    # )
-
-    # return instance
+        return instance

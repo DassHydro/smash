@@ -1,6 +1,6 @@
 !%      This module `mwd_setup` encapsulates all SMASH setup.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      SetupDT type:
 !%      
 !%      ========================== =====================================
@@ -41,6 +41,10 @@
 !%      ``maxiter``                Maximum number of optimization iteration               (default: 100)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      =========================  =====================================
+!%
+!%      contains
+!%
+!%      [1] setup_copy
 
 module mwd_setup
     
