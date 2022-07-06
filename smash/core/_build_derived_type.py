@@ -91,7 +91,7 @@ def _parse_derived_type(derived_type, data: dict):
     """
     Derived type parser
     """
-    
+
     datac = data.copy()
 
     if isinstance(derived_type, SetupDT):
@@ -100,7 +100,9 @@ def _parse_derived_type(derived_type, data: dict):
 
             if dname in datac.keys():
 
-                datac[dname] = _standardize_setup_dict(derived_type, dname, datac[dname])
+                datac[dname] = _standardize_setup_dict(
+                    derived_type, dname, datac[dname]
+                )
 
     for key, value in datac.items():
 
@@ -169,11 +171,6 @@ def _standardize_setup(setup: SetupDT):
     if (et - ost).total_seconds() < 0:
         raise ValueError(
             "argument optim_start_time of SetupDT corresponds to a later date than end_time"
-        )
-
-    if setup.active_cell_only and not setup.sparse_storage:
-        warnings.warn(
-            "argument 'sparse_storage' is False but 'active_cell_only' is True"
         )
 
     if setup.simulation_only:
@@ -321,12 +318,6 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     """
 
     _standardize_mesh(setup, mesh)
-
-    if not setup.active_cell_only:
-
-        mesh.global_active_cell = np.where(mesh.flow > 0, 1, mesh.global_active_cell)
-        mesh.local_active_cell = mesh.global_active_cell.copy()
-        mesh.nac = np.count_nonzero(mesh.global_active_cell)
 
     if setup.sparse_storage:
 

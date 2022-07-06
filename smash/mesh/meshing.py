@@ -4,10 +4,10 @@ from smash.mesh import _meshing
 
 import errno
 import os
+import warnings
 import numpy as np
 from osgeo import gdal, osr
-
-#% TODO : Refactorize code
+import matplotlib.pyplot as plt
 
 METER_TO_DEGREE = 0.000008512223965693407
 DEGREE_TO_METER = 117478.11195173833
@@ -76,156 +76,279 @@ def _array_to_ascii(array, path, xmin, ymin, cellsize, no_data_val):
         np.savetxt(f, array, "%5.2f")
 
 
-def _standardize_generate_mesh(x, y, area, code):
+def _get_array(ds_flow, bbox=None):
 
-    x_array = np.array(x, dtype=np.float32, ndmin=1)
-    y_array = np.array(y, dtype=np.float32, ndmin=1)
-    area_array = np.array(area, dtype=np.float32, ndmin=1)
+    if bbox:
 
-    # TODO Add check for size
+        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
 
-    code_array = np.zeros(shape=(20, len(x_array)), dtype="uint8")
+        col_off = int((bbox[0] - xmin) / xres)
+        row_off = int((ymax - bbox[3]) / yres)
+        ncol = int((bbox[1] - bbox[0]) / xres)
+        nrow = int((bbox[3] - bbox[2]) / yres)
 
-    if code is None:
-
-        for i in range(len(x_array)):
-
-            code_ord = [ord(l) for l in ["_", "c", str(i)]]
-
-            code_array[0:3, i] = code_ord
-            code_array[3:, i] = 32
-
-    elif isinstance(code, (str, list)):
-
-        code = np.array(code, ndmin=1)
-
-        for i in range(len(x_array)):
-
-            code_array[0 : len(code[i]), i] = [ord(l) for l in code[i]]
-            code_array[len(code[i]) :, i] = 32
-
-    return x_array, y_array, area_array, code_array
-
-
-def generate_mesh(
-    path: str,
-    x: (float, list[float]),
-    y: (float, list[float]),
-    area: (float, list[float]),
-    max_depth: int = 1,
-    code: (None, str) = None,
-    epsg: (None, str, int) = None,
-) -> dict:
-
-    if os.path.isfile(path):
-        ds_flow = gdal.Open(path)
+        flow = ds_flow.GetRasterBand(1).ReadAsArray(col_off, row_off, ncol, nrow)
 
     else:
-        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-    (x, y, area, code) = _standardize_generate_mesh(x, y, area, code)
+        flow = ds_flow.GetRasterBand(1).ReadAsArray()
 
-    flow = ds_flow.GetRasterBand(1).ReadAsArray()
-    
     if np.any(~np.isin(flow, D8_VALUE), where=(flow > 0)):
-        
+
         raise ValueError(f"Flow direction data is invalid. Value must be in {D8_VALUE}")
+
+    return flow
+
+
+def _get_transform(ds_flow):
 
     ncol = ds_flow.RasterXSize
     nrow = ds_flow.RasterYSize
 
     transform = ds_flow.GetGeoTransform()
-    
+
     xmin = transform[0]
-    ymax = transform[3]
     xres = transform[1]
+    xmax = xmin + ncol * xres
+
+    ymax = transform[3]
     yres = -transform[5]
+    ymin = ymax - nrow * yres
+
+    return xmin, xmax, xres, ymin, ymax, yres
+
+
+def _get_srs(ds_flow, epsg):
 
     projection = ds_flow.GetProjection()
-    
+
     if projection:
-    
+
         srs = osr.SpatialReference(wkt=projection)
-    
+
     else:
-        
-        if epsg is None:
-            
-            raise ValueError(
-            "Flow direction file does not contain 'Coordinate Spatial Reference' information. Specify it directly in the file or via the 'epsg' argument."
-            )
-            
-        else:
-            
+
+        if epsg:
+
             srs = osr.SpatialReference()
             srs.ImportFromEPSG(int(epsg))
 
-    #% Approximate area from square meter to square degree
-    if srs.GetAttrValue("UNIT") == "degree":
-
-        area = area * METER_TO_DEGREE ** 2
-        dx = xres * DEGREE_TO_METER
-        
-    else:
-        
-        dx = xres
-
-    col_otl = np.zeros(shape=x.shape, dtype=np.int32)
-    row_otl = np.zeros(shape=x.shape, dtype=np.int32)
-    area_otl = np.zeros(shape=x.shape, dtype=np.float32)
-    global_mask_dln = np.zeros(shape=flow.shape, dtype=np.int32)
-
-    for ind in range(len(x)):
-
-        col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
-
-        mask_dln, col_otl[ind], row_otl[ind] = _meshing.catchment_dln(
-            flow, col, row, xres, yres, area[ind], max_depth
-        )
-        
-        if srs.GetAttrValue("UNIT") == "degree":
-        
-            area_otl[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres) * DEGREE_TO_METER ** 2
-            
         else:
-            
-            area_otl[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres)
 
-        global_mask_dln = np.where(mask_dln == 1, 1, global_mask_dln)
+            raise ValueError(
+                "Flow direction file does not contain 'CRS' information. Can be specified with the 'epsg' argument"
+            )
 
-    flow = np.ma.masked_array(flow, mask=(1 - global_mask_dln))
+    return srs
 
-    flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
-    global_mask_dln = _trim_zeros_2D(global_mask_dln)
 
-    xmin_shifted = xmin + scol * xres
-    ymax_shifted = ymax - srow * yres
+def _standardize_gauge(ds_flow, x, y, area, code):
 
-    col_otl = col_otl - scol
-    row_otl = row_otl - srow
+    x = np.array(x, dtype=np.float32, ndmin=1)
+    y = np.array(y, dtype=np.float32, ndmin=1)
+    area = np.array(area, dtype=np.float32, ndmin=1)
 
-    drained_area = _meshing.drained_area(flow)
-    
+    if (x.size != y.size) or (y.size != area.size):
+
+        raise ValueError(
+            f"Inconsistent size for 'x' ({x.size}), 'y' ({y.size}) and 'area' ({area.size})"
+        )
+
+    xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
+
+    if np.any((x < xmin) | (x > xmax)):
+
+        raise ValueError(f"'x' {x} value(s) out of flow directions bounds {xmin, xmax}")
+
+    if np.any((y < ymin) | (y > ymax)):
+
+        raise ValueError(f"'y' {y} value(s) out of flow directions bounds {ymin, ymax}")
+
+    if np.any(area < 0):
+
+        raise ValueError(f"Negative 'area' value(s) {area}")
+
+    #% Setting _c0, _c1, ... _cN as default codes
+    if code is None:
+
+        code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
+
+        for i in range(x.size):
+
+            code[0:3, i] = [ord(l) for l in ["_", "c", str(i)]]
+
+    elif isinstance(code, (str, list)):
+
+        code_imd = np.array(code, ndmin=1)
+
+        #% Only check x (y and area already check above)
+        if code_imd.size != x.size:
+
+            raise ValueError(
+                f"Inconsistent size for 'code' ({code_imd.size}) and 'x' ({x.size})"
+            )
+
+        else:
+
+            code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
+
+            for i in range(x.size):
+
+                code[0 : len(code_imd[i]), i] = [ord(l) for l in code_imd[i]]
+
+    return x, y, area, code
+
+
+def _standardize_bbox(ds_flow, bbox):
+
+    #% Bounding Box (xmin, ymin, xmax, ymax)
+
+    if isinstance(bbox, (list, tuple, set)):
+
+        bbox = list(bbox)
+
+        if len(bbox) != 4:
+
+            raise ValueError(f"'bbox argument must be of size 4 ({len(bbox)})")
+
+        if bbox[0] > bbox[1]:
+
+            raise ValueError(
+                f"'bbox' xmin ({bbox[0]}) is greater than xmax ({bbox[1]})"
+            )
+
+        if bbox[2] > bbox[3]:
+
+            raise ValueError(
+                f"'bbox' ymin ({bbox[2]}) is greater than ymax ({bbox[3]})"
+            )
+
+        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
+
+        if bbox[0] < xmin:
+
+            warnings.warn(
+                f"'bbox' xmin ({bbox[0]}) is out of flow directions bound ({xmin}). 'bbox' is update according to flow directions bound"
+            )
+
+            bbox[0] = xmin
+
+        if bbox[1] > xmax:
+
+            warnings.warn(
+                f"'bbox' xmax ({bbox[1]}) is out of flow directions bound ({xmax}). 'bbox' is update according to flow directions bound"
+            )
+
+            bbox[1] = xmax
+
+        if bbox[2] < ymin:
+
+            warnings.warn(
+                f"'bbox' ymin ({bbox[2]}) is out of flow directions bound ({ymin}). 'bbox' is update according to flow directions bound"
+            )
+
+            bbox[2] = ymin
+
+        if bbox[3] > ymax:
+
+            warnings.warn(
+                f"'bbox' ymax ({bbox[3]}) is out of flow directions bound ({ymax}). 'bbox' is update according to flow directions bound"
+            )
+
+            bbox[3] = ymax
+
+    else:
+
+        raise TypeError("'bbox' argument must be list-like object")
+
+    return bbox
+
+
+def _get_path(drained_area):
+
     ind_path = np.unravel_index(np.argsort(drained_area, axis=None), drained_area.shape)
 
-    path = np.zeros(shape=(2, flow.shape[0] * flow.shape[1]), dtype=np.int32, order="F")
+    path = np.zeros(shape=(2, drained_area.size), dtype=np.int32, order="F")
 
     #% Transform from Python to FORTRAN index
     path[0, :] = ind_path[0] + 1
     path[1, :] = ind_path[1] + 1
 
-    drained_area = np.ma.masked_array(drained_area, mask=(1 - global_mask_dln))
-    
-    global_active_cell = global_mask_dln.astype(np.int32)
+    return path
+
+
+def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
+
+    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flow)
+
+    srs = _get_srs(ds_flow, epsg)
+
+    (x, y, area, code) = _standardize_gauge(ds_flow, x, y, area, code)
+
+    flow = _get_array(ds_flow)
+
+    #% Convert (approximate) area from square meter to square degree
+    if srs.GetAttrValue("UNIT") == "degree":
+
+        area = area * METER_TO_DEGREE**2
+        dx = xres * DEGREE_TO_METER
+
+    else:
+
+        dx = xres
+
+    col_ol = np.zeros(shape=x.shape, dtype=np.int32)
+    row_ol = np.zeros(shape=x.shape, dtype=np.int32)
+    area_ol = np.zeros(shape=x.shape, dtype=np.float32)
+    mask_dln = np.zeros(shape=flow.shape, dtype=np.int32)
+
+    for ind in range(x.size):
+
+        col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
+
+        mask_dln_imd, col_ol[ind], row_ol[ind] = _meshing.catchment_dln(
+            flow, col, row, xres, yres, area[ind], max_depth
+        )
+
+        if srs.GetAttrValue("UNIT") == "degree":
+
+            area_ol[ind] = (
+                np.count_nonzero(mask_dln == 1) * (xres * yres) * DEGREE_TO_METER**2
+            )
+
+        else:
+
+            area_ol[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres)
+
+        mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
+
+    flow = np.ma.masked_array(flow, mask=(1 - mask_dln))
+
+    flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
+    mask_dln = _trim_zeros_2D(mask_dln)
+
+    xmin_shifted = xmin + scol * xres
+    ymax_shifted = ymax - srow * yres
+
+    col_ol = col_ol - scol
+    row_ol = row_ol - srow
+
+    drained_area = _meshing.drained_area(flow)
+
+    path = _get_path(drained_area)
+
+    drained_area = np.ma.masked_array(drained_area, mask=(1 - mask_dln))
+
+    global_active_cell = mask_dln.astype(np.int32)
 
     #% Transform from Python to FORTRAN index
-    gauge_pos = np.vstack((row_otl + 1, col_otl + 1))
+    gauge_pos = np.vstack((row_ol + 1, col_ol + 1))
 
     mesh = {
         "dx": dx,
         "nrow": flow.shape[0],
         "ncol": flow.shape[1],
-        "ng": len(x),
+        "ng": x.size,
         "nac": np.count_nonzero(global_active_cell),
         "xmin": xmin_shifted,
         "ymax": ymax_shifted,
@@ -234,9 +357,90 @@ def generate_mesh(
         "path": path,
         "gauge_pos": gauge_pos,
         "code": code,
-        "area": area_otl,
+        "area": area_ol,
         "global_active_cell": global_active_cell,
         "local_active_cell": global_active_cell.copy(),
     }
 
     return mesh
+
+
+def _get_mesh_from_bbox(ds_flow, bbox, epsg):
+
+    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flow)
+
+    srs = _get_srs(ds_flow, epsg)
+
+    bbox = _standardize_bbox(ds_flow, bbox)
+
+    flow = _get_array(ds_flow, bbox)
+
+    flow = np.ma.masked_array(flow, mask=(flow < 1))
+
+    if srs.GetAttrValue("UNIT") == "degree":
+
+        dx = xres * DEGREE_TO_METER
+
+    else:
+
+        dx = xres
+
+    drained_area = _meshing.drained_area(flow)
+
+    path = _get_path(drained_area)
+
+    drained_area = np.ma.masked_array(drained_area, mask=(flow < 1))
+
+    global_active_cell = np.zeros(shape=flow.shape, dtype=np.int32)
+
+    global_active_cell = np.where(flow > 0, 1, global_active_cell)
+
+    mesh = {
+        "dx": dx,
+        "nrow": flow.shape[0],
+        "ncol": flow.shape[1],
+        "nac": np.count_nonzero(global_active_cell),
+        "xmin": bbox[0],
+        "ymax": bbox[3],
+        "flow": flow,
+        "drained_area": drained_area,
+        "path": path,
+        "global_active_cell": global_active_cell,
+        "local_active_cell": global_active_cell.copy(),
+    }
+
+    return mesh
+
+
+def generate_mesh(
+    path: str,
+    bbox: (None, tuple(float)) = None,
+    x: (None, float, list[float]) = None,
+    y: (None, float, list[float]) = None,
+    area: (None, float, list[float]) = None,
+    code: (None, str, list[str]) = None,
+    max_depth: int = 1,
+    epsg: (None, str, int) = None,
+) -> dict:
+
+    if os.path.isfile(path):
+
+        ds_flow = gdal.Open(path)
+
+    else:
+
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+
+    if bbox:
+
+        return _get_mesh_from_bbox(ds_flow, bbox, epsg)
+
+    else:
+
+        if not x or not y or not area:
+
+            raise ValueError(
+                "'bbox' argument or 'x', 'y' and 'area' arguments must be defined"
+            )
+
+        return _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg)

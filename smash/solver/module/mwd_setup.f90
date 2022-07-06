@@ -12,7 +12,6 @@
 !%      ``optim_start_time``       Optimization start time [%Y%m%d%H%M]                   (default: '...')
 !%      ``ntime_step``             Number of time step
 !%      ``optim_start_step``       Indice start optimization
-!%      ``active_cell_only``       Simulation on active cell                              (default: .true.)
 !%      ``simulation_only``        Simulation only                                        (default: .false.)
 !%      ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
 !%      ``read_qobs``              Read observed discharge                                (default: .true.)
@@ -62,7 +61,6 @@ module mwd_setup
         integer :: ntime_step = 0
         integer :: optim_start_step = 1
         
-        logical :: active_cell_only = .true.
         logical :: simulation_only = .false.
         logical :: sparse_storage = .false.
         

@@ -13,7 +13,7 @@ def load_dataset(name: str):
 
     if name == "flwdir":
 
-        return os.path.join(DATASET_PATH, "France_flwdir.asc")
+        return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
     elif name == "Cance":
 
@@ -27,10 +27,9 @@ def load_dataset(name: str):
                 "pet_directory": os.path.join(DATASET_PATH, "Cance/pet"),
             }
         )
-        
+
         return setup, mesh
-        
+
     else:
-        
+
         raise ValueError(f"Unknown dataset '{name}'")
-        

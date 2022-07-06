@@ -87,7 +87,6 @@ class Model(object):
             self.states = StatesDT(self.setup, self.mesh)
 
             self.output = OutputDT(self.setup, self.mesh)
-            
 
     @property
     def setup(self):
@@ -288,7 +287,7 @@ class Model(object):
             raise ValueError(
                 f"'case' argument must be one of ['spt', 'gt'] not '{case}'"
             )
-        
+
         return instance
 
     def optimize(self, algorithm: str = "sbs", inplace: bool = False):
@@ -300,31 +299,31 @@ class Model(object):
         else:
 
             instance = self.copy()
-            
+
         cost = np.float32(0.0)
 
         if algorithm == "sbs":
 
             optimize_sbs(
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
-            instance.parameters,
-            instance.states,
-            instance.output,
-            cost,
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+                cost,
             )
 
         elif algorithm == "l-bfgs-b":
 
             optimize_lbfgsb(
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
-            instance.parameters,
-            instance.states,
-            instance.output,
-            cost,
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+                cost,
             )
 
         return instance
