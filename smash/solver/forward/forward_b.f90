@@ -114,37 +114,43 @@ CONTAINS
     REAL(sp) :: result1_b
     INTEGER :: branch
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
-&       %dt*0.001_sp/mesh%area(g)
-      row = mesh%gauge_pos(1, g)
-      col = mesh%gauge_pos(2, g)
-      CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step &
-&                   + 1)
-      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
-&       1000._sp)*(setup%dx/1000._sp))
-      IF (ANY(qo .GE. 0._sp)) THEN
-        CALL PUSHCONTROL1B(1)
+      IF (mesh%optim_gauge(g) .EQ. 1) THEN
+        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&         setup%dt/mesh%area(g)*1e3_sp
+        row = mesh%gauge_pos(1, g)
+        col = mesh%gauge_pos(2, g)
+        CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%&
+&                     optim_start_step + 1)
+        qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)&
+&         *setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
+&         1e3_sp
+        IF (ANY(qo .GE. 0._sp)) THEN
+          CALL PUSHCONTROL2B(2)
+        ELSE
+          CALL PUSHCONTROL2B(1)
+        END IF
       ELSE
-        CALL PUSHCONTROL1B(0)
+        CALL PUSHCONTROL2B(0)
       END IF
     END DO
     output_b%qsim = 0.0_4
     DO g=mesh%ng,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
-        qs_b = 0.0_4
-      ELSE
-        result1_b = jobs_b
-        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&         setup%dt*0.001_sp/mesh%area(g)
-        CALL NSE_B(qo, qs, qs_b, result1_b)
+      CALL POPCONTROL2B(branch)
+      IF (branch .NE. 0) THEN
+        IF (branch .EQ. 1) THEN
+          qs_b = 0.0_4
+        ELSE
+          result1_b = jobs_b
+          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&           setup%dt/mesh%area(g)*1e3_sp
+          CALL NSE_B(qo, qs, qs_b, result1_b)
+        END IF
+        CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step&
+&                    + 1)
+        output_b%qsim(g, setup%optim_start_step:setup%ntime_step) = &
+&         output_b%qsim(g, setup%optim_start_step:setup%ntime_step) + &
+&         setup%dt*1e3_sp*qs_b/mesh%area(g)
       END IF
-      CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step +&
-&                  1)
-      output_b%qsim(g, setup%optim_start_step:setup%ntime_step) = &
-&       output_b%qsim(g, setup%optim_start_step:setup%ntime_step) + &
-&       setup%dt*0.001_sp*qs_b/mesh%area(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
@@ -163,16 +169,18 @@ CONTAINS
     REAL(sp) :: result1
     jobs = 0._sp
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
-&       %dt*0.001_sp/mesh%area(g)
-      row = mesh%gauge_pos(1, g)
-      col = mesh%gauge_pos(2, g)
-      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt*0.001_sp/(REAL(mesh%drained_area(row, col))*(setup%dx/&
-&       1000._sp)*(setup%dx/1000._sp))
-      IF (ANY(qo .GE. 0._sp)) THEN
-        result1 = NSE(qo, qs)
-        jobs = jobs + result1
+      IF (mesh%optim_gauge(g) .EQ. 1) THEN
+        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&         setup%dt/mesh%area(g)*1e3_sp
+        row = mesh%gauge_pos(1, g)
+        col = mesh%gauge_pos(2, g)
+        qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)&
+&         *setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
+&         1e3_sp
+        IF (ANY(qo .GE. 0._sp)) THEN
+          result1 = NSE(qo, qs)
+          jobs = jobs + result1
+        END IF
       END IF
     END DO
   END SUBROUTINE COMPUTE_JOBS
@@ -1188,23 +1196,23 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, states, &
           SELECT CASE  (setup%routing_module) 
           CASE (0) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
 &                                      flow, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *setup%dx*setup%dx*0.001_sp/setup%dt
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
-&                               mesh%ncol, mesh%flow, mesh%drained_area&
-&                               , row, col, q, qup)
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flow, mesh%drained_area, row&
+&                               , col, q, qup)
               q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *setup%dx*setup%dx*0.001_sp/setup%dt
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
           CASE (1) 
             IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
 &                                      flow, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
@@ -1212,15 +1220,15 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, states, &
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
-&                               mesh%ncol, mesh%flow, mesh%drained_area&
-&                               , row, col, q, qup)
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flow, mesh%drained_area, row&
+&                               , col, q, qup)
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
           END SELECT
         END IF
@@ -1493,27 +1501,27 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
           CASE (0) 
             IF (setup%sparse_storage) THEN
               CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
 &                                      flow, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *setup%dx*setup%dx*0.001_sp/setup%dt
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(5)
             ELSE
               CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
-&                               mesh%ncol, mesh%flow, mesh%drained_area&
-&                               , row, col, q, qup)
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flow, mesh%drained_area, row&
+&                               , col, q, qup)
               q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *setup%dx*setup%dx*0.001_sp/setup%dt
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(4)
             END IF
           CASE (1) 
             IF (setup%sparse_storage) THEN
               CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%&
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
 &                                      flow, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
@@ -1522,18 +1530,18 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(3)
             ELSE
               CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, setup%dx, mesh%nrow, &
-&                               mesh%ncol, mesh%flow, mesh%drained_area&
-&                               , row, col, q, qup)
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flow, mesh%drained_area, row&
+&                               , col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*setup%dx*setup%dx*0.001_sp/setup%dt
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(2)
             END IF
           CASE DEFAULT
@@ -1606,7 +1614,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         ELSE
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          temp_b0 = setup%dx**2*0.001_sp*q_b(row, col)/setup%dt
+          temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
           q_b(row, col) = 0.0_4
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
@@ -1615,7 +1623,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                       col), parameters_b%lr(row, col), states%hlr(row&
 &                       , col), states_b%hlr(row, col), qrout, qrout_b)
           CALL POPREAL4(qup)
-          CALL UPSTREAM_DISCHARGE_B(setup%dt, setup%dx, mesh%nrow, mesh%&
+          CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flow, mesh%drained_area, row, &
 &                             col, q, q_b, qup, qup_b)
         END IF
@@ -1623,7 +1631,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         IF (branch .EQ. 3) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          temp_b0 = setup%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
+          temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
           sparse_q_b(k) = 0.0_4
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
@@ -1632,7 +1640,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                       col), parameters_b%lr(row, col), states%hlr(row&
 &                       , col), states_b%hlr(row, col), qrout, qrout_b)
           CALL POPREAL4(qup)
-          CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, setup%dx, mesh%nrow&
+          CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
 &                                    , mesh%ncol, mesh%nac, mesh%flow, &
 &                                    mesh%drained_area, mesh%&
 &                                    rowcol_to_ind_sparse, row, col, &
@@ -1640,24 +1648,24 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         ELSE
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          temp_b0 = setup%dx**2*0.001_sp*q_b(row, col)/setup%dt
+          temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
           q_b(row, col) = 0.0_4
           qt_b = temp_b0
           qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(qup)
-          CALL UPSTREAM_DISCHARGE_B(setup%dt, setup%dx, mesh%nrow, mesh%&
+          CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flow, mesh%drained_area, row, &
 &                             col, q, q_b, qup, qup_b)
         END IF
       ELSE IF (branch .EQ. 5) THEN
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        temp_b0 = setup%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
+        temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
         sparse_q_b(k) = 0.0_4
         qt_b = temp_b0
         qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
         CALL POPREAL4(qup)
-        CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, setup%dx, mesh%nrow, &
+        CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, &
 &                                  mesh%ncol, mesh%nac, mesh%flow, mesh%&
 &                                  drained_area, mesh%&
 &                                  rowcol_to_ind_sparse, row, col, &

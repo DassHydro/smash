@@ -7,7 +7,6 @@
 !%      `Variables`                Description
 !%      ========================== =====================================
 !%      ``dt``                     Solver time step        [s]                            (default: 3600)
-!%      ``dx``                     Solver spatial step     [m]                            (default: 1000)
 !%      ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%      ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
 !%      ``optim_start_time``       Optimization start time [%Y%m%d%H%M]                   (default: '...')
@@ -55,7 +54,6 @@ module mwd_setup
     type :: SetupDT
     
         real(sp) :: dt = 3600._sp
-        real(sp) :: dx = 1000._sp
         
         character(lchar) :: start_time = "..."
         character(lchar) :: end_time = "..."

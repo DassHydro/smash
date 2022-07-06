@@ -7,6 +7,12 @@ import os
 import numpy as np
 from osgeo import gdal, osr
 
+#% TODO : Refactorize code
+
+METER_TO_DEGREE = 0.000008512223965693407
+DEGREE_TO_METER = 117478.11195173833
+D8_VALUE = np.arange(1, 9)
+
 __all__ = ["generate_mesh"]
 
 
@@ -108,6 +114,7 @@ def generate_mesh(
     area: (float, list[float]),
     max_depth: int = 1,
     code: (None, str) = None,
+    epsg: (None, str, int) = None,
 ) -> dict:
 
     if os.path.isfile(path):
@@ -119,24 +126,49 @@ def generate_mesh(
     (x, y, area, code) = _standardize_generate_mesh(x, y, area, code)
 
     flow = ds_flow.GetRasterBand(1).ReadAsArray()
+    
+    if np.any(~np.isin(flow, D8_VALUE), where=(flow > 0)):
+        
+        raise ValueError(f"Flow direction data is invalid. Value must be in {D8_VALUE}")
 
     ncol = ds_flow.RasterXSize
     nrow = ds_flow.RasterYSize
 
     transform = ds_flow.GetGeoTransform()
-
-    projection = ds_flow.GetProjection()
-    srs = osr.SpatialReference(wkt=projection)
-
+    
     xmin = transform[0]
     ymax = transform[3]
     xres = transform[1]
     yres = -transform[5]
 
-    #% Approximate area from square meter to square degree
-    if srs.GetAttrValue("geogcs") == "WGS 84":
+    projection = ds_flow.GetProjection()
+    
+    if projection:
+    
+        srs = osr.SpatialReference(wkt=projection)
+    
+    else:
+        
+        if epsg is None:
+            
+            raise ValueError(
+            "Flow direction file does not contain 'Coordinate Spatial Reference' information. Specify it directly in the file or via the 'epsg' argument."
+            )
+            
+        else:
+            
+            srs = osr.SpatialReference()
+            srs.ImportFromEPSG(int(epsg))
 
-        area = area * (xres * yres)
+    #% Approximate area from square meter to square degree
+    if srs.GetAttrValue("UNIT") == "degree":
+
+        area = area * METER_TO_DEGREE ** 2
+        dx = xres * DEGREE_TO_METER
+        
+    else:
+        
+        dx = xres
 
     col_otl = np.zeros(shape=x.shape, dtype=np.int32)
     row_otl = np.zeros(shape=x.shape, dtype=np.int32)
@@ -150,8 +182,14 @@ def generate_mesh(
         mask_dln, col_otl[ind], row_otl[ind] = _meshing.catchment_dln(
             flow, col, row, xres, yres, area[ind], max_depth
         )
-
-        area_otl[ind] = np.count_nonzero(mask_dln == 1)
+        
+        if srs.GetAttrValue("UNIT") == "degree":
+        
+            area_otl[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres) * DEGREE_TO_METER ** 2
+            
+        else:
+            
+            area_otl[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres)
 
         global_mask_dln = np.where(mask_dln == 1, 1, global_mask_dln)
 
@@ -184,6 +222,7 @@ def generate_mesh(
     gauge_pos = np.vstack((row_otl + 1, col_otl + 1))
 
     mesh = {
+        "dx": dx,
         "nrow": flow.shape[0],
         "ncol": flow.shape[1],
         "ng": len(x),

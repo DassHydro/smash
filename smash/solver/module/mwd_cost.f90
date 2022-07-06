@@ -28,20 +28,24 @@ module mwd_cost
             
             do g=1, mesh%ng
             
-                qs = output%qsim(g, setup%optim_start_step:setup%ntime_step) &
-                & * setup%dt * 0.001_sp / mesh%area(g)
-                
-                row = mesh%gauge_pos(1, g)
-                col = mesh%gauge_pos(2, g)
-                
-                qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step) &
-                & * setup%dt * 0.001_sp / (real(mesh%drained_area(row, col)) * &
-                & (setup%dx / 1000._sp) * (setup%dx / 1000._sp))
-                
-                if (any(qo .ge. 0._sp)) then
+                if (mesh%optim_gauge(g) .eq. 1) then
             
-                    jobs = jobs + nse(qo, qs)
-    
+                    qs = output%qsim(g, setup%optim_start_step:setup%ntime_step) &
+                    & * setup%dt / mesh%area(g) * 1e3_sp
+                    
+                    row = mesh%gauge_pos(1, g)
+                    col = mesh%gauge_pos(2, g)
+                    
+                    qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step) &
+                    & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
+                    & * 1e3_sp
+                    
+                    if (any(qo .ge. 0._sp)) then
+                
+                        jobs = jobs + nse(qo, qs)
+        
+                    end if
+                
                 end if
                 
             end do

@@ -129,9 +129,6 @@ def _standardize_setup(setup: SetupDT):
             UserWarning,
         )
 
-    if setup.dx < 0:
-        raise ValueError("argument 'dx' is lower than 0")
-
     if setup.start_time.decode().strip() == "...":
         raise ValueError("argument 'start_time' is not defined")
 

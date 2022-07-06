@@ -306,24 +306,24 @@ class Model(object):
         if algorithm == "sbs":
 
             optimize_sbs(
-            self.setup,
-            self.mesh,
-            self.input_data,
-            self.parameters,
-            self.states,
-            self.output,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+            instance.parameters,
+            instance.states,
+            instance.output,
             cost,
             )
 
         elif algorithm == "l-bfgs-b":
 
             optimize_lbfgsb(
-            self.setup,
-            self.mesh,
-            self.input_data,
-            self.parameters,
-            self.states,
-            self.output,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+            instance.parameters,
+            instance.states,
+            instance.output,
             cost,
             )
 

@@ -27,5 +27,10 @@ def load_dataset(name: str):
                 "pet_directory": os.path.join(DATASET_PATH, "Cance/pet"),
             }
         )
-
+        
         return setup, mesh
+        
+    else:
+        
+        raise ValueError(f"Unknown dataset '{name}'")
+        

@@ -72,8 +72,8 @@ subroutine catchment_dln(flow, col, row, xres, yres, area, &
                 call mask_upstream_cells(flow, col_imd, row_imd, ncol, &
                 & nrow, mask_dln_imd)
                 
-                tol = abs(area - count(mask_dln_imd) &
-                & * xres * yres) / area
+                tol = abs(area - (count(mask_dln_imd) &
+                & * (xres * yres))) / area
                 
                 if (tol .lt. min_tol) then
                 

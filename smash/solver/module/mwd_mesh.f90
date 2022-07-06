@@ -6,6 +6,7 @@
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
+!%      ``dx``                   Solver spatial step             [m]
 !%      ``nrow``                 Number of row
 !%      ``ncol``                 Number of column
 !%      ``ng``                   Number of gauge
@@ -18,7 +19,7 @@
 !%      ``gauge_pos``            Gauge position 
 !%      ``gauge_optim``          Gauge to optimize
 !%      ``code``                 Gauge code
-!%      ``area``                 Drained area at gauge position  [km2]
+!%      ``area``                 Drained area at gauge position  [m2]
 !%      ``global_active_cell``   Mask of global active cell
 !%      ``local_active_cell``    Mask of local active cell
 !%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice
@@ -44,6 +45,7 @@ module mwd_mesh
     
     type :: MeshDT
     
+        real(sp) :: dx
         integer :: nrow
         integer :: ncol
         integer :: ng
@@ -56,7 +58,7 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: path
         
         integer, dimension(:,:), allocatable :: gauge_pos
-        integer, dimension(:), allocatable :: gauge_optim
+        integer, dimension(:), allocatable :: optim_gauge
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
@@ -90,8 +92,8 @@ module mwd_mesh
             mesh%path = -99
             
             allocate(mesh%gauge_pos(2, mesh%ng))
-            allocate(mesh%gauge_optim(mesh%ng))
-            mesh%gauge_optim = 1
+            allocate(mesh%optim_gauge(mesh%ng))
+            mesh%optim_gauge = 1
             
             allocate(mesh%code(mesh%ng))
             mesh%code = "...................."
