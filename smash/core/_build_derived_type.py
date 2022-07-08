@@ -151,13 +151,13 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError(
             "argument 'end_time' corresponds to an earlier date than 'start_time'"
         )
-
+        
     if setup.optim_start_time.decode().strip() == "...":
         setup.optim_start_time = setup.start_time
         warnings.warn(
             f"argument 'optim_start_time' is not defined. Value set to 'start_time': {st}"
         )
-
+        
     try:
         ost = pd.Timestamp(setup.optim_start_time.decode().strip())
     except:
@@ -173,12 +173,9 @@ def _standardize_setup(setup: SetupDT):
             "argument optim_start_time of SetupDT corresponds to a later date than end_time"
         )
 
-    if setup.simulation_only:
-        setup.read_qobs = False
-
     if setup.read_qobs and setup.qobs_directory.decode().strip() == "...":
         raise ValueError(
-            "argument 'simulation_only' is False, 'read_qobs' is True and 'qobs_directory' is not defined"
+            "argument 'read_qobs' is True and 'qobs_directory' is not defined"
         )
 
     if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode().strip()):
@@ -268,7 +265,9 @@ def _build_setup(setup: SetupDT):
     _standardize_setup(setup)
 
     st = pd.Timestamp(setup.start_time.decode().strip())
+    
     ost = pd.Timestamp(setup.optim_start_time.decode().strip())
+        
     et = pd.Timestamp(setup.end_time.decode().strip())
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt

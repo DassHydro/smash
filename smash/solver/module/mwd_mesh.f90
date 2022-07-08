@@ -93,7 +93,7 @@ module mwd_mesh
             
             allocate(mesh%gauge_pos(2, mesh%ng))
             allocate(mesh%optim_gauge(mesh%ng))
-            mesh%optim_gauge = 1
+            mesh%optim_gauge = 0
             
             allocate(mesh%code(mesh%ng))
             mesh%code = "...................."

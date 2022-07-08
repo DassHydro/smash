@@ -53,12 +53,8 @@ module mwd_input_data
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
 
-            if (.not. setup%simulation_only) then
-            
-                allocate(input_data%qobs(mesh%ng, setup%ntime_step))
-                input_data%qobs = -99._sp
-                
-            end if
+            allocate(input_data%qobs(mesh%ng, setup%ntime_step))
+            input_data%qobs = -99._sp
             
             if (setup%sparse_storage) then
             

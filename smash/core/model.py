@@ -300,8 +300,6 @@ class Model(object):
 
             instance = self.copy()
 
-        cost = np.float32(0.0)
-
         if algorithm == "sbs":
 
             optimize_sbs(
@@ -311,7 +309,6 @@ class Model(object):
                 instance.parameters,
                 instance.states,
                 instance.output,
-                cost,
             )
 
         elif algorithm == "l-bfgs-b":
@@ -323,7 +320,6 @@ class Model(object):
                 instance.parameters,
                 instance.states,
                 instance.output,
-                cost,
             )
 
         return instance

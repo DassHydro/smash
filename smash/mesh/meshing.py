@@ -7,7 +7,6 @@ import os
 import warnings
 import numpy as np
 from osgeo import gdal, osr
-import matplotlib.pyplot as plt
 
 METER_TO_DEGREE = 0.000008512223965693407
 DEGREE_TO_METER = 117478.11195173833
@@ -313,12 +312,12 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
         if srs.GetAttrValue("UNIT") == "degree":
 
             area_ol[ind] = (
-                np.count_nonzero(mask_dln == 1) * (xres * yres) * DEGREE_TO_METER**2
+                np.count_nonzero(mask_dln_imd == 1) * (xres * yres) * DEGREE_TO_METER**2
             )
 
         else:
 
-            area_ol[ind] = np.count_nonzero(mask_dln == 1) * (xres * yres)
+            area_ol[ind] = np.count_nonzero(mask_dln_imd == 1) * (xres * yres)
 
         mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
 
@@ -399,6 +398,7 @@ def _get_mesh_from_bbox(ds_flow, bbox, epsg):
         "dx": dx,
         "nrow": flow.shape[0],
         "ncol": flow.shape[1],
+        "ng": 0,
         "nac": np.count_nonzero(global_active_cell),
         "xmin": bbox[0],
         "ymax": bbox[3],

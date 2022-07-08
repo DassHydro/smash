@@ -22,6 +22,7 @@ module mwd_cost
             real(sp), intent(out) :: jobs
             
             real(sp), dimension(setup%ntime_step - setup%optim_start_step + 1) :: qo, qs
+!            real(sp), dimension(mesh%ng) :: jobs_gauge
             integer :: g, row, col
             
             jobs = 0._sp

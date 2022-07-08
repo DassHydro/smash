@@ -106,7 +106,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     
                     end if
                     
-                    if (prcp .ge. 0) then !% [ IF PRCP GAP ]
+                    if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
                 
                         !% =============================================================================================== %!
                         !%   Interception module case [ 0 - 1 ]
@@ -286,5 +286,5 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     !% =================================================================================================================== %!
     
     call compute_jobs(setup, mesh, input_data, output, cost)
-    
+        
 end subroutine forward

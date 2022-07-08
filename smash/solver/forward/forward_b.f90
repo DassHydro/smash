@@ -13,6 +13,7 @@
 !%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
 !%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
 !%      ``parameters_gradient``  Parameters gradients
+!%      ``cost``                 Cost value
 !%      ``sp1``                  Scalar product <dY*, dY>
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
@@ -35,6 +36,7 @@ MODULE MWD_OUTPUT_DIFF_B
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qsim_domain
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_qsim_domain
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: parameters_gradient
+      REAL(sp) :: cost
       REAL(sp) :: sp1
       REAL(sp) :: sp2
       REAL(sp), DIMENSION(:), ALLOCATABLE :: an
@@ -107,6 +109,7 @@ CONTAINS
 &   , qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
 &   qs_b
+!            real(sp), dimension(mesh%ng) :: jobs_gauge
     INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
@@ -163,6 +166,7 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
 &   , qs
+!            real(sp), dimension(mesh%ng) :: jobs_gauge
     INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
@@ -1132,7 +1136,7 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, states, &
             pet = input_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0) THEN
+          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module case [ 0 - 1 ]
@@ -1413,7 +1417,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0) THEN
+          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module case [ 0 - 1 ]

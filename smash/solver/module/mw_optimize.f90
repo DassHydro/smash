@@ -31,7 +31,7 @@ module mw_optimize
     contains
         
         !% Calling forward from forward/forward.f90
-        subroutine optimize_sbs(setup, mesh, input_data, parameters, states, output, cost)
+        subroutine optimize_sbs(setup, mesh, input_data, parameters, states, output)
         
             implicit none
             
@@ -41,17 +41,59 @@ module mw_optimize
             type(ParametersDT), intent(inout) :: parameters
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
-            real(sp), intent(inout) :: cost
             
             type(StatesDT) :: states_bgd
             integer, dimension(mesh%nrow, mesh%ncol) :: mask_ac
             integer, dimension(2) :: loc_ac
-            integer :: iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, p, pp
+            integer :: iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, p, pp, flag, g, nop
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
             real(sp), dimension(np) :: x, x_tf, y, y_tf, z_tf, sdx, lb_tf, ub_tf
-            real(sp) :: gx, ga, clg, ddx, dxn, nop, f
+            real(sp) :: gx, ga, clg, ddx, dxn, f, cost
+            character(lchar) :: msg
             
-            write(*,*) "--- Optimize sbs ---"
+            !% TODO Clean verbose
+            
+            write(*,*) ">>> Optimize Model J"
+            write(*,'(4x,a)') "Algorithm: 'sbs'"
+            write(*,'(4x,4a)') "Objective function: ", "'", trim(setup%obj_fun), "'"
+            write(*,'(4x,a)') "Method: 'uniform'"
+            write(*,'(4x,a,i0)') "Nx: ", 1
+        
+            msg = ""
+            flag = 1
+            
+            do p=1, np
+                
+                if (setup%optim_parameters(p) .gt. 0) then
+                    
+                    msg(flag:flag + len_trim(name_parameters(p))) = trim(name_parameters(p))
+                    
+                    flag = flag + len_trim(name_parameters(p)) + 1
+                    
+                end if
+            
+            end do
+            
+            write(*,'(4x,a,i0,3a)') "Np: ", count(setup%optim_parameters .eq. 1), " [ ", trim(msg), " ] "
+            
+            msg = ""
+            flag = 1
+            
+            do g=1, mesh%ng
+                
+                if (mesh%optim_gauge(g) .gt. 0) then
+                    
+                    msg(flag:flag + len_trim(mesh%code(g))) = trim(mesh%code(g))
+                
+                    flag = flag + len_trim(mesh%code(g)) + 1
+                    
+                end if
+            
+            end do
+            
+            
+            write(*,'(4x,a,i0,3a)') "Ng: ", count(mesh%optim_gauge .eq. 1), " [ ", trim(msg), " ] "
+            write(*,*) ""
             
             !% =========================================================================================================== %!
             !%   Initialisation
@@ -92,11 +134,25 @@ module mw_optimize
             iaa = 0
             iam = 0
             jfaa = 0
-            nfg = 0
+            nfg = 1
             
             nop = count(setup%optim_parameters .eq. 1)
             
-            do iter=1, int(setup%maxiter * nop + 1)
+            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            
+            do iter=1, setup%maxiter * nop + 1
+                        
+                !% ======================================================================================================= %!
+                !%   Iterate writting
+                !% ======================================================================================================= %!
+            
+                if (mod(iter, nop) .eq. 0) then
+                    
+                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                    & "At iterate", (iter / nop), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                
+                end if
             
                 !% ======================================================================================================= %!
                 !%   Convergence DDX < 0.01
@@ -104,7 +160,7 @@ module mw_optimize
             
                 if (ddx .lt. 0.01_sp) then
                 
-                    write(*,*) ">>> CONVERGENCE: DDX < 0.01"
+                    write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
 
                     do p=1, np
                         
@@ -126,8 +182,6 @@ module mw_optimize
                             
                     call forward(setup, mesh, input_data, parameters, states, output, cost)
                     
-                    write(*,*) "COST OPTIM SBS", cost
-                    
                     exit
                 
                 end if
@@ -138,7 +192,7 @@ module mw_optimize
                 
                 if (iter .eq. int(setup%maxiter * nop + 1)) then
                 
-                    write(*,*) ">>> STOP: TOTAL NO. of iteration EXCEEDS LIMIT"
+                    write(*,'(4x,a)') "STOP: TOTAL NO. of iteration EXCEEDS LIMIT"
             
                     do p=1, np
                         
@@ -159,8 +213,6 @@ module mw_optimize
                     states = states_bgd
                             
                     call forward(setup, mesh, input_data, parameters, states, output, cost)
-                    
-                    write(*,*) "COST OPTIM SBS", cost
 
                     exit
                 
@@ -407,7 +459,7 @@ module mw_optimize
         
         !% Calling setulb from optimize/lbfgsb.f
         !% Calling forward_b from forward/forward_b.f90
-        subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output, cost)
+        subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
             
             implicit none
             
@@ -417,7 +469,6 @@ module mw_optimize
             type(ParametersDT), intent(inout) :: parameters
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
-            real(sp), intent(inout) :: cost
             
             integer :: n, m, iprint, iwriteX
             integer, dimension(:), allocatable :: nbd, iwa
@@ -433,9 +484,9 @@ module mw_optimize
             type(ParametersDT) :: parameters_b
             type(StatesDT) :: states_b, states_bgd
             type(OutputDT) :: output_b
-            real(sp) :: cost_b
+            real(sp) :: cost, cost_b
             
-            write(*,*) "--- Optimize l-bfgs-b ---"
+            write(*,*) ">>> Optimize l-bfgs-b"
             
             iprint = 99
             

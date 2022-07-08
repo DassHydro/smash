@@ -10,6 +10,7 @@
 !%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
 !%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
 !%      ``parameters_gradient``  Parameters gradients
+!%      ``cost``                 Cost value
 !%      ``sp1``                  Scalar product <dY*, dY>
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
@@ -35,6 +36,8 @@ module mwd_output
         real(sp), dimension(:,:), allocatable :: sparse_qsim_domain
         
         real(sp), dimension(:,:,:), allocatable :: parameters_gradient
+        
+        real(sp) :: cost
         
         real(sp) :: sp1
         real(sp) :: sp2

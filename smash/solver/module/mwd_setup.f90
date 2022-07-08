@@ -12,7 +12,6 @@
 !%      ``optim_start_time``       Optimization start time [%Y%m%d%H%M]                   (default: '...')
 !%      ``ntime_step``             Number of time step
 !%      ``optim_start_step``       Indice start optimization
-!%      ``simulation_only``        Simulation only                                        (default: .false.)
 !%      ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
 !%      ``read_qobs``              Read observed discharge                                (default: .true.)
 !%      ``qobs_directory``         Observed discharge directory path                      (default: '...')
@@ -36,6 +35,7 @@
 !%      ``optim_parameters``       Choice of optimized SMASH parameters                   (default: 0)
 !%      ``lb_parameters``          Lower bounds of SMASH parameters                       (default: see below)
 !%      ``ub_parameters``          Upper bounds of SMASH parameters                       (default: see below
+!%      ``obj_fun``                Maximum number of optimization iteration               (default: 100)
 !%      ``maxiter``                Maximum number of optimization iteration               (default: 100)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      =========================  =====================================
@@ -61,7 +61,6 @@ module mwd_setup
         integer :: ntime_step = 0
         integer :: optim_start_step = 1
         
-        logical :: simulation_only = .false.
         logical :: sparse_storage = .false.
         
         logical :: read_qobs = .true.
@@ -128,6 +127,8 @@ module mwd_setup
         &   0.999999_sp ,&  !% alpha
         &   50._sp      ,&  !% exc
         &   1e3_sp/)        !% lr
+        
+        character(lchar) :: obj_fun = "nse"
         
         integer :: maxiter = 100
         
