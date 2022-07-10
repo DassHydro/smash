@@ -26,7 +26,7 @@ module mw_optimize
     
     private :: transformation, inv_transformation, &
     & optimize_matrix_to_vector, optimize_vector_to_matrix, &
-    & normalize_matrix, unnormalize_matrix
+    & normalize_matrix, unnormalize_matrix, optimize_message
     
     contains
         
@@ -45,55 +45,12 @@ module mw_optimize
             type(StatesDT) :: states_bgd
             integer, dimension(mesh%nrow, mesh%ncol) :: mask_ac
             integer, dimension(2) :: loc_ac
-            integer :: iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, p, pp, flag, g, nop
+            integer :: iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, p, pp, nop
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
             real(sp), dimension(np) :: x, x_tf, y, y_tf, z_tf, sdx, lb_tf, ub_tf
             real(sp) :: gx, ga, clg, ddx, dxn, f, cost
-            character(lchar) :: msg
             
-            !% TODO Clean verbose
-            
-            write(*,*) ">>> Optimize Model J"
-            write(*,'(4x,a)') "Algorithm: 'sbs'"
-            write(*,'(4x,4a)') "Objective function: ", "'", trim(setup%obj_fun), "'"
-            write(*,'(4x,a)') "Method: 'uniform'"
-            write(*,'(4x,a,i0)') "Nx: ", 1
-        
-            msg = ""
-            flag = 1
-            
-            do p=1, np
-                
-                if (setup%optim_parameters(p) .gt. 0) then
-                    
-                    msg(flag:flag + len_trim(name_parameters(p))) = trim(name_parameters(p))
-                    
-                    flag = flag + len_trim(name_parameters(p)) + 1
-                    
-                end if
-            
-            end do
-            
-            write(*,'(4x,a,i0,3a)') "Np: ", count(setup%optim_parameters .eq. 1), " [ ", trim(msg), " ] "
-            
-            msg = ""
-            flag = 1
-            
-            do g=1, mesh%ng
-                
-                if (mesh%optim_gauge(g) .gt. 0) then
-                    
-                    msg(flag:flag + len_trim(mesh%code(g))) = trim(mesh%code(g))
-                
-                    flag = flag + len_trim(mesh%code(g)) + 1
-                    
-                end if
-            
-            end do
-            
-            
-            write(*,'(4x,a,i0,3a)') "Ng: ", count(mesh%optim_gauge .eq. 1), " [ ", trim(msg), " ] "
-            write(*,*) ""
+            call optimize_message(setup, mesh, 1)
             
             !% =========================================================================================================== %!
             !%   Initialisation
@@ -141,82 +98,7 @@ module mw_optimize
             write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
             
-            do iter=1, setup%maxiter * nop + 1
-                        
-                !% ======================================================================================================= %!
-                !%   Iterate writting
-                !% ======================================================================================================= %!
-            
-                if (mod(iter, nop) .eq. 0) then
-                    
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-                    & "At iterate", (iter / nop), "nfg = ", nfg, "J =", gx, "ddx =", ddx
-                
-                end if
-            
-                !% ======================================================================================================= %!
-                !%   Convergence DDX < 0.01
-                !% ======================================================================================================= %!
-            
-                if (ddx .lt. 0.01_sp) then
-                
-                    write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
-
-                    do p=1, np
-                        
-                        if(setup%optim_parameters(p) .eq. 1) then
-                        
-                            where (mask_ac .eq. 1)
-                            
-                                parameters_matrix(:,:,p) = x(p)
-                            
-                            end where
-                            
-                        end if
-                        
-                    end do
-                    
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    
-                    states = states_bgd
-                            
-                    call forward(setup, mesh, input_data, parameters, states, output, cost)
-                    
-                    exit
-                
-                end if
-                
-                !% ======================================================================================================= %!
-                !%   Maximum Number of Iteration
-                !% ======================================================================================================= %!
-                
-                if (iter .eq. int(setup%maxiter * nop + 1)) then
-                
-                    write(*,'(4x,a)') "STOP: TOTAL NO. of iteration EXCEEDS LIMIT"
-            
-                    do p=1, np
-                        
-                        if(setup%optim_parameters(p) .eq. 1) then
-                        
-                            where (mask_ac .eq. 1)
-                            
-                                parameters_matrix(:,:,p) = x(p)
-                            
-                            end where
-                            
-                        end if
-                        
-                    end do
-                    
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    
-                    states = states_bgd
-                            
-                    call forward(setup, mesh, input_data, parameters, states, output, cost)
-
-                    exit
-                
-                end if
+            do iter=1, setup%maxiter * nop
                 
                 !% ======================================================================================================= %!
                 !%   Optimize
@@ -391,6 +273,81 @@ module mw_optimize
                 
                 ia = 0
                 
+                !% ======================================================================================================= %!
+                !%   Iterate writting
+                !% ======================================================================================================= %!
+            
+                if (mod(iter, nop) .eq. 0) then
+                    
+                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                    & "At iterate", (iter / nop), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                
+                end if
+                
+                !% ======================================================================================================= %!
+                !%   Convergence DDX < 0.01
+                !% ======================================================================================================= %!
+            
+                if (ddx .lt. 0.01_sp) then
+                
+                    write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
+
+                    do p=1, np
+                        
+                        if(setup%optim_parameters(p) .eq. 1) then
+                        
+                            where (mask_ac .eq. 1)
+                            
+                                parameters_matrix(:,:,p) = x(p)
+                            
+                            end where
+                            
+                        end if
+                        
+                    end do
+                    
+                    call matrix_to_parameters(parameters_matrix, parameters)
+                    
+                    states = states_bgd
+                            
+                    call forward(setup, mesh, input_data, parameters, states, output, cost)
+                    
+                    exit
+                
+                end if
+                
+                !% ======================================================================================================= %!
+                !%   Maximum Number of Iteration
+                !% ======================================================================================================= %!
+                
+                if (iter .eq. setup%maxiter * nop) then
+                
+                    write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+            
+                    do p=1, np
+                        
+                        if(setup%optim_parameters(p) .eq. 1) then
+                        
+                            where (mask_ac .eq. 1)
+                            
+                                parameters_matrix(:,:,p) = x(p)
+                            
+                            end where
+                            
+                        end if
+                        
+                    end do
+                    
+                    call matrix_to_parameters(parameters_matrix, parameters)
+                    
+                    states = states_bgd
+                            
+                    call forward(setup, mesh, input_data, parameters, states, output, cost)
+
+                    exit
+                
+                end if
+                
             end do
 
         end subroutine optimize_sbs
@@ -470,7 +427,7 @@ module mw_optimize
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            integer :: n, m, iprint, iwriteX
+            integer :: n, m, iprint
             integer, dimension(:), allocatable :: nbd, iwa
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: &
             & parameters_matrix, norm_parameters_matrix, parameters_b_matrix
@@ -486,18 +443,18 @@ module mw_optimize
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             
-            write(*,*) ">>> Optimize l-bfgs-b"
+            call optimize_message(setup, mesh, mesh%nac)
             
-            iprint = 99
+            iprint = -1
             
             n = mesh%nac * count(setup%optim_parameters .eq. 1)
             m = 10
-            factr=1.e7_dp
-            pgtol=1.e-12_dp
+            factr = 1.e7_dp
+            pgtol = 1.e-12_dp
             
             allocate(nbd(n), x(n), l(n), u(n), g(n))
-            allocate (iwa(3 * n))
-            allocate (wa(2 * m * n + 5 * n + 11 * m * m + 8 * m))
+            allocate(iwa(3 * n))
+            allocate(wa(2 * m * n + 5 * n + 11 * m * m + 8 * m))
             
             nbd = 2
             l = 0._dp
@@ -509,27 +466,26 @@ module mw_optimize
             
             call optimize_matrix_to_vector(setup, mesh, norm_parameters_matrix, x)
             
-            call ParametersDT_initialise(parameters_b, setup, mesh)
+            call ParametersDT_initialise(parameters_b, mesh)
             
-            call StatesDT_initialise(states_b, setup, mesh)
+            call StatesDT_initialise(states_b, mesh)
             
             call OutputDT_initialise(output_b, setup, mesh)
             
             states_bgd = states
             
             task = 'START'
-            iwriteX=0
             do while((task(1:2) .eq. 'FG' .or. task .eq. 'NEW_X' .or. &
                     & task .eq. 'START'))
                     
-                call setulb(n      ,&    ! dimension of the problem
-                            m      ,&    ! number of corrections of limited memory (approx. Hessian) 
-                            x      ,&    ! control
+                call setulb(n       ,&   ! dimension of the problem
+                            m       ,&   ! number of corrections of limited memory (approx. Hessian) 
+                            x       ,&   ! control
                             l       ,&   ! lower bound on control
                             u       ,&   ! upper bound on control
                             nbd     ,&   ! type of bounds
-                            f       ,&   ! value of the (cost) function at xx
-                            g       ,&   ! value of the (cost) gradient at xx
+                            f       ,&   ! value of the (cost) function at x
+                            g       ,&   ! value of the (cost) gradient at x
                             factr   ,&   ! tolerance iteration 
                             pgtol   ,&   ! tolerance on projected gradient 
                             wa      ,&   ! working array
@@ -561,16 +517,38 @@ module mw_optimize
                     call parameters_to_matrix(parameters_b, parameters_b_matrix)
                     
                     call optimize_matrix_to_vector(setup, mesh, parameters_b_matrix, g)
+                    
+                    if (task(4:8) .eq. 'START') then
+                    
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                    
+                    end if
  
                 end if
                 
-                if (isave(30) .ge. setup%maxiter) then
+                if (task(1:5) .eq. 'NEW_X') then
                     
-                    task='STOP: TOTAL NO. of iteration EXCEEDS LIMIT'
+                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                
+                    if (isave(30) .ge. setup%maxiter) then
+                        
+                        task='STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT'
+                        
+                    end if
                     
+                    if (dsave(13) .le. 1.d-10*(1.0d0 + abs(f))) then
+                       
+                        task='STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL'
+                       
+                    end if
+                       
                 end if
                     
             end do
+            
+        write(*, '(4x,a)') task
 
         states = states_bgd
         
@@ -698,5 +676,78 @@ module mw_optimize
             end do
             
         end subroutine unnormalize_matrix
+        
+        
+        subroutine optimize_message(setup, mesh, nx)
+            
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            integer, intent(in) :: nx
+            
+            integer :: i, flag
+            character(lchar) :: msg, imd_char
+            
+            write(*,'(a)') ">>> Optimize Model J"
+            write(*,'(4x,4a)') "Algorithm: ", "'", trim(setup%algorithm), "'"
+            write(*,'(4x,4a)') "Jobs function: ", "'", trim(setup%jobs_fun), "'"
+            write(*,'(4x,a,i0)') "Nx: ", nx
+        
+            msg = ""
+            flag = 1
+            
+            do i=1, np
+                
+                if (setup%optim_parameters(i) .gt. 0) then
+                    
+                    msg(flag:flag + len_trim(name_parameters(i))) = trim(name_parameters(i))
+                    
+                    flag = flag + len_trim(name_parameters(i)) + 1
+                    
+                end if
+            
+            end do
+            
+            write(*,'(4x,a,i0,3a)') "Np: ", count(setup%optim_parameters .eq. 1), " [ ", trim(msg), " ] "
+            
+            msg = ""
+            flag = 1
+            
+            do i=1, mesh%ng
+                
+                if (mesh%wgauge(i) .gt. 0) then
+                    
+                    msg(flag:flag + len_trim(mesh%code(i))) = trim(mesh%code(i))
+                
+                    flag = flag + len_trim(mesh%code(i)) + 1
+                    
+                end if
+            
+            end do
+            
+            write(*,'(4x,a,i0,3a)') "Ng: ", count(mesh%wgauge .gt. 0), " [ ", trim(msg), " ] "
+            
+            msg = ""
+            flag = 1
+            
+            do i=1, mesh%ng
+                
+                if (mesh%wgauge(i) .gt. 0) then
+                
+                    write(imd_char,'(f0.6)') mesh%wgauge(i)
+                    
+                    msg(flag:flag + len_trim(imd_char)) = trim(imd_char)
+                
+                    flag = flag + len_trim(imd_char) + 1
+                    
+                end if
+            
+            end do
+            
+            write(*,'(4x,a,i0,3a)') "wg: ", count(mesh%wgauge .gt. 0), " [ ", trim(msg), " ] "
+            write(*,*) ""
+            
+        end subroutine optimize_message
         
 end module mw_optimize

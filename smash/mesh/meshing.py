@@ -312,7 +312,9 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
         if srs.GetAttrValue("UNIT") == "degree":
 
             area_ol[ind] = (
-                np.count_nonzero(mask_dln_imd == 1) * (xres * yres) * DEGREE_TO_METER**2
+                np.count_nonzero(mask_dln_imd == 1)
+                * (xres * yres)
+                * DEGREE_TO_METER**2
             )
 
         else:

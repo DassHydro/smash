@@ -1,23 +1,24 @@
 #!/bin/bash
 
-# sed for derived type function
-sed_DT () {
+# sed wrapped and differentiated DT
+sed_mwd_DT () {
 
 	# Add copy to class method
-	sed -i "/.*join(ret).*/a \\\n\tdef copy(self):\n\t\treturn "$1"_copy(self)" ./smash/solver/_mw*_$1.py
+	sed -i "/.*join(ret).*/a \\\n\tdef copy(self):\n\t\treturn "$1"_copy(self)" ./smash/solver/_mwd_$1.py
 	
 	# Check for finalise method (depend on which machine/compiler its used)
-	sed -i "/.*_finalise/i \\\t\t\ttry:" ./smash/solver/_mw*_$1.py
-	sed -i "/.*finalise/s/^/\t/" ./smash/solver/_mw*_$1.py
-	sed -i "/.*_finalise/a \\\t\t\texcept:\n\t\t\t\tpass" ./smash/solver/_mw*_$1.py
+	sed -i "/.*_finalise/i \\\t\t\ttry:" ./smash/solver/_mwd_$1.py
+	sed -i "/.*finalise/s/^/\t/" ./smash/solver/_mwd_$1.py
+	sed -i "/.*_finalise/a \\\t\t\texcept:\n\t\t\t\tpass" ./smash/solver/_mwd_$1.py
 
 }
 
-derived_type=("setup" "mesh" "input_data" "parameters" "states" "output")
 
-for dt in ${derived_type[@]}; do
+mwd_DT=("setup" "mesh" "input_data" "parameters" "states" "output")
+
+for dt in ${mwd_DT[@]}; do
   
-  sed_DT $dt
+  sed_mwd_DT $dt
   
 done
 

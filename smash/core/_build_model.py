@@ -54,37 +54,6 @@ RATION_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
-SETUP_DICT = [
-    "default_parameters",
-    "default_states",
-    "lb_parameters",
-    "ub_parameters",
-    "optim_parameters",
-]
-
-
-def _standardize_setup_dict(setup: SetupDT, dname: str, ditem: dict) -> list:
-
-    if "parameters" in dname:
-
-        default_dname = dict(zip(name_parameters, getattr(setup, dname)))
-
-    elif "states" in dname:
-
-        default_dname = dict(zip(name_states, getattr(setup, dname)))
-
-    for key, value in ditem.items():
-
-        if key in default_dname.keys():
-
-            default_dname.update({key: value})
-
-        else:
-
-            raise ValueError(f"Invalid key '{key}' in '{dname}'")
-
-    return list(default_dname.values())
-
 
 def _parse_derived_type(derived_type, data: dict):
 
@@ -92,19 +61,7 @@ def _parse_derived_type(derived_type, data: dict):
     Derived type parser
     """
 
-    datac = data.copy()
-
-    if isinstance(derived_type, SetupDT):
-
-        for dname in SETUP_DICT:
-
-            if dname in datac.keys():
-
-                datac[dname] = _standardize_setup_dict(
-                    derived_type, dname, datac[dname]
-                )
-
-    for key, value in datac.items():
+    for key, value in data.items():
 
         if hasattr(derived_type, key):
 
@@ -150,27 +107,6 @@ def _standardize_setup(setup: SetupDT):
     if (et - st).total_seconds() < 0:
         raise ValueError(
             "argument 'end_time' corresponds to an earlier date than 'start_time'"
-        )
-        
-    if setup.optim_start_time.decode().strip() == "...":
-        setup.optim_start_time = setup.start_time
-        warnings.warn(
-            f"argument 'optim_start_time' is not defined. Value set to 'start_time': {st}"
-        )
-        
-    try:
-        ost = pd.Timestamp(setup.optim_start_time.decode().strip())
-    except:
-        raise ValueError("argument 'optim_start_time' is not a valid date")
-
-    if (ost - st).total_seconds() < 0:
-        raise ValueError(
-            "argument 'optim_start_time' corresponds to an earlier date than 'start_time'"
-        )
-
-    if (et - ost).total_seconds() < 0:
-        raise ValueError(
-            "argument optim_start_time of SetupDT corresponds to a later date than end_time"
         )
 
     if setup.read_qobs and setup.qobs_directory.decode().strip() == "...":
@@ -265,14 +201,10 @@ def _build_setup(setup: SetupDT):
     _standardize_setup(setup)
 
     st = pd.Timestamp(setup.start_time.decode().strip())
-    
-    ost = pd.Timestamp(setup.optim_start_time.decode().strip())
-        
+
     et = pd.Timestamp(setup.end_time.decode().strip())
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt
-
-    setup.optim_start_step = (ost - st).total_seconds() / setup.dt + 1
 
 
 def _standardize_mesh(setup: SetupDT, mesh: MeshDT):

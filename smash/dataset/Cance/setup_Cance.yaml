@@ -1,6 +1,5 @@
 dt: 3_600
 start_time: 2014-09-15 00:00
-optim_start_time: 2014-09-15 00:00
 end_time: 2014-11-14 00:00
 
 sparse_storage: True
@@ -23,10 +22,5 @@ mean_forcing: False
 
 exchange_module: 1
 routing_module: 1
-
-default_parameters: {cp: 100, cft: 100, lr: 5, exc: 0}
-default_states: {hp: 0.5, hft: 0.01, hlr: 0.00001}
-optim_parameters: {cp: 1, cft: 1, lr: 1, exc: 1}
-maxiter: 10
 
 save_qsim_domain: False

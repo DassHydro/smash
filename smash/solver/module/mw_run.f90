@@ -61,12 +61,12 @@ module mw_run
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             
-            call ParametersDT_initialise(parameters_b, setup, mesh)
-            call StatesDT_initialise(states_b, setup, mesh)
-            call OutputDT_initialise(output_b, setup, mesh)
-            
             write(*,'(a)') ">>> Adjoint Model (dM/dk)* (k)"
-        
+            
+            call ParametersDT_initialise(parameters_b, mesh)
+            call StatesDT_initialise(states_b, mesh)
+            call OutputDT_initialise(output_b, setup, mesh)
+
             cost_b = 1._sp
             
             call forward_b(setup, mesh, input_data, parameters, &
@@ -84,14 +84,14 @@ module mw_run
             
         end subroutine adjoint_run
         
-!%      TODO comment and clean
+!%      TODO comment
         !% Calling forward_d from forward/forward_d.f90
         subroutine tangent_linear_run(setup, mesh, input_data, parameters, states, output)
         
         implicit none
             
-            type(SetupDT), intent(in) :: setup
-            type(MeshDT), intent(in) :: mesh
+            type(SetupDT), intent(inout) :: setup
+            type(MeshDT), intent(inout) :: mesh
             type(Input_DataDT), intent(in) :: input_data
             type(ParametersDT), intent(in) :: parameters
             type(StatesDT), intent(inout) :: states
@@ -101,8 +101,23 @@ module mw_run
             type(StatesDT) :: states_d
             type(OutputDT) :: output_d
             real(sp) :: cost, cost_d
+            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
             
             write(*,'(a)') ">>> Tangent Linear Model (dM/dk) (k)"
+            
+            call ParametersDT_initialise(parameters_d, mesh)
+            call StatesDT_initialise(states_d, mesh)
+            call OutputDT_initialise(output_d, setup, mesh)
+            
+            call parameters_to_matrix(parameters_d, parameters_d_matrix)
+            call states_to_matrix(states_d, states_d_matrix)
+            
+            parameters_d_matrix = 1._sp
+            states_d_matrix = 0._sp
+            
+            call matrix_to_parameters(parameters_d_matrix, parameters_d)
+            call matrix_to_states(states_d_matrix, states_d)
             
             call forward_d(setup, mesh, input_data, parameters, &
             & parameters_d, states, states_d, output, output_d, cost, cost_d)

@@ -27,7 +27,6 @@
 module mwd_parameters
 
     use mwd_common !% only: sp, dp, lchar, np, ns
-    use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     
     implicit none
@@ -47,11 +46,10 @@ module mwd_parameters
     
     contains
         
-        subroutine ParametersDT_initialise(parameters, setup, mesh)
+        subroutine ParametersDT_initialise(parameters, mesh)
         
             implicit none
             
-            type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
             
@@ -69,8 +67,14 @@ module mwd_parameters
             allocate(parameters%exc(nrow, ncol))
             allocate(parameters%lr(nrow, ncol))
             
-            call vector_to_parameters(&
-            & setup%default_parameters, parameters)
+            parameters%ci    = 1._sp
+            parameters%cp    = 200._sp
+            parameters%beta  = 1000._sp
+            parameters%cft   = 200._sp
+            parameters%cst   = 500._sp
+            parameters%alpha = 0.9_sp
+            parameters%exc   = 0._sp
+            parameters%lr    = 5._sp
 
         end subroutine ParametersDT_initialise
         

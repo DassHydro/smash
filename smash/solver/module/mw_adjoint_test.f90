@@ -38,25 +38,30 @@ module mw_adjoint_test
             type(OutputDT) ::  output_d, output_b
             real(sp) :: cost, cost_d, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
+
             
             write(*,'(a)') ">>> Scalar Product Test"
             
             states_bgd = states
             
-            call ParametersDT_initialise(parameters_d, setup, mesh)
-            call ParametersDT_initialise(parameters_b, setup, mesh)
+            call ParametersDT_initialise(parameters_d, mesh)
+            call ParametersDT_initialise(parameters_b, mesh)
             
-            call StatesDT_initialise(states_d, setup, mesh)
-            call StatesDT_initialise(states_b, setup, mesh)
+            call StatesDT_initialise(states_d, mesh)
+            call StatesDT_initialise(states_b, mesh)
             
             call OutputDT_initialise(output_d, setup, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
             
             call parameters_to_matrix(parameters_d, parameters_d_matrix)
+            call states_to_matrix(states_d, states_d_matrix)
             
             parameters_d_matrix = 1._sp
+            states_d_matrix = 0._sp
             
             call matrix_to_parameters(parameters_d_matrix, parameters_d)
+            call matrix_to_states(states_d_matrix, states_d)
             
             write(*,'(4x,a)') "Tangent Linear Model dY  = (dM/dk) (k) . dk"
             
@@ -73,14 +78,15 @@ module mw_adjoint_test
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             
-            !% cost_b reset at the end of the adjoint model ...
+            !% cost_b reset at the end of the forward_b ...
+            !% No perturbation has been set to states_d
             output%sp1 = 1._sp * cost_d
             
             output%sp2 = sum(parameters_b_matrix * parameters_d_matrix)
             
-            write(*,'(4x,a,f10.6)') "<dY*, dY> (sp1) = ", output%sp1
-            write(*,'(4x,a,f10.6)') "<dk*, dk> (sp2) = ", output%sp2
-            write(*,'(4x,a,f10.6)') "Relative Error  = ", (output%sp1 - output%sp2) &
+            write(*,'(4x,a,f12.8)') "<dY*, dY> (sp1) = ", output%sp1
+            write(*,'(4x,a,f12.8)') "<dk*, dk> (sp2) = ", output%sp2
+            write(*,'(4x,a,f12.8)') "Relative Error  = ", (output%sp1 - output%sp2) &
             & / output%sp1
         
         end subroutine scalar_product_test
@@ -116,8 +122,8 @@ module mw_adjoint_test
             parameters_bgd = parameters
             dk = 1._sp
             
-            call ParametersDT_initialise(parameters_b, setup, mesh)
-            call StatesDT_initialise(states_b, setup, mesh)
+            call ParametersDT_initialise(parameters_b, mesh)
+            call StatesDT_initialise(states_b, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
             
             write(*,'(4x,a)') "Forward Model Y    = M (k)"
@@ -156,9 +162,11 @@ module mw_adjoint_test
                 
                 output%ian(n) = (yadk - yk) / (output%an(n) * sum(parameters_b_matrix * dk)) 
                 
-                write(*,'(4x,a,f10.6,4x,a,f10.6)') "an = ", output%an(n), "|Ia - 1| = ", abs(output%ian(n) - 1)
+                write(*,'(4x,a,f12.8,4x,a,f12.8)') "a = ", output%an(n), "|Ia - 1| = ", abs(output%ian(n) - 1)
                 
             end do
+            
+            write(*,'(4x,a)') "Ia = (Yadk - Y) / (a dk* . dk)"
         
         end subroutine gradient_test
         

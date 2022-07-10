@@ -17,7 +17,6 @@
 !%      ``drained_area``         Drained area                    [nb of cell]
 !%      ``path``                 Solver path 
 !%      ``gauge_pos``            Gauge position 
-!%      ``gauge_optim``          Gauge to optimize
 !%      ``code``                 Gauge code
 !%      ``area``                 Drained area at gauge position  [m2]
 !%      ``global_active_cell``   Mask of global active cell
@@ -58,7 +57,7 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: path
         
         integer, dimension(:,:), allocatable :: gauge_pos
-        integer, dimension(:), allocatable :: optim_gauge
+        real(sp), dimension(:), allocatable :: wgauge
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
@@ -75,7 +74,7 @@ module mwd_mesh
         
             implicit none
             
-            type(SetupDT), intent(in) :: setup
+            type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
             integer, intent(in) :: nrow, ncol, ng
             
@@ -92,8 +91,6 @@ module mwd_mesh
             mesh%path = -99
             
             allocate(mesh%gauge_pos(2, mesh%ng))
-            allocate(mesh%optim_gauge(mesh%ng))
-            mesh%optim_gauge = 0
             
             allocate(mesh%code(mesh%ng))
             mesh%code = "...................."
@@ -110,6 +107,10 @@ module mwd_mesh
                 mesh%rowcol_to_ind_sparse = -99
                 
             end if
+            
+            !% Optimize options
+            allocate(mesh%wgauge(mesh%ng))
+            mesh%wgauge = 1._sp
             
         end subroutine MeshDT_initialise
         

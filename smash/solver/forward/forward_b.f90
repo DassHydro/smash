@@ -89,6 +89,8 @@ MODULE MWD_COST_DIFF_B
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_B
   IMPLICIT NONE
+  PUBLIC :: compute_jobs
+  PUBLIC :: compute_jobs_b
 
 CONTAINS
 !  Differentiation of compute_jobs in reverse (adjoint) mode (with options fixinterface):
@@ -109,51 +111,102 @@ CONTAINS
 &   , qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
 &   qs_b
-!            real(sp), dimension(mesh%ng) :: jobs_gauge
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge_b
+    REAL(sp) :: imd
+    REAL(sp) :: imd_b
     INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
-    REAL(sp) :: result1
-    REAL(sp) :: result1_b
     INTEGER :: branch
     DO g=1,mesh%ng
-      IF (mesh%optim_gauge(g) .EQ. 1) THEN
-        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&         setup%dt/mesh%area(g)*1e3_sp
-        row = mesh%gauge_pos(1, g)
-        col = mesh%gauge_pos(2, g)
-        CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%&
-&                     optim_start_step + 1)
-        qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)&
-&         *setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
-&         1e3_sp
-        IF (ANY(qo .GE. 0._sp)) THEN
-          CALL PUSHCONTROL2B(2)
-        ELSE
-          CALL PUSHCONTROL2B(1)
-        END IF
+      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
+&       %dt/mesh%area(g)*1e3_sp
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
+      CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step &
+&                   + 1)
+      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
+&       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
+&       1e3_sp
+      IF (ANY(qo .GE. 0._sp)) THEN
+        SELECT CASE  (setup%jobs_fun) 
+        CASE ('nse') 
+          CALL PUSHCONTROL3B(6)
+        CASE ('kge') 
+          CALL PUSHCONTROL3B(5)
+        CASE ('kge2') 
+          CALL PUSHREAL4(imd)
+          imd = KGE(qo, qs)
+          CALL PUSHCONTROL3B(4)
+        CASE ('se') 
+          CALL PUSHCONTROL3B(3)
+        CASE ('rmse') 
+          CALL PUSHCONTROL3B(2)
+        CASE ('logarithmique') 
+          CALL PUSHCONTROL3B(1)
+        CASE DEFAULT
+          CALL PUSHCONTROL3B(7)
+        END SELECT
       ELSE
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL3B(0)
       END IF
+    END DO
+    jobs_gauge_b = 0.0_4
+    DO g=mesh%ng,1,-1
+      jobs_gauge_b(g) = jobs_gauge_b(g) + mesh%wgauge(g)*jobs_b
     END DO
     output_b%qsim = 0.0_4
     DO g=mesh%ng,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .EQ. 1) THEN
-          qs_b = 0.0_4
-        ELSE
-          result1_b = jobs_b
+      CALL POPCONTROL3B(branch)
+      IF (branch .LT. 4) THEN
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            qs_b = 0.0_4
+          ELSE
+            qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)&
+&             *setup%dt/mesh%area(g)*1e3_sp
+            CALL LOGARITHMIQUE_B(qo, qs, qs_b, jobs_gauge_b(g))
+            jobs_gauge_b(g) = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
           qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
 &           setup%dt/mesh%area(g)*1e3_sp
-          CALL NSE_B(qo, qs, qs_b, result1_b)
+          CALL RMSE_B(qo, qs, qs_b, jobs_gauge_b(g))
+          jobs_gauge_b(g) = 0.0_4
+        ELSE
+          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&           setup%dt/mesh%area(g)*1e3_sp
+          CALL SE_B(qo, qs, qs_b, jobs_gauge_b(g))
+          jobs_gauge_b(g) = 0.0_4
         END IF
-        CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step&
-&                    + 1)
-        output_b%qsim(g, setup%optim_start_step:setup%ntime_step) = &
-&         output_b%qsim(g, setup%optim_start_step:setup%ntime_step) + &
-&         setup%dt*1e3_sp*qs_b/mesh%area(g)
+      ELSE IF (branch .LT. 6) THEN
+        IF (branch .EQ. 4) THEN
+          imd_b = 2*imd*jobs_gauge_b(g)
+          jobs_gauge_b(g) = 0.0_4
+          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&           setup%dt/mesh%area(g)*1e3_sp
+          CALL POPREAL4(imd)
+          CALL KGE_B(qo, qs, qs_b, imd_b)
+        ELSE
+          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&           setup%dt/mesh%area(g)*1e3_sp
+          CALL KGE_B(qo, qs, qs_b, jobs_gauge_b(g))
+          jobs_gauge_b(g) = 0.0_4
+        END IF
+      ELSE IF (branch .EQ. 6) THEN
+        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
+&         setup%dt/mesh%area(g)*1e3_sp
+        CALL NSE_B(qo, qs, qs_b, jobs_gauge_b(g))
+        jobs_gauge_b(g) = 0.0_4
+      ELSE
+        qs_b = 0.0_4
       END IF
+      CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step +&
+&                  1)
+      output_b%qsim(g, setup%optim_start_step:setup%ntime_step) = &
+&       output_b%qsim(g, setup%optim_start_step:setup%ntime_step) + &
+&       setup%dt*1e3_sp*qs_b/mesh%area(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
@@ -166,34 +219,49 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
 &   , qs
-!            real(sp), dimension(mesh%ng) :: jobs_gauge
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge
+    REAL(sp) :: imd
     INTEGER :: g, row, col
     INTRINSIC REAL
     INTRINSIC ANY
-    REAL(sp) :: result1
     jobs = 0._sp
+    jobs_gauge = 0._sp
     DO g=1,mesh%ng
-      IF (mesh%optim_gauge(g) .EQ. 1) THEN
-        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&         setup%dt/mesh%area(g)*1e3_sp
-        row = mesh%gauge_pos(1, g)
-        col = mesh%gauge_pos(2, g)
-        qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)&
-&         *setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
-&         1e3_sp
-        IF (ANY(qo .GE. 0._sp)) THEN
-          result1 = NSE(qo, qs)
-          jobs = jobs + result1
-        END IF
+      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
+&       %dt/mesh%area(g)*1e3_sp
+      row = mesh%gauge_pos(1, g)
+      col = mesh%gauge_pos(2, g)
+      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
+&       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
+&       1e3_sp
+      IF (ANY(qo .GE. 0._sp)) THEN
+        SELECT CASE  (setup%jobs_fun) 
+        CASE ('nse') 
+          jobs_gauge(g) = NSE(qo, qs)
+        CASE ('kge') 
+          jobs_gauge(g) = KGE(qo, qs)
+        CASE ('kge2') 
+          imd = KGE(qo, qs)
+          jobs_gauge(g) = imd*imd
+        CASE ('se') 
+          jobs_gauge(g) = SE(qo, qs)
+        CASE ('rmse') 
+          jobs_gauge(g) = RMSE(qo, qs)
+        CASE ('logarithmique') 
+          jobs_gauge(g) = LOGARITHMIQUE(qo, qs)
+        END SELECT
       END IF
+    END DO
+    DO g=1,mesh%ng
+      jobs = jobs + mesh%wgauge(g)*jobs_gauge(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS
 
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!~         subroutine compute_jreg
-!~         end subroutine compute_jreg
+!%         subroutine compute_jreg
+!%         end subroutine compute_jreg
   SUBROUTINE NSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -237,8 +305,8 @@ CONTAINS
     END DO
   END SUBROUTINE NSE_B
 
-!~         subroutine compute_jreg
-!~         end subroutine compute_jreg
+!%         subroutine compute_jreg
+!%         end subroutine compute_jreg
   FUNCTION NSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -268,6 +336,293 @@ CONTAINS
 !% NSE criterion
     res = num/den
   END FUNCTION NSE
+
+!  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: r a b
+!   with respect to varying inputs: y
+  SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, DIMENSION(:) :: y_b
+    REAL, INTENT(INOUT) :: r, a, b
+    REAL, INTENT(INOUT) :: r_b, a_b, b_b
+    REAL :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, var_x&
+&   , var_y, cov
+    REAL :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_y_b, cov_b
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL :: temp
+    REAL :: temp0
+    REAL :: temp1
+    INTEGER :: ad_to
+    INTEGER :: branch
+! Metric computation
+    n = 0
+    sum_x = 0.
+    sum_y = 0.
+    sum_xx = 0.
+    sum_yy = 0.
+    sum_xy = 0.
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_y = sum_y + y(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy = sum_xy + x(i)*y(i)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    mean_x = sum_x/n
+    mean_y = sum_y/n
+    var_x = sum_xx/n - mean_x*mean_x
+    var_y = sum_yy/n - mean_y*mean_y
+    cov = sum_xy/n - mean_x*mean_y
+! KGE components (r, alpha, beta)
+    IF (var_y .EQ. 0.0) THEN
+      var_y_b = 0.0
+    ELSE
+      var_y_b = a_b/(2.0*SQRT(var_y)*SQRT(var_x))
+    END IF
+    temp = SQRT(var_y)
+    temp0 = SQRT(var_x)
+    temp1 = temp0*temp
+    cov_b = r_b/temp1
+    IF (.NOT.var_y .EQ. 0.0) var_y_b = var_y_b - temp0*cov*r_b/(2.0*temp&
+&       *temp1**2)
+    mean_y_b = b_b/mean_x - mean_x*cov_b - 2*mean_y*var_y_b
+    sum_xy_b = cov_b/n
+    sum_yy_b = var_y_b/n
+    sum_y_b = mean_y_b/n
+    y_b = 0.0
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) y_b(i) = y_b(i) + x(i)*sum_xy_b + 2*y(i)*&
+&         sum_yy_b + sum_y_b
+    END DO
+  END SUBROUTINE KGE_COMPONENTS_B
+
+  SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, INTENT(INOUT) :: r, a, b
+    REAL :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, var_x&
+&   , var_y, cov
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+! Metric computation
+    n = 0
+    sum_x = 0.
+    sum_y = 0.
+    sum_xx = 0.
+    sum_yy = 0.
+    sum_xy = 0.
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_y = sum_y + y(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy = sum_xy + x(i)*y(i)
+      END IF
+    END DO
+    mean_x = sum_x/n
+    mean_y = sum_y/n
+    var_x = sum_xx/n - mean_x*mean_x
+    var_y = sum_yy/n - mean_y*mean_y
+    cov = sum_xy/n - mean_x*mean_y
+! KGE components (r, alpha, beta)
+    r = cov/SQRT(var_x)/SQRT(var_y)
+    a = SQRT(var_y)/SQRT(var_x)
+    b = mean_y/mean_x
+  END SUBROUTINE KGE_COMPONENTS
+
+!  Differentiation of kge in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: res
+!   with respect to varying inputs: y
+  SUBROUTINE KGE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, DIMENSION(:) :: y_b
+    REAL :: res
+    REAL :: res_b
+    REAL :: r, a, b
+    REAL :: r_b, a_b, b_b
+    INTRINSIC SQRT
+    REAL :: temp_b
+    CALL KGE_COMPONENTS(x, y, r, a, b)
+! KGE criterion
+    IF ((r-1)**2 + (b-1)**2 + (a-1)**2 .EQ. 0.0) THEN
+      temp_b = 0.0
+    ELSE
+      temp_b = res_b/(2.0*SQRT((r-1)**2+(b-1)**2+(a-1)**2))
+    END IF
+    r_b = 2*(r-1)*temp_b
+    b_b = 2*(b-1)*temp_b
+    a_b = 2*(a-1)*temp_b
+    CALL KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
+  END SUBROUTINE KGE_B
+
+  FUNCTION KGE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL :: res
+    REAL :: r, a, b
+    INTRINSIC SQRT
+    CALL KGE_COMPONENTS(x, y, r, a, b)
+! KGE criterion
+    res = SQRT((r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1))
+  END FUNCTION KGE
+
+!  Differentiation of se in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: res
+!   with respect to varying inputs: y
+  SUBROUTINE SE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, DIMENSION(:) :: y_b
+    REAL :: res
+    REAL :: res_b
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTEGER :: ad_to
+    INTEGER :: branch
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) THEN
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    ad_to = i - 1
+    y_b = 0.0
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) y_b(i) = y_b(i) - 2*(x(i)-y(i))*res_b
+    END DO
+  END SUBROUTINE SE_B
+
+  FUNCTION SE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    res = 0.
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) res = res + (x(i)-y(i))*(x(i)-y(i))
+    END DO
+  END FUNCTION SE
+
+!  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: res
+!   with respect to varying inputs: y
+  SUBROUTINE RMSE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, DIMENSION(:) :: y_b
+    REAL :: res
+    REAL :: res_b
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL :: result1
+    REAL :: result1_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) THEN
+        CALL PUSHCONTROL1B(1)
+        n = n + 1
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    result1 = SE(x, y)
+    IF (result1/n .EQ. 0.0) THEN
+      result1_b = 0.0
+    ELSE
+      result1_b = res_b/(n*2.0*SQRT(result1/n))
+    END IF
+    CALL SE_B(x, y, y_b, result1_b)
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+    END DO
+  END SUBROUTINE RMSE_B
+
+  FUNCTION RMSE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL :: res
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL :: result1
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0.) n = n + 1
+    END DO
+    result1 = SE(x, y)
+    res = SQRT(result1/n)
+  END FUNCTION RMSE
+
+!  Differentiation of logarithmique in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: res
+!   with respect to varying inputs: y
+  SUBROUTINE LOGARITHMIQUE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL, DIMENSION(:) :: y_b
+    REAL :: res
+    REAL :: res_b
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC LOG
+    REAL :: temp
+    INTEGER :: ad_to
+    INTEGER :: branch
+    DO i=1,SIZE(x)
+      IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    ad_to = i - 1
+    y_b = 0.0
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        temp = y(i)/x(i)
+        y_b(i) = y_b(i) + 2*LOG(temp)*res_b/temp
+      END IF
+    END DO
+  END SUBROUTINE LOGARITHMIQUE_B
+
+  FUNCTION LOGARITHMIQUE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: x, y
+    REAL :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC LOG
+    res = 0.
+    DO i=1,SIZE(x)
+      IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) res = res + x(i)*LOG(y(i)/x(i&
+&         ))*LOG(y(i)/x(i))
+    END DO
+  END FUNCTION LOGARITHMIQUE
 
 END MODULE MWD_COST_DIFF_B
 
@@ -833,8 +1188,6 @@ END MODULE MD_OPERATOR_DIFF_B
 MODULE MWD_STATES_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
-!% only: SetupDT
-  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
   IMPLICIT NONE
@@ -847,9 +1200,8 @@ MODULE MWD_STATES_DIFF_B
   END TYPE STATESDT
 
 CONTAINS
-  SUBROUTINE STATESDT_INITIALISE(states, setup, mesh)
+  SUBROUTINE STATESDT_INITIALISE(states, mesh)
     IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     INTEGER :: nrow, ncol
@@ -860,7 +1212,11 @@ CONTAINS
     ALLOCATE(states%hft(nrow, ncol))
     ALLOCATE(states%hst(nrow, ncol))
     ALLOCATE(states%hlr(nrow, ncol))
-    CALL VECTOR_TO_STATES(setup%default_states, states)
+    states%hi = 0.01_sp
+    states%hp = 0.01_sp
+    states%hft = 0.01_sp
+    states%hst = 0.01_sp
+    states%hlr = 0.01_sp
   END SUBROUTINE STATESDT_INITIALISE
 
 !%      TODO comment       
@@ -941,8 +1297,6 @@ END MODULE MWD_STATES_DIFF_B
 MODULE MWD_PARAMETERS_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
-!% only: SetupDT
-  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
   IMPLICIT NONE
@@ -958,9 +1312,8 @@ MODULE MWD_PARAMETERS_DIFF_B
   END TYPE PARAMETERSDT
 
 CONTAINS
-  SUBROUTINE PARAMETERSDT_INITIALISE(parameters, setup, mesh)
+  SUBROUTINE PARAMETERSDT_INITIALISE(parameters, mesh)
     IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     INTEGER :: nrow, ncol
@@ -974,7 +1327,14 @@ CONTAINS
     ALLOCATE(parameters%alpha(nrow, ncol))
     ALLOCATE(parameters%exc(nrow, ncol))
     ALLOCATE(parameters%lr(nrow, ncol))
-    CALL VECTOR_TO_PARAMETERS(setup%default_parameters, parameters)
+    parameters%ci = 1._sp
+    parameters%cp = 200._sp
+    parameters%beta = 1000._sp
+    parameters%cft = 200._sp
+    parameters%cst = 500._sp
+    parameters%alpha = 0.9_sp
+    parameters%exc = 0._sp
+    parameters%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
 !%      TODO comment  

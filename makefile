@@ -146,7 +146,7 @@ finalize:
 	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
 	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
-	bash sed_f90wrap.sh
+	bash finalize_f90wrap.sh
 	
 #% Generating tapenade files (adjoint and tangent linear models)
 tap:

@@ -9,9 +9,7 @@
 !%      ``dt``                     Solver time step        [s]                            (default: 3600)
 !%      ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%      ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
-!%      ``optim_start_time``       Optimization start time [%Y%m%d%H%M]                   (default: '...')
 !%      ``ntime_step``             Number of time step
-!%      ``optim_start_step``       Indice start optimization
 !%      ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
 !%      ``read_qobs``              Read observed discharge                                (default: .true.)
 !%      ``qobs_directory``         Observed discharge directory path                      (default: '...')
@@ -30,13 +28,6 @@
 !%      ``transfer_module``        Choice of transfer module                              (default: 0)
 !%      ``exchange_module``        Choise of exchange module                              (default: 0)
 !%      ``routing_module``         Choise of routing module                               (default: 0)
-!%      ``default_parameters``     Default SMASH parameters                               (default: see below)
-!%      ``default_states``         Default SMASH states                                   (default: see below)
-!%      ``optim_parameters``       Choice of optimized SMASH parameters                   (default: 0)
-!%      ``lb_parameters``          Lower bounds of SMASH parameters                       (default: see below)
-!%      ``ub_parameters``          Upper bounds of SMASH parameters                       (default: see below
-!%      ``obj_fun``                Maximum number of optimization iteration               (default: 100)
-!%      ``maxiter``                Maximum number of optimization iteration               (default: 100)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      =========================  =====================================
 !%
@@ -52,14 +43,13 @@ module mwd_setup
     
     type :: SetupDT
     
+        !% User options
         real(sp) :: dt = 3600._sp
         
         character(lchar) :: start_time = "..."
         character(lchar) :: end_time = "..."
-        character(lchar) :: optim_start_time = "..."
         
         integer :: ntime_step = 0
-        integer :: optim_start_step = 1
         
         logical :: sparse_storage = .false.
         
@@ -85,26 +75,18 @@ module mwd_setup
         integer :: exchange_module = 0
         integer :: routing_module = 0
         
-        real(sp), dimension(np) :: default_parameters = &
+        logical :: save_qsim_domain = .false.
         
-        & (/1._sp    ,& !% ci
-        &   200._sp  ,& !% cp
-        &   1000._sp ,& !% beta
-        &   500._sp  ,& !% cft
-        &   500._sp  ,& !% cst
-        &   0.9_sp   ,& !% alpha
-        &   0._sp    ,& !% exc
-        &   5._sp/)     !% lr
+        !% Optimize options
+        character(lchar) :: algorithm
         
-        real(sp), dimension(ns) :: default_states = &
-        
-        & (/0.01_sp ,& !% hi
-        &   0.01_sp ,& !% hp
-        &   0.01_sp ,& !% hft
-        &   0.01_sp ,& !% hst
-        &   0.01_sp/)  !% hlr
+        character(lchar) :: jobs_fun = "nse"
+        character(lchar) :: jreg_fun = "evolution"
+
+        integer :: optim_start_step = 1
         
         integer, dimension(np) :: optim_parameters = 0
+        integer, dimension(ns) :: optim_states = 0
         
         real(sp), dimension(np) :: lb_parameters = &
         
@@ -128,11 +110,23 @@ module mwd_setup
         &   50._sp      ,&  !% exc
         &   1e3_sp/)        !% lr
         
-        character(lchar) :: obj_fun = "nse"
+        real(sp), dimension(ns) :: lb_states = &
+        
+        & (/1e-6_sp ,& !% hi
+        &   1e-6_sp ,& !% hp
+        &   1e-6_sp ,& !% hft
+        &   1e-6_sp ,& !% hst
+        &   1e-6_sp/)  !% hlr
+        
+        real(sp), dimension(ns) :: ub_states = &
+        
+        & (/0.999999_sp ,& !% hi
+        &   0.999999_sp ,& !% hp
+        &   0.999999_sp ,& !% hft
+        &   0.999999_sp ,& !% hst
+        &   10000._sp/)    !% hlr
         
         integer :: maxiter = 100
-        
-        logical :: save_qsim_domain = .false.
         
     end type SetupDT
     

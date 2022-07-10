@@ -8,14 +8,24 @@ from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
 from smash.solver._mw_run import forward_run, adjoint_run, tangent_linear_run
 from smash.solver._mw_adjoint_test import scalar_product_test, gradient_test
-from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
 
-from smash.core._build_derived_type import (
+from smash.core._build_model import (
     _parse_derived_type,
     _build_setup,
     _build_mesh,
     _build_input_data,
 )
+
+from smash.core._optimize import (
+    _standardize_optimize_args,
+    _optimize_sbs,
+    _optimize_lbfgsb,
+)
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from pandas import Timestamp
 
 import numpy as np
 
@@ -34,6 +44,8 @@ class Model(object):
         self,
         setup: (str, None) = None,
         mesh: (dict, None) = None,
+        parameters: (dict, None) = None,
+        states: (dict, None) = None,
         build: bool = True,
     ):
 
@@ -61,6 +73,7 @@ class Model(object):
             if mesh is None:
 
                 raise ValueError(f"'mesh' argument must be defined")
+
             else:
 
                 if isinstance(mesh, dict):
@@ -82,9 +95,35 @@ class Model(object):
 
             _build_input_data(self.setup, self.mesh, self.input_data)
 
-            self.parameters = ParametersDT(self.setup, self.mesh)
+            self.parameters = ParametersDT(self.mesh)
 
-            self.states = StatesDT(self.setup, self.mesh)
+            if parameters:
+
+                if isinstance(parameters, dict):
+                    _parse_derived_type(self.parameters, parameters)
+
+                else:
+
+                    raise TypeError(
+                        f"'parameters' argument must be dictionary, not {type(parameters)}"
+                    )
+
+            self.__parameters_bgd = self.parameters.copy()
+
+            self.states = StatesDT(self.mesh)
+
+            if states:
+
+                if isinstance(states, dict):
+                    _parse_derived_type(self.states, states)
+
+                else:
+
+                    raise TypeError(
+                        f"'states' argument must be dictionary, not {type(states)}"
+                    )
+
+            self.__states_bgd = self.states.copy()
 
             self.output = OutputDT(self.setup, self.mesh)
 
@@ -194,10 +233,40 @@ class Model(object):
         copy.mesh = self.mesh.copy()
         copy.input_data = self.input_data.copy()
         copy.parameters = self.parameters.copy()
+        copy.__parameters_bgd = self.__parameters_bgd.copy()
         copy.states = self.states.copy()
+        copy.__states_bgd = self.__states_bgd.copy()
         copy.output = self.output.copy()
 
         return copy
+
+    def reset_parameters(self, inplace=True):
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        instance.parameters = self.__parameters_bgd.copy()
+
+        return instance
+
+    def reset_states(self, inplace=True):
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        instance.states = self.__states_bgd.copy()
+
+        return instance
 
     def run(self, case: str = "fwd", inplace: bool = False):
 
@@ -290,7 +359,18 @@ class Model(object):
 
         return instance
 
-    def optimize(self, algorithm: str = "sbs", inplace: bool = False):
+    def optimize(
+        self,
+        algorithm: str,
+        control_vector: (list, tuple, set),
+        jobs_fun: str = "nse",
+        bounds: (list, tuple, set, None) = None,
+        gauge: (str, list, None) = None,
+        wgauge: (str, list, None) = None,
+        ost: (str, Timestamp) = None,
+        options: (dict, None) = None,
+        inplace: bool = False,
+    ):
 
         if inplace:
 
@@ -300,26 +380,54 @@ class Model(object):
 
             instance = self.copy()
 
+        (
+            algorithm,
+            control_vector,
+            jobs_fun,
+            bounds,
+            wgauge,
+            ost,
+        ) = _standardize_optimize_args(
+            algorithm,
+            control_vector,
+            jobs_fun,
+            bounds,
+            gauge,
+            wgauge,
+            ost,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+        )
+        
+        # TODO
+        # options = _standardize_optimize_options(options)
+
         if algorithm == "sbs":
 
-            optimize_sbs(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
+            _optimize_sbs(
+                instance,
+                control_vector,
+                jobs_fun,
+                bounds,
+                wgauge,
+                ost,
+                **options,
             )
 
         elif algorithm == "l-bfgs-b":
 
-            optimize_lbfgsb(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
+            _optimize_lbfgsb(
+                instance,
+                control_vector,
+                jobs_fun,
+                bounds,
+                wgauge,
+                ost,
+                **options,
             )
+
+        # elif algorithm == "nsga":
+        # elif algorithm == "nelder-mead":
 
         return instance

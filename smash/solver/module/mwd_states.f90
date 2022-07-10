@@ -24,7 +24,6 @@
 module mwd_states
 
     use mwd_common !% only: sp, dp, lchar, np, ns
-    use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     
     implicit none
@@ -41,11 +40,10 @@ module mwd_states
     
     contains
         
-        subroutine StatesDT_initialise(states, setup, mesh)
+        subroutine StatesDT_initialise(states, mesh)
         
             implicit none
             
-            type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
             
@@ -60,8 +58,12 @@ module mwd_states
             allocate(states%hst(nrow, ncol))
             allocate(states%hlr(nrow, ncol))
             
-            call vector_to_states(setup%default_states, states)
-
+            states%hi  = 0.01_sp
+            states%hp  = 0.01_sp
+            states%hft = 0.01_sp
+            states%hst = 0.01_sp
+            states%hlr = 0.01_sp
+            
         end subroutine StatesDT_initialise
         
         

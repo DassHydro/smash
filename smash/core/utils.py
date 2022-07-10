@@ -10,7 +10,7 @@ from smash.solver._mwd_mesh import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mw_mesh import MeshDT
+    from smash.solver._mwd_mesh import MeshDT
 
 import numpy as np
 
