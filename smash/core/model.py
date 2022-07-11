@@ -18,6 +18,7 @@ from smash.core._build_model import (
 
 from smash.core._optimize import (
     _standardize_optimize_args,
+    _standardize_optimize_options,
     _optimize_sbs,
     _optimize_lbfgsb,
 )
@@ -401,7 +402,7 @@ class Model(object):
         )
         
         # TODO
-        # options = _standardize_optimize_options(options)
+        options = _standardize_optimize_options(options)
 
         if algorithm == "sbs":
 

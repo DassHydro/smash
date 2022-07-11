@@ -45,28 +45,28 @@ def _optimize_sbs(
 
     setup_bgd = SetupDT()
     
-    instance.setup.optim_parameters = 0
-    instance.setup.lb_parameters = setup_bgd.lb_parameters.copy()
-    instance.setup.ub_parameters = setup_bgd.ub_parameters.copy()
+    instance.setup._optim_parameters = 0
+    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
+    instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
 
     for i, name in enumerate(control_vector):
 
         ind = np.argwhere(name_parameters == name)
 
-        instance.setup.optim_parameters[ind] = 1
+        instance.setup._optim_parameters[ind] = 1
 
-        instance.setup.lb_parameters[ind] = bounds[i][0]
-        instance.setup.ub_parameters[ind] = bounds[i][1]
+        instance.setup._lb_parameters[ind] = bounds[i][0]
+        instance.setup._ub_parameters[ind] = bounds[i][1]
 
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
-    instance.setup.optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
+    instance.setup._optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
 
-    instance.setup.algorithm = "sbs"
-    instance.setup.jobs_fun = jobs_fun
-    instance.setup.maxiter = maxiter
+    instance.setup._algorithm = "sbs"
+    instance.setup._jobs_fun = jobs_fun
+    instance.setup._maxiter = maxiter
     
-    instance.mesh.wgauge = wgauge
+    instance.mesh._wgauge = wgauge
 
     optimize_sbs(
         instance.setup,
@@ -93,11 +93,11 @@ def _optimize_lbfgsb(
 
     setup_bgd = SetupDT()
 
-    instance.setup.optim_parameters = 0
-    instance.setup.optim_states = 0
-    instance.setup.lb_parameters = setup_bgd.lb_parameters.copy()
-    instance.setup.lb_states = setup_bgd.lb_states.copy()
-    instance.setup.ub_states = setup_bgd.ub_states.copy()
+    instance.setup._optim_parameters = 0
+    instance.setup._optim_states = 0
+    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
+    instance.setup._lb_states = setup_bgd._lb_states.copy()
+    instance.setup._ub_states = setup_bgd._ub_states.copy()
 
     for i, name in enumerate(control_vector):
 
@@ -105,30 +105,30 @@ def _optimize_lbfgsb(
 
             ind = np.argwhere(name_parameters == name)
 
-            instance.setup.optim_parameters[ind] = 1
+            instance.setup._optim_parameters[ind] = 1
 
-            instance.setup.lb_parameters[ind] = bounds[i][0]
-            instance.setup.ub_parameters[ind] = bounds[i][1]
+            instance.setup._lb_parameters[ind] = bounds[i][0]
+            instance.setup._ub_parameters[ind] = bounds[i][1]
 
         #% Already check, must be states if not parameters
         else:
 
             ind = np.argwhere(name_states == name)
 
-            instance.setup.optim_states[ind] = 1
+            instance.setup._optim_states[ind] = 1
 
-            instance.setup.lb_states[ind] = bounds[i][0]
-            instance.setup.ub_states[ind] = bounds[i][1]
+            instance.setup._lb_states[ind] = bounds[i][0]
+            instance.setup._ub_states[ind] = bounds[i][1]
 
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
-    instance.setup.optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
+    instance.setup._optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
 
-    instance.setup.algorithm = "l-bfgs-b"
-    instance.setup.jobs_fun = jobs_fun
-    instance.setup.maxiter = maxiter
+    instance.setup._algorithm = "l-bfgs-b"
+    instance.setup._jobs_fun = jobs_fun
+    instance.setup._maxiter = maxiter
     
-    instance.mesh.wgauge = wgauge
+    instance.mesh._wgauge = wgauge
 
     optimize_lbfgsb(
         instance.setup,
@@ -250,7 +250,7 @@ def _standardize_bounds(bounds, control_vector, setup) -> list:
                 ind = np.argwhere(name_parameters == name)
 
                 bounds.append(
-                    (setup.lb_parameters[ind].item(), setup.ub_parameters[ind].item())
+                    (setup._lb_parameters[ind].item(), setup._ub_parameters[ind].item())
                 )
 
             elif name in name_states:
@@ -258,7 +258,7 @@ def _standardize_bounds(bounds, control_vector, setup) -> list:
                 ind = np.argwhere(name_states == name)
 
                 bounds.append(
-                    (setup.lb_states[ind].item(), setup.ub_states[ind].item())
+                    (setup._lb_states[ind].item(), setup._ub_states[ind].item())
                 )
 
     return bounds
@@ -282,7 +282,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
                     ind = np.argwhere(code == name)
 
-                    if np.all(input_data.qobs[ind, setup.optim_start_step :] < 0):
+                    if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
                         gauge_imd.remove(name)
 
@@ -316,7 +316,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
                 for ind, name in enumerate(code):
 
-                    if np.all(input_data.qobs[ind, setup.optim_start_step :] < 0):
+                    if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
                         gauge_imd.remove(name)
 
@@ -338,7 +338,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
                 ind = np.argmax(mesh.area)
 
-                if np.all(input_data.qobs[ind, setup.optim_start_step :] < 0):
+                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
                     raise ValueError(
                         f"No available observed discharge for optimization at gauge {gauge}"
@@ -352,7 +352,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
                 ind = np.argwhere(code == gauge)
 
-                if np.all(input_data.qobs[ind, setup.optim_start_step :] < 0):
+                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
                     raise ValueError(
                         f"No available observed discharge for optimization at gauge {gauge}"
@@ -375,7 +375,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
         ind = np.argmax(mesh.area)
 
-        if np.all(input_data.qobs[ind, setup.optim_start_step :] < 0):
+        if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
             raise ValueError(
                 f"No available observed discharge for optimization at gauge {code[ind]}"
@@ -541,3 +541,12 @@ def _standardize_optimize_args(
     ost = _standardize_ost(ost, setup)
 
     return algorithm, control_vector, jobs_fun, bounds, wgauge, ost
+
+
+def _standardize_optimize_options(options) -> dict:
+
+    if options is None:
+        
+        options = {}
+        
+    return options

@@ -43,13 +43,11 @@ module mwd_setup
     
     type :: SetupDT
     
-        !% User options
+        !% Public setup
         real(sp) :: dt = 3600._sp
         
         character(lchar) :: start_time = "..."
         character(lchar) :: end_time = "..."
-        
-        integer :: ntime_step = 0
         
         logical :: sparse_storage = .false.
         
@@ -77,18 +75,20 @@ module mwd_setup
         
         logical :: save_qsim_domain = .false.
         
-        !% Optimize options
-        character(lchar) :: algorithm
+        !% Private setup
+        integer :: ntime_step = 0 !>f90wrap private
         
-        character(lchar) :: jobs_fun = "nse"
-        character(lchar) :: jreg_fun = "evolution"
+        character(lchar) :: algorithm !>f90wrap private
+        
+        character(lchar) :: jobs_fun = "nse" !>f90wrap private
+        character(lchar) :: jreg_fun = "evolution" !>f90wrap private
 
-        integer :: optim_start_step = 1
+        integer :: optim_start_step = 1 !>f90wrap private
         
-        integer, dimension(np) :: optim_parameters = 0
-        integer, dimension(ns) :: optim_states = 0
+        integer, dimension(np) :: optim_parameters = 0 !>f90wrap private
+        integer, dimension(ns) :: optim_states = 0 !>f90wrap private
         
-        real(sp), dimension(np) :: lb_parameters = &
+        real(sp), dimension(np) :: lb_parameters = & !>f90wrap private
         
         & (/1e-6_sp ,& !% ci
         &   1e-6_sp ,& !% cp
@@ -99,7 +99,7 @@ module mwd_setup
         &   -50._sp ,& !% exc
         &   1e-6_sp/)  !% lr
         
-        real(sp), dimension(np) :: ub_parameters = &
+        real(sp), dimension(np) :: ub_parameters = & !>f90wrap private
         
         & (/1e2_sp      ,&  !% ci
         &   1e3_sp      ,&  !% cp
@@ -110,7 +110,7 @@ module mwd_setup
         &   50._sp      ,&  !% exc
         &   1e3_sp/)        !% lr
         
-        real(sp), dimension(ns) :: lb_states = &
+        real(sp), dimension(ns) :: lb_states = & !>f90wrap private
         
         & (/1e-6_sp ,& !% hi
         &   1e-6_sp ,& !% hp
@@ -118,7 +118,7 @@ module mwd_setup
         &   1e-6_sp ,& !% hst
         &   1e-6_sp/)  !% hlr
         
-        real(sp), dimension(ns) :: ub_states = &
+        real(sp), dimension(ns) :: ub_states = & !>f90wrap private
         
         & (/0.999999_sp ,& !% hi
         &   0.999999_sp ,& !% hp
@@ -126,7 +126,7 @@ module mwd_setup
         &   0.999999_sp ,& !% hst
         &   10000._sp/)    !% hlr
         
-        integer :: maxiter = 100
+        integer :: maxiter = 100 !>f90wrap private
         
     end type SetupDT
     

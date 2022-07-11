@@ -43,7 +43,8 @@ module mwd_mesh
     implicit none
     
     type :: MeshDT
-    
+        
+        !% Public setup
         real(sp) :: dx
         integer :: nrow
         integer :: ncol
@@ -57,14 +58,16 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: path
         
         integer, dimension(:,:), allocatable :: gauge_pos
-        real(sp), dimension(:), allocatable :: wgauge
+        
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
         integer, dimension(:,:), allocatable :: global_active_cell
         integer, dimension(:,:), allocatable :: local_active_cell
         
-        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse
+        !% Private setup
+        real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
+        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90wrap private
 
     end type MeshDT
     
@@ -101,16 +104,15 @@ module mwd_mesh
             allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
             mesh%local_active_cell = 0
             
+            allocate(mesh%wgauge(mesh%ng))
+            mesh%wgauge = 1._sp
+            
             if (setup%sparse_storage) then
                 
                 allocate(mesh%rowcol_to_ind_sparse(mesh%nrow, mesh%ncol))
                 mesh%rowcol_to_ind_sparse = -99
                 
             end if
-            
-            !% Optimize options
-            allocate(mesh%wgauge(mesh%ng))
-            mesh%wgauge = 1._sp
             
         end subroutine MeshDT_initialise
         

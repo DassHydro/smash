@@ -186,11 +186,6 @@ def _standardize_setup(setup: SetupDT):
             f"argument 'routing_module' must be in [0, 3] not {setup.routing_module}"
         )
 
-    if setup.maxiter < 0:
-        raise ValueError(f"argument 'maxiter' is lower than 0")
-
-    # TODO, check for better warning/error callbacks for dict/array parameters
-
 
 def _build_setup(setup: SetupDT):
 
@@ -204,7 +199,7 @@ def _build_setup(setup: SetupDT):
 
     et = pd.Timestamp(setup.end_time.decode().strip())
 
-    setup.ntime_step = (et - st).total_seconds() / setup.dt
+    setup._ntime_step = (et - st).total_seconds() / setup.dt
 
 
 def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
