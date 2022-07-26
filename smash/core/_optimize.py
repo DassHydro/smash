@@ -173,7 +173,7 @@ def _standardize_control_vector(control_vector, algorithm) -> list:
                     f"Unknown parameter or state '{name}' in 'control_vector'"
                 )
 
-            elif name in name_states and algorithm != "l-bfgs-b":
+            elif name in name_states and algorithm not in ["sbs", "l-bfgs-b"]:
 
                 raise ValueError(
                     f"state optimization not available with '{algorithm}' algorithm"

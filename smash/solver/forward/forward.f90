@@ -1,7 +1,7 @@
-subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
+subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, output, cost)
 
     !% =================================================================================================================== %!
-    !%   Module import ('only' commented because of issues in adjoint model)
+    !%   Module import ('only' is commented because of issues in adjoint model)
     !% =================================================================================================================== %!
     
     use mwd_common !% only: sp
@@ -26,6 +26,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     type(MeshDT), intent(in) :: mesh
     type(Input_DataDT), intent(in) :: input_data
     type(ParametersDT), intent(in) :: parameters
+    type(ParametersDT), intent(in) :: parameters_bgd
     type(StatesDT), intent(inout) :: states
     type(OutputDT), intent(inout) :: output
     real(sp), intent(inout) :: cost
@@ -36,7 +37,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
     
     real(sp), dimension(:,:), allocatable :: q
     real(sp), dimension(:), allocatable :: sparse_q
-    real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
+    real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
     & qd, qr, ql, qt, qup, qrout
     integer :: t, i, row, col, k, g
     
@@ -71,6 +72,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
             perc = 0._sp
             l = 0._sp
             prr = 0._sp
+            prl = 0._sp
             prd = 0._sp
             qd = 0._sp
             qr = 0._sp
@@ -168,9 +170,22 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
                     case(0)
                     
                         prr = parameters%alpha(row, col) * (pr + perc) + l
-                        prd = (pr + perc) - prr
+                        prd = (1._sp - parameters%alpha(row, col)) * (pr + perc)
                         
                         call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        
+                        qd = max(0._sp, prd + l)
+                        
+                        
+                    case(1)
+                    
+                        prr = 0.9_sp * parameters%alpha(row, col) * (pr + perc) + l
+                        prl = 0.9_sp * (1._sp - parameters%alpha(row, col)) * (pr + perc)
+                        prd = 0.1_sp * (pr + perc)
+                        
+                        call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        
+                        call GR_transferN(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
                         
                         qd = max(0._sp, prd + l)
 
@@ -262,7 +277,7 @@ subroutine forward(setup, mesh, input_data, parameters, states, output, cost)
         end do
         
         !% =============================================================================================================== %!
-        !%   Store simulated discharge at domain (optional)
+        !%   Store simulated discharge on domain (optional)
         !% =============================================================================================================== %!
         
         if (setup%save_qsim_domain) then

@@ -35,10 +35,18 @@ module mw_run
             type(OutputDT), intent(inout) :: output
             
             real(sp) :: cost
+            type(ParametersDT) :: parameters_bgd
+            type(StatesDT) :: states_bgd
             
-            write(*,'(a)') ">>> Forward Model M (k)"
+            write(*,'(a)') "</> Forward Model M (k)"
             
-            call forward(setup, mesh, input_data, parameters, states, output, cost)
+            parameters_bgd = parameters
+            states_bgd = states
+            
+            call forward(setup, mesh, input_data, parameters, &
+            & parameters_bgd, states, output, cost)
+            
+            states = states_bgd
 
         end subroutine forward_run
         
@@ -55,22 +63,28 @@ module mw_run
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            type(ParametersDT) :: parameters_b
+            type(ParametersDT) :: parameters_bgd, parameters_b
+            type(StatesDT) :: states_bgd
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_b_matrix
             type(StatesDT) :: states_b
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             
-            write(*,'(a)') ">>> Adjoint Model (dM/dk)* (k)"
+            write(*,'(a)') "</> Adjoint Model (dM/dk)* (k)"
             
             call ParametersDT_initialise(parameters_b, mesh)
             call StatesDT_initialise(states_b, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
 
             cost_b = 1._sp
+            parameters_bgd = parameters
+            states_bgd = states
             
             call forward_b(setup, mesh, input_data, parameters, &
-            & parameters_b, states, states_b, output, output_b, cost, cost_b)
+            & parameters_b, parameters_bgd, states, states_b, &
+            & output, output_b, cost, cost_b)
+            
+            states = states_bgd
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             
@@ -97,14 +111,14 @@ module mw_run
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            type(ParametersDT) :: parameters_d
-            type(StatesDT) :: states_d
+            type(ParametersDT) :: parameters_bgd, parameters_d
+            type(StatesDT) :: states_bgd, states_d
             type(OutputDT) :: output_d
             real(sp) :: cost, cost_d
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
             
-            write(*,'(a)') ">>> Tangent Linear Model (dM/dk) (k)"
+            write(*,'(a)') "</> Tangent Linear Model (dM/dk) (k)"
             
             call ParametersDT_initialise(parameters_d, mesh)
             call StatesDT_initialise(states_d, mesh)
@@ -119,8 +133,14 @@ module mw_run
             call matrix_to_parameters(parameters_d_matrix, parameters_d)
             call matrix_to_states(states_d_matrix, states_d)
             
+            parameters_bgd = parameters
+            states_bgd = states
+            
             call forward_d(setup, mesh, input_data, parameters, &
-            & parameters_d, states, states_d, output, output_d, cost, cost_d)
+            & parameters_d, parameters_bgd, states, states_d, &
+            & output, output_d, cost, cost_d)
+            
+            states = states_bgd
             
         end subroutine tangent_linear_run
         

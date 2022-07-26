@@ -98,33 +98,7 @@ class Model(object):
 
             self.parameters = ParametersDT(self.mesh)
 
-            if parameters:
-
-                if isinstance(parameters, dict):
-                    _parse_derived_type(self.parameters, parameters)
-
-                else:
-
-                    raise TypeError(
-                        f"'parameters' argument must be dictionary, not {type(parameters)}"
-                    )
-
-            self.__parameters_bgd = self.parameters.copy()
-
             self.states = StatesDT(self.mesh)
-
-            if states:
-
-                if isinstance(states, dict):
-                    _parse_derived_type(self.states, states)
-
-                else:
-
-                    raise TypeError(
-                        f"'states' argument must be dictionary, not {type(states)}"
-                    )
-
-            self.__states_bgd = self.states.copy()
 
             self.output = OutputDT(self.setup, self.mesh)
 
@@ -234,40 +208,10 @@ class Model(object):
         copy.mesh = self.mesh.copy()
         copy.input_data = self.input_data.copy()
         copy.parameters = self.parameters.copy()
-        copy.__parameters_bgd = self.__parameters_bgd.copy()
         copy.states = self.states.copy()
-        copy.__states_bgd = self.__states_bgd.copy()
         copy.output = self.output.copy()
 
         return copy
-
-    def reset_parameters(self, inplace=True):
-
-        if inplace:
-
-            instance = self
-
-        else:
-
-            instance = self.copy()
-
-        instance.parameters = self.__parameters_bgd.copy()
-
-        return instance
-
-    def reset_states(self, inplace=True):
-
-        if inplace:
-
-            instance = self
-
-        else:
-
-            instance = self.copy()
-
-        instance.states = self.__states_bgd.copy()
-
-        return instance
 
     def run(self, case: str = "fwd", inplace: bool = False):
 

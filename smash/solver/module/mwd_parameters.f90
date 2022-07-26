@@ -75,7 +75,7 @@ module mwd_parameters
             parameters%alpha = 0.9_sp
             parameters%exc   = 0._sp
             parameters%lr    = 5._sp
-
+ 
         end subroutine ParametersDT_initialise
         
         

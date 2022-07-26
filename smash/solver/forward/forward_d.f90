@@ -89,6 +89,77 @@ MODULE MWD_COST_DIFF_D
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_D
   IMPLICIT NONE
+!%        subroutine reg_evolution(setup, domain, nbz, param_reg, param, &
+!%    & optim, alpha, omega, reg)
+!%        use module_smash_setup
+!%        use module_smash_mesh
+!%        use common_data
+!%        implicit none
+!%        type(model_setup),intent(in) :: setup
+!%        type(mesh),intent(in) :: domain
+!%        integer :: nbz
+!%        real, dimension(domain%nbx,domain%nby,nbz) :: param_reg, param
+!%        integer, dimension(nbz) :: optim
+!%        real, dimension(nbz) :: alpha, omega
+!%        real :: reg
+!%        real :: deviation,deviation_total ! Euclidian Norm
+!%        real :: penalty,penalty_total ! penalty term
+!%        integer :: ix,iy,p
+!%        real :: dy
+!%        integer :: ixmin,ixmax,iymin,iymax !index des dérivés
+!%        !initialisation
+!%        reg = 0.
+!%        dy = setup%dx
+!%        deviation_total = 0.0
+!%        do p=1, nbz
+!%            if (optim(p) .gt. 0) then
+!%                deviation = 0.
+!%                do ix=1, domain%nbx
+!%                    do iy=1, domain%nby
+!%                        deviation = deviation+&
+!%                        &(1./((alpha(p)**2.) * &
+!%                        & (omega(p)*1000./setup%dx)**0.5)) * &
+!%                        & ((param(ix,iy,p)-param_reg(ix,iy,p))**2.)
+!%                    end do
+!%                end do
+!%                deviation_total = deviation_total + deviation
+!%            end if
+!%        end do
+!%        ! penality term
+!%        penalty_total = 0.0
+!%        do p=1, nbz ! loop on all parameters
+!%            if (optim(p) .gt. 0) then
+!%                penalty = 0.
+!%                do ix=1, domain%nbx
+!%                    do iy=1, domain%nby
+!%                        ixmin = ix - 1
+!%                        ixmax = ix + 1
+!%                        iymin = iy - 1
+!%                        iymax = iy + 1
+!%                        !condition limite !
+!%                        if (ix .eq. 1) ixmin = ix
+!%                        if (ix .eq. domain%nbx) ixmax = ix
+!%                        if (iy .eq. 1) iymin = iy
+!%                        if (iy .eq. domain%nby) iymax = iy
+!%                        !derivée seconde
+!%                        penalty=penalty+1./((omega(p)*1000./setup%dx)**0.5)*&
+!%                        &( &
+!%                        &((omega(p)*1000./setup%dx)*(&
+!%                        &(param(ixmax,iy,p)-param(ix,iy,p))&
+!%                        &-(param(ix,iy,p)-param(ixmin,iy,p))&
+!%                        &))**2. + &
+!%                        &((omega(p)*1000./dy)*(&
+!%                        &(param(ix,iymax,p)-param(ix,iy,p))&
+!%                        &-(param(ix,iy,p)-param(ix,iymin,p))&
+!%                        &))**2.&
+!%                        &)
+!%                    end do
+!%                end do
+!%                penalty_total = penalty_total + penalty
+!%            end if
+!%        end do
+!%        reg = deviation_total + penalty_total
+!%    end subroutine reg_evolution
   PUBLIC :: compute_jobs
   PUBLIC :: compute_jobs_d
 
@@ -207,8 +278,8 @@ CONTAINS
 !  Differentiation of nse in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
-!%         subroutine compute_jreg
-!%         end subroutine compute_jreg
+!%        subroutine compute_jreg(setup, 
+!%        end subroutine compute_jreg
   FUNCTION NSE_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -248,8 +319,8 @@ CONTAINS
     res = num/den
   END FUNCTION NSE_D
 
-!%         subroutine compute_jreg
-!%         end subroutine compute_jreg
+!%        subroutine compute_jreg(setup, 
+!%        end subroutine compute_jreg
   FUNCTION NSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -1335,27 +1406,29 @@ END MODULE MWD_PARAMETERS_DIFF_D
 !  Differentiation of forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.alpha)
-!                *(parameters.exc) *(parameters.lr) *(states.hi)
-!                *(states.hp) *(states.hft) *(states.hlr)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!                *(states.hi) *(states.hp) *(states.hft) *(states.hst)
+!                *(states.hlr)
 !   RW status of diff variables: parameters.ci:(loc) *(parameters.ci):in
 !                parameters.cp:(loc) *(parameters.cp):in parameters.beta:(loc)
 !                *(parameters.beta):in parameters.cft:(loc) *(parameters.cft):in
-!                parameters.cst:(loc) *(parameters.cst):(loc) parameters.alpha:(loc)
+!                parameters.cst:(loc) *(parameters.cst):in parameters.alpha:(loc)
 !                *(parameters.alpha):in parameters.exc:(loc) *(parameters.exc):in
 !                parameters.lr:(loc) *(parameters.lr):in *(output.qsim):(loc)
 !                states.hi:(loc) *(states.hi):in-killed states.hp:(loc)
 !                *(states.hp):in-killed states.hft:(loc) *(states.hft):in-killed
-!                states.hst:(loc) *(states.hst):(loc) states.hlr:(loc)
+!                states.hst:(loc) *(states.hst):in-killed states.hlr:(loc)
 !                *(states.hlr):in-killed cost:out
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.alpha:in
-!                parameters.exc:in parameters.lr:in output.qsim:in
-!                states.hi:in states.hp:in states.hft:in states.hlr:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.lr:in
+!                output.qsim:in states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.hlr:in
 SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
-& states, states_d, output, output_d, cost, cost_d)
+& parameters_bgd, states, states_d, output, output_d, cost, cost_d)
 !% =================================================================================================================== %!
-!%   Module import ('only' commented because of issues in adjoint model)
+!%   Module import ('only' is commented because of issues in adjoint model)
 !% =================================================================================================================== %!
 !% only: sp
   USE MWD_COMMON
@@ -1385,6 +1458,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   TYPE(INPUT_DATADT), INTENT(IN) :: input_data
   TYPE(PARAMETERSDT), INTENT(IN) :: parameters
   TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
   TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(STATESDT), INTENT(INOUT) :: states_d
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
@@ -1398,10 +1472,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
   REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
   REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
-  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
-& qt, qup, qrout
-  REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qd_d, &
-& qr_d, qt_d, qup_d, qrout_d
+  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
+& , ql, qt, qup, qrout
+  REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, &
+& qd_d, qr_d, ql_d, qt_d, qup_d, qrout_d
   INTEGER :: t, i, row, col, k, g
   INTRINSIC MIN
   INTRINSIC MAX
@@ -1435,6 +1509,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
       perc = 0._sp
       l = 0._sp
       prr = 0._sp
+      prl = 0._sp
       prd = 0._sp
       qd = 0._sp
       qr = 0._sp
@@ -1540,12 +1615,39 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
             prr_d = (pr+perc)*parameters_d%alpha(row, col) + parameters%&
 &             alpha(row, col)*(pr_d+perc_d) + l_d
             prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd_d = pr_d + perc_d - prr_d
-            prd = pr + perc - prr
+            prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
+&             pr+perc)*parameters_d%alpha(row, col)
+            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
 &                         row, col), parameters_d%cft(row, col), states%&
 &                         hft(row, col), states_d%hft(row, col), qr, &
 &                         qr_d)
+            IF (0._sp .LT. prd + l) THEN
+              qd_d = prd_d + l_d
+              qd = prd + l
+              ql_d = 0.0_4
+            ELSE
+              qd = 0._sp
+              qd_d = 0.0_4
+              ql_d = 0.0_4
+            END IF
+          CASE (1) 
+            prr_d = 0.9_sp*((pr+perc)*parameters_d%alpha(row, col)+&
+&             parameters%alpha(row, col)*(pr_d+perc_d)) + l_d
+            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
+            prl_d = 0.9_sp*((1._sp-parameters%alpha(row, col))*(pr_d+&
+&             perc_d)-(pr+perc)*parameters_d%alpha(row, col))
+            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+            prd_d = 0.1_sp*(pr_d+perc_d)
+            prd = 0.1_sp*(pr+perc)
+            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                         row, col), parameters_d%cft(row, col), states%&
+&                         hft(row, col), states_d%hft(row, col), qr, &
+&                         qr_d)
+            CALL GR_TRANSFERN_D(5._sp, prcp, prl, prl_d, parameters%cst(&
+&                         row, col), parameters_d%cst(row, col), states%&
+&                         hst(row, col), states_d%hst(row, col), ql, &
+&                         ql_d)
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -1555,9 +1657,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
             END IF
           CASE DEFAULT
             qd_d = 0.0_4
+            ql_d = 0.0_4
             qr_d = 0.0_4
           END SELECT
-          qt_d = qd_d + qr_d
+          qt_d = qd_d + qr_d + ql_d
           qt = qd + qr + ql
 !% =================================================================================================== %!
 !%   Routing module case [ 0 - 1 ]
@@ -1636,7 +1739,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
       END IF
     END DO
 !% =============================================================================================================== %!
-!%   Store simulated discharge at domain (optional)
+!%   Store simulated discharge on domain (optional)
 !% =============================================================================================================== %!
     IF (setup%save_qsim_domain) THEN
       IF (setup%sparse_storage) THEN
@@ -1654,10 +1757,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 &               cost_d)
 END SUBROUTINE FORWARD_D
 
-SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
-& output, cost)
+SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
+& parameters_bgd, states, output, cost)
 !% =================================================================================================================== %!
-!%   Module import ('only' commented because of issues in adjoint model)
+!%   Module import ('only' is commented because of issues in adjoint model)
 !% =================================================================================================================== %!
 !% only: sp
   USE MWD_COMMON
@@ -1686,6 +1789,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
   TYPE(MESHDT), INTENT(IN) :: mesh
   TYPE(INPUT_DATADT), INTENT(IN) :: input_data
   TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
   TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   REAL(sp), INTENT(INOUT) :: cost
@@ -1694,8 +1798,8 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
 !===================================================================================================================== %!
   REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
   REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qd, qr, ql, &
-& qt, qup, qrout
+  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
+& , ql, qt, qup, qrout
   INTEGER :: t, i, row, col, k, g
   INTRINSIC MIN
   INTRINSIC MAX
@@ -1723,6 +1827,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
       perc = 0._sp
       l = 0._sp
       prr = 0._sp
+      prl = 0._sp
       prd = 0._sp
       qd = 0._sp
       qr = 0._sp
@@ -1802,9 +1907,22 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
           SELECT CASE  (setup%transfer_module) 
           CASE (0) 
             prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = pr + perc - prr
+            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
 &                       , states%hft(row, col), qr)
+            IF (0._sp .LT. prd + l) THEN
+              qd = prd + l
+            ELSE
+              qd = 0._sp
+            END IF
+          CASE (1) 
+            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
+            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+            prd = 0.1_sp*(pr+perc)
+            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
+&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
+&                       , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -1871,7 +1989,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, states, &
       END IF
     END DO
 !% =============================================================================================================== %!
-!%   Store simulated discharge at domain (optional)
+!%   Store simulated discharge on domain (optional)
 !% =============================================================================================================== %!
     IF (setup%save_qsim_domain) THEN
       IF (setup%sparse_storage) THEN

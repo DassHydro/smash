@@ -87,10 +87,10 @@ module mwd_cost
         end subroutine compute_jobs
         
         
-!%         subroutine compute_jreg
-        
-        
-!%         end subroutine compute_jreg
+!%        subroutine compute_jreg(setup, 
+
+
+!%        end subroutine compute_jreg
         
         function nse(x, y) result(res)
     
@@ -275,6 +275,104 @@ module mwd_cost
             end do
 
         end function logarithmique
+
+        
+!%        subroutine reg_evolution(setup, domain, nbz, param_reg, param, &
+!%    & optim, alpha, omega, reg)
+        
+!%        use module_smash_setup
+!%        use module_smash_mesh
+!%        use common_data
+        
+!%        implicit none
+        
+!%        type(model_setup),intent(in) :: setup
+!%        type(mesh),intent(in) :: domain
+!%        integer :: nbz
+!%        real, dimension(domain%nbx,domain%nby,nbz) :: param_reg, param
+!%        integer, dimension(nbz) :: optim
+!%        real, dimension(nbz) :: alpha, omega
+!%        real :: reg
+
+!%        real :: deviation,deviation_total ! Euclidian Norm
+!%        real :: penalty,penalty_total ! penalty term
+!%        integer :: ix,iy,p
+!%        real :: dy
+!%        integer :: ixmin,ixmax,iymin,iymax !index des dérivés
+        
+!%        !initialisation
+!%        reg = 0.
+        
+!%        dy = setup%dx
+!%        deviation_total = 0.0
+!%        do p=1, nbz
+            
+!%            if (optim(p) .gt. 0) then
+!%                deviation = 0.
+                
+!%                do ix=1, domain%nbx
+                    
+!%                    do iy=1, domain%nby
+!%                        deviation = deviation+&
+!%                        &(1./((alpha(p)**2.) * &
+!%                        & (omega(p)*1000./setup%dx)**0.5)) * &
+!%                        & ((param(ix,iy,p)-param_reg(ix,iy,p))**2.)
+!%                    end do
+                    
+!%                end do
+!%                deviation_total = deviation_total + deviation
+                
+!%            end if
+            
+!%        end do
+        
+!%        ! penality term
+!%        penalty_total = 0.0
+!%        do p=1, nbz ! loop on all parameters
+            
+!%            if (optim(p) .gt. 0) then
+!%                penalty = 0.
+            
+!%                do ix=1, domain%nbx
+            
+!%                    do iy=1, domain%nby
+
+!%                        ixmin = ix - 1
+!%                        ixmax = ix + 1
+!%                        iymin = iy - 1
+!%                        iymax = iy + 1
+
+!%                        !condition limite !
+!%                        if (ix .eq. 1) ixmin = ix
+!%                        if (ix .eq. domain%nbx) ixmax = ix
+!%                        if (iy .eq. 1) iymin = iy
+!%                        if (iy .eq. domain%nby) iymax = iy
+
+!%                        !derivée seconde
+!%                        penalty=penalty+1./((omega(p)*1000./setup%dx)**0.5)*&
+!%                        &( &
+!%                        &((omega(p)*1000./setup%dx)*(&
+!%                        &(param(ixmax,iy,p)-param(ix,iy,p))&
+!%                        &-(param(ix,iy,p)-param(ixmin,iy,p))&
+!%                        &))**2. + &
+!%                        &((omega(p)*1000./dy)*(&
+!%                        &(param(ix,iymax,p)-param(ix,iy,p))&
+!%                        &-(param(ix,iy,p)-param(ix,iymin,p))&
+!%                        &))**2.&
+!%                        &)
+                        
+!%                    end do
+                    
+!%                end do
+!%                penalty_total = penalty_total + penalty
+            
+!%            end if
+        
+!%        end do
+        
+!%        reg = deviation_total + penalty_total
+
+!%    end subroutine reg_evolution
 
 
 end module mwd_cost
