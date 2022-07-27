@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
+from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb, optimize_lbfgsb2 
 
 from typing import TYPE_CHECKING
 
@@ -46,17 +46,32 @@ def _optimize_sbs(
     setup_bgd = SetupDT()
     
     instance.setup._optim_parameters = 0
-    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
+    instance.setup._optim_states = 0
     instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
+    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
+    instance.setup._lb_states = setup_bgd._lb_states.copy()
+    instance.setup._ub_states = setup_bgd._ub_states.copy()
 
     for i, name in enumerate(control_vector):
+        
+        if name in name_parameters:
 
-        ind = np.argwhere(name_parameters == name)
+            ind = np.argwhere(name_parameters == name)
 
-        instance.setup._optim_parameters[ind] = 1
+            instance.setup._optim_parameters[ind] = 1
 
-        instance.setup._lb_parameters[ind] = bounds[i][0]
-        instance.setup._ub_parameters[ind] = bounds[i][1]
+            instance.setup._lb_parameters[ind] = bounds[i][0]
+            instance.setup._ub_parameters[ind] = bounds[i][1]
+        
+        #% Already check, must be states if not parameters
+        else:
+
+            ind = np.argwhere(name_states == name)
+
+            instance.setup._optim_states[ind] = 1
+
+            instance.setup._lb_states[ind] = bounds[i][0]
+            instance.setup._ub_states[ind] = bounds[i][1]
 
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
@@ -95,6 +110,7 @@ def _optimize_lbfgsb(
 
     instance.setup._optim_parameters = 0
     instance.setup._optim_states = 0
+    instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
     instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
     instance.setup._lb_states = setup_bgd._lb_states.copy()
     instance.setup._ub_states = setup_bgd._ub_states.copy()
@@ -130,7 +146,7 @@ def _optimize_lbfgsb(
     
     instance.mesh._wgauge = wgauge
 
-    optimize_lbfgsb(
+    optimize_lbfgsb2(
         instance.setup,
         instance.mesh,
         instance.input_data,

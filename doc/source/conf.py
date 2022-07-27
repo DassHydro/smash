@@ -78,7 +78,7 @@ default_role = "autolink"
 #
 html_theme = "pydata_sphinx_theme"
 
-html_logo = "_static/logo.png"
+html_logo = "_static/logo_smash.svg"
 
 html_last_updated_fmt = "%b %d, %Y"
 
