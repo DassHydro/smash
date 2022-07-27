@@ -26,6 +26,7 @@ module mwd_output
     use mwd_common !% only: sp, dp, lchar, np, ns
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
+    use mwd_states !%only: StatesDT, StatesDT_initialise
     
     implicit none
     
@@ -44,6 +45,8 @@ module mwd_output
         
         real(sp), dimension(:), allocatable :: an
         real(sp), dimension(:), allocatable :: ian
+        
+        type(StatesDT) :: fstates
         
     end type OutputDT
     
@@ -77,6 +80,8 @@ module mwd_output
                 end if
                 
             end if
+            
+            call StatesDT_initialise(output%fstates, mesh)
         
         end subroutine OutputDT_initialise
         

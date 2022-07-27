@@ -58,8 +58,9 @@ sed -i "/import logging/a \import numpy" ./smash/solver/_mwd_common.py
 sed -i "/return name_parameters/i \\\tname_parameters = numpy.array(name_parameters$decode)" ./smash/solver/_mwd_common.py
 sed -i "/return name_states/i \\\tname_states = numpy.array(name_states$decode)" ./smash/solver/_mwd_common.py
 
-# Change relative to absolute _solver import
+# Change relative to absolute solver/_solver import
 sed -i "0,/import _solver/s//from smash.solver import _solver/" ./smash/solver/_mw*.py
+sed -i "s/from solver/from smash.solver/g" ./smash/solver/_mw*.py
 
 # Replace tab with 4 spaces
 sed -i "s/\t/    /g" ./smash/solver/_mw*.py

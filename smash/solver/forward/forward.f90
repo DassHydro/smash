@@ -1,4 +1,4 @@
-subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, output, cost)
+subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
 
     !% =================================================================================================================== %!
     !%   Module import ('only' is commented because of issues in adjoint model)
@@ -28,6 +28,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     type(ParametersDT), intent(in) :: parameters
     type(ParametersDT), intent(in) :: parameters_bgd
     type(StatesDT), intent(inout) :: states
+    type(StatesDT), intent(inout) :: states_bgd
     type(OutputDT), intent(inout) :: output
     real(sp), intent(inout) :: cost
     
@@ -295,6 +296,12 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         end if
         
     end do !% [ END DO TIME ]
+    
+    !% =============================================================================================================== %!
+    !%   Store states at final time step (optional)
+    !% =============================================================================================================== %!
+    
+    output%fstates = states
     
     !% =================================================================================================================== %!
     !%   Compute J

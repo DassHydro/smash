@@ -262,7 +262,9 @@ class Model(object):
                 f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'"
             )
 
-        return instance
+        if not inplace:
+
+            return instance
 
     def adjoint_test(self, case: str = "spt", inplace: bool = False):
 
@@ -302,7 +304,9 @@ class Model(object):
                 f"'case' argument must be one of ['spt', 'gt'] not '{case}'"
             )
 
-        return instance
+        if not inplace:
+
+            return instance
 
     def optimize(
         self,
@@ -344,7 +348,7 @@ class Model(object):
             instance.mesh,
             instance.input_data,
         )
-        
+
         # TODO
         options = _standardize_optimize_options(options)
 
@@ -375,4 +379,6 @@ class Model(object):
         # elif algorithm == "nsga":
         # elif algorithm == "nelder-mead":
 
-        return instance
+        if not inplace:
+
+            return instance

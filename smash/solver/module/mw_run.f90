@@ -44,7 +44,7 @@ module mw_run
             states_bgd = states
             
             call forward(setup, mesh, input_data, parameters, &
-            & parameters_bgd, states, output, cost)
+            & parameters_bgd, states, states_bgd, output, cost)
             
             states = states_bgd
 
@@ -81,7 +81,7 @@ module mw_run
             states_bgd = states
             
             call forward_b(setup, mesh, input_data, parameters, &
-            & parameters_b, parameters_bgd, states, states_b, &
+            & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
             states = states_bgd
@@ -137,7 +137,7 @@ module mw_run
             states_bgd = states
             
             call forward_d(setup, mesh, input_data, parameters, &
-            & parameters_d, parameters_bgd, states, states_d, &
+            & parameters_d, parameters_bgd, states, states_d, states_bgd, &
             & output, output_d, cost, cost_d)
             
             states = states_bgd

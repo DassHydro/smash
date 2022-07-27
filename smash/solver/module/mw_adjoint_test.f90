@@ -40,7 +40,6 @@ module mw_adjoint_test
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
 
-            
             write(*,'(a)') "</> Scalar Product Test"
             
             parameters_bgd = parameters
@@ -67,7 +66,7 @@ module mw_adjoint_test
             write(*,'(4x,a)') "Tangent Linear Model dY  = (dM/dk) (k) . dk"
             
             call forward_d(setup, mesh, input_data, parameters, &
-            & parameters_d, parameters_bgd, states, states_d, &
+            & parameters_d, parameters_bgd, states, states_d, states_bgd, &
             & output, output_d, cost, cost_d)
             
             states = states_bgd
@@ -76,14 +75,14 @@ module mw_adjoint_test
             write(*,'(4x,a)') "Adjoint Model        dk* = (dM/dk)* (k) . dY*"
             
             call forward_b(setup, mesh, input_data, parameters, &
-            & parameters_b, parameters_bgd, states, states_b, &
+            & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
             states = states_bgd
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             
-            !% cost_b reset at the end of the forward_b ...
+            !% cost_b reset at the end of forward_b ...
             !% No perturbation has been set to states_d
             output%sp1 = 1._sp * cost_d
             
@@ -134,7 +133,7 @@ module mw_adjoint_test
             write(*,'(4x,a)') "Forward Model Y    = M (k)"
             
             call forward(setup, mesh, input_data, parameters, &
-            & parameters_bgd, states, output, cost)
+            & parameters_bgd, states, states_bgd, output, cost)
             
             states = states_bgd
             
@@ -145,7 +144,7 @@ module mw_adjoint_test
             write(*,'(4x,a)') "Adjoint Model dk*  = (dM/dk)* (k) . dY*"
             
             call forward_b(setup, mesh, input_data, parameters, &
-            & parameters_b, parameters_bgd, states, states_b, &
+            & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
             states = states_bgd
@@ -165,7 +164,7 @@ module mw_adjoint_test
                 call matrix_to_parameters(parameters_matrix, parameters)
                 
                 call forward(setup, mesh, input_data, parameters, &
-                & parameters_bgd, states, output, cost)
+                & parameters_bgd, states, states_bgd, output, cost)
                 
                 states = states_bgd
                 

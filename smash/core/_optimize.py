@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb, optimize_lbfgsb2 
+from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
 
 from typing import TYPE_CHECKING
 
@@ -44,7 +44,7 @@ def _optimize_sbs(
     _check_unknown_options(unknown_options)
 
     setup_bgd = SetupDT()
-    
+
     instance.setup._optim_parameters = 0
     instance.setup._optim_states = 0
     instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
@@ -53,7 +53,7 @@ def _optimize_sbs(
     instance.setup._ub_states = setup_bgd._ub_states.copy()
 
     for i, name in enumerate(control_vector):
-        
+
         if name in name_parameters:
 
             ind = np.argwhere(name_parameters == name)
@@ -62,7 +62,7 @@ def _optimize_sbs(
 
             instance.setup._lb_parameters[ind] = bounds[i][0]
             instance.setup._ub_parameters[ind] = bounds[i][1]
-        
+
         #% Already check, must be states if not parameters
         else:
 
@@ -75,12 +75,14 @@ def _optimize_sbs(
 
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
-    instance.setup._optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
+    instance.setup._optim_start_step = (
+        ost - st
+    ).total_seconds() / instance.setup.dt + 1
 
     instance.setup._algorithm = "sbs"
     instance.setup._jobs_fun = jobs_fun
     instance.setup._maxiter = maxiter
-    
+
     instance.mesh._wgauge = wgauge
 
     optimize_sbs(
@@ -138,15 +140,17 @@ def _optimize_lbfgsb(
 
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
-    instance.setup._optim_start_step = (ost - st).total_seconds() / instance.setup.dt + 1
+    instance.setup._optim_start_step = (
+        ost - st
+    ).total_seconds() / instance.setup.dt + 1
 
     instance.setup._algorithm = "l-bfgs-b"
     instance.setup._jobs_fun = jobs_fun
     instance.setup._maxiter = maxiter
-    
+
     instance.mesh._wgauge = wgauge
 
-    optimize_lbfgsb2(
+    optimize_lbfgsb(
         instance.setup,
         instance.mesh,
         instance.input_data,
@@ -405,92 +409,93 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
 
 
 def _standardize_wgauge(wgauge, gauge, mesh) -> list:
-    
+
     code = np.array(mesh.code.tobytes(order="F").decode().split())
 
     if wgauge:
 
         if isinstance(wgauge, (list, tuple, set)):
-            
+
             imd_wgauge = list(wgauge)
-            
+
             if len(imd_wgauge) != len(gauge):
 
                 raise ValueError(
                     f"Inconsistent size between 'gauge' ({len(gauge)}) and 'wgauge' ({len(imd_wgauge)})"
                 )
-                
+
             else:
-                
+
                 wgauge = np.zeros(shape=len(code), dtype=np.float32)
-                
+
                 ind = np.in1d(code, gauge)
-                
+
                 wgauge[ind] = imd_wgauge
-                
+
         elif isinstance(wgauge, (int, float)):
-            
+
             imd_wgauge = [wgauge]
-            
+
             if len(imd_wgauge) != len(gauge):
 
                 raise ValueError(
                     f"Inconsistent size between 'gauge' ({len(gauge)}) and 'wgauge' ({len(imd_wgauge)})"
                 )
-                
+
             else:
-                
+
                 wgauge = np.zeros(shape=len(code), dtype=np.float32)
-                
+
                 ind = np.in1d(code, gauge)
-                
+
                 wgauge[ind] = imd_wgauge
-                
-        
+
         elif isinstance(wgauge, str):
-            
+
             if wgauge == "mean":
-                
+
                 wgauge = np.zeros(shape=len(code), dtype=np.float32)
-                
-                wgauge = np.where(np.in1d(code, gauge), 1/len(gauge), wgauge)
-                
+
+                wgauge = np.where(np.in1d(code, gauge), 1 / len(gauge), wgauge)
+
             elif wgauge == "area":
-                
+
                 wgauge = np.zeros(shape=len(code), dtype=np.float32)
-                
+
                 ind = np.in1d(code, gauge)
-                
+
                 value = mesh.area[ind] / sum(mesh.area[ind])
-                
+
                 wgauge[ind] = value
-                
+
             elif wgauge == "area_minv":
-                
+
                 wgauge = np.zeros(shape=len(code), dtype=np.float32)
-                
+
                 ind = np.in1d(code, gauge)
-                
+
                 value = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
-                
+
                 wgauge[ind] = value
-                
+
             else:
-                
+
                 raise ValueError(
                     f"str 'wgauge' argument must be either one alias among ['mean', 'area', 'area_minv']"
                 )
-                
+
         else:
-            
-            raise TypeError(f"'wgauge' argument must be list-like object, int, float or str")
-            
+
+            raise TypeError(
+                f"'wgauge' argument must be list-like object, int, float or str"
+            )
+
     else:
-        
+
         #% Default is mean
         wgauge = np.zeros(shape=len(code), dtype=np.float32)
-        
-        wgauge = np.where(np.in1d(code, gauge), 1/len(gauge), wgauge)
+
+        wgauge = np.where(np.in1d(code, gauge), 1 / len(gauge), wgauge)
 
     return wgauge
 
@@ -562,7 +567,7 @@ def _standardize_optimize_args(
 def _standardize_optimize_options(options) -> dict:
 
     if options is None:
-        
+
         options = {}
-        
+
     return options
