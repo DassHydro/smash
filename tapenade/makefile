@@ -14,9 +14,10 @@ d:
 finalize:
 	# sed forward_b
 	sed -i "/.*DIFF/ s/DIFF/DIFF_B/g" forward_b.f90
-	sed -i "s/.*CALL.*COMPUTE\_JOBS\_B.*/  CALL COMPUTE\_JOBS(setup, mesh, input_data, output, cost)\n&/" forward_b.f90
+	sed -i "s/.*CALL.*COMPUTE\_COST\_B.*/  CALL COMPUTE\_COST(setup, mesh, input_data, parameters, parameters_bgd, states_imd, states_bgd, output, cost)\n&/" forward_b.f90
+	sed -i "s/.*CALL.*COMPUTE\_COST\_B.*/  CALL SET0_PARAMETERS(parameters\_b)\n  CALL SET0_STATES(states\_b)\n  CALL SET0_STATES(states\_imd\_b)\n&/" forward_b.f90
 	
-	# sed forward_b 
+	# sed forward_d 
 	sed -i "/.*DIFF/ s/DIFF/DIFF_D/g" forward_d.f90
 	
 	# mv

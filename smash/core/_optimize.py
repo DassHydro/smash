@@ -43,6 +43,8 @@ def _optimize_sbs(
 
     _check_unknown_options(unknown_options)
 
+    instance.setup._algorithm = "sbs"
+
     setup_bgd = SetupDT()
 
     instance.setup._optim_parameters = 0
@@ -73,17 +75,17 @@ def _optimize_sbs(
             instance.setup._lb_states[ind] = bounds[i][0]
             instance.setup._ub_states[ind] = bounds[i][1]
 
+    instance.setup._jobs_fun = jobs_fun
+
+    instance.mesh._wgauge = wgauge
+
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
     instance.setup._optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    instance.setup._algorithm = "sbs"
-    instance.setup._jobs_fun = jobs_fun
     instance.setup._maxiter = maxiter
-
-    instance.mesh._wgauge = wgauge
 
     optimize_sbs(
         instance.setup,
@@ -103,10 +105,14 @@ def _optimize_lbfgsb(
     wgauge: list[float],
     ost: pd.Timestamp,
     maxiter: int = 100,
+    jreg_fun: str = "prior",
+    wjreg: float = 0.0,
     **unknown_options,
 ):
 
     _check_unknown_options(unknown_options)
+
+    instance.setup._algorithm = "l-bfgs-b"
 
     setup_bgd = SetupDT()
 
@@ -138,17 +144,19 @@ def _optimize_lbfgsb(
             instance.setup._lb_states[ind] = bounds[i][0]
             instance.setup._ub_states[ind] = bounds[i][1]
 
+    instance.setup._jobs_fun = jobs_fun
+
+    instance.mesh._wgauge = wgauge
+
     st = pd.Timestamp(instance.setup.start_time.decode().strip())
 
     instance.setup._optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    instance.setup._algorithm = "l-bfgs-b"
-    instance.setup._jobs_fun = jobs_fun
     instance.setup._maxiter = maxiter
-
-    instance.mesh._wgauge = wgauge
+    instance.setup._jreg_fun = jreg_fun
+    instance.setup._wjreg = wjreg
 
     optimize_lbfgsb(
         instance.setup,

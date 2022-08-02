@@ -1,18 +1,35 @@
 !%    This module `mw_cost` encapsulates all SMASH cost (type, subroutines, functions)
+!%
+!%      contains
+!%
+!%      [1]  compute_jobs
+!%      [2]  compute_jreg
+!%      [3]  compute_cost
+!%      [4]  nse
+!%      [5]  kge_components
+!%      [6]  kge
+!%      [7]  se
+!%      [8]  rmse
+!%      [9]  logarithmique
+!%      [10] reg_prior
+
 module mwd_cost
     
-    use mwd_common  !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, dp, lchar, np, ns
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
     use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !% only: ParametersDT, parameters_to_matrix
+    use mwd_states !% only: StatesDT, states_to_matrix
     use mwd_output !% only: OutputDT
 
     implicit none
     
-    public :: compute_jobs
+    public :: compute_jobs, compute_jreg, compute_cost
     
     contains
-    
+        
+        !% TODO comment
         subroutine compute_jobs(setup, mesh, input_data, output, jobs)
         
             implicit none
@@ -24,12 +41,12 @@ module mwd_cost
             real(sp), intent(out) :: jobs
             
             real(sp), dimension(setup%ntime_step - setup%optim_start_step + 1) :: qo, qs
-            real(sp), dimension(mesh%ng) :: jobs_gauge
+            real(sp), dimension(mesh%ng) :: gauge_jobs
             real(sp) :: imd
             integer :: g, row, col
             
             jobs = 0._sp
-            jobs_gauge = 0._sp
+            gauge_jobs = 0._sp
             
             do g=1, mesh%ng
             
@@ -49,28 +66,28 @@ module mwd_cost
                     
                     case("nse")
             
-                        jobs_gauge(g) = nse(qo, qs)
+                        gauge_jobs(g) = nse(qo, qs)
                         
                     case("kge")
                     
-                        jobs_gauge(g) = kge(qo, qs)
+                        gauge_jobs(g) = kge(qo, qs)
                         
                     case("kge2")
                     
                         imd = kge(qo, qs)
-                        jobs_gauge(g) = imd * imd
+                        gauge_jobs(g) = imd * imd
                         
                     case("se")
                     
-                        jobs_gauge(g) = se(qo, qs)
+                        gauge_jobs(g) = se(qo, qs)
                         
                     case("rmse")
                     
-                        jobs_gauge(g) = rmse(qo, qs)
+                        gauge_jobs(g) = rmse(qo, qs)
                         
                     case("logarithmique")
                     
-                        jobs_gauge(g) = logarithmique(qo, qs)
+                        gauge_jobs(g) = logarithmique(qo, qs)
 
                     end select
     
@@ -80,18 +97,88 @@ module mwd_cost
             
             do g=1, mesh%ng
                 
-                jobs = jobs + mesh%wgauge(g) * jobs_gauge(g)
+                jobs = jobs + mesh%wgauge(g) * gauge_jobs(g)
             
             end do
 
         end subroutine compute_jobs
         
         
-!%        subroutine compute_jreg(setup, 
-
-
-!%        end subroutine compute_jreg
+        !% TODO comment
+        subroutine compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
         
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(ParametersDT), intent(in) :: parameters, parameters_bgd
+            type(StatesDT), intent(in) :: states, states_bgd
+            real(sp), intent(inout) :: jreg
+            
+            real(sp) :: parameters_jreg, states_jreg
+            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_bgd_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix, states_bgd_matrix
+            
+            call parameters_to_matrix(parameters, parameters_matrix)
+            call parameters_to_matrix(parameters_bgd, parameters_bgd_matrix)
+            
+            call states_to_matrix(states, states_matrix)
+            call states_to_matrix(states_bgd, states_bgd_matrix)
+            
+            jreg = 0._sp
+            parameters_jreg = 0._sp
+            states_jreg = 0._sp
+            
+            select case(setup%jreg_fun)
+            
+            !% Normalize prior between parameters and states
+            case("prior")
+            
+                parameters_jreg = reg_prior(mesh, np, parameters_matrix, parameters_bgd_matrix)
+                states_jreg = reg_prior(mesh, ns, states_matrix, states_bgd_matrix)
+                
+            end select
+            
+            jreg = parameters_jreg + states_jreg
+
+        end subroutine compute_jreg
+
+
+        !% TODO comment
+        subroutine compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(Input_DataDT), intent(in) :: input_data
+            type(ParametersDT), intent(in) :: parameters, parameters_bgd
+            type(StatesDT), intent(in) :: states, states_bgd
+            type(OutputDT), intent(inout) :: output
+            real(sp), intent(inout) :: cost
+            
+            real(sp) :: jobs, jreg
+            
+            call compute_jobs(setup, mesh, input_data, output, jobs)
+            
+            !% Only compute in case wjreg > 0
+            if (setup%wjreg .gt. 0._sp) then
+            
+                call compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
+                
+            else
+            
+                jreg = 0._sp
+                
+            end if
+            
+            cost = jobs + setup%wjreg * jreg
+            output%cost = cost
+            
+        end subroutine compute_cost
+
+        
+        !% TODO comment
         function nse(x, y) result(res)
     
             implicit none
@@ -135,6 +222,7 @@ module mwd_cost
         end function nse
         
         
+        !% TODO comment
         subroutine kge_components(x, y, r, a, b)
         
             implicit none
@@ -182,7 +270,8 @@ module mwd_cost
     
         end subroutine kge_components
     
-       
+
+        !% TODO comment
         function kge(x, y) result(res)
         
             implicit none
@@ -201,7 +290,8 @@ module mwd_cost
         
         end function kge
         
-        
+
+        !% TODO comment
         function se(x, y) result(res)
             
             implicit none
@@ -225,7 +315,8 @@ module mwd_cost
         
         end function se
         
-        
+
+        !% TODO comment
         function rmse(x, y) result(res)
         
             implicit none
@@ -252,6 +343,7 @@ module mwd_cost
         end function rmse
         
         
+        !% TODO comment
         function logarithmique(x, y) result(res)
             
             implicit none
@@ -276,103 +368,19 @@ module mwd_cost
 
         end function logarithmique
 
-        
-!%        subroutine reg_evolution(setup, domain, nbz, param_reg, param, &
-!%    & optim, alpha, omega, reg)
-        
-!%        use module_smash_setup
-!%        use module_smash_mesh
-!%        use common_data
-        
-!%        implicit none
-        
-!%        type(model_setup),intent(in) :: setup
-!%        type(mesh),intent(in) :: domain
-!%        integer :: nbz
-!%        real, dimension(domain%nbx,domain%nby,nbz) :: param_reg, param
-!%        integer, dimension(nbz) :: optim
-!%        real, dimension(nbz) :: alpha, omega
-!%        real :: reg
 
-!%        real :: deviation,deviation_total ! Euclidian Norm
-!%        real :: penalty,penalty_total ! penalty term
-!%        integer :: ix,iy,p
-!%        real :: dy
-!%        integer :: ixmin,ixmax,iymin,iymax !index des dérivés
+        !% TODO comment
+        function reg_prior(mesh, size_mat3, matrix, matrix_bgd) result(res)
         
-!%        !initialisation
-!%        reg = 0.
+            implicit none
+            
+            type(MeshDT), intent(in) :: mesh
+            integer, intent(in) :: size_mat3
+            real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix, matrix_bgd
+            real(sp) :: res
+            
+            res = sum((matrix - matrix_bgd) * (matrix - matrix_bgd))
         
-!%        dy = setup%dx
-!%        deviation_total = 0.0
-!%        do p=1, nbz
-            
-!%            if (optim(p) .gt. 0) then
-!%                deviation = 0.
-                
-!%                do ix=1, domain%nbx
-                    
-!%                    do iy=1, domain%nby
-!%                        deviation = deviation+&
-!%                        &(1./((alpha(p)**2.) * &
-!%                        & (omega(p)*1000./setup%dx)**0.5)) * &
-!%                        & ((param(ix,iy,p)-param_reg(ix,iy,p))**2.)
-!%                    end do
-                    
-!%                end do
-!%                deviation_total = deviation_total + deviation
-                
-!%            end if
-            
-!%        end do
-        
-!%        ! penality term
-!%        penalty_total = 0.0
-!%        do p=1, nbz ! loop on all parameters
-            
-!%            if (optim(p) .gt. 0) then
-!%                penalty = 0.
-            
-!%                do ix=1, domain%nbx
-            
-!%                    do iy=1, domain%nby
-
-!%                        ixmin = ix - 1
-!%                        ixmax = ix + 1
-!%                        iymin = iy - 1
-!%                        iymax = iy + 1
-
-!%                        !condition limite !
-!%                        if (ix .eq. 1) ixmin = ix
-!%                        if (ix .eq. domain%nbx) ixmax = ix
-!%                        if (iy .eq. 1) iymin = iy
-!%                        if (iy .eq. domain%nby) iymax = iy
-
-!%                        !derivée seconde
-!%                        penalty=penalty+1./((omega(p)*1000./setup%dx)**0.5)*&
-!%                        &( &
-!%                        &((omega(p)*1000./setup%dx)*(&
-!%                        &(param(ixmax,iy,p)-param(ix,iy,p))&
-!%                        &-(param(ix,iy,p)-param(ixmin,iy,p))&
-!%                        &))**2. + &
-!%                        &((omega(p)*1000./dy)*(&
-!%                        &(param(ix,iymax,p)-param(ix,iy,p))&
-!%                        &-(param(ix,iy,p)-param(ix,iymin,p))&
-!%                        &))**2.&
-!%                        &)
-                        
-!%                    end do
-                    
-!%                end do
-!%                penalty_total = penalty_total + penalty
-            
-!%            end if
-        
-!%        end do
-        
-!%        reg = deviation_total + penalty_total
-
-!%    end subroutine reg_evolution
-
+        end function reg_prior
 
 end module mwd_cost

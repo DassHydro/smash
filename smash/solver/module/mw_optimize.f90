@@ -4,12 +4,14 @@
 !%      contains
 !%
 !%      [1] optimize_sbs
-!%      [2] optimize_lbfgsb
-!%      [3] transformation
-!%      [4] inv_transformation
-!%      [5] normalize_matrix
-!%      [6] unnormalize_matrix
-!%      [7] optimize_message
+!%      [2] transformation
+!%      [3] inv_transformation
+!%      [4] optimize_lbfgsb
+!%      [5] optimize_matrix_to_vector
+!%      [6] optimize_vector_to_matrix
+!%      [7] normalize_matrix
+!%      [8] unnormalize_matrix
+!%      [9] optimize_message
 
 module mw_optimize
     
@@ -802,7 +804,14 @@ module mw_optimize
             
             write(*,'(a)') "</> Optimize Model J"
             write(*,'(4x,4a)') "Algorithm: ", "'", trim(setup%algorithm), "'"
+            
             write(*,'(4x,4a)') "Jobs function: ", "'", trim(setup%jobs_fun), "'"
+            
+            if (trim(setup%algorithm) .eq. "l-bfgs-b") then
+                write(*,'(4x,4a)') "Jreg function: ", "'", trim(setup%jreg_fun), "'"
+                write(*,'(4x,a,f0.6)') "wJreg: ", setup%wjreg
+            end if
+            
             write(*,'(4x,a,i0)') "Nx: ", nx
         
             msg = ""

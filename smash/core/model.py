@@ -349,7 +349,6 @@ class Model(object):
             instance.input_data,
         )
 
-        # TODO
         options = _standardize_optimize_options(options)
 
         if algorithm == "sbs":

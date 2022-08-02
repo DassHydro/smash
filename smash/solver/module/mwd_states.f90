@@ -3,6 +3,7 @@
 !%
 !%      StatesDT type:
 !%      
+!%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
@@ -20,6 +21,7 @@
 !%      [3] states_to_matrix
 !%      [4] matrix_to_states
 !%      [5] vector_to_states
+!%      [6] set0_states
 
 module mwd_states
 
@@ -132,5 +134,21 @@ module mwd_states
             states%hlr = vector(5)
         
         end subroutine vector_to_states
+        
+        
+!%      TODO comment        
+        subroutine set0_states(states)
+        
+            implicit none
+            
+            type(StatesDT), intent(inout) :: states
+            
+            real(sp), dimension(ns) :: vector0
+            
+            vector0 = 0._sp
+            
+            call vector_to_states(vector0, states)
+        
+        end subroutine set0_states
 
 end module mwd_states

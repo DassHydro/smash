@@ -234,8 +234,6 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if np.all(mesh.drained_area == -99):
         raise ValueError("argument drained_area of MeshDT contains only NaN value")
 
-    # TODO add check for remaining MeshDT attributes / or move to mesh
-
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
 

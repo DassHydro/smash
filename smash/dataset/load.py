@@ -15,7 +15,7 @@ def load_dataset(name: str):
 
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
-    elif name == "Cance":
+    elif name.capitalize() == "Cance":
 
         setup = smash.read_setup(os.path.join(DATASET_PATH, "Cance/setup_Cance.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "Cance/mesh_Cance.hdf5"))

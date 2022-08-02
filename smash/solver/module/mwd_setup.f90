@@ -2,14 +2,14 @@
 !%      This module is wrapped and differentiated.
 !%
 !%      SetupDT type:
-!%      
+!%
+!%      </> Public
 !%      ========================== =====================================
 !%      `Variables`                Description
 !%      ========================== =====================================
 !%      ``dt``                     Solver time step        [s]                            (default: 3600)
 !%      ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%      ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
-!%      ``ntime_step``             Number of time step
 !%      ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
 !%      ``read_qobs``              Read observed discharge                                (default: .true.)
 !%      ``qobs_directory``         Observed discharge directory path                      (default: '...')
@@ -29,6 +29,24 @@
 !%      ``exchange_module``        Choise of exchange module                              (default: 0)
 !%      ``routing_module``         Choise of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
+
+!%      </> Private
+!%      ========================== =====================================
+!%      `Variables`                Description
+!%      ========================== =====================================
+!%      ``ntime_step``             Number of time step
+!%      ``algorithm``              Optimize Algorithm name
+!%      ``jobs_fun``               Objective function name        (default: 'nse')
+!%      ``jreg_fun``               Regularization name            (default: 'prior')
+!%      ``wjreg``                  Regularization weight          (default: 0)
+!%      ``optim_start_step``       Optimization start step        (default: 1)
+!%      ``optim_parameters``       Optimized parameters array     (default: 0)
+!%      ``optim_states``           Optimize states array          (default: 0)
+!%      ``lb_parameters``          Parameters lower bounds        (default: see below)
+!%      ``ub_parameters``          Parameters upper bounds        (default: see below)
+!%      ``lb_states``              States lower bounds            (default: see below)
+!%      ``ub_states``              States upper bounds            (default: see below)
+!%      ``maxiter``                Maximum number of iteration    (default: 100)
 !%      =========================  =====================================
 !%
 !%      contains
@@ -43,7 +61,7 @@ module mwd_setup
     
     type :: SetupDT
     
-        !% Public setup
+        !% </> Public
         real(sp) :: dt = 3600._sp
         
         character(lchar) :: start_time = "..."
@@ -75,13 +93,14 @@ module mwd_setup
         
         logical :: save_qsim_domain = .false.
         
-        !% Private setup
+        !% </> Private
         integer :: ntime_step = 0 !>f90wrap private
         
         character(lchar) :: algorithm !>f90wrap private
         
         character(lchar) :: jobs_fun = "nse" !>f90wrap private
-        character(lchar) :: jreg_fun = "evolution" !>f90wrap private
+        character(lchar) :: jreg_fun = "prior" !>f90wrap private
+        real(sp) :: wjreg = 0._sp !>f90wrap private
 
         integer :: optim_start_step = 1 !>f90wrap private
         

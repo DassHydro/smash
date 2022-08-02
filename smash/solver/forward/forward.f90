@@ -14,7 +14,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     
     use md_operator !% only: GR_interception, GR_production, GR_exchange, &
     !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
-    use mwd_cost !% only: compute_jobs
+    use mwd_cost !% only: compute_cost
 
     implicit none
 
@@ -25,10 +25,8 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     type(SetupDT), intent(in) :: setup
     type(MeshDT), intent(in) :: mesh
     type(Input_DataDT), intent(in) :: input_data
-    type(ParametersDT), intent(in) :: parameters
-    type(ParametersDT), intent(in) :: parameters_bgd
-    type(StatesDT), intent(inout) :: states
-    type(StatesDT), intent(inout) :: states_bgd
+    type(ParametersDT), intent(in) :: parameters, parameters_bgd
+    type(StatesDT), intent(inout) :: states, states_bgd
     type(OutputDT), intent(inout) :: output
     real(sp), intent(inout) :: cost
     
@@ -36,6 +34,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     !%   Local Variables (private)
     !===================================================================================================================== %!
     
+    type(StatesDT) :: states_imd
     real(sp), dimension(:,:), allocatable :: q
     real(sp), dimension(:), allocatable :: sparse_q
     real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
@@ -43,6 +42,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     integer :: t, i, row, col, k, g
     
     cost = 0._sp
+    states_imd = states
     
     if (setup%sparse_storage) then
         
@@ -307,6 +307,6 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     !%   Compute J
     !% =================================================================================================================== %!
     
-    call compute_jobs(setup, mesh, input_data, output, cost)
+    call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states_imd, states_bgd, output, cost)
         
 end subroutine forward

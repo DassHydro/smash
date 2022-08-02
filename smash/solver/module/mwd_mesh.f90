@@ -3,6 +3,7 @@
 !%
 !%      MeshDT type:
 !%      
+!%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
@@ -21,7 +22,13 @@
 !%      ``area``                 Drained area at gauge position  [m2]
 !%      ``global_active_cell``   Mask of global active cell
 !%      ``local_active_cell``    Mask of local active cell
-!%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice
+!%
+!%      </> Private
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``wgauge``               Objective function gauge weight
+!%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
 !%      ======================== =======================================
 !%
 !%      contains
@@ -44,7 +51,7 @@ module mwd_mesh
     
     type :: MeshDT
         
-        !% Public setup
+        !% </> Public
         real(sp) :: dx
         integer :: nrow
         integer :: ncol
@@ -65,7 +72,7 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: global_active_cell
         integer, dimension(:,:), allocatable :: local_active_cell
         
-        !% Private setup
+        !% </> Private
         real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
         integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90wrap private
 
@@ -128,6 +135,7 @@ module mwd_mesh
             mesh_out = mesh_in
         
         end subroutine mesh_copy
+        
         
 !%      TODO comment        
         subroutine compute_rowcol_to_ind_sparse(mesh)

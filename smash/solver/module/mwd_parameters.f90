@@ -3,6 +3,7 @@
 !%
 !%      ParametersDT type:
 !%      
+!%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
@@ -23,6 +24,7 @@
 !%      [3] parameters_to_matrix
 !%      [4] matrix_to_parameters
 !%      [5] vector_to_parameters
+!%      [6] set0_parameters
 
 module mwd_parameters
 
@@ -70,7 +72,7 @@ module mwd_parameters
             parameters%ci    = 1._sp
             parameters%cp    = 200._sp
             parameters%beta  = 1000._sp
-            parameters%cft   = 200._sp
+            parameters%cft   = 500._sp
             parameters%cst   = 500._sp
             parameters%alpha = 0.9_sp
             parameters%exc   = 0._sp
@@ -153,5 +155,21 @@ module mwd_parameters
             parameters%lr = vector(8)
         
         end subroutine vector_to_parameters
+        
+        
+!%      TODO comment  
+        subroutine set0_parameters(parameters)
+        
+            implicit none
+            
+            type(ParametersDT), intent(inout) :: parameters
+            
+            real(sp), dimension(np) :: vector0
+            
+            vector0 = 0._sp
+            
+            call vector_to_parameters(vector0, parameters)
+        
+        end subroutine set0_parameters
 
 end module mwd_parameters

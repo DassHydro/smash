@@ -3,6 +3,7 @@
 !%
 !%      OutputDT type:
 !%      
+!%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
@@ -14,12 +15,13 @@
 !%      ``sp1``                  Scalar product <dY*, dY>
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
-!%      ``Ian``                  Ialpha gradient test
+!%      ``ian``                  Ialpha gradient test
 !%      ======================== =======================================
 !%
 !%      contains
 !%
 !%      [1] OutputDT_initialise
+!%      [2] output_copy
 
 module mwd_output
     

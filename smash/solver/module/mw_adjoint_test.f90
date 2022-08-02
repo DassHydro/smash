@@ -22,6 +22,7 @@ module mw_adjoint_test
     
         !% Calling forward_d from forward/forward_d.f90
         !% Calling forward_b from forward/forward_b.f90
+        !% TODO comment
         subroutine scalar_product_test(setup, mesh, input_data, parameters, states, output)
             
             implicit none
@@ -97,6 +98,7 @@ module mw_adjoint_test
         
         !% Calling forward from forward/forward.f90
         !% Calling forward_b from forward/forward_b.f90
+        !% TODO comment
         subroutine gradient_test(setup, mesh, input_data, parameters, states, output)
         
             implicit none
