@@ -26,7 +26,7 @@ smash documentation
 
     .. link-button:: getting_started
             :type: ref
-            :text: To the getting started guides
+            :text: To the getting started
             :classes: btn-block btn-secondary stretched-link
    
     ---
@@ -36,6 +36,13 @@ smash documentation
     ^^^^^^^^^^
     
     The user guide provides in depth-information of the *smash* library
+    
+    +++
+
+    .. link-button:: user_guide
+            :type: ref
+            :text: To the user guide
+            :classes: btn-block btn-secondary stretched-link
             
     ---
     :img-top: _static/index_api.svg
@@ -45,6 +52,13 @@ smash documentation
 
     The reference guide contains a detailed description of
     the *smash* API.
+    
+    +++
+
+    .. link-button:: api_reference
+            :type: ref
+            :text: To the reference guide
+            :classes: btn-block btn-secondary stretched-link
     
     ---
     :img-top: _static/model_description.svg
@@ -61,3 +75,5 @@ smash documentation
    :titlesonly:
    
    getting_started/index
+   user_guide/index
+   api_reference/index

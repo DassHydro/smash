@@ -1,0 +1,466 @@
+.. _user_guide.practice_case:
+
+=============
+Practice case
+=============
+
+The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the :ref:`user_guide.real_case` section.
+
+For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following drained area and flow directions:
+
+.. image:: ../_static/flwdir_da_Practice_case.png
+	:width: 750
+	:align: center
+
+First, open a Python interface:
+
+.. code-block:: none
+
+	python3
+	
+-------
+Imports
+-------
+
+.. ipython:: python
+	
+	import smash
+	import numpy as np
+	import matplotlib.pyplot as plt
+	
+.. warning::
+
+	- The wrapping of Fortran code in Python requires the use of the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package, which itself uses `f2py <https://numpy.org/doc/stable/f2py/>`__. Thus, the `NumPy <https://numpy.org/>`__ package is essential in the management of arguments/tables. A knowledge of this package is advised in the use of `smash`.
+	
+	- The `Matplotlib <https://matplotlib.org/>`__ package is the visualization package used in the `smash` documentation but any tool can be used.
+	
+---------------------	
+Model object creation
+---------------------
+
+Creating a :class:`Model` requires two input arguments: ``setup`` and ``mesh``.
+
+
+.. _setup_argument_creation:
+
+Setup argument creation
+***********************
+	
+``setup`` is a dictionary that allows to initialize :class:`Model` (i.e. allocate the necessary setup Fortran arrays). 
+
+.. note::
+	
+	Each key and associated values that can be passed into the ``setup`` dictionary are detailed in the section (TODO link). 
+
+A minimal ``setup`` configuration is:
+
+- the calculation time step in s (i.e. ``dt``),
+
+- the beginning of the simulation (i.e. ``start_time``),
+
+- the end of the simulation (i.e. ``end_time``).
+
+.. ipython:: python
+
+	setup = {
+		"dt": 3_600,
+		"start_time": "2020-01-01 00:00",
+		"end_time": "2020-01-04 00:00",
+	}
+	
+.. _mesh_argument_creation:
+	
+Mesh argument creation
+**********************
+
+``mesh`` is a dictionary that allows to initialize :class:`Model` (i.e. allocate the necessary mesh Fortran arrays). 
+
+.. note::
+	
+	Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the section (TODO link).
+
+First part of  ``mesh`` configuration is:
+
+- the calculation spatial step in m (i.e. ``dx``),
+
+- the number of rows (i.e. ``nrow``),
+
+- the number of columns (i.e. ``ncol``),
+
+- the number of gauge (i.e. ``ng``),
+
+- the number of cells that contribute to any gauge discharge (active cells, i.e. ``nac``),
+
+- the catchment area in m² (i.e. ``area``),
+
+- the gauge position in the grid (**Fortran indexing**) (i.e. ``gauge_pos``).
+
+.. ipython:: python
+
+	dx = 1_000
+	(nrow, ncol) = (10, 10)
+
+	mesh = {
+		"dx": dx,
+		"nrow": nrow,
+		"ncol": ncol,
+		"ng": 1,
+		"nac": nrow * ncol,
+		"area": nrow * ncol * (dx ** 2),
+		"gauge_pos": np.array([[10], [10]], dtype=np.int32),
+	}
+
+Second part of ``mesh`` configuration is:
+
+- the flow directions (i.e. ``flow``),
+
+- the drained area in number of cells (i.e. ``drained_area``).
+
+.. ipython:: python
+
+	mesh["flow"] = np.array(
+	    [
+		[4, 5, 5, 5, 5, 5, 5, 5, 5, 5],
+		[3, 4, 5, 5, 5, 5, 5, 5, 5, 5],
+		[3, 3, 4, 5, 5, 5, 5, 5, 5, 5],
+		[3, 3, 3, 4, 5, 5, 5, 5, 5, 5],
+		[3, 3, 3, 3, 4, 5, 5, 5, 5, 5],
+		[3, 3, 3, 3, 3, 4, 5, 5, 5, 5],
+		[3, 3, 3, 3, 3, 3, 4, 5, 5, 5],
+		[3, 3, 3, 3, 3, 3, 3, 4, 5, 5],
+		[3, 3, 3, 3, 3, 3, 3, 3, 4, 5],
+		[3, 3, 3, 3, 3, 3, 3, 3, 3, 4],
+	    ],
+	    dtype=np.int32,
+	)
+	
+	mesh["drained_area"] = np.array(
+	    [
+               [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+               [1, 4, 2, 2, 2, 2, 2, 2, 2, 2],
+               [1, 2, 9, 3, 3, 3, 3, 3, 3, 3],
+               [1, 2, 3, 16, 4, 4, 4, 4, 4, 4],
+               [1, 2, 3, 4, 25, 5, 5, 5, 5, 5],
+               [1, 2, 3, 4, 5, 36, 6, 6, 6, 6],
+               [1, 2, 3, 4, 5, 6, 49, 7, 7, 7],
+               [1, 2, 3, 4, 5, 6, 7, 64, 8, 8],
+               [1, 2, 3, 4, 5, 6, 7, 8, 81, 9],
+               [1, 2, 3, 4, 5, 6, 7, 8, 9, 100],
+            ],
+            dtype=np.int32,
+        )
+
+
+Finally, the calculation path (i.e. ``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (**Fortran indexing**).
+
+.. ipython:: python
+
+	ind_path = np.unravel_index(np.argsort(mesh["drained_area"], axis=None),
+		 mesh["drained_area"].shape)
+
+	mesh["path"] = np.zeros(shape=(2, mesh["drained_area"].size), 
+		dtype=np.int32)
+
+	mesh["path"][0, :] = ind_path[0] + 1
+	mesh["path"][1, :] = ind_path[1] + 1
+	
+
+Once ``setup`` and ``mesh`` are filled in, a :class:`Model` object can be created:
+
+.. ipython:: python
+	
+	model = smash.Model(setup, mesh)
+	
+-------------
+Viewing Model
+-------------
+
+Once the :class:`Model` object is created, it is possible to visualize what it contains through 6 attributes. This 6 attributes are Python classes that are derived from the wrapping of Fortran derived types.
+
+.. note::
+
+	See details in the :ref:`api_reference` for the attributes:
+	
+	- :attr:`.Model.setup`
+	
+	- :attr:`.Model.mesh`
+	
+	- :attr:`.Model.input_data`
+	
+	- :attr:`.Model.parameters`
+	
+	- :attr:`.Model.states`
+	
+	- :attr:`.Model.output`
+
+Setup
+*****
+
+The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`Model`. We have in the :ref:`setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
+
+.. ipython:: python
+
+	model.setup.dt, model.setup.start_time, model.setup.end_time
+	
+The other :attr:`.Model.setup` arguments can also be viewed even if they have not been directly defined in the :class:`Model` initialization. These arguments have default values in the code:
+
+.. ipython:: python
+
+	model.setup.production_module, model.setup.routing_module
+	
+If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+.. ipython:: python
+	
+	@verbatim
+	model.setup.<TAB>
+	model.setup.copy(                   model.setup.prcp_directory
+	model.setup.daily_interannual_pet   model.setup.prcp_format
+	model.setup.dt                      model.setup.production_module
+	model.setup.end_time                model.setup.qobs_directory
+	model.setup.exchange_module         model.setup.read_pet
+	model.setup.from_handle(            model.setup.read_prcp
+	model.setup.interception_module     model.setup.read_qobs
+	model.setup.mean_forcing            model.setup.routing_module
+	model.setup.pet_conversion_factor   model.setup.save_qsim_domain
+	model.setup.pet_directory           model.setup.sparse_storage
+	model.setup.pet_format              model.setup.start_time
+	model.setup.prcp_conversion_factor  model.setup.transfer_module
+	
+Mesh
+****
+
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`Model`. We have in the :ref:`mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
+
+.. ipython:: python
+
+	model.mesh.dx, model.mesh.nrow, model.mesh.ncol
+	
+NumPy array can also be viewed:
+
+.. ipython:: python
+
+	model.mesh.drained_area
+	
+Or plotted using Matplotlib.
+
+.. ipython:: python
+	
+	plt.imshow(model.mesh.drained_area, cmap="Spectral");
+	plt.colorbar(label="Number of cells");
+	@savefig da_pc_user_guide.png
+	plt.title("Practice case - Drained Area");
+
+If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+.. ipython:: python
+	
+	@verbatim
+	model.mesh.<TAB>
+	model.mesh.area                model.mesh.local_active_cell
+	model.mesh.code                model.mesh.nac
+	model.mesh.copy(               model.mesh.ncol
+	model.mesh.drained_area        model.mesh.ng
+	model.mesh.dx                  model.mesh.nrow
+	model.mesh.flow                model.mesh.path
+	model.mesh.from_handle(        model.mesh.xmin
+	model.mesh.gauge_pos           model.mesh.ymax
+	model.mesh.global_active_cell 
+
+Input Data
+**********
+
+The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the domain and the simulation period. 
+
+For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge on the domain and the simulation period is up to 72 time steps. The value -99 indicates no data.
+
+.. ipython:: python
+
+	model.input_data.qobs
+	
+	model.input_data.qobs.shape
+	
+Precipitation is also a NumPy array but of shape (10, 10, 72). The number of rows and columns is 10 and same as the observed dicharge, the simulation period is up to 72 time steps.
+
+.. ipython:: python
+
+	model.input_data.prcp.shape
+
+If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+.. ipython:: python
+	
+	@verbatim
+	model.input_data.<TAB>
+	model.input_data.copy(         model.input_data.prcp
+	model.input_data.from_handle(  model.input_data.qobs
+	model.input_data.mean_pet      model.input_data.sparse_pet
+	model.input_data.mean_prcp     model.input_data.sparse_prcp
+	model.input_data.pet
+	
+.. warning::
+
+	It can happen, depending on the :class:`Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the setup to calculate spatial averages of precipitation. Access to this variable is therefore impossible and the code will return the following error:
+	
+	.. ipython:: python
+		:okexcept:
+			
+		model.input_data.mean_prcp
+		
+Parameters and States
+*********************
+
+The :attr:`.Model.parameters` and :attr:`.Model.states` attributes contain a set of arguments storing :class:`Model` parameters and states. This attributes contain only NumPy arrays of shape (10, 10) (i.e. number of rows and columns of the domain).
+
+.. ipython:: python
+	
+	model.parameters.cp.shape, model.states.hp.shape
+	
+This arrays are filled in with uniform default values.
+
+.. ipython:: python
+	
+	model.parameters.cp[0,0], model.states.hp[0,0]
+	
+.. note:: 
+
+	The :attr:`.Model.states` attribute stores the **initial** states :math:`h(x,0)` and will not be updated during simulation.
+	
+If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+.. ipython:: python
+	
+	@verbatim
+	model.parameters.<TAB>
+	model.parameters.alpha         model.parameters.cp
+	model.parameters.beta          model.parameters.cst
+	model.parameters.cft           model.parameters.exc
+	model.parameters.ci            model.parameters.from_handle(
+	model.parameters.copy(         model.parameters.lr
+	
+.. ipython:: python
+	
+	@verbatim
+	model.states.<TAB>
+	model.states.copy(         model.states.hlr
+	model.states.from_handle(  model.states.hp
+	model.states.hft           model.states.hst
+	model.states.hi
+	
+Output
+******
+
+The last attribute, :attr:`.Model.output`, contains a set of arguments storing :class:`Model` outputs (i.e. simulated discharge, final states, cost ...). The attribute values are empty as long as no simulation has been run.
+
+If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+.. ipython:: python
+	
+	@verbatim
+	model.output.<TAB>
+	model.output.an                   model.output.parameters_gradient
+	model.output.copy(                model.output.qsim
+	model.output.cost                 model.output.qsim_domain
+	model.output.from_handle(         model.output.sp1
+	model.output.fstates              model.output.sp2
+	model.output.ian                  model.output.sparse_qsim_domain
+
+
+------------------
+Input Data filling
+------------------
+
+To run a simulation, the :class:`Model` needs at least one precipitation and potential evapotranspiration (PET) chronicle. In this practice case, we will impose a triangular precipitation over the simulation period, uniform on the domain and a zero PET.
+
+.. ipython:: python
+
+	prcp = np.zeros(shape=model.input_data.prcp.shape[2], dtype=np.float32)
+	
+	tri = np.linspace(0, 6.25, 10)
+	
+	prcp[0:10] = tri
+	
+	prcp[9:19] = np.flip(tri)
+	
+	model.input_data.prcp = np.broadcast_to(prcp, model.input_data.prcp.shape)
+
+	model.input_data.pet = 0.
+	
+Checking on any cell the precipitation values:
+
+.. ipython:: python
+
+	plt.plot(model.input_data.prcp[0,0,:]);
+	plt.grid(alpha=.7, ls="--");
+	plt.xlabel("Time step");
+	@savefig prpc_pc_user_guide.png
+	plt.ylabel("Precipitation $(mm/h)$");
+	
+---
+Run
+---
+
+Forward run
+***********
+
+The :class:`Model` is finally ready to be run using the :meth:`.Model.run` method:
+	
+.. ipython:: python
+
+	model.run(inplace=True)
+	
+	plt.plot(model.output.qsim[0,:]);
+	plt.grid(alpha=.7, ls="--");
+	plt.xlabel("Time step");
+	@savefig qsim_fwd_pc_user_guide.png
+	plt.ylabel("Simulated discharge $(m^3/s)$");
+	
+	
+Optimization
+************
+
+To perform an optimization, observed discharge must be provided to :class:`Model`. Since the practice case is a ficticious catchment, we will use the simulated data from the previous forward run as observed discharge.
+
+.. ipython:: python
+
+	model.input_data.qobs = model.output.qsim.copy()
+	
+Next, we will perturb the production parameter :math:`cp` to generate a hydrograph different from the previous one.
+
+.. ipython:: python
+
+	model.parameters.cp = 1
+	
+Re run to see the difference between the hydrographs.
+
+.. ipython:: python
+
+	model.run(inplace=True)
+	
+	plt.plot(model.input_data.qobs[0,:], label="Observed discharge");
+	plt.plot(model.output.qsim[0,:], label="Simulated discharge");
+	plt.grid(alpha=.7, ls="--");
+	plt.xlabel("Time step");
+	plt.ylabel("Simulated discharge $(m^3/s)$");
+	@savefig qsim_fwd2_pc_user_guide.png
+	plt.legend();
+	
+Finally, perform a spatially uniform calibration of the parameter :math:`cp` with the :meth:`.Model.optimize` method:
+
+.. ipython:: python
+
+	model.optimize("sbs", control_vector=["cp"], inplace=True)
+	
+	plt.plot(model.input_data.qobs[0,:], label="Observed discharge");
+	plt.plot(model.output.qsim[0,:], label="Simulated discharge");
+	plt.grid(alpha=.7, ls="--");
+	plt.xlabel("Time step");
+	plt.ylabel("Simulated discharge $(m^3/s)$");
+	@savefig qsim_opt_pc_user_guide.png
+	plt.legend();
+	
+-------------------
+Getting data in/out
+-------------------
+
+TODO

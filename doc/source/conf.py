@@ -61,6 +61,8 @@ numpydoc_show_class_members = True
 
 autosummary_generate = True  # Turn on sphinx.ext.autosummary
 
+autodoc_typehints = "none"
+
 # Add any paths that contain templates here, relative to this directory.
 templates_path = ["_templates"]
 
@@ -82,11 +84,10 @@ html_logo = "_static/logo_smash.svg"
 
 html_last_updated_fmt = "%b %d, %Y"
 
-# html_theme_options = {
-# "gitlab_url": "https://gitlab.irstea.fr/aiga/SMASH/-/tree/pyf90interface/src/py/smash",
-# "collapse_navigation": False,
-# "use_edit_page_button": True,
-# }
+html_theme_options = {
+"gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
+"collapse_navigation": False,
+}
 
 # html_context = {
 # "gitlab_url": "https://gitlab.irstea.fr", # or your self-hosted GitLab

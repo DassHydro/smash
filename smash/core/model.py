@@ -43,10 +43,8 @@ class Model(object):
 
     def __init__(
         self,
-        setup: (str, None) = None,
+        setup: (dict, None) = None,
         mesh: (dict, None) = None,
-        parameters: (dict, None) = None,
-        states: (dict, None) = None,
         build: bool = True,
     ):
 
@@ -104,6 +102,10 @@ class Model(object):
 
     @property
     def setup(self):
+        
+        '''
+        setup attr
+        '''
 
         return self._setup
 

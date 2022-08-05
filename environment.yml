@@ -1,0 +1,9 @@
+name: smash-dev
+channels:
+    - conda-forge
+dependencies:
+    - python=3.8
+    - pybtex
+    - pillow
+    - gdal
+    - f90wrap>=0.2.7

@@ -11,13 +11,13 @@
 !%      ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%      ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
 !%      ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
-!%      ``read_qobs``              Read observed discharge                                (default: .true.)
+!%      ``read_qobs``              Read observed discharge                                (default: .false.)
 !%      ``qobs_directory``         Observed discharge directory path                      (default: '...')
-!%      ``read_prcp``              Read precipitation                                     (default: .true.)
+!%      ``read_prcp``              Read precipitation                                     (default: .false.)
 !%      ``prcp_format``            Precipitation format                                   (default: 'tif')
 !%      ``prcp_conversion_factor`` Precipitation conversion factor                        (default: 1)
 !%      ``prcp_directory``         Precipiation directory path                            (default: '...')
-!%      ``read_pet``               Reap potential evapotranspiration                      (default: .true.)
+!%      ``read_pet``               Reap potential evapotranspiration                      (default: .false.)
 !%      ``pet_format``             Potential evapotranspiration format                    (default: 'tif')
 !%      ``pet_conversion_factor``  Potential evapotranpisration conversion factor         (default: 1)
 !%      ``pet_directory``          Potential evapotranspiration directory path            (default: '...')
@@ -69,15 +69,15 @@ module mwd_setup
         
         logical :: sparse_storage = .false.
         
-        logical :: read_qobs = .true.
+        logical :: read_qobs = .false.
         character(lchar) :: qobs_directory = "..."
         
-        logical :: read_prcp = .true.
+        logical :: read_prcp = .false.
         character(lchar) :: prcp_format = "tif"
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..."
         
-        logical :: read_pet = .true.
+        logical :: read_pet = .false.
         character(lchar) :: pet_format = "tif"
         real(sp) :: pet_conversion_factor = 1._sp
         character(lchar) :: pet_directory = "..."

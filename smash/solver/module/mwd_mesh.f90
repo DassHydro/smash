@@ -92,6 +92,9 @@ module mwd_mesh
             mesh%ncol = ncol
             mesh%ng = ng
             
+            mesh%xmin = 0
+            mesh%ymax = 0
+            
             allocate(mesh%flow(mesh%nrow, mesh%ncol)) 
             mesh%flow = -99
             allocate(mesh%drained_area(mesh%nrow, mesh%ncol)) 
@@ -107,9 +110,9 @@ module mwd_mesh
             allocate(mesh%area(mesh%ng))
             
             allocate(mesh%global_active_cell(mesh%nrow, mesh%ncol))
-            mesh%global_active_cell = 0
+            mesh%global_active_cell = 1
             allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
-            mesh%local_active_cell = 0
+            mesh%local_active_cell = 1
             
             allocate(mesh%wgauge(mesh%ng))
             mesh%wgauge = 1._sp
