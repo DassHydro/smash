@@ -64,7 +64,7 @@ module mw_optimize
             !%   Initialisation
             !% =========================================================================================================== %!
             
-            where (mesh%global_active_cell .eq. 1)
+            where (mesh%active_cell .eq. 1)
             
                 mask_ac = 1
             
@@ -695,7 +695,7 @@ module mw_optimize
                     
                         do row=1, mesh%nrow
                         
-                            if (mesh%global_active_cell(row, col) .eq. 1) then
+                            if (mesh%active_cell(row, col) .eq. 1) then
                                 
                                 k = k + 1
                                 vector(k) = real(matrix(row, col, i), kind(vector))
@@ -734,7 +734,7 @@ module mw_optimize
                     
                         do row=1, mesh%nrow
                         
-                            if (mesh%global_active_cell(row, col) .eq. 1) then
+                            if (mesh%active_cell(row, col) .eq. 1) then
                                 
                                 k = k + 1
                                 

@@ -13,11 +13,19 @@ __all__ = ["save_setup", "read_setup"]
 
 def save_setup(setup: dict, path: str):
 
+    """
+    Save setup
+    """
+
     with open(path, "w") as f:
         yaml.dump(setup, f, default_flow_style=False)
 
 
 def read_setup(path: str) -> dict:
+
+    """
+    Read setup
+    """
 
     if os.path.isfile(path):
 

@@ -20,8 +20,7 @@
 !%      ``gauge_pos``            Gauge position 
 !%      ``code``                 Gauge code
 !%      ``area``                 Drained area at gauge position  [m2]
-!%      ``global_active_cell``   Mask of global active cell
-!%      ``local_active_cell``    Mask of local active cell
+!%      ``active_cell``          Mask of active cell
 !%
 !%      </> Private
 !%      ======================== =======================================
@@ -29,6 +28,7 @@
 !%      ======================== =======================================
 !%      ``wgauge``               Objective function gauge weight
 !%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
+!%      ``local_active_cell``    Mask of local active cell (\in active_cell)
 !%      ======================== =======================================
 !%
 !%      contains
@@ -69,12 +69,12 @@ module mwd_mesh
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
-        integer, dimension(:,:), allocatable :: global_active_cell
-        integer, dimension(:,:), allocatable :: local_active_cell
+        integer, dimension(:,:), allocatable :: active_cell
         
         !% </> Private
         real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
         integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90wrap private
+        integer, dimension(:,:), allocatable :: local_active_cell !>f90wrap private
 
     end type MeshDT
     
@@ -109,10 +109,8 @@ module mwd_mesh
             mesh%code = "...................."
             allocate(mesh%area(mesh%ng))
             
-            allocate(mesh%global_active_cell(mesh%nrow, mesh%ncol))
-            mesh%global_active_cell = 1
-            allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
-            mesh%local_active_cell = 1
+            allocate(mesh%active_cell(mesh%nrow, mesh%ncol))
+            mesh%active_cell = 1
             
             allocate(mesh%wgauge(mesh%ng))
             mesh%wgauge = 1._sp
@@ -123,6 +121,9 @@ module mwd_mesh
                 mesh%rowcol_to_ind_sparse = -99
                 
             end if
+            
+            allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
+            mesh%local_active_cell = 1
             
         end subroutine MeshDT_initialise
         
@@ -159,7 +160,7 @@ module mwd_mesh
                     row = mesh%path(1, i)
                     col = mesh%path(2, i)
                     
-                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                    if (mesh%active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
                         mesh%rowcol_to_ind_sparse(row, col) = k
@@ -234,7 +235,7 @@ module mwd_mesh
                     row = mesh%path(1, i)
                     col = mesh%path(2, i)
                     
-                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                    if (mesh%active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
                         vector(k) = matrix(row, col)
@@ -270,7 +271,7 @@ module mwd_mesh
                     row = mesh%path(1, i)
                     col = mesh%path(2, i)
                     
-                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                    if (mesh%active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
                         vector(k) = matrix(row, col)
@@ -308,7 +309,7 @@ module mwd_mesh
                     row = mesh%path(1, i)
                     col = mesh%path(2, i)
                     
-                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                    if (mesh%active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
                         matrix(row, col) = vector(k)
@@ -358,7 +359,7 @@ module mwd_mesh
                     row = mesh%path(1, i)
                     col = mesh%path(2, i)
                     
-                    if (mesh%global_active_cell(row, col) .eq. 1) then
+                    if (mesh%active_cell(row, col) .eq. 1) then
                         
                         k = k + 1
                         matrix(row, col) = vector(k)

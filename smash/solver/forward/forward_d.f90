@@ -1775,7 +1775,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
-        IF (mesh%global_active_cell(row, col) .EQ. 1 .AND. mesh%&
+        IF (mesh%active_cell(row, col) .EQ. 1 .AND. mesh%&
 &           local_active_cell(row, col) .EQ. 1) THEN
 !% [ IF ACTIVE CELL ]
           IF (setup%sparse_storage) THEN
@@ -2099,7 +2099,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
-        IF (mesh%global_active_cell(row, col) .EQ. 1 .AND. mesh%&
+        IF (mesh%active_cell(row, col) .EQ. 1 .AND. mesh%&
 &           local_active_cell(row, col) .EQ. 1) THEN
 !% [ IF ACTIVE CELL ]
           IF (setup%sparse_storage) THEN

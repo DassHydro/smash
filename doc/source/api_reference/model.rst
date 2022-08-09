@@ -1,7 +1,5 @@
 .. _api_reference.model:
 
-.. module:: Model
-
 =====
 Model
 =====

@@ -41,52 +41,31 @@ class Model(object):
     **S**\patially distributed **M**\odelling and **AS**\simillation for **H**\ydrology.
     """
 
-    def __init__(
-        self,
-        setup: (dict, None) = None,
-        mesh: (dict, None) = None,
-        build: bool = True,
-    ):
+    def __init__(self, setup: dict, mesh: dict):
 
-        if build:
+        if setup or mesh:
 
             self.setup = SetupDT()
 
-            if setup is None:
-
-                raise ValueError(f"'setup' argument must be defined")
+            if isinstance(setup, dict):
+                _parse_derived_type(self.setup, setup)
 
             else:
 
-                if isinstance(setup, dict):
-                    _parse_derived_type(self.setup, setup)
-
-                else:
-
-                    raise TypeError(
-                        f"'setup' argument must be dictionary, not {type(setup)}"
-                    )
+                raise TypeError(
+                    f"'setup' argument must be dictionary, not {type(setup)}"
+                )
 
             _build_setup(self.setup)
 
-            if mesh is None:
+            if isinstance(mesh, dict):
 
-                raise ValueError(f"'mesh' argument must be defined")
+                self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+
+                _parse_derived_type(self.mesh, mesh)
 
             else:
-
-                if isinstance(mesh, dict):
-
-                    self.mesh = MeshDT(
-                        self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"]
-                    )
-
-                    _parse_derived_type(self.mesh, mesh)
-
-                else:
-                    raise TypeError(
-                        f"'mesh' argument must be dictionary, not {type(mesh)}"
-                    )
+                raise TypeError(f"'mesh' argument must be dictionary, not {type(mesh)}")
 
             _build_mesh(self.setup, self.mesh)
 
@@ -102,10 +81,10 @@ class Model(object):
 
     @property
     def setup(self):
-        
-        '''
+
+        """
         setup attr
-        '''
+        """
 
         return self._setup
 
@@ -205,7 +184,7 @@ class Model(object):
 
     def copy(self):
 
-        copy = Model(build=False)
+        copy = Model(None, None)
         copy.setup = self.setup.copy()
         copy.mesh = self.mesh.copy()
         copy.input_data = self.input_data.copy()
@@ -377,6 +356,7 @@ class Model(object):
                 **options,
             )
 
+        #% TODO
         # elif algorithm == "nsga":
         # elif algorithm == "nelder-mead":
 

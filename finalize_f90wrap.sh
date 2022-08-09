@@ -39,6 +39,7 @@ priv_attr=(
 "mwd_setup.maxiter"
 "mwd_mesh.wgauge"
 "mwd_mesh.rowcol_to_ind_sparse"
+"mwd_mesh.local_active_cell"
 )
 
 for args in ${priv_attr[@]}; do

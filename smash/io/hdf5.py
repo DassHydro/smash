@@ -8,6 +8,10 @@ __all__ = ["save_mesh", "read_mesh"]
 
 def save_mesh(mesh: dict, path: str):
 
+    """
+    Save mesh
+    """
+
     with h5py.File(path, "w") as f:
 
         for key, value in mesh.items():
@@ -35,9 +39,15 @@ def save_mesh(mesh: dict, path: str):
 
 def read_mesh(path: str) -> dict:
 
+    """
+    Read mesh
+    """
+
     mesh = {}
 
     with h5py.File(path, "r") as f:
+
+        ac = "active_cell" in list(f.keys())
 
         for attr in list(f.attrs.keys()):
 
@@ -47,9 +57,15 @@ def read_mesh(path: str) -> dict:
 
             if ds in ["flow", "drained_area"]:
 
-                mesh[ds] = np.ma.masked_array(
-                    f[ds][:], mask=(1 - f["global_active_cell"][:])
-                )
+                if ac:
+
+                    mesh[ds] = np.ma.masked_array(
+                        f[ds][:], mask=(1 - f["active_cell"][:])
+                    )
+
+                else:
+
+                    mesh[ds] = f[ds][:]
 
             else:
 

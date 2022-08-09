@@ -340,7 +340,7 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
 
     drained_area = np.ma.masked_array(drained_area, mask=(1 - mask_dln))
 
-    global_active_cell = mask_dln.astype(np.int32)
+    active_cell = mask_dln.astype(np.int32)
 
     #% Transform from Python to FORTRAN index
     gauge_pos = np.vstack((row_ol + 1, col_ol + 1))
@@ -350,7 +350,7 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
         "nrow": flow.shape[0],
         "ncol": flow.shape[1],
         "ng": x.size,
-        "nac": np.count_nonzero(global_active_cell),
+        "nac": np.count_nonzero(active_cell),
         "xmin": xmin_shifted,
         "ymax": ymax_shifted,
         "flow": flow,
@@ -359,8 +359,7 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
         "gauge_pos": gauge_pos,
         "code": code,
         "area": area_ol,
-        "global_active_cell": global_active_cell,
-        "local_active_cell": global_active_cell.copy(),
+        "active_cell": active_cell,
     }
 
     return mesh
@@ -392,23 +391,22 @@ def _get_mesh_from_bbox(ds_flow, bbox, epsg):
 
     drained_area = np.ma.masked_array(drained_area, mask=(flow < 1))
 
-    global_active_cell = np.zeros(shape=flow.shape, dtype=np.int32)
+    active_cell = np.zeros(shape=flow.shape, dtype=np.int32)
 
-    global_active_cell = np.where(flow > 0, 1, global_active_cell)
+    active_cell = np.where(flow > 0, 1, active_cell)
 
     mesh = {
         "dx": dx,
         "nrow": flow.shape[0],
         "ncol": flow.shape[1],
         "ng": 0,
-        "nac": np.count_nonzero(global_active_cell),
+        "nac": np.count_nonzero(active_cell),
         "xmin": bbox[0],
         "ymax": bbox[3],
         "flow": flow,
         "drained_area": drained_area,
         "path": path,
-        "global_active_cell": global_active_cell,
-        "local_active_cell": global_active_cell.copy(),
+        "active_cell": active_cell,
     }
 
     return mesh

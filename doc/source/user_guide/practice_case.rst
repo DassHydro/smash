@@ -4,7 +4,7 @@
 Practice case
 =============
 
-The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the :ref:`user_guide.real_case` section.
+The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the User Guide section: :ref:`user_guide.real_case`.
 
 For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following drained area and flow directions:
 
@@ -38,7 +38,7 @@ Imports
 Model object creation
 ---------------------
 
-Creating a :class:`Model` requires two input arguments: ``setup`` and ``mesh``.
+Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
 
 .. _setup_argument_creation:
@@ -46,11 +46,11 @@ Creating a :class:`Model` requires two input arguments: ``setup`` and ``mesh``.
 Setup argument creation
 ***********************
 	
-``setup`` is a dictionary that allows to initialize :class:`Model` (i.e. allocate the necessary setup Fortran arrays). 
+``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary setup Fortran arrays). 
 
 .. note::
 	
-	Each key and associated values that can be passed into the ``setup`` dictionary are detailed in the section (TODO link). 
+	Each key and associated values that can be passed into the ``setup`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.setup>`.
 
 A minimal ``setup`` configuration is:
 
@@ -73,11 +73,13 @@ A minimal ``setup`` configuration is:
 Mesh argument creation
 **********************
 
-``mesh`` is a dictionary that allows to initialize :class:`Model` (i.e. allocate the necessary mesh Fortran arrays). 
+``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary mesh Fortran arrays). 
 
 .. note::
 	
-	Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the section (TODO link).
+	- Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.mesh>`.
+	
+	- In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method: `smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.real_case`.
 
 First part of  ``mesh`` configuration is:
 
@@ -165,7 +167,7 @@ Finally, the calculation path (i.e. ``path``) must be provided (ascending order 
 	mesh["path"][1, :] = ind_path[1] + 1
 	
 
-Once ``setup`` and ``mesh`` are filled in, a :class:`Model` object can be created:
+Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be created:
 
 .. ipython:: python
 	
@@ -175,7 +177,7 @@ Once ``setup`` and ``mesh`` are filled in, a :class:`Model` object can be create
 Viewing Model
 -------------
 
-Once the :class:`Model` object is created, it is possible to visualize what it contains through 6 attributes. This 6 attributes are Python classes that are derived from the wrapping of Fortran derived types.
+Once the :class:`.Model` object is created, it is possible to visualize what it contains through 6 attributes. This 6 attributes are Python classes that are derived from the wrapping of Fortran derived types.
 
 .. note::
 
@@ -196,13 +198,13 @@ Once the :class:`Model` object is created, it is possible to visualize what it c
 Setup
 *****
 
-The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`Model`. We have in the :ref:`setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
+The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
 
 .. ipython:: python
 
 	model.setup.dt, model.setup.start_time, model.setup.end_time
 	
-The other :attr:`.Model.setup` arguments can also be viewed even if they have not been directly defined in the :class:`Model` initialization. These arguments have default values in the code:
+The other :attr:`.Model.setup` arguments can also be viewed even if they have not been directly defined in the :class:`.Model` initialization. These arguments have default values in the code:
 
 .. ipython:: python
 
@@ -230,7 +232,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Mesh
 ****
 
-The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`Model`. We have in the :ref:`mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -257,22 +259,23 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 	
 	@verbatim
 	model.mesh.<TAB>
-	model.mesh.area                model.mesh.local_active_cell
-	model.mesh.code                model.mesh.nac
-	model.mesh.copy(               model.mesh.ncol
-	model.mesh.drained_area        model.mesh.ng
-	model.mesh.dx                  model.mesh.nrow
-	model.mesh.flow                model.mesh.path
-	model.mesh.from_handle(        model.mesh.xmin
-	model.mesh.gauge_pos           model.mesh.ymax
-	model.mesh.global_active_cell 
+	model.mesh.active_cell   model.mesh.gauge_pos
+	model.mesh.area          model.mesh.nac
+	model.mesh.code          model.mesh.ncol
+	model.mesh.copy(         model.mesh.ng
+	model.mesh.drained_area  model.mesh.nrow
+	model.mesh.dx            model.mesh.path
+	model.mesh.flow          model.mesh.xmin
+	model.mesh.from_handle(  model.mesh.ymax
+
+	
 
 Input Data
 **********
 
-The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the domain and the simulation period. 
+The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
 
-For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge on the domain and the simulation period is up to 72 time steps. The value -99 indicates no data.
+For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
 
 .. ipython:: python
 
@@ -300,7 +303,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 	
 .. warning::
 
-	It can happen, depending on the :class:`Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the setup to calculate spatial averages of precipitation. Access to this variable is therefore impossible and the code will return the following error:
+	It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the setup to calculate the spatial average of precipitation. Access to this variable is therefore impossible and the code will return the following error:
 	
 	.. ipython:: python
 		:okexcept:
@@ -310,7 +313,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Parameters and States
 *********************
 
-The :attr:`.Model.parameters` and :attr:`.Model.states` attributes contain a set of arguments storing :class:`Model` parameters and states. This attributes contain only NumPy arrays of shape (10, 10) (i.e. number of rows and columns of the domain).
+The :attr:`.Model.parameters` and :attr:`.Model.states` attributes contain a set of arguments storing :class:`.Model` parameters and states. This attributes contain only NumPy arrays of shape (10, 10) (i.e. number of rows and columns in the grid).
 
 .. ipython:: python
 	
@@ -320,11 +323,11 @@ This arrays are filled in with uniform default values.
 
 .. ipython:: python
 	
-	model.parameters.cp[0,0], model.states.hp[0,0]
+	model.parameters.cp, model.states.hp
 	
 .. note:: 
 
-	The :attr:`.Model.states` attribute stores the **initial** states :math:`h(x,0)` and will not be updated during simulation.
+	The :attr:`.Model.states` attribute stores the **initial** states :math:`h(x,0)`.
 	
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
@@ -350,7 +353,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Output
 ******
 
-The last attribute, :attr:`.Model.output`, contains a set of arguments storing :class:`Model` outputs (i.e. simulated discharge, final states, cost ...). The attribute values are empty as long as no simulation has been run.
+The last attribute, :attr:`.Model.output`, contains a set of arguments storing :class:`.Model` outputs (i.e. simulated discharge, final states, cost ...). The attribute values are empty as long as no simulation has been run.
 
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
@@ -370,7 +373,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Input Data filling
 ------------------
 
-To run a simulation, the :class:`Model` needs at least one precipitation and potential evapotranspiration (PET) chronicle. In this practice case, we will impose a triangular precipitation over the simulation period, uniform on the domain and a zero PET.
+To run a simulation, the :class:`.Model` needs at least one precipitation and potential evapotranspiration (PET) chronicle. In this Practice case, we will impose a triangular precipitation over the simulation period, uniform on the domain and a zero PET.
 
 .. ipython:: python
 
@@ -403,23 +406,30 @@ Run
 Forward run
 ***********
 
-The :class:`Model` is finally ready to be run using the :meth:`.Model.run` method:
+The :class:`.Model` is finally ready to be run using the :meth:`.Model.run` method:
 	
 .. ipython:: python
 
 	model.run(inplace=True)
 	
+Once the run is done, it is possible to access the simulated discharge on the gauge via the :attr:`.Model.output` and to plot a hydrograph.
+	
+	
+.. ipython:: python
+
 	plt.plot(model.output.qsim[0,:]);
 	plt.grid(alpha=.7, ls="--");
 	plt.xlabel("Time step");
 	@savefig qsim_fwd_pc_user_guide.png
 	plt.ylabel("Simulated discharge $(m^3/s)$");
 	
+
+This hydrograph is the result of a forward run of the code with the default structure, parameters and initial states.
 	
 Optimization
 ************
 
-To perform an optimization, observed discharge must be provided to :class:`Model`. Since the practice case is a ficticious catchment, we will use the simulated data from the previous forward run as observed discharge.
+To perform an optimization, observed discharge must be provided to :class:`.Model`. Since the Practice case is a ficticious catchment, we will use the simulated data from the previous forward run as observed discharge.
 
 .. ipython:: python
 
@@ -459,8 +469,62 @@ Finally, perform a spatially uniform calibration of the parameter :math:`cp` wit
 	@savefig qsim_opt_pc_user_guide.png
 	plt.legend();
 	
--------------------
-Getting data in/out
--------------------
+.. note::
+	
+	In the Practice case, we will not go into the details of the optimization which is an essential part of the `smash` calculation code. To go further, details can be found for the use of the :meth:`.Model.optimize` method in the User Guide section: :ref:`user_guide.real_case` and for the algorithms in the Model description section: (TODO link).
+	
+	
+------------
+Getting data
+------------
+
+The last step is to save what we have entered in :class:`.Model` (i.e. ``setup`` and ``mesh`` dictionaries) and the :class:`.Model` itself.
+
+
+Setup argument in/out
+*********************
+
+The setup dictionary ``setup``, which was created in the section :ref:`setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method `smash.save_setup`.
+
+.. ipython:: python
+
+	smash.save_setup(setup, "setup.yaml")
+	
+A file named ``setup.yaml`` has been created in the current working directory containing the ``setup`` dictionary information. This file can itself be opened in order to recover our initial ``setup`` dictionary via the method `smash.read_setup`.
+
+.. ipython:: python
+
+	setup_f = smash.read_setup("setup.yaml")
+	
+	setup_f
+	
+Mesh argument in/out
+********************
+
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method `smash.save_mesh`. However, NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+
+.. ipython:: python
+
+	smash.save_mesh(mesh, "mesh.hdf5")
+	
+A file named ``mesh.hdf5`` has been created in the current working directory containing the ``mesh`` dictionary information. This file can itself be opened in order to recover our initial ``mesh`` dictionary via the method `smash.read_mesh`.
+
+.. ipython:: python
+
+	mesh_f = smash.read_mesh("mesh.hdf5")
+	
+	mesh_f
+	
+A new :class:`.Model` object can be created from the read files (same as the first one).
+
+.. ipython:: python
+
+	model_f = smash.Model(setup_f, mesh_f)
+	
+Model in/out
+************
 
 TODO
+
+
+

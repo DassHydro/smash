@@ -26,8 +26,8 @@
 !%      ``interception_module``    Choice of interception module                          (default: 0)
 !%      ``production_module``      Choice of production module                            (default: 0)
 !%      ``transfer_module``        Choice of transfer module                              (default: 0)
-!%      ``exchange_module``        Choise of exchange module                              (default: 0)
-!%      ``routing_module``         Choise of routing module                               (default: 0)
+!%      ``exchange_module``        Choice of exchange module                              (default: 0)
+!%      ``routing_module``         Choice of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 
 !%      </> Private

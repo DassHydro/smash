@@ -141,7 +141,7 @@ module mwd_input_data
                         row = mesh%path(1, i)
                         col = mesh%path(2, i)
                         
-                        if (mesh%global_active_cell(row, col) .eq. &
+                        if (mesh%active_cell(row, col) .eq. &
                         & 1) then
                         
                             k = k + 1

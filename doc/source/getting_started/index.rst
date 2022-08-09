@@ -38,7 +38,7 @@ Compile
 	
 	1. **Install f90wrap**
 	
-		Install the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package using ``pip3``
+		Install the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package using ``pip3``,
 	
 		.. code-block:: none
 			
@@ -46,7 +46,7 @@ Compile
 			
 		.. note ::
 			
-			``pip3`` can be installed as follows:
+			``pip3`` can be installed as follows,
 			
 			.. code-block:: none
 			
@@ -54,7 +54,7 @@ Compile
 				
 	2. **Install gdal**
 	
-		Install the `gdal <https://gdal.org/api/python.html>`__ package
+		Install the `gdal <https://gdal.org/api/python.html>`__ package,
 	
 		.. code-block:: none
 			
@@ -64,7 +64,7 @@ Compile
 			
 	3. **Build**
 	
-		Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory
+		Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory,
 		
 		.. code-block:: none
 		
@@ -72,7 +72,7 @@ Compile
 			
 	4. **Check your installation**
 		
-		Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface
+		Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
 		
 		.. code-block:: none
 		
@@ -80,7 +80,7 @@ Compile
 			
 		.. code-block:: python
 			
-			>>> import smash
+			import smash
 	
 .. dropdown:: Anaconda
 	:animate: fade-in-slide-down
@@ -94,11 +94,11 @@ Compile
 	
 	.. note::
 	
-		``conda`` can be downloaded `here <https://www.anaconda.com/>`__
+		``conda`` can be downloaded `here <https://www.anaconda.com/>`__.
 			
 	1. **Create environment**
 	
-		In the `smash` directory create the ``conda`` environment named ``smash-dev``:
+		In the `smash` directory create the ``conda`` environment named ``smash-dev``,
 		
 		.. code-block:: none
 		
@@ -106,7 +106,7 @@ Compile
 			
 	2. **Activate environment**
 	
-		Active the environment:
+		Active the environment,
 		
 		.. code-block:: none
 		
@@ -114,7 +114,7 @@ Compile
 			
 	3. **Build**
 	
-		Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory
+		Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory,
 		
 		.. code-block:: none
 		
@@ -122,7 +122,7 @@ Compile
 			
 	4. **Check your installation**
 		
-		Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface
+		Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
 		
 		.. code-block:: none
 		
@@ -130,12 +130,12 @@ Compile
 			
 		.. code-block:: python
 			
-			>>> import smash
+			import smash
 			
 	.. hint::
 		
 		If you'd prefer that conda's base environment not be activated on startup, 
-   		set the auto_activate_base parameter to false: 
+   		set the auto_activate_base parameter to false, 
 		
 		.. code-block::
 		
@@ -145,7 +145,6 @@ Compile
 	:animate: fade-in-slide-down
 	:container: + shadow
 	:title: font-weight-bolder
-	:open:
 	
 	.. image:: ../_static/logo_docker.png
 		:width: 175

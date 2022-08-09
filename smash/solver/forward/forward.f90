@@ -95,7 +95,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                 !%   Global/Local active cell
                 !% ======================================================================================================= %!
                 
-                if (mesh%global_active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+                if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
                         
                     if (setup%sparse_storage) then
                     
