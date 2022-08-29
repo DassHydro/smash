@@ -501,7 +501,7 @@ A file named ``setup.yaml`` has been created in the current working directory co
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method `smash.save_mesh`. However, NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method `smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 
