@@ -445,6 +445,10 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         _read_windowed_raster(files[ind], mesh)
                         * setup.pet_conversion_factor
                     )
+                    
+                    if setup.sparse_storage:
+                    
+                        vector = sparse_matrix_to_vector(mesh, matrix)
 
                     for j in range(nstep_per_day):
 
@@ -453,8 +457,6 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         ind_step = subset_date_range.indexer_at_time(step)
 
                         if setup.sparse_storage:
-
-                            vector = sparse_matrix_to_vector(mesh, matrix)
 
                             input_data.sparse_pet[:, ind_day[0][ind_step]] = (
                                 np.repeat(vector[:, np.newaxis], len(ind_step), axis=1)
