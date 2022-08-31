@@ -24,7 +24,7 @@ import pandas as pd
 import numpy as np
 import datetime
 
-RATION_PET_HOURLY = np.array(
+RATIO_PET_HOURLY = np.array(
     [
         0,
         0,
@@ -405,11 +405,11 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         if hourly_ratio >= 1:
 
-            ratio = np.repeat(RATION_PET_HOURLY, hourly_ratio) / hourly_ratio
+            ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
 
         else:
 
-            ratio = np.sum(RATION_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
+            ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
         for i, day in enumerate(
             tqdm(leap_year_days, desc="Reading daily interannual pet")
