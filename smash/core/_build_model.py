@@ -445,9 +445,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         _read_windowed_raster(files[ind], mesh)
                         * setup.pet_conversion_factor
                     )
-                    
+
                     if setup.sparse_storage:
-                    
+
                         vector = sparse_matrix_to_vector(mesh, matrix)
 
                     for j in range(nstep_per_day):

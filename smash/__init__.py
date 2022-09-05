@@ -3,8 +3,9 @@ from smash.core.utils import sparse_matrix_to_vector, sparse_vector_to_matrix
 
 from smash.mesh.meshing import generate_mesh
 
-from smash.io.yaml import save_setup, read_setup
-from smash.io.hdf5 import save_mesh, read_mesh, save_model, read_model
+from smash.io.setup_io import save_setup, read_setup
+from smash.io.mesh_io import save_mesh, read_mesh
+from smash.io.model_io import save_model, read_model
 
 from smash.dataset.load import load_dataset
 

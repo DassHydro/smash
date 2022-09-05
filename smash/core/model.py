@@ -78,6 +78,15 @@ class Model(object):
             self.states = StatesDT(self.mesh)
 
             self.output = OutputDT(self.setup, self.mesh)
+            
+            self._last_update = "Initialization"
+            
+    def __repr__(self):
+        
+        dim = f"Model dimension: (time: {self.setup._ntime_step}, nrow: {self.mesh.nrow}, ncol: {self.mesh.ncol})"
+        last_update = f"Model last update: {self._last_update}"
+        
+        return f"{dim}\n{last_update}"
 
     @property
     def setup(self):
@@ -214,6 +223,8 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+            instance._last_update = "Forward Run"
 
         elif case == "adj":
 
@@ -225,6 +236,8 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+            instance._last_update = "Adjoint Run"
 
         elif case == "tl":
 
@@ -236,6 +249,8 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+            instance._last_update = "Tangent Linear Run"
 
         else:
 
@@ -267,6 +282,8 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+            instance._last_update = "Scalar Product Test"
 
         elif case == "gt":
 
@@ -278,6 +295,8 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
+            
+            instance._last_update = "Gradient Test"
 
         else:
 
@@ -343,6 +362,8 @@ class Model(object):
                 ost,
                 **options,
             )
+            
+            instance._last_update = "Step By Step Optimization"
 
         elif algorithm == "l-bfgs-b":
 
@@ -355,6 +376,8 @@ class Model(object):
                 ost,
                 **options,
             )
+            
+            instance._last_update = "L-BFGS-B Optimization"
 
         #% TODO
         # elif algorithm == "nsga":

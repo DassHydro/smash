@@ -10,5 +10,8 @@ This page gives an overview of all public `smash` objects, functions and methods
    :maxdepth: 2
 
    model
-   model_initialization
+   mesh
+   io
+   dataset
+   solver
   

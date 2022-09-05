@@ -1,8 +1,8 @@
-.. _api_reference.model_initialization:
+.. _api_reference.io:
 
-====================
-Model initialization
-====================
+======
+In/Out
+======
 
 .. currentmodule:: smash
 
@@ -19,7 +19,15 @@ Mesh
 .. autosummary::
    :toctree: smash/
    
-   generate_mesh
    save_mesh
    read_mesh
+
+Model
+*****
+
+.. autosummary::
+   :toctree: smash/
+
+   save_model
+   read_model
 

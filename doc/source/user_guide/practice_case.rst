@@ -172,6 +172,12 @@ Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be creat
 .. ipython:: python
 	
 	model = smash.Model(setup, mesh)
+
+	model
+
+.. note::
+
+	The representation of the :class:`.Model` object is very simple and only displays the dimensions and the last action that updated the object. More information on what the object contains is available below.
 	
 -------------
 Viewing Model
@@ -411,6 +417,8 @@ The :class:`.Model` is finally ready to be run using the :meth:`.Model.run` meth
 .. ipython:: python
 
 	model.run(inplace=True)
+
+	model
 	
 Once the run is done, it is possible to access the simulated discharge on the gauge via the :attr:`.Model.output` and to plot a hydrograph.
 	
@@ -460,6 +468,10 @@ Finally, perform a spatially uniform calibration of the parameter :math:`cp` wit
 .. ipython:: python
 
 	model.optimize("sbs", control_vector=["cp"], inplace=True)
+
+	model
+
+.. ipython:: python
 	
 	plt.plot(model.input_data.qobs[0,:], label="Observed discharge");
 	plt.plot(model.output.qsim[0,:], label="Simulated discharge");
@@ -484,47 +496,66 @@ The last step is to save what we have entered in :class:`.Model` (i.e. ``setup``
 Setup argument in/out
 *********************
 
-The setup dictionary ``setup``, which was created in the section :ref:`setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method `smash.save_setup`.
+The setup dictionary ``setup``, which was created in the section :ref:`setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
 
 .. ipython:: python
 
 	smash.save_setup(setup, "setup.yaml")
 	
-A file named ``setup.yaml`` has been created in the current working directory containing the ``setup`` dictionary information. This file can itself be opened in order to recover our initial ``setup`` dictionary via the method `smash.read_setup`.
+A file named ``setup.yaml`` has been created in the current working directory containing the ``setup`` dictionary information. This file can itself be opened in order to recover our initial ``setup`` dictionary via the method :meth:`smash.read_setup`.
 
 .. ipython:: python
 
-	setup_f = smash.read_setup("setup.yaml")
+	setup2 = smash.read_setup("setup.yaml")
 	
-	setup_f
+	setup2
 	
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method `smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 
 	smash.save_mesh(mesh, "mesh.hdf5")
 	
-A file named ``mesh.hdf5`` has been created in the current working directory containing the ``mesh`` dictionary information. This file can itself be opened in order to recover our initial ``mesh`` dictionary via the method `smash.read_mesh`.
+A file named ``mesh.hdf5`` has been created in the current working directory containing the ``mesh`` dictionary information. This file can itself be opened in order to recover our initial ``mesh`` dictionary via the method :meth:`smash.read_mesh`.
 
 .. ipython:: python
 
-	mesh_f = smash.read_mesh("mesh.hdf5")
+	mesh2 = smash.read_mesh("mesh.hdf5")
 	
-	mesh_f
+	mesh2
 	
 A new :class:`.Model` object can be created from the read files (same as the first one).
 
 .. ipython:: python
 
-	model_f = smash.Model(setup_f, mesh_f)
+	model2 = smash.Model(setup2, mesh2)
+
+	model2
 	
 Model in/out
 ************
 
-TODO
+The :class:`.Model` object can also be saved to file. Like the ``mesh``, it will be saved in HDF5 format using the :meth:`smash.save_model` method. Here, we will save the :class:`.Model` object ``model`` after optimization.
 
+.. ipython:: python
 
+	smash.save_model(model, "model.hdf5")
 
+A file named ``model.hdf5`` has been created in the current working directory containing the ``model`` object information. This file can itself be opened in order to recover our initial ``model`` object via the method :meth:`smash.read_model`.
+
+.. ipython:: python
+
+	model3 = smash.read_model("model.hdf5")
+
+	model3
+
+``model3`` is directly the :class:`.Model` object itself on which the methods associated with the object are applicable.
+
+.. ipython:: python
+
+	model3.run(inplace=True)
+
+	model3

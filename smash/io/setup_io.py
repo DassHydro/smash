@@ -1,10 +1,6 @@
 from __future__ import annotations
 
-from smash.solver._mwd_common import name_parameters, name_states
-from smash.solver._mwd_setup import SetupDT
-
 import yaml
-import numpy as np
 import os
 import errno
 
@@ -16,7 +12,11 @@ def save_setup(setup: dict, path: str):
     """
     Save setup
     """
+    
+    if not path.endswith(".yaml"):
 
+        path = path + ".yaml"
+    
     with open(path, "w") as f:
         yaml.dump(setup, f, default_flow_style=False)
 
