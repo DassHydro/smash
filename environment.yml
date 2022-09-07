@@ -6,4 +6,5 @@ dependencies:
     - pybtex
     - pillow
     - gdal
-    - f90wrap>=0.2.7
+    - numpy==1.22
+    - f90wrap==0.2.7

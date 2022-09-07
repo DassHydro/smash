@@ -23,25 +23,21 @@ module mw_run
 
 !%      TODO comment
         !% Calling forward from forward/forward.f90
-        subroutine forward_run(setup, mesh, input_data, parameters, states, output)
+        subroutine forward_run(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, verbose)
         
             implicit none
             
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
             type(Input_DataDT), intent(in) :: input_data
-            type(ParametersDT), intent(in) :: parameters
-            type(StatesDT), intent(inout) :: states
+            type(ParametersDT), intent(in) :: parameters, parameters_bgd
+            type(StatesDT), intent(inout) :: states, states_bgd
             type(OutputDT), intent(inout) :: output
+            logical, intent(in) :: verbose
             
             real(sp) :: cost
-            type(ParametersDT) :: parameters_bgd
-            type(StatesDT) :: states_bgd
-            
-            write(*,'(a)') "</> Forward Model M (k)"
-            
-            parameters_bgd = parameters
-            states_bgd = states
+                
+            if (verbose) write(*,'(a)') "</> Forward Model M (k)"
             
             call forward(setup, mesh, input_data, parameters, &
             & parameters_bgd, states, states_bgd, output, cost)

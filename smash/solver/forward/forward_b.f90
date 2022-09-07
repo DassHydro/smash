@@ -238,7 +238,7 @@ CONTAINS
     states%hp = 0.01_sp
     states%hft = 0.01_sp
     states%hst = 0.01_sp
-    states%hlr = 0.01_sp
+    states%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE
 
 !%      TODO comment       

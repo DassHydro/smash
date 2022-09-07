@@ -21,6 +21,7 @@ from smash.core._optimize import (
     _standardize_optimize_options,
     _optimize_sbs,
     _optimize_lbfgsb,
+    _optimize_nelder_mead,
 )
 
 from typing import TYPE_CHECKING
@@ -220,8 +221,11 @@ class Model(object):
                 instance.mesh,
                 instance.input_data,
                 instance.parameters,
+                instance.parameters.copy(),
                 instance.states,
+                instance.states.copy(),
                 instance.output,
+                True,
             )
             
             instance._last_update = "Forward Run"
@@ -378,10 +382,23 @@ class Model(object):
             )
             
             instance._last_update = "L-BFGS-B Optimization"
+            
+        elif algorithm == "nelder-mead":
+            
+            _optimize_nelder_mead(
+                instance,
+                control_vector,
+                jobs_fun,
+                bounds,
+                wgauge,
+                ost,
+                **options
+            )
+            
+            instance._last_update = "Nelder-Mead Optimization"
 
         #% TODO
         # elif algorithm == "nsga":
-        # elif algorithm == "nelder-mead":
 
         if not inplace:
 

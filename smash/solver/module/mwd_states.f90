@@ -64,7 +64,7 @@ module mwd_states
             states%hp  = 0.01_sp
             states%hft = 0.01_sp
             states%hst = 0.01_sp
-            states%hlr = 0.01_sp
+            states%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
         

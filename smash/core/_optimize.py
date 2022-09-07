@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
+from smash.solver._mw_run import forward_run
 from smash.solver._mw_optimize import optimize_sbs, optimize_lbfgsb
+from smash.solver._mwd_cost import compute_jobs
 
 from typing import TYPE_CHECKING
 
@@ -16,9 +18,10 @@ if TYPE_CHECKING:
 
 import warnings
 import numpy as np
+import scipy.optimize
 import pandas as pd
 
-ALGORITHM = ["sbs", "l-bfgs-b"]
+ALGORITHM = ["sbs", "l-bfgs-b", "nelder-mead"]
 
 JOBS_FUN = [
     "nse",
@@ -28,7 +31,6 @@ JOBS_FUN = [
     "rmse",
     "logarithmique",
 ]
-
 
 def _optimize_sbs(
     instance: Model,
@@ -115,7 +117,8 @@ def _optimize_lbfgsb(
     instance.setup._algorithm = "l-bfgs-b"
 
     setup_bgd = SetupDT()
-
+    
+    #% Set default values
     instance.setup._optim_parameters = 0
     instance.setup._optim_states = 0
     instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
@@ -168,6 +171,192 @@ def _optimize_lbfgsb(
     )
 
 
+def _set1d_parameters_states(instance: Model, control_vector: list[str], x: np.ndarray):
+
+    for ind, name in enumerate(control_vector):
+
+        if name in name_parameters:
+
+            setattr(instance.parameters, name, x[ind])
+
+        else:
+
+            setattr(instance.states, name, x[ind])
+
+
+def _get1d_parameters_states(instance: Model, control_vector: list[str]):
+
+    x = np.zeros(shape=len(control_vector), dtype=np.float32)
+
+    for ind, name in enumerate(control_vector):
+
+        if name in name_parameters:
+
+            x[ind] = getattr(instance.parameters, name)[0, 0]
+
+        else:
+
+            x[ind] = getattr(instance.states, name)[0, 0]
+
+    return x
+
+
+def _optimize_message(instance: Model, control_vector: list[str]):
+    
+    sp4 = (' ' * 4)
+    
+    parameters = [el for el in control_vector if el in name_parameters]
+    states = [el for el in control_vector if el in name_states]
+    code = [el for ind, el in enumerate(instance.mesh.code.tobytes("F").decode().split()) if instance.mesh._wgauge[ind] > 0]
+    gauge = ["{:.6f}".format(el) for el in instance.mesh._wgauge if el > 0]
+    
+    ret = []
+   
+    ret.append("</> Optimize Model J")
+    ret.append(f"Algorithm: '{instance.setup._algorithm.decode().strip()}'")
+    ret.append(f"Jobs function: '{instance.setup._jobs_fun.decode().strip()}'")
+    ret.append(f"Nx: 1")
+    ret.append(f"Np: {len(parameters)} [ {' '.join(parameters)} ]")
+    ret.append(f"Ns: {len(states)} [ {' '.join(states)} ]")
+    ret.append(f"Ng: {len(code)} [ {' '.join(code)} ]")
+    ret.append(f"wg: {len(gauge)} [ {' '.join(gauge)} ]")
+    
+    print(f"\n{sp4}".join(ret) + "\n")
+
+
+def _problem(x: np.ndarray, instance: Model, control_vector: list[str], parameters_bgd: ParametersDT, states_bgd: StatesDT):
+    
+    global callback_args
+
+    _set1d_parameters_states(instance, control_vector, x)
+    
+    forward_run(
+        instance.setup,
+        instance.mesh,
+        instance.input_data,
+        instance.parameters,
+        parameters_bgd,
+        instance.states,
+        states_bgd,
+        instance.output,
+        False,
+    )
+    
+    callback_args["nfg"] += 1
+    callback_args["J"] = instance.output.cost
+
+    return instance.output.cost
+
+
+def _callback(x: np.ndarray):
+    
+    global callback_args
+    
+    sp4 = (' ' * 4)
+    
+    ret = []
+    
+    ret.append(f"{sp4}At iterate")
+    ret.append("{:3}".format(callback_args['iterate']))
+    ret.append("nfg =" + "{:5}".format(callback_args['nfg']))
+    ret.append("J =" + "{:10.6f}".format(callback_args['J']))
+    
+    callback_args["iterate"] += 1
+    
+    print(sp4.join(ret))
+
+
+def _optimize_nelder_mead(
+    instance: Model,
+    control_vector: list[str],
+    jobs_fun: str,
+    bounds: list[float],
+    wgauge: list[float],
+    ost: pd.Timestamp,
+    maxiter=None,
+    maxfev=None,
+    disp=False,
+    return_all=False,
+    initial_simplex=None,
+    xatol=0.0001,
+    fatol=0.0001,
+    adaptive=False,
+    **unknown_options,
+):
+    global callback_args
+    
+    _check_unknown_options(unknown_options)
+    
+    instance.setup._algorithm = "nelder-mead"
+    
+    parameters_bgd = instance.parameters.copy()
+    states_bgd = instance.states.copy()
+
+    x = _get1d_parameters_states(instance, control_vector)
+
+    instance.setup._jobs_fun = jobs_fun
+
+    instance.mesh._wgauge = wgauge
+
+    st = pd.Timestamp(instance.setup.start_time.decode().strip())
+
+    instance.setup._optim_start_step = (
+        ost - st
+    ).total_seconds() / instance.setup.dt + 1
+    
+    _optimize_message(instance, control_vector)
+    
+    callback_args = {"iterate": 0, "nfg": 0, "J": 0}
+    
+    forward_run(
+        instance.setup,
+        instance.mesh,
+        instance.input_data,
+        instance.parameters,
+        parameters_bgd,
+        instance.states,
+        states_bgd,
+        instance.output,
+        False,
+    )
+    
+    callback_args["nfg"] += 1
+    callback_args["J"] = instance.output.cost
+    
+    _callback(x)
+
+    res = scipy.optimize.minimize(
+        _problem,
+        x,
+        args=(instance, control_vector, parameters_bgd, states_bgd),
+        bounds=bounds,
+        method="nelder-mead",
+        callback=_callback,
+        options={
+            "maxiter": maxiter,
+            "maxfev": maxfev,
+            "disp": disp,
+            "return_all": return_all,
+            "initial_simplex": initial_simplex,
+            "xatol": xatol,
+            "fatol": fatol,
+            "adaptive": adaptive,
+        },
+    )
+    
+    _problem(res.x, instance, control_vector, parameters_bgd, states_bgd)
+    
+    _callback(res.x)
+    
+    if res.success:
+        
+        print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
+    
+    else:
+        
+        print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
+    
+
 def _standardize_algorithm(algorithm) -> str:
 
     if isinstance(algorithm, str):
@@ -201,7 +390,7 @@ def _standardize_control_vector(control_vector, algorithm) -> list:
                     f"Unknown parameter or state '{name}' in 'control_vector'"
                 )
 
-            elif name in name_states and algorithm not in ["sbs", "l-bfgs-b"]:
+            elif name in name_states and algorithm not in ["sbs", "l-bfgs-b", "nelder-mead"]:
 
                 raise ValueError(
                     f"state optimization not available with '{algorithm}' algorithm"
@@ -539,7 +728,7 @@ def _check_unknown_options(unknown_options):
 
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
-        warnings.warn("Unknown algorithm options: %s" % msg)
+        warnings.warn("Unknown algorithm options: '%s'" % msg)
 
 
 def _standardize_optimize_args(
