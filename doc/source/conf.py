@@ -87,6 +87,7 @@ html_last_updated_fmt = "%b %d, %Y"
 html_theme_options = {
 "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
 "collapse_navigation": False,
+"google_analytics_id": "UA-27880019-2",
 }
 
 # html_context = {

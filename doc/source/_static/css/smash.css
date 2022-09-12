@@ -40,3 +40,8 @@
   margin-left: auto;
   margin-right: auto;
 }
+
+.bolditalic {
+  font-weight: bold;
+  font-style: italic;
+}

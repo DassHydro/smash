@@ -2,8 +2,6 @@ dt: 3_600
 start_time: 2014-09-15 00:00
 end_time: 2014-11-14 00:00
 
-sparse_storage: True
-
 read_qobs: True
 qobs_directory: qobs
 
@@ -18,9 +16,5 @@ pet_conversion_factor: 1
 daily_interannual_pet: True
 pet_directory: pet
 
-mean_forcing: False
-
 exchange_module: 1
 routing_module: 1
-
-save_qsim_domain: False
