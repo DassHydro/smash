@@ -10,6 +10,7 @@
 !%      ``qobs``                 Oberserved discharge at gauge               [m3/s]
 !%      ``prcp``                 Precipitation field                         [mm]
 !%      ``pet``                  Potential evapotranspiration field          [mm]
+!%      ``descriptor``           Descriptor map(s) field                     [(descriptor dependent)]
 !%      ``sparse_prcp``          Sparse precipitation field                  [mm] 
 !%      ``sparse_pet``           Spase potential evapotranspiration field    [mm]
 !%      ``mean_prcp``            Mean precipitation at gauge                 [mm]
@@ -36,6 +37,8 @@ module mwd_input_data
         real(sp), dimension(:,:,:), allocatable :: prcp
         real(sp), dimension(:,:,:), allocatable :: pet
         
+        real(sp), dimension(:,:,:), allocatable :: descriptor
+        
         real(sp), dimension(:,:), allocatable :: sparse_prcp
         real(sp), dimension(:,:), allocatable :: sparse_pet
         
@@ -53,9 +56,13 @@ module mwd_input_data
             type(Input_DataDT), intent(inout) :: input_data
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
+            
+            if (mesh%ng .gt. 0) then
 
-            allocate(input_data%qobs(mesh%ng, setup%ntime_step))
-            input_data%qobs = -99._sp
+                allocate(input_data%qobs(mesh%ng, setup%ntime_step))
+                input_data%qobs = -99._sp
+                
+            end if
             
             if (setup%sparse_storage) then
             
@@ -75,6 +82,12 @@ module mwd_input_data
                 & setup%ntime_step))
                 input_data%pet = -99._sp
             
+            end if
+            
+            if (setup%nd .gt. 0) then
+            
+                allocate(input_data%descriptor(mesh%nrow, mesh%ncol, setup%nd))
+                
             end if
             
             if (setup%mean_forcing) then

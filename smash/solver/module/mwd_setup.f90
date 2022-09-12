@@ -23,6 +23,10 @@
 !%      ``pet_directory``          Potential evapotranspiration directory path            (default: '...')
 !%      ``daily_interannual_pet``  Read daily interannual potential evapotranspiration    (default: .false.)
 !%      ``mean_forcing``           Compute mean forcing                                   (default: .false.)
+!%      ``read_descriptor``        Read descriptor map(s)                                 (default: .false.)
+!%      ``descriptor_format``      Descriptor map(s) format                               (default: .false.)
+!%      ``descriptor_directory``   Descriptor map(s) directory                            (default: "...")
+!%      ``descriptor_name``        Descriptor map(s) names
 !%      ``interception_module``    Choice of interception module                          (default: 0)
 !%      ``production_module``      Choice of production module                            (default: 0)
 !%      ``transfer_module``        Choice of transfer module                              (default: 0)
@@ -35,6 +39,7 @@
 !%      `Variables`                Description
 !%      ========================== =====================================
 !%      ``ntime_step``             Number of time step
+!%      ``nd``                     Number of descriptor map(s)
 !%      ``algorithm``              Optimize Algorithm name
 !%      ``jobs_fun``               Objective function name        (default: 'nse')
 !%      ``jreg_fun``               Regularization name            (default: 'prior')
@@ -85,6 +90,11 @@ module mwd_setup
         
         logical :: mean_forcing = .false.
         
+        logical :: read_descriptor = .false.
+        character(lchar) :: descriptor_format = "tif"
+        character(lchar) :: descriptor_directory = "..."
+        character(20), allocatable, dimension(:) :: descriptor_name
+        
         integer :: interception_module = 0
         integer :: production_module = 0
         integer :: transfer_module = 0
@@ -95,6 +105,7 @@ module mwd_setup
         
         !% </> Private
         integer :: ntime_step = 0 !>f90wrap private
+        integer :: nd = 0 !>f90wrap private
         
         character(lchar) :: algorithm !>f90wrap private
         
@@ -150,6 +161,25 @@ module mwd_setup
     end type SetupDT
     
     contains
+    
+!%      TODO comment
+        subroutine SetupDT_initialise(setup, nd)
+        
+            implicit none
+            
+            type(SetupDT), intent(inout) :: setup
+            integer, intent(in) :: nd
+            
+            setup%nd = nd
+            
+            if (setup%nd .gt. 0) then
+            
+                allocate(setup%descriptor_name(setup%nd))
+                setup%descriptor_name = "..."
+            
+            end if
+        
+        end subroutine SetupDT_initialise
     
 !%      TODO comment
         subroutine setup_copy(setup_in, setup_out)

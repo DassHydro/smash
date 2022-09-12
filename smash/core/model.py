@@ -46,9 +46,12 @@ class Model(object):
 
         if setup or mesh:
 
-            self.setup = SetupDT()
-
             if isinstance(setup, dict):
+                
+                dn = setup.get("descriptor_name", [])
+                
+                self.setup = SetupDT(1 if isinstance(dn, str) else len(dn))
+                
                 _parse_derived_type(self.setup, setup)
 
             else:

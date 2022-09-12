@@ -25,6 +25,7 @@ done
 # private f90wrap module attributes
 priv_attr=(
 "mwd_setup.ntime_step"
+"mwd_setup.nd"
 "mwd_setup.algorithm"
 "mwd_setup.jobs_fun"
 "mwd_setup.jreg_fun"

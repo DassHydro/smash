@@ -137,8 +137,16 @@ def read_model(path: str) -> Model:
         with h5py.File(path, "r") as f:
 
             instance = smash.Model(None, None)
+            
+            if "descriptor_name" in f["setup"].keys():
+                
+                nd = f["setup"]["descriptor_name"].shape[1]
+                
+            else:
+                
+                nd = 0
 
-            instance.setup = SetupDT()
+            instance.setup = SetupDT(nd)
 
             _parse_hdf5_to_derived_type(f["setup"], instance.setup)
 

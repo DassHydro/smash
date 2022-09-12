@@ -47,7 +47,7 @@ def _optimize_sbs(
 
     instance.setup._algorithm = "sbs"
 
-    setup_bgd = SetupDT()
+    setup_bgd = SetupDT(instance.setup._nd)
 
     instance.setup._optim_parameters = 0
     instance.setup._optim_states = 0
@@ -116,7 +116,7 @@ def _optimize_lbfgsb(
 
     instance.setup._algorithm = "l-bfgs-b"
 
-    setup_bgd = SetupDT()
+    setup_bgd = SetupDT(instance.setup._nd)
     
     #% Set default values
     instance.setup._optim_parameters = 0
@@ -273,6 +273,7 @@ def _optimize_nelder_mead(
     bounds: list[float],
     wgauge: list[float],
     ost: pd.Timestamp,
+    transfer_equation: False,
     maxiter=None,
     maxfev=None,
     disp=False,
@@ -357,7 +358,7 @@ def _optimize_nelder_mead(
         print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
     
 
-def _standardize_algorithm(algorithm) -> str:
+def _standardize_algorithm(algorithm: str) -> str:
 
     if isinstance(algorithm, str):
 
@@ -376,7 +377,7 @@ def _standardize_algorithm(algorithm) -> str:
     return algorithm
 
 
-def _standardize_control_vector(control_vector, algorithm) -> list:
+def _standardize_control_vector(control_vector: list, algorithm: str) -> list:
 
     if isinstance(control_vector, (list, tuple, set)):
 
@@ -402,7 +403,7 @@ def _standardize_control_vector(control_vector, algorithm) -> list:
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun, algorithm) -> str:
+def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
 
     if isinstance(jobs_fun, str):
 
@@ -423,7 +424,7 @@ def _standardize_jobs_fun(jobs_fun, algorithm) -> str:
     return jobs_fun
 
 
-def _standardize_bounds(bounds, control_vector, setup) -> list:
+def _standardize_bounds(bounds: (list, tuple, set), control_vector: str, setup: SetupDT) -> list:
 
     if bounds:
 
@@ -481,7 +482,7 @@ def _standardize_bounds(bounds, control_vector, setup) -> list:
     return bounds
 
 
-def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
+def _standardize_gauge(gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT) -> list:
 
     code = np.array(mesh.code.tobytes(order="F").decode().split())
 
@@ -605,7 +606,7 @@ def _standardize_gauge(gauge, setup, mesh, input_data) -> list:
     return gauge
 
 
-def _standardize_wgauge(wgauge, gauge, mesh) -> list:
+def _standardize_wgauge(wgauge: (list, tuple, set), gauge: (list, tuple, set), mesh: MeshDT) -> list:
 
     code = np.array(mesh.code.tobytes(order="F").decode().split())
 
@@ -697,7 +698,7 @@ def _standardize_wgauge(wgauge, gauge, mesh) -> list:
     return wgauge
 
 
-def _standardize_ost(ost, setup) -> pd.Timestamp:
+def _standardize_ost(ost: str, setup: SetupDT) -> pd.Timestamp:
 
     st = pd.Timestamp(setup.start_time.decode().strip())
     et = pd.Timestamp(setup.end_time.decode().strip())
@@ -724,7 +725,7 @@ def _standardize_ost(ost, setup) -> pd.Timestamp:
     return ost
 
 
-def _check_unknown_options(unknown_options):
+def _check_unknown_options(unknown_options: dict):
 
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))

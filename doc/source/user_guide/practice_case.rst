@@ -41,7 +41,7 @@ Model object creation
 Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
 
-.. _setup_argument_creation:
+.. _practice_case.setup_argument_creation:
 
 Setup argument creation
 ***********************
@@ -68,7 +68,7 @@ A minimal ``setup`` configuration is:
         "end_time": "2020-01-04 00:00",
     }
     
-.. _mesh_argument_creation:
+.. _practice_case.mesh_argument_creation:
     
 Mesh argument creation
 **********************
@@ -204,7 +204,7 @@ Once the :class:`.Model` object is created, it is possible to visualize what it 
 Setup
 *****
 
-The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
+The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`practice_case.setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -238,7 +238,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Mesh
 ****
 
-The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`practice_case.mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -279,7 +279,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Input Data
 **********
 
-The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
+The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
 
 For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
 
@@ -496,7 +496,7 @@ The last step is to save what we have entered in :class:`.Model` (i.e. ``setup``
 Setup argument in/out
 *********************
 
-The setup dictionary ``setup``, which was created in the section :ref:`setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
+The setup dictionary ``setup``, which was created in the section :ref:`practice_case.setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
 
 .. ipython:: python
 
@@ -513,7 +513,7 @@ A file named ``setup.yaml`` has been created in the current working directory co
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 

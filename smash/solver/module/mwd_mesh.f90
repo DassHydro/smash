@@ -17,10 +17,10 @@
 !%      ``flow``                 Flow directions
 !%      ``drained_area``         Drained area                    [nb of cell]
 !%      ``path``                 Solver path 
+!%      ``active_cell``          Mask of active cell
 !%      ``gauge_pos``            Gauge position 
 !%      ``code``                 Gauge code
 !%      ``area``                 Drained area at gauge position  [m2]
-!%      ``active_cell``          Mask of active cell
 !%
 !%      </> Private
 !%      ======================== =======================================
@@ -63,13 +63,13 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: flow
         integer, dimension(:,:), allocatable :: drained_area
         integer, dimension(:,:), allocatable :: path
+        integer, dimension(:,:), allocatable :: active_cell
         
         integer, dimension(:,:), allocatable :: gauge_pos
-        
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
         
-        integer, dimension(:,:), allocatable :: active_cell
+        
         
         !% </> Private
         real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
@@ -97,23 +97,29 @@ module mwd_mesh
             
             allocate(mesh%flow(mesh%nrow, mesh%ncol)) 
             mesh%flow = -99
+            
             allocate(mesh%drained_area(mesh%nrow, mesh%ncol)) 
             mesh%drained_area = -99
             
             allocate(mesh%path(2, mesh%nrow * mesh%ncol)) 
             mesh%path = -99
             
-            allocate(mesh%gauge_pos(2, mesh%ng))
-            
-            allocate(mesh%code(mesh%ng))
-            mesh%code = "...................."
-            allocate(mesh%area(mesh%ng))
-            
             allocate(mesh%active_cell(mesh%nrow, mesh%ncol))
             mesh%active_cell = 1
             
-            allocate(mesh%wgauge(mesh%ng))
-            mesh%wgauge = 1._sp
+            if (mesh%ng .gt. 0) then
+            
+                allocate(mesh%gauge_pos(2, mesh%ng))
+                
+                allocate(mesh%code(mesh%ng))
+                mesh%code = "..."
+                
+                allocate(mesh%area(mesh%ng))
+                
+                allocate(mesh%wgauge(mesh%ng))
+                mesh%wgauge = 1._sp
+                
+            end if
             
             if (setup%sparse_storage) then
                 

@@ -62,8 +62,12 @@ module mwd_output
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
             
-            allocate(output%qsim(mesh%ng, setup%ntime_step))
-            output%qsim = - 99._sp
+            if (mesh%ng .gt. 0) then
+                
+                allocate(output%qsim(mesh%ng, setup%ntime_step))
+                output%qsim = - 99._sp
+                
+            end if
             
             if (setup%save_qsim_domain) then
                 

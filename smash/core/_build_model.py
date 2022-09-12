@@ -54,6 +54,29 @@ RATIO_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
+def _charlist_to_uint8(charl: (str, list[str]), itemsize: int):
+    
+    if isinstance(charl, str):
+        charl = [charl]
+    
+    res = np.zeros(shape=(itemsize, len(charl)), dtype="uint8") + np.uint8(32)
+    
+    for i, el in enumerate(charl):
+        
+        res[0 : len(el), i] = [ord(l) for l in el]
+        
+    return res
+
+
+def _is_allocated(derived_type: (SetupDT, MeshDT), key: str):
+    
+    try:
+        getattr(derived_type, key)
+        return True
+    
+    except:
+        return False
+
 
 def _parse_derived_type(derived_type, data: dict):
 
@@ -64,6 +87,10 @@ def _parse_derived_type(derived_type, data: dict):
     for key, value in data.items():
 
         if hasattr(derived_type, key):
+            
+            if key == "descriptor_name":
+                
+                value = _charlist_to_uint8(value, 20)
 
             setattr(derived_type, key, value)
 
@@ -160,6 +187,28 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.pet_conversion_factor < 0:
         raise ValueError("argument 'pet_conversion_factor' is lower than 0")
+        
+    if setup.read_descriptor and setup.descriptor_directory.decode().strip() == "...":
+        raise ValueError(
+            "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
+        )
+        
+    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory.decode().strip()):
+        raise FileNotFoundError(
+            errno.ENOENT,
+            os.strerror(errno.ENOENT),
+            setup.descriptor_directory.decode().strip(),
+        )
+
+    if setup.read_descriptor and not _is_allocated(setup, "descriptor_name"):
+        raise ValueError(
+            "argument 'read_descriptor' is True and 'descriptor_name' is not defined"
+        )
+
+    if not setup.descriptor_format.decode().strip() in ["tif", "nc"]:
+        raise ValueError(
+            f"argument 'descriptor_format' must be one of {['tif', 'nc']} not {setup.descriptor_format.decode().strip()}"
+        )
 
     if setup.interception_module < 0 or setup.interception_module > 1:
         raise ValueError(
@@ -512,6 +561,30 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 files.pop(ind)
 
 
+def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    
+    descriptor_name = setup.descriptor_name.tobytes(order="F").decode("utf-8").split()
+    
+    for i, name in enumerate(descriptor_name):
+        
+        path = glob.glob(f"{setup.descriptor_directory.decode().strip()}/**/{name}.tif*", recursive=True)
+        
+
+        if len(path) == 0:
+            warnings.warn(
+                f"No descriptor file '{name}.tif' in recursive root directory '{setup.descriptor_directory.decode().strip()}'"
+            )
+
+        elif len(path) > 1:
+            raise ValueError(
+                f"There is more than one file containing the name '{name}.tif'"
+            )
+
+        else:
+            
+            input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
+
+
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     """
@@ -533,3 +606,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.mean_forcing:
 
         compute_mean_forcing(setup, mesh, input_data)
+        
+    if setup.read_descriptor:
+        
+        _read_descriptor(setup, mesh, input_data)
