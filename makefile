@@ -120,7 +120,7 @@ meshing:
 	@echo " Making meshing extension "
 	@echo ""
 	@echo "********************************************"
-	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area
+	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area argsort_i
 
 #% Making python library (pip3)
 library:

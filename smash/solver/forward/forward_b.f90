@@ -388,8 +388,10 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(SETUPDT), INTENT(INOUT) :: setup
     TYPE(MESHDT), INTENT(INOUT) :: mesh
-    ALLOCATE(output%qsim(mesh%ng, setup%ntime_step))
-    output%qsim = -99._sp
+    IF (mesh%ng .GT. 0) THEN
+      ALLOCATE(output%qsim(mesh%ng, setup%ntime_step))
+      output%qsim = -99._sp
+    END IF
     IF (setup%save_qsim_domain) THEN
       IF (setup%sparse_storage) THEN
         ALLOCATE(output%sparse_qsim_domain(mesh%nac, setup%ntime_step))
@@ -1543,12 +1545,12 @@ CONTAINS
 !  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flow, drained_area&
-&   , row, col, q, q_b, qup, qup_b)
+  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flwdir, &
+&   drained_area, row, col, q, q_b, qup, qup_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), DIMENSION(nrow, ncol) :: q_b
     REAL(sp) :: qup
@@ -1565,7 +1567,7 @@ CONTAINS
         row_imd = row + drow(i)
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
-          IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
             CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
@@ -1588,12 +1590,12 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE_B
 
-  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flow, drained_area, &
-&   row, col, q, qup)
+  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flwdir, drained_area&
+&   , row, col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
     INTEGER :: i, row_imd, col_imd
@@ -1608,7 +1610,7 @@ CONTAINS
         row_imd = row + drow(i)
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
-          IF (flow(row_imd, col_imd) .EQ. dkind(i)) qup = qup + q(&
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) qup = qup + q(&
 &             row_imd, col_imd)
         END IF
       END DO
@@ -1619,12 +1621,12 @@ CONTAINS
 !  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flow, &
-&   drained_area, ind_sparse, row, col, q, q_b, qup, qup_b)
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flwdir&
+&   , drained_area, ind_sparse, row, col, q, q_b, qup, qup_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area, &
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
 &   ind_sparse
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), DIMENSION(nac) :: q_b
@@ -1642,7 +1644,7 @@ CONTAINS
         row_imd = row + drow(i)
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
-          IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
             CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
@@ -1666,12 +1668,12 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B
 
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flow, &
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flwdir, &
 &   drained_area, ind_sparse, row, col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flow, drained_area, &
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
 &   ind_sparse
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
@@ -1687,7 +1689,7 @@ CONTAINS
         row_imd = row + drow(i)
         IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
 &           .AND. row_imd .LE. nrow) THEN
-          IF (flow(row_imd, col_imd) .EQ. dkind(i)) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
             k = ind_sparse(row_imd, col_imd)
             qup = qup + q(k)
           END IF
@@ -1920,15 +1922,15 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flow, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
 &               *mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flow, mesh%drained_area, row&
-&                               , col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
               q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
 &               *mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
@@ -1936,7 +1938,7 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flow, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
@@ -1945,8 +1947,8 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flow, mesh%drained_area, row&
-&                               , col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
@@ -2255,7 +2257,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flow, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
@@ -2264,8 +2266,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flow, mesh%drained_area, row&
-&                               , col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
               q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
 &               *mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(4)
@@ -2275,7 +2277,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flow, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
@@ -2287,8 +2289,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flow, mesh%drained_area, row&
-&                               , col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
 &                         states%hlr(row, col), qrout)
@@ -2369,8 +2371,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                       , col), states_b%hlr(row, col), qrout, qrout_b)
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
-&                             ncol, mesh%flow, mesh%drained_area, row, &
-&                             col, q, q_b, qup, qup_b)
+&                             ncol, mesh%flwdir, mesh%drained_area, row&
+&                             , col, q, q_b, qup, qup_b)
         END IF
       ELSE IF (branch .LT. 5) THEN
         IF (branch .EQ. 3) THEN
@@ -2386,8 +2388,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                       , col), states_b%hlr(row, col), qrout, qrout_b)
           CALL POPREAL4(qup)
           CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
-&                                    , mesh%ncol, mesh%nac, mesh%flow, &
-&                                    mesh%drained_area, mesh%&
+&                                    , mesh%ncol, mesh%nac, mesh%flwdir&
+&                                    , mesh%drained_area, mesh%&
 &                                    rowcol_to_ind_sparse, row, col, &
 &                                    sparse_q, sparse_q_b, qup, qup_b)
         ELSE
@@ -2399,8 +2401,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
           qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
-&                             ncol, mesh%flow, mesh%drained_area, row, &
-&                             col, q, q_b, qup, qup_b)
+&                             ncol, mesh%flwdir, mesh%drained_area, row&
+&                             , col, q, q_b, qup, qup_b)
         END IF
       ELSE IF (branch .EQ. 5) THEN
         row = mesh%path(1, i)
@@ -2411,8 +2413,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
         CALL POPREAL4(qup)
         CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, &
-&                                  mesh%ncol, mesh%nac, mesh%flow, mesh%&
-&                                  drained_area, mesh%&
+&                                  mesh%ncol, mesh%nac, mesh%flwdir, &
+&                                  mesh%drained_area, mesh%&
 &                                  rowcol_to_ind_sparse, row, col, &
 &                                  sparse_q, sparse_q_b, qup, qup_b)
       ELSE

@@ -7,20 +7,21 @@
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
-!%      ``dx``                   Solver spatial step             [m]
+!%      ``dx``                   Solver spatial step                 [m]
 !%      ``nrow``                 Number of row
 !%      ``ncol``                 Number of column
 !%      ``ng``                   Number of gauge
 !%      ``nac``                  Number of active cell
-!%      ``xmin``                 CRS x mininimum value           [m]
-!%      ``ymax``                 CRS y maximum value             [m]
-!%      ``flow``                 Flow directions
-!%      ``drained_area``         Drained area                    [nb of cell]
+!%      ``xmin``                 CRS x mininimum value               [m]
+!%      ``ymax``                 CRS y maximum value                 [m]
+!%      ``flwdir``               Flow directions
+!%      ``drained_area``         Drained area                        [nb of cell]
 !%      ``path``                 Solver path 
 !%      ``active_cell``          Mask of active cell
+!%      ``flwdst``               Flow distances from main outlet(s)  [m]
 !%      ``gauge_pos``            Gauge position 
 !%      ``code``                 Gauge code
-!%      ``area``                 Drained area at gauge position  [m2]
+!%      ``area``                 Drained area at gauge position      [m2]
 !%
 !%      </> Private
 !%      ======================== =======================================
@@ -60,11 +61,12 @@ module mwd_mesh
         integer :: xmin
         integer :: ymax
         
-        integer, dimension(:,:), allocatable :: flow
+        integer, dimension(:,:), allocatable :: flwdir
         integer, dimension(:,:), allocatable :: drained_area
         integer, dimension(:,:), allocatable :: path
         integer, dimension(:,:), allocatable :: active_cell
         
+        real(sp), dimension(:,:), allocatable :: flwdst
         integer, dimension(:,:), allocatable :: gauge_pos
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
@@ -95,8 +97,8 @@ module mwd_mesh
             mesh%xmin = 0
             mesh%ymax = 0
             
-            allocate(mesh%flow(mesh%nrow, mesh%ncol)) 
-            mesh%flow = -99
+            allocate(mesh%flwdir(mesh%nrow, mesh%ncol)) 
+            mesh%flwdir = -99
             
             allocate(mesh%drained_area(mesh%nrow, mesh%ncol)) 
             mesh%drained_area = -99
@@ -108,6 +110,9 @@ module mwd_mesh
             mesh%active_cell = 1
             
             if (mesh%ng .gt. 0) then
+            
+                allocate(mesh%flwdst(mesh%nrow, mesh%ncol))
+                mesh%flwdst = -99._sp
             
                 allocate(mesh%gauge_pos(2, mesh%ng))
                 
@@ -205,7 +210,7 @@ module mwd_mesh
                 if (col_imd .gt. 0 .and. col_imd .le. mesh%ncol .and. &
                 &   row_imd .gt. 0 .and. row_imd .le. mesh%nrow) then
                 
-                    if (mesh%flow(row_imd, col_imd) .eq. dkind(i)) then
+                    if (mesh%flwdir(row_imd, col_imd) .eq. dkind(i)) then
                         
                         call mask_upstream_cells(row_imd, col_imd, &
                         & mesh, mask)

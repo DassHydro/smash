@@ -205,7 +205,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flow, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                         
                             sparse_q(k) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
@@ -214,7 +214,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
                         
                             q(row, col) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
@@ -226,7 +226,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flow, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
                             call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
@@ -237,7 +237,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flow, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
                             
                             call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         

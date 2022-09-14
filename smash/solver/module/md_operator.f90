@@ -117,13 +117,13 @@ module md_operator
         
         
         subroutine upstream_discharge(dt, dx, nrow, ncol, &
-        & flow, drained_area, row, col, q, qup)
+        & flwdir, drained_area, row, col, q, qup)
         
             implicit none
 
             real(sp), intent(in) :: dt, dx
             integer, intent(in) :: nrow, ncol, row, col
-            integer, dimension(nrow, ncol), intent(in) :: flow, drained_area
+            integer, dimension(nrow, ncol), intent(in) :: flwdir, drained_area
             real(sp), dimension(nrow, ncol), intent(in) :: q
             real(sp), intent(out) :: qup
             
@@ -144,7 +144,7 @@ module md_operator
                     if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
                     &   row_imd .gt. 0 .and. row_imd .le. nrow) then
                     
-                        if (flow(row_imd, col_imd) .eq. dkind(i)) then
+                        if (flwdir(row_imd, col_imd) .eq. dkind(i)) then
                         
                             qup = qup + q(row_imd, col_imd)
                             
@@ -163,13 +163,13 @@ module md_operator
         
         
         subroutine sparse_upstream_discharge(dt, dx, nrow, ncol, nac, &
-        & flow, drained_area, ind_sparse, row, col, q, qup)
+        & flwdir, drained_area, ind_sparse, row, col, q, qup)
             
             implicit none
 
             real(sp), intent(in) :: dt, dx
             integer, intent(in) :: nrow, ncol, nac, row, col
-            integer, dimension(nrow, ncol), intent(in) :: flow, drained_area, ind_sparse
+            integer, dimension(nrow, ncol), intent(in) :: flwdir, drained_area, ind_sparse
             real(sp), dimension(nac), intent(in) :: q
             real(sp), intent(out) :: qup
             
@@ -190,7 +190,7 @@ module md_operator
                     if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
                     &   row_imd .gt. 0 .and. row_imd .le. nrow) then
                     
-                        if (flow(row_imd, col_imd) .eq. dkind(i)) then
+                        if (flwdir(row_imd, col_imd) .eq. dkind(i)) then
                             
                             k = ind_sparse(row_imd, col_imd)
                             qup = qup + q(k)

@@ -89,6 +89,8 @@ module mwd_setup
         logical :: daily_interannual_pet = .false.
         
         logical :: mean_forcing = .false.
+        logical :: prcp_moment = .false.
+        
         
         logical :: read_descriptor = .false.
         character(lchar) :: descriptor_format = "tif"

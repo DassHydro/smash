@@ -22,6 +22,7 @@
 !%      [1] Input_DataDT_initialise
 !%      [2] input_data_copy
 !%      [3] compute_mean_forcing
+!%      [4] compute_prcp_moment
 
 module mwd_input_data
 
@@ -44,6 +45,8 @@ module mwd_input_data
         
         real(sp), dimension(:,:), allocatable :: mean_prcp
         real(sp), dimension(:,:), allocatable :: mean_pet
+        
+        real(sp), dimension(:,:,:), allocatable :: prcp_moment
     
     end type Input_DataDT
     
@@ -61,6 +64,9 @@ module mwd_input_data
 
                 allocate(input_data%qobs(mesh%ng, setup%ntime_step))
                 input_data%qobs = -99._sp
+                allocate(input_data%prcp_moment(mesh%ng, &
+                & setup%ntime_step, 2))
+                input_data%prcp_moment = -99._sp
                 
             end if
             
@@ -86,7 +92,8 @@ module mwd_input_data
             
             if (setup%nd .gt. 0) then
             
-                allocate(input_data%descriptor(mesh%nrow, mesh%ncol, setup%nd))
+                allocate(input_data%descriptor(mesh%nrow, mesh%ncol, &
+                & setup%nd))
                 
             end if
             
@@ -117,7 +124,9 @@ module mwd_input_data
         end subroutine input_data_copy
       
       
-!%      TODO comment 
+!%      TODO comment
+!%      Refactorize this with check for no data inside mean
+!%      Allow mean_forcing without gauge
         subroutine compute_mean_forcing(setup, mesh, input_data)
         
             implicit none
@@ -201,5 +210,36 @@ module mwd_input_data
             end do
         
         end subroutine compute_mean_forcing
+        
+        
+!%      TODO comment
+!        subroutine compute_prcp_moment(setup, mesh, input_data)
+        
+!            implicit none
+            
+!            type(SetupDT), intent(in) :: setup
+!            type(MeshDT), intent(in) :: mesh
+!            type(Input_DataDT), intent(inout) :: input_data
+            
+!            integer :: i, j
+!            real(sp) :: ddst, num, den
+            
+!            do i=1, mesh%ng
+            
+!                ddst = mesh%flwdst(mesh%gauge_pos(1, i), mesh%gauge_pos(2, i))
+                
+!                do j=1, setup%ntime_step
+                
+!                    num = sum(input_data%prcp(:,:,j) * (mesh%flwdst(:,:) - ddst))
+                    
+!                    den = sum(input_data%prcp(:,:,j)) * sum(mesh%flwdst(:,:) - ddst)
+                    
+!                    input_data%prcp_moment(i, j, 1) = num / den / (mesh%nrow * mesh%ncol)
+            
+!                end do
+            
+!            end do
+        
+!        end subroutine compute_prcp_moment
     
 end module mwd_input_data

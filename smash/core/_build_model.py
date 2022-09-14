@@ -3,7 +3,7 @@ from __future__ import annotations
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import compute_rowcol_to_ind_sparse
-from smash.solver._mwd_input_data import compute_mean_forcing
+from smash.solver._mwd_input_data import compute_mean_forcing, compute_prcp_moment
 
 from smash.core.utils import sparse_matrix_to_vector
 
@@ -188,6 +188,7 @@ def _standardize_setup(setup: SetupDT):
     if setup.pet_conversion_factor < 0:
         raise ValueError("argument 'pet_conversion_factor' is lower than 0")
         
+        
     if setup.read_descriptor and setup.descriptor_directory.decode().strip() == "...":
         raise ValueError(
             "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
@@ -277,8 +278,8 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
             "argument area of MeshDT contains at least one value lower than 0"
         )
 
-    if np.all(mesh.flow == -99):
-        raise ValueError("argument flow of MeshDT contains only NaN value")
+    if np.all(mesh.flwdir == -99):
+        raise ValueError("argument flwdir of MeshDT contains only NaN value")
 
     if np.all(mesh.drained_area == -99):
         raise ValueError("argument drained_area of MeshDT contains only NaN value")
@@ -606,6 +607,10 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.mean_forcing:
 
         compute_mean_forcing(setup, mesh, input_data)
+        
+    if setup.prcp_moment:
+    
+        compute_prcp_moment(setup, mesh, input_data)
         
     if setup.read_descriptor:
         

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.mesh import _meshing
+from smash.mesh._meshing import mw_meshing
 
 import errno
 import os
@@ -75,36 +75,36 @@ def _array_to_ascii(array, path, xmin, ymin, cellsize, no_data_val):
         np.savetxt(f, array, "%5.2f")
 
 
-def _get_array(ds_flow, bbox=None):
+def _get_array(ds_flwdir, bbox=None):
 
     if bbox:
 
-        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
+        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flwdir)
 
         col_off = int((bbox[0] - xmin) / xres)
         row_off = int((ymax - bbox[3]) / yres)
         ncol = int((bbox[1] - bbox[0]) / xres)
         nrow = int((bbox[3] - bbox[2]) / yres)
 
-        flow = ds_flow.GetRasterBand(1).ReadAsArray(col_off, row_off, ncol, nrow)
+        flwdir = ds_flwdir.GetRasterBand(1).ReadAsArray(col_off, row_off, ncol, nrow)
 
     else:
 
-        flow = ds_flow.GetRasterBand(1).ReadAsArray()
+        flwdir = ds_flwdir.GetRasterBand(1).ReadAsArray()
 
-    if np.any(~np.isin(flow, D8_VALUE), where=(flow > 0)):
+    if np.any(~np.isin(flwdir, D8_VALUE), where=(flwdir > 0)):
 
         raise ValueError(f"Flow direction data is invalid. Value must be in {D8_VALUE}")
 
-    return flow
+    return flwdir
 
 
-def _get_transform(ds_flow):
+def _get_transform(ds_flwdir):
 
-    ncol = ds_flow.RasterXSize
-    nrow = ds_flow.RasterYSize
+    ncol = ds_flwdir.RasterXSize
+    nrow = ds_flwdir.RasterYSize
 
-    transform = ds_flow.GetGeoTransform()
+    transform = ds_flwdir.GetGeoTransform()
 
     xmin = transform[0]
     xres = transform[1]
@@ -117,9 +117,9 @@ def _get_transform(ds_flow):
     return xmin, xmax, xres, ymin, ymax, yres
 
 
-def _get_srs(ds_flow, epsg):
+def _get_srs(ds_flwdir, epsg):
 
-    projection = ds_flow.GetProjection()
+    projection = ds_flwdir.GetProjection()
 
     if projection:
 
@@ -141,7 +141,7 @@ def _get_srs(ds_flow, epsg):
     return srs
 
 
-def _standardize_gauge(ds_flow, x, y, area, code):
+def _standardize_gauge(ds_flwdir, x, y, area, code):
 
     x = np.array(x, dtype=np.float32, ndmin=1)
     y = np.array(y, dtype=np.float32, ndmin=1)
@@ -153,7 +153,7 @@ def _standardize_gauge(ds_flow, x, y, area, code):
             f"Inconsistent size for 'x' ({x.size}), 'y' ({y.size}) and 'area' ({area.size})"
         )
 
-    xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
+    xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flwdir)
 
     if np.any((x < xmin) | (x > xmax)):
 
@@ -198,7 +198,7 @@ def _standardize_gauge(ds_flow, x, y, area, code):
     return x, y, area, code
 
 
-def _standardize_bbox(ds_flow, bbox):
+def _standardize_bbox(ds_flwdir, bbox):
 
     #% Bounding Box (xmin, ymin, xmax, ymax)
 
@@ -222,7 +222,7 @@ def _standardize_bbox(ds_flow, bbox):
                 f"'bbox' ymin ({bbox[2]}) is greater than ymax ({bbox[3]})"
             )
 
-        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flow)
+        xmin, xmax, xres, ymin, ymax, yres = _get_transform(ds_flwdir)
 
         if bbox[0] < xmin:
 
@@ -276,15 +276,15 @@ def _get_path(drained_area):
     return path
 
 
-def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
+def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
-    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flow)
+    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flwdir)
 
-    srs = _get_srs(ds_flow, epsg)
+    srs = _get_srs(ds_flwdir, epsg)
 
-    (x, y, area, code) = _standardize_gauge(ds_flow, x, y, area, code)
+    (x, y, area, code) = _standardize_gauge(ds_flwdir, x, y, area, code)
 
-    flow = _get_array(ds_flow)
+    flwdir = _get_array(ds_flwdir)
 
     #% Convert (approximate) area from square meter to square degree
     if srs.GetAttrValue("UNIT") == "degree":
@@ -299,14 +299,14 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
     col_ol = np.zeros(shape=x.shape, dtype=np.int32)
     row_ol = np.zeros(shape=x.shape, dtype=np.int32)
     area_ol = np.zeros(shape=x.shape, dtype=np.float32)
-    mask_dln = np.zeros(shape=flow.shape, dtype=np.int32)
+    mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
 
     for ind in range(x.size):
 
         col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
 
-        mask_dln_imd, col_ol[ind], row_ol[ind] = _meshing.catchment_dln(
-            flow, col, row, xres, yres, area[ind], max_depth
+        mask_dln_imd, col_ol[ind], row_ol[ind] = mw_meshing.catchment_dln(
+            flwdir, col, row, xres, yres, area[ind], max_depth
         )
 
         if srs.GetAttrValue("UNIT") == "degree":
@@ -323,9 +323,9 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
 
         mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
 
-    flow = np.ma.masked_array(flow, mask=(1 - mask_dln))
+    flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
 
-    flow, scol, ecol, srow, erow = _trim_zeros_2D(flow, shift_value=True)
+    flwdir, scol, ecol, srow, erow = _trim_zeros_2D(flwdir, shift_value=True)
     mask_dln = _trim_zeros_2D(mask_dln)
 
     xmin_shifted = xmin + scol * xres
@@ -333,11 +333,15 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
 
     col_ol = col_ol - scol
     row_ol = row_ol - srow
-
-    drained_area = _meshing.drained_area(flow)
+    
+    flwdst = mw_meshing.flow_distance(flwdir, col_ol, row_ol, area_ol, dx)
+    
+    drained_area = mw_meshing.drained_area(flwdir)
 
     path = _get_path(drained_area)
-
+    
+    flwdst = np.ma.masked_array(flwdst, mask=(1 - mask_dln))
+    
     drained_area = np.ma.masked_array(drained_area, mask=(1 - mask_dln))
 
     active_cell = mask_dln.astype(np.int32)
@@ -347,13 +351,14 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
 
     mesh = {
         "dx": dx,
-        "nrow": flow.shape[0],
-        "ncol": flow.shape[1],
+        "nrow": flwdir.shape[0],
+        "ncol": flwdir.shape[1],
         "ng": x.size,
         "nac": np.count_nonzero(active_cell),
         "xmin": xmin_shifted,
         "ymax": ymax_shifted,
-        "flow": flow,
+        "flwdir": flwdir,
+        "flwdst": flwdst,
         "drained_area": drained_area,
         "path": path,
         "gauge_pos": gauge_pos,
@@ -365,17 +370,17 @@ def _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg):
     return mesh
 
 
-def _get_mesh_from_bbox(ds_flow, bbox, epsg):
+def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
-    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flow)
+    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(ds_flwdir)
 
-    srs = _get_srs(ds_flow, epsg)
+    srs = _get_srs(ds_flwdir, epsg)
 
-    bbox = _standardize_bbox(ds_flow, bbox)
+    bbox = _standardize_bbox(ds_flwdir, bbox)
 
-    flow = _get_array(ds_flow, bbox)
+    flwdir = _get_array(ds_flwdir, bbox)
 
-    flow = np.ma.masked_array(flow, mask=(flow < 1))
+    flwdir = np.ma.masked_array(flwdir, mask=(flwdir < 1))
 
     if srs.GetAttrValue("UNIT") == "degree":
 
@@ -385,25 +390,25 @@ def _get_mesh_from_bbox(ds_flow, bbox, epsg):
 
         dx = xres
 
-    drained_area = _meshing.drained_area(flow)
+    drained_area = mw_meshing.drained_area(flwdir)
 
     path = _get_path(drained_area)
 
-    drained_area = np.ma.masked_array(drained_area, mask=(flow < 1))
+    drained_area = np.ma.masked_array(drained_area, mask=(flwdir < 1))
 
-    active_cell = np.zeros(shape=flow.shape, dtype=np.int32)
+    active_cell = np.zeros(shape=flwdir.shape, dtype=np.int32)
 
-    active_cell = np.where(flow > 0, 1, active_cell)
+    active_cell = np.where(flwdir > 0, 1, active_cell)
 
     mesh = {
         "dx": dx,
-        "nrow": flow.shape[0],
-        "ncol": flow.shape[1],
+        "nrow": flwdir.shape[0],
+        "ncol": flwdir.shape[1],
         "ng": 0,
         "nac": np.count_nonzero(active_cell),
         "xmin": bbox[0],
         "ymax": bbox[3],
-        "flow": flow,
+        "flwdir": flwdir,
         "drained_area": drained_area,
         "path": path,
         "active_cell": active_cell,
@@ -425,7 +430,7 @@ def generate_mesh(
 
     if os.path.isfile(path):
 
-        ds_flow = gdal.Open(path)
+        ds_flwdir = gdal.Open(path)
 
     else:
 
@@ -433,7 +438,7 @@ def generate_mesh(
 
     if bbox:
 
-        return _get_mesh_from_bbox(ds_flow, bbox, epsg)
+        return _get_mesh_from_bbox(ds_flwdir, bbox, epsg)
 
     else:
 
@@ -443,4 +448,4 @@ def generate_mesh(
                 "'bbox' argument or 'x', 'y' and 'area' arguments must be defined"
             )
 
-        return _get_mesh_from_xy(ds_flow, x, y, area, code, max_depth, epsg)
+        return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)

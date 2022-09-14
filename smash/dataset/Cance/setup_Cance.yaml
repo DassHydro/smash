@@ -16,6 +16,8 @@ pet_conversion_factor: 1
 daily_interannual_pet: True
 pet_directory: pet
 
+prcp_moment: True
+
 read_descriptor: True
 descriptor_format: tif
 descriptor_directory: descriptor

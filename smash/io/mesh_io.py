@@ -46,7 +46,7 @@ def _parse_hdf5_to_mesh_dict(hdf5_ins) -> dict:
 
     for ds in hdf5_ins.keys():
 
-        if ds in ["flow", "drained_area"] and ac_check:
+        if ds in ["flwdir", "flwdst", "drained_area"] and ac_check:
 
             mesh[ds] = np.ma.masked_array(
                 hdf5_ins[ds][:], mask=(1 - hdf5_ins["active_cell"][:])
