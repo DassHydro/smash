@@ -3,7 +3,7 @@ from __future__ import annotations
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import compute_rowcol_to_ind_sparse
-from smash.solver._mwd_input_data import compute_mean_forcing, compute_prcp_moment
+from smash.solver._mwd_input_data import compute_mean_forcing, compute_prcp_indice
 
 from smash.core.utils import sparse_matrix_to_vector
 
@@ -608,9 +608,9 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         compute_mean_forcing(setup, mesh, input_data)
         
-    if setup.prcp_moment:
+    if setup.prcp_indice:
     
-        compute_prcp_moment(setup, mesh, input_data)
+        compute_prcp_indice(setup, mesh, input_data)
         
     if setup.read_descriptor:
         

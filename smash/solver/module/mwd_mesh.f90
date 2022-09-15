@@ -38,10 +38,11 @@
 !%      [2] mesh_copy
 !%      [3] compute_rowcol_to_ind_sparse
 !%      [4] mask_upstream_cells
-!%      [5] sparse_matrix_to_vector_r
-!%      [6] sparse_matrix_to_vector_i
-!%      [7] sparse_vector_to_matrix_r
-!%      [8] sparse_vector_to_matrix_i
+!%      [5] mask_gauge
+!%      [6] sparse_matrix_to_vector_r
+!%      [7] sparse_matrix_to_vector_i
+!%      [8] sparse_vector_to_matrix_r
+!%      [9] sparse_vector_to_matrix_i
 
 module mwd_mesh
     
@@ -222,7 +223,27 @@ module mwd_mesh
             end do
                     
         end subroutine mask_upstream_cells
+            
+            
+!%      TODO comment
+        subroutine mask_gauge(mesh, mask)
+            
+            implicit none
+            
+            type(MeshDT), intent(in) :: mesh
+            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: mask
+            
+            integer :: i
+            
+            do i=1, mesh%ng
+            
+                call mask_upstream_cells(mesh%gauge_pos(1, i), &
+                & mesh%gauge_pos(2, i), mesh, mask(:, :, i))
+            
+            end do
         
+        end subroutine mask_gauge
+
 
 !%      TODO comment        
         subroutine sparse_matrix_to_vector_r(mesh, matrix, vector)

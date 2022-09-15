@@ -23,6 +23,7 @@
 !%      ``pet_directory``          Potential evapotranspiration directory path            (default: '...')
 !%      ``daily_interannual_pet``  Read daily interannual potential evapotranspiration    (default: .false.)
 !%      ``mean_forcing``           Compute mean forcing                                   (default: .false.)
+!%      ``prcp_indice``            Compute prcp indices                                   (default: .false.)
 !%      ``read_descriptor``        Read descriptor map(s)                                 (default: .false.)
 !%      ``descriptor_format``      Descriptor map(s) format                               (default: .false.)
 !%      ``descriptor_directory``   Descriptor map(s) directory                            (default: "...")
@@ -89,7 +90,7 @@ module mwd_setup
         logical :: daily_interannual_pet = .false.
         
         logical :: mean_forcing = .false.
-        logical :: prcp_moment = .false.
+        logical :: prcp_indice = .false.
         
         
         logical :: read_descriptor = .false.

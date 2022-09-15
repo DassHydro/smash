@@ -1,6 +1,24 @@
 !%      This module `mwd_input_data` encapsulates all SMASH input_data.
 !%      This module is wrapped and differentiated.
 !%
+!%      Prcp_IndiceDT type: DOI: doi:10.5194/hess-15-3767-2011 (Zoccatelli, 2011)
+!%      
+!%      md1 = p1 / (p0 * g1)
+!%      md2 = (1 / (g2 - g1**2)) * ((p2 / p0) - (p1 / p0)**2)
+!%      
+!%      </> Public
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``p0``                   The 0-th spatial moment of catchment prcp  [mm/dt]
+!%      ``p1``                   The 1-th spatial moment of catchment prpc  [mm2/dt]
+!%      ``p2``                   The 2-th spatial moment of catchment prpc  [mm3/dt]
+!%      ``g1``                   The 1-th spatial moment of flow distance   [mm]
+!%      ``g2``                   The 2-th spatial moment of flow distance   [mm2]
+!%      ``md1``                  The 1-th scaled moment                     [-]
+!%      ``md2``                  The 2-th scaled moment                     [-]
+!%      ======================== =======================================
+!%
 !%      Input_DataDT type:
 !%      
 !%      </> Public
@@ -19,19 +37,35 @@
 !%
 !%      contains
 !%
+!%      [1] Prcp_IndiceDT_initialise
 !%      [1] Input_DataDT_initialise
 !%      [2] input_data_copy
 !%      [3] compute_mean_forcing
-!%      [4] compute_prcp_moment
+!%      [4] compute_prcp_indice
 
 module mwd_input_data
 
     use mwd_common !% only: sp, dp, lchar
     use mwd_setup !% only: SetupDT
-    use mwd_mesh  !% only: MeshDT
+    use mwd_mesh  !% only: MeshDT, mask_gauge
     
     implicit none
-
+    
+    type Prcp_IndiceDT
+    
+        real(sp), dimension(:,:), allocatable :: p0
+        real(sp), dimension(:,:), allocatable :: p1
+        real(sp), dimension(:,:), allocatable :: p2
+        
+        real(sp), dimension(:), allocatable :: g1
+        real(sp), dimension(:), allocatable :: g2
+        
+        real(sp), dimension(:,:), allocatable :: md1
+        real(sp), dimension(:,:), allocatable :: md2
+    
+    end type Prcp_IndiceDT
+    
+    
     type Input_DataDT
     
         real(sp), dimension(:,:), allocatable :: qobs
@@ -45,12 +79,41 @@ module mwd_input_data
         
         real(sp), dimension(:,:), allocatable :: mean_prcp
         real(sp), dimension(:,:), allocatable :: mean_pet
-        
-        real(sp), dimension(:,:,:), allocatable :: prcp_moment
+
+        type(Prcp_IndiceDT) :: prcp_indice
     
     end type Input_DataDT
     
+    
     contains
+    
+        subroutine Prcp_IndiceDT_initialise(prcp_indice, setup, mesh)
+            
+            implicit none
+            
+            type(Prcp_IndiceDT) :: prcp_indice
+            type(SetupDT) :: setup
+            type(MeshDT) :: mesh
+            
+            allocate(prcp_indice%p0(mesh%ng, setup%ntime_step))
+            prcp_indice%p0 = -99._sp
+            allocate(prcp_indice%p1(mesh%ng, setup%ntime_step))
+            prcp_indice%p1 = -99._sp
+            allocate(prcp_indice%p2(mesh%ng, setup%ntime_step))
+            prcp_indice%p2 = -99._sp
+            
+            allocate(prcp_indice%g1(mesh%ng))
+            prcp_indice%g1 = -99._sp
+            allocate(prcp_indice%g2(mesh%ng))
+            prcp_indice%g2 = -99._sp
+        
+            allocate(prcp_indice%md1(mesh%ng, setup%ntime_step))
+            prcp_indice%md1 = -99._sp
+            allocate(prcp_indice%md2(mesh%ng, setup%ntime_step))
+            prcp_indice%md2 = -99._sp
+        
+        end subroutine Prcp_IndiceDT_initialise
+        
     
         subroutine Input_DataDT_initialise(input_data, setup, mesh)
         
@@ -64,9 +127,6 @@ module mwd_input_data
 
                 allocate(input_data%qobs(mesh%ng, setup%ntime_step))
                 input_data%qobs = -99._sp
-                allocate(input_data%prcp_moment(mesh%ng, &
-                & setup%ntime_step, 2))
-                input_data%prcp_moment = -99._sp
                 
             end if
             
@@ -105,6 +165,13 @@ module mwd_input_data
                 allocate(input_data%mean_pet(mesh%ng, setup%ntime_step))
                 input_data%mean_pet = -99._sp
                 
+            end if
+            
+            if (setup%prcp_indice .and. mesh%ng .gt. 0) then
+            
+                call Prcp_IndiceDT_initialise(input_data%prcp_indice, &
+                & setup, mesh)
+            
             end if
             
         end subroutine Input_DataDT_initialise
@@ -213,33 +280,71 @@ module mwd_input_data
         
         
 !%      TODO comment
-!        subroutine compute_prcp_moment(setup, mesh, input_data)
+        subroutine compute_prcp_indice(setup, mesh, input_data)
         
-!            implicit none
+            implicit none
             
-!            type(SetupDT), intent(in) :: setup
-!            type(MeshDT), intent(in) :: mesh
-!            type(Input_DataDT), intent(inout) :: input_data
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(Input_DataDT), intent(inout) :: input_data
             
-!            integer :: i, j
-!            real(sp) :: ddst, num, den
+            logical, dimension(mesh%nrow, mesh%ncol) :: mask
+            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: dflwdst
+            integer :: i, j
+            real(sp) :: minv_n, sum_r, sum_d, sum_d2, sum_rd, &
+            & sum_rd2, p0, p1, p2, g1, g2, md1, md2
             
-!            do i=1, mesh%ng
+            call mask_gauge(mesh, g3d_mask)
             
-!                ddst = mesh%flwdst(mesh%gauge_pos(1, i), mesh%gauge_pos(2, i))
+            do i=1, mesh%ng
                 
-!                do j=1, setup%ntime_step
+                dflwdst = mesh%flwdst - &
+                & mesh%flwdst(mesh%gauge_pos(1, i), mesh%gauge_pos(2, i))
                 
-!                    num = sum(input_data%prcp(:,:,j) * (mesh%flwdst(:,:) - ddst))
+                do j=1, setup%ntime_step
                     
-!                    den = sum(input_data%prcp(:,:,j)) * sum(mesh%flwdst(:,:) - ddst)
+                    mask = (input_data%prcp(:,:,j) .ge. 0 .and. g3d_mask(:,:,i) .eq. 1)
+                
+                    minv_n = 1._sp / count(mask)
                     
-!                    input_data%prcp_moment(i, j, 1) = num / den / (mesh%nrow * mesh%ncol)
-            
-!                end do
-            
-!            end do
+                    sum_r = sum(input_data%prcp(:,:,j), mask=mask)
+                    
+                    !% Do not compute moments if there is no precipitation
+                    if (sum_r .gt. 0._sp) then
+                        
+                        sum_d = sum(dflwdst, mask=mask)
+                        sum_d2 = sum(dflwdst * dflwdst, mask=mask)
+                        sum_rd = sum(input_data%prcp(:,:,j) * dflwdst, mask=mask)
+                        sum_rd2 = sum(input_data%prcp(:,:,j) * dflwdst * dflwdst, mask=mask)
+                        
+                        p0 = minv_n * sum_r
+                        input_data%prcp_indice%p0(i, j) = p0
+                        
+                        p1 = minv_n * sum_rd
+                        input_data%prcp_indice%p1(i, j) = p1
+                        
+                        p2 = minv_n * sum_rd2
+                        input_data%prcp_indice%p2(i, j) = p2
+                        
+                        g1 = minv_n * sum_d
+                        input_data%prcp_indice%g1(i) = g1
+                        
+                        g2 = minv_n * sum_d2
+                        input_data%prcp_indice%g2(i) = g2
+                        
+                        md1 = p1 / (p0 * g1)
+                        input_data%prcp_indice%md1(i, j) = md1
+                    
+                        md2 = (1._sp / (g2 - g1 * g1)) * ((p2 / p0) - (p1 / p0) * (p1 / p0))
+                        input_data%prcp_indice%md2(i, j) = md2
+                    
+                    end if
+                    
+                end do 
         
-!        end subroutine compute_prcp_moment
-    
+            end do
+            
+        end subroutine compute_prcp_indice
+
 end module mwd_input_data
