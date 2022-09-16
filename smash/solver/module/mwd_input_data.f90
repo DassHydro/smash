@@ -62,6 +62,8 @@ module mwd_input_data
         
         real(sp), dimension(:,:), allocatable :: md1
         real(sp), dimension(:,:), allocatable :: md2
+        
+        real(sp), dimension(:,:), allocatable :: std
     
     end type Prcp_IndiceDT
     
@@ -111,6 +113,9 @@ module mwd_input_data
             prcp_indice%md1 = -99._sp
             allocate(prcp_indice%md2(mesh%ng, setup%ntime_step))
             prcp_indice%md2 = -99._sp
+        
+            allocate(prcp_indice%std(mesh%ng, setup%ntime_step))
+            prcp_indice%std = -99._sp
         
         end subroutine Prcp_IndiceDT_initialise
         
@@ -292,8 +297,8 @@ module mwd_input_data
             integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
             real(sp), dimension(mesh%nrow, mesh%ncol) :: dflwdst
             integer :: i, j
-            real(sp) :: minv_n, sum_r, sum_d, sum_d2, sum_rd, &
-            & sum_rd2, p0, p1, p2, g1, g2, md1, md2
+            real(sp) :: minv_n, sum_r, sum_r2, sum_d, sum_d2, sum_rd, &
+            & sum_rd2, mean_r, p0, p1, p2, g1, g2, md1, md2, std
             
             call mask_gauge(mesh, g3d_mask)
             
@@ -310,13 +315,16 @@ module mwd_input_data
                     
                     sum_r = sum(input_data%prcp(:,:,j), mask=mask)
                     
-                    !% Do not compute moments if there is no precipitation
+                    !% Do not compute indices if there is no precipitation
                     if (sum_r .gt. 0._sp) then
                         
+                        sum_r2 = sum(input_data%prcp(:,:,j) * input_data%prcp(:,:,j), mask=mask)
                         sum_d = sum(dflwdst, mask=mask)
                         sum_d2 = sum(dflwdst * dflwdst, mask=mask)
                         sum_rd = sum(input_data%prcp(:,:,j) * dflwdst, mask=mask)
                         sum_rd2 = sum(input_data%prcp(:,:,j) * dflwdst * dflwdst, mask=mask)
+                        
+                        mean_r = sum_r * minv_n
                         
                         p0 = minv_n * sum_r
                         input_data%prcp_indice%p0(i, j) = p0
@@ -338,6 +346,9 @@ module mwd_input_data
                     
                         md2 = (1._sp / (g2 - g1 * g1)) * ((p2 / p0) - (p1 / p0) * (p1 / p0))
                         input_data%prcp_indice%md2(i, j) = md2
+                        
+                        std = sqrt((minv_n * sum_r2) - (mean_r * mean_r))
+                        input_data%prcp_indice%std(i, j) = std
                     
                     end if
                     
