@@ -231,9 +231,12 @@ module mwd_mesh
             implicit none
             
             type(MeshDT), intent(in) :: mesh
-            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: mask
+            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng), &
+            & intent(inout) :: mask
             
             integer :: i
+            
+            mask = 0
             
             do i=1, mesh%ng
             

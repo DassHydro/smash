@@ -17,6 +17,7 @@
 !%      ``g2``                   The 2-th spatial moment of flow distance   [mm2]
 !%      ``md1``                  The 1-th scaled moment                     [-]
 !%      ``md2``                  The 2-th scaled moment                     [-]
+!%      ``std``                  Standard deviation of catchment prcp       [mm]
 !%      ======================== =======================================
 !%
 !%      Input_DataDT type:
@@ -162,7 +163,7 @@ module mwd_input_data
                 
             end if
             
-            if (setup%mean_forcing) then
+            if (setup%mean_forcing .and. mesh%ng .gt. 0) then
             
                 allocate(input_data%mean_prcp(mesh%ng, &
                 & setup%ntime_step))
@@ -194,97 +195,56 @@ module mwd_input_data
             input_data_out = input_data_in
         
         end subroutine input_data_copy
-      
-      
-!%      TODO comment
-!%      Refactorize this with check for no data inside mean
-!%      Allow mean_forcing without gauge
-        subroutine compute_mean_forcing(setup, mesh, input_data)
         
+        
+!%      TODO comment
+!%      Subroutine takes more time with sparse forcing (call sparse_vector_to_matrix_r)
+        subroutine compute_mean_forcing(setup, mesh, input_data)
+                
             implicit none
             
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(inout) :: input_data
             
-            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: &
-            & mask_gauge
-            real(sp), dimension(mesh%ng) :: cml_prcp, cml_pet
-            integer :: t, col, row, g, k, n, i
+            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
+            logical, dimension(mesh%nrow, mesh%ncol) :: mask_prcp, mask_pet
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_pet
+            integer :: i, j
             
-            mask_gauge = 0
+            call mask_gauge(mesh, g3d_mask)
             
-            do g=1, mesh%ng
+            do i=1, setup%ntime_step
             
-                call mask_upstream_cells(mesh%gauge_pos(1, g), &
-                & mesh%gauge_pos(2, g), mesh, mask_gauge(:, : ,g))
+                if (setup%sparse_storage) then
+                        
+                    call sparse_vector_to_matrix_r(mesh, input_data%sparse_prcp(:,i), matrix_prcp)
+                    call sparse_vector_to_matrix_r(mesh, input_data%sparse_pet(:,i), matrix_pet)
+                    
+                else
+                
+                    matrix_prcp = input_data%prcp(:,:,i)
+                    matrix_pet = input_data%pet(:,:,i)
+                    
+                end if
+            
+                do j=1, mesh%ng
+                
+                    mask_prcp = (matrix_prcp .ge. 0._sp .and. g3d_mask(:,:,j) .eq. 1)
+                    mask_pet = (matrix_pet .ge. 0._sp .and. g3d_mask(:,:,j) .eq. 1)
+                    
+                    input_data%mean_prcp(j, i) = sum(matrix_prcp, mask=mask_prcp) / count(mask_prcp)
+                    input_data%mean_pet(j, i) = sum(matrix_pet, mask=mask_pet) / count(mask_pet)
+                    
+                end do
             
             end do
 
-            do t=1, setup%ntime_step
-            
-                k = 0
-                cml_prcp = 0._sp
-                cml_pet = 0._sp
-                
-                do i=1, mesh%nrow * mesh%ncol
-                
-                    if (mesh%path(1, i) .gt. 0 .and. &
-                    & mesh%path(2, i) .gt. 0) then
-                    
-                        row = mesh%path(1, i)
-                        col = mesh%path(2, i)
-                        
-                        if (mesh%active_cell(row, col) .eq. &
-                        & 1) then
-                        
-                            k = k + 1
-                            
-                            do g=1, mesh%ng
-                                
-                                if (mask_gauge(row, col, g) .eq. 1) then
-                                
-                                    if (setup%sparse_storage) then
-                                        
-                                        cml_prcp(g) = cml_prcp(g) + &
-                                        & input_data%sparse_prcp(k, t)
-                                        cml_pet(g) = cml_pet(g) + &
-                                        & input_data%sparse_pet(k, t)
-                                        
-                                    else
-                                    
-                                        cml_prcp(g) = cml_prcp(g) + &
-                                        & input_data%prcp(row, col, t)
-                                        cml_pet(g) = cml_pet(g) + &
-                                        & input_data%pet(row, col, t)
-                                    
-                                    end if
-                                    
-                                end if
-                            
-                            end do
-                        
-                        end if
-                        
-                    end if
-                    
-                end do
-                    
-                do g=1, mesh%ng
-            
-                    n = count(mask_gauge(:, :, g) .eq. 1)
-                    
-                    input_data%mean_prcp(g, t) = cml_prcp(g) / n
-                    input_data%mean_pet(g, t) = cml_pet(g) / n
-            
-                end do
-                
-            end do
-        
         end subroutine compute_mean_forcing
         
         
 !%      TODO comment
+!%      Subroutine takes more time with sparse forcing (call sparse_vector_to_matrix_r)
         subroutine compute_prcp_indice(setup, mesh, input_data)
         
             implicit none
@@ -293,69 +253,80 @@ module mwd_input_data
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(inout) :: input_data
             
-            logical, dimension(mesh%nrow, mesh%ncol) :: mask
             integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
-            real(sp), dimension(mesh%nrow, mesh%ncol) :: dflwdst
+            logical, dimension(mesh%nrow, mesh%ncol) :: mask
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix, dflwdst
             integer :: i, j
-            real(sp) :: minv_n, sum_r, sum_r2, sum_d, sum_d2, sum_rd, &
-            & sum_rd2, mean_r, p0, p1, p2, g1, g2, md1, md2, std
+            real(sp) :: minv_n, sum_p, sum_p2, sum_d, sum_d2, sum_pd, &
+            & sum_pd2, mean_p, p0, p1, p2, g1, g2, md1, md2, std
             
             call mask_gauge(mesh, g3d_mask)
             
-            do i=1, mesh%ng
+            do i=1, setup%ntime_step
+            
+                if (setup%sparse_storage) then
                 
-                dflwdst = mesh%flwdst - &
-                & mesh%flwdst(mesh%gauge_pos(1, i), mesh%gauge_pos(2, i))
-                
-                do j=1, setup%ntime_step
+                    call sparse_vector_to_matrix_r(mesh, input_data%sparse_prcp(:,i), matrix)
                     
-                    mask = (input_data%prcp(:,:,j) .ge. 0 .and. g3d_mask(:,:,i) .eq. 1)
+                else
                 
+                    matrix = input_data%prcp(:,:,i)
+                    
+                end if
+            
+                do j=1, mesh%ng
+                
+                    dflwdst = mesh%flwdst - &
+                    & mesh%flwdst(mesh%gauge_pos(1, j), mesh%gauge_pos(2, j))
+                    
+                    mask = (matrix .ge. 0._sp .and. g3d_mask(:,:,j) .eq. 1)
+                    
                     minv_n = 1._sp / count(mask)
                     
-                    sum_r = sum(input_data%prcp(:,:,j), mask=mask)
+                    sum_p = sum(matrix, mask=mask)
                     
                     !% Do not compute indices if there is no precipitation
-                    if (sum_r .gt. 0._sp) then
+                    if (sum_p .gt. 0._sp) then
                         
-                        sum_r2 = sum(input_data%prcp(:,:,j) * input_data%prcp(:,:,j), mask=mask)
+                        sum_p2 = sum(matrix * matrix, mask=mask)
                         sum_d = sum(dflwdst, mask=mask)
                         sum_d2 = sum(dflwdst * dflwdst, mask=mask)
-                        sum_rd = sum(input_data%prcp(:,:,j) * dflwdst, mask=mask)
-                        sum_rd2 = sum(input_data%prcp(:,:,j) * dflwdst * dflwdst, mask=mask)
+                        sum_pd = sum(matrix * dflwdst, mask=mask)
+                        sum_pd2 = sum(matrix * dflwdst * dflwdst, mask=mask)
                         
-                        mean_r = sum_r * minv_n
+                        mean_p = minv_n * sum_p
                         
-                        p0 = minv_n * sum_r
-                        input_data%prcp_indice%p0(i, j) = p0
+                        p0 = minv_n * sum_p
+                        input_data%prcp_indice%p0(j, i) = p0
                         
-                        p1 = minv_n * sum_rd
-                        input_data%prcp_indice%p1(i, j) = p1
+                        p1 = minv_n * sum_pd
+                        input_data%prcp_indice%p1(j, i) = p1
                         
-                        p2 = minv_n * sum_rd2
-                        input_data%prcp_indice%p2(i, j) = p2
+                        p2 = minv_n * sum_pd2
+                        input_data%prcp_indice%p2(j, i) = p2
                         
                         g1 = minv_n * sum_d
-                        input_data%prcp_indice%g1(i) = g1
+                        input_data%prcp_indice%g1(j) = g1
                         
                         g2 = minv_n * sum_d2
-                        input_data%prcp_indice%g2(i) = g2
+                        input_data%prcp_indice%g2(j) = g2
                         
                         md1 = p1 / (p0 * g1)
-                        input_data%prcp_indice%md1(i, j) = md1
+                        input_data%prcp_indice%md1(j, i) = md1
                     
                         md2 = (1._sp / (g2 - g1 * g1)) * ((p2 / p0) - (p1 / p0) * (p1 / p0))
-                        input_data%prcp_indice%md2(i, j) = md2
+                        input_data%prcp_indice%md2(j, i) = md2
                         
-                        std = sqrt((minv_n * sum_r2) - (mean_r * mean_r))
-                        input_data%prcp_indice%std(i, j) = std
-                    
+                        std = sqrt((minv_n * sum_p2) - (mean_p * mean_p))
+                        input_data%prcp_indice%std(j, i) = std
+                        
                     end if
-                    
-                end do 
-        
+                
+                end do
+                
             end do
             
         end subroutine compute_prcp_indice
+        
 
 end module mwd_input_data

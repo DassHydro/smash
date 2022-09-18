@@ -63,7 +63,10 @@ c: \
 #% f77 files
 f77: \
  obj/adBuffer.o \
- obj/lbfgsb.o
+ obj/lbfgsb.o \
+ obj/dlasrt.o \
+ obj/lsame.o \
+ obj/xerbla.o \
  
 #% f90 files
 f90: \

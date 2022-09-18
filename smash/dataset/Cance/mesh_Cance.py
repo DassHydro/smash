@@ -1,5 +1,4 @@
 import smash
-import matplotlib.pyplot as plt
 
 flwdir = smash.load_dataset("flwdir")
 
