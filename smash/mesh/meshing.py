@@ -335,7 +335,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
     row_ol = row_ol - srow
     
     flwdst = mw_meshing.flow_distance(flwdir, col_ol, row_ol, area_ol, dx)
-    
+
     drained_area = mw_meshing.drained_area(flwdir)
 
     path = _get_path(drained_area)

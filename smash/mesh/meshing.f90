@@ -171,7 +171,7 @@ module mw_meshing
 
     end subroutine drained_area
 
-
+    !% Workq for small array
     function argsort_i(a, asc) result(b)
 
         implicit none
@@ -292,11 +292,10 @@ module mw_meshing
         integer :: ncol, nrow, i, ind
         
         !% Transform from Python to FORTRAN index
-        col_ol =  col_ol + 1
-        row_ol =  row_ol + 1
+        col_ol = col_ol + 1
+        row_ol = row_ol + 1
         
-        
-        flwdst = 0.
+        flwdst = -99.
         
         ncol = size(flwdir, 2)
         nrow = size(flwdir, 1)
@@ -311,6 +310,8 @@ module mw_meshing
         
             if (flag(ind) .eq. 0) then
             
+                flwdst(row_ol(ind), col_ol(ind)) = 0.
+            
                 call distance_upstream_cells(flwdir, col_ol(ind), &
                 & row_ol(ind), ncol, nrow, col_ol, row_ol, flag, dx, flwdst)
                 
@@ -319,8 +320,8 @@ module mw_meshing
         end do
         
         !% Transform from FORTRAN to Python index
-        col_ol =  col_ol - 1
-        row_ol =  row_ol - 1
+        col_ol = col_ol - 1
+        row_ol = row_ol - 1
         
     end subroutine flow_distance
   

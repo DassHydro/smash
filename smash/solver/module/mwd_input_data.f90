@@ -18,6 +18,10 @@
 !%      ``md1``                  The 1-th scaled moment                     [-]
 !%      ``md2``                  The 2-th scaled moment                     [-]
 !%      ``std``                  Standard deviation of catchment prcp       [mm]
+!%      ``wf``                   Width function                             [m, bin]
+!%      ``pwf``                  Precipitation width function               [mm, bin]
+!%      ``vg``                   Standard deviation of catchment prcp       [mm]
+!%      ``hg``                   Standard deviation of catchment prcp       [mm]
 !%      ======================== =======================================
 !%
 !%      Input_DataDT type:
@@ -47,6 +51,7 @@
 module mwd_input_data
 
     use mwd_common !% only: sp, dp, lchar
+    use md_routine !% only: percentile1d
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT, mask_gauge
     
@@ -65,6 +70,8 @@ module mwd_input_data
         real(sp), dimension(:,:), allocatable :: md2
         
         real(sp), dimension(:,:), allocatable :: std
+        
+        real(sp), dimension(:,:,:), allocatable :: wf
     
     end type Prcp_IndiceDT
     
@@ -117,6 +124,10 @@ module mwd_input_data
         
             allocate(prcp_indice%std(mesh%ng, setup%ntime_step))
             prcp_indice%std = -99._sp
+            
+            allocate(prcp_indice%wf(mesh%ng, 2, 100))
+            prcp_indice%wf = -99._sp
+            
         
         end subroutine Prcp_IndiceDT_initialise
         
@@ -245,6 +256,123 @@ module mwd_input_data
         
 !%      TODO comment
 !%      Subroutine takes more time with sparse forcing (call sparse_vector_to_matrix_r)
+!        subroutine compute_prcp_indice(setup, mesh, input_data)
+        
+!            implicit none
+            
+!            type(SetupDT), intent(in) :: setup
+!            type(MeshDT), intent(in) :: mesh
+!            type(Input_DataDT), intent(inout) :: input_data
+            
+!            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
+!            logical, dimension(mesh%nrow, mesh%ncol) :: mask
+!            real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix, dflwdst
+!            integer :: i, j
+!            real(sp) :: minv_n, sum_p, sum_p2, sum_d, sum_d2, sum_pd, &
+!            & sum_pd2, mean_p, p0, p1, p2, g1, g2, md1, md2, std
+            
+!            call mask_gauge(mesh, g3d_mask)
+            
+!            do i=1, setup%ntime_step
+            
+!                if (setup%sparse_storage) then
+                
+!                    call sparse_vector_to_matrix_r(mesh, input_data%sparse_prcp(:,i), matrix)
+                    
+!                else
+                
+!                    matrix = input_data%prcp(:,:,i)
+                    
+!                end if
+            
+!                do j=1, mesh%ng
+                
+!                    dflwdst = mesh%flwdst - &
+!                    & mesh%flwdst(mesh%gauge_pos(1, j), mesh%gauge_pos(2, j))
+                    
+!                    mask = (matrix .ge. 0._sp .and. g3d_mask(:,:,j) .eq. 1)
+                    
+!                    minv_n = 1._sp / count(mask)
+                    
+!                    sum_p = sum(matrix, mask=mask)
+                    
+!                    % Do not compute indices if there is no precipitation
+!                    if (sum_p .gt. 0._sp) then
+                        
+!                        sum_p2 = sum(matrix * matrix, mask=mask)
+!                        sum_d = sum(dflwdst, mask=mask)
+!                        sum_d2 = sum(dflwdst * dflwdst, mask=mask)
+!                        sum_pd = sum(matrix * dflwdst, mask=mask)
+!                        sum_pd2 = sum(matrix * dflwdst * dflwdst, mask=mask)
+                        
+!                        mean_p = minv_n * sum_p
+                        
+!                        p0 = minv_n * sum_p
+!                        input_data%prcp_indice%p0(j, i) = p0
+                        
+!                        p1 = minv_n * sum_pd
+!                        input_data%prcp_indice%p1(j, i) = p1
+                        
+!                        p2 = minv_n * sum_pd2
+!                        input_data%prcp_indice%p2(j, i) = p2
+                        
+!                        g1 = minv_n * sum_d
+!                        input_data%prcp_indice%g1(j) = g1
+                        
+!                        g2 = minv_n * sum_d2
+!                        input_data%prcp_indice%g2(j) = g2
+                        
+!                        md1 = p1 / (p0 * g1)
+!                        input_data%prcp_indice%md1(j, i) = md1
+                    
+!                        md2 = (1._sp / (g2 - g1 * g1)) * ((p2 / p0) - (p1 / p0) * (p1 / p0))
+!                        input_data%prcp_indice%md2(j, i) = md2
+                        
+!                        std = sqrt((minv_n * sum_p2) - (mean_p * mean_p))
+!                        input_data%prcp_indice%std(j, i) = std
+                        
+!                    end if
+                
+!                end do
+                
+!            end do
+            
+!        end subroutine compute_prcp_indice
+        
+        !% TODO comment
+        !% Maybe pass this subroutine to mwd_mesh.f90
+        subroutine flatten_flwdst(flwdst, a)
+            
+            implicit none
+            
+            real(sp), dimension(:,:), intent(in) :: flwdst
+            real(sp), dimension(:), allocatable, intent(inout) :: a
+            
+            integer :: i, j, n
+            
+            allocate(a(count(flwdst .ge. 0._sp)))
+            
+            n = 1
+            
+            do i=1, size(flwdst, 2)
+            
+                do j=1, size(flwdst, 1)
+                    
+                    if (flwdst(j, i) .ge. 0._sp) then
+                        
+                        a(n) = flwdst(j, i) 
+                        n = n + 1
+                    
+                    end if
+                
+                end do
+            
+            end do
+        
+        end subroutine flatten_flwdst
+        
+!%      TODO comment
+!%      Subroutine takes more time with sparse forcing (call sparse_vector_to_matrix_r)
         subroutine compute_prcp_indice(setup, mesh, input_data)
         
             implicit none
@@ -254,13 +382,37 @@ module mwd_input_data
             type(Input_DataDT), intent(inout) :: input_data
             
             integer, dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_mask
+            real(sp), dimension(mesh%nrow, mesh%ncol, mesh%ng) :: g3d_flwdst
             logical, dimension(mesh%nrow, mesh%ncol) :: mask
-            real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix, dflwdst
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix
             integer :: i, j
             real(sp) :: minv_n, sum_p, sum_p2, sum_d, sum_d2, sum_pd, &
             & sum_pd2, mean_p, p0, p1, p2, g1, g2, md1, md2, std
+            real(sp), dimension(101) :: flwdst_pctl, pctl = (/(i, i=0, 100, 1)/)
+            real(sp), dimension(:), allocatable :: tmp
             
             call mask_gauge(mesh, g3d_mask)
+            
+            do i=1, mesh%ng
+            
+                g3d_flwdst(:,:,i) = mesh%flwdst - &
+                & mesh%flwdst(mesh%gauge_pos(1, i), mesh%gauge_pos(2, i))
+                
+                if (allocated(tmp)) deallocate(tmp)
+                
+                call flatten_flwdst(g3d_flwdst(:,:,i), tmp)
+                
+                call percentile1d(tmp, pctl, flwdst_pctl)
+                
+                do j=1, size(pctl) - 1
+                
+                    input_data%prcp_indice%wf(i, 1, j) = flwdst_pctl(j+1)
+                    input_data%prcp_indice%wf(i, 2, j) = &
+                    & real(count(tmp .ge. flwdst_pctl(j) .and. tmp .lt. flwdst_pctl(j+1)), kind=sp)
+                
+                end do
+            
+            end do
             
             do i=1, setup%ntime_step
             
@@ -275,9 +427,6 @@ module mwd_input_data
                 end if
             
                 do j=1, mesh%ng
-                
-                    dflwdst = mesh%flwdst - &
-                    & mesh%flwdst(mesh%gauge_pos(1, j), mesh%gauge_pos(2, j))
                     
                     mask = (matrix .ge. 0._sp .and. g3d_mask(:,:,j) .eq. 1)
                     
@@ -289,10 +438,17 @@ module mwd_input_data
                     if (sum_p .gt. 0._sp) then
                         
                         sum_p2 = sum(matrix * matrix, mask=mask)
-                        sum_d = sum(dflwdst, mask=mask)
-                        sum_d2 = sum(dflwdst * dflwdst, mask=mask)
-                        sum_pd = sum(matrix * dflwdst, mask=mask)
-                        sum_pd2 = sum(matrix * dflwdst * dflwdst, mask=mask)
+                        
+                        sum_d = sum(g3d_flwdst(:,:,j), mask=mask)
+                        
+                        sum_d2 = sum(g3d_flwdst(:,:,j) * &
+                        & g3d_flwdst(:,:,j), mask=mask)
+                        
+                        sum_pd = sum(matrix * &
+                        & g3d_flwdst(:,:,j), mask=mask)
+                        
+                        sum_pd2 = sum(matrix * &
+                        & g3d_flwdst(:,:,j) * g3d_flwdst(:,:,j), mask=mask)
                         
                         mean_p = minv_n * sum_p
                         

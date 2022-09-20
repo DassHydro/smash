@@ -120,7 +120,7 @@ Second part of ``mesh`` configuration is:
 
 .. ipython:: python
 
-    mesh["flow"] = np.array(
+    mesh["flwdir"] = np.array(
         [
         [4, 5, 5, 5, 5, 5, 5, 5, 5, 5],
         [3, 4, 5, 5, 5, 5, 5, 5, 5, 5],

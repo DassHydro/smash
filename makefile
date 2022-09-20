@@ -64,13 +64,11 @@ c: \
 f77: \
  obj/adBuffer.o \
  obj/lbfgsb.o \
- obj/dlasrt.o \
- obj/lsame.o \
- obj/xerbla.o \
  
 #% f90 files
 f90: \
  obj/mwd_common.o \
+ obj/md_routine.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \
