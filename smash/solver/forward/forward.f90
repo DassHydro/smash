@@ -260,8 +260,8 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
         do g=1, mesh%ng
         
-            row = mesh%gauge_pos(1, g)
-            col = mesh%gauge_pos(2, g)
+            row = mesh%gauge_pos(g, 1)
+            col = mesh%gauge_pos(g, 2)
             
             if (setup%sparse_storage) then
                 

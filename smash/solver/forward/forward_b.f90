@@ -23,11 +23,10 @@
 !%      contains
 !%
 !%      [1] ParametersDT_initialise
-!%      [2] parameters_copy
-!%      [3] parameters_to_matrix
-!%      [4] matrix_to_parameters
-!%      [5] vector_to_parameters
-!%      [6] set0_parameters
+!%      [2] parameters_to_matrix
+!%      [3] matrix_to_parameters
+!%      [4] vector_to_parameters
+!%      [5] set0_parameters
 MODULE MWD_PARAMETERS_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -70,14 +69,6 @@ CONTAINS
     parameters%exc = 0._sp
     parameters%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE
-
-!%      TODO comment  
-  SUBROUTINE PARAMETERS_COPY(parameters_in, parameters_out)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_in
-    TYPE(PARAMETERSDT), INTENT(OUT) :: parameters_out
-    parameters_out = parameters_in
-  END SUBROUTINE PARAMETERS_COPY
 
 !  Differentiation of parameters_to_matrix in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: matrix
@@ -202,11 +193,10 @@ END MODULE MWD_PARAMETERS_DIFF_B
 !%      contains
 !%
 !%      [1] StatesDT_initialise
-!%      [2] states_copy
-!%      [3] states_to_matrix
-!%      [4] matrix_to_states
-!%      [5] vector_to_states
-!%      [6] set0_states
+!%      [2] states_to_matrix
+!%      [3] matrix_to_states
+!%      [4] vector_to_states
+!%      [5] set0_states
 MODULE MWD_STATES_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -240,14 +230,6 @@ CONTAINS
     states%hst = 0.01_sp
     states%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE
-
-!%      TODO comment       
-  SUBROUTINE STATES_COPY(states_in, states_out)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(IN) :: states_in
-    TYPE(STATESDT), INTENT(OUT) :: states_out
-    states_out = states_in
-  END SUBROUTINE STATES_COPY
 
 !  Differentiation of states_to_matrix in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: matrix
@@ -355,7 +337,6 @@ END MODULE MWD_STATES_DIFF_B
 !%      contains
 !%
 !%      [1] OutputDT_initialise
-!%      [2] output_copy
 MODULE MWD_OUTPUT_DIFF_B
 !% only: sp, dp, lchar, np, ns
   USE MWD_COMMON
@@ -404,14 +385,6 @@ CONTAINS
     END IF
     CALL STATESDT_INITIALISE(output%fstates, mesh)
   END SUBROUTINE OUTPUTDT_INITIALISE
-
-!%      TODO comment 
-  SUBROUTINE OUTPUT_COPY(output_in, output_out)
-    IMPLICIT NONE
-    TYPE(OUTPUTDT), INTENT(IN) :: output_in
-    TYPE(OUTPUTDT), INTENT(OUT) :: output_out
-    output_out = output_in
-  END SUBROUTINE OUTPUT_COPY
 
 END MODULE MWD_OUTPUT_DIFF_B
 
@@ -479,8 +452,8 @@ CONTAINS
     DO g=1,mesh%ng
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt/mesh%area(g)*1e3_sp
-      row = mesh%gauge_pos(1, g)
-      col = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(g, 1)
+      col = mesh%gauge_pos(g, 2)
       CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step &
 &                   + 1)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
@@ -587,8 +560,8 @@ CONTAINS
     DO g=1,mesh%ng
       qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
 &       %dt/mesh%area(g)*1e3_sp
-      row = mesh%gauge_pos(1, g)
-      col = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(g, 1)
+      col = mesh%gauge_pos(g, 2)
       qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
 &       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
 &       1e3_sp
@@ -1963,8 +1936,8 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
     DO g=1,mesh%ng
-      row = mesh%gauge_pos(1, g)
-      col = mesh%gauge_pos(2, g)
+      row = mesh%gauge_pos(g, 1)
+      col = mesh%gauge_pos(g, 2)
       IF (setup%sparse_storage) THEN
         k = mesh%rowcol_to_ind_sparse(row, col)
         output%qsim(g, t) = sparse_q(k)
@@ -2314,9 +2287,9 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 !% =============================================================================================================== %!
     DO g=1,mesh%ng
       CALL PUSHINTEGER4(row)
-      row = mesh%gauge_pos(1, g)
+      row = mesh%gauge_pos(g, 1)
       CALL PUSHINTEGER4(col)
-      col = mesh%gauge_pos(2, g)
+      col = mesh%gauge_pos(g, 2)
       IF (setup%sparse_storage) THEN
         CALL PUSHINTEGER4(k)
         k = mesh%rowcol_to_ind_sparse(row, col)
@@ -2339,8 +2312,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
     DO g=mesh%ng,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
-        row = mesh%gauge_pos(1, g)
-        col = mesh%gauge_pos(2, g)
+        row = mesh%gauge_pos(g, 1)
+        col = mesh%gauge_pos(g, 2)
         q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
         output_b%qsim(g, t) = 0.0_4
       ELSE

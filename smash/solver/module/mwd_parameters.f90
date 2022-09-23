@@ -20,11 +20,10 @@
 !%      contains
 !%
 !%      [1] ParametersDT_initialise
-!%      [2] parameters_copy
-!%      [3] parameters_to_matrix
-!%      [4] matrix_to_parameters
-!%      [5] vector_to_parameters
-!%      [6] set0_parameters
+!%      [2] parameters_to_matrix
+!%      [3] matrix_to_parameters
+!%      [4] vector_to_parameters
+!%      [5] set0_parameters
 
 module mwd_parameters
 
@@ -79,20 +78,6 @@ module mwd_parameters
             parameters%lr    = 5._sp
  
         end subroutine ParametersDT_initialise
-        
-        
-!%      TODO comment  
-        subroutine parameters_copy(parameters_in, &
-        & parameters_out)
-            
-            implicit none
-            
-            type(ParametersDT), intent(in) :: parameters_in
-            type(ParametersDT), intent(out) :: parameters_out
-            
-            parameters_out = parameters_in
-        
-        end subroutine parameters_copy
         
         
 !%      TODO comment  

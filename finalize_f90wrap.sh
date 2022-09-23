@@ -1,24 +1,25 @@
 #!/bin/bash
 
 # sed wrapped and differentiated DT
-sed_mwd_DT () {
+sed_DT () {
 
 	# Add copy to class method
-	sed -i "/.*join(ret).*/a \\\n\tdef copy(self):\n\t\treturn "$1"_copy(self)" ./smash/solver/_mwd_$1.py
+	sed -i "/from __future__/a \from smash.solver._mw_routine import copy_$1" ./smash/solver/_*$1.py
+	sed -i "/.*join(ret).*/a \\\n\tdef copy(self):\n\t\treturn copy_$1(self)" ./smash/solver/_*$1.py
 	
 	# Check for finalise method (depend on which machine/compiler its used)
-	sed -i "/.*_finalise/i \\\t\t\ttry:" ./smash/solver/_mwd_$1.py
-	sed -i "/.*finalise/s/^/\t/" ./smash/solver/_mwd_$1.py
-	sed -i "/.*_finalise/a \\\t\t\texcept:\n\t\t\t\tpass" ./smash/solver/_mwd_$1.py
+	sed -i "/.*_finalise/i \\\t\t\ttry:" ./smash/solver/_*$1.py
+	sed -i "/.*finalise/s/^/\t/" ./smash/solver/_*$1.py
+	sed -i "/.*_finalise/a \\\t\t\texcept:\n\t\t\t\tpass" ./smash/solver/_*$1.py
 
 }
 
 
-mwd_DT=("setup" "mesh" "input_data" "parameters" "states" "output")
+main_DT=("setup" "mesh" "input_data" "parameters" "states" "output")
 
-for dt in ${mwd_DT[@]}; do
+for dt in ${main_DT[@]}; do
   
-  sed_mwd_DT $dt
+  sed_DT $dt
   
 done
 
@@ -61,7 +62,7 @@ sed -i "/import logging/a \import numpy" ./smash/solver/_mwd_common.py
 sed -i "/return name_parameters/i \\\tname_parameters = numpy.array(name_parameters$decode)" ./smash/solver/_mwd_common.py
 sed -i "/return name_states/i \\\tname_states = numpy.array(name_states$decode)" ./smash/solver/_mwd_common.py
 
-# Change relative to absolute solver/_solver import
+# Change relative to absolute solver/_solver
 sed -i "0,/import _solver/s//from smash.solver import _solver/" ./smash/solver/_mw*.py
 sed -i "s/from solver/from smash.solver/g" ./smash/solver/_mw*.py
 

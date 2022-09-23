@@ -194,6 +194,23 @@ class Model(object):
             raise TypeError(
                 f"'output' attribute must be set with {type(OutputDT())}, not {type(value)}"
             )
+            
+    @property
+    def _last_update(self):
+        
+            return self.__last_update
+        
+    @_last_update.setter
+    def _last_update(self, value):
+        
+        if isinstance(value, str):
+            
+            self.__last_update = value
+            
+        else:
+            raise TypeError(
+                f"'_last_update' attribute must be set with {str}, not {type(value)}"
+            )
 
     def copy(self):
 
@@ -204,6 +221,7 @@ class Model(object):
         copy.parameters = self.parameters.copy()
         copy.states = self.states.copy()
         copy.output = self.output.copy()
+        copy._last_update = self._last_update
 
         return copy
 

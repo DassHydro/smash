@@ -35,18 +35,10 @@
 !%      contains
 !%
 !%      [1] MeshDT_initialise
-!%      [2] mesh_copy
-!%      [3] compute_rowcol_to_ind_sparse
-!%      [4] mask_upstream_cells
-!%      [5] mask_gauge
-!%      [6] sparse_matrix_to_vector_r
-!%      [7] sparse_matrix_to_vector_i
-!%      [8] sparse_vector_to_matrix_r
-!%      [9] sparse_vector_to_matrix_i
 
 module mwd_mesh
     
-    use mwd_common !% only: sp, dp, lchar
+    use mwd_common !% only: sp
     use mwd_setup !% only: SetupDT
     
     implicit none
@@ -71,8 +63,6 @@ module mwd_mesh
         integer, dimension(:,:), allocatable :: gauge_pos
         character(20), dimension(:), allocatable :: code
         real(sp), dimension(:), allocatable :: area
-        
-        
         
         !% </> Private
         real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
@@ -115,7 +105,7 @@ module mwd_mesh
                 allocate(mesh%flwdst(mesh%nrow, mesh%ncol))
                 mesh%flwdst = -99._sp
             
-                allocate(mesh%gauge_pos(2, mesh%ng))
+                allocate(mesh%gauge_pos(mesh%ng, 2))
                 
                 allocate(mesh%code(mesh%ng))
                 mesh%code = "..."
@@ -130,7 +120,6 @@ module mwd_mesh
             if (setup%sparse_storage) then
                 
                 allocate(mesh%rowcol_to_ind_sparse(mesh%nrow, mesh%ncol))
-                mesh%rowcol_to_ind_sparse = -99
                 
             end if
             
@@ -138,286 +127,5 @@ module mwd_mesh
             mesh%local_active_cell = 1
             
         end subroutine MeshDT_initialise
-        
-
-!%      TODO comment
-        subroutine mesh_copy(mesh_in, mesh_out)
-            
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh_in
-            type(MeshDT), intent(out) :: mesh_out
-            
-            mesh_out = mesh_in
-        
-        end subroutine mesh_copy
-        
-        
-!%      TODO comment        
-        subroutine compute_rowcol_to_ind_sparse(mesh)
-        
-            implicit none
-            
-            type(MeshDT), intent(inout) :: mesh
-            
-            integer :: i, row, col, k
-            
-            k = 0
-            
-            do i=1, mesh%nrow * mesh%ncol
-            
-                if (mesh%path(1, i) .gt. 0 .and. &
-                & mesh%path(2, i) .gt. 0) then
-                    
-                    row = mesh%path(1, i)
-                    col = mesh%path(2, i)
-                    
-                    if (mesh%active_cell(row, col) .eq. 1) then
-                        
-                        k = k + 1
-                        mesh%rowcol_to_ind_sparse(row, col) = k
-                        
-                    end if
-                
-                end if
-            
-            end do
-        
-        end subroutine compute_rowcol_to_ind_sparse
-    
-    
-!%      TODO comment
-        recursive subroutine mask_upstream_cells(row, col, mesh, mask)
-        
-            implicit none
-            
-            integer, intent(in) :: row, col
-            type(MeshDT), intent(in) :: mesh
-            integer, dimension(mesh%nrow, mesh%ncol), intent(inout) &
-            & :: mask
-            
-            integer :: i, row_imd, col_imd
-            integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
-            integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-            integer, dimension(8) :: dkind = [1, 2, 3, 4, 5, 6, 7, 8]
-            
-            mask(row, col) = 1
-    
-            do i=1, 8
-                
-                col_imd = col + dcol(i)
-                row_imd = row + drow(i)
-                
-                if (col_imd .gt. 0 .and. col_imd .le. mesh%ncol .and. &
-                &   row_imd .gt. 0 .and. row_imd .le. mesh%nrow) then
-                
-                    if (mesh%flwdir(row_imd, col_imd) .eq. dkind(i)) then
-                        
-                        call mask_upstream_cells(row_imd, col_imd, &
-                        & mesh, mask)
-                    
-                    end if
-                    
-                end if
-            
-            end do
-                    
-        end subroutine mask_upstream_cells
-            
-            
-!%      TODO comment
-        subroutine mask_gauge(mesh, mask)
-            
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh
-            integer, dimension(mesh%nrow, mesh%ncol, mesh%ng), &
-            & intent(inout) :: mask
-            
-            integer :: i
-            
-            mask = 0
-            
-            do i=1, mesh%ng
-            
-                call mask_upstream_cells(mesh%gauge_pos(1, i), &
-                & mesh%gauge_pos(2, i), mesh, mask(:, :, i))
-            
-            end do
-        
-        end subroutine mask_gauge
-
-
-!%      TODO comment        
-        subroutine sparse_matrix_to_vector_r(mesh, matrix, vector)
-        
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh
-            real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) &
-            & :: matrix
-            real(sp), dimension(mesh%nac), intent(inout) :: vector
-            
-            integer :: i, row, col, k
-            
-            k = 0
-            
-            do i=1, mesh%nrow * mesh%ncol
-            
-                if (mesh%path(1, i) .gt. 0 .and. &
-                & mesh%path(2, i) .gt. 0) then
-                    
-                    row = mesh%path(1, i)
-                    col = mesh%path(2, i)
-                    
-                    if (mesh%active_cell(row, col) .eq. 1) then
-                        
-                        k = k + 1
-                        vector(k) = matrix(row, col)
-                        
-                    end if
-                
-                end if
-            
-            end do
-        
-        end subroutine sparse_matrix_to_vector_r
-        
-
-!%      TODO comment        
-        subroutine sparse_matrix_to_vector_i(mesh, matrix, vector)
-        
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh
-            integer, dimension(mesh%nrow, mesh%ncol), intent(in) &
-            & :: matrix
-            integer, dimension(mesh%nac), intent(inout) :: vector
-            
-            integer :: i, row, col, k
-            
-            k = 0
-            
-            do i=1, mesh%nrow * mesh%ncol
-            
-                if (mesh%path(1, i) .gt. 0 .and. &
-                & mesh%path(2, i) .gt. 0) then
-                    
-                    row = mesh%path(1, i)
-                    col = mesh%path(2, i)
-                    
-                    if (mesh%active_cell(row, col) .eq. 1) then
-                        
-                        k = k + 1
-                        vector(k) = matrix(row, col)
-                        
-                    end if
-                
-                end if
-            
-            end do
-        
-        end subroutine sparse_matrix_to_vector_i
-        
-        
-!%      TODO comment
-        subroutine sparse_vector_to_matrix_r(mesh, vector, matrix, &
-        & na_value)
-        
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh
-            real(sp), dimension(mesh%nac), intent(in) :: vector
-            real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) &
-            & :: matrix
-            real(sp), optional, intent(in) :: na_value
-            
-            integer :: i, row, col, k
-            
-            k = 0
-            
-            do i=1, mesh%nrow * mesh%ncol
-                
-                if (mesh%path(1, i) .gt. 0 .and. &
-                & mesh%path(2, i) .gt. 0) then
-                    
-                    row = mesh%path(1, i)
-                    col = mesh%path(2, i)
-                    
-                    if (mesh%active_cell(row, col) .eq. 1) then
-                        
-                        k = k + 1
-                        matrix(row, col) = vector(k)
-                        
-                    else
-                    
-                         if (present(na_value)) then
-                        
-                            matrix(row, col) = na_value
-                            
-                        else
-                        
-                            matrix(row, col) = -99._sp
-                        
-                        end if
-                    
-                    end if
-                    
-                end if
-                
-            end do
-        
-        end subroutine sparse_vector_to_matrix_r
-        
-
-!%      TODO comment
-        subroutine sparse_vector_to_matrix_i(mesh, vector, matrix, &
-        & na_value)
-        
-            implicit none
-            
-            type(MeshDT), intent(in) :: mesh
-            integer, dimension(mesh%nac), intent(in) :: vector
-            integer, dimension(mesh%nrow, mesh%ncol), intent(inout) &
-            & :: matrix
-            integer, optional, intent(in) :: na_value
-            
-            integer :: i, row, col, k
-                
-            k = 0
-            
-            do i=1, mesh%nrow * mesh%ncol
-                
-                if (mesh%path(1, i) .gt. 0 .and. &
-                & mesh%path(2, i) .gt. 0) then
-                    
-                    row = mesh%path(1, i)
-                    col = mesh%path(2, i)
-                    
-                    if (mesh%active_cell(row, col) .eq. 1) then
-                        
-                        k = k + 1
-                        matrix(row, col) = vector(k)
-                        
-                    else
-                    
-                         if (present(na_value)) then
-                        
-                            matrix(row, col) = na_value
-                            
-                        else
-                        
-                            matrix(row, col) = -99
-                            
-                        end if
-                    
-                    end if
-                    
-                end if
-                
-            end do
-        
-        end subroutine sparse_vector_to_matrix_i
-
 
 end module mwd_mesh

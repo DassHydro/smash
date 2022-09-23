@@ -2,8 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mwd_mesh import compute_rowcol_to_ind_sparse
-from smash.solver._mwd_input_data import compute_mean_forcing, compute_prcp_indice
+from smash.solver._mw_routine import compute_rowcol_to_ind_sparse, compute_mean_forcing, compute_prcp_indice
 
 from smash.core.utils import sparse_matrix_to_vector
 
@@ -23,6 +22,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import datetime
+import time
 
 RATIO_PET_HOURLY = np.array(
     [
@@ -292,10 +292,10 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     """
 
     _standardize_mesh(setup, mesh)
-
+    
     if setup.sparse_storage:
-
-        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mwd_mesh
+        
+        compute_rowcol_to_ind_sparse(mesh) #% Fortran subroutine mw_routine
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -606,11 +606,11 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if setup.mean_forcing:
 
-        compute_mean_forcing(setup, mesh, input_data)
-        
+        compute_mean_forcing(setup, mesh, input_data) #% Fortran subroutine mw_routine
+    
     if setup.prcp_indice:
     
-        compute_prcp_indice(setup, mesh, input_data)
+        compute_prcp_indice(setup, mesh, input_data) #% Fortran subroutine mw_routine
         
     if setup.read_descriptor:
         

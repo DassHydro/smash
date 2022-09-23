@@ -34,7 +34,7 @@
 !%      ``exchange_module``        Choice of exchange module                              (default: 0)
 !%      ``routing_module``         Choice of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
-
+!%
 !%      </> Private
 !%      ========================== =====================================
 !%      `Variables`                Description
@@ -56,8 +56,8 @@
 !%      =========================  =====================================
 !%
 !%      contains
-!%
-!%      [1] setup_copy
+!%      
+!%      [1] SetupDT_initialise
 
 module mwd_setup
     
@@ -183,17 +183,5 @@ module mwd_setup
             end if
         
         end subroutine SetupDT_initialise
-    
-!%      TODO comment
-        subroutine setup_copy(setup_in, setup_out)
-                
-            implicit none
-            
-            type(SetupDT), intent(in) :: setup_in
-            type(SetupDT), intent(out) :: setup_out
-            
-            setup_out = setup_in
-            
-        end subroutine setup_copy
 
 end module mwd_setup

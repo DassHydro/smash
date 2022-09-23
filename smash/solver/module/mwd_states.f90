@@ -17,11 +17,10 @@
 !%      contains
 !%
 !%      [1] StatesDT_initialise
-!%      [2] states_copy
-!%      [3] states_to_matrix
-!%      [4] matrix_to_states
-!%      [5] vector_to_states
-!%      [6] set0_states
+!%      [2] states_to_matrix
+!%      [3] matrix_to_states
+!%      [4] vector_to_states
+!%      [5] set0_states
 
 module mwd_states
 
@@ -67,20 +66,6 @@ module mwd_states
             states%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
-        
-        
-!%      TODO comment       
-        subroutine states_copy(states_in, &
-        & states_out)
-            
-            implicit none
-            
-            type(StatesDT), intent(in) :: states_in
-            type(StatesDT), intent(out) :: states_out
-            
-            states_out = states_in
-        
-        end subroutine states_copy
         
         
 !%      TODO comment 

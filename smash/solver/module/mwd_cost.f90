@@ -53,8 +53,8 @@ module mwd_cost
                 qs = output%qsim(g, setup%optim_start_step:setup%ntime_step) &
                 & * setup%dt / mesh%area(g) * 1e3_sp
                 
-                row = mesh%gauge_pos(1, g)
-                col = mesh%gauge_pos(2, g)
+                row = mesh%gauge_pos(g, 1)
+                col = mesh%gauge_pos(g, 2)
                 
                 qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step) &
                 & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
