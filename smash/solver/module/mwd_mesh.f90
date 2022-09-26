@@ -75,6 +75,11 @@ module mwd_mesh
     
         subroutine MeshDT_initialise(mesh, setup, nrow, ncol, ng)
         
+            !% Notes
+            !% -----
+            !%
+            !% MeshDT initialisation subroutine
+        
             implicit none
             
             type(SetupDT), intent(inout) :: setup

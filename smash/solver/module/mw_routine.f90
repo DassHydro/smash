@@ -3,14 +3,16 @@
 
 module mw_routine
 
-    use mwd_common, only: sp
+    use mwd_common, only: sp, np, ns
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
     use mwd_parameters, only: ParametersDT
     use mwd_states, only: StatesDT
     use mwd_output, only: OutputDT
-    use m_statistic, only: quantile, flatten2d
+    
+    use m_statistic, only: quantile
+    use m_array_manipulation, only: ma_flatten
     
     implicit none
     
@@ -117,9 +119,16 @@ module mw_routine
         
         end subroutine copy_output
         
-        
-!%      TODO comment        
+               
         subroutine compute_rowcol_to_ind_sparse(mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% (row, col) indices to (k) sparse indices subroutine
+            !% Given MeshDT, 
+            !% it saves the link between (row, col) matrix to (k) vector indice
+            !% in MeshDT%rowcol_to_sparse_indice
         
             implicit none
             
@@ -151,8 +160,15 @@ module mw_routine
         end subroutine compute_rowcol_to_ind_sparse
     
 
-!%      TODO comment
         recursive subroutine mask_upstream_cells(row, col, mesh, mask)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Masked upstream cells subroutine
+            !% Given (row, col) indices, MeshDT, 
+            !% it returns a mask where True values are upstream cells of
+            !% the given row, col indices.
         
             implicit none
             
@@ -190,8 +206,19 @@ module mw_routine
         end subroutine mask_upstream_cells
 
 
-!%      TODO comment        
         subroutine sparse_matrix_to_vector_r(mesh, matrix, vector)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Sparse matrix to vector subroutine
+            !% Given MeshDT, a single precision matrix of dim(2) and size(mesh%nrow, mesh%ncol),
+            !% it returns a single precision vector of dim(1) and size(mesh%nac)
+            !% Flatten rule follow mesh%rowcol_to_ind_sparse
+            !%
+            !% See Also
+            !% --------
+            !% compute compute_rowcol_to_ind_sparse
         
             implicit none
             
@@ -226,8 +253,19 @@ module mw_routine
         end subroutine sparse_matrix_to_vector_r
         
 
-!%      TODO comment
         subroutine sparse_matrix_to_vector_i(mesh, matrix, vector)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Sparse matrix to vector subroutine
+            !% Given MeshDT, an integer matrix of dim(2) and size(mesh%nrow, mesh%ncol),
+            !% it returns an integer vector of dim(1) and size(mesh%nac)
+            !% Flatten rule follow mesh%rowcol_to_ind_sparse
+            !%
+            !% See Also
+            !% --------
+            !% compute compute_rowcol_to_ind_sparse
         
             implicit none
             
@@ -261,10 +299,22 @@ module mw_routine
         
         end subroutine sparse_matrix_to_vector_i
         
-        
-!%      TODO comment
+
         subroutine sparse_vector_to_matrix_r(mesh, vector, matrix, &
         & na_value)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Sparse vector to matrix subroutine
+            !% Given MeshDT, a single precision vector of dim(1) and size(mesh%nac),
+            !% optionnaly a single precesion no-data value,
+            !% it returns a single precision matrix of dim(2) and size(mesh%nrow, mesh%ncol)
+            !% Unflatten rule follow mesh%rowcol_to_ind_sparse
+            !%
+            !% See Also
+            !% --------
+            !% compute compute_rowcol_to_ind_sparse
         
             implicit none
             
@@ -312,9 +362,21 @@ module mw_routine
         end subroutine sparse_vector_to_matrix_r
         
 
-!%      TODO comment
         subroutine sparse_vector_to_matrix_i(mesh, vector, matrix, &
         & na_value)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Sparse vector to matrix subroutine
+            !% Given MeshDT, an integer vector of dim(1) and size(mesh%nac),
+            !% optionnaly an integer no-data value,
+            !% it returns an integer matrix of dim(2) and size(mesh%nrow, mesh%ncol)
+            !% Unflatten rule follow mesh%rowcol_to_ind_sparse
+            !%
+            !% See Also
+            !% --------
+            !% compute compute_rowcol_to_ind_sparse
         
             implicit none
             
@@ -362,8 +424,16 @@ module mw_routine
         end subroutine sparse_vector_to_matrix_i
         
         
-!%      TODO comment
         subroutine compute_mean_forcing(setup, mesh, input_data)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Mean forcing computation subroutine
+            !% Given SetupDT, MeshDT, Input_DataDT,
+            !% it saves in Input_Data%mean_prcp, Input_DataDT%mean_pet the
+            !% spatial average by catchment of precipitation and evapotranspiration
+            !% for each time step.
                 
             implicit none
             
@@ -414,9 +484,17 @@ module mw_routine
         end subroutine compute_mean_forcing
         
         
-!%      TODO comment
         subroutine compute_prcp_indice(setup, mesh, input_data)
         
+            !% Notes
+            !% -----
+            !%
+            !% Prcp indice computation subroutine
+            !% Given SetupDT, MeshDT, Input_DataDT,
+            !% it saves in Input_Data%prcp_indice several precipitation indices.
+            !% DOI: doi:10.5194/hess-15-3767-2011 (Zoccatelli et al., 2011)
+            !% DOI: https://doi.org/10.1016/j.hydrol.2015.04.058 (Emmanuel et al., 2015)
+            
             implicit none
             
             type(SetupDT), intent(in) :: setup
@@ -444,7 +522,7 @@ module mw_routine
                 flwdst_gauge(:,:,i) = mesh%flwdst - &
                 & mesh%flwdst(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
                 
-                call flatten2d(flwdst_gauge(:,:,i), flwdst1d, mask_gauge(:,:,i))
+                call ma_flatten(flwdst_gauge(:,:,i), mask_gauge(:,:,i), flwdst1d)
 
                 !% tmp needed cause array(1, n) != array(n) 
                 call quantile(flwdst1d, qtl, flwdst_qtl)
@@ -561,5 +639,6 @@ module mw_routine
             end do
             
         end subroutine compute_prcp_indice
-        
+
+
 end module mw_routine

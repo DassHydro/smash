@@ -47,11 +47,11 @@ class Model(object):
         if setup or mesh:
 
             if isinstance(setup, dict):
-                
+
                 dn = setup.get("descriptor_name", [])
-                
+
                 self.setup = SetupDT(1 if isinstance(dn, str) else len(dn))
-                
+
                 _parse_derived_type(self.setup, setup)
 
             else:
@@ -82,14 +82,14 @@ class Model(object):
             self.states = StatesDT(self.mesh)
 
             self.output = OutputDT(self.setup, self.mesh)
-            
+
             self._last_update = "Initialization"
-            
+
     def __repr__(self):
-        
+
         dim = f"Model dimension: (time: {self.setup._ntime_step}, nrow: {self.mesh.nrow}, ncol: {self.mesh.ncol})"
         last_update = f"Model last update: {self._last_update}"
-        
+
         return f"{dim}\n{last_update}"
 
     @property
@@ -194,19 +194,19 @@ class Model(object):
             raise TypeError(
                 f"'output' attribute must be set with {type(OutputDT())}, not {type(value)}"
             )
-            
+
     @property
     def _last_update(self):
-        
-            return self.__last_update
-        
+
+        return self.__last_update
+
     @_last_update.setter
     def _last_update(self, value):
-        
+
         if isinstance(value, str):
-            
+
             self.__last_update = value
-            
+
         else:
             raise TypeError(
                 f"'_last_update' attribute must be set with {str}, not {type(value)}"
@@ -248,7 +248,7 @@ class Model(object):
                 instance.output,
                 True,
             )
-            
+
             instance._last_update = "Forward Run"
 
         elif case == "adj":
@@ -261,7 +261,7 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
-            
+
             instance._last_update = "Adjoint Run"
 
         elif case == "tl":
@@ -274,7 +274,7 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
-            
+
             instance._last_update = "Tangent Linear Run"
 
         else:
@@ -307,7 +307,7 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
-            
+
             instance._last_update = "Scalar Product Test"
 
         elif case == "gt":
@@ -320,7 +320,7 @@ class Model(object):
                 instance.states,
                 instance.output,
             )
-            
+
             instance._last_update = "Gradient Test"
 
         else:
@@ -387,7 +387,7 @@ class Model(object):
                 ost,
                 **options,
             )
-            
+
             instance._last_update = "Step By Step Optimization"
 
         elif algorithm == "l-bfgs-b":
@@ -401,21 +401,15 @@ class Model(object):
                 ost,
                 **options,
             )
-            
+
             instance._last_update = "L-BFGS-B Optimization"
-            
+
         elif algorithm == "nelder-mead":
-            
+
             _optimize_nelder_mead(
-                instance,
-                control_vector,
-                jobs_fun,
-                bounds,
-                wgauge,
-                ost,
-                **options
+                instance, control_vector, jobs_fun, bounds, wgauge, ost, **options
             )
-            
+
             instance._last_update = "Nelder-Mead Optimization"
 
         #% TODO

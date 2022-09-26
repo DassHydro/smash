@@ -24,10 +24,11 @@
 !%      [3] matrix_to_parameters
 !%      [4] vector_to_parameters
 !%      [5] set0_parameters
+!%      [6] set1_parameters
 
 module mwd_parameters
 
-    use mwd_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, np
     use mwd_mesh  !% only: MeshDT
     
     implicit none
@@ -48,6 +49,11 @@ module mwd_parameters
     contains
         
         subroutine ParametersDT_initialise(parameters, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% ParametersDT initialisation subroutine
         
             implicit none
             
@@ -79,8 +85,7 @@ module mwd_parameters
  
         end subroutine ParametersDT_initialise
         
-        
-!%      TODO comment  
+        !%      TODO comment  
         subroutine parameters_to_matrix(parameters, matrix)
         
             implicit none
@@ -156,5 +161,22 @@ module mwd_parameters
             call vector_to_parameters(vector0, parameters)
         
         end subroutine set0_parameters
+        
+        
+!%      TODO comment  
+        subroutine set1_parameters(parameters)
+        
+            implicit none
+            
+            type(ParametersDT), intent(inout) :: parameters
+            
+            real(sp), dimension(np) :: vector1
+            
+            vector1 = 1._sp
+            
+            call vector_to_parameters(vector1, parameters)
+        
+        end subroutine set1_parameters
+
 
 end module mwd_parameters

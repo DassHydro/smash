@@ -16,6 +16,7 @@
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
 !%      ``ian``                  Ialpha gradient test
+!%      ``fstates``              Final states (StatesDT)
 !%      ======================== =======================================
 !%
 !%      contains
@@ -54,6 +55,11 @@ module mwd_output
     contains
     
         subroutine OutputDT_initialise(output, setup, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% OutputDT initialisation subroutine
         
             implicit none
             

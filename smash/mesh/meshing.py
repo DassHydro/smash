@@ -333,15 +333,15 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     col_ol = col_ol - scol
     row_ol = row_ol - srow
-    
+
     flwdst = mw_meshing.flow_distance(flwdir, col_ol, row_ol, area_ol, dx)
 
     drained_area = mw_meshing.drained_area(flwdir)
 
     path = _get_path(drained_area)
-    
+
     flwdst = np.ma.masked_array(flwdst, mask=(1 - mask_dln))
-    
+
     drained_area = np.ma.masked_array(drained_area, mask=(1 - mask_dln))
 
     active_cell = mask_dln.astype(np.int32)

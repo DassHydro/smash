@@ -69,6 +69,7 @@ f77: \
 f90: \
  obj/mwd_common.o \
  obj/m_statistic.o \
+ obj/m_array_manipulation.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \

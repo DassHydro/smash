@@ -9,22 +9,33 @@
 
 module mw_run
     
-    use mwd_common !% only: sp, dp, lchar, np, np
-    use mwd_setup !% only: SetupDT
-    use mwd_mesh  !% only: MeshDT
-    use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !%  only: ParametersDT, parameters_to_matrix
-    use mwd_states !% only: StatesDT
-    use mwd_output !% only: OutputDT
+    use mwd_common, only: sp, np, ns
+    use mwd_setup, only: SetupDT
+    use mwd_mesh, only: MeshDT
+    use mwd_input_data, only: Input_DataDT
+    use mwd_parameters, only: ParametersDT, ParametersDT_initialise, &
+    & parameters_to_matrix, set0_parameters, set1_parameters
+    use mwd_states, only: StatesDT, StatesDT_initialise, &
+    & states_to_matrix, set0_states, set1_states
+    use mwd_output, only: OutputDT, OutputDT_initialise
     
     implicit none
     
     contains
 
-!%      TODO comment
-        !% Calling forward from forward/forward.f90
         subroutine forward_run(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, verbose)
         
+            !% Notes
+            !% -----
+            !%
+            !% Forward run subroutine
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, 
+            !% ParametersDT_bgd, StatesDT, StatesDT_bgd, OutputDT and logical verbose value,
+            !% it computes a forward run. Verbose argument allow to print:
+            !% "</> Forward Model M (k)"
+            !%
+            !% Calling forward from forward/forward.f90  Y = M (k)
+            
             implicit none
             
             type(SetupDT), intent(inout) :: setup
@@ -46,9 +57,17 @@ module mw_run
 
         end subroutine forward_run
         
-!%      TODO comment
-        !% Calling forward_b from forward/forward_b.f90
+        !% WIP
         subroutine adjoint_run(setup, mesh, input_data, parameters, states, output)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Forward run subroutine
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it computes an adjoint run.
+            !%
+            !% Calling forward_b from forward/forward_b.f90 dk* = (dM/dk)* (k) . dY*
             
             implicit none
             
@@ -94,11 +113,19 @@ module mw_run
             
         end subroutine adjoint_run
         
-!%      TODO comment
-        !% Calling forward_d from forward/forward_d.f90
+        !% WIP
         subroutine tangent_linear_run(setup, mesh, input_data, parameters, states, output)
         
-        implicit none
+            !% Notes
+            !% -----
+            !%
+            !% Forward run subroutine
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it computes an tangent linear run.
+            !%
+            !% Calling forward_d from forward/forward_d.f90 dY = (dM/dk) (k) . dk
+        
+            implicit none
             
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
@@ -120,14 +147,8 @@ module mw_run
             call StatesDT_initialise(states_d, mesh)
             call OutputDT_initialise(output_d, setup, mesh)
             
-            call parameters_to_matrix(parameters_d, parameters_d_matrix)
-            call states_to_matrix(states_d, states_d_matrix)
-            
-            parameters_d_matrix = 1._sp
-            states_d_matrix = 0._sp
-            
-            call matrix_to_parameters(parameters_d_matrix, parameters_d)
-            call matrix_to_states(states_d_matrix, states_d)
+            call set1_parameters(parameters_d)
+            call set0_states(states_d)
             
             parameters_bgd = parameters
             states_bgd = states

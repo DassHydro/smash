@@ -1,4 +1,5 @@
-!%    This module `mw_cost` encapsulates all SMASH cost (type, subroutines, functions)
+!%    This module `mwd_cost` encapsulates all SMASH cost (type, subroutines, functions)
+!%    This module is wrapped and differentiated.
 !%
 !%      contains
 !%
@@ -19,8 +20,8 @@ module mwd_cost
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
     use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !% only: ParametersDT, parameters_to_matrix
-    use mwd_states !% only: StatesDT, states_to_matrix
+    use mwd_parameters !% only: ParametersDT
+    use mwd_states !% only: StatesDT
     use mwd_output !% only: OutputDT
 
     implicit none
@@ -29,9 +30,26 @@ module mwd_cost
     
     contains
         
-        !% TODO comment
         subroutine compute_jobs(setup, mesh, input_data, output, jobs)
         
+            !% Notes
+            !% -----
+            !%
+            !% Jobs computation subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, OutputDT,
+            !% it returns the result of Jobs computation
+            !%
+            !% Jobs = f(Q*,Q)
+            !%
+            !% See Also
+            !% --------
+            !% nse
+            !% kge
+            !% se
+            !% rmse
+            !% logarithmique
+            
             implicit none
             
             type(SetupDT), intent(in) :: setup
@@ -103,9 +121,22 @@ module mwd_cost
 
         end subroutine compute_jobs
         
-        
-        !% TODO comment
+        !% WIP
         subroutine compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Jreg computation subroutine
+            !%
+            !% Given SetupDT, MeshDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd,
+            !% it returns the result of Jreg computation
+            !%
+            !% Jreg = f(theta_bgd,theta)
+            !%
+            !% See Also
+            !% --------
+            !% reg_prior
         
             implicit none
             
@@ -144,8 +175,22 @@ module mwd_cost
         end subroutine compute_jreg
 
 
-        !% TODO comment
         subroutine compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
+        
+            !% Notes
+            !% -----
+            !%
+            !% cost computation subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd, OutputDT
+            !% it returns the result of cost computation
+            !%
+            !% cost = Jobs + wJreg * Jreg
+            !%
+            !% See Also
+            !% --------
+            !% compute_jobs
+            !% compute_jreg
         
             implicit none
             
@@ -178,8 +223,18 @@ module mwd_cost
         end subroutine compute_cost
 
         
-        !% TODO comment
         function nse(x, y) result(res)
+            
+            !% Notes
+            !% -----
+            !%
+            !% NSE computation function
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of NSE computation
+            !% num = sum(x**2) - 2 * sum(x*y) + sum(y**2)
+            !% den = sum(x**2) - n * mean(x) ** 2
+            !% NSE = num / den
     
             implicit none
             
@@ -222,8 +277,18 @@ module mwd_cost
         end function nse
         
         
-        !% TODO comment
         subroutine kge_components(x, y, r, a, b)
+        
+            !% Notes
+            !% -----
+            !%
+            !% KGE components computation subroutine
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns KGE components r, a, b
+            !% r = cov(x,y) / std(y) / std(x)
+            !% a = mean(y) / mean(x)
+            !% b = std(y) / std(x)
         
             implicit none
             
@@ -271,8 +336,20 @@ module mwd_cost
         end subroutine kge_components
     
 
-        !% TODO comment
         function kge(x, y) result(res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% KGE computation function
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of KGE computation
+            !% KGE = sqrt((1 - r) ** 2 + (1 - a) ** 2 + (1 - b) ** 2)
+            !%
+            !% See Also
+            !% --------
+            !% kge_components
         
             implicit none
             
@@ -291,8 +368,16 @@ module mwd_cost
         end function kge
         
 
-        !% TODO comment
         function se(x, y) result(res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Square Error (SE) computation function
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of SE computation
+            !% SE = sum((x - y) ** 2)
             
             implicit none
             
@@ -316,8 +401,20 @@ module mwd_cost
         end function se
         
 
-        !% TODO comment
         function rmse(x, y) result(res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Root Mean Square Error (RMSE) computation function
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of SE computation
+            !% RMSE = sqrt(SE / n)
+            !%
+            !% See Also
+            !% --------
+            !% se
         
             implicit none
             
@@ -343,8 +440,16 @@ module mwd_cost
         end function rmse
         
         
-        !% TODO comment
         function logarithmique(x, y) result(res)
+            
+            !% Notes
+            !% -----
+            !%
+            !% Logarithmique (LGRM) computation function
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of LGRM computation
+            !% LGRM = sum(x * log(y/x) ** 2)
             
             implicit none
             
@@ -369,9 +474,19 @@ module mwd_cost
         end function logarithmique
 
 
-        !% TODO comment
+        !% TODO refactorize
         function reg_prior(mesh, size_mat3, matrix, matrix_bgd) result(res)
         
+            !% Notes
+            !% -----
+            !%
+            !% Prior regularization (PR) computation function
+            !%
+            !% Given two matrix of dim(3) and size(mesh%nrow, mesh%ncol, size_mat3), 
+            !% it returns the result of PR computation. (Square Error between matrix)
+            !% 
+            !% PR = sum((mat1 - mat2) ** 2)
+            
             implicit none
             
             type(MeshDT), intent(in) :: mesh

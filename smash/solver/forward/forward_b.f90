@@ -27,8 +27,9 @@
 !%      [3] matrix_to_parameters
 !%      [4] vector_to_parameters
 !%      [5] set0_parameters
+!%      [6] set1_parameters
 MODULE MWD_PARAMETERS_DIFF_B
-!% only: sp, dp, lchar, np, ns
+!% only: sp, np
   USE MWD_COMMON
 !% only: MeshDT
   USE MWD_MESH
@@ -172,6 +173,15 @@ CONTAINS
     CALL VECTOR_TO_PARAMETERS(vector0, parameters)
   END SUBROUTINE SET0_PARAMETERS
 
+!%      TODO comment  
+  SUBROUTINE SET1_PARAMETERS(parameters)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), DIMENSION(np) :: vector1
+    vector1 = 1._sp
+    CALL VECTOR_TO_PARAMETERS(vector1, parameters)
+  END SUBROUTINE SET1_PARAMETERS
+
 END MODULE MWD_PARAMETERS_DIFF_B
 
 !%      This module `mwd_states` encapsulates all SMASH states.
@@ -197,8 +207,9 @@ END MODULE MWD_PARAMETERS_DIFF_B
 !%      [3] matrix_to_states
 !%      [4] vector_to_states
 !%      [5] set0_states
+!%      [6] set1_states
 MODULE MWD_STATES_DIFF_B
-!% only: sp, dp, lchar, np, ns
+!% only: sp, ns
   USE MWD_COMMON
 !% only: MeshDT
   USE MWD_MESH
@@ -312,6 +323,15 @@ CONTAINS
     CALL VECTOR_TO_STATES(vector0, states)
   END SUBROUTINE SET0_STATES
 
+!%      TODO comment        
+  SUBROUTINE SET1_STATES(states)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), DIMENSION(ns) :: vector1
+    vector1 = 1._sp
+    CALL VECTOR_TO_STATES(vector1, states)
+  END SUBROUTINE SET1_STATES
+
 END MODULE MWD_STATES_DIFF_B
 
 !%      This module `mwd_output` encapsulates all SMASH output.
@@ -332,6 +352,7 @@ END MODULE MWD_STATES_DIFF_B
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
 !%      ``ian``                  Ialpha gradient test
+!%      ``fstates``              Final states (StatesDT)
 !%      ======================== =======================================
 !%
 !%      contains
@@ -388,7 +409,8 @@ CONTAINS
 
 END MODULE MWD_OUTPUT_DIFF_B
 
-!%    This module `mw_cost` encapsulates all SMASH cost (type, subroutines, functions)
+!%    This module `mwd_cost` encapsulates all SMASH cost (type, subroutines, functions)
+!%    This module is wrapped and differentiated.
 !%
 !%      contains
 !%
@@ -411,9 +433,9 @@ MODULE MWD_COST_DIFF_B
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: ParametersDT, parameters_to_matrix
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF_B
-!% only: StatesDT, states_to_matrix
+!% only: StatesDT
   USE MWD_STATES_DIFF_B
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_B
@@ -426,7 +448,6 @@ CONTAINS
 !   gradient     of useful results: jobs
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
-!% TODO comment
   SUBROUTINE COMPUTE_JOBS_B(setup, mesh, input_data, output, output_b, &
 &   jobs, jobs_b)
     IMPLICIT NONE
@@ -540,7 +561,6 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
-!% TODO comment
   SUBROUTINE COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -600,7 +620,7 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                states.hi:in states.hp:in states.hft:in states.hst:in
 !                states.hlr:in
-!% TODO comment
+!% WIP
   SUBROUTINE COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
 &   parameters_bgd, states, states_b, states_bgd, jreg, jreg_b)
     IMPLICIT NONE
@@ -649,7 +669,7 @@ CONTAINS
 &                         parameters_matrix, parameters_matrix_b)
   END SUBROUTINE COMPUTE_JREG_B
 
-!% TODO comment
+!% WIP
   SUBROUTINE COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, &
 &   states, states_bgd, jreg)
     IMPLICIT NONE
@@ -693,7 +713,6 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.hlr:in
-!% TODO comment
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &   parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
 &   output_b, cost, cost_b)
@@ -744,7 +763,6 @@ CONTAINS
 &                 , jobs_b)
   END SUBROUTINE COMPUTE_COST_B
 
-!% TODO comment
   SUBROUTINE COMPUTE_COST(setup, mesh, input_data, parameters, &
 &   parameters_bgd, states, states_bgd, output, cost)
     IMPLICIT NONE
@@ -771,7 +789,6 @@ CONTAINS
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE NSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -815,7 +832,6 @@ CONTAINS
     END DO
   END SUBROUTINE NSE_B
 
-!% TODO comment
   FUNCTION NSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -849,7 +865,6 @@ CONTAINS
 !  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: r a b
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -918,7 +933,6 @@ CONTAINS
     END DO
   END SUBROUTINE KGE_COMPONENTS_B
 
-!% TODO comment
   SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -959,7 +973,6 @@ CONTAINS
 !  Differentiation of kge in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE KGE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -983,7 +996,6 @@ CONTAINS
     CALL KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
   END SUBROUTINE KGE_B
 
-!% TODO comment
   FUNCTION KGE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -998,7 +1010,6 @@ CONTAINS
 !  Differentiation of se in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE SE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1024,7 +1035,6 @@ CONTAINS
     END DO
   END SUBROUTINE SE_B
 
-!% TODO comment
   FUNCTION SE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1040,7 +1050,6 @@ CONTAINS
 !  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE RMSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1077,7 +1086,6 @@ CONTAINS
     END DO
   END SUBROUTINE RMSE_B
 
-!% TODO comment
   FUNCTION RMSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1097,7 +1105,6 @@ CONTAINS
 !  Differentiation of logarithmique in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-!% TODO comment
   SUBROUTINE LOGARITHMIQUE_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1128,7 +1135,6 @@ CONTAINS
     END DO
   END SUBROUTINE LOGARITHMIQUE_B
 
-!% TODO comment
   FUNCTION LOGARITHMIQUE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
@@ -1146,7 +1152,7 @@ CONTAINS
 !  Differentiation of reg_prior in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: matrix
-!% TODO comment
+!% TODO refactorize
   SUBROUTINE REG_PRIOR_B(mesh, size_mat3, matrix, matrix_b, matrix_bgd, &
 &   res_b)
     IMPLICIT NONE
@@ -1162,7 +1168,7 @@ CONTAINS
     matrix_b = 2*(matrix-matrix_bgd)*res_b
   END SUBROUTINE REG_PRIOR_B
 
-!% TODO comment
+!% TODO refactorize
   FUNCTION REG_PRIOR(mesh, size_mat3, matrix, matrix_bgd) RESULT (RES)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -1197,7 +1203,7 @@ CONTAINS
 !  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: hi ei ci pn
 !   with respect to varying inputs: hi ci
-!% TODO Renommer argument pour etre global
+!% TODO comment
   SUBROUTINE GR_INTERCEPTION_B(prcp, pet, ci, ci_b, hi, hi_b, pn, pn_b, &
 &   ei, ei_b)
     IMPLICIT NONE
@@ -1242,7 +1248,7 @@ CONTAINS
     END IF
   END SUBROUTINE GR_INTERCEPTION_B
 
-!% TODO Renommer argument pour etre global
+!% TODO comment
   SUBROUTINE GR_INTERCEPTION(prcp, pet, ci, hi, pn, ei)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: prcp, pet, ci

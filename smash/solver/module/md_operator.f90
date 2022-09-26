@@ -19,7 +19,7 @@ module md_operator
     
     contains
         
-        !% TODO Renommer argument pour etre global
+        !% TODO comment
         subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
         
             implicit none

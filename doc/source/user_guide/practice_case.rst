@@ -109,7 +109,7 @@ First part of  ``mesh`` configuration is:
         "ng": 1,
         "nac": nrow * ncol,
         "area": nrow * ncol * (dx ** 2),
-        "gauge_pos": np.array([[10], [10]], dtype=np.int32),
+        "gauge_pos": np.array([10, 10], dtype=np.int32),
     }
 
 Second part of ``mesh`` configuration is:

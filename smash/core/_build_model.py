@@ -2,7 +2,11 @@ from __future__ import annotations
 
 from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mw_routine import compute_rowcol_to_ind_sparse, compute_mean_forcing, compute_prcp_indice
+from smash.solver._mw_routine import (
+    compute_rowcol_to_ind_sparse,
+    compute_mean_forcing,
+    compute_prcp_indice,
+)
 
 from smash.core.utils import sparse_matrix_to_vector
 
@@ -22,7 +26,6 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import datetime
-import time
 
 RATIO_PET_HOURLY = np.array(
     [
@@ -54,26 +57,27 @@ RATIO_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
+
 def _charlist_to_uint8(charl: (str, list[str]), itemsize: int):
-    
+
     if isinstance(charl, str):
         charl = [charl]
-    
+
     res = np.zeros(shape=(itemsize, len(charl)), dtype="uint8") + np.uint8(32)
-    
+
     for i, el in enumerate(charl):
-        
+
         res[0 : len(el), i] = [ord(l) for l in el]
-        
+
     return res
 
 
 def _is_allocated(derived_type: (SetupDT, MeshDT), key: str):
-    
+
     try:
         getattr(derived_type, key)
         return True
-    
+
     except:
         return False
 
@@ -87,9 +91,9 @@ def _parse_derived_type(derived_type, data: dict):
     for key, value in data.items():
 
         if hasattr(derived_type, key):
-            
+
             if key == "descriptor_name":
-                
+
                 value = _charlist_to_uint8(value, 20)
 
             setattr(derived_type, key, value)
@@ -187,14 +191,15 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.pet_conversion_factor < 0:
         raise ValueError("argument 'pet_conversion_factor' is lower than 0")
-        
-        
+
     if setup.read_descriptor and setup.descriptor_directory.decode().strip() == "...":
         raise ValueError(
             "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
         )
-        
-    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory.decode().strip()):
+
+    if setup.read_descriptor and not os.path.exists(
+        setup.descriptor_directory.decode().strip()
+    ):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
@@ -292,10 +297,10 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     """
 
     _standardize_mesh(setup, mesh)
-    
+
     if setup.sparse_storage:
-        
-        compute_rowcol_to_ind_sparse(mesh) #% Fortran subroutine mw_routine
+
+        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mw_routine
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -563,13 +568,15 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-    
+
     descriptor_name = setup.descriptor_name.tobytes(order="F").decode("utf-8").split()
-    
+
     for i, name in enumerate(descriptor_name):
-        
-        path = glob.glob(f"{setup.descriptor_directory.decode().strip()}/**/{name}.tif*", recursive=True)
-        
+
+        path = glob.glob(
+            f"{setup.descriptor_directory.decode().strip()}/**/{name}.tif*",
+            recursive=True,
+        )
 
         if len(path) == 0:
             warnings.warn(
@@ -582,7 +589,7 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-            
+
             input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
 
 
@@ -606,12 +613,12 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if setup.mean_forcing:
 
-        compute_mean_forcing(setup, mesh, input_data) #% Fortran subroutine mw_routine
-    
+        compute_mean_forcing(setup, mesh, input_data)  #% Fortran subroutine mw_routine
+
     if setup.prcp_indice:
-    
-        compute_prcp_indice(setup, mesh, input_data) #% Fortran subroutine mw_routine
-        
+
+        compute_prcp_indice(setup, mesh, input_data)  #% Fortran subroutine mw_routine
+
     if setup.read_descriptor:
-        
+
         _read_descriptor(setup, mesh, input_data)

@@ -61,7 +61,7 @@
 
 module mwd_setup
     
-    use mwd_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, lchar, np, ns
     
     implicit none
     
@@ -165,8 +165,13 @@ module mwd_setup
     
     contains
     
-!%      TODO comment
+
         subroutine SetupDT_initialise(setup, nd)
+        
+            !% Notes
+            !% -----
+            !%
+            !% SetupDT initialisation subroutine
         
             implicit none
             

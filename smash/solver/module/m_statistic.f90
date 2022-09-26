@@ -16,11 +16,6 @@
 !%      module procedure quantile0d_r
 !%      module procedure quantile1d_i
 !%      module procedure quantile1d_r
-!%      
-!%      flatten2d interface:
-!%      
-!%      module procedure flatten2d_i      
-!%      module procedure flatten2d_r      
 !%
 !%      contains
 !%      
@@ -32,12 +27,10 @@
 !%      [6]  quantile0d_r
 !%      [7]  quantile1d_i
 !%      [8]  quantile1d_r
-!%      [9]  flatten2d_i
-!%      [10] flatten2d_r
 
 module m_statistic
 
-    use mwd_common !% only: sp, dp, lchar
+    use mwd_common, only: sp
     
     implicit none
     
@@ -66,18 +59,17 @@ module m_statistic
     
     end interface quantile
     
-    
-    interface flatten2d
-        
-        module procedure flatten2d_i
-        module procedure flatten2d_r
-    
-    end interface flatten2d
-    
-    
     contains
     
         subroutine insertionsort_i(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Insertion sort subroutine
+            !%
+            !% Given an integer array of dim(1),
+            !% it returns the sorted integer array in-place
             
             implicit none
             
@@ -109,6 +101,14 @@ module m_statistic
         
         subroutine insertionsort_r(a)
             
+            !% Notes
+            !% -----
+            !%
+            !% Insertion sort subroutine
+            !%
+            !% Given a single precision array of dim(1),
+            !% it returns the sorted single precision array in-place
+            
             implicit none
             
             real(sp), dimension(:), intent(inout) :: a
@@ -138,6 +138,15 @@ module m_statistic
         
         
         recursive subroutine quicksort_i(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quicksort sort subroutine
+            !%
+            !% Given an integer array of dim(1),
+            !% it returns the sorted integer array in-place.
+            !% It uses insertion sort for array of size lower than or equal to 20
             
             implicit none
             
@@ -191,6 +200,15 @@ module m_statistic
         
         
         recursive subroutine quicksort_r(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quicksort sort subroutine
+            !%
+            !% Given a single precision array of dim(1),
+            !% it returns the sorted single precision array in-place.
+            !% It uses insertion sort for array of size lower than or equal to 20
             
             implicit none
             
@@ -244,6 +262,17 @@ module m_statistic
         
         
         subroutine quantile0d_i(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given an integer array of dim(1), a single precision quantile value,
+            !% it returns the value associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
             
             implicit none
             
@@ -278,6 +307,17 @@ module m_statistic
         
         
         subroutine quantile0d_r(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given a single precision array of dim(1), a single precision quantile value,
+            !% it returns a single precision value associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
             
             implicit none
             
@@ -312,6 +352,17 @@ module m_statistic
         
         
         subroutine quantile1d_i(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given an integer array of dim(1), a single precision quantile array of dim(1),
+            !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
         
             implicit none
             
@@ -350,6 +401,17 @@ module m_statistic
         
         
         subroutine quantile1d_r(a, q, res)
+            
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given a single precision array of dim(1), a single precision quantile array of dim(1),
+            !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
         
             implicit none
             
@@ -386,99 +448,5 @@ module m_statistic
         
         end subroutine quantile1d_r
         
-        
-        subroutine flatten2d_i(mat2d, a, mask)
-            
-            implicit none
-            
-            integer, dimension(:,:), intent(in) :: mat2d
-            integer, dimension(:), allocatable, intent(inout) :: a
-            logical, optional, &
-            & dimension(size(mat2d, 1), size(mat2d, 2)), intent(in) :: mask
-            
-            logical, dimension(size(mat2d, 1), size(mat2d, 2)) :: mask_value
-            
-            integer :: i, j, n
-            
-            if (present(mask)) then
-            
-                mask_value = mask
-                
-            else
-            
-                mask_value = .true.
-                
-            end if
-            
-            if (allocated(a)) deallocate(a)
-            
-            allocate(a(count(mask_value)))
-            
-            n = 1
-            
-            do i=1, size(mat2d, 2)
-            
-                do j=1, size(mat2d, 1)
-                
-                    if (mask_value(j, i)) then
-                        
-                        a(n) = mat2d(j, i) 
-                        n = n + 1
-                    
-                    end if
- 
-                end do
-            
-            end do
-        
-        end subroutine flatten2d_i
-        
-        
-        subroutine flatten2d_r(mat2d, a, mask)
-            
-            implicit none
-            
-            real(sp), dimension(:,:), intent(in) :: mat2d
-            real(sp), dimension(:), allocatable, intent(inout) :: a
-            logical, optional, &
-            & dimension(size(mat2d, 1), size(mat2d, 2)), intent(in) :: mask
-            
-            logical, dimension(size(mat2d, 1), size(mat2d, 2)) :: mask_value
-            
-            integer :: i, j, n
-            
-            if (present(mask)) then
-            
-                mask_value = mask
-                
-            else
-            
-                mask_value = .true.
-                
-            end if
-            
-            if (allocated(a)) deallocate(a)
-            
-            allocate(a(count(mask_value)))
-            
-            n = 1
-            
-            do i=1, size(mat2d, 2)
-            
-                do j=1, size(mat2d, 1)
-                
-                    if (mask_value(j, i)) then
-                        
-                        a(n) = mat2d(j, i) 
-                        n = n + 1
-                    
-                    end if
- 
-                end do
-            
-            end do
-        
-        end subroutine flatten2d_r
-
 end module m_statistic
 

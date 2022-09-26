@@ -21,4 +21,6 @@ help:
 	
 clean:
 	@rm -rf build
-	@rm -rf source/savefig 
+	@rm -rf source/savefig
+	@rm -rf *.hdf5 *yaml
+	@rm -rf source/api_reference/smash

@@ -2,13 +2,6 @@
 !%      This module is wrapped and differentiated.
 !%
 !%      Prcp_IndiceDT type: 
-!%
-!%      DOI: doi:10.5194/hess-15-3767-2011 (Zoccatelli et al., 2011)
-!%      md1 = p1 / (p0 * g1)
-!%      md2 = (1 / (g2 - g1**2)) * ((p2 / p0) - (p1 / p0)**2)
-!%
-!%      DOI: https://doi.org/10.1016/j.hydrol.2015.04.058 (Emmanuel et al., 2015)
-!%      vg = max|wf - pwf|
 !%      
 !%      </> Public
 !%      ======================== =======================================
@@ -21,7 +14,7 @@
 !%      ``g2``                   The 2-th spatial moment of flow distance   [mm2]
 !%      ``md1``                  The 1-th scaled moment                     [-]
 !%      ``md2``                  The 2-th scaled moment                     [-]
-!%      ``std``                  Standard deviation of catchment prcp       [mm]
+!%      ``std``                  Standard deviation of catchment prcp       [mm/dt]
 !%      ``wf``                   Width function                             [-]
 !%      ``pwf``                  Precipitation width function               [-]
 !%      ``vg``                   Vertical gap                               [-]
@@ -41,14 +34,13 @@
 !%      ``sparse_pet``           Spase potential evapotranspiration field    [mm]
 !%      ``mean_prcp``            Mean precipitation at gauge                 [mm]
 !%      ``mean_pet``             Mean potential evapotranspiration at gauge  [mm]
+!%      ``prcp_indice``          Precipitation indices (Prcp_IndicesDT)
 !%      ======================== =======================================
 !%
 !%      contains
 !%
 !%      [1] Prcp_IndiceDT_initialise
 !%      [2] Input_DataDT_initialise
-!%      [3] compute_mean_forcing
-!%      [4] compute_prcp_indice
 
 module mwd_input_data
 
@@ -104,6 +96,11 @@ module mwd_input_data
     contains
     
         subroutine Prcp_IndiceDT_initialise(prcp_indice, setup, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Prcp_IndiceDT initialisation subroutine
             
             implicit none
             
@@ -147,6 +144,11 @@ module mwd_input_data
         
     
         subroutine Input_DataDT_initialise(input_data, setup, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Input_DataDT initialisation subroutine
         
             implicit none
             

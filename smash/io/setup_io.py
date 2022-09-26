@@ -12,11 +12,11 @@ def save_setup(setup: dict, path: str):
     """
     Save setup
     """
-    
+
     if not path.endswith(".yaml"):
 
         path = path + ".yaml"
-    
+
     with open(path, "w") as f:
         yaml.dump(setup, f, default_flow_style=False)
 
