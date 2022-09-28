@@ -54,11 +54,11 @@ Setup argument creation
 
 A minimal ``setup`` configuration is:
 
-- the calculation time step in s (i.e. ``dt``),
+- ``dt``: the calculation time step in s,
 
-- the beginning of the simulation (i.e. ``start_time``),
+- ``start_time``: the beginning of the simulation,
 
-- the end of the simulation (i.e. ``end_time``).
+- ``end_time``: the end of the simulation.
 
 .. ipython:: python
 
@@ -79,23 +79,23 @@ Mesh argument creation
     
     - Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.mesh>`.
     
-    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method: `smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.real_case_cance`.
+    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method :meth:`smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.real_case_cance`.
 
 First part of  ``mesh`` configuration is:
 
-- the calculation spatial step in m (i.e. ``dx``),
+- ``dx``: the calculation spatial step in m,
 
-- the number of rows (i.e. ``nrow``),
+- ``nrow``: the number of rows,
 
-- the number of columns (i.e. ``ncol``),
+- ``ncol``: the number of columns,
 
-- the number of gauge (i.e. ``ng``),
+- ``ng``: the number of gauges,
 
-- the number of cells that contribute to any gauge discharge (active cells, i.e. ``nac``),
+- ``nac``: the number of cells that contribute to any gauge discharge (here the full grid contributes),
 
-- the catchment area in m² (i.e. ``area``),
+- ``area``: the catchment area in m²,
 
-- the gauge position in the grid (**Fortran indexing**) (i.e. ``gauge_pos``).
+- ``gauge_pos``: the gauge position in the grid (it must follow **Fortran indexing**).
 
 .. ipython:: python
 
@@ -114,9 +114,9 @@ First part of  ``mesh`` configuration is:
 
 Second part of ``mesh`` configuration is:
 
-- the flow directions (i.e. ``flow``),
+- ``flwdir``: the flow directions,
 
-- the drained area in number of cells (i.e. ``drained_area``).
+- ``drained_area``: the drained area in number of cells.
 
 .. ipython:: python
 
@@ -153,7 +153,7 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (i.e. ``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (**Fortran indexing**).
+Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (it must follow **Fortran indexing**).
 
 .. ipython:: python
 
@@ -224,16 +224,19 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.setup.<TAB>
     model.setup.copy(                   model.setup.prcp_directory
     model.setup.daily_interannual_pet   model.setup.prcp_format
-    model.setup.dt                      model.setup.production_module
-    model.setup.end_time                model.setup.qobs_directory
-    model.setup.exchange_module         model.setup.read_pet
-    model.setup.from_handle(            model.setup.read_prcp
-    model.setup.interception_module     model.setup.read_qobs
-    model.setup.mean_forcing            model.setup.routing_module
-    model.setup.pet_conversion_factor   model.setup.save_qsim_domain
-    model.setup.pet_directory           model.setup.sparse_storage
-    model.setup.pet_format              model.setup.start_time
-    model.setup.prcp_conversion_factor  model.setup.transfer_module
+    model.setup.descriptor_directory    model.setup.prcp_indice
+    model.setup.descriptor_format       model.setup.production_module
+    model.setup.descriptor_name         model.setup.qobs_directory
+    model.setup.dt                      model.setup.read_descriptor
+    model.setup.end_time                model.setup.read_pet
+    model.setup.exchange_module         model.setup.read_prcp
+    model.setup.from_handle(            model.setup.read_qobs
+    model.setup.interception_module     model.setup.routing_module
+    model.setup.mean_forcing            model.setup.save_qsim_domain
+    model.setup.pet_conversion_factor   model.setup.sparse_storage
+    model.setup.pet_directory           model.setup.start_time
+    model.setup.pet_format              model.setup.transfer_module
+    model.setup.prcp_conversion_factor 
     
 Mesh
 ****
@@ -271,10 +274,10 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.mesh.copy(         model.mesh.ng
     model.mesh.drained_area  model.mesh.nrow
     model.mesh.dx            model.mesh.path
-    model.mesh.flow          model.mesh.xmin
-    model.mesh.from_handle(  model.mesh.ymax
+    model.mesh.flwdir        model.mesh.xmin
+    model.mesh.flwdst        model.mesh.ymax
+    model.mesh.from_handle( 
 
-    
 
 Input Data
 **********
@@ -302,14 +305,15 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     @verbatim
     model.input_data.<TAB>
     model.input_data.copy(         model.input_data.prcp
+    model.input_data.descriptor    model.input_data.prcp_indice
     model.input_data.from_handle(  model.input_data.qobs
     model.input_data.mean_pet      model.input_data.sparse_pet
     model.input_data.mean_prcp     model.input_data.sparse_prcp
-    model.input_data.pet
+    model.input_data.pet    
     
 .. warning::
 
-    It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the setup to calculate the spatial average of precipitation. Access to this variable is therefore impossible and the code will return the following error:
+    It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the ``setup`` to calculate the spatial average of precipitation. Access to this variable is therefore impossible and the code will return the following error:
     
     .. ipython:: python
         :okexcept:
@@ -443,7 +447,7 @@ To perform an optimization, observed discharge must be provided to :class:`.Mode
 
     model.input_data.qobs = model.output.qsim.copy()
     
-Next, we will perturb the production parameter :math:`cp` to generate a hydrograph different from the previous one.
+Next, we will perturb the production parameter :math:`\mathrm{cp}` to generate a hydrograph different from the previous one.
 
 .. ipython:: python
 
@@ -459,15 +463,17 @@ Re run to see the difference between the hydrographs.
     plt.plot(model.output.qsim[0,:], label="Simulated discharge");
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    plt.ylabel("Simulated discharge $(m^3/s)$");
+    plt.ylabel("Discharge $(m^3/s)$");
     @savefig qsim_fwd2_pc_user_guide.png
     plt.legend();
     
-Finally, perform a spatially uniform calibration of the parameter :math:`cp` with the :meth:`.Model.optimize` method:
+Finally, perform a spatially uniform calibration of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
 
 .. ipython:: python
 
     model.optimize("sbs", control_vector=["cp"], inplace=True)
+    
+    model.parameters.cp
 
     model
 
@@ -477,7 +483,7 @@ Finally, perform a spatially uniform calibration of the parameter :math:`cp` wit
     plt.plot(model.output.qsim[0,:], label="Simulated discharge");
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    plt.ylabel("Simulated discharge $(m^3/s)$");
+    plt.ylabel("Discharge $(m^3/s)$");
     @savefig qsim_opt_pc_user_guide.png
     plt.legend();
     

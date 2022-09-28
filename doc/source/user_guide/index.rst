@@ -8,8 +8,8 @@ The practical use of `smash` is first done on a :ref:`user_guide.practice_case`,
 
 
 .. toctree::
-    :maxdepth: 1
-	
+    :maxdepth: 2
+
     practice_case
     real_case_cance
     model_initialization
