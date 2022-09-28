@@ -185,6 +185,38 @@ def _set1d_parameters_states(instance: Model, control_vector: list[str], x: np.n
             setattr(instance.states, name, x[ind])
 
 
+def _set2d_te_parameters_states(
+    instance: Model, control_vector: list[str], x: np.ndarray, bounds: list[tuple]
+):
+
+    nd_step = 1 + instance.setup._nd
+
+    for ind, name in enumerate(control_vector):
+
+        lb, ub = bounds[ind]
+
+        value = x[ind * nd_step] * np.ones(
+            shape=(instance.mesh.nrow, instance.mesh.ncol), dtype=np.float32
+        )
+
+        for i in range(instance.setup._nd):
+
+            value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
+
+        #% Hard coded bounds check (WIP)
+        value = np.where(value < lb, lb, value)
+        value = np.where(value > ub, ub, value)
+
+        if name in name_parameters:
+
+            setattr(instance.parameters, name, value)
+
+        else:
+
+            setattr(instance.states, name, value)
+
+
+#% TODO: might check a cell in active cell
 def _get1d_parameters_states(instance: Model, control_vector: list[str]):
 
     x = np.zeros(shape=len(control_vector), dtype=np.float32)
@@ -198,6 +230,26 @@ def _get1d_parameters_states(instance: Model, control_vector: list[str]):
         else:
 
             x[ind] = getattr(instance.states, name)[0, 0]
+
+    return x
+
+
+#% TODO: might check a cell in active cell
+def _get1d_te_parameters_states(instance: Model, control_vector: list[str]):
+
+    nd_step = 1 + instance.setup._nd
+
+    x = np.zeros(shape=len(control_vector) * nd_step, dtype=np.float32)
+
+    for ind, name in enumerate(control_vector):
+
+        if name in name_parameters:
+
+            x[ind * nd_step] = getattr(instance.parameters, name)[0, 0]
+
+        else:
+
+            x[ind * nd_step] = getattr(instance.states, name)[0, 0]
 
     return x
 
@@ -259,6 +311,37 @@ def _problem(
     return instance.output.cost
 
 
+def _te_problem(
+    x: np.ndarray,
+    instance: Model,
+    control_vector: list[str],
+    parameters_bgd: ParametersDT,
+    states_bgd: StatesDT,
+    bounds: list[tuple],
+):
+
+    global callback_args
+
+    _set2d_te_parameters_states(instance, control_vector, x, bounds)
+
+    forward_run(
+        instance.setup,
+        instance.mesh,
+        instance.input_data,
+        instance.parameters,
+        parameters_bgd,
+        instance.states,
+        states_bgd,
+        instance.output,
+        False,
+    )
+
+    callback_args["nfg"] += 1
+    callback_args["J"] = instance.output.cost
+
+    return instance.output.cost
+
+
 def _callback(x: np.ndarray):
 
     global callback_args
@@ -284,7 +367,7 @@ def _optimize_nelder_mead(
     bounds: list[float],
     wgauge: list[float],
     ost: pd.Timestamp,
-    transfer_equation: False,
+    transfer_equation=False,
     maxiter=None,
     maxfev=None,
     disp=False,
@@ -303,8 +386,6 @@ def _optimize_nelder_mead(
 
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
-
-    x = _get1d_parameters_states(instance, control_vector)
 
     instance.setup._jobs_fun = jobs_fun
 
@@ -335,28 +416,58 @@ def _optimize_nelder_mead(
     callback_args["nfg"] += 1
     callback_args["J"] = instance.output.cost
 
-    _callback(x)
+    if transfer_equation:
 
-    res = scipy.optimize.minimize(
-        _problem,
-        x,
-        args=(instance, control_vector, parameters_bgd, states_bgd),
-        bounds=bounds,
-        method="nelder-mead",
-        callback=_callback,
-        options={
-            "maxiter": maxiter,
-            "maxfev": maxfev,
-            "disp": disp,
-            "return_all": return_all,
-            "initial_simplex": initial_simplex,
-            "xatol": xatol,
-            "fatol": fatol,
-            "adaptive": adaptive,
-        },
-    )
+        x = _get1d_te_parameters_states(instance, control_vector)
 
-    _problem(res.x, instance, control_vector, parameters_bgd, states_bgd)
+        _callback(x)
+
+        res = scipy.optimize.minimize(
+            _te_problem,
+            x,
+            args=(instance, control_vector, parameters_bgd, states_bgd, bounds),
+            method="nelder-mead",
+            callback=_callback,
+            options={
+                "maxiter": maxiter,
+                "maxfev": maxfev,
+                "disp": disp,
+                "return_all": return_all,
+                "initial_simplex": initial_simplex,
+                "xatol": xatol,
+                "fatol": fatol,
+                "adaptive": adaptive,
+            },
+        )
+
+        _te_problem(res.x, instance, control_vector, parameters_bgd, states_bgd, bounds)
+
+    else:
+
+        x = _get1d_parameters_states(instance, control_vector)
+
+        _callback(x)
+
+        res = scipy.optimize.minimize(
+            _problem,
+            x,
+            args=(instance, control_vector, parameters_bgd, states_bgd),
+            bounds=bounds,
+            method="nelder-mead",
+            callback=_callback,
+            options={
+                "maxiter": maxiter,
+                "maxfev": maxfev,
+                "disp": disp,
+                "return_all": return_all,
+                "initial_simplex": initial_simplex,
+                "xatol": xatol,
+                "fatol": fatol,
+                "adaptive": adaptive,
+            },
+        )
+
+        _problem(res.x, instance, control_vector, parameters_bgd, states_bgd)
 
     _callback(res.x)
 

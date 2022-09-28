@@ -16,5 +16,8 @@ pet_conversion_factor: 1
 daily_interannual_pet: True
 pet_directory: pet
 
+read_descriptor: True
+descriptor_name: ["slope", "dd"]
+
 exchange_module: 1
 routing_module: 1

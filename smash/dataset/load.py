@@ -25,6 +25,7 @@ def load_dataset(name: str):
                 "qobs_directory": os.path.join(DATASET_PATH, "Cance/qobs"),
                 "prcp_directory": os.path.join(DATASET_PATH, "Cance/prcp"),
                 "pet_directory": os.path.join(DATASET_PATH, "Cance/pet"),
+                "descriptor_directory": os.path.join(DATASET_PATH, "Cance/descriptor"),
             }
         )
 
