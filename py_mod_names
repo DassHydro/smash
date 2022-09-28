@@ -7,6 +7,7 @@
 	"mwd_states": "_mwd_states",
 	"mwd_output": "_mwd_output",
 	"mwd_cost": "_mwd_cost",
+	"mw_routine": "_mw_routine",
 	"mw_run": "_mw_run",
 	"mw_adjoint_test": "_mw_adjoint_test",
 	"mw_optimize": "_mw_optimize",

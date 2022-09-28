@@ -11,6 +11,39 @@
     ```bash
     make
     ```
+3.  Check install
+    ```bash
+    python3
+    ```
+    ```python
+    import smash
+    ```
+    
+## Compilation Instructions on Conda Environment (require conda)
+
+1.  Clone the SMASH repository from GitLab.
+    ```bash
+    git clone https://gitlab.irstea.fr/francois.colleoni/smash.git
+    ```
+2.  Create the conda environment `(smash-dev)`
+    ```bash
+    conda env create environment.yml
+    ```
+3.  Activate the conda environment `(smash-dev)`
+    ```bash
+    conda activate smash-dev
+    ```
+4.  Compile all programs, modules and libraries.
+    ```bash
+    (smash-dev) make
+    ```
+5.  Check install
+    ```bash
+    python3
+    ```
+    ```python
+    import smash
+    ```
     
 # Developer notes:
 

@@ -17,19 +17,19 @@
 !%      contains
 !%
 !%      [1] StatesDT_initialise
-!%      [2] states_copy
-!%      [3] states_to_matrix
-!%      [4] matrix_to_states
-!%      [5] vector_to_states
-!%      [6] set0_states
+!%      [2] states_to_matrix
+!%      [3] matrix_to_states
+!%      [4] vector_to_states
+!%      [5] set0_states
+!%      [6] set1_states
 
 module mwd_states
 
-    use mwd_common !% only: sp, dp, lchar, np, ns
+    use mwd_common !% only: sp, ns
     use mwd_mesh  !% only: MeshDT
     
     implicit none
-    
+
     type StatesDT
         
         real(sp), dimension(:,:), allocatable :: hi
@@ -67,20 +67,6 @@ module mwd_states
             states%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
-        
-        
-!%      TODO comment       
-        subroutine states_copy(states_in, &
-        & states_out)
-            
-            implicit none
-            
-            type(StatesDT), intent(in) :: states_in
-            type(StatesDT), intent(out) :: states_out
-            
-            states_out = states_in
-        
-        end subroutine states_copy
         
         
 !%      TODO comment 
@@ -150,5 +136,21 @@ module mwd_states
             call vector_to_states(vector0, states)
         
         end subroutine set0_states
+
+        
+!%      TODO comment        
+        subroutine set1_states(states)
+        
+            implicit none
+            
+            type(StatesDT), intent(inout) :: states
+            
+            real(sp), dimension(ns) :: vector1
+            
+            vector1 = 1._sp
+            
+            call vector_to_states(vector1, states)
+        
+        end subroutine set1_states
 
 end module mwd_states

@@ -8,24 +8,38 @@
 
 module mw_adjoint_test
     
-    use mwd_common !% only: sp, dp, lchar, np, np
-    use mwd_setup !% only: SetupDT
-    use mwd_mesh  !% only: MeshDT
-    use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !%  only: ParametersDT, parameters_to_matrix, matrix_to_parameters
-    use mwd_states !% only: StatesDT
-    use mwd_output !% only: OutputDT
+    use mwd_common, only: sp, np, ns
+    use mwd_setup, only: SetupDT
+    use mwd_mesh, only: MeshDT
+    use mwd_input_data, only: Input_DataDT
+    use mwd_parameters, only: ParametersDT, ParametersDT_initialise, &
+    & parameters_to_matrix, matrix_to_parameters, set0_parameters, &
+    & set1_parameters
+    use mwd_states, only: StatesDT, StatesDT_initialise, &
+    & states_to_matrix, matrix_to_states, set0_states, &
+    & set1_states
+    use mwd_output, only: OutputDT, OutputDT_initialise
     
     implicit none
     
     contains
     
-        !% Calling forward_d from forward/forward_d.f90
-        !% Calling forward_b from forward/forward_b.f90
-        !% TODO comment
         subroutine scalar_product_test(setup, mesh, input_data, parameters, states, output)
             
             implicit none
+            
+            !% Notes
+            !% -----
+            !%
+            !% Scalar Product Test subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it returns the results of scalar product test.
+            !% sp1 = <dY*, dY>
+            !% sp2 = <dk*, dk>
+            !%
+            !% Calling forward_d from forward/forward_d.f90  dY  = (dM/dk) (k) . dk
+            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*
             
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
@@ -55,14 +69,8 @@ module mw_adjoint_test
             call OutputDT_initialise(output_d, setup, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
             
-            call parameters_to_matrix(parameters_d, parameters_d_matrix)
-            call states_to_matrix(states_d, states_d_matrix)
-            
-            parameters_d_matrix = 1._sp
-            states_d_matrix = 0._sp
-            
-            call matrix_to_parameters(parameters_d_matrix, parameters_d)
-            call matrix_to_states(states_d_matrix, states_d)
+            call set1_parameters(parameters_d)
+            call set0_states(states_d)
             
             write(*,'(4x,a)') "Tangent Linear Model dY  = (dM/dk) (k) . dk"
             
@@ -82,6 +90,7 @@ module mw_adjoint_test
             states = states_bgd
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
+            call parameters_to_matrix(parameters_d, parameters_d_matrix)
             
             !% cost_b reset at the end of forward_b ...
             !% No perturbation has been set to states_d
@@ -96,10 +105,20 @@ module mw_adjoint_test
         
         end subroutine scalar_product_test
         
-        !% Calling forward from forward/forward.f90
-        !% Calling forward_b from forward/forward_b.f90
-        !% TODO comment
+        
         subroutine gradient_test(setup, mesh, input_data, parameters, states, output)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Gradient Test subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it returns the results of gradient test.
+            !% Ia = (Yadk - Y) / (a dk* . dk)
+            !% 
+            !% Calling forward from forward/forward.f90      Y   = M (k)
+            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*"
         
             implicit none
             

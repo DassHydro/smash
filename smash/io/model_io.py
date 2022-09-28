@@ -57,7 +57,15 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
 
                 if isinstance(
                     value,
-                    (SetupDT, MeshDT, Input_DataDT, Prcp_IndiceDT, ParametersDT, StatesDT, OutputDT),
+                    (
+                        SetupDT,
+                        MeshDT,
+                        Input_DataDT,
+                        Prcp_IndiceDT,
+                        ParametersDT,
+                        StatesDT,
+                        OutputDT,
+                    ),
                 ):
 
                     hdf5_ins_imd = hdf5_ins.create_group(attr)
@@ -120,7 +128,7 @@ def save_model(model: Model, path: str):
             grp = f.create_group(derived_type_key)
 
             _parse_derived_type_to_hdf5(derived_type, grp)
-            
+
             f.attrs["_last_update"] = model._last_update
 
         f.close()
@@ -137,13 +145,13 @@ def read_model(path: str) -> Model:
         with h5py.File(path, "r") as f:
 
             instance = smash.Model(None, None)
-            
+
             if "descriptor_name" in f["setup"].keys():
-                
+
                 nd = f["setup"]["descriptor_name"].shape[1]
-                
+
             else:
-                
+
                 nd = 0
 
             instance.setup = SetupDT(nd)
@@ -176,7 +184,7 @@ def read_model(path: str) -> Model:
                 _parse_hdf5_to_derived_type(
                     f[derived_type_key], getattr(instance, derived_type_key)
                 )
-                
+
             instance._last_update = f.attrs["_last_update"]
 
             f.close()

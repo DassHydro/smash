@@ -1,6 +1,6 @@
 !%      This module `md_common` encapsulates all SMASH common.
 !%      This module is wrapped and differentiated.
-
+!%
 !%      mwd_common variables
 !%
 !%      </> Public

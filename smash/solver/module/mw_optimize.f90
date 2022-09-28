@@ -15,14 +15,16 @@
 
 module mw_optimize
     
-    use mwd_common !% only: sp, dp, lchar, np, ns
-    use mwd_setup !% only: SetupDT
-    use mwd_mesh !% only: MeshDT
-    use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !% only: ParametersDT, parameters_to_matrix, &
-    ! & matrix_to_parameters, states_to_matrix, matrix_to_states
-    use mwd_states !% only: StatesDT
-    use mwd_output !% only: OutputDT
+    use mwd_common, only: sp, dp, lchar, np, ns, &
+    & name_parameters, name_states
+    use mwd_setup, only: SetupDT
+    use mwd_mesh, only: MeshDT
+    use mwd_input_data, only: Input_DataDT
+    use mwd_parameters, only: ParametersDT, ParametersDT_initialise, &
+    & parameters_to_matrix, matrix_to_parameters
+    use mwd_states, only: StatesDT, StatesDT_initialise, &
+    & states_to_matrix, matrix_to_states
+    use mwd_output, only: OutputDT, OutputDT_initialise
     
     implicit none
     
@@ -34,10 +36,19 @@ module mw_optimize
     
     contains
         
-                
-        !% Calling forward from forward/forward.f90
         subroutine optimize_sbs(setup, mesh, input_data, parameters, states, output)
-    
+        
+            !% Notes
+            !% -----
+            !%
+            !% Step By Step optimization subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it returns the result of a step by step optimization.
+            !% argmin(theta) = J(theta)
+            !%
+            !% Calling forward from forward/forward.f90  Y  = M (k)
+            
             implicit none
             
             type(SetupDT), intent(inout) :: setup
@@ -447,7 +458,7 @@ module mw_optimize
             
         end subroutine optimize_sbs
 
-        
+!%      TODO comment
         function transformation(x, lb, ub) result(x_tf)
         
             implicit none
@@ -477,7 +488,8 @@ module mw_optimize
 
         end function transformation
         
-        
+
+!%      TODO comment
         function inv_transformation(x_tf, lb, ub) result(x)
         
             implicit none
@@ -508,9 +520,19 @@ module mw_optimize
         end function inv_transformation
         
         
-        !% Calling setulb from optimize/lbfgsb.f
-        !% Calling forward_b from forward/forward_b.f90
         subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
+        
+            !% Notes
+            !% -----
+            !%
+            !% L-BFGS-B optimization subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
+            !% it returns the result of a l-bfgs-b optimization.
+            !% argmin(theta) = J(theta)
+            !%
+            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*
+            !% Calling setulb from optimize/lbfgsb.f
             
             implicit none
             
@@ -674,6 +696,7 @@ module mw_optimize
         end subroutine optimize_lbfgsb
         
 
+!%      TODO comment
         subroutine optimize_matrix_to_vector(mesh, mask, matrix, vector)
         
             implicit none
@@ -712,7 +735,8 @@ module mw_optimize
         
         end subroutine optimize_matrix_to_vector
         
-        
+
+!%      TODO comment
         subroutine optimize_vector_to_matrix(mesh, mask, vector, matrix)
         
             implicit none
@@ -752,7 +776,8 @@ module mw_optimize
         
         end subroutine optimize_vector_to_matrix
     
-        
+
+!%      TODO comment
         subroutine normalize_matrix(matrix, lb, ub, norm_matrix)
             
             implicit none
@@ -771,7 +796,8 @@ module mw_optimize
             
         end subroutine normalize_matrix
         
-        
+
+!%      TODO comment
         subroutine unnormalize_matrix(norm_matrix, lb, ub, matrix)
             
             implicit none
@@ -790,7 +816,8 @@ module mw_optimize
             
         end subroutine unnormalize_matrix
         
-        
+
+!%      TODO comment
         subroutine optimize_message(setup, mesh, nx)
             
             implicit none

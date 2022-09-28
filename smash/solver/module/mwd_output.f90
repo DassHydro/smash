@@ -16,12 +16,12 @@
 !%      ``sp2``                  Scalar product <dk*, dk>
 !%      ``an``                   Alpha gradient test 
 !%      ``ian``                  Ialpha gradient test
+!%      ``fstates``              Final states (StatesDT)
 !%      ======================== =======================================
 !%
 !%      contains
 !%
 !%      [1] OutputDT_initialise
-!%      [2] output_copy
 
 module mwd_output
     
@@ -55,6 +55,11 @@ module mwd_output
     contains
     
         subroutine OutputDT_initialise(output, setup, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% OutputDT initialisation subroutine
         
             implicit none
             
@@ -90,19 +95,5 @@ module mwd_output
             call StatesDT_initialise(output%fstates, mesh)
         
         end subroutine OutputDT_initialise
-        
-
-!%      TODO comment 
-        subroutine output_copy(output_in, &
-        & output_out)
-            
-            implicit none
-            
-            type(OutputDT), intent(in) :: output_in
-            type(OutputDT), intent(out) :: output_out
-            
-            output_out = output_in
-        
-        end subroutine output_copy
 
 end module mwd_output

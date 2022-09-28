@@ -1,41 +1,75 @@
-!%      This module `md_routine` encapsulates all SMASH routine.
-!%      This module is differentiated.
+!%      This module `m_statistic` encapsulates all SMASH statistic.
+!%
+!%      insertionsort interface:
+!%
+!%      module procedure insertionsort_i
+!%      module procedure insertionsort_r
+!%
+!%      quicksort interface:
+!%
+!%      module procedure quicksort_i
+!%      module procedure quicksort_r
+!%      
+!%      quantile interface:
+!%
+!%      module procedure quantile0d_i
+!%      module procedure quantile0d_r
+!%      module procedure quantile1d_i
+!%      module procedure quantile1d_r
 !%
 !%      contains
+!%      
+!%      [1]  insertionsort_i
+!%      [2]  insertionsort_r
+!%      [3]  quicksort_i
+!%      [4]  quicksort_r
+!%      [5]  quantile0d_i
+!%      [6]  quantile0d_r
+!%      [7]  quantile1d_i
+!%      [8]  quantile1d_r
 
+module m_statistic
 
-module md_routine
-
-    use mwd_common
+    use mwd_common, only: sp
     
     implicit none
     
-    interface median1d
+    interface insertionsort
     
-        module procedure median1d_i
-        module procedure median1d_r
+        module procedure insertionsort_i
+        module procedure insertionsort_r
     
-    end interface median1d
+    end interface insertionsort
     
     
-    interface quantile1d
+    interface quicksort
     
+        module procedure quicksort_i
+        module procedure quicksort_r
+    
+    end interface quicksort
+    
+    
+    interface quantile
+    
+        module procedure quantile0d_i
+        module procedure quantile0d_r
         module procedure quantile1d_i
         module procedure quantile1d_r
     
-    end interface quantile1d
+    end interface quantile
     
-
-    interface percentile1d
-    
-        module procedure percentile1d_i
-        module procedure percentile1d_r
-    
-    end interface percentile1d
-        
     contains
     
         subroutine insertionsort_i(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Insertion sort subroutine
+            !%
+            !% Given an integer array of dim(1),
+            !% it returns the sorted integer array in-place
             
             implicit none
             
@@ -67,6 +101,14 @@ module md_routine
         
         subroutine insertionsort_r(a)
             
+            !% Notes
+            !% -----
+            !%
+            !% Insertion sort subroutine
+            !%
+            !% Given a single precision array of dim(1),
+            !% it returns the sorted single precision array in-place
+            
             implicit none
             
             real(sp), dimension(:), intent(inout) :: a
@@ -96,6 +138,15 @@ module md_routine
         
         
         recursive subroutine quicksort_i(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quicksort sort subroutine
+            !%
+            !% Given an integer array of dim(1),
+            !% it returns the sorted integer array in-place.
+            !% It uses insertion sort for array of size lower than or equal to 20
             
             implicit none
             
@@ -149,6 +200,15 @@ module md_routine
         
         
         recursive subroutine quicksort_r(a)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quicksort sort subroutine
+            !%
+            !% Given a single precision array of dim(1),
+            !% it returns the sorted single precision array in-place.
+            !% It uses insertion sort for array of size lower than or equal to 20
             
             implicit none
             
@@ -201,65 +261,108 @@ module md_routine
             end subroutine quicksort_r
         
         
-        subroutine median1d_i(a, res)
+        subroutine quantile0d_i(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given an integer array of dim(1), a single precision quantile value,
+            !% it returns the value associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
             
             implicit none
             
             integer, dimension(:), intent(in) :: a
+            real(sp), intent(in) :: q
             real(sp), intent(inout) :: res
             
             integer, dimension(size(a)) :: b
-            integer :: n
+            integer :: n, qt
+            real(sp) :: div, r
             
             n = size(a)
-            
             b = a
-
-            call quicksort_i(b)
             
-            if (mod(n, 2) .gt. 0) then
+            call quicksort(b)
             
-                res = real(b((n + 1) / 2), kind=sp)
+            if (q .ge. 1._sp) then
+            
+                res = b(n)
                 
             else
-                
-                res = real((b(n / 2) + b((n / 2) + 1)), kind=sp) / 2._sp
+            
+                div = q * real(n - 1, kind=sp) + 1._sp
+                qt = floor(div)
+                r = mod(div, real(qt, kind=sp))
+                    
+                res = (1._sp - r) * b(qt) + r * b(qt + 1)
             
             end if
-
-        end subroutine median1d_i
+        
+        end subroutine quantile0d_i
         
         
-        subroutine median1d_r(a, res)
+        subroutine quantile0d_r(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given a single precision array of dim(1), a single precision quantile value,
+            !% it returns a single precision value associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
             
             implicit none
             
             real(sp), dimension(:), intent(in) :: a
+            real(sp), intent(in) :: q
             real(sp), intent(inout) :: res
             
             real(sp), dimension(size(a)) :: b
-            integer :: n
+            integer :: n, qt
+            real(sp) :: div, r
             
             n = size(a)
-            
             b = a
-
-            call quicksort_r(b)
             
-            if (mod(n, 2) .gt. 0) then
+            call quicksort(b)
             
-                res = b((n + 1) / 2)
+            if (q .ge. 1._sp) then
+            
+                res = b(n)
                 
             else
-                
-                res = (b(n / 2) + b((n / 2) + 1)) / 2
+            
+                div = q * real(n - 1, kind=sp) + 1._sp
+                qt = floor(div)
+                r = mod(div, real(qt, kind=sp))
+                    
+                res = (1._sp - r) * b(qt) + r * b(qt + 1)
             
             end if
-
-        end subroutine median1d_r
+        
+        end subroutine quantile0d_r
         
         
         subroutine quantile1d_i(a, q, res)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given an integer array of dim(1), a single precision quantile array of dim(1),
+            !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
         
             implicit none
             
@@ -274,7 +377,7 @@ module md_routine
             n = size(a)
             b = a
             
-            call quicksort_i(b)
+            call quicksort(b)
             
             do i=1, size(q)
             
@@ -298,6 +401,17 @@ module md_routine
         
         
         subroutine quantile1d_r(a, q, res)
+            
+            !% Notes
+            !% -----
+            !%
+            !% Quantile subroutine
+            !%
+            !% Given a single precision array of dim(1), a single precision quantile array of dim(1),
+            !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+            !% Linear interpolation is applied.
+            !% 0: gives array(0)
+            !% 1: gives array(size(array))
         
             implicit none
             
@@ -312,7 +426,7 @@ module md_routine
             n = size(a)
             b = a
             
-            call quicksort_r(b)
+            call quicksort(b)
             
             do i=1, size(q)
             
@@ -334,32 +448,5 @@ module md_routine
         
         end subroutine quantile1d_r
         
-        
-        subroutine percentile1d_i(a, p, res)
-        
-            implicit none
-            
-            integer, dimension(:), intent(in) :: a
-            real(sp), dimension(:), intent(inout) :: p
-            real(sp), dimension(size(p)), intent(inout) :: res
-            
-            call quantile1d_i(a, p / 100._sp, res)
-            
-        end subroutine percentile1d_i
-        
-        
-        subroutine percentile1d_r(a, p, res)
-        
-            implicit none
-            
-            real(sp), dimension(:), intent(in) :: a
-            real(sp), dimension(:), intent(inout) :: p
-            real(sp), dimension(size(p)), intent(inout) :: res
-            
-            call quantile1d_r(a, p / 100._sp, res)
-            
-        end subroutine percentile1d_r
-
-    
-end module md_routine
+end module m_statistic
 

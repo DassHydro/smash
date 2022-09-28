@@ -32,6 +32,7 @@ JOBS_FUN = [
     "logarithmique",
 ]
 
+
 def _optimize_sbs(
     instance: Model,
     control_vector: list[str],
@@ -117,7 +118,7 @@ def _optimize_lbfgsb(
     instance.setup._algorithm = "l-bfgs-b"
 
     setup_bgd = SetupDT(instance.setup._nd)
-    
+
     #% Set default values
     instance.setup._optim_parameters = 0
     instance.setup._optim_states = 0
@@ -202,16 +203,20 @@ def _get1d_parameters_states(instance: Model, control_vector: list[str]):
 
 
 def _optimize_message(instance: Model, control_vector: list[str]):
-    
-    sp4 = (' ' * 4)
-    
+
+    sp4 = " " * 4
+
     parameters = [el for el in control_vector if el in name_parameters]
     states = [el for el in control_vector if el in name_states]
-    code = [el for ind, el in enumerate(instance.mesh.code.tobytes("F").decode().split()) if instance.mesh._wgauge[ind] > 0]
+    code = [
+        el
+        for ind, el in enumerate(instance.mesh.code.tobytes("F").decode().split())
+        if instance.mesh._wgauge[ind] > 0
+    ]
     gauge = ["{:.6f}".format(el) for el in instance.mesh._wgauge if el > 0]
-    
+
     ret = []
-   
+
     ret.append("</> Optimize Model J")
     ret.append(f"Algorithm: '{instance.setup._algorithm.decode().strip()}'")
     ret.append(f"Jobs function: '{instance.setup._jobs_fun.decode().strip()}'")
@@ -220,16 +225,22 @@ def _optimize_message(instance: Model, control_vector: list[str]):
     ret.append(f"Ns: {len(states)} [ {' '.join(states)} ]")
     ret.append(f"Ng: {len(code)} [ {' '.join(code)} ]")
     ret.append(f"wg: {len(gauge)} [ {' '.join(gauge)} ]")
-    
+
     print(f"\n{sp4}".join(ret) + "\n")
 
 
-def _problem(x: np.ndarray, instance: Model, control_vector: list[str], parameters_bgd: ParametersDT, states_bgd: StatesDT):
-    
+def _problem(
+    x: np.ndarray,
+    instance: Model,
+    control_vector: list[str],
+    parameters_bgd: ParametersDT,
+    states_bgd: StatesDT,
+):
+
     global callback_args
 
     _set1d_parameters_states(instance, control_vector, x)
-    
+
     forward_run(
         instance.setup,
         instance.mesh,
@@ -241,7 +252,7 @@ def _problem(x: np.ndarray, instance: Model, control_vector: list[str], paramete
         instance.output,
         False,
     )
-    
+
     callback_args["nfg"] += 1
     callback_args["J"] = instance.output.cost
 
@@ -249,20 +260,20 @@ def _problem(x: np.ndarray, instance: Model, control_vector: list[str], paramete
 
 
 def _callback(x: np.ndarray):
-    
+
     global callback_args
-    
-    sp4 = (' ' * 4)
-    
+
+    sp4 = " " * 4
+
     ret = []
-    
+
     ret.append(f"{sp4}At iterate")
-    ret.append("{:3}".format(callback_args['iterate']))
-    ret.append("nfg =" + "{:5}".format(callback_args['nfg']))
-    ret.append("J =" + "{:10.6f}".format(callback_args['J']))
-    
+    ret.append("{:3}".format(callback_args["iterate"]))
+    ret.append("nfg =" + "{:5}".format(callback_args["nfg"]))
+    ret.append("J =" + "{:10.6f}".format(callback_args["J"]))
+
     callback_args["iterate"] += 1
-    
+
     print(sp4.join(ret))
 
 
@@ -285,11 +296,11 @@ def _optimize_nelder_mead(
     **unknown_options,
 ):
     global callback_args
-    
+
     _check_unknown_options(unknown_options)
-    
+
     instance.setup._algorithm = "nelder-mead"
-    
+
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
 
@@ -304,11 +315,11 @@ def _optimize_nelder_mead(
     instance.setup._optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
-    
+
     _optimize_message(instance, control_vector)
-    
+
     callback_args = {"iterate": 0, "nfg": 0, "J": 0}
-    
+
     forward_run(
         instance.setup,
         instance.mesh,
@@ -320,10 +331,10 @@ def _optimize_nelder_mead(
         instance.output,
         False,
     )
-    
+
     callback_args["nfg"] += 1
     callback_args["J"] = instance.output.cost
-    
+
     _callback(x)
 
     res = scipy.optimize.minimize(
@@ -344,19 +355,19 @@ def _optimize_nelder_mead(
             "adaptive": adaptive,
         },
     )
-    
+
     _problem(res.x, instance, control_vector, parameters_bgd, states_bgd)
-    
+
     _callback(res.x)
-    
+
     if res.success:
-        
+
         print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
-    
+
     else:
-        
+
         print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
-    
+
 
 def _standardize_algorithm(algorithm: str) -> str:
 
@@ -391,7 +402,11 @@ def _standardize_control_vector(control_vector: list, algorithm: str) -> list:
                     f"Unknown parameter or state '{name}' in 'control_vector'"
                 )
 
-            elif name in name_states and algorithm not in ["sbs", "l-bfgs-b", "nelder-mead"]:
+            elif name in name_states and algorithm not in [
+                "sbs",
+                "l-bfgs-b",
+                "nelder-mead",
+            ]:
 
                 raise ValueError(
                     f"state optimization not available with '{algorithm}' algorithm"
@@ -424,7 +439,9 @@ def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
     return jobs_fun
 
 
-def _standardize_bounds(bounds: (list, tuple, set), control_vector: str, setup: SetupDT) -> list:
+def _standardize_bounds(
+    bounds: (list, tuple, set), control_vector: str, setup: SetupDT
+) -> list:
 
     if bounds:
 
@@ -482,7 +499,9 @@ def _standardize_bounds(bounds: (list, tuple, set), control_vector: str, setup: 
     return bounds
 
 
-def _standardize_gauge(gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT) -> list:
+def _standardize_gauge(
+    gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
+) -> list:
 
     code = np.array(mesh.code.tobytes(order="F").decode().split())
 
@@ -606,7 +625,9 @@ def _standardize_gauge(gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, 
     return gauge
 
 
-def _standardize_wgauge(wgauge: (list, tuple, set), gauge: (list, tuple, set), mesh: MeshDT) -> list:
+def _standardize_wgauge(
+    wgauge: (list, tuple, set), gauge: (list, tuple, set), mesh: MeshDT
+) -> list:
 
     code = np.array(mesh.code.tobytes(order="F").decode().split())
 

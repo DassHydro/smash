@@ -36,7 +36,7 @@ MOD := -J$(BUILDDIR)
 
 #% f90wrap information
 SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERDIR)/module/mw*_*.f90
+SOLVERMODWRAP := $(SOLVERDIR)/module/mw*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
@@ -68,7 +68,8 @@ f77: \
 #% f90 files
 f90: \
  obj/mwd_common.o \
- obj/md_routine.o \
+ obj/m_statistic.o \
+ obj/m_array_manipulation.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \
@@ -77,6 +78,7 @@ f90: \
  obj/mwd_output.o \
  obj/mwd_cost.o \
  obj/md_operator.o \
+ obj/mw_routine.o \
  obj/mw_run.o \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
@@ -91,10 +93,11 @@ $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
 #% f77 compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F77EXT)
 	$(FC) $(F77FLAGS) $(MOD) $(INC) -c -o $@ $<
-
+	
 #% f90 compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F90EXT)
 	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
+
  
 #% Making wrappers (f90wrap)
 wrappers:
@@ -143,7 +146,8 @@ library_edit:
 	
 #% Finalize compilation with mv, rm and sed
 finalize:
-	mv f90wrap_* $(SOLVERDIR)/f90wrap/.
+	mv f90wrap_*.f90 $(SOLVERDIR)/f90wrap/.
+	mv f90wrap_*.o $(BUILDDIR)/.
 	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
 	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
