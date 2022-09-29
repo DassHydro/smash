@@ -278,11 +278,6 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if mesh.ymax < 0:
         raise ValueError("argument ymax of MeshDT is lower than 0")
 
-    if np.any(mesh.area < 0):
-        raise ValueError(
-            "argument area of MeshDT contains at least one value lower than 0"
-        )
-
     if np.all(mesh.flwdir == -99):
         raise ValueError("argument flwdir of MeshDT contains only NaN value")
 

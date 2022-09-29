@@ -200,7 +200,7 @@ def _standardize_gauge(ds_flwdir, x, y, area, code):
 
 def _standardize_bbox(ds_flwdir, bbox):
 
-    #% Bounding Box (xmin, ymin, xmax, ymax)
+    #% Bounding Box (xmin, xmax, ymin, ymax)
 
     if isinstance(bbox, (list, tuple, set)):
 
