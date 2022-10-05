@@ -4,4 +4,5 @@ pip install pydata_sphinx_theme
 pip install sphinx-panels
 pip install IPython
 pip install sphinxcontrib-bibtex
+pip install sphinx-design
 python3 -m pip install sphinx-autosummary-accessors

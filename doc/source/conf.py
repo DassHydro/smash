@@ -42,10 +42,9 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosummary",
     "numpydoc",
-    "sphinx_panels",
+    "sphinx_design",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
-    # "matplotlib.sphinxext.only_directives",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_autosummary_accessors",
     "optimize_directive",
@@ -85,26 +84,19 @@ html_logo = "_static/logo_smash.svg"
 html_last_updated_fmt = "%b %d, %Y"
 
 html_theme_options = {
-"gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
-"collapse_navigation": False,
-"google_analytics_id": "UA-27880019-2",
+    "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
+    "collapse_navigation": True,
 }
 
-# html_context = {
-# "gitlab_url": "https://gitlab.irstea.fr", # or your self-hosted GitLab
-# "gitlab_user": "francois.colleoni",
-# "gitlab_repo": "smash",
-# "gitlab_version": "master",
-# "doc_path": "src/py/docs/source",
-# }
+html_context = {
+    "default_mode": "light"
+}
 
 html_css_files = [
     "css/smash.css",
 ]
 
 html_use_modindex = True
-
-panels_add_bootstrap_css = False
 
 bibtex_bibfiles = ["_static/bib/references.bib"]
 

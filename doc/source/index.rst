@@ -10,64 +10,77 @@ smash documentation
 
 :mod:`smash` is an open source, python library interfacing the Fortran **S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology model.
 
-.. panels::
-    :card: + intro-card text-center
-    :column: col-lg-6 col-md-6 col-sm-12 col-xs-12 d-flex p-3
+.. grid:: 2
 
-    ---
-    :img-top: _static/index_getting_started.svg
+    .. grid-item-card::
+        :img-top: _static/index_getting_started.svg
+        
+        Getting Started
+        ^^^^^^^^^^^^^^^
 
-    Getting started
-    ^^^^^^^^^^^^^^^
+        New to *smash*? Check out the getting started guides.
 
-    New to *smash*? Check out the getting started guides.
+        +++
 
-    +++
+        .. button-ref:: getting_started
+            :expand:
+            :color: secondary
+            :click-parent:
 
-    .. link-button:: getting_started
-            :type: ref
-            :text: To the getting started
-            :classes: btn-block btn-secondary stretched-link
-   
-    ---
-    :img-top: _static/index_user_guide.svg
-    
-    User Guide
-    ^^^^^^^^^^
-    
-    The user guide provides in depth-information of the *smash* library
-    
-    +++
-
-    .. link-button:: user_guide
-            :type: ref
-            :text: To the user guide
-            :classes: btn-block btn-secondary stretched-link
+            To the getting started
             
-    ---
-    :img-top: _static/index_api.svg
+    .. grid-item-card::
+        :img-top: _static/index_user_guide.svg
+
+        User Guide
+        ^^^^^^^^^^
+
+        The user guide provides in depth-information of the *smash* library.
+
+        +++
+
+        .. button-ref:: user_guide
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the user guide
             
-    API reference
-    ^^^^^^^^^^^^^
+    .. grid-item-card::
+        :img-top: _static/index_api.svg
 
-    The reference guide contains a detailed description of
-    the *smash* API.
-    
-    +++
+        API Reference
+        ^^^^^^^^^^^^^
 
-    .. link-button:: api_reference
-            :type: ref
-            :text: To the reference guide
-            :classes: btn-block btn-secondary stretched-link
-    
-    ---
-    :img-top: _static/model_description.svg
+        The reference guide contains a detailed description of
+        the *smash* API.
+
+        +++
+
+        .. button-ref:: api_reference
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the api reference
             
-    Model description
-    ^^^^^^^^^^^^^^^^^
+    .. grid-item-card::
+        :img-top: _static/model_description.svg
 
-    The model description contains a detailed description of
-    the *smash* model operators.
+        Model Description
+        ^^^^^^^^^^^^^^^^^
+
+        The model description contains a detailed description of
+        the *smash* model operators.
+
+        +++
+
+        .. button-ref:: getting_started
+            :expand:
+            :color: secondary
+            :click-parent:
+
+            To the getting started
 
 .. toctree::
    :maxdepth: 3
