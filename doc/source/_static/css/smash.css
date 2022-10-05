@@ -103,6 +103,11 @@ Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
   margin-right: auto;
 }
 
+.bolditalic {
+  font-weight: bold;
+  font-style: italic;
+}
+
 /* Dark theme tweaking */
 html[data-theme=dark] .sd-card img[src*='.svg'] {
     filter: invert(0.82) brightness(0.8) contrast(1.2);
