@@ -658,7 +658,7 @@ def _standardize_gauge(
 
             if gauge == "all":
 
-                gauge = code.copy()
+                gauge = list(code.copy())
 
                 gauge_imd = gauge.copy()
 
