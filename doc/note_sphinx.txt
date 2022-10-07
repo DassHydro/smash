@@ -6,3 +6,6 @@ pip install IPython
 pip install sphinxcontrib-bibtex
 pip install sphinx-design
 python3 -m pip install sphinx-autosummary-accessors
+pip3 install pydata_sphinx_theme--upgrade
+pip3 install sphinx_design
+

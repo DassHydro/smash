@@ -295,6 +295,25 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
         end if
         
+        
+        !% =============================================================================================================== %!
+        !%   Store simulated net rainfall on domain (optional)
+        !% =============================================================================================================== %!
+        
+        if (setup%save_net_prcp_domain) then
+        
+            if (setup%sparse_storage) then
+            
+                output%sparse_net_prcp_domain(:, t) =  pr + perc ! PR is net rainfall et perc is percolation (inflow water from hp)
+                
+            else
+            
+                output%net_prcp_domain(:, :, t) = pr + perc 
+            
+            end if
+        
+        end if
+        
     end do !% [ END DO TIME ]
     
     !% =============================================================================================================== %!

@@ -1,0 +1,1279 @@
+
+<!DOCTYPE html>
+
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>smash.solver._mwd_setup &#8212; smash 0.1.0 documentation</title>
+  <script>
+    document.documentElement.dataset.mode = localStorage.getItem("mode") || "light";
+    document.documentElement.dataset.theme = localStorage.getItem("theme") || "light";
+  </script>
+  
+  <!-- Loaded before other Sphinx assets -->
+  <link href="../../../_static/styles/theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+<link href="../../../_static/styles/pydata-sphinx-theme.css?digest=1e1de1a1873e13ef5536" rel="stylesheet">
+
+  
+  <link rel="stylesheet"
+    href="../../../_static/vendor/fontawesome/6.1.2/css/all.min.css">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-solid-900.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-brands-400.woff2">
+  <link rel="preload" as="font" type="font/woff2" crossorigin
+    href="../../../_static/vendor/fontawesome/6.1.2/webfonts/fa-regular-400.woff2">
+
+    <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/plot_directive.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/design-style.4045f2051d55cab465a707391d5b2007.min.css" />
+    <link rel="stylesheet" type="text/css" href="../../../_static/css/smash.css" />
+  
+  <!-- Pre-loaded scripts that we'll load fully later -->
+  <link rel="preload" as="script" href="../../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536">
+
+    <script data-url_root="../../../" id="documentation_options" src="../../../_static/documentation_options.js"></script>
+    <script src="../../../_static/jquery.js"></script>
+    <script src="../../../_static/underscore.js"></script>
+    <script src="../../../_static/_sphinx_javascript_frameworks_compat.js"></script>
+    <script src="../../../_static/doctools.js"></script>
+    <script src="../../../_static/design-tabs.js"></script>
+    <script>DOCUMENTATION_OPTIONS.pagename = '_modules/smash/solver/_mwd_setup';</script>
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="docsearch:language" content="en">
+  </head>
+  
+  
+  <body data-spy="scroll" data-target="#bd-toc-nav" data-offset="180" data-default-mode="light">
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__primary" id="__primary">
+  <label class="overlay overlay-primary" for="__primary"></label>
+
+  
+  <input type="checkbox" class="sidebar-toggle" name="__secondary" id="__secondary">
+  <label class="overlay overlay-secondary" for="__secondary"></label>
+
+  
+  <div class="search-button__wrapper">
+    <div class="search-button__overlay"></div>
+    <div class="search-button__search-container">
+      
+<form class="bd-search d-flex align-items-center" action="../../../search.html" method="get">
+  <i class="fa-solid fa-magnifying-glass"></i>
+  <input type="search" class="form-control" name="q" id="search-input" placeholder="Search the docs ..." aria-label="Search the docs ..." autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+  <span class="search-button__kbd-shortcut"><kbd class="kbd-shortcut__modifier">Ctrl</kbd>+<kbd>K</kbd></span>
+</form>
+    </div>
+  </div>
+
+  
+  <nav class="bd-header navbar navbar-expand-lg bd-navbar" id="navbar-main"><div class="bd-header__inner bd-page-width">
+  <label class="sidebar-toggle primary-toggle" for="__primary">
+      <span class="fa-solid fa-bars"></span>
+  </label>
+  <div id="navbar-start">
+    
+    
+  
+
+
+<a class="navbar-brand logo" href="../../../index.html">
+
+  
+  
+  
+  
+  
+  
+  
+
+  
+    <img src="../../../_static/logo_smash.svg" class="logo__image only-light" alt="Logo image">
+    <img src="../../../_static/logo_smash.svg" class="logo__image only-dark" alt="Logo image">
+  
+  
+</a>
+    
+  </div>
+
+  
+  <div class="col-lg-9 navbar-header-items">
+    <div id="navbar-center" class="mr-auto">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../getting_started/index.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../user_guide/index.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../api_reference/index.html">
+                        API Reference
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+    </div>
+
+    <div id="navbar-end">
+      <div class="navbar-end-item navbar-end__search-button-container">
+        
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+      </div>
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" data-toggle="tooltip">
+    <a class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="fa-regular fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.irstea.fr/francois.colleoni/smash/" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fa-brands fa-square-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+  </div>
+
+
+  
+  <div class="search-button-container--mobile">
+<button class="btn btn-sm navbar-btn search-button search-button__button" title="Search" data-toggle="tooltip">
+  <i class="fa-solid fa-magnifying-glass"></i>
+</button>
+  </div>
+
+  
+  <label class="sidebar-toggle secondary-toggle" for="__secondary">
+      <span class="fa-solid fa-outdent"></span>
+  </label>
+  
+
+</div>
+  </nav>
+  
+
+  <div class="bd-container">
+    <div class="bd-container__inner bd-page-width">
+      
+      <div class="bd-sidebar-primary bd-sidebar hide-on-wide">
+        
+  
+  <div class="sidebar-header-items sidebar-primary__section">
+    
+    
+      <div class="sidebar-header-items__center">
+      
+      <div class="navbar-center-item">
+        <nav class="navbar-nav">
+    <p class="sidebar-header-items__title" role="heading" aria-level="1" aria-label="Site Navigation">
+        Site Navigation
+    </p>
+    <ul id="navbar-main-elements" class="navbar-nav">
+        
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../getting_started/index.html">
+                        Getting started
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../user_guide/index.html">
+                        User guide
+                    </a>
+                </li>
+                
+
+                <li class="nav-item">
+                    <a class="nav-link" href="../../../api_reference/index.html">
+                        API Reference
+                    </a>
+                </li>
+                
+    </ul>
+</nav>
+      </div>
+      
+      </div>
+    
+
+    
+    
+    <div class="sidebar-header-items__end">
+      
+      <div class="navbar-end-item">
+        <span class="theme-switch-button btn btn-sm btn-outline-primary navbar-btn rounded-circle" title="light/dark" data-toggle="tooltip">
+    <a class="theme-switch" data-mode="light"><i class="fa-solid fa-sun"></i></a>
+    <a class="theme-switch" data-mode="dark"><i class="fa-regular fa-moon"></i></a>
+    <a class="theme-switch" data-mode="auto"><i class="fa-solid fa-circle-half-stroke"></i></a>
+</span>
+      </div>
+      
+      <div class="navbar-end-item">
+        <ul id="navbar-icon-links" class="navbar-nav" aria-label="Icon Links">
+        <li class="nav-item">
+          
+          
+          
+          
+          
+          
+          
+          <a href="https://gitlab.irstea.fr/francois.colleoni/smash/" title="GitLab" class="nav-link" rel="noopener" target="_blank" data-toggle="tooltip"><span><i class="fa-brands fa-square-gitlab"></i></span>
+            <label class="sr-only">GitLab</label></a>
+        </li>
+      </ul>
+      </div>
+      
+    </div>
+    
+  </div>
+
+  
+
+  
+  <div class="sidebar-end-items sidebar-primary__section">
+    <div class="sidebar-end-items__item">
+    </div>
+  </div>
+
+      </div>
+      <main class="bd-main">
+        
+        
+        <div class="bd-content">
+          <div class="bd-article-container">
+            
+            <div class="bd-header-article">
+                
+            </div>
+            
+            
+            <article class="bd-article" role="main">
+              
+  <h1>Source code for smash.solver._mwd_setup</h1><div class="highlight"><pre>
+<span></span><span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">Module mwd_setup</span>
+
+
+<span class="sd">Defined at smash/solver/module/mwd_setup.f90 lines 61-149</span>
+
+<span class="sd">This module `mwd_setup` encapsulates all SMASH setup.</span>
+<span class="sd">This module is wrapped and differentiated.</span>
+
+<span class="sd">SetupDT type:</span>
+
+<span class="sd">&lt;/&gt; Public</span>
+<span class="sd">========================== =====================================</span>
+<span class="sd">`Variables`                Description</span>
+<span class="sd">========================== =====================================</span>
+<span class="sd">``dt`` Solver time step [s] (default: 3600)</span>
+<span class="sd">``start_time`` Simulation start time [%Y%m%d%H%M] (default: &#39;...&#39;)</span>
+<span class="sd">``end_time`` Simulation end time [%Y%m%d%H%M] (default: &#39;...&#39;)</span>
+<span class="sd">``sparse_storage``         Forcing sparse storage(default: .false.)</span>
+<span class="sd">``read_qobs``              Read observed discharge(default: .false.)</span>
+<span class="sd">``qobs_directory``         Observed discharge directory path(default: &#39;...&#39;)</span>
+<span class="sd">``read_prcp``              Read precipitation(default: .false.)</span>
+<span class="sd">``prcp_format``            Precipitation format(default: &#39;tif&#39;)</span>
+<span class="sd">``prcp_conversion_factor`` Precipitation conversion factor(default: 1)</span>
+<span class="sd">``prcp_directory``         Precipiation directory path(default: &#39;...&#39;)</span>
+<span class="sd">``read_pet``               Reap potential evapotranspiration(default: .false.)</span>
+<span class="sd">``pet_format``             Potential evapotranspiration format(default: &#39;tif&#39;)</span>
+<span class="sd">``pet_conversion_factor`` Potential evapotranpisration conversion \</span>
+<span class="sd">    factor(default: 1)</span>
+<span class="sd">``pet_directory`` Potential evapotranspiration directory path(default: &#39;...&#39;)</span>
+<span class="sd">``daily_interannual_pet`` Read daily interannual potential \</span>
+<span class="sd">    evapotranspiration(default: .false.)</span>
+<span class="sd">``mean_forcing``           Compute mean forcing(default: .false.)</span>
+<span class="sd">``prcp_indice``            Compute prcp indices(default: .false.)</span>
+<span class="sd">``read_descriptor`` Read descriptor map(s) (default: .false.)</span>
+<span class="sd">``descriptor_format``      Descriptor map(s) format(default: .false.)</span>
+<span class="sd">``descriptor_directory``   Descriptor map(s) directory(default: &quot;...&quot;)</span>
+<span class="sd">``descriptor_name``        Descriptor map(s) names</span>
+<span class="sd">``interception_module``    Choice of interception module(default: 0)</span>
+<span class="sd">``production_module``      Choice of production module(default: 0)</span>
+<span class="sd">``transfer_module``        Choice of transfer module(default: 0)</span>
+<span class="sd">``exchange_module``        Choice of exchange module(default: 0)</span>
+<span class="sd">``routing_module``         Choice of routing module(default: 0)</span>
+<span class="sd">``save_qsim_domain`` Save simulated discharge on the domain(default: .false.)</span>
+
+<span class="sd">&lt;/&gt; Private</span>
+<span class="sd">========================== =====================================</span>
+<span class="sd">`Variables`                Description</span>
+<span class="sd">========================== =====================================</span>
+<span class="sd">``ntime_step``             Number of time step</span>
+<span class="sd">``nd``                     Number of descriptor map(s)</span>
+<span class="sd">``algorithm``              Optimize Algorithm name</span>
+<span class="sd">``jobs_fun``               Objective function name(default: &#39;nse&#39;)</span>
+<span class="sd">``jreg_fun``               Regularization name(default: &#39;prior&#39;)</span>
+<span class="sd">``wjreg``                  Regularization weight(default: 0)</span>
+<span class="sd">``optim_start_step``       Optimization start step(default: 1)</span>
+<span class="sd">``optim_parameters``       Optimized parameters array(default: 0)</span>
+<span class="sd">``optim_states``           Optimize states array(default: 0)</span>
+<span class="sd">``lb_parameters``          Parameters lower bounds(default: see below)</span>
+<span class="sd">``ub_parameters``          Parameters upper bounds(default: see below)</span>
+<span class="sd">``lb_states``              States lower bounds(default: see below)</span>
+<span class="sd">``ub_states``              States upper bounds(default: see below)</span>
+<span class="sd">``maxiter``                Maximum number of iteration(default: 100)</span>
+<span class="sd">=========================  =====================================</span>
+
+<span class="sd">contains</span>
+
+<span class="sd">[1] SetupDT_initialise</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="kn">from</span> <span class="nn">__future__</span> <span class="kn">import</span> <span class="n">print_function</span><span class="p">,</span> <span class="n">absolute_import</span><span class="p">,</span> <span class="n">division</span>
+<span class="kn">from</span> <span class="nn">smash.solver._mw_routine</span> <span class="kn">import</span> <span class="n">copy_setup</span>
+<span class="kn">from</span> <span class="nn">smash.solver</span> <span class="kn">import</span> <span class="n">_solver</span>
+<span class="kn">import</span> <span class="nn">f90wrap.runtime</span>
+<span class="kn">import</span> <span class="nn">logging</span>
+
+<span class="n">_arrays</span> <span class="o">=</span> <span class="p">{}</span>
+<span class="n">_objs</span> <span class="o">=</span> <span class="p">{}</span>
+
+<div class="viewcode-block" id="SetupDT"><a class="viewcode-back" href="../../../api_reference/smash/smash.solver._mwd_setup.SetupDT.html#smash.solver._mwd_setup.SetupDT">[docs]</a><span class="nd">@f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">register_class</span><span class="p">(</span><span class="s2">&quot;solver.SetupDT&quot;</span><span class="p">)</span>
+<span class="k">class</span> <span class="nc">SetupDT</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">FortranDerivedType</span><span class="p">):</span>
+    <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">    Type(name=setupdt)</span>
+<span class="sd">    </span>
+<span class="sd">    </span>
+<span class="sd">    Defined at smash/solver/module/mwd_setup.f90 lines 64-134</span>
+<span class="sd">    </span>
+<span class="sd">    &lt;/&gt; Public</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nd</span><span class="p">,</span> <span class="n">handle</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        self = Setupdt(nd)</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 lines 137-149</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        nd : int</span>
+<span class="sd">        </span>
+<span class="sd">        Returns</span>
+<span class="sd">        -------</span>
+<span class="sd">        setup : Setupdt</span>
+<span class="sd">        </span>
+<span class="sd">        Notes</span>
+<span class="sd">        -----</span>
+<span class="sd">        </span>
+<span class="sd">        SetupDT initialisation subroutine</span>
+<span class="sd">        only: sp, lchar, np, ns</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">FortranDerivedType</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span>
+        <span class="n">result</span> <span class="o">=</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt_initialise</span><span class="p">(</span><span class="n">nd</span><span class="o">=</span><span class="n">nd</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span> <span class="o">=</span> <span class="n">result</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span> <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">result</span><span class="p">,</span> <span class="nb">tuple</span><span class="p">)</span> <span class="k">else</span> <span class="n">result</span>
+    
+    <span class="k">def</span> <span class="fm">__del__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Destructor for class Setupdt</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 lines 64-134</span>
+<span class="sd">        </span>
+<span class="sd">        Parameters</span>
+<span class="sd">        ----------</span>
+<span class="sd">        this : Setupdt</span>
+<span class="sd">            Object to be destructed</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Automatically generated destructor for setupdt</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_alloc</span><span class="p">:</span>
+            <span class="k">try</span><span class="p">:</span>
+                <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt_finalise</span><span class="p">(</span><span class="n">this</span><span class="o">=</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+            <span class="k">except</span><span class="p">:</span>
+                <span class="k">pass</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element dt ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 66</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__dt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@dt</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">dt</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dt</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__dt</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">dt</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element start_time ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 67</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__start_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@start_time</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">start_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">start_time</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__start_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">start_time</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element end_time ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 68</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__end_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@end_time</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">end_time</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">end_time</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__end_time</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">end_time</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">sparse_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element sparse_storage ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 69</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__sparse_storage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@sparse_storage</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">sparse_storage</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">sparse_storage</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__sparse_storage</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">sparse_storage</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">read_qobs</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element read_qobs ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 70</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__read_qobs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@read_qobs</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">read_qobs</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_qobs</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__read_qobs</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">read_qobs</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">qobs_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element qobs_directory ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 71</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__qobs_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@qobs_directory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">qobs_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">qobs_directory</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__qobs_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">qobs_directory</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">read_prcp</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element read_prcp ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 72</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__read_prcp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@read_prcp</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">read_prcp</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_prcp</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__read_prcp</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">read_prcp</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prcp_format</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element prcp_format ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 73</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__prcp_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@prcp_format</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">prcp_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prcp_format</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__prcp_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">prcp_format</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prcp_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element prcp_conversion_factor ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 74</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__prcp_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@prcp_conversion_factor</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">prcp_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prcp_conversion_factor</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__prcp_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">prcp_conversion_factor</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prcp_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element prcp_directory ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 75</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__prcp_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@prcp_directory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">prcp_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prcp_directory</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__prcp_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">prcp_directory</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">read_pet</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element read_pet ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 76</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__read_pet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@read_pet</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">read_pet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_pet</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__read_pet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">read_pet</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pet_format</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element pet_format ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 77</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__pet_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@pet_format</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">pet_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pet_format</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__pet_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">pet_format</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pet_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element pet_conversion_factor ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 78</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__pet_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@pet_conversion_factor</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">pet_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pet_conversion_factor</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__pet_conversion_factor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">pet_conversion_factor</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">pet_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element pet_directory ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 79</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__pet_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@pet_directory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">pet_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">pet_directory</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__pet_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">pet_directory</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">daily_interannual_pet</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element daily_interannual_pet ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 80</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__daily_interannual_pet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@daily_interannual_pet</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">daily_interannual_pet</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">daily_interannual_pet</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__daily_interannual_pet</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">daily_interannual_pet</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">mean_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element mean_forcing ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 81</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__mean_forcing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@mean_forcing</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">mean_forcing</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">mean_forcing</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__mean_forcing</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">mean_forcing</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">prcp_indice</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element prcp_indice ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 82</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__prcp_indice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@prcp_indice</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">prcp_indice</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">prcp_indice</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__prcp_indice</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">prcp_indice</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">read_descriptor</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element read_descriptor ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 83</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__read_descriptor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@read_descriptor</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">read_descriptor</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">read_descriptor</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__read_descriptor</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">read_descriptor</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">descriptor_format</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element descriptor_format ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 84</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__descriptor_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@descriptor_format</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">descriptor_format</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptor_format</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__descriptor_format</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">descriptor_format</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">descriptor_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element descriptor_directory ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 85</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__descriptor_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@descriptor_directory</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">descriptor_directory</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptor_directory</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__descriptor_directory</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">descriptor_directory</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">descriptor_name</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element descriptor_name ftype=character(20) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 86</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__descriptor_name</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">descriptor_name</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">descriptor_name</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__descriptor_name</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">descriptor_name</span>
+        <span class="k">return</span> <span class="n">descriptor_name</span>
+    
+    <span class="nd">@descriptor_name</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">descriptor_name</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">descriptor_name</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">descriptor_name</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">descriptor_name</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">interception_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element interception_module ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 87</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__interception_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@interception_module</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">interception_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">interception_module</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__interception_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">interception_module</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">production_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element production_module ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 88</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__production_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@production_module</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">production_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">production_module</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__production_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">production_module</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">transfer_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element transfer_module ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 89</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__transfer_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@transfer_module</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">transfer_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">transfer_module</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__transfer_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">transfer_module</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">exchange_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element exchange_module ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 90</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__exchange_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@exchange_module</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">exchange_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">exchange_module</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__exchange_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">exchange_module</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">routing_module</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element routing_module ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 91</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__routing_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@routing_module</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">routing_module</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">routing_module</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__routing_module</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">routing_module</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">save_qsim_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element save_qsim_domain ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 92</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__save_qsim_domain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@save_qsim_domain</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">save_qsim_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_qsim_domain</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__save_qsim_domain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">save_qsim_domain</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">save_net_prcp_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element save_net_prcp_domain ftype=logical pytype=bool</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 93</span>
+<span class="sd">        </span>
+<span class="sd">        &lt;/&gt; Private</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__save_net_prcp_domain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@save_net_prcp_domain</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">save_net_prcp_domain</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">save_net_prcp_domain</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__save_net_prcp_domain</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> \
+            <span class="n">save_net_prcp_domain</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_ntime_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element ntime_step ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 95</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__ntime_step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_ntime_step</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_ntime_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ntime_step</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__ntime_step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">ntime_step</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_nd</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element nd ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 96</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__nd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_nd</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_nd</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">nd</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__nd</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">nd</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element algorithm ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 97</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__algorithm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_algorithm</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_algorithm</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__algorithm</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">algorithm</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_jobs_fun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element jobs_fun ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 98</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__jobs_fun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_jobs_fun</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_jobs_fun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jobs_fun</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__jobs_fun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">jobs_fun</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_jreg_fun</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element jreg_fun ftype=character(lchar) pytype=str</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 99</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__jreg_fun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_jreg_fun</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_jreg_fun</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">jreg_fun</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__jreg_fun</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">jreg_fun</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_wjreg</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element wjreg ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 100</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__wjreg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_wjreg</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_wjreg</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">wjreg</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__wjreg</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">wjreg</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_optim_start_step</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element optim_start_step ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 101</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__optim_start_step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_optim_start_step</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_optim_start_step</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim_start_step</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__optim_start_step</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">optim_start_step</span><span class="p">)</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_optim_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element optim_parameters ftype=integer pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 102</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__optim_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">optim_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optim_parameters</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__optim_parameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">optim_parameters</span>
+        <span class="k">return</span> <span class="n">optim_parameters</span>
+    
+    <span class="nd">@_optim_parameters</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_optim_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim_parameters</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optim_parameters</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">optim_parameters</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_optim_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element optim_states ftype=integer pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 103</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__optim_states</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">optim_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">optim_states</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__optim_states</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">optim_states</span>
+        <span class="k">return</span> <span class="n">optim_states</span>
+    
+    <span class="nd">@_optim_states</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_optim_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">optim_states</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_optim_states</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">optim_states</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_lb_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element lb_parameters ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 112</span>
+<span class="sd">        </span>
+<span class="sd">        lr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__lb_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">lb_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lb_parameters</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__lb_parameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">lb_parameters</span>
+        <span class="k">return</span> <span class="n">lb_parameters</span>
+    
+    <span class="nd">@_lb_parameters</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_lb_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lb_parameters</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lb_parameters</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">lb_parameters</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_ub_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element ub_parameters ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 121</span>
+<span class="sd">        </span>
+<span class="sd">        lr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__ub_parameters</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">ub_parameters</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ub_parameters</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__ub_parameters</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">ub_parameters</span>
+        <span class="k">return</span> <span class="n">ub_parameters</span>
+    
+    <span class="nd">@_ub_parameters</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_ub_parameters</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ub_parameters</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ub_parameters</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ub_parameters</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_lb_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element lb_states ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 127</span>
+<span class="sd">        </span>
+<span class="sd">        hlr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__lb_states</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">lb_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">lb_states</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__lb_states</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">lb_states</span>
+        <span class="k">return</span> <span class="n">lb_states</span>
+    
+    <span class="nd">@_lb_states</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_lb_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">lb_states</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_lb_states</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">lb_states</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_ub_states</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element ub_states ftype=real(sp) pytype=float</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 133</span>
+<span class="sd">        </span>
+<span class="sd">        hlr</span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="n">array_ndim</span><span class="p">,</span> <span class="n">array_type</span><span class="p">,</span> <span class="n">array_shape</span><span class="p">,</span> <span class="n">array_handle</span> <span class="o">=</span> \
+            <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__ub_states</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+        <span class="k">if</span> <span class="n">array_handle</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">:</span>
+            <span class="n">ub_states</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">ub_states</span> <span class="o">=</span> <span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">get_array</span><span class="p">(</span><span class="n">f90wrap</span><span class="o">.</span><span class="n">runtime</span><span class="o">.</span><span class="n">sizeof_fortran_t</span><span class="p">,</span>
+                                    <span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span>
+                                    <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__array__ub_states</span><span class="p">)</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_arrays</span><span class="p">[</span><span class="n">array_handle</span><span class="p">]</span> <span class="o">=</span> <span class="n">ub_states</span>
+        <span class="k">return</span> <span class="n">ub_states</span>
+    
+    <span class="nd">@_ub_states</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_ub_states</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">ub_states</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_ub_states</span><span class="p">[</span><span class="o">...</span><span class="p">]</span> <span class="o">=</span> <span class="n">ub_states</span>
+    
+    <span class="nd">@property</span>
+    <span class="k">def</span> <span class="nf">_maxiter</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">        Element maxiter ftype=integer  pytype=int</span>
+<span class="sd">        </span>
+<span class="sd">        </span>
+<span class="sd">        Defined at smash/solver/module/mwd_setup.f90 line 134</span>
+<span class="sd">        </span>
+<span class="sd">        &quot;&quot;&quot;</span>
+        <span class="k">return</span> <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__get__maxiter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">)</span>
+    
+    <span class="nd">@_maxiter</span><span class="o">.</span><span class="n">setter</span>
+    <span class="k">def</span> <span class="nf">_maxiter</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">):</span>
+        <span class="n">_solver</span><span class="o">.</span><span class="n">f90wrap_setupdt__set__maxiter</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_handle</span><span class="p">,</span> <span class="n">maxiter</span><span class="p">)</span>
+    
+    <span class="k">def</span> <span class="fm">__str__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">ret</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;&lt;setupdt&gt;{</span><span class="se">\n</span><span class="s1">&#39;</span><span class="p">]</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;    dt : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dt</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    start_time : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">start_time</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    sparse_storage : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">sparse_storage</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    read_qobs : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_qobs</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    qobs_directory : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">qobs_directory</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    read_prcp : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_prcp</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    prcp_format : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prcp_format</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    prcp_conversion_factor : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prcp_conversion_factor</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    prcp_directory : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">prcp_directory</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    read_pet : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_pet</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    pet_format : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pet_format</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    pet_conversion_factor : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pet_conversion_factor</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    pet_directory : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">pet_directory</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    daily_interannual_pet : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">daily_interannual_pet</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    mean_forcing : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">mean_forcing</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    read_descriptor : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">read_descriptor</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    descriptor_format : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">descriptor_format</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    descriptor_directory : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">descriptor_directory</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    descriptor_name : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">descriptor_name</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    interception_module : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">interception_module</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    production_module : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">production_module</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    transfer_module : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">transfer_module</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    exchange_module : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">exchange_module</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    routing_module : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">routing_module</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    save_qsim_domain : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_qsim_domain</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;,</span><span class="se">\n</span><span class="s1">    save_net_prcp_domain : &#39;</span><span class="p">)</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="nb">repr</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">save_net_prcp_domain</span><span class="p">))</span>
+        <span class="n">ret</span><span class="o">.</span><span class="n">append</span><span class="p">(</span><span class="s1">&#39;}&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="s1">&#39;&#39;</span><span class="o">.</span><span class="n">join</span><span class="p">(</span><span class="n">ret</span><span class="p">)</span>
+
+<div class="viewcode-block" id="SetupDT.copy"><a class="viewcode-back" href="../../../api_reference/smash/smash.solver._mwd_setup.SetupDT.copy.html#smash.solver._mwd_setup.SetupDT.copy">[docs]</a>    <span class="k">def</span> <span class="nf">copy</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="n">copy_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">)</span></div>
+    
+    <span class="n">_dt_array_initialisers</span> <span class="o">=</span> <span class="p">[]</span></div>
+    
+
+
+<span class="n">_array_initialisers</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="n">_dt_array_initialisers</span> <span class="o">=</span> <span class="p">[]</span>
+
+<span class="k">try</span><span class="p">:</span>
+    <span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">_array_initialisers</span><span class="p">:</span>
+        <span class="n">func</span><span class="p">()</span>
+<span class="k">except</span> <span class="ne">ValueError</span><span class="p">:</span>
+    <span class="n">logging</span><span class="o">.</span><span class="n">debug</span><span class="p">(</span><span class="s1">&#39;unallocated array(s) detected on import of module &quot;mwd_setup&quot;.&#39;</span><span class="p">)</span>
+
+<span class="k">for</span> <span class="n">func</span> <span class="ow">in</span> <span class="n">_dt_array_initialisers</span><span class="p">:</span>
+    <span class="n">func</span><span class="p">()</span>
+</pre></div>
+
+            </article>
+            
+            
+            
+            <footer class="bd-footer-article">
+                <!-- Previous / next buttons -->
+<div class='prev-next-area'>
+</div>
+            </footer>
+            
+          </div>
+          
+          
+          
+            <div class="bd-sidebar-secondary bd-toc">
+              
+<div class="toc-item">
+  
+<div id="searchbox"></div>
+</div>
+
+<div class="toc-item">
+  
+</div>
+
+<div class="toc-item">
+  
+</div>
+
+            </div>
+          
+          
+        </div>
+        <footer class="bd-footer-content">
+          <div class="bd-footer-content__inner">
+            
+          </div>
+        </footer>
+        
+      </main>
+    </div>
+  </div>
+
+  
+    
+  <!-- Scripts loaded after <body> so the DOM is not blocked -->
+  <script src="../../../_static/scripts/pydata-sphinx-theme.js?digest=1e1de1a1873e13ef5536"></script>
+
+  <footer class="bd-footer"><div class="bd-footer__inner container">
+  
+  <div class="footer-item">
+    
+<p class="copyright">
+
+    &copy; Copyright 2022, Francois Colleoni.<br>
+
+</p>
+
+  </div>
+  
+  <div class="footer-item">
+    
+<p class="sphinx-version">
+Created using <a href="http://sphinx-doc.org/">Sphinx</a> 5.0.0+.<br>
+</p>
+
+  </div>
+  
+</div>
+  </footer>
+  </body>
+</html>

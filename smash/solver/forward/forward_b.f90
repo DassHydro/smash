@@ -372,6 +372,8 @@ MODULE MWD_OUTPUT_DIFF_B
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qsim
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qsim_domain
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_qsim_domain
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: net_prcp_domain
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_net_prcp_domain
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: parameters_gradient
       REAL(sp) :: cost
       REAL(sp) :: sp1
@@ -402,6 +404,18 @@ CONTAINS
         ALLOCATE(output%qsim_domain(mesh%nrow, mesh%ncol, setup%&
 &       ntime_step))
         output%qsim_domain = -99._sp
+      END IF
+    END IF
+! save net rainfall
+    IF (setup%save_net_prcp_domain) THEN
+      IF (setup%sparse_storage) THEN
+        ALLOCATE(output%sparse_net_prcp_domain(mesh%nac, setup%&
+&       ntime_step))
+        output%sparse_net_prcp_domain = -99._sp
+      ELSE
+        ALLOCATE(output%net_prcp_domain(mesh%nrow, mesh%ncol, setup%&
+&       ntime_step))
+        output%net_prcp_domain = -99._sp
       END IF
     END IF
     CALL STATESDT_INITIALISE(output%fstates, mesh)
@@ -1959,6 +1973,17 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
         output%sparse_qsim_domain(:, t) = sparse_q
       ELSE
         output%qsim_domain(:, :, t) = q
+      END IF
+    END IF
+!% =============================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!% =============================================================================================================== %!
+    IF (setup%save_net_prcp_domain) THEN
+      IF (setup%sparse_storage) THEN
+! PR is net rainfall et perc is percolation (inflow water from hp)
+        output%sparse_net_prcp_domain(:, t) = pr + perc
+      ELSE
+        output%net_prcp_domain(:, :, t) = pr + perc
       END IF
     END IF
   END DO

@@ -105,6 +105,8 @@ module mwd_setup
         integer :: routing_module = 0
         
         logical :: save_qsim_domain = .false.
+        logical :: save_net_prcp_domain = .false.
+        
         
         !% </> Private
         integer :: ntime_step = 0 !>f90wrap private

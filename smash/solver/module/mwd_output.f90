@@ -38,6 +38,9 @@ module mwd_output
         real(sp), dimension(:,:,:), allocatable :: qsim_domain
         real(sp), dimension(:,:), allocatable :: sparse_qsim_domain
         
+        real(sp), dimension(:,:,:), allocatable :: net_prcp_domain
+        real(sp), dimension(:,:), allocatable   :: sparse_net_prcp_domain
+        
         real(sp), dimension(:,:,:), allocatable :: parameters_gradient
         
         real(sp) :: cost
@@ -87,6 +90,25 @@ module mwd_output
                     allocate(output%qsim_domain(mesh%nrow, mesh%ncol, &
                     & setup%ntime_step))
                     output%qsim_domain = - 99._sp
+                
+                end if
+                
+            end if
+            
+            ! save net rainfall
+            if (setup%save_net_prcp_domain) then
+                
+                if (setup%sparse_storage) then
+                
+                    allocate(output%sparse_net_prcp_domain(mesh%nac, &
+                    & setup%ntime_step))
+                    output%sparse_net_prcp_domain = - 99._sp
+                    
+                else
+
+                    allocate(output%net_prcp_domain(mesh%nrow, mesh%ncol, &
+                    & setup%ntime_step))
+                    output%net_prcp_domain = - 99._sp
                 
                 end if
                 
