@@ -304,7 +304,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
             if (setup%sparse_storage) then
             
-                output%sparse_net_prcp_domain(:, t) =  pr + perc ! PR is net rainfall et perc is percolation (inflow water from hp)
+                output%sparse_net_prcp_domain(:, t) = pr + perc
                 
             else
             

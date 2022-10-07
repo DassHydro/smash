@@ -331,20 +331,22 @@ END MODULE MWD_STATES_DIFF_D
 !%      OutputDT type:
 !%      
 !%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``qsim``                 Simulated discharge at gauge            [m3/s]
-!%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
-!%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
-!%      ``parameters_gradient``  Parameters gradients
-!%      ``cost``                 Cost value
-!%      ``sp1``                  Scalar product <dY*, dY>
-!%      ``sp2``                  Scalar product <dk*, dk>
-!%      ``an``                   Alpha gradient test 
-!%      ``ian``                  Ialpha gradient test
-!%      ``fstates``              Final states (StatesDT)
-!%      ======================== =======================================
+!%      ========================== =====================================
+!%      `Variables`                Description
+!%      ========================== =====================================
+!%      ``qsim``                   Simulated discharge at gauge            [m3/s]
+!%      ``qsim_domain``            Simulated discharge whole domain        [m3/s]
+!%      ``sparse_qsim_domain``     Sparse simulated discharge whole domain [m3/s]
+!%      ``net_prcp_domain``        Net precipitaition whole domain         [mm/dt]
+!%      ``sparse_net_prcp_domain`` Sparse net precipitation whole domain   [mm/dt]
+!%      ``parameters_gradient``    Parameters gradients
+!%      ``cost``                   Cost value
+!%      ``sp1``                    Scalar product <dY*, dY>
+!%      ``sp2``                    Scalar product <dk*, dk>
+!%      ``an``                     Alpha gradient test 
+!%      ``ian``                    Ialpha gradient test
+!%      ``fstates``                Final states (StatesDT)
+!%      ========================== =====================================
 !%
 !%      contains
 !%
@@ -397,7 +399,6 @@ CONTAINS
         output%qsim_domain = -99._sp
       END IF
     END IF
-! save net rainfall
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
         ALLOCATE(output%sparse_net_prcp_domain(mesh%nac, setup%&
@@ -1993,7 +1994,6 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 !% =============================================================================================================== %!
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-! PR is net rainfall et perc is percolation (inflow water from hp)
         output%sparse_net_prcp_domain(:, t) = pr + perc
       ELSE
         output%net_prcp_domain(:, :, t) = pr + perc
@@ -2260,7 +2260,6 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
 !% =============================================================================================================== %!
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-! PR is net rainfall et perc is percolation (inflow water from hp)
         output%sparse_net_prcp_domain(:, t) = pr + perc
       ELSE
         output%net_prcp_domain(:, :, t) = pr + perc
