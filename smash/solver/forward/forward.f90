@@ -9,7 +9,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     use mwd_mesh  !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_parameters !% only: ParametersDT
-    use mwd_states !% only: StatesDT, StatesDT_initialise
+    use mwd_states !% only: StatesDT
     use mwd_output !% only: OutputDT
     
     use md_operator !% only: GR_interception, GR_production, GR_exchange, &
