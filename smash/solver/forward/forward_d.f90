@@ -1660,8 +1660,8 @@ END MODULE MD_OPERATOR_DIFF_D
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
-!                output.qsim:in states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
+!                output.qsim:in states.hi:in-out states.hp:in-out
+!                states.hft:in-out states.hst:in-out states.hlr:in-out
 SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 & parameters_bgd, states, states_d, states_bgd, output, output_d, cost, &
 & cost_d)
@@ -1678,7 +1678,7 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   USE MWD_INPUT_DATA
 !% only: ParametersDT
   USE MWD_PARAMETERS_DIFF_D
-!% only: StatesDT
+!% only: StatesDT, StatesDT_initialise
   USE MWD_STATES_DIFF_D
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_D
@@ -2002,15 +2002,17 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step (optional)
+!%   Store states at final time step and reset states
 !% =============================================================================================================== %!
   output%fstates = states
+  states_d = states_imd_d
+  states = states_imd
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
-&               , parameters_bgd, states_imd, states_imd_d, states_bgd, &
-&               output, output_d, cost, cost_d)
+&               , parameters_bgd, states, states_d, states_bgd, output, &
+&               output_d, cost, cost_d)
 END SUBROUTINE FORWARD_D
 
 SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
@@ -2028,7 +2030,7 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
   USE MWD_INPUT_DATA
 !% only: ParametersDT
   USE MWD_PARAMETERS_DIFF_D
-!% only: StatesDT
+!% only: StatesDT, StatesDT_initialise
   USE MWD_STATES_DIFF_D
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_D
@@ -2268,13 +2270,14 @@ SUBROUTINE FORWARD_NODIFF_D(setup, mesh, input_data, parameters, &
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step (optional)
+!%   Store states at final time step and reset states
 !% =============================================================================================================== %!
   output%fstates = states
+  states = states_imd
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
-&             , states_imd, states_bgd, output, cost)
+&             , states, states_bgd, output, cost)
 END SUBROUTINE FORWARD_NODIFF_D
 
