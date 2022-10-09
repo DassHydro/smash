@@ -59,7 +59,7 @@ module mw_optimize
             type(OutputDT), intent(inout) :: output
             
             type(ParametersDT) :: parameters_bgd
-            type(StatesDT) :: states_bgd, states_imd
+            type(StatesDT) :: states_bgd
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix
             integer, dimension(mesh%nrow, mesh%ncol) :: mask_ac
@@ -92,8 +92,6 @@ module mw_optimize
             
             call forward(setup, mesh, input_data, parameters, &
             & parameters_bgd, states, states_bgd, output, cost)
-            
-            states = states_bgd
             
             call parameters_to_matrix(parameters, parameters_matrix)
             call states_to_matrix(states, states_matrix)
@@ -184,14 +182,10 @@ module mw_optimize
                             
                             call matrix_to_parameters(parameters_matrix, parameters)
                             call matrix_to_states(states_matrix, states)
-                            
-                            states_imd = states
-                            
+
                             call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                             & states, states_bgd, output, cost)
-                            
-                            states = states_imd
-                            
+
                             f = cost
                             nfg = nfg + 1
                             
@@ -305,12 +299,8 @@ module mw_optimize
                     call matrix_to_parameters(parameters_matrix, parameters)
                     call matrix_to_states(states_matrix, states)
                     
-                    states_imd = states
-                    
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
-                    
-                    states = states_imd
                     
                     f = cost
                     
@@ -400,13 +390,9 @@ module mw_optimize
                     
                     call matrix_to_parameters(parameters_matrix, parameters)
                     call matrix_to_states(states_matrix, states)
-                    
-                    states_imd = states
-                            
+
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
-                    
-                    states =  states_imd
                     
                     exit
                 
@@ -442,13 +428,9 @@ module mw_optimize
                     
                     call matrix_to_parameters(parameters_matrix, parameters)
                     call matrix_to_states(states_matrix, states)
-                    
-                    states_imd = states
-                            
+
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
-                    
-                    states =  states_imd
                     
                     exit
                 
@@ -557,7 +539,7 @@ module mw_optimize
             real(dp) :: dsave(29)
             
             type(ParametersDT) :: parameters_bgd, parameters_b
-            type(StatesDT) :: states_bgd, states_imd, states_b
+            type(StatesDT) :: states_bgd, states_b
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             
@@ -639,13 +621,10 @@ module mw_optimize
                 
                     cost_b = 1._sp
                     cost = 0._sp
-                    states_imd = states
                     
                     call forward_b(setup, mesh, input_data, parameters, &
                     & parameters_b, parameters_bgd, states, states_b, states_bgd, &
                     & output, output_b, cost, cost_b)
-                    
-                    states = states_imd
         
                     f = real(cost, kind(f))
                     
@@ -685,13 +664,9 @@ module mw_optimize
             end do
             
         write(*, '(4x,a)') task
-
-        states_imd = states
         
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
-            
-        states = states_imd
             
         end subroutine optimize_lbfgsb
         

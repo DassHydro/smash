@@ -178,11 +178,27 @@ def _set1d_parameters_states(instance: Model, control_vector: list[str], x: np.n
 
         if name in name_parameters:
 
-            setattr(instance.parameters, name, x[ind])
+            setattr(
+                instance.parameters,
+                name,
+                np.where(
+                    instance.mesh.active_cell == 1,
+                    x[ind],
+                    getattr(instance.parameters, name),
+                ),
+            )
 
         else:
 
-            setattr(instance.states, name, x[ind])
+            setattr(
+                instance.states,
+                name,
+                np.where(
+                    instance.mesh.active_cell == 1,
+                    x[ind],
+                    getattr(instance.states, name),
+                ),
+            )
 
 
 def _set2d_te_parameters_states(
@@ -216,8 +232,11 @@ def _set2d_te_parameters_states(
             setattr(instance.states, name, value)
 
 
-#% TODO: might check a cell in active cell
 def _get1d_parameters_states(instance: Model, control_vector: list[str]):
+
+    ac_ind = np.unravel_index(
+        np.argmax(instance.mesh.active_cell, axis=None), instance.mesh.active_cell.shape
+    )
 
     x = np.zeros(shape=len(control_vector), dtype=np.float32)
 
@@ -225,31 +244,34 @@ def _get1d_parameters_states(instance: Model, control_vector: list[str]):
 
         if name in name_parameters:
 
-            x[ind] = getattr(instance.parameters, name)[0, 0]
+            x[ind] = getattr(instance.parameters, name)[ac_ind]
 
         else:
 
-            x[ind] = getattr(instance.states, name)[0, 0]
+            x[ind] = getattr(instance.states, name)[ac_ind]
 
     return x
 
 
-#% TODO: might check a cell in active cell
 def _get1d_te_parameters_states(instance: Model, control_vector: list[str]):
+
+    ac_ind = np.unravel_index(
+        np.argmax(instance.mesh.active_cell, axis=None), instance.mesh.active_cell.shape
+    )
 
     nd_step = 1 + instance.setup._nd
 
-    x = np.zeros(shape=len(control_vector) * nd_step, dtype=np.float32)
+    x = np.ones(shape=len(control_vector) * nd_step, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
 
         if name in name_parameters:
 
-            x[ind * nd_step] = getattr(instance.parameters, name)[0, 0]
+            x[ind * nd_step] = getattr(instance.parameters, name)[ac_ind]
 
         else:
 
-            x[ind * nd_step] = getattr(instance.states, name)[0, 0]
+            x[ind * nd_step] = getattr(instance.states, name)[ac_ind]
 
     return x
 
