@@ -1,41 +1,23 @@
 # SMASH - Spatially distributed Modelling and ASsimilation for Hydrology
 [![Build Status](https://img.shields.io/badge/docs-public-brightgreen)](https://gitlab.irstea.fr/francois.colleoni/smash/)
-
-## Compilation Instructions
-
-1.  Clone the SMASH repository from GitLab.
-    ```bash
-    git clone https://gitlab.irstea.fr/francois.colleoni/smash.git
-    ```
-2.  Compile all programs, modules and libraries.
-    ```bash
-    make
-    ```
-3.  Check install
-    ```bash
-    python3
-    ```
-    ```python
-    import smash
-    ```
     
-## Compilation Instructions on Conda Environment (require conda)
+## Compilation Instructions on Conda Environment
 
 1.  Clone the SMASH repository from GitLab.
     ```bash
     git clone https://gitlab.irstea.fr/francois.colleoni/smash.git
     ```
-2.  Create the conda environment `(smash-dev)`
+2.  Create the conda environment `(smash)`
     ```bash
     conda env create environment.yml
     ```
-3.  Activate the conda environment `(smash-dev)`
+3.  Activate the conda environment `(smash)`
     ```bash
-    conda activate smash-dev
+    conda activate smash
     ```
 4.  Compile all programs, modules and libraries.
     ```bash
-    (smash-dev) make
+    (smash) make
     ```
 5.  Check install
     ```bash
@@ -47,24 +29,43 @@
     
 # Developer notes:
 
-## Adjoint Generation
+## Developer Environments
 
-1. Clean the code
-  ```bash
-  make clean
-  ```
-2. Generate tapaneade files (i.e. adjoint and tangent linear models)
-  ```bash 
-  make tap
-  ```
-3. Compile again
-  ```bash
-  make
-  ```
+1.  The conda environment `(smash-dev)`
+    ```bash
+    conda env create environment-dev.yml
+    ```
+    
+2. The docker environment
+   A pre-filled in `Dockerfile` is available.
+   ```bash
+   docker build --network=host -t smash-dev .
+   ```
+   ```bash
+   docker run smash-dev
+   ```
   
-## Develop in debug mode
+## Compile Adjoint and Tangent Linear Model
 
-Compile with debug mode.
-  ```bash	
-  make debug
-  ```
+Make sure java is installed (already done in docker environment).
+
+    ```bash
+    make tap
+    ```
+    
+## Compile code in debug mode
+    
+    ```bash
+    make debug
+    ```
+
+## Install `smash` library in editor mode
+
+The `smash` library is automatically installed in editor mode with the debug mode. Otherwise, once can switch to editor mode after compiling:
+
+    ```bash
+    make library_edit
+    ```
+    
+
+

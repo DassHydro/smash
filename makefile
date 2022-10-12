@@ -62,7 +62,6 @@ c: \
  
 #% f77 files
 f77: \
- obj/adBuffer.o \
  obj/lbfgsb.o \
  
 #% f90 files

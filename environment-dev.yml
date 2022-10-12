@@ -1,10 +1,10 @@
-name: smash
+name: smash-dev
 channels:
     - conda-forge
 dependencies:
     - python=3.8
     - pip
-    
+
     # compile
     - make
     - gcc
@@ -22,3 +22,18 @@ dependencies:
     - gdal
     - scipy
     - pyyaml
+    
+    # documentation
+    - sphinx
+    - numpydoc
+    - pydata-sphinx-theme
+    - ipython
+    - sphinxcontrib-bibtex
+    - sphinx-design
+    - sphinx-autosummary-accessors
+    
+    # test
+    - pytest
+    
+    # format
+    - black
