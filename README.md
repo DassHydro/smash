@@ -37,7 +37,8 @@
     ```
     
 2. The docker environment
-   A pre-filled in `Dockerfile` is available.
+
+   A pre-filled in `Dockerfile` is available
    ```bash
    docker build --network=host -t smash-dev .
    ```
@@ -47,25 +48,22 @@
   
 ## Compile Adjoint and Tangent Linear Model
 
-Make sure java is installed (already done in docker environment).
+Make sure java is installed (already done in docker environment)
 
-    ```bash
-    make tap
-    ```
+```bash
+make tap
+```
     
-## Compile code in debug mode
+## Compile Code in Debug Mode
     
-    ```bash
-    make debug
-    ```
+```bash
+make debug
+```
 
-## Install `smash` library in editor mode
+## Install `smash` Library in Editor Mode
 
 The `smash` library is automatically installed in editor mode with the debug mode. Otherwise, once can switch to editor mode after compiling:
 
-    ```bash
-    make library_edit
-    ```
-    
-
-
+```bash
+make library_edit
+```
