@@ -1,0 +1,26 @@
+image: gitlab-registry.irstea.fr/francois.colleoni/smash:latest
+
+cache:
+  paths:
+    - smash
+  
+stages:
+  - build-tap
+  - build-code
+  - build-doc
+  
+build-tap:
+  stage: build-tap
+  script:
+    - make tap
+
+build-code:
+  stage: build-code
+  script: 
+    - make
+
+build-doc:
+  stage: build-doc
+  script: 
+    - cd doc
+    - make html
