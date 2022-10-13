@@ -82,8 +82,7 @@ f90: \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
  obj/forward.o \
- obj/forward_d.o \
- obj/forward_b.o \
+ obj/forward_db.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)

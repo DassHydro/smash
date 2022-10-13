@@ -20,8 +20,8 @@ module mwd_cost
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
     use mwd_input_data !% only: Input_DataDT
-    use mwd_parameters !% only: ParametersDT
-    use mwd_states !% only: StatesDT
+    use mwd_parameters !% only: ParametersDT, Hyper_ParametersDT
+    use mwd_states !% only: StatesDT, Hyper_StatesDT
     use mwd_output !% only: OutputDT
 
     implicit none
@@ -221,7 +221,48 @@ module mwd_cost
             output%cost = cost
             
         end subroutine compute_cost
-
+        
+        
+        !% TODO comment and refactorize
+        subroutine hyper_compute_cost(setup, mesh, input_data, &
+        & hyper_parameters, hyper_parameters_bgd, hyper_states, &
+        & hyper_states_bgd, output, cost)
+        
+            !% Notes
+            !% -----
+            !%
+            !% cost computation subroutine
+            !%
+            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd, OutputDT
+            !% it returns the result of cost computation
+            !%
+            !% cost = Jobs + wJreg * Jreg
+            !%
+            !% See Also
+            !% --------
+            !% compute_jobs
+            !% compute_jreg
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(Input_DataDT), intent(in) :: input_data
+            type(Hyper_ParametersDT), intent(in) :: hyper_parameters, hyper_parameters_bgd
+            type(Hyper_StatesDT), intent(in) :: hyper_states, hyper_states_bgd
+            type(OutputDT), intent(inout) :: output
+            real(sp), intent(inout) :: cost
+            
+            real(sp) :: jobs, jreg
+            
+            call compute_jobs(setup, mesh, input_data, output, jobs)
+            
+            jreg = 0._sp
+            
+            cost = jobs + setup%wjreg * jreg
+            output%cost = cost
+        
+        end subroutine hyper_compute_cost
         
         function nse(x, y) result(res)
             

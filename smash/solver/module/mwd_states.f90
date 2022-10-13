@@ -26,7 +26,8 @@
 module mwd_states
 
     use mwd_common !% only: sp, ns
-    use mwd_mesh  !% only: MeshDT
+    use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
     
     implicit none
 
@@ -39,6 +40,16 @@ module mwd_states
         real(sp), dimension(:,:), allocatable :: hlr
         
     end type StatesDT
+    
+    type Hyper_StatesDT
+    
+        real(sp), dimension(:,:), allocatable :: hi
+        real(sp), dimension(:,:), allocatable :: hp
+        real(sp), dimension(:,:), allocatable :: hft
+        real(sp), dimension(:,:), allocatable :: hst
+        real(sp), dimension(:,:), allocatable :: hlr
+    
+    end type Hyper_StatesDT
     
     contains
         
@@ -152,5 +163,135 @@ module mwd_states
             call vector_to_states(vector1, states)
         
         end subroutine set1_states
+        
+        
+!%      TODO comment
+        subroutine hyper_states_to_matrix(hyper_states, matrix)
+        
+            implicit none
+            
+            type(Hyper_StatesDT), intent(in) :: hyper_states
+            real(sp), dimension(size(hyper_states%hp, 1), &
+            & size(hyper_states%hp, 2), ns), intent(inout) :: matrix
+
+            matrix(:,:,1) = hyper_states%hi(:,:)
+            matrix(:,:,2) = hyper_states%hp(:,:)
+            matrix(:,:,3) = hyper_states%hft(:,:)
+            matrix(:,:,4) = hyper_states%hst(:,:)
+            matrix(:,:,5) = hyper_states%hlr(:,:)
+
+        end subroutine hyper_states_to_matrix
+
+        
+!%      TODO comment
+        subroutine matrix_to_hyper_states(matrix, hyper_states)
+        
+            implicit none
+            
+            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            real(sp), dimension(size(hyper_states%hp, 1), &
+            & size(hyper_states%hp, 2), ns), intent(in) :: matrix
+            
+            hyper_states%hi(:,:) = matrix(:,:,1)
+            hyper_states%hp(:,:) = matrix(:,:,2)
+            hyper_states%hft(:,:) = matrix(:,:,3)
+            hyper_states%hst(:,:) = matrix(:,:,4)
+            hyper_states%hlr(:,:) = matrix(:,:,5)
+        
+        end subroutine matrix_to_hyper_states
+        
+        
+!%      TODO comment
+        subroutine set0_hyper_states(hyper_states)
+            
+            implicit none
+            
+            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            
+            real(sp), dimension(size(hyper_states%hp, 1), &
+            & size(hyper_states%hp, 2), ns) :: matrix
+            
+            matrix = 0._sp
+            
+            call matrix_to_hyper_states(matrix, hyper_states)
+        
+        end subroutine set0_hyper_states
+        
+        
+!%      TODO comment
+        subroutine set1_hyper_states(hyper_states)
+            
+            implicit none
+            
+            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            
+            real(sp), dimension(size(hyper_states%hp, 1), &
+            & size(hyper_states%hp, 2), ns) :: matrix
+            
+            matrix = 1._sp
+            
+            call matrix_to_hyper_states(matrix, hyper_states)
+        
+        end subroutine set1_hyper_states
+  
+        
+!%     TODO comment
+        subroutine hyper_states_to_states(hyper_states, &
+        & states, setup, input_data)
+        
+            implicit none
+            
+            type(Hyper_StatesDT), intent(in) :: hyper_states
+            type(StatesDT), intent(inout) :: states
+            type(SetupDT), intent(in) :: setup
+            type(Input_DataDT), intent(in) :: input_data
+            
+            real(sp), dimension(size(hyper_states%hp, 1), &
+            & size(hyper_states%hp, 2), ns) :: hyper_states_matrix
+            real(sp), dimension(size(states%hp, 1), &
+            & size(states%hp, 2), np) :: states_matrix
+            real(sp), dimension(size(states%hp, 1), &
+            & size(states%hp, 2)) :: d, dpb
+            integer :: i, j
+            real(sp) :: a, b
+            
+            call hyper_states_to_matrix(hyper_states, hyper_states_matrix)
+            call states_to_matrix(states, states_matrix)
+            
+            !% Add mask later here
+            !% 1 in dim2 will be replace with k and apply where on Omega
+            do i=1, ns
+            
+                states_matrix(:,:,i) = hyper_states_matrix(1, 1, i)
+                
+                do j=1, setup%nd
+                
+                    d = input_data%descriptor(:,:,j)
+            
+                    a = hyper_states_matrix(2 * j, 1, i)
+                    b = hyper_states_matrix(2 * j + 1, 1, i)
+                    dpb = d ** b
+                
+                    states_matrix(:,:,i) = states_matrix(:,:,i) + a * dpb
+            
+                end do
+                
+                where (states_matrix(:,:,i) .lt. setup%lb_states(i))
+                    
+                    states_matrix(:,:,i) = setup%lb_states(i)
+                
+                end where
+            
+                where (states_matrix(:,:,i) .gt. setup%ub_states(i))
+                    
+                    states_matrix(:,:,i) = setup%ub_states(i)
+                
+                end where
+            
+            end do
+            
+            call matrix_to_states(states_matrix, states)
+        
+        end subroutine hyper_states_to_states
 
 end module mwd_states
