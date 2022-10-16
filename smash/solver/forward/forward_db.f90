@@ -2104,6 +2104,7 @@ CONTAINS
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
+!% TODO comment and refactorize
   SUBROUTINE HYPER_COMPUTE_COST_D(setup, mesh, input_data, &
 &   hyper_parameters, hyper_parameters_bgd, hyper_states, &
 &   hyper_states_bgd, output, output_d, cost, cost_d)
@@ -2129,6 +2130,7 @@ CONTAINS
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
+!% TODO comment and refactorize
   SUBROUTINE HYPER_COMPUTE_COST_B(setup, mesh, input_data, &
 &   hyper_parameters, hyper_parameters_bgd, hyper_states, &
 &   hyper_states_bgd, output, output_b, cost, cost_b)
@@ -2151,6 +2153,7 @@ CONTAINS
 &                 , jobs_b)
   END SUBROUTINE HYPER_COMPUTE_COST_B
 
+!% TODO comment and refactorize
   SUBROUTINE HYPER_COMPUTE_COST(setup, mesh, input_data, &
 &   hyper_parameters, hyper_parameters_bgd, hyper_states, &
 &   hyper_states_bgd, output, cost)

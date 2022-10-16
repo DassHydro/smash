@@ -104,6 +104,7 @@ wrappers:
 	@echo " Making wrappers "
 	@echo ""
 	@echo "********************************************"
+	rm -rf $(BUILDDIR)/f90wrap*
 	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package --py-mod-names py_mod_names
 	
 #% Making module extension (f2py-f90wrap)
