@@ -31,7 +31,6 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-
 __all__ = ["Model"]
 
 
@@ -338,10 +337,11 @@ class Model(object):
         algorithm: str,
         control_vector: (list, tuple, set),
         jobs_fun: str = "nse",
+        mapping: (str, None) = None,
         bounds: (list, tuple, set, None) = None,
         gauge: (str, list, None) = None,
         wgauge: (str, list, None) = None,
-        ost: (str, Timestamp) = None,
+        ost: (str, Timestamp, None) = None,
         options: (dict, None) = None,
         inplace: bool = False,
     ):
@@ -358,6 +358,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            mapping,
             bounds,
             wgauge,
             ost,
@@ -365,6 +366,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            mapping,
             bounds,
             gauge,
             wgauge,
@@ -382,6 +384,7 @@ class Model(object):
                 instance,
                 control_vector,
                 jobs_fun,
+                mapping,
                 bounds,
                 wgauge,
                 ost,
@@ -396,6 +399,7 @@ class Model(object):
                 instance,
                 control_vector,
                 jobs_fun,
+                mapping,
                 bounds,
                 wgauge,
                 ost,
@@ -407,7 +411,14 @@ class Model(object):
         elif algorithm == "nelder-mead":
 
             _optimize_nelder_mead(
-                instance, control_vector, jobs_fun, bounds, wgauge, ost, **options
+                instance,
+                control_vector,
+                jobs_fun,
+                mapping,
+                bounds,
+                wgauge,
+                ost,
+                **options,
             )
 
             instance._last_update = "Nelder-Mead Optimization"

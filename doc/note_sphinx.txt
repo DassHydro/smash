@@ -1,7 +1,0 @@
-pip3 install -U Sphinx
-pip3 install numpydoc
-pip3 install pydata_sphinx_theme
-pip3 install IPython
-pip3 install sphinxcontrib-bibtex
-pip3 install sphinx-design
-python3 -m pip install sphinx-autosummary-accessors

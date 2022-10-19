@@ -16,19 +16,42 @@
 !%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
 !%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
+!%      
+!%      Hyper_ParametersDT type:
+!%
+!%      </> Public
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``ci``                   Interception parameter          [mm]    (default: 1)     ]0, +Inf[
+!%      ``cp``                   Production parameter            [mm]    (default: 200)   ]0, +Inf[
+!%      ``beta``                 Percolation parameter           [-]     (default: 1000)  ]0, +Inf[
+!%      ``cft``                  Fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``cst``                  Slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``alpha``                Transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
+!%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
+!%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
+!%      ======================== =======================================
 !%
 !%      contains
 !%
-!%      [1] ParametersDT_initialise
-!%      [2] parameters_to_matrix
-!%      [3] matrix_to_parameters
-!%      [4] vector_to_parameters
-!%      [5] set0_parameters
-!%      [6] set1_parameters
+!%      [1]  ParametersDT_initialise
+!%      [2]  Hyper_ParametersDT_initialise
+!%      [3]  parameters_to_matrix
+!%      [4]  matrix_to_parameters
+!%      [5]  vector_to_parameters
+!%      [6]  set0_parameters
+!%      [7]  set1_parameters
+!%      [8]  hyper_parameters_to_matrix
+!%      [10] matrix_to_hyper_parameters
+!%      [11] set0_hyper_parameters
+!%      [12] set1_hyper_parameters
+!%      [13] hyper_parameters_to_parameters
 
 module mwd_parameters
 
     use mwd_common !% only: sp, np
+    use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     
@@ -100,22 +123,31 @@ module mwd_parameters
         end subroutine ParametersDT_initialise
         
         
-        subroutine Hyper_ParametersDT_initialise(hyper_parameters, setup, mesh)
+        subroutine Hyper_ParametersDT_initialise(hyper_parameters, setup)
         
             !% Notes
             !% -----
             !%
-            !% ParametersDT initialisation subroutine
+            !% Hyper_ParametersDT initialisation subroutine
         
             implicit none
             
-            type(SetupDT), intent(in) :: setup
-            type(MeshDT), intent(in) :: mesh
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
+            type(SetupDT), intent(in) :: setup
             
             integer :: n
             
-            n = np * (1 + 2 * setup%nd)
+            select case(trim(setup%mapping))
+            
+            case("hyper-linear")
+            
+                n = (1 + setup%nd)
+                
+            case("hyper-polynomial")
+            
+                n = (1 + 2 * setup%nd)
+                
+            end select
             
             allocate(hyper_parameters%ci(n, 1))
             allocate(hyper_parameters%cp(n, 1))
@@ -126,14 +158,7 @@ module mwd_parameters
             allocate(hyper_parameters%exc(n, 1))
             allocate(hyper_parameters%lr(n, 1))
             
-            hyper_parameters%ci    = 0._sp
-            hyper_parameters%cp    = 0._sp
-            hyper_parameters%beta  = 0._sp
-            hyper_parameters%cft   = 0._sp
-            hyper_parameters%cst   = 0._sp
-            hyper_parameters%alpha = 0._sp
-            hyper_parameters%exc   = 0._sp
-            hyper_parameters%lr    = 0._sp
+            call set0_hyper_parameters(hyper_parameters)
  
         end subroutine Hyper_ParametersDT_initialise
         
@@ -340,8 +365,20 @@ module mwd_parameters
                 
                     d = input_data%descriptor(:,:,j)
             
-                    a = hyper_parameters_matrix(2 * j, 1, i)
-                    b = hyper_parameters_matrix(2 * j + 1, 1, i)
+                    select case(trim(setup%mapping))
+                    
+                    case("hyper-linear")
+                    
+                        a = hyper_parameters_matrix(j + 1, 1, i)
+                        b = 1._sp
+                        
+                    case("hyper-polynomial")
+                        
+                        a = hyper_parameters_matrix(2 * j, 1, i)
+                        b = hyper_parameters_matrix(2 * j + 1, 1, i)
+                    
+                    end select
+                    
                     dpb = d ** b
                     
                     parameters_matrix(:,:,i) = parameters_matrix(:,:,i) + a * dpb

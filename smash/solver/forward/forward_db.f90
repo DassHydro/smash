@@ -19,18 +19,42 @@
 !%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
 !%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
+!%      
+!%      Hyper_ParametersDT type:
+!%
+!%      </> Public
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``ci``                   Interception parameter          [mm]    (default: 1)     ]0, +Inf[
+!%      ``cp``                   Production parameter            [mm]    (default: 200)   ]0, +Inf[
+!%      ``beta``                 Percolation parameter           [-]     (default: 1000)  ]0, +Inf[
+!%      ``cft``                  Fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``cst``                  Slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``alpha``                Transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
+!%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
+!%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
+!%      ======================== =======================================
 !%
 !%      contains
 !%
-!%      [1] ParametersDT_initialise
-!%      [2] parameters_to_matrix
-!%      [3] matrix_to_parameters
-!%      [4] vector_to_parameters
-!%      [5] set0_parameters
-!%      [6] set1_parameters
+!%      [1]  ParametersDT_initialise
+!%      [2]  Hyper_ParametersDT_initialise
+!%      [3]  parameters_to_matrix
+!%      [4]  matrix_to_parameters
+!%      [5]  vector_to_parameters
+!%      [6]  set0_parameters
+!%      [7]  set1_parameters
+!%      [8]  hyper_parameters_to_matrix
+!%      [10] matrix_to_hyper_parameters
+!%      [11] set0_hyper_parameters
+!%      [12] set1_hyper_parameters
+!%      [13] hyper_parameters_to_parameters
 MODULE MWD_PARAMETERS_DIFF
 !% only: sp, np
   USE MWD_COMMON
+!% only: SetupDT
+  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
 !% only: Input_DataDT
@@ -195,14 +219,18 @@ CONTAINS
     parameters%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
-  SUBROUTINE HYPER_PARAMETERSDT_INITIALISE(hyper_parameters, setup, mesh&
-& )
+  SUBROUTINE HYPER_PARAMETERSDT_INITIALISE(hyper_parameters, setup)
     IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
+    TYPE(SETUPDT), INTENT(IN) :: setup
     INTEGER :: n
-    n = np*(1+2*setup%nd)
+    INTRINSIC TRIM
+    SELECT CASE  (TRIM(setup%mapping)) 
+    CASE ('hyper-linear') 
+      n = 1 + setup%nd
+    CASE ('hyper-polynomial') 
+      n = 1 + 2*setup%nd
+    END SELECT
     ALLOCATE(hyper_parameters%ci(n, 1))
     ALLOCATE(hyper_parameters%cp(n, 1))
     ALLOCATE(hyper_parameters%beta(n, 1))
@@ -211,14 +239,7 @@ CONTAINS
     ALLOCATE(hyper_parameters%alpha(n, 1))
     ALLOCATE(hyper_parameters%exc(n, 1))
     ALLOCATE(hyper_parameters%lr(n, 1))
-    hyper_parameters%ci = 0._sp
-    hyper_parameters%cp = 0._sp
-    hyper_parameters%beta = 0._sp
-    hyper_parameters%cft = 0._sp
-    hyper_parameters%cst = 0._sp
-    hyper_parameters%alpha = 0._sp
-    hyper_parameters%exc = 0._sp
-    hyper_parameters%lr = 0._sp
+    CALL SET0_HYPER_PARAMETERS(hyper_parameters)
   END SUBROUTINE HYPER_PARAMETERSDT_INITIALISE
 
 !  Differentiation of parameters_to_matrix in forward (tangent) mode (with options fixinterface):
@@ -627,6 +648,7 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
+    INTRINSIC TRIM
     REAL(sp), DIMENSION(size(parameters%cp, 1), size(parameters%cp, 2)) &
 &   :: temp
     CALL HYPER_PARAMETERS_TO_MATRIX_D(hyper_parameters, &
@@ -635,6 +657,8 @@ CONTAINS
 &                               hyper_parameters_matrix_d)
     CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
     parameters_matrix_d = 0.0_4
+    a_d = 0.0_4
+    b_d = 0.0_4
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,np
@@ -642,10 +666,18 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        a_d = hyper_parameters_matrix_d(2*j, 1, i)
-        a = hyper_parameters_matrix(2*j, 1, i)
-        b_d = hyper_parameters_matrix_d(2*j+1, 1, i)
-        b = hyper_parameters_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a_d = hyper_parameters_matrix_d(j+1, 1, i)
+          a = hyper_parameters_matrix(j+1, 1, i)
+          b = 1._sp
+          b_d = 0.0_4
+        CASE ('hyper-polynomial') 
+          a_d = hyper_parameters_matrix_d(2*j, 1, i)
+          a = hyper_parameters_matrix(2*j, 1, i)
+          b_d = hyper_parameters_matrix_d(2*j+1, 1, i)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+        END SELECT
         temp = d**b
         WHERE (d .LE. 0.0) 
           dpb_d = 0.0_4
@@ -708,6 +740,8 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
+    INTRINSIC TRIM
+    INTEGER :: branch
     CALL HYPER_PARAMETERS_TO_MATRIX(hyper_parameters, &
 &                             hyper_parameters_matrix)
 !% Add mask later here
@@ -716,10 +750,22 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        CALL PUSHREAL4(a)
-        a = hyper_parameters_matrix(2*j, 1, i)
-        CALL PUSHREAL4(b)
-        b = hyper_parameters_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          CALL PUSHREAL4(a)
+          a = hyper_parameters_matrix(j+1, 1, i)
+          CALL PUSHREAL4(b)
+          b = 1._sp
+          CALL PUSHCONTROL2B(1)
+        CASE ('hyper-polynomial') 
+          CALL PUSHREAL4(a)
+          a = hyper_parameters_matrix(2*j, 1, i)
+          CALL PUSHREAL4(b)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+          CALL PUSHCONTROL2B(2)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(0)
+        END SELECT
         dpb = d**b
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
@@ -732,6 +778,8 @@ CONTAINS
     CALL MATRIX_TO_PARAMETERS_B(parameters_matrix, parameters_matrix_b, &
 &                         parameters, parameters_b)
     hyper_parameters_matrix_b = 0.0_4
+    a_b = 0.0_4
+    b_b = 0.0_4
     DO i=np,1,-1
       WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
 &       parameters_matrix_b(:, :, i) = 0.0_4
@@ -743,15 +791,29 @@ CONTAINS
         d = input_data%descriptor(:, :, j)
         dpb = d**b
         dpb_b = 0.0_4
-        a_b = SUM(dpb*parameters_matrix_b(:, :, i))
+        a_b = a_b + SUM(dpb*parameters_matrix_b(:, :, i))
         dpb_b = a*parameters_matrix_b(:, :, i)
-        b_b = SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
-        CALL POPREAL4(b)
-        hyper_parameters_matrix_b(2*j+1, 1, i) = &
-&         hyper_parameters_matrix_b(2*j+1, 1, i) + b_b
-        CALL POPREAL4(a)
-        hyper_parameters_matrix_b(2*j, 1, i) = hyper_parameters_matrix_b&
-&         (2*j, 1, i) + a_b
+        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(b)
+            CALL POPREAL4(a)
+            hyper_parameters_matrix_b(j+1, 1, i) = &
+&             hyper_parameters_matrix_b(j+1, 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          ELSE
+            CALL POPREAL4(b)
+            hyper_parameters_matrix_b(2*j+1, 1, i) = &
+&             hyper_parameters_matrix_b(2*j+1, 1, i) + b_b
+            CALL POPREAL4(a)
+            hyper_parameters_matrix_b(2*j, 1, i) = &
+&             hyper_parameters_matrix_b(2*j, 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          END IF
+        END IF
       END DO
       hyper_parameters_matrix_b(1, 1, i) = hyper_parameters_matrix_b(1, &
 &       1, i) + SUM(parameters_matrix_b(:, :, i))
@@ -780,6 +842,7 @@ CONTAINS
 &   :: d, dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
+    INTRINSIC TRIM
     CALL HYPER_PARAMETERS_TO_MATRIX(hyper_parameters, &
 &                             hyper_parameters_matrix)
     CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
@@ -789,8 +852,14 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        a = hyper_parameters_matrix(2*j, 1, i)
-        b = hyper_parameters_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a = hyper_parameters_matrix(j+1, 1, i)
+          b = 1._sp
+        CASE ('hyper-polynomial') 
+          a = hyper_parameters_matrix(2*j, 1, i)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+        END SELECT
         dpb = d**b
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
@@ -820,14 +889,33 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
 !%      ======================== =======================================
 !%
+!%      Hyper_StatesDT type:
+!%      
+!%      </> Public
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
+!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
+!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
+!%      ======================== =======================================
+!%
 !%      contains
 !%
 !%      [1] StatesDT_initialise
-!%      [2] states_to_matrix
-!%      [3] matrix_to_states
-!%      [4] vector_to_states
-!%      [5] set0_states
-!%      [6] set1_states
+!%      [2] Hyper_StatesDT_initialise
+!%      [3] states_to_matrix
+!%      [4] matrix_to_states
+!%      [5] vector_to_states
+!%      [6] set0_states
+!%      [7] set1_states
+!%      [8]  hyper_states_to_matrix
+!%      [10] matrix_to_hyper_states
+!%      [11] set0_hyper_states
+!%      [12] set1_hyper_states
+!%      [13] hyper_states_to_states
 MODULE MWD_STATES_DIFF
 !% only: sp, ns
   USE MWD_COMMON
@@ -952,6 +1040,26 @@ CONTAINS
     states%hst = 0.01_sp
     states%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE
+
+  SUBROUTINE HYPER_STATESDT_INITIALISE(hyper_states, setup)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    INTEGER :: n
+    INTRINSIC TRIM
+    SELECT CASE  (TRIM(setup%mapping)) 
+    CASE ('hyper-linear') 
+      n = 1 + setup%nd
+    CASE ('hyper-polynomial') 
+      n = 1 + 2*setup%nd
+    END SELECT
+    ALLOCATE(hyper_states%hi(n, 1))
+    ALLOCATE(hyper_states%hp(n, 1))
+    ALLOCATE(hyper_states%hft(n, 1))
+    ALLOCATE(hyper_states%hst(n, 1))
+    ALLOCATE(hyper_states%hlr(n, 1))
+    CALL SET0_HYPER_STATES(hyper_states)
+  END SUBROUTINE HYPER_STATESDT_INITIALISE
 
 !  Differentiation of states_to_matrix in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: matrix
@@ -1274,11 +1382,14 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
+    INTRINSIC TRIM
     REAL(sp), DIMENSION(size(states%hp, 1), size(states%hp, 2)) :: temp
     CALL HYPER_STATES_TO_MATRIX_D(hyper_states, hyper_states_d, &
 &                           hyper_states_matrix, hyper_states_matrix_d)
     CALL STATES_TO_MATRIX(states, states_matrix)
     states_matrix_d = 0.0_4
+    a_d = 0.0_4
+    b_d = 0.0_4
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,ns
@@ -1286,10 +1397,18 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        a_d = hyper_states_matrix_d(2*j, 1, i)
-        a = hyper_states_matrix(2*j, 1, i)
-        b_d = hyper_states_matrix_d(2*j+1, 1, i)
-        b = hyper_states_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a_d = hyper_states_matrix_d(j+1, 1, i)
+          a = hyper_states_matrix(j+1, 1, i)
+          b = 1._sp
+          b_d = 0.0_4
+        CASE ('hyper-polynomial') 
+          a_d = hyper_states_matrix_d(2*j, 1, i)
+          a = hyper_states_matrix(2*j, 1, i)
+          b_d = hyper_states_matrix_d(2*j+1, 1, i)
+          b = hyper_states_matrix(2*j+1, 1, i)
+        END SELECT
         temp = d**b
         WHERE (d .LE. 0.0) 
           dpb_d = 0.0_4
@@ -1346,6 +1465,8 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
+    INTRINSIC TRIM
+    INTEGER :: branch
     CALL HYPER_STATES_TO_MATRIX(hyper_states, hyper_states_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
@@ -1353,10 +1474,22 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        CALL PUSHREAL4(a)
-        a = hyper_states_matrix(2*j, 1, i)
-        CALL PUSHREAL4(b)
-        b = hyper_states_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          CALL PUSHREAL4(a)
+          a = hyper_states_matrix(j+1, 1, i)
+          CALL PUSHREAL4(b)
+          b = 1._sp
+          CALL PUSHCONTROL2B(1)
+        CASE ('hyper-polynomial') 
+          CALL PUSHREAL4(a)
+          a = hyper_states_matrix(2*j, 1, i)
+          CALL PUSHREAL4(b)
+          b = hyper_states_matrix(2*j+1, 1, i)
+          CALL PUSHCONTROL2B(2)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(0)
+        END SELECT
         dpb = d**b
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
@@ -1369,6 +1502,8 @@ CONTAINS
     CALL MATRIX_TO_STATES_B(states_matrix, states_matrix_b, states, &
 &                     states_b)
     hyper_states_matrix_b = 0.0_4
+    a_b = 0.0_4
+    b_b = 0.0_4
     DO i=ns,1,-1
       WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
 &       states_matrix_b(:, :, i) = 0.0_4
@@ -1380,15 +1515,29 @@ CONTAINS
         d = input_data%descriptor(:, :, j)
         dpb = d**b
         dpb_b = 0.0_4
-        a_b = SUM(dpb*states_matrix_b(:, :, i))
+        a_b = a_b + SUM(dpb*states_matrix_b(:, :, i))
         dpb_b = a*states_matrix_b(:, :, i)
-        b_b = SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
-        CALL POPREAL4(b)
-        hyper_states_matrix_b(2*j+1, 1, i) = hyper_states_matrix_b(2*j+1&
-&         , 1, i) + b_b
-        CALL POPREAL4(a)
-        hyper_states_matrix_b(2*j, 1, i) = hyper_states_matrix_b(2*j, 1&
-&         , i) + a_b
+        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(b)
+            CALL POPREAL4(a)
+            hyper_states_matrix_b(j+1, 1, i) = hyper_states_matrix_b(j+1&
+&             , 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          ELSE
+            CALL POPREAL4(b)
+            hyper_states_matrix_b(2*j+1, 1, i) = hyper_states_matrix_b(2&
+&             *j+1, 1, i) + b_b
+            CALL POPREAL4(a)
+            hyper_states_matrix_b(2*j, 1, i) = hyper_states_matrix_b(2*j&
+&             , 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          END IF
+        END IF
       END DO
       hyper_states_matrix_b(1, 1, i) = hyper_states_matrix_b(1, 1, i) + &
 &       SUM(states_matrix_b(:, :, i))
@@ -1415,6 +1564,7 @@ CONTAINS
 &   dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
+    INTRINSIC TRIM
     CALL HYPER_STATES_TO_MATRIX(hyper_states, hyper_states_matrix)
     CALL STATES_TO_MATRIX(states, states_matrix)
 !% Add mask later here
@@ -1423,8 +1573,14 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        a = hyper_states_matrix(2*j, 1, i)
-        b = hyper_states_matrix(2*j+1, 1, i)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a = hyper_states_matrix(j+1, 1, i)
+          b = 1._sp
+        CASE ('hyper-polynomial') 
+          a = hyper_states_matrix(2*j, 1, i)
+          b = hyper_states_matrix(2*j+1, 1, i)
+        END SELECT
         dpb = d**b
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO

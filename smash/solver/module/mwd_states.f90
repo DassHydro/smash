@@ -14,14 +14,33 @@
 !%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
 !%      ======================== =======================================
 !%
+!%      Hyper_StatesDT type:
+!%      
+!%      </> Public
+!%      ======================== =======================================
+!%      `Variables`              Description
+!%      ======================== =======================================
+!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
+!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
+!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
+!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
+!%      ======================== =======================================
+!%
 !%      contains
 !%
 !%      [1] StatesDT_initialise
-!%      [2] states_to_matrix
-!%      [3] matrix_to_states
-!%      [4] vector_to_states
-!%      [5] set0_states
-!%      [6] set1_states
+!%      [2] Hyper_StatesDT_initialise
+!%      [3] states_to_matrix
+!%      [4] matrix_to_states
+!%      [5] vector_to_states
+!%      [6] set0_states
+!%      [7] set1_states
+!%      [8]  hyper_states_to_matrix
+!%      [10] matrix_to_hyper_states
+!%      [11] set0_hyper_states
+!%      [12] set1_hyper_states
+!%      [13] hyper_states_to_states
 
 module mwd_states
 
@@ -78,6 +97,43 @@ module mwd_states
             states%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
+        
+        
+        subroutine Hyper_StatesDT_initialise(hyper_states, setup)
+        
+            !% Notes
+            !% -----
+            !%
+            !% Hyper_StatesDT initialisation subroutine
+        
+            implicit none
+            
+            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            type(SetupDT), intent(in) :: setup
+            
+            integer :: n
+            
+            select case(trim(setup%mapping))
+            
+            case("hyper-linear")
+            
+                n = (1 + setup%nd)
+                
+            case("hyper-polynomial")
+            
+                n = (1 + 2 * setup%nd)
+                
+            end select
+            
+            allocate(hyper_states%hi(n, 1))
+            allocate(hyper_states%hp(n, 1))
+            allocate(hyper_states%hft(n, 1))
+            allocate(hyper_states%hst(n, 1))
+            allocate(hyper_states%hlr(n, 1))
+            
+            call set0_hyper_states(hyper_states)
+ 
+        end subroutine Hyper_StatesDT_initialise
         
         
 !%      TODO comment 
@@ -268,8 +324,20 @@ module mwd_states
                 
                     d = input_data%descriptor(:,:,j)
             
-                    a = hyper_states_matrix(2 * j, 1, i)
-                    b = hyper_states_matrix(2 * j + 1, 1, i)
+                    select case(trim(setup%mapping))
+                    
+                    case("hyper-linear")
+                    
+                        a = hyper_states_matrix(j + 1, 1, i)
+                        b = 1._sp
+                        
+                    case("hyper-polynomial")
+                        
+                        a = hyper_states_matrix(2 * j, 1, i)
+                        b = hyper_states_matrix(2 * j + 1, 1, i)
+                    
+                    end select
+                    
                     dpb = d ** b
                 
                     states_matrix(:,:,i) = states_matrix(:,:,i) + a * dpb
