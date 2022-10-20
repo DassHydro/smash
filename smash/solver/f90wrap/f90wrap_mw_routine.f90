@@ -19,8 +19,8 @@ subroutine f90wrap_copy_setup(indt, outdt)
 end subroutine f90wrap_copy_setup
 
 subroutine f90wrap_copy_mesh(indt, outdt)
-    use mw_routine, only: copy_mesh
     use mwd_mesh, only: meshdt
+    use mw_routine, only: copy_mesh
     implicit none
     
     type meshdt_ptr_type
@@ -109,8 +109,8 @@ subroutine f90wrap_copy_output(indt, outdt)
 end subroutine f90wrap_copy_output
 
 subroutine f90wrap_compute_rowcol_to_ind_sparse(mesh)
-    use mw_routine, only: compute_rowcol_to_ind_sparse
     use mwd_mesh, only: meshdt
+    use mw_routine, only: compute_rowcol_to_ind_sparse
     implicit none
     
     type meshdt_ptr_type
@@ -144,8 +144,8 @@ subroutine f90wrap_mask_upstream_cells(row, col, mesh, mask, n0, n1)
 end subroutine f90wrap_mask_upstream_cells
 
 subroutine f90wrap_sparse_matrix_to_vector_r(mesh, matrix, vector, n0, n1, n2)
-    use mw_routine, only: sparse_matrix_to_vector_r
     use mwd_mesh, only: meshdt
+    use mw_routine, only: sparse_matrix_to_vector_r
     implicit none
     
     type meshdt_ptr_type
@@ -188,8 +188,8 @@ subroutine f90wrap_sparse_matrix_to_vector_i(mesh, matrix, vector, n0, n1, n2)
 end subroutine f90wrap_sparse_matrix_to_vector_i
 
 subroutine f90wrap_sparse_vector_to_matrix_r(mesh, vector, matrix, na_value, n0, n1, n2)
-    use mw_routine, only: sparse_vector_to_matrix_r
     use mwd_mesh, only: meshdt
+    use mw_routine, only: sparse_vector_to_matrix_r
     implicit none
     
     type meshdt_ptr_type
@@ -235,20 +235,20 @@ end subroutine f90wrap_sparse_vector_to_matrix_i
 
 subroutine f90wrap_compute_mean_forcing(setup, mesh, input_data)
     use mwd_setup, only: setupdt
+    use mwd_mesh, only: meshdt
     use mw_routine, only: compute_mean_forcing
     use mwd_input_data, only: input_datadt
-    use mwd_mesh, only: meshdt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
     type(setupdt_ptr_type) :: setup_ptr
     integer, intent(in), dimension(2) :: setup
     type(meshdt_ptr_type) :: mesh_ptr
@@ -268,15 +268,15 @@ subroutine f90wrap_compute_prcp_indice(setup, mesh, input_data)
     use mwd_input_data, only: input_datadt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
     type(setupdt_ptr_type) :: setup_ptr
     integer, intent(in), dimension(2) :: setup
     type(meshdt_ptr_type) :: mesh_ptr

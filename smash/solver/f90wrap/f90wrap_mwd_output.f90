@@ -325,20 +325,20 @@ subroutine f90wrap_outputdt__set__fstates(this, f90wrap_fstates)
 end subroutine f90wrap_outputdt__set__fstates
 
 subroutine f90wrap_outputdt_initialise(output, setup, mesh)
-    use mwd_output, only: outputdt, outputdt_initialise
     use mwd_setup, only: setupdt
     use mwd_mesh, only: meshdt
+    use mwd_output, only: outputdt_initialise, outputdt
     implicit none
     
+    type setupdt_ptr_type
+        type(setupdt), pointer :: p => NULL()
+    end type setupdt_ptr_type
     type outputdt_ptr_type
         type(outputdt), pointer :: p => NULL()
     end type outputdt_ptr_type
     type meshdt_ptr_type
         type(meshdt), pointer :: p => NULL()
     end type meshdt_ptr_type
-    type setupdt_ptr_type
-        type(setupdt), pointer :: p => NULL()
-    end type setupdt_ptr_type
     type(outputdt_ptr_type) :: output_ptr
     integer, intent(out), dimension(2) :: output
     type(setupdt_ptr_type) :: setup_ptr

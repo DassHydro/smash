@@ -1,25 +1,25 @@
 ! Module mwd_cost defined in file smash/solver/module/mwd_cost.f90
 
 subroutine f90wrap_compute_jobs(setup, mesh, input_data, output, jobs)
-    use mwd_output, only: outputdt
-    use mwd_input_data, only: input_datadt
     use mwd_cost, only: compute_jobs
     use mwd_mesh, only: meshdt
     use mwd_setup, only: setupdt
+    use mwd_input_data, only: input_datadt
+    use mwd_output, only: outputdt
     implicit none
     
-    type outputdt_ptr_type
-        type(outputdt), pointer :: p => NULL()
-    end type outputdt_ptr_type
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
+    type outputdt_ptr_type
+        type(outputdt), pointer :: p => NULL()
+    end type outputdt_ptr_type
     type(setupdt_ptr_type) :: setup_ptr
     integer, intent(in), dimension(2) :: setup
     type(meshdt_ptr_type) :: mesh_ptr
@@ -37,25 +37,25 @@ subroutine f90wrap_compute_jobs(setup, mesh, input_data, output, jobs)
 end subroutine f90wrap_compute_jobs
 
 subroutine f90wrap_compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
-    use mwd_cost, only: compute_jreg
-    use mwd_setup, only: setupdt
     use mwd_mesh, only: meshdt
     use mwd_parameters, only: parametersdt
+    use mwd_setup, only: setupdt
     use mwd_states, only: statesdt
+    use mwd_cost, only: compute_jreg
     implicit none
     
-    type statesdt_ptr_type
-        type(statesdt), pointer :: p => NULL()
-    end type statesdt_ptr_type
-    type parametersdt_ptr_type
-        type(parametersdt), pointer :: p => NULL()
-    end type parametersdt_ptr_type
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
+    type statesdt_ptr_type
+        type(statesdt), pointer :: p => NULL()
+    end type statesdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
+    type parametersdt_ptr_type
+        type(parametersdt), pointer :: p => NULL()
+    end type parametersdt_ptr_type
     type(setupdt_ptr_type) :: setup_ptr
     integer, intent(in), dimension(2) :: setup
     type(meshdt_ptr_type) :: mesh_ptr
@@ -80,30 +80,30 @@ subroutine f90wrap_compute_jreg(setup, mesh, parameters, parameters_bgd, states,
 end subroutine f90wrap_compute_jreg
 
 subroutine f90wrap_compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
-    use mwd_output, only: outputdt
-    use mwd_input_data, only: input_datadt
-    use mwd_setup, only: setupdt
     use mwd_mesh, only: meshdt
     use mwd_parameters, only: parametersdt
+    use mwd_setup, only: setupdt
+    use mwd_input_data, only: input_datadt
+    use mwd_output, only: outputdt
     use mwd_states, only: statesdt
     use mwd_cost, only: compute_cost
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
-    type parametersdt_ptr_type
-        type(parametersdt), pointer :: p => NULL()
-    end type parametersdt_ptr_type
     type statesdt_ptr_type
         type(statesdt), pointer :: p => NULL()
     end type statesdt_ptr_type
-    type setupdt_ptr_type
-        type(setupdt), pointer :: p => NULL()
-    end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type parametersdt_ptr_type
+        type(parametersdt), pointer :: p => NULL()
+    end type parametersdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
+    type setupdt_ptr_type
+        type(setupdt), pointer :: p => NULL()
+    end type setupdt_ptr_type
     type outputdt_ptr_type
         type(outputdt), pointer :: p => NULL()
     end type outputdt_ptr_type
@@ -224,8 +224,8 @@ subroutine f90wrap_logarithmique(x, ret_res, y, n0, n1)
 end subroutine f90wrap_logarithmique
 
 subroutine f90wrap_reg_prior(mesh, size_mat3, matrix, ret_res, matrix_bgd, n0, n1, n2, n3, n4, n5)
-    use mwd_cost, only: reg_prior
     use mwd_mesh, only: meshdt
+    use mwd_cost, only: reg_prior
     implicit none
     
     type meshdt_ptr_type

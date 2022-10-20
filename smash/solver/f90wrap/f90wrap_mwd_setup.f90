@@ -1132,7 +1132,7 @@ subroutine f90wrap_setupdt__set__maxiter(this, f90wrap_maxiter)
 end subroutine f90wrap_setupdt__set__maxiter
 
 subroutine f90wrap_setupdt_initialise(setup, nd)
-    use mwd_setup, only: setupdt_initialise, setupdt
+    use mwd_setup, only: setupdt, setupdt_initialise
     implicit none
     
     type setupdt_ptr_type

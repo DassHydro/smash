@@ -1,30 +1,30 @@
 ! Module mw_optimize defined in file smash/solver/module/mw_optimize.f90
 
 subroutine f90wrap_optimize_sbs(setup, mesh, input_data, parameters, states, output)
-    use mwd_output, only: outputdt
-    use mwd_input_data, only: input_datadt
-    use mwd_parameters, only: parametersdt
     use mwd_mesh, only: meshdt
+    use mwd_parameters, only: parametersdt
     use mwd_setup, only: setupdt
-    use mwd_states, only: statesdt
+    use mwd_input_data, only: input_datadt
+    use mwd_output, only: outputdt
     use mw_optimize, only: optimize_sbs
+    use mwd_states, only: statesdt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
-    type parametersdt_ptr_type
-        type(parametersdt), pointer :: p => NULL()
-    end type parametersdt_ptr_type
     type statesdt_ptr_type
         type(statesdt), pointer :: p => NULL()
     end type statesdt_ptr_type
-    type setupdt_ptr_type
-        type(setupdt), pointer :: p => NULL()
-    end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type parametersdt_ptr_type
+        type(parametersdt), pointer :: p => NULL()
+    end type parametersdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
+    type setupdt_ptr_type
+        type(setupdt), pointer :: p => NULL()
+    end type setupdt_ptr_type
     type outputdt_ptr_type
         type(outputdt), pointer :: p => NULL()
     end type outputdt_ptr_type
@@ -51,30 +51,30 @@ subroutine f90wrap_optimize_sbs(setup, mesh, input_data, parameters, states, out
 end subroutine f90wrap_optimize_sbs
 
 subroutine f90wrap_optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-    use mwd_output, only: outputdt
-    use mwd_input_data, only: input_datadt
-    use mwd_setup, only: setupdt
-    use mw_optimize, only: optimize_lbfgsb
     use mwd_mesh, only: meshdt
     use mwd_parameters, only: parametersdt
+    use mwd_setup, only: setupdt
+    use mwd_input_data, only: input_datadt
+    use mwd_output, only: outputdt
+    use mw_optimize, only: optimize_lbfgsb
     use mwd_states, only: statesdt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
-    type parametersdt_ptr_type
-        type(parametersdt), pointer :: p => NULL()
-    end type parametersdt_ptr_type
     type statesdt_ptr_type
         type(statesdt), pointer :: p => NULL()
     end type statesdt_ptr_type
-    type setupdt_ptr_type
-        type(setupdt), pointer :: p => NULL()
-    end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type parametersdt_ptr_type
+        type(parametersdt), pointer :: p => NULL()
+    end type parametersdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
+    type setupdt_ptr_type
+        type(setupdt), pointer :: p => NULL()
+    end type setupdt_ptr_type
     type outputdt_ptr_type
         type(outputdt), pointer :: p => NULL()
     end type outputdt_ptr_type

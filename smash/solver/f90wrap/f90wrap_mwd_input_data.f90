@@ -301,17 +301,17 @@ subroutine f90wrap_prcp_indicedt__array__vg(this, nd, dtype, dshape, dloc)
 end subroutine f90wrap_prcp_indicedt__array__vg
 
 subroutine f90wrap_prcp_indicedt_initialise(prcp_indice, setup, mesh)
-    use mwd_input_data, only: prcp_indicedt_initialise, prcp_indicedt
     use mwd_setup, only: setupdt
     use mwd_mesh, only: meshdt
+    use mwd_input_data, only: prcp_indicedt_initialise, prcp_indicedt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
     type prcp_indicedt_ptr_type
         type(prcp_indicedt), pointer :: p => NULL()
     end type prcp_indicedt_ptr_type
@@ -542,7 +542,7 @@ subroutine f90wrap_input_datadt__array__mean_pet(this, nd, dtype, dshape, dloc)
 end subroutine f90wrap_input_datadt__array__mean_pet
 
 subroutine f90wrap_input_datadt__get__prcp_indice(this, f90wrap_prcp_indice)
-    use mwd_input_data, only: prcp_indicedt, input_datadt
+    use mwd_input_data, only: input_datadt, prcp_indicedt
     implicit none
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
@@ -561,7 +561,7 @@ subroutine f90wrap_input_datadt__get__prcp_indice(this, f90wrap_prcp_indice)
 end subroutine f90wrap_input_datadt__get__prcp_indice
 
 subroutine f90wrap_input_datadt__set__prcp_indice(this, f90wrap_prcp_indice)
-    use mwd_input_data, only: prcp_indicedt, input_datadt
+    use mwd_input_data, only: input_datadt, prcp_indicedt
     implicit none
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
@@ -580,20 +580,20 @@ subroutine f90wrap_input_datadt__set__prcp_indice(this, f90wrap_prcp_indice)
 end subroutine f90wrap_input_datadt__set__prcp_indice
 
 subroutine f90wrap_input_datadt_initialise(input_data, setup, mesh)
-    use mwd_input_data, only: input_datadt, input_datadt_initialise
     use mwd_setup, only: setupdt
     use mwd_mesh, only: meshdt
+    use mwd_input_data, only: input_datadt_initialise, input_datadt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
     type input_datadt_ptr_type
         type(input_datadt), pointer :: p => NULL()
     end type input_datadt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
     type(input_datadt_ptr_type) :: input_data_ptr
     integer, intent(out), dimension(2) :: input_data
     type(setupdt_ptr_type) :: setup_ptr

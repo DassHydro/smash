@@ -476,12 +476,12 @@ subroutine f90wrap_meshdt_initialise(mesh, setup, nrow, ncol, ng)
     use mwd_mesh, only: meshdt_initialise, meshdt
     implicit none
     
-    type meshdt_ptr_type
-        type(meshdt), pointer :: p => NULL()
-    end type meshdt_ptr_type
     type setupdt_ptr_type
         type(setupdt), pointer :: p => NULL()
     end type setupdt_ptr_type
+    type meshdt_ptr_type
+        type(meshdt), pointer :: p => NULL()
+    end type meshdt_ptr_type
     type(meshdt_ptr_type) :: mesh_ptr
     integer, intent(out), dimension(2) :: mesh
     type(setupdt_ptr_type) :: setup_ptr

@@ -201,7 +201,7 @@ subroutine f90wrap_parametersdt__array__lr(this, nd, dtype, dshape, dloc)
 end subroutine f90wrap_parametersdt__array__lr
 
 subroutine f90wrap_parametersdt_initialise(parameters, mesh)
-    use mwd_parameters, only: parametersdt_initialise, parametersdt
+    use mwd_parameters, only: parametersdt, parametersdt_initialise
     use mwd_mesh, only: meshdt
     implicit none
     
@@ -235,7 +235,7 @@ subroutine f90wrap_parametersdt_finalise(this)
 end subroutine f90wrap_parametersdt_finalise
 
 subroutine f90wrap_parameters_to_matrix(parameters, matrix, n0, n1, n2)
-    use mwd_parameters, only: parameters_to_matrix, parametersdt
+    use mwd_parameters, only: parametersdt, parameters_to_matrix
     implicit none
     
     type parametersdt_ptr_type
@@ -255,7 +255,7 @@ subroutine f90wrap_parameters_to_matrix(parameters, matrix, n0, n1, n2)
 end subroutine f90wrap_parameters_to_matrix
 
 subroutine f90wrap_matrix_to_parameters(matrix, parameters, n0, n1, n2)
-    use mwd_parameters, only: parametersdt, matrix_to_parameters
+    use mwd_parameters, only: matrix_to_parameters, parametersdt
     implicit none
     
     type parametersdt_ptr_type
@@ -275,7 +275,7 @@ subroutine f90wrap_matrix_to_parameters(matrix, parameters, n0, n1, n2)
 end subroutine f90wrap_matrix_to_parameters
 
 subroutine f90wrap_vector_to_parameters(vector, parameters, n0)
-    use mwd_parameters, only: vector_to_parameters, parametersdt
+    use mwd_parameters, only: parametersdt, vector_to_parameters
     implicit none
     
     type parametersdt_ptr_type
@@ -291,7 +291,7 @@ subroutine f90wrap_vector_to_parameters(vector, parameters, n0)
 end subroutine f90wrap_vector_to_parameters
 
 subroutine f90wrap_set0_parameters(parameters)
-    use mwd_parameters, only: parametersdt, set0_parameters
+    use mwd_parameters, only: set0_parameters, parametersdt
     implicit none
     
     type parametersdt_ptr_type
@@ -304,7 +304,7 @@ subroutine f90wrap_set0_parameters(parameters)
 end subroutine f90wrap_set0_parameters
 
 subroutine f90wrap_set1_parameters(parameters)
-    use mwd_parameters, only: parametersdt, set1_parameters
+    use mwd_parameters, only: set1_parameters, parametersdt
     implicit none
     
     type parametersdt_ptr_type

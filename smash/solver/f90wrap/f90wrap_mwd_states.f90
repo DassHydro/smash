@@ -126,8 +126,8 @@ subroutine f90wrap_statesdt__array__hlr(this, nd, dtype, dshape, dloc)
 end subroutine f90wrap_statesdt__array__hlr
 
 subroutine f90wrap_statesdt_initialise(states, mesh)
-    use mwd_states, only: statesdt, statesdt_initialise
     use mwd_mesh, only: meshdt
+    use mwd_states, only: statesdt, statesdt_initialise
     implicit none
     
     type statesdt_ptr_type
@@ -160,7 +160,7 @@ subroutine f90wrap_statesdt_finalise(this)
 end subroutine f90wrap_statesdt_finalise
 
 subroutine f90wrap_states_to_matrix(states, matrix, n0, n1, n2)
-    use mwd_states, only: statesdt, states_to_matrix
+    use mwd_states, only: states_to_matrix, statesdt
     implicit none
     
     type statesdt_ptr_type
@@ -180,7 +180,7 @@ subroutine f90wrap_states_to_matrix(states, matrix, n0, n1, n2)
 end subroutine f90wrap_states_to_matrix
 
 subroutine f90wrap_matrix_to_states(matrix, states, n0, n1, n2)
-    use mwd_states, only: statesdt, matrix_to_states
+    use mwd_states, only: matrix_to_states, statesdt
     implicit none
     
     type statesdt_ptr_type
@@ -200,7 +200,7 @@ subroutine f90wrap_matrix_to_states(matrix, states, n0, n1, n2)
 end subroutine f90wrap_matrix_to_states
 
 subroutine f90wrap_vector_to_states(vector, states, n0)
-    use mwd_states, only: statesdt, vector_to_states
+    use mwd_states, only: vector_to_states, statesdt
     implicit none
     
     type statesdt_ptr_type
@@ -229,7 +229,7 @@ subroutine f90wrap_set0_states(states)
 end subroutine f90wrap_set0_states
 
 subroutine f90wrap_set1_states(states)
-    use mwd_states, only: statesdt, set1_states
+    use mwd_states, only: set1_states, statesdt
     implicit none
     
     type statesdt_ptr_type
