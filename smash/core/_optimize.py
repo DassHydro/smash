@@ -25,7 +25,7 @@ import numpy as np
 import scipy.optimize
 import pandas as pd
 
-ALGORITHM = ["sbs", "l-bfgs-b", "nelder-mead"]
+ALGORITHM = ["sbs", "l-bfgs-b", "nelder-mead", "slsqp"]
 
 JOBS_FUN = [
     "nse",
@@ -248,6 +248,8 @@ def _optimize_nelder_mead(
 
         x = _parameters_states_to_x(instance, control_vector)
 
+        _problem(x, instance, control_vector, parameters_bgd, states_bgd)
+
         callback_args["nfg"] += 1
         callback_args["J"] = instance.output.cost
 
@@ -314,6 +316,125 @@ def _optimize_nelder_mead(
     if res.success:
 
         print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
+
+    else:
+
+        print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
+
+
+def _optimize_slsqp(
+    instance: Model,
+    control_vector: list[str],
+    jobs_fun: str,
+    mapping: str,
+    bounds: list[float],
+    wgauge: list[float],
+    ost: pd.Timestamp,
+    maxiter=100,
+    ftol=1e-08,
+    iprint=-1,
+    disp=False,
+    eps=1.4901161193847656e-08,
+    finite_diff_rel_step=None,
+    **unknown_options,
+):
+
+    global callback_args
+
+    _check_unknown_options(unknown_options)
+
+    instance.setup._algorithm = "slsqp"
+
+    instance.setup._jobs_fun = jobs_fun
+
+    instance.setup._mapping = mapping
+
+    instance.mesh._wgauge = wgauge
+
+    st = pd.Timestamp(instance.setup.start_time.decode().strip())
+
+    instance.setup._optim_start_step = (
+        ost - st
+    ).total_seconds() / instance.setup.dt + 1
+
+    _optimize_message(instance, control_vector, mapping)
+
+    callback_args = {"iterate": 0, "nfg": 0, "J": 0}
+
+    if mapping == "uniform":
+
+        parameters_bgd = instance.parameters.copy()
+        states_bgd = instance.states.copy()
+
+        x = _parameters_states_to_x(instance, control_vector)
+
+        _problem(x, instance, control_vector, parameters_bgd, states_bgd)
+
+        callback_args["nfg"] += 1
+        callback_args["J"] = instance.output.cost
+
+        _callback(x)
+
+        res = scipy.optimize.minimize(
+            _problem,
+            x,
+            jac="3-point",
+            args=(instance, control_vector, parameters_bgd, states_bgd),
+            bounds=bounds,
+            method="slsqp",
+            callback=_callback,
+            options={
+                "maxiter": maxiter,
+                "ftol": ftol,
+                "iprint": iprint,
+                "disp": disp,
+                "eps": eps,
+                "finite_diff_rel_step": finite_diff_rel_step,
+            },
+        )
+
+        _problem(res.x, instance, control_vector, parameters_bgd, states_bgd)
+
+    #! WIP
+    elif mapping == "hyper-linear":
+
+        #! Change for hyper_ regularization
+        parameters_bgd = instance.parameters.copy()
+        states_bgd = instance.states.copy()
+
+        x = _hyper_parameters_states_to_x(instance, control_vector)
+
+        cons = _hyper_constraints(x, instance, control_vector, bounds)
+
+        _hyper_problem(x, instance, control_vector, parameters_bgd, states_bgd, bounds)
+
+        _callback(x)
+
+        res = scipy.optimize.minimize(
+            _hyper_problem,
+            x,
+            jac="3-point",
+            constraints=cons,
+            args=(instance, control_vector, parameters_bgd, states_bgd, bounds),
+            method="slsqp",
+            callback=_callback,
+            options={
+                "maxiter": maxiter,
+                "ftol": ftol,
+                "iprint": iprint,
+                "disp": disp,
+                "eps": eps,
+                "finite_diff_rel_step": finite_diff_rel_step,
+            },
+        )
+
+        _hyper_problem(
+            res.x, instance, control_vector, parameters_bgd, states_bgd, bounds
+        )
+
+    if res.success:
+
+        print(f"{' ' * 4}CONVERGENCE: FTOL < {ftol}")
 
     else:
 
@@ -464,8 +585,6 @@ def _x_to_hyper_parameters_states(
 
     for ind, name in enumerate(control_vector):
 
-        lb, ub = bounds[ind]
-
         value = x[ind * nd_step] * np.ones(
             shape=(instance.mesh.nrow, instance.mesh.ncol), dtype=np.float32
         )
@@ -474,7 +593,7 @@ def _x_to_hyper_parameters_states(
 
             value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
 
-        #% Hard coded bounds check (WIP)
+        lb, ub = bounds[ind]
         value = np.where(value < lb, lb, value)
         value = np.where(value > ub, ub, value)
 
@@ -485,6 +604,81 @@ def _x_to_hyper_parameters_states(
         else:
 
             setattr(instance.states, name, value)
+
+
+def _hyper_constraints(
+    x: np.ndarray, instance: Model, control_vector: list[str], bounds: list[tuple]
+) -> list[dict]:
+
+    cons = []
+
+    def _fte(x, i, d, n, t):
+
+        f = x[i * (n + 1)]
+
+        for j in range(n):
+
+            f += x[i * (n + 1) + (j + 1)] * d[..., j]
+
+        if t == "lb":
+
+            ind = np.unravel_index(np.argmin(f, axis=None), f.shape)
+
+        else:
+
+            ind = np.unravel_index(np.argmax(f, axis=None), f.shape)
+
+        return f[ind]
+
+    def _jac_fte(x, i, d, n, t):
+
+        f = x[i * (n + 1)]
+
+        for j in range(n):
+
+            f += x[i * (n + 1) + (j + 1)] * d[..., j]
+
+        if t == "lb":
+
+            ind = np.unravel_index(np.argmin(f, axis=None), f.shape)
+
+        else:
+
+            ind = np.unravel_index(np.argmax(f, axis=None), f.shape)
+
+        jac = np.zeros(shape=x.shape, dtype=np.float64)
+
+        jac[i * (n + 1) : (i + 1) * (n + 1)] = np.insert(d[ind[0], ind[1], :], 0, 1)
+
+        return jac
+
+    for i in range(len(control_vector)):
+
+        n = instance.setup._nd
+
+        b = bounds[i]
+
+        d = instance.input_data.descriptor
+
+        cons.append(
+            {
+                "type": "ineq",
+                "fun": lambda x, f=_fte, i=i, d=d, n=n, b=b, t="lb": f(x, i, d, n, t)
+                - b[0],
+                "jac": lambda x, f=_jac_fte, i=i, d=d, n=n, t="lb": f(x, i, d, n, t),
+            }
+        )
+
+        cons.append(
+            {
+                "type": "ineq",
+                "fun": lambda x, f=_fte, i=i, d=d, n=n, b=b, t="ub": b[1]
+                - f(x, i, d, n, t),
+                "jac": lambda x, f=_jac_fte, i=i, d=d, n=n, t="ub": f(x, i, d, n, t),
+            }
+        )
+
+    return cons
 
 
 def _problem(
@@ -548,7 +742,7 @@ def _hyper_problem(
     return instance.output.cost
 
 
-def _callback(x: np.ndarray):
+def _callback(x: np.ndarray, *args):
 
     global callback_args
 
@@ -585,7 +779,7 @@ def _standardize_algorithm(algorithm: str) -> str:
     return algorithm
 
 
-def _standardize_control_vector(control_vector: list, algorithm: str) -> list:
+def _standardize_control_vector(control_vector: list) -> list:
 
     if isinstance(control_vector, (list, tuple, set)):
 
@@ -599,9 +793,6 @@ def _standardize_control_vector(control_vector: list, algorithm: str) -> list:
                     f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*name_parameters, *name_states]}"
                 )
 
-                raise ValueError(
-                    f"state optimization not available with '{algorithm}' algorithm"
-                )
     else:
 
         raise TypeError(f"'control_vector' argument must be list-like object")
@@ -678,10 +869,24 @@ def _standardize_mapping(mapping: str, algorithm: str, setup: SetupDT) -> str:
                     f"'{mapping}' mapping can not be use if no catchment descriptor are available"
                 )
 
+        elif algorithm == "slsqp":
+
+            if mapping in ["distributed", "hyper-polynomial"]:
+
+                raise ValueError(
+                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
+                )
+
+            elif mapping == "hyper-linear" and setup._nd == 0:
+
+                raise ValueError(
+                    f"'{mapping}' mapping can not be use if no catchment descriptor are available"
+                )
+
     #% Default values
     else:
 
-        if algorithm in ["sbs", "nelder-mead"]:
+        if algorithm in ["sbs", "nelder-mead", "slsqp"]:
 
             mapping = "uniform"
 
@@ -1022,7 +1227,7 @@ def _standardize_optimize_args(
 
     algorithm = _standardize_algorithm(algorithm)
 
-    control_vector = _standardize_control_vector(control_vector, algorithm)
+    control_vector = _standardize_control_vector(control_vector)
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 
