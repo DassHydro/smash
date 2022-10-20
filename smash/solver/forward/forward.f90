@@ -298,17 +298,19 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
         !% =============================================================================================================== %!
         !%   Store simulated net rainfall on domain (optional)
+        !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+        !%   the part of the rainfall water depth that actually causes runoff. 
         !% =============================================================================================================== %!
         
         if (setup%save_net_prcp_domain) then
         
             if (setup%sparse_storage) then
             
-                output%sparse_net_prcp_domain(:, t) = pr + perc
+                output%sparse_net_prcp_domain(:, t) =  qt
                 
             else
             
-                output%net_prcp_domain(:, :, t) = pr + perc 
+                output%net_prcp_domain(:, :, t) = qt
             
             end if
         
