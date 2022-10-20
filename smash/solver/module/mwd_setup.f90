@@ -34,6 +34,7 @@
 !%      ``exchange_module``        Choice of exchange module                              (default: 0)
 !%      ``routing_module``         Choice of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
+!%      ``save_net_prcp_domain``   Save net precipitation on the domain                   (default: .false.)
 !%
 !%      </> Private
 !%      ========================== =====================================
@@ -106,7 +107,6 @@ module mwd_setup
         
         logical :: save_qsim_domain = .false.
         logical :: save_net_prcp_domain = .false.
-        
         
         !% </> Private
         integer :: ntime_step = 0 !>f90wrap private

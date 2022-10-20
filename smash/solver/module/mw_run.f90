@@ -52,8 +52,6 @@ module mw_run
             
             call forward(setup, mesh, input_data, parameters, &
             & parameters_bgd, states, states_bgd, output, cost)
-            
-            states = states_bgd
 
         end subroutine forward_run
         
@@ -99,8 +97,6 @@ module mw_run
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
-            states = states_bgd
-            
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             
             if (.not. allocated(output%parameters_gradient)) then
@@ -138,8 +134,6 @@ module mw_run
             type(StatesDT) :: states_bgd, states_d
             type(OutputDT) :: output_d
             real(sp) :: cost, cost_d
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
             
             write(*,'(a)') "</> Tangent Linear Model (dM/dk) (k)"
             
@@ -156,8 +150,6 @@ module mw_run
             call forward_d(setup, mesh, input_data, parameters, &
             & parameters_d, parameters_bgd, states, states_d, states_bgd, &
             & output, output_d, cost, cost_d)
-            
-            states = states_bgd
             
         end subroutine tangent_linear_run
         

@@ -340,20 +340,22 @@ END MODULE MWD_STATES_DIFF_B
 !%      OutputDT type:
 !%      
 !%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``qsim``                 Simulated discharge at gauge            [m3/s]
-!%      ``qsim_domain``          Simulated discharge whole domain        [m3/s]
-!%      ``sparse_qsim_domain``   Sparse simulated discharge whole domain [m3/s]
-!%      ``parameters_gradient``  Parameters gradients
-!%      ``cost``                 Cost value
-!%      ``sp1``                  Scalar product <dY*, dY>
-!%      ``sp2``                  Scalar product <dk*, dk>
-!%      ``an``                   Alpha gradient test 
-!%      ``ian``                  Ialpha gradient test
-!%      ``fstates``              Final states (StatesDT)
-!%      ======================== =======================================
+!%      ========================== =====================================
+!%      `Variables`                Description
+!%      ========================== =====================================
+!%      ``qsim``                   Simulated discharge at gauge            [m3/s]
+!%      ``qsim_domain``            Simulated discharge whole domain        [m3/s]
+!%      ``sparse_qsim_domain``     Sparse simulated discharge whole domain [m3/s]
+!%      ``net_prcp_domain``        Net precipitaition whole domain         [mm/dt]
+!%      ``sparse_net_prcp_domain`` Sparse net precipitation whole domain   [mm/dt]
+!%      ``parameters_gradient``    Parameters gradients
+!%      ``cost``                   Cost value
+!%      ``sp1``                    Scalar product <dY*, dY>
+!%      ``sp2``                    Scalar product <dk*, dk>
+!%      ``an``                     Alpha gradient test 
+!%      ``ian``                    Ialpha gradient test
+!%      ``fstates``                Final states (StatesDT)
+!%      ========================== =====================================
 !%
 !%      contains
 !%
@@ -406,7 +408,6 @@ CONTAINS
         output%qsim_domain = -99._sp
       END IF
     END IF
-! save net rainfall
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
         ALLOCATE(output%sparse_net_prcp_domain(mesh%nac, setup%&
@@ -1748,7 +1749,7 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
   USE MWD_INPUT_DATA
 !% only: ParametersDT
   USE MWD_PARAMETERS_DIFF_B
-!% only: StatesDT
+!% only: StatesDT, StatesDT_initialise
   USE MWD_STATES_DIFF_B
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_B
@@ -1980,7 +1981,6 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
 !% =============================================================================================================== %!
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-! PR is net rainfall et perc is percolation (inflow water from hp)
         output%sparse_net_prcp_domain(:, t) = pr + perc
       ELSE
         output%net_prcp_domain(:, :, t) = pr + perc
@@ -1989,14 +1989,15 @@ SUBROUTINE FORWARD_NODIFF_B(setup, mesh, input_data, parameters, &
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step (optional)
+!%   Store states at final time step and reset states
 !% =============================================================================================================== %!
   output%fstates = states
+  states = states_imd
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
-&             , states_imd, states_bgd, output, cost)
+&             , states, states_bgd, output, cost)
 END SUBROUTINE FORWARD_NODIFF_B
 
 !  Differentiation of forward in reverse (adjoint) mode (with options fixinterface):
@@ -2019,8 +2020,8 @@ END SUBROUTINE FORWARD_NODIFF_B
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
-!                output.qsim:in states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
+!                output.qsim:in states.hi:in-out states.hp:in-out
+!                states.hft:in-out states.hst:in-out states.hlr:in-out
 SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 & parameters_bgd, states, states_b, states_bgd, output, output_b, cost, &
 & cost_b)
@@ -2037,7 +2038,7 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
   USE MWD_INPUT_DATA
 !% only: ParametersDT
   USE MWD_PARAMETERS_DIFF_B
-!% only: StatesDT
+!% only: StatesDT, StatesDT_initialise
   USE MWD_STATES_DIFF_B
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF_B
@@ -2332,13 +2333,22 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
       END IF
     END DO
   END DO
-  CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd, states_imd, states_bgd, output, cost)
+!% [ END DO TIME ]
+!% =============================================================================================================== %!
+!%   Store states at final time step and reset states
+!% =============================================================================================================== %!
+  states_b = states_imd_b
+  states = states_imd
+!% =================================================================================================================== %!
+!%   Compute J
+!% =================================================================================================================== %!
+  CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
   CALL SET0_PARAMETERS(parameters_b)
   CALL SET0_STATES(states_b)
   CALL SET0_STATES(states_imd_b)
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
-&               , parameters_bgd, states_imd, states_imd_b, states_bgd, &
-&               output, output_b, cost, cost_b)
+&               , parameters_bgd, states, states_b, states_bgd, output, &
+&               output_b, cost, cost_b)
   DO t=setup%ntime_step,1,-1
     DO g=mesh%ng,1,-1
       CALL POPCONTROL1B(branch)

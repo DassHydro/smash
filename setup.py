@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="smash",
-    version="0.1.1",
+    version="0.1.3",
     description="Spatially distributed Modelling and ASsimilation for Hydrology",
     url="/",
     author="Francois Colleoni",
@@ -16,6 +16,16 @@ setup(
     ],
     package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_meshing*.so"]},
     include_package_data=True,
-    install_requires=["numpy>=1.21.2", "pandas>=1.4.2", "h5py>=3.7.0", "tqdm>=4.64.0"],
+    install_requires=[
+        "f90wrap==0.2.7",
+        "numpy",
+        "pandas",
+        "matplotlib",
+        "h5py",
+        "tqdm",
+        "gdal",
+        "scipy",
+        "pyyaml",
+    ],
     zip_safe=False,
 )

@@ -319,15 +319,16 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     end do !% [ END DO TIME ]
     
     !% =============================================================================================================== %!
-    !%   Store states at final time step (optional)
+    !%   Store states at final time step and reset states
     !% =============================================================================================================== %!
     
     output%fstates = states
+    states = states_imd
     
     !% =================================================================================================================== %!
     !%   Compute J
     !% =================================================================================================================== %!
     
-    call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states_imd, states_bgd, output, cost)
+    call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
         
 end subroutine forward

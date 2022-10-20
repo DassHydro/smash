@@ -53,7 +53,6 @@ module mw_adjoint_test
             type(OutputDT) ::  output_d, output_b
             real(sp) :: cost, cost_d, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_d_matrix
 
             write(*,'(a)') "</> Scalar Product Test"
             
@@ -78,7 +77,6 @@ module mw_adjoint_test
             & parameters_d, parameters_bgd, states, states_d, states_bgd, &
             & output, output_d, cost, cost_d)
             
-            states = states_bgd
             cost_b = 1._sp
             
             write(*,'(4x,a)') "Adjoint Model        dk* = (dM/dk)* (k) . dY*"
@@ -86,8 +84,6 @@ module mw_adjoint_test
             call forward_b(setup, mesh, input_data, parameters, &
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
-            
-            states = states_bgd
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             call parameters_to_matrix(parameters_d, parameters_d_matrix)
@@ -156,8 +152,6 @@ module mw_adjoint_test
             call forward(setup, mesh, input_data, parameters, &
             & parameters_bgd, states, states_bgd, output, cost)
             
-            states = states_bgd
-            
             yk = cost
             
             cost_b = 1._sp
@@ -167,8 +161,6 @@ module mw_adjoint_test
             call forward_b(setup, mesh, input_data, parameters, &
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
-            
-            states = states_bgd
             
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             
@@ -186,8 +178,6 @@ module mw_adjoint_test
                 
                 call forward(setup, mesh, input_data, parameters, &
                 & parameters_bgd, states, states_bgd, output, cost)
-                
-                states = states_bgd
                 
                 yadk = cost
                 

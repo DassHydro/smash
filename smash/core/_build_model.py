@@ -358,6 +358,20 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             break
 
 
+#% Adjust left files (sorted by date - only works if files have the same name)
+def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
+
+    n = 0
+    ind = -1
+    while ind == -1:
+
+        ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
+
+        n += 1
+
+    return files[ind:]
+
+
 def _index_containing_substring(the_list: list, substring: str):
 
     for i, s in enumerate(the_list):
@@ -382,6 +396,9 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
         )
 
+        files = _adjust_left_files(files, date_range)
+
+    #% WIP
     elif setup.prcp_format.decode().strip() == "nc":
 
         files = sorted(
@@ -438,6 +455,10 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 f"{setup.pet_directory.decode().strip()}/**/*tif*", recursive=True
             )
         )
+
+        if not setup.daily_interannual_pet:
+
+            files = _adjust_left_files(files, date_range)
 
     elif setup.pet_format.decode().strip() == "nc":
 
