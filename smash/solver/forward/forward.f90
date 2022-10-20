@@ -306,11 +306,11 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
             if (setup%sparse_storage) then
             
-                output%sparse_net_prcp_domain(:, t) =  qt ! qd + qr !pr + perc  ! PR is net rainfall et perc is percolation (inflow water from hp)
+                output%sparse_net_prcp_domain(:, t) =  qt
                 
             else
             
-                output%net_prcp_domain(:, :, t) = qt ! qd + qr !pr + perc 
+                output%net_prcp_domain(:, :, t) = qt
             
             end if
         
