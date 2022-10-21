@@ -12,10 +12,10 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC
 debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC
-CFLAGS := -g -O3 -march=native -ffast-math -fPIC
+F77FLAGS := -O3 -march=native -funroll-loops -fPIC
+CFLAGS := -g -O3 -march=native -fPIC
 
 #% Files extension
 F90EXT := f90
@@ -82,8 +82,7 @@ f90: \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
  obj/forward.o \
- obj/forward_d.o \
- obj/forward_b.o \
+ obj/forward_db.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
@@ -105,6 +104,7 @@ wrappers:
 	@echo " Making wrappers "
 	@echo ""
 	@echo "********************************************"
+	rm -rf $(BUILDDIR)/f90wrap*
 	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package --py-mod-names py_mod_names
 	
 #% Making module extension (f2py-f90wrap)

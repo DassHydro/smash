@@ -29,6 +29,7 @@ priv_attr=(
 "mwd_setup.nd"
 "mwd_setup.algorithm"
 "mwd_setup.jobs_fun"
+"mwd_setup.mapping"
 "mwd_setup.jreg_fun"
 "mwd_setup.wjreg"
 "mwd_setup.optim_start_step"

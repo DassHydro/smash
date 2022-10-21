@@ -44,6 +44,7 @@
 !%      ``nd``                     Number of descriptor map(s)
 !%      ``algorithm``              Optimize Algorithm name
 !%      ``jobs_fun``               Objective function name        (default: 'nse')
+!%      ``mapping``                Mapping name                   (default: '...')
 !%      ``jreg_fun``               Regularization name            (default: 'prior')
 !%      ``wjreg``                  Regularization weight          (default: 0)
 !%      ``optim_start_step``       Optimization start step        (default: 1)
@@ -115,6 +116,7 @@ module mwd_setup
         character(lchar) :: algorithm !>f90wrap private
         
         character(lchar) :: jobs_fun = "nse" !>f90wrap private
+        character(lchar) :: mapping = "..." !>f90wrap private
         character(lchar) :: jreg_fun = "prior" !>f90wrap private
         real(sp) :: wjreg = 0._sp !>f90wrap private
 

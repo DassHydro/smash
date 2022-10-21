@@ -23,4 +23,12 @@ def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
     col_off = (mesh.xmin - xmin) / xres
     row_off = (ymax - mesh.ymax) / yres
 
-    return ds.GetRasterBand(1).ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
+    band = ds.GetRasterBand(1)
+
+    nodata = band.GetNoDataValue()
+
+    arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
+
+    arr = np.where(arr == nodata, -99, arr)
+
+    return arr
