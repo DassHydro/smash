@@ -4541,12 +4541,14 @@ SUBROUTINE FORWARD_NODIFF(setup, mesh, input_data, parameters, &
     END IF
 !% =============================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
 !% =============================================================================================================== %!
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-        output%sparse_net_prcp_domain(:, t) = pr + perc
+        output%sparse_net_prcp_domain(:, t) = qt
       ELSE
-        output%net_prcp_domain(:, :, t) = pr + perc
+        output%net_prcp_domain(:, :, t) = qt
       END IF
     END IF
   END DO
@@ -5465,7 +5467,7 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step and reset states
+!%   Store states at final time step
 !% =============================================================================================================== %!
 !% =================================================================================================================== %!
 !%   Compute J
@@ -5824,7 +5826,7 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step and reset states
+!%   Store states at final time step
 !% =============================================================================================================== %!
 !% =================================================================================================================== %!
 !%   Compute J
@@ -6301,18 +6303,20 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
     END IF
 !% =============================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
 !% =============================================================================================================== %!
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-        output%sparse_net_prcp_domain(:, t) = pr + perc
+        output%sparse_net_prcp_domain(:, t) = qt
       ELSE
-        output%net_prcp_domain(:, :, t) = pr + perc
+        output%net_prcp_domain(:, :, t) = qt
       END IF
     END IF
   END DO
 !% [ END DO TIME ]
 !% =============================================================================================================== %!
-!%   Store states at final time step and reset states
+!%   Store states at final time step
 !% =============================================================================================================== %!
   output%fstates = states
 !% =================================================================================================================== %!

@@ -300,7 +300,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
         
             if (setup%sparse_storage) then
             
-                output%sparse_net_prcp_domain(:, t) =  qt
+                output%sparse_net_prcp_domain(:, t) = qt
                 
             else
             
@@ -635,17 +635,19 @@ subroutine hyper_forward(setup, mesh, input_data, &
         
         !% =============================================================================================================== %!
         !%   Store simulated net rainfall on domain (optional)
+        !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+        !%   the part of the rainfall water depth that actually causes runoff. 
         !% =============================================================================================================== %!
         
         if (setup%save_net_prcp_domain) then
         
             if (setup%sparse_storage) then
             
-                output%sparse_net_prcp_domain(:, t) = pr + perc
+                output%sparse_net_prcp_domain(:, t) = qt
                 
             else
             
-                output%net_prcp_domain(:, :, t) = pr + perc 
+                output%net_prcp_domain(:, :, t) = qt
             
             end if
         
@@ -654,7 +656,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
     end do !% [ END DO TIME ]
     
     !% =============================================================================================================== %!
-    !%   Store states at final time step and reset states
+    !%   Store states at final time step
     !% =============================================================================================================== %!
     
     output%fstates = states
