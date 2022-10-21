@@ -31,14 +31,17 @@ module mw_optimize
     & states_to_matrix, matrix_to_states, hyper_states_to_matrix, &
     & matrix_to_hyper_states
     use mwd_output, only: OutputDT, OutputDT_initialise
+    use m_statistic, only: mean, std
     
     implicit none
     
     public :: optimize_sbs, optimize_lbfgsb, hyper_optimize_lbfgsb
     
-    private :: transformation, inv_transformation, &
-    & optimize_matrix_to_vector, optimize_vector_to_matrix, &
-    & normalize_matrix, unnormalize_matrix
+    private :: transformation, inv_transformation, & 
+    & normalize_descriptor, unnormalize_descriptor, &
+    & set_hyper_parameters_states, parameters_states_to_x, &
+    & x_to_parameters_states, hyper_parameters_states_to_x, &
+    & x_to_hyper_parameters_states
     
     contains
         
@@ -519,12 +522,8 @@ module mw_optimize
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            integer :: n, m, iprint, nps
+            integer :: n, m, iprint
             integer, dimension(:), allocatable :: nbd, iwa
-            integer, dimension(np+ns) :: optim_ps
-            real(sp), dimension(np+ns) :: lb, ub
-            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: &
-            & ps_matrix, norm_ps_matrix, ps_b_matrix
             real(dp) :: factr, pgtol, f
             real(dp), dimension(:), allocatable :: x, l, u, g, wa
             character(lchar) :: task, csave
@@ -538,13 +537,9 @@ module mw_optimize
             real(sp) :: cost, cost_b
             
             iprint = -1
-            
-            nps = np + ns
-            
-            optim_ps(1:np) = setup%optim_parameters
-            optim_ps(np+1:nps) = setup%optim_states
-            
-            n = mesh%nac * count(optim_ps .eq. 1)
+
+            n = mesh%nac * (count(setup%optim_parameters .gt. 0) + &
+            & count(setup%optim_states .gt. 0))
             m = 10
             factr = 1.e7_dp
             pgtol = 1.e-12_dp
@@ -557,19 +552,6 @@ module mw_optimize
             l = 0._dp
             u = 1._dp
             
-            call parameters_to_matrix(parameters, ps_matrix(:,:,1:np))
-            call states_to_matrix(states, ps_matrix(:,:,np+1:nps))
-            
-            lb(1:np) = setup%lb_parameters 
-            lb(np+1:nps) = setup%lb_states 
-            
-            ub(1:np) = setup%ub_parameters 
-            ub(np+1:nps) = setup%ub_states
-            
-            call normalize_matrix(ps_matrix, lb, ub, norm_ps_matrix)
-            
-            call optimize_matrix_to_vector(mesh, optim_ps, norm_ps_matrix, x)
-            
             call ParametersDT_initialise(parameters_b, mesh)
             
             call StatesDT_initialise(states_b, mesh)
@@ -579,6 +561,8 @@ module mw_optimize
             parameters_bgd = parameters
             states_bgd = states
             
+            call parameters_states_to_x(parameters, states, x, setup, mesh, .true.)
+
             task = 'START'
             do while((task(1:2) .eq. 'FG' .or. task .eq. 'NEW_X' .or. &
                     & task .eq. 'START'))
@@ -602,12 +586,7 @@ module mw_optimize
                             isave   ,&   ! working array
                             dsave)       ! working array
                             
-                call optimize_vector_to_matrix(mesh, optim_ps, x, norm_ps_matrix)
-                
-                call unnormalize_matrix(norm_ps_matrix, lb, ub, ps_matrix)
-                
-                call matrix_to_parameters(ps_matrix(:,:,1:np), parameters)
-                call matrix_to_states(ps_matrix(:,:,np+1:nps), states)
+                call x_to_parameters_states(x, parameters, states, setup, mesh, .true.)
                 
                 if (task(1:2) .eq. 'FG') then
                 
@@ -620,10 +599,7 @@ module mw_optimize
         
                     f = real(cost, kind(f))
                     
-                    call parameters_to_matrix(parameters_b, ps_b_matrix(:,:,1:np))
-                    call states_to_matrix(states_b, ps_b_matrix(:,:,np+1:nps))
-                    
-                    call optimize_matrix_to_vector(mesh, optim_ps, ps_b_matrix, g)
+                    call parameters_states_to_x(parameters_b, states_b, g, setup, mesh, .false.)
                     
                     if (task(4:8) .eq. 'START') then
                     
@@ -659,27 +635,43 @@ module mw_optimize
         
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
-            
+
         end subroutine optimize_lbfgsb
         
-
-!%      TODO comment
-        subroutine optimize_matrix_to_vector(mesh, mask, matrix, vector)
+        
+        subroutine parameters_states_to_x(parameters, states, x, setup, mesh, normalize)
         
             implicit none
             
+            type(ParametersDT), intent(in) :: parameters
+            type(StatesDT), intent(in) :: states
+            real(dp), dimension(:), intent(inout) :: x
+            type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
-            integer, dimension(:), intent(in) :: mask
-            real(sp), dimension(:,:,:), intent(in) :: matrix
-            real(dp), dimension(:), intent(inout) :: vector
+            logical, intent(in) :: normalize
             
-            integer :: i, k, col, row
+            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
+            integer, dimension(np+ns) :: optim
+            real(sp), dimension(np+ns) :: lb, ub
+            integer :: i, j, col, row
             
-            k = 0
+            call parameters_to_matrix(parameters, matrix(:,:,1:np))
+            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
             
-            do i=1, size(mask)
-                
-                if (mask(i) .gt. 0) then
+            optim(1:np) = setup%optim_parameters 
+            optim(np+1:np+ns) = setup%optim_states
+            
+            lb(1:np) = setup%lb_parameters
+            lb(np+1:np+ns) = setup%lb_states
+            
+            ub(1:np) = setup%ub_parameters
+            ub(np+1:np+ns) = setup%ub_states
+
+            j = 0
+            
+            do i=1, (np + ns)
+            
+                if (optim(i) .gt. 0) then
                 
                     do col=1, mesh%ncol
                     
@@ -687,8 +679,19 @@ module mw_optimize
                         
                             if (mesh%active_cell(row, col) .eq. 1) then
                                 
-                                k = k + 1
-                                vector(k) = real(matrix(row, col, i), kind(vector))
+                                j = j + 1
+                                
+                                if (normalize) then
+                                
+                                    x(j) = real(&
+                                    & (matrix(row, col, i) - lb(i)) / &
+                                    & (ub(i) - lb(i)), kind(x))
+                                    
+                                else
+                                
+                                    x(j) = real(matrix(row, col, i), kind(x))
+                                    
+                                end if
                                 
                             end if
                             
@@ -697,29 +700,45 @@ module mw_optimize
                     end do
                 
                 end if
-            
-            end do
-        
-        end subroutine optimize_matrix_to_vector
-        
 
-!%      TODO comment
-        subroutine optimize_vector_to_matrix(mesh, mask, vector, matrix)
+            end do
+
+        end subroutine parameters_states_to_x
+        
+        
+        subroutine x_to_parameters_states(x, parameters, states, setup, mesh, unnormalize)
         
             implicit none
             
+            real(dp), dimension(:), intent(in) :: x
+            type(ParametersDT), intent(inout) :: parameters
+            type(StatesDT), intent(inout) :: states
+            type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
-            integer, dimension(:), intent(in) :: mask
-            real(dp), dimension(:), intent(in) :: vector
-            real(sp), dimension(:,:,:), intent(inout) :: matrix
+            logical, intent(in) :: unnormalize
             
-            integer :: i, k, col, row
+            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
+            integer, dimension(np+ns) :: optim
+            real(sp), dimension(np+ns) :: lb, ub
+            integer :: i, j, col, row
             
-            k = 0
+            call parameters_to_matrix(parameters, matrix(:,:,1:np))
+            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
             
-            do i=1, size(mask)
-                
-                if (mask(i) .gt. 0) then
+            optim(1:np) = setup%optim_parameters 
+            optim(np+1:np+ns) = setup%optim_states
+            
+            lb(1:np) = setup%lb_parameters
+            lb(np+1:np+ns) = setup%lb_states
+            
+            ub(1:np) = setup%ub_parameters
+            ub(np+1:np+ns) = setup%ub_states
+            
+            j = 0
+            
+            do i=1, (np + ns)
+            
+                if (optim(i) .gt. 0) then
                 
                     do col=1, mesh%ncol
                     
@@ -727,9 +746,19 @@ module mw_optimize
                         
                             if (mesh%active_cell(row, col) .eq. 1) then
                                 
-                                k = k + 1
+                                j = j + 1
                                 
-                                matrix(row, col, i) = real(vector(k), kind(matrix))
+                                if (unnormalize) then
+                                
+                                    matrix(row, col, i) = real(x(j) * &
+                                    & (ub(i) - lb(i)) + lb(i), & 
+                                    & kind(matrix))
+                                    
+                                else
+                                    
+                                    matrix(row, col, i) = real(x(j), kind(matrix))
+                                
+                                end if
                                 
                             end if
                             
@@ -738,52 +767,15 @@ module mw_optimize
                     end do
                 
                 end if
-            
-            end do
-        
-        end subroutine optimize_vector_to_matrix
-    
 
-!%      TODO comment
-        subroutine normalize_matrix(matrix, lb, ub, norm_matrix)
-            
-            implicit none
-            
-            real(sp), dimension(:,:,:), intent(in) :: matrix
-            real(sp), dimension(:), intent(in) :: lb, ub
-            real(sp), dimension(:,:,:), intent(inout) :: norm_matrix
-            
-            integer :: i
-            
-            do i=1, size(matrix, 3)
-            
-                norm_matrix(:,:,i) = (matrix(:,:,i) - lb(i)) / (ub(i) - lb(i))
-            
             end do
             
-        end subroutine normalize_matrix
-        
+            call matrix_to_parameters(matrix(:,:,1:np), parameters)
+            call matrix_to_states(matrix(:,:,np+1:ns), states)
 
-!%      TODO comment
-        subroutine unnormalize_matrix(norm_matrix, lb, ub, matrix)
-            
-            implicit none
-            
-            real(sp), dimension(:,:,:), intent(in) :: norm_matrix
-            real(sp), dimension(:), intent(in) :: lb, ub
-            real(sp), dimension(:,:,:), intent(inout) :: matrix
-            
-            integer :: i
-            
-            do i=1, size(matrix, 3)
-            
-                matrix(:,:,i) = norm_matrix(:,:,i) * (ub(i) - lb(i)) + lb(i)
-            
-            end do
-            
-        end subroutine unnormalize_matrix
-        
-        
+        end subroutine x_to_parameters_states
+
+
         subroutine hyper_optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
         
             implicit none
@@ -795,11 +787,8 @@ module mw_optimize
             type(StatesDT), intent(inout) :: states
             type(OutputDT), intent(inout) :: output
             
-            integer :: n, m, iprint, nps
+            integer :: n, c, ndc, m, iprint
             integer, dimension(:), allocatable :: nbd, iwa
-            integer, dimension(np+ns) :: optim_ps
-            real(sp), dimension(:,:,:), allocatable :: hyper_ps_matrix, &
-            & hyper_ps_b_matrix
             real(dp) :: factr, pgtol, f
             real(dp), dimension(:), allocatable :: x, l, u, g, wa
             character(lchar) :: task, csave
@@ -813,30 +802,26 @@ module mw_optimize
             & hyper_states_b, hyper_states_bgd
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
+            real(sp), dimension(setup%nd) :: min_descriptor, &
+            & max_descriptor
             
             iprint = -1
             
-            nps = np + ns
-            
-            optim_ps(1:np) = setup%optim_parameters
-            optim_ps(np+1:nps) = setup%optim_states
+            c = count(setup%optim_parameters .gt. 0) + count(setup%optim_states .gt. 0)
             
             select case(trim(setup%mapping))
             
             case("hyper-linear")
             
-                n = count(optim_ps .gt. 0) * (1 + setup%nd)
-                allocate(hyper_ps_matrix((1 + setup%nd), 1, np+ns))
-                allocate(hyper_ps_b_matrix((1 + setup%nd), 1, np+ns))
+                ndc = (1 + setup%nd)
                 
             case("hyper-polynomial")
-            
-                n = count(optim_ps .gt. 0) * (1 + 2 * setup%nd)
-                allocate(hyper_ps_matrix((1 + 2 * setup%nd), 1, np+ns))
-                allocate(hyper_ps_b_matrix((1 + 2 * setup%nd), 1, np+ns))
-            
+                
+                ndc = (1 + 2 * setup%nd)
+                
             end select
             
+            n = c * ndc
             m = 10
             factr = 1.e7_dp
             pgtol = 1.e-12_dp
@@ -848,25 +833,23 @@ module mw_optimize
             !% unbounded
             nbd = 0
             
+            call normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+            
             call Hyper_ParametersDT_initialise(hyper_parameters, setup)
-            call Hyper_StatesDT_initialise(hyper_states, setup)
-            
-            call set_hyper_parameters(hyper_parameters, setup, mesh, parameters)
-            call set_hyper_states(hyper_states, setup, mesh, states)
-            
-            call hyper_parameters_to_matrix(hyper_parameters, hyper_ps_matrix(:,:,1:np))
-            call hyper_states_to_matrix(hyper_states, hyper_ps_matrix(:,:,np+1:nps))
-            
-            call optimize_hyper_matrix_to_vector(optim_ps, hyper_ps_matrix, x)
-            
             call Hyper_ParametersDT_initialise(hyper_parameters_b, setup)
             
+            call Hyper_StatesDT_initialise(hyper_states, setup)
             call Hyper_StatesDT_initialise(hyper_states_b, setup)
             
             call OutputDT_initialise(output_b, setup, mesh)
             
+            call set_hyper_parameters_states(hyper_parameters, &
+            & hyper_states, setup, mesh, parameters, states, ndc)
+            
             hyper_parameters_bgd = hyper_parameters
             hyper_states_bgd = hyper_states
+            
+            call hyper_parameters_states_to_x(hyper_parameters, hyper_states, x, setup, ndc)
             
             task = 'START'
             do while((task(1:2) .eq. 'FG' .or. task .eq. 'NEW_X' .or. &
@@ -891,10 +874,7 @@ module mw_optimize
                             isave   ,&   ! working array
                             dsave)       ! working array
                             
-                call optimize_vector_to_hyper_matrix(optim_ps, x, hyper_ps_matrix)
-                
-                call matrix_to_hyper_parameters(hyper_ps_matrix(:,:,1:np), hyper_parameters)
-                call matrix_to_hyper_states(hyper_ps_matrix(:,:,np+1:nps), hyper_states)
+                call x_to_hyper_parameters_states(x, hyper_parameters, hyper_states, setup, ndc)
                 
                 if (task(1:2) .eq. 'FG') then
                 
@@ -907,10 +887,7 @@ module mw_optimize
         
                     f = real(cost, kind(f))
                     
-                    call hyper_parameters_to_matrix(hyper_parameters_b, hyper_ps_b_matrix(:,:,1:np))
-                    call hyper_states_to_matrix(hyper_states_b, hyper_ps_b_matrix(:,:,np+1:nps))
-                    
-                    call optimize_hyper_matrix_to_vector(optim_ps, hyper_ps_b_matrix, g)
+                    call hyper_parameters_states_to_x(hyper_parameters_b, hyper_states_b, g, setup, ndc)
                     
                     if (task(4:8) .eq. 'START') then
                         
@@ -950,102 +927,94 @@ module mw_optimize
         call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, input_data)
         call hyper_states_to_states(hyper_states, states, setup, input_data)
         
+        call unnormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        
         end subroutine hyper_optimize_lbfgsb
         
         
-        subroutine set_hyper_parameters(hyper_parameters, setup, mesh, parameters)
+        subroutine normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
         
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(Input_DataDT), intent(inout) :: input_data
+            real(sp), dimension(setup%nd) :: min_descriptor, max_descriptor
+            
+            integer :: i
+            
+            do i=1, setup%nd
+            
+                min_descriptor(i) = minval(input_data%descriptor(:,:,i))
+                max_descriptor(i) = maxval(input_data%descriptor(:,:,i))
+                
+                input_data%descriptor(:,:,i) = &
+                & (input_data%descriptor(:,:,i) - min_descriptor(i)) / (max_descriptor(i) - min_descriptor(i))
+            
+            end do
+        
+        end subroutine normalize_descriptor
+        
+        
+        subroutine unnormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(Input_DataDT), intent(inout) :: input_data
+            real(sp), dimension(setup%nd) :: min_descriptor, max_descriptor
+            
+            integer :: i
+            
+            do i=1, setup%nd
+            
+                input_data%descriptor(:,:,i) = &
+                & input_data%descriptor(:,:,i) * (max_descriptor(i) - min_descriptor(i)) + min_descriptor(i)
+            
+            end do
+        
+        end subroutine unnormalize_descriptor
+        
+
+        subroutine set_hyper_parameters_states(hyper_parameters, hyper_states, setup, mesh, parameters, states, ndc)
+            
             implicit none
             
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
-            type(SetupDT), intent(in) :: setup
-            type(MeshDT), intent(in) :: mesh
-            type(ParametersDT), intent(in) :: parameters
-            
-            real(sp), dimension(size(hyper_parameters%cp, 1), &
-            & size(hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-            real(sp), dimension(size(parameters%cp, 1), &
-            & size(parameters%cp, 2), np) :: parameters_matrix
-            integer, dimension(2) :: ind_ac
-            integer :: i, j
-            
-            ind_ac = maxloc(mesh%active_cell)
-            
-            call parameters_to_matrix(parameters, parameters_matrix)
-            call hyper_parameters_to_matrix(hyper_parameters, hyper_parameters_matrix)
-            
-            hyper_parameters_matrix(1, 1, :) = parameters_matrix(ind_ac(1), ind_ac(2), :)
-            
-            do i=1, np
-                
-                if (setup%optim_parameters(i) .gt. 0) then
-                
-                    select case(trim(setup%mapping))
-                    
-                    case("hyper-linear")
-                    
-                        hyper_parameters_matrix(2: size(hyper_parameters_matrix, 1), 1, i) = 0._sp
-                    
-                    case("hyper-polynomial")
-                    
-                        do j=1, setup%nd
-                        
-                            if (mod(j + 1, 2) .eq. 0) then
-                        
-                                hyper_parameters_matrix(j + 1, 1, i) = 0._sp
-                                
-                            else
-                            
-                                hyper_parameters_matrix(j + 1, 1, i) = 1._sp
-                                
-                                
-                            end if
-                    
-                        end do
-                    
-                    end select
-                
-                end if
-            
-            end do
-            
-            call matrix_to_hyper_parameters(hyper_parameters_matrix, hyper_parameters)
-        
-        end subroutine set_hyper_parameters
-        
-        
-        subroutine set_hyper_states(hyper_states, setup, mesh, states)
-        
-            implicit none
-            
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
+            type(ParametersDT), intent(in) :: parameters
             type(StatesDT), intent(in) :: states
+            integer, intent(in) :: ndc
             
-            real(sp), dimension(size(hyper_states%hp, 1), &
-            & size(hyper_states%hp, 2), ns) :: hyper_states_matrix
-            real(sp), dimension(size(states%hp, 1), &
-            & size(states%hp, 2), ns) :: states_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
+            real(sp), dimension(ndc, 1, np+ns) :: hyper_matrix
+            integer, dimension(np+ns) :: optim
             integer, dimension(2) :: ind_ac
             integer :: i, j
             
             ind_ac = maxloc(mesh%active_cell)
             
-            call states_to_matrix(states, states_matrix)
-            call hyper_states_to_matrix(hyper_states, hyper_states_matrix)
+            call parameters_to_matrix(parameters, matrix(:,:,1:np))
+            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
             
-            hyper_states_matrix(1, 1, :) = states_matrix(ind_ac(1), ind_ac(2), :)
+            call hyper_parameters_to_matrix(hyper_parameters, hyper_matrix(:,:,1:np))
+            call hyper_states_to_matrix(hyper_states, hyper_matrix(:,:,np+1:np+ns))
             
-            do i=1, ns
+            hyper_matrix(1, 1, :) = matrix(ind_ac(1), ind_ac(2), :)
+            
+            optim(1:np) = setup%optim_parameters 
+            optim(np+1:np+ns) = setup%optim_states
+            
+            do i=1, (np + ns)
                 
-                if (setup%optim_states(i) .gt. 0) then
+                if (optim(i) .gt. 0) then
                 
                     select case(trim(setup%mapping))
                     
                     case("hyper-linear")
                     
-                        hyper_states_matrix(2: size(hyper_states_matrix, 1), 1, i) = 0._sp
+                        hyper_matrix(2: ndc, 1, i) = 0._sp
                     
                     case("hyper-polynomial")
                     
@@ -1053,13 +1022,12 @@ module mw_optimize
                         
                             if (mod(j + 1, 2) .eq. 0) then
                         
-                                hyper_states_matrix(j + 1, 1, i) = 0._sp
+                                hyper_matrix(j + 1, 1, i) = 0._sp
                                 
                             else
                             
-                                hyper_states_matrix(j + 1, 1, i) = 1._sp
-                                
-                                
+                                hyper_matrix(j + 1, 1, i) = 1._sp
+
                             end if
                     
                         end do
@@ -1067,74 +1035,95 @@ module mw_optimize
                     end select
                 
                 end if
-                
             
             end do
             
-            call matrix_to_hyper_states(hyper_states_matrix, hyper_states)
+            call matrix_to_hyper_parameters(hyper_matrix(:,:,1:np), hyper_parameters)
+            call matrix_to_hyper_states(hyper_matrix(:,:,np+1:np+ns), hyper_states)
         
-        end subroutine set_hyper_states
-        
-        
-        subroutine optimize_hyper_matrix_to_vector(optim_ps, hyper_ps_matrix, x)
+        end subroutine set_hyper_parameters_states
+
+
+        subroutine hyper_parameters_states_to_x(hyper_parameters, hyper_states, x, setup, ndc)
         
             implicit none
             
-            integer, dimension(:), intent(in) :: optim_ps
-            real(sp), dimension(:,:,:), intent(in) :: hyper_ps_matrix
+            type(Hyper_ParametersDT), intent(in) :: hyper_parameters
+            type(Hyper_StatesDT), intent(in) :: hyper_states
             real(dp), dimension(:), intent(inout) :: x
+            type(SetupDT), intent(in) :: setup
+            integer, intent(in) :: ndc
             
-            integer :: i, j, n
+            real(sp), dimension(ndc, 1, np+ns) :: matrix
+            integer, dimension(np+ns) :: optim
+            integer :: i, j, k
             
-            n = 1
+            call hyper_parameters_to_matrix(hyper_parameters, matrix(:,:,1:np))
+            call hyper_states_to_matrix(hyper_states, matrix(:,:,np+1:np+ns))
             
-            do i=1, size(optim_ps)
+            optim(1:np) = setup%optim_parameters 
+            optim(np+1:np+ns) = setup%optim_states
             
-                if (optim_ps(i) .gt. 0) then
+            k = 0
             
-                    do j=1, size(hyper_ps_matrix, 1)
-                    
-                        x(n) = real(hyper_ps_matrix(j, 1, i), kind(x))
+            do i=1, (np + ns)
+            
+                if (optim(i) .gt. 0) then
+                
+                    do j=1, ndc
                         
-                        n = n + 1
+                        k = k + 1
+                        x(k) = real(matrix(j, 1, i), kind(x))
                     
                     end do
-                    
+                
                 end if
-            
+        
             end do
         
-        end subroutine optimize_hyper_matrix_to_vector
+        end subroutine hyper_parameters_states_to_x
         
         
-        subroutine optimize_vector_to_hyper_matrix(optim_ps, x, hyper_ps_matrix)
+        subroutine x_to_hyper_parameters_states(x, hyper_parameters, hyper_states, setup, ndc)
         
             implicit none
             
-            integer, dimension(:), intent(in) :: optim_ps
             real(dp), dimension(:), intent(in) :: x
-            real(sp), dimension(:,:,:), intent(inout) :: hyper_ps_matrix
+            type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
+            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            type(SetupDT), intent(in) :: setup
+            integer, intent(in) :: ndc
             
-            integer :: i, j, n
+            real(sp), dimension(ndc, 1, np+ns) :: matrix
+            integer, dimension(np+ns) :: optim
+            integer :: i, j, k
             
-            n = 1
+            call hyper_parameters_to_matrix(hyper_parameters, matrix(:,:,1:np))
+            call hyper_states_to_matrix(hyper_states, matrix(:,:,np+1:np+ns))
             
-            do i=1, size(optim_ps)
+            optim(1:np) = setup%optim_parameters 
+            optim(np+1:np+ns) = setup%optim_states
             
-                if (optim_ps(i) .gt. 0) then
+            k = 0
+            
+            do i=1, (np + ns)
+            
+                if (optim(i) .gt. 0) then
                 
-                    do j=1, size(hyper_ps_matrix, 1)
-                    
-                        hyper_ps_matrix(j, 1, i) = real(x(n), kind(hyper_ps_matrix))
+                    do j=1, ndc
                         
-                        n = n + 1
+                        k = k + 1
+                        matrix(j, 1, i) = real(x(k), kind(matrix))
                     
                     end do
                 
                 end if
-            
-            end do
         
-        end subroutine optimize_vector_to_hyper_matrix
+            end do
+            
+            call matrix_to_hyper_parameters(matrix(:,:,1:np), hyper_parameters)
+            call matrix_to_hyper_states(matrix(:,:,np+1:np+ns), hyper_states)
+        
+        end subroutine x_to_hyper_parameters_states
         
 end module mw_optimize

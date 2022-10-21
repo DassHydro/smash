@@ -22,7 +22,6 @@ from smash.core._optimize import (
     _optimize_sbs,
     _optimize_lbfgsb,
     _optimize_nelder_mead,
-    _optimize_slsqp,
 )
 
 from typing import TYPE_CHECKING
@@ -423,21 +422,6 @@ class Model(object):
             )
 
             instance._last_update = "Nelder-Mead Optimization"
-
-        elif algorithm == "slsqp":
-
-            _optimize_slsqp(
-                instance,
-                control_vector,
-                jobs_fun,
-                mapping,
-                bounds,
-                wgauge,
-                ost,
-                **options,
-            )
-
-            instance._last_update = "SLSQP Optimization"
 
         #% TODO
         # elif algorithm == "nsga":

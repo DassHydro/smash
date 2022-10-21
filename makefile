@@ -12,10 +12,10 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC
 debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC
-CFLAGS := -g -O3 -march=native -ffast-math -fPIC
+F77FLAGS := -O3 -march=native -funroll-loops -fPIC
+CFLAGS := -g -O3 -march=native -fPIC
 
 #% Files extension
 F90EXT := f90

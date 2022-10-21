@@ -51,7 +51,7 @@ module m_array_manipulation
 
     contains
        
-        subroutine ma_flatten2d_i(m2d, mask, a)
+        subroutine ma_flatten2d_i(a, mask, res)
         
             !% Notes
             !% -----
@@ -63,25 +63,25 @@ module m_array_manipulation
             
             implicit none
             
-            integer, dimension(:,:), intent(in) :: m2d
-            logical, dimension(size(m2d, 1), size(m2d, 2)), intent(in) :: mask
-            integer, dimension(:), allocatable, intent(inout) :: a
+            integer, dimension(:,:), intent(in) :: a
+            logical, dimension(size(a, 1), size(a, 2)), intent(in) :: mask
+            integer, dimension(:), allocatable, intent(inout) :: res
             
             integer :: i, j, n
             
-            if (allocated(a)) deallocate(a)
+            if (allocated(res)) deallocate(res)
             
-            allocate(a(count(mask)))
+            allocate(res(count(mask)))
             
             n = 1
             
-            do i=1, size(m2d, 2)
+            do i=1, size(a, 2)
             
-                do j=1, size(m2d, 1)
+                do j=1, size(a, 1)
                 
                     if (mask(j, i)) then
                         
-                        a(n) = m2d(j, i) 
+                        res(n) = a(j, i) 
                         n = n + 1
                     
                     end if
@@ -93,7 +93,7 @@ module m_array_manipulation
         end subroutine ma_flatten2d_i
         
         
-        subroutine ma_flatten2d_r(m2d, mask, a)
+        subroutine ma_flatten2d_r(a, mask, res)
         
             !% Notes
             !% -----
@@ -105,25 +105,25 @@ module m_array_manipulation
             
             implicit none
             
-            real(sp), dimension(:,:), intent(in) :: m2d
-            logical, dimension(size(m2d, 1), size(m2d, 2)), intent(in) :: mask
-            real(sp), dimension(:), allocatable, intent(inout) :: a
+            real(sp), dimension(:,:), intent(in) :: a
+            logical, dimension(size(a, 1), size(a, 2)), intent(in) :: mask
+            real(sp), dimension(:), allocatable, intent(inout) :: res
 
             integer :: i, j, n
             
-            if (allocated(a)) deallocate(a)
+            if (allocated(res)) deallocate(res)
             
-            allocate(a(count(mask)))
+            allocate(res(count(mask)))
             
             n = 1
             
-            do i=1, size(m2d, 2)
+            do i=1, size(a, 2)
             
-                do j=1, size(m2d, 1)
+                do j=1, size(a, 1)
                 
                     if (mask(j, i)) then
                         
-                        a(n) = m2d(j, i) 
+                        res(n) = a(j, i) 
                         n = n + 1
                     
                     end if
@@ -135,7 +135,7 @@ module m_array_manipulation
         end subroutine ma_flatten2d_r
 
        
-        subroutine ma_flatten3d_i(m3d, mask, a)
+        subroutine ma_flatten3d_i(a, mask, res)
         
             !% Notes
             !% -----
@@ -147,27 +147,27 @@ module m_array_manipulation
             
             implicit none
             
-            integer, dimension(:,:,:), intent(in) :: m3d
-            logical, dimension(size(m3d, 1), size(m3d, 2), size(m3d, 3)), intent(in) :: mask
-            integer, dimension(:), allocatable, intent(inout) :: a
+            integer, dimension(:,:,:), intent(in) :: a
+            logical, dimension(size(a, 1), size(a, 2), size(a, 3)), intent(in) :: mask
+            integer, dimension(:), allocatable, intent(inout) :: res
     
             integer :: i, j, k, n
             
-            if (allocated(a)) deallocate(a)
+            if (allocated(res)) deallocate(res)
             
-            allocate(a(count(mask)))
+            allocate(res(count(mask)))
             
             n = 1
             
-            do i=1, size(m3d, 3)
+            do i=1, size(a, 3)
             
-                do j=1, size(m3d, 2)
+                do j=1, size(a, 2)
                 
-                    do k=1, size(m3d, 1)
+                    do k=1, size(a, 1)
                     
                         if (mask(k, j, i)) then
                             
-                            a(n) = m3d(k, j, i) 
+                            res(n) = a(k, j, i) 
                             n = n + 1
                         
                         end if
@@ -181,7 +181,7 @@ module m_array_manipulation
         end subroutine ma_flatten3d_i
         
         
-        subroutine ma_flatten3d_r(m3d, mask, a)
+        subroutine ma_flatten3d_r(a, mask, res)
         
             !% Notes
             !% -----
@@ -193,27 +193,27 @@ module m_array_manipulation
             
             implicit none
             
-            real(sp), dimension(:,:,:), intent(in) :: m3d
-            logical, dimension(size(m3d, 1), size(m3d, 2), size(m3d, 3)), intent(in) :: mask
-            real(sp), dimension(:), allocatable, intent(inout) :: a
+            real(sp), dimension(:,:,:), intent(in) :: a
+            logical, dimension(size(a, 1), size(a, 2), size(a, 3)), intent(in) :: mask
+            real(sp), dimension(:), allocatable, intent(inout) :: res
             
             integer :: i, j, k, n
             
-            if (allocated(a)) deallocate(a)
+            if (allocated(res)) deallocate(res)
             
-            allocate(a(count(mask)))
+            allocate(res(count(mask)))
             
             n = 1
             
-            do i=1, size(m3d, 3)
+            do i=1, size(a, 3)
             
-                do j=1, size(m3d, 2)
+                do j=1, size(a, 2)
                 
-                    do k=1, size(m3d, 1)
+                    do k=1, size(a, 1)
                 
                         if (mask(k, j, i)) then
                             
-                            a(n) = m3d(k, j, i) 
+                            res(n) = a(k, j, i) 
                             n = n + 1
                         
                         end if
@@ -227,7 +227,7 @@ module m_array_manipulation
         end subroutine ma_flatten3d_r
        
        
-        subroutine flatten2d_i(m2d, a)
+        subroutine flatten2d_i(a, res)
         
             !% Notes
             !% -----
@@ -239,18 +239,18 @@ module m_array_manipulation
             
             implicit none
             
-            integer, dimension(:,:), intent(in) :: m2d
-            integer, dimension(size(m2d)), intent(inout) :: a
+            integer, dimension(:,:), intent(in) :: a
+            integer, dimension(size(a)), intent(inout) :: res
             
             integer :: i, j, n
             
             n = 1
             
-            do i=1, size(m2d, 2)
+            do i=1, size(a, 2)
             
-                do j=1, size(m2d, 1)
+                do j=1, size(a, 1)
                         
-                    a(n) = m2d(j, i) 
+                    res(n) = a(j, i) 
                     n = n + 1
  
                 end do
@@ -260,7 +260,7 @@ module m_array_manipulation
         end subroutine flatten2d_i
         
         
-        subroutine flatten2d_r(m2d, a)
+        subroutine flatten2d_r(a, res)
         
             !% Notes
             !% -----
@@ -272,18 +272,18 @@ module m_array_manipulation
             
             implicit none
             
-            real(sp), dimension(:,:), intent(in) :: m2d
-            real(sp), dimension(size(m2d)), intent(inout) :: a
+            real(sp), dimension(:,:), intent(in) :: a
+            real(sp), dimension(size(a)), intent(inout) :: res
 
             integer :: i, j, n
             
             n = 1
             
-            do i=1, size(m2d, 2)
+            do i=1, size(a, 2)
             
-                do j=1, size(m2d, 1)
+                do j=1, size(a, 1)
 
-                    a(n) = m2d(j, i) 
+                    res(n) = a(j, i) 
                     n = n + 1
 
                 end do
@@ -293,7 +293,7 @@ module m_array_manipulation
         end subroutine flatten2d_r
 
        
-        subroutine flatten3d_i(m3d, a)
+        subroutine flatten3d_i(a, res)
         
             !% Notes
             !% -----
@@ -305,20 +305,20 @@ module m_array_manipulation
             
             implicit none
             
-            integer, dimension(:,:,:), intent(in) :: m3d
-            integer, dimension(size(m3d)), intent(inout) :: a
+            integer, dimension(:,:,:), intent(in) :: a
+            integer, dimension(size(a)), intent(inout) :: res
 
             integer :: i, j, k, n
     
             n = 1
             
-            do i=1, size(m3d, 3)
+            do i=1, size(a, 3)
             
-                do j=1, size(m3d, 2)
+                do j=1, size(a, 2)
                 
-                    do k=1, size(m3d, 1)
+                    do k=1, size(a, 1)
 
-                        a(n) = m3d(k, j, i) 
+                        res(n) = a(k, j, i) 
                         n = n + 1
 
                     end do
@@ -330,7 +330,7 @@ module m_array_manipulation
         end subroutine flatten3d_i
         
         
-        subroutine flatten3d_r(m3d, a)
+        subroutine flatten3d_r(a, res)
         
             !% Notes
             !% -----
@@ -342,20 +342,20 @@ module m_array_manipulation
             
             implicit none
             
-            real(sp), dimension(:,:,:), intent(in) :: m3d
-            real(sp), dimension(size(m3d)), intent(inout) :: a
+            real(sp), dimension(:,:,:), intent(in) :: a
+            real(sp), dimension(size(a)), intent(inout) :: res
 
             integer :: i, j, k, n
             
             n = 1
             
-            do i=1, size(m3d, 3)
+            do i=1, size(a, 3)
             
-                do j=1, size(m3d, 2)
+                do j=1, size(a, 2)
                 
-                    do k=1, size(m3d, 1)
+                    do k=1, size(a, 1)
                             
-                        a(n) = m3d(k, j, i) 
+                        res(n) = a(k, j, i) 
                         n = n + 1
                         
                     end do

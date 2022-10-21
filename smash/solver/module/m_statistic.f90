@@ -17,6 +17,27 @@
 !%      module procedure quantile1d_i
 !%      module procedure quantile1d_r
 !%
+!%      mean interface:
+!%
+!%      module procedure mean1d_i
+!%      module procedure mean1d_r
+!%      module procedure mean2d_i
+!%      module procedure mean2d_r
+!%
+!%      variance interface:
+!%
+!%      module procedure variance1d_i
+!%      module procedure variance1d_r
+!%      module procedure variance2d_i
+!%      module procedure variance2d_r
+!%
+!%      std interface:
+!%
+!%      module procedure std1d_i
+!%      module procedure std1d_r
+!%      module procedure std2d_i
+!%      module procedure std2d_r
+!%
 !%      contains
 !%      
 !%      [1]  insertionsort_i
@@ -27,6 +48,18 @@
 !%      [6]  quantile0d_r
 !%      [7]  quantile1d_i
 !%      [8]  quantile1d_r
+!%      [9]  mean1d_i
+!%      [10] mean1d_r
+!%      [11] mean2d_i
+!%      [12] mean2d_r
+!%      [13] variance1d_i
+!%      [14] variance1d_r
+!%      [15] variance2d_i
+!%      [16] variance2d_r
+!%      [17] std1d_i
+!%      [18] std1d_r
+!%      [19] std2d_i
+!%      [20] std2d_r
 
 module m_statistic
 
@@ -58,6 +91,36 @@ module m_statistic
         module procedure quantile1d_r
     
     end interface quantile
+    
+    
+    interface mean
+        
+        module procedure mean1d_i
+        module procedure mean1d_r
+        module procedure mean2d_i
+        module procedure mean2d_r
+        
+    end interface mean
+    
+    
+    interface variance
+    
+        module procedure variance1d_i
+        module procedure variance1d_r
+        module procedure variance2d_i
+        module procedure variance2d_r
+    
+    end interface
+    
+    
+    interface std
+    
+        module procedure std1d_i
+        module procedure std1d_r
+        module procedure std2d_i
+        module procedure std2d_r
+    
+    end interface
     
     contains
     
@@ -447,6 +510,198 @@ module m_statistic
             end do
         
         end subroutine quantile1d_r
+        
+        
+!%      TODO comment
+        subroutine mean1d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+        
+            res = sum(a) / size(a)
+        
+        end subroutine mean1d_i
+        
+        
+!%      TODO comment
+        subroutine mean1d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+        
+            res = sum(a) / size(a)
+        
+        end subroutine mean1d_r
+        
+        
+!%      TODO comment
+        subroutine mean2d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+        
+            res = sum(a) / size(a)
+        
+        end subroutine mean2d_i
+        
+        
+!%      TODO comment
+        subroutine mean2d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+        
+            res = sum(a) / size(a)
+        
+        end subroutine mean2d_r
+        
+        
+!%      TODO comment
+        subroutine variance1d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            real(sp) :: sum_a, sum_a2
+            integer :: n
+            
+            sum_a = sum(a)
+            sum_a2 = sum(a * a)
+            n = size(a)
+            
+            res = (sum_a2 - (sum_a * sum_a) / n) / (n  - 1)
+            
+        end subroutine variance1d_i
+        
+        
+!%      TODO comment
+        subroutine variance1d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            real(sp) :: sum_a, sum_a2
+            integer :: n
+            
+            sum_a = sum(a)
+            sum_a2 = sum(a * a)
+            n = size(a)
+            
+            res = (sum_a2 - (sum_a * sum_a) / n) / (n  - 1)
+            
+        end subroutine variance1d_r
+        
+        
+!%      TODO comment
+        subroutine variance2d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            real(sp) :: sum_a, sum_a2
+            integer :: n
+            
+            sum_a = sum(a)
+            sum_a2 = sum(a * a)
+            n = size(a)
+            
+            res = (sum_a2 - (sum_a * sum_a) / n) / (n  - 1)
+            
+        end subroutine variance2d_i
+        
+        
+!%      TODO comment
+        subroutine variance2d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            real(sp) :: sum_a, sum_a2
+            integer :: n
+            
+            sum_a = sum(a)
+            sum_a2 = sum(a * a)
+            n = size(a)
+            
+            res = (sum_a2 - (sum_a * sum_a) / n) / (n  - 1)
+            
+        end subroutine variance2d_r
+        
+        
+!%      TODO comment
+        subroutine std1d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            call variance1d_i(a, res)
+            
+            res = sqrt(res)
+            
+        end subroutine std1d_i
+        
+        
+!%      TODO comment
+        subroutine std1d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            call variance1d_r(a, res)
+            
+            res = sqrt(res)
+            
+        end subroutine std1d_r
+        
+        
+!%      TODO comment
+        subroutine std2d_i(a, res)
+        
+            implicit none
+            
+            integer, dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            call variance2d_i(a, res)
+            
+            res = sqrt(res)
+            
+        end subroutine std2d_i
+        
+        
+!%      TODO comment
+        subroutine std2d_r(a, res)
+        
+            implicit none
+            
+            real(sp), dimension(:,:), intent(in) :: a
+            real(sp), intent(inout) :: res
+            
+            call variance2d_r(a, res)
+            
+            res = sqrt(res)
+            
+        end subroutine std2d_r
         
 end module m_statistic
 
