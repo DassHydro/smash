@@ -39,7 +39,7 @@ module mw_optimize
     
     private :: transformation, inv_transformation, & 
     & normalize_descriptor, unnormalize_descriptor, &
-    & set_hyper_parameters_states, parameters_states_to_x, &
+    & hyper_problem_initialise, parameters_states_to_x, &
     & x_to_parameters_states, hyper_parameters_states_to_x, &
     & x_to_hyper_parameters_states
     
@@ -830,9 +830,6 @@ module mw_optimize
             allocate(iwa(3 * n))
             allocate(wa(2 * m * n + 5 * n + 11 * m * m + 8 * m))
             
-            !% unbounded
-            nbd = 0
-            
             call normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
             
             call Hyper_ParametersDT_initialise(hyper_parameters, setup)
@@ -843,8 +840,8 @@ module mw_optimize
             
             call OutputDT_initialise(output_b, setup, mesh)
             
-            call set_hyper_parameters_states(hyper_parameters, &
-            & hyper_states, setup, mesh, parameters, states, ndc)
+            call hyper_problem_initialise(hyper_parameters, &
+            & hyper_states, nbd, l, u, setup, mesh, parameters, states, ndc)
             
             hyper_parameters_bgd = hyper_parameters
             hyper_states_bgd = hyper_states
@@ -975,12 +972,14 @@ module mw_optimize
         end subroutine unnormalize_descriptor
         
 
-        subroutine set_hyper_parameters_states(hyper_parameters, hyper_states, setup, mesh, parameters, states, ndc)
+        subroutine hyper_problem_initialise(hyper_parameters, hyper_states, nbd, l, u, setup, mesh, parameters, states, ndc)
             
             implicit none
             
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
             type(Hyper_StatesDT), intent(inout) :: hyper_states
+            integer, dimension(:), intent(inout) :: nbd
+            real(dp), dimension(:), intent(inout) :: l, u
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(in) :: parameters
@@ -991,7 +990,7 @@ module mw_optimize
             real(sp), dimension(ndc, 1, np+ns) :: hyper_matrix
             integer, dimension(np+ns) :: optim
             integer, dimension(2) :: ind_ac
-            integer :: i, j
+            integer :: i, j, k
             
             ind_ac = maxloc(mesh%active_cell)
             
@@ -1006,6 +1005,11 @@ module mw_optimize
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
             
+            nbd = 0
+            l = 0._dp
+            u = 0._dp
+            k = 0
+            
             do i=1, (np + ns)
                 
                 if (optim(i) .gt. 0) then
@@ -1018,21 +1022,29 @@ module mw_optimize
                     
                     case("hyper-polynomial")
                     
-                        do j=1, setup%nd
+                        do j=1, 2 * setup%nd
                         
                             if (mod(j + 1, 2) .eq. 0) then
                         
                                 hyper_matrix(j + 1, 1, i) = 0._sp
                                 
+                                nbd(k + (j + 1)) = 0
+                                
                             else
                             
                                 hyper_matrix(j + 1, 1, i) = 1._sp
+                                
+                                nbd(k + (j + 1)) = 2
+                                l(k + (j + 1)) = 0.5_dp
+                                u(k + (j + 1)) = 2._dp
 
                             end if
                     
                         end do
                     
                     end select
+                    
+                    k = k + ndc
                 
                 end if
             
@@ -1041,7 +1053,7 @@ module mw_optimize
             call matrix_to_hyper_parameters(hyper_matrix(:,:,1:np), hyper_parameters)
             call matrix_to_hyper_states(hyper_matrix(:,:,np+1:np+ns), hyper_states)
         
-        end subroutine set_hyper_parameters_states
+        end subroutine hyper_problem_initialise
 
 
         subroutine hyper_parameters_states_to_x(hyper_parameters, hyper_states, x, setup, ndc)
