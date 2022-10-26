@@ -1,4 +1,4 @@
-# <img src="doc/source/_static/logo_smash.svg" width=180 align="center" alt=""/> - Spatially distributed Modelling and ASsimilation for Hydrology 
+## <img src="doc/source/_static/logo_smash.svg" width=180 align="center" alt=""/> - Spatially distributed Modelling and ASsimilation for Hydrology
 [![Build Status](https://img.shields.io/badge/docs-public-brightgreen)](https://gitlab.irstea.fr/francois.colleoni/smash/)
     
 ## Compilation Instructions on Conda Environment
