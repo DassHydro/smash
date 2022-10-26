@@ -99,7 +99,7 @@ def _optimize_sbs(
     instance.setup._maxiter = maxiter
 
     _optimize_message(instance, control_vector, mapping)
-    
+
     optimize_sbs(
         instance.setup,
         instance.mesh,
@@ -917,13 +917,13 @@ def _standardize_wgauge(
         elif isinstance(wgauge, str):
 
             if wgauge == "mean":
-                
+
                 wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
                 wgauge = np.where(np.in1d(mesh.code, gauge), 1 / len(gauge), wgauge)
 
             elif wgauge == "area":
-                
+
                 wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
                 ind = np.in1d(mesh.code, gauge)
@@ -933,7 +933,7 @@ def _standardize_wgauge(
                 wgauge[ind] = value
 
             elif wgauge == "area_minv":
-                
+
                 wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
                 ind = np.in1d(mesh.code, gauge)

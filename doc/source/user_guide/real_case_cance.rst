@@ -349,15 +349,13 @@ Input Data - Observed discharge
 3 gauges were placed in the meshing. For the sake of clarity, only the most downstream gauge discharge ``V3524010`` is plotted.
 
 .. ipython:: python
-
-    code = model.mesh.code.tobytes("F").decode().split()
     
     plt.plot(model.input_data.qobs[0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge ($m^3/s$)");
     @savefig qobs_rc_Cance_user_guide.png
-    plt.title(code[0]);
+    plt.title(model.mesh.code[0]);
     
 Input Data - Atmospheric forcings
 *********************************

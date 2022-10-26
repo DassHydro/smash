@@ -168,9 +168,7 @@ def _standardize_setup(setup: SetupDT):
             "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
         )
 
-    if setup.read_descriptor and not os.path.exists(
-        setup.descriptor_directory
-    ):
+    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
@@ -275,9 +273,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     for i, c in enumerate(mesh.code):
 
-        path = glob.glob(
-            f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True
-        )
+        path = glob.glob(f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True)
 
         if len(path) == 0:
             warnings.warn(
@@ -359,20 +355,14 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if setup.prcp_format == "tif":
 
-        files = sorted(
-            glob.glob(
-                f"{setup.prcp_directory}/**/*tif*", recursive=True
-            )
-        )
+        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
         files = _adjust_left_files(files, date_range)
 
     #% WIP
     elif setup.prcp_format == "nc":
 
-        files = sorted(
-            glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True)
-        )
+        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
     for i, date in enumerate(tqdm(date_range, desc="Reading precipitation")):
 
@@ -419,11 +409,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if setup.pet_format == "tif":
 
-        files = sorted(
-            glob.glob(
-                f"{setup.pet_directory}/**/*tif*", recursive=True
-            )
-        )
+        files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
 
         if not setup.daily_interannual_pet:
 
@@ -431,9 +417,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     elif setup.pet_format == "nc":
 
-        files = sorted(
-            glob.glob(f"{setup.pet_directory}/**/*nc", recursive=True)
-        )
+        files = sorted(glob.glob(f"{setup.pet_directory}/**/*nc", recursive=True))
 
     if setup.daily_interannual_pet:
 

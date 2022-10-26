@@ -87,12 +87,6 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
                         chunks=True,
                     )
 
-                elif isinstance(value, bytes):
-
-                    value = value.strip()
-
-                    hdf5_ins.attrs[attr] = value
-
                 else:
 
                     hdf5_ins.attrs[attr] = value
