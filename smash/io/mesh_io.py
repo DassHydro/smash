@@ -13,6 +13,9 @@ def _parse_mesh_dict_to_hdf5(mesh: dict, hdf5_ins):
     for key, value in mesh.items():
 
         if isinstance(value, np.ndarray):
+            
+            if value.dtype.char == 'U':
+                value = value.astype("S")
 
             hdf5_ins.create_dataset(
                 key,
@@ -22,12 +25,6 @@ def _parse_mesh_dict_to_hdf5(mesh: dict, hdf5_ins):
                 compression="gzip",
                 chunks=True,
             )
-
-        elif isinstance(value, bytes):
-
-            value = value.strip()
-
-            hdf5_ins.attrs[key] = value
 
         else:
 
@@ -51,6 +48,10 @@ def _parse_hdf5_to_mesh_dict(hdf5_ins) -> dict:
             mesh[ds] = np.ma.masked_array(
                 hdf5_ins[ds][:], mask=(1 - hdf5_ins["active_cell"][:])
             )
+            
+        elif ds == "code":
+            
+            mesh[ds] = hdf5_ins[ds][:].astype("U")
 
         else:
 

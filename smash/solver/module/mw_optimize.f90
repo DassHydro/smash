@@ -15,8 +15,7 @@
 
 module mw_optimize
     
-    use mwd_common, only: sp, dp, lchar, np, ns, &
-    & name_parameters, name_states
+    use md_common, only: sp, dp, lchar, np, ns
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT

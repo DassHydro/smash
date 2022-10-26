@@ -1,6 +1,6 @@
 subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
     
-    use mwd_common !% only: sp
+    use md_common !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -334,7 +334,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
     & hyper_parameters, hyper_parameters_bgd, hyper_states, &
     & hyper_states_bgd, output, cost)
 
-    use mwd_common !% only: sp
+    use md_common !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT

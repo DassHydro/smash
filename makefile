@@ -67,7 +67,7 @@ f77: \
  
 #% f90 files
 f90: \
- obj/mwd_common.o \
+ obj/md_common.o \
  obj/m_statistic.o \
  obj/m_array_manipulation.o \
  obj/mwd_setup.o \
@@ -146,14 +146,6 @@ library_edit:
 	
 #% Finalize compilation with mv, rm and sed
 finalize:
-	mv f90wrap_*.f90 $(SOLVERDIR)/f90wrap/.
-	mv f90wrap_*.o $(BUILDDIR)/.
-	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
-	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
-	rm -rf $(SHAREDLIB)
-	bash $(F90WRAPDIR)/finalize_f90wrap.sh
-
-finalize2:
 	mv f90wrap_*.f90 $(SOLVERDIR)/f90wrap/.
 	mv f90wrap_*.o $(BUILDDIR)/.
 	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.

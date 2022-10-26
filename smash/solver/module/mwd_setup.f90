@@ -54,6 +54,8 @@
 !%      ``ub_parameters``          Parameters upper bounds        (default: see below)
 !%      ``lb_states``              States lower bounds            (default: see below)
 !%      ``ub_states``              States upper bounds            (default: see below)
+!%      ``name_parameters``        Name of SMASH parameters       (default: see below)
+!%      ``name_states``            Name of SMASH states           (default: see below)
 !%      ``maxiter``                Maximum number of iteration    (default: 100)
 !%      =========================  =====================================
 !%
@@ -63,7 +65,7 @@
 
 module mwd_setup
     
-    use mwd_common !% only: sp, lchar, np, ns
+    use md_common !% only: sp, lchar, np, ns
     
     implicit none
     
@@ -98,7 +100,7 @@ module mwd_setup
         logical :: read_descriptor = .false.
         character(lchar) :: descriptor_format = "tif" !>f90w-char
         character(lchar) :: descriptor_directory = "..." !>f90w-char
-        character(20), allocatable, dimension(:) :: descriptor_name !<f90w-char_array
+        character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
         
         integer :: interception_module = 0
         integer :: production_module = 0
@@ -162,6 +164,25 @@ module mwd_setup
         &   0.999999_sp ,& !% hft
         &   0.999999_sp ,& !% hst
         &   10000._sp/)    !% hlr
+        
+        character(10), dimension(np) :: name_parameters = & !>f90w-private f90w-char_array
+        
+        & (/"ci        ",&
+        &   "cp        ",&
+        &   "beta      ",&
+        &   "cft       ",&
+        &   "cst       ",&
+        &   "alpha     ",&
+        &   "exc       ",&
+        &   "lr        "/)
+        
+        character(10), dimension(ns) :: name_states = & !>f90w-private f90w-char_array
+    
+        & (/"hi        ",&
+        &   "hp        ",&
+        &   "hft       ",&
+        &   "hst       ",&
+        &   "hlr       "/)
         
         integer :: maxiter = 100 !>f90w-private
         

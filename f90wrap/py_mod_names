@@ -1,5 +1,4 @@
 {
-    "mwd_common": "_mwd_common",
     "mwd_setup": "_mwd_setup",
     "mwd_mesh": "_mwd_mesh",
     "mwd_input_data": "_mwd_input_data",

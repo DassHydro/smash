@@ -148,7 +148,7 @@ def read_model(path: str) -> Model:
 
             if "descriptor_name" in f["setup"].keys():
 
-                nd = f["setup"]["descriptor_name"].shape[1]
+                nd = f["setup"]["descriptor_name"].size
 
             else:
 

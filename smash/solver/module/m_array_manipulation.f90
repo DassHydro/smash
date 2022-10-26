@@ -27,7 +27,7 @@
 
 module m_array_manipulation
 
-    use mwd_common, only: sp
+    use md_common, only: sp
     
     implicit none
     

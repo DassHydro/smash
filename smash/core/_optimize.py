@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mw_run import forward_run
 from smash.solver._mw_optimize import (
@@ -66,9 +65,9 @@ def _optimize_sbs(
 
     for i, name in enumerate(control_vector):
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
-            ind = np.argwhere(name_parameters == name)
+            ind = np.argwhere(instance.setup._name_parameters == name)
 
             instance.setup._optim_parameters[ind] = 1
 
@@ -78,7 +77,7 @@ def _optimize_sbs(
         #% Already check, must be states if not parameters
         else:
 
-            ind = np.argwhere(name_states == name)
+            ind = np.argwhere(instance.setup._name_states == name)
 
             instance.setup._optim_states[ind] = 1
 
@@ -91,7 +90,7 @@ def _optimize_sbs(
 
     instance.mesh._wgauge = wgauge
 
-    st = pd.Timestamp(instance.setup.start_time.decode().strip())
+    st = pd.Timestamp(instance.setup.start_time)
 
     instance.setup._optim_start_step = (
         ost - st
@@ -100,7 +99,7 @@ def _optimize_sbs(
     instance.setup._maxiter = maxiter
 
     _optimize_message(instance, control_vector, mapping)
-
+    
     optimize_sbs(
         instance.setup,
         instance.mesh,
@@ -141,9 +140,9 @@ def _optimize_lbfgsb(
 
     for i, name in enumerate(control_vector):
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
-            ind = np.argwhere(name_parameters == name)
+            ind = np.argwhere(instance.setup._name_parameters == name)
 
             instance.setup._optim_parameters[ind] = 1
 
@@ -153,7 +152,7 @@ def _optimize_lbfgsb(
         #% Already check, must be states if not parameters
         else:
 
-            ind = np.argwhere(name_states == name)
+            ind = np.argwhere(instance.setup._name_states == name)
 
             instance.setup._optim_states[ind] = 1
 
@@ -166,7 +165,7 @@ def _optimize_lbfgsb(
 
     instance.mesh._wgauge = wgauge
 
-    st = pd.Timestamp(instance.setup.start_time.decode().strip())
+    st = pd.Timestamp(instance.setup.start_time)
 
     instance.setup._optim_start_step = (
         ost - st
@@ -231,7 +230,7 @@ def _optimize_nelder_mead(
 
     instance.mesh._wgauge = wgauge
 
-    st = pd.Timestamp(instance.setup.start_time.decode().strip())
+    st = pd.Timestamp(instance.setup.start_time)
 
     instance.setup._optim_start_step = (
         ost - st
@@ -326,15 +325,15 @@ def _optimize_message(instance: Model, control_vector: list[str], mapping: str):
 
     sp4 = " " * 4
 
-    algorithm = instance.setup._algorithm.decode().strip()
-    jobs_fun = instance.setup._jobs_fun.decode().strip()
-    jreg_fun = instance.setup._jreg_fun.decode().strip()
+    algorithm = instance.setup._algorithm
+    jobs_fun = instance.setup._jobs_fun
+    jreg_fun = instance.setup._jreg_fun
     wjreg = instance.setup._wjreg
-    parameters = [el for el in control_vector if el in name_parameters]
-    states = [el for el in control_vector if el in name_states]
+    parameters = [el for el in control_vector if el in instance.setup._name_parameters]
+    states = [el for el in control_vector if el in instance.setup._name_states]
     code = [
         el
-        for ind, el in enumerate(instance.mesh.code.tobytes("F").decode().split())
+        for ind, el in enumerate(instance.mesh.code)
         if instance.mesh._wgauge[ind] > 0
     ]
     gauge = ["{:.6f}".format(el) for el in instance.mesh._wgauge if el > 0]
@@ -393,7 +392,7 @@ def _parameters_states_to_x(instance: Model, control_vector: list[str]) -> np.nd
 
     for ind, name in enumerate(control_vector):
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
             x[ind] = getattr(instance.parameters, name)[ac_ind]
 
@@ -418,7 +417,7 @@ def _hyper_parameters_states_to_x(
 
     for ind, name in enumerate(control_vector):
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
             x[ind * nd_step] = getattr(instance.parameters, name)[ac_ind]
 
@@ -433,7 +432,7 @@ def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: list
 
     for ind, name in enumerate(control_vector):
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
             setattr(
                 instance.parameters,
@@ -478,7 +477,7 @@ def _x_to_hyper_parameters_states(
         value = np.where(value < lb, lb, value)
         value = np.where(value > ub, ub, value)
 
-        if name in name_parameters:
+        if name in instance.setup._name_parameters:
 
             setattr(instance.parameters, name, value)
 
@@ -585,7 +584,7 @@ def _standardize_algorithm(algorithm: str) -> str:
     return algorithm
 
 
-def _standardize_control_vector(control_vector: list) -> list:
+def _standardize_control_vector(control_vector: list, setup: SetupDT) -> list:
 
     if isinstance(control_vector, (list, tuple, set)):
 
@@ -593,10 +592,10 @@ def _standardize_control_vector(control_vector: list) -> list:
 
         for name in control_vector:
 
-            if not name in [*name_parameters, *name_states]:
+            if not name in [*setup._name_parameters, *setup._name_states]:
 
                 raise ValueError(
-                    f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*name_parameters, *name_states]}"
+                    f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*setup._name_parameters, *setup._name_states]}"
                 )
 
     else:
@@ -730,17 +729,17 @@ def _standardize_bounds(
 
         for name in control_vector:
 
-            if name in name_parameters:
+            if name in setup._name_parameters:
 
-                ind = np.argwhere(name_parameters == name)
+                ind = np.argwhere(setup._name_parameters == name)
 
                 bounds.append(
                     (setup._lb_parameters[ind].item(), setup._ub_parameters[ind].item())
                 )
 
-            elif name in name_states:
+            elif name in setup._name_states:
 
-                ind = np.argwhere(name_states == name)
+                ind = np.argwhere(setup._name_states == name)
 
                 bounds.append(
                     (setup._lb_states[ind].item(), setup._ub_states[ind].item())
@@ -753,8 +752,6 @@ def _standardize_gauge(
     gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
 ) -> list:
 
-    code = np.array(mesh.code.tobytes(order="F").decode().split())
-
     if gauge:
 
         if isinstance(gauge, (list, tuple, set)):
@@ -765,9 +762,9 @@ def _standardize_gauge(
 
             for i, name in enumerate(gauge):
 
-                if name in code:
+                if name in mesh.code:
 
-                    ind = np.argwhere(code == name)
+                    ind = np.argwhere(mesh.code == name)
 
                     if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
@@ -780,7 +777,7 @@ def _standardize_gauge(
                 else:
 
                     raise ValueError(
-                        f"gauge code '{name}' does not belong to the list of 'Model' gauges code {code}"
+                        f"gauge code '{name}' does not belong to the list of 'Model' gauges code {mesh.code}"
                     )
 
             if len(gauge_imd) == 0:
@@ -797,11 +794,11 @@ def _standardize_gauge(
 
             if gauge == "all":
 
-                gauge = list(code.copy())
+                gauge = list(mesh.code.copy())
 
                 gauge_imd = gauge.copy()
 
-                for ind, name in enumerate(code):
+                for ind, name in enumerate(mesh.code):
 
                     if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
@@ -833,11 +830,11 @@ def _standardize_gauge(
 
                 else:
 
-                    gauge = [code[ind]]
+                    gauge = [mesh.code[ind]]
 
-            elif gauge in code:
+            elif gauge in mesh.code:
 
-                ind = np.argwhere(code == gauge)
+                ind = np.argwhere(mesh.code == gauge)
 
                 if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
@@ -852,7 +849,7 @@ def _standardize_gauge(
             else:
 
                 raise ValueError(
-                    f"str 'gauge' argument must be either one alias among ['all', 'downstream'] or a gauge code {code}"
+                    f"str 'gauge' argument must be either one alias among ['all', 'downstream'] or a gauge code {mesh.code}"
                 )
 
         else:
@@ -865,12 +862,12 @@ def _standardize_gauge(
         if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
 
             raise ValueError(
-                f"No available observed discharge for optimization at gauge {code[ind]}"
+                f"No available observed discharge for optimization at gauge {mesh.code[ind]}"
             )
 
         else:
 
-            gauge = [code[ind]]
+            gauge = [mesh.code[ind]]
 
     return gauge
 
@@ -878,8 +875,6 @@ def _standardize_gauge(
 def _standardize_wgauge(
     wgauge: (list, tuple, set), gauge: (list, tuple, set), mesh: MeshDT
 ) -> list:
-
-    code = np.array(mesh.code.tobytes(order="F").decode().split())
 
     if wgauge:
 
@@ -895,9 +890,9 @@ def _standardize_wgauge(
 
             else:
 
-                wgauge = np.zeros(shape=len(code), dtype=np.float32)
+                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-                ind = np.in1d(code, gauge)
+                ind = np.in1d(mesh.code, gauge)
 
                 wgauge[ind] = imd_wgauge
 
@@ -913,35 +908,35 @@ def _standardize_wgauge(
 
             else:
 
-                wgauge = np.zeros(shape=len(code), dtype=np.float32)
+                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-                ind = np.in1d(code, gauge)
+                ind = np.in1d(mesh.code, gauge)
 
                 wgauge[ind] = imd_wgauge
 
         elif isinstance(wgauge, str):
 
             if wgauge == "mean":
+                
+                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-                wgauge = np.zeros(shape=len(code), dtype=np.float32)
-
-                wgauge = np.where(np.in1d(code, gauge), 1 / len(gauge), wgauge)
+                wgauge = np.where(np.in1d(mesh.code, gauge), 1 / len(gauge), wgauge)
 
             elif wgauge == "area":
+                
+                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-                wgauge = np.zeros(shape=len(code), dtype=np.float32)
-
-                ind = np.in1d(code, gauge)
+                ind = np.in1d(mesh.code, gauge)
 
                 value = mesh.area[ind] / sum(mesh.area[ind])
 
                 wgauge[ind] = value
 
             elif wgauge == "area_minv":
+                
+                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-                wgauge = np.zeros(shape=len(code), dtype=np.float32)
-
-                ind = np.in1d(code, gauge)
+                ind = np.in1d(mesh.code, gauge)
 
                 value = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
 
@@ -962,17 +957,17 @@ def _standardize_wgauge(
     else:
 
         #% Default is mean
-        wgauge = np.zeros(shape=len(code), dtype=np.float32)
+        wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
 
-        wgauge = np.where(np.in1d(code, gauge), 1 / len(gauge), wgauge)
+        wgauge = np.where(np.in1d(mesh.code, gauge), 1 / len(gauge), wgauge)
 
     return wgauge
 
 
 def _standardize_ost(ost: str, setup: SetupDT) -> pd.Timestamp:
 
-    st = pd.Timestamp(setup.start_time.decode().strip())
-    et = pd.Timestamp(setup.end_time.decode().strip())
+    st = pd.Timestamp(setup.start_time)
+    et = pd.Timestamp(setup.end_time)
 
     if ost:
 
@@ -1019,7 +1014,7 @@ def _standardize_optimize_args(
 
     algorithm = _standardize_algorithm(algorithm)
 
-    control_vector = _standardize_control_vector(control_vector)
+    control_vector = _standardize_control_vector(control_vector, setup)
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 

@@ -38,7 +38,7 @@
 
 module mwd_mesh
     
-    use mwd_common !% only: sp
+    use md_common !% only: sp
     use mwd_setup !% only: SetupDT
     
     implicit none
@@ -61,13 +61,13 @@ module mwd_mesh
         
         real(sp), dimension(:,:), allocatable :: flwdst
         integer, dimension(:,:), allocatable :: gauge_pos
-        character(20), dimension(:), allocatable :: code
+        character(20), dimension(:), allocatable :: code !>f90w-char_array
         real(sp), dimension(:), allocatable :: area
         
         !% </> Private
-        real(sp), dimension(:), allocatable :: wgauge !>f90wrap private
-        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90wrap private
-        integer, dimension(:,:), allocatable :: local_active_cell !>f90wrap private
+        real(sp), dimension(:), allocatable :: wgauge !>f90w-private
+        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90w-private
+        integer, dimension(:,:), allocatable :: local_active_cell !>f90w-private
 
     end type MeshDT
     

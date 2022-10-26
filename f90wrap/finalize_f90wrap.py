@@ -3,7 +3,6 @@ import glob
 import os
 
 NAME_DT = ["setup", "mesh", "input_data", "parameters", "states", "output"]
-NAME_DT_CLASS = ["class " + n for n in NAME_DT]
 
 
 def get_py_mod_names(py_mod_names_file):
@@ -49,6 +48,7 @@ def get_flagged_attr(f90f):
     res = {}
 
     char = set()
+    char_array = set()
     private = set()
 
     with open(f90f) as f:
@@ -57,11 +57,15 @@ def get_flagged_attr(f90f):
 
             if "!>f90w" in l:
 
-                ind_double_dot = l.find("::") + 2
+                ind_double_2dots = l.find("::") + 2
 
-                subl = l[ind_double_dot:].strip()
+                subl = l[ind_double_2dots:].strip()
+                
+                if "f90w-char_array" in subl:
+                    
+                    char_array.add(subl.split(" ")[0])
 
-                if "f90w-char" in subl:
+                elif "f90w-char" in subl:
 
                     char.add(subl.split(" ")[0])
 
@@ -69,7 +73,7 @@ def get_flagged_attr(f90f):
 
                     private.add(subl.split(" ")[0])
 
-    res.update({"char": char, "private": private})
+    res.update({"char": char, "char_array": char_array, "private": private})
 
     return res
 
@@ -88,13 +92,25 @@ def sed_internal_import(pyf):
 def sed_char_handler_decorator(pyf, char):
 
     os.system(
-        f'sed -i "/from __future__/a \\from smash.solver.\_f90wrap_decorator import character_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import char_getter_handler" {pyf}'
     )
 
     for attr in char:
 
-        os.system(f'sed -i "/def {attr}/i \\\t\@character_handler" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_getter_handler" {pyf}')
 
+
+def sed_char_array_handler_decorator(pyf, char_array):
+    
+    os.system(
+        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import char_array_getter_handler, char_array_setter_handler" {pyf}'
+    )
+
+    for attr in char_array:
+
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_array_getter_handler" {pyf}')
+        os.system(f'sed -i "/{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
+    
 
 def sed_private_property(pyf, private):
 
@@ -105,36 +121,43 @@ def sed_private_property(pyf, private):
         os.system(f' sed -i "s/self.{attr}/self._{attr}/g" {pyf}')
         os.system(f' sed -i "/ret.append.*{attr}.*/d" {pyf}')
 
-
+#% Rework
 def sed_copy_derived_type(pyf):
+    
+    name = -1
+    
+    for n in NAME_DT:
+        
+        if n in pyf.lower():
+            
+            name = n
+            
+    if name != -1:
+        
+        class_name = "class " + name
+        ind_cn = np.inf
+        
+        with open(pyf) as f:
 
-    ind_nc_save = -1
-    ind_l_save = -1
+            for ind_l, l in enumerate(f):
 
-    with open(pyf) as f:
+                if class_name in l.lower():
 
-        for ind_l, l in enumerate(f):
+                    ind_cn = ind_l
 
-            for ind_nc, nc in enumerate(NAME_DT_CLASS):
+                if "@property" in l:
 
-                if nc in l.lower():
-
-                    ind_nc_save = ind_nc
-
-            if "@property" in l:
-
-                ind_l_save = ind_l
-
-                break
-
-    if ind_nc_save != -1 and ind_l_save != -1:
-
-        copy_name = NAME_DT[ind_nc_save]
+                    ind_p = ind_l
+                    
+                    if ind_p > ind_cn:
+                        
+                        break
+                        
         os.system(
-            f'sed -i "{ind_l_save}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{copy_name}(self)\\n/" {pyf}'
+            f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
         )
         os.system(
-            f'sed -i "/from __future__/a \\from smash.solver._mw_routine import copy_{copy_name}" {pyf}'
+            f'sed -i "/from __future__/a \\from smash.solver._mw_routine import copy_{name}" {pyf}'
         )
 
 
@@ -169,6 +192,8 @@ if __name__ == "__main__":
         flagged_attr = get_flagged_attr(f90f)
 
         sed_char_handler_decorator(pyf, flagged_attr["char"])
+        
+        sed_char_array_handler_decorator(pyf, flagged_attr["char_array"])
 
         sed_private_property(pyf, flagged_attr["private"])
 

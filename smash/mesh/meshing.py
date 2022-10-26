@@ -166,34 +166,22 @@ def _standardize_gauge(ds_flwdir, x, y, area, code):
     if np.any(area < 0):
 
         raise ValueError(f"Negative 'area' value(s) {area}")
-
+    
     #% Setting _c0, _c1, ... _cN as default codes
     if code is None:
-
-        code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
-
-        for i in range(x.size):
-
-            code[0:3, i] = [ord(l) for l in ["_", "c", str(i)]]
-
+        
+        code = np.array([f"_c{i}" for i in range(x.size)])
+        
     elif isinstance(code, (str, list)):
-
-        code_imd = np.array(code, ndmin=1)
-
+        
+        code = np.array(code, ndmin=1)
+        
         #% Only check x (y and area already check above)
-        if code_imd.size != x.size:
-
+        if code.size != x.size:
+            
             raise ValueError(
-                f"Inconsistent size for 'code' ({code_imd.size}) and 'x' ({x.size})"
+                f"Inconsistent size for 'code' ({code.size}) and 'x' ({x.size})"
             )
-
-        else:
-
-            code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
-
-            for i in range(x.size):
-
-                code[0 : len(code_imd[i]), i] = [ord(l) for l in code_imd[i]]
 
     return x, y, area, code
 
