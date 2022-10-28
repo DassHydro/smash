@@ -42,7 +42,7 @@
 !%      ========================== =====================================
 !%      ``ntime_step``             Number of time step
 !%      ``nd``                     Number of descriptor map(s)
-!%      ``algorithm``              Optimize Algorithm name
+!%      ``algorithm``              Optimize Algorithm name        (default: '...')
 !%      ``jobs_fun``               Objective function name        (default: 'nse')
 !%      ``mapping``                Mapping name                   (default: '...')
 !%      ``jreg_fun``               Regularization name            (default: 'prior')
@@ -54,6 +54,8 @@
 !%      ``ub_parameters``          Parameters upper bounds        (default: see below)
 !%      ``lb_states``              States lower bounds            (default: see below)
 !%      ``ub_states``              States upper bounds            (default: see below)
+!%      ``name_parameters``        Name of SMASH parameters       (default: see below)
+!%      ``name_states``            Name of SMASH states           (default: see below)
 !%      ``maxiter``                Maximum number of iteration    (default: 100)
 !%      =========================  =====================================
 !%
@@ -63,7 +65,7 @@
 
 module mwd_setup
     
-    use mwd_common !% only: sp, lchar, np, ns
+    use md_common !% only: sp, lchar, np, ns
     
     implicit none
     
@@ -72,23 +74,23 @@ module mwd_setup
         !% </> Public
         real(sp) :: dt = 3600._sp
         
-        character(lchar) :: start_time = "..."
-        character(lchar) :: end_time = "..."
+        character(lchar) :: start_time = "..." !>f90w-char
+        character(lchar) :: end_time = "..." !>f90w-char
         
         logical :: sparse_storage = .false.
         
         logical :: read_qobs = .false.
-        character(lchar) :: qobs_directory = "..."
+        character(lchar) :: qobs_directory = "..." !>f90w-char
         
         logical :: read_prcp = .false.
-        character(lchar) :: prcp_format = "tif"
+        character(lchar) :: prcp_format = "tif" !>f90w-char
         real(sp) :: prcp_conversion_factor = 1._sp
-        character(lchar) :: prcp_directory = "..."
+        character(lchar) :: prcp_directory = "..." !>f90w-char
         
         logical :: read_pet = .false.
-        character(lchar) :: pet_format = "tif"
+        character(lchar) :: pet_format = "tif" !>f90w-char
         real(sp) :: pet_conversion_factor = 1._sp
-        character(lchar) :: pet_directory = "..."
+        character(lchar) :: pet_directory = "..." !>f90w-char
         logical :: daily_interannual_pet = .false.
         
         logical :: mean_forcing = .false.
@@ -96,9 +98,9 @@ module mwd_setup
         
         
         logical :: read_descriptor = .false.
-        character(lchar) :: descriptor_format = "tif"
-        character(lchar) :: descriptor_directory = "..."
-        character(20), allocatable, dimension(:) :: descriptor_name
+        character(lchar) :: descriptor_format = "tif" !>f90w-char
+        character(lchar) :: descriptor_directory = "..." !>f90w-char
+        character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
         
         integer :: interception_module = 0
         integer :: production_module = 0
@@ -110,22 +112,22 @@ module mwd_setup
         logical :: save_net_prcp_domain = .false.
         
         !% </> Private
-        integer :: ntime_step = 0 !>f90wrap private
-        integer :: nd = 0 !>f90wrap private
+        integer :: ntime_step = 0 !>f90w-private
+        integer :: nd = 0 !>f90w-private
         
-        character(lchar) :: algorithm !>f90wrap private
+        character(lchar) :: algorithm = "..." !>f90w-private f90w-char
         
-        character(lchar) :: jobs_fun = "nse" !>f90wrap private
-        character(lchar) :: mapping = "..." !>f90wrap private
-        character(lchar) :: jreg_fun = "prior" !>f90wrap private
-        real(sp) :: wjreg = 0._sp !>f90wrap private
+        character(lchar) :: jobs_fun = "nse" !>f90w-private f90w-char
+        character(lchar) :: mapping = "..." !>f90w-private f90w-char
+        character(lchar) :: jreg_fun = "prior" !>f90w-private f90w-char
+        real(sp) :: wjreg = 0._sp !>f90w-private 
 
-        integer :: optim_start_step = 1 !>f90wrap private
+        integer :: optim_start_step = 1 !>f90w-private
         
-        integer, dimension(np) :: optim_parameters = 0 !>f90wrap private
-        integer, dimension(ns) :: optim_states = 0 !>f90wrap private
+        integer, dimension(np) :: optim_parameters = 0 !>f90w-private
+        integer, dimension(ns) :: optim_states = 0 !>f90w-private
         
-        real(sp), dimension(np) :: lb_parameters = & !>f90wrap private
+        real(sp), dimension(np) :: lb_parameters = & !>f90w-private
         
         & (/1e-6_sp ,& !% ci
         &   1e-6_sp ,& !% cp
@@ -136,7 +138,7 @@ module mwd_setup
         &   -50._sp ,& !% exc
         &   1e-6_sp/)  !% lr
         
-        real(sp), dimension(np) :: ub_parameters = & !>f90wrap private
+        real(sp), dimension(np) :: ub_parameters = & !>f90w-private
         
         & (/1e2_sp      ,&  !% ci
         &   1e3_sp      ,&  !% cp
@@ -147,7 +149,7 @@ module mwd_setup
         &   50._sp      ,&  !% exc
         &   1e3_sp/)        !% lr
         
-        real(sp), dimension(ns) :: lb_states = & !>f90wrap private
+        real(sp), dimension(ns) :: lb_states = & !>f90w-private
         
         & (/1e-6_sp ,& !% hi
         &   1e-6_sp ,& !% hp
@@ -155,7 +157,7 @@ module mwd_setup
         &   1e-6_sp ,& !% hst
         &   1e-6_sp/)  !% hlr
         
-        real(sp), dimension(ns) :: ub_states = & !>f90wrap private
+        real(sp), dimension(ns) :: ub_states = & !>f90w-private
         
         & (/0.999999_sp ,& !% hi
         &   0.999999_sp ,& !% hp
@@ -163,7 +165,26 @@ module mwd_setup
         &   0.999999_sp ,& !% hst
         &   10000._sp/)    !% hlr
         
-        integer :: maxiter = 100 !>f90wrap private
+        character(10), dimension(np) :: name_parameters = & !>f90w-private f90w-char_array
+        
+        & (/"ci        ",&
+        &   "cp        ",&
+        &   "beta      ",&
+        &   "cft       ",&
+        &   "cst       ",&
+        &   "alpha     ",&
+        &   "exc       ",&
+        &   "lr        "/)
+        
+        character(10), dimension(ns) :: name_states = & !>f90w-private f90w-char_array
+    
+        & (/"hi        ",&
+        &   "hp        ",&
+        &   "hft       ",&
+        &   "hst       ",&
+        &   "hlr       "/)
+        
+        integer :: maxiter = 100 !>f90w-private
         
     end type SetupDT
     

@@ -87,12 +87,6 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
                         chunks=True,
                     )
 
-                elif isinstance(value, bytes):
-
-                    value = value.strip()
-
-                    hdf5_ins.attrs[attr] = value
-
                 else:
 
                     hdf5_ins.attrs[attr] = value
@@ -148,7 +142,7 @@ def read_model(path: str) -> Model:
 
             if "descriptor_name" in f["setup"].keys():
 
-                nd = f["setup"]["descriptor_name"].shape[1]
+                nd = f["setup"]["descriptor_name"].size
 
             else:
 

@@ -8,7 +8,7 @@
 
 module mw_adjoint_test
     
-    use mwd_common, only: sp, np, ns
+    use md_common, only: sp, np, ns
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT

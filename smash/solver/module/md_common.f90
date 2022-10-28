@@ -1,5 +1,5 @@
 !%      This module `md_common` encapsulates all SMASH common.
-!%      This module is wrapped and differentiated.
+!%      This module is differentiated.
 !%
 !%      mwd_common variables
 !%
@@ -12,11 +12,9 @@
 !%      ``lchar``               Characeter length value
 !%      ``np``                  Number of SMASH parameters (ParametersDT)
 !%      ``ns``                  Number of SMASH states (StatesDT)
-!%      ``name_parameters``     Name of SMASH parameters
-!%      ``name_states``         Name of SMASH states
 !%      ======================= ========================================
 
-module mwd_common
+module md_common
     
     implicit none
     
@@ -26,24 +24,5 @@ module mwd_common
     
     integer, parameter :: np = 8
     integer, parameter :: ns = 5
-    
-    character(10), dimension(np) :: name_parameters = &
-        
-        & (/"ci        ",&
-        &   "cp        ",&
-        &   "beta      ",&
-        &   "cft       ",&
-        &   "cst       ",&
-        &   "alpha     ",&
-        &   "exc       ",&
-        &   "lr        "/)
-        
-    character(10), dimension(ns) :: name_states = &
-    
-        & (/"hi        ",&
-        &   "hp        ",&
-        &   "hft       ",&
-        &   "hst       ",&
-        &   "hlr       "/)
 
-end module mwd_common
+end module md_common

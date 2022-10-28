@@ -13,7 +13,7 @@
 
 module md_operator
     
-    use mwd_common !% only : sp
+    use md_common !% only : sp
 
     implicit none
     

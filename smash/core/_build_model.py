@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_common import name_parameters, name_states
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mw_routine import (
     compute_rowcol_to_ind_sparse,
@@ -58,30 +57,6 @@ RATIO_PET_HOURLY = np.array(
 )
 
 
-def _charlist_to_uint8(charl: (str, list[str]), itemsize: int):
-
-    if isinstance(charl, str):
-        charl = [charl]
-
-    res = np.zeros(shape=(itemsize, len(charl)), dtype="uint8") + np.uint8(32)
-
-    for i, el in enumerate(charl):
-
-        res[0 : len(el), i] = [ord(l) for l in el]
-
-    return res
-
-
-def _is_allocated(derived_type: (SetupDT, MeshDT), key: str):
-
-    try:
-        getattr(derived_type, key)
-        return True
-
-    except:
-        return False
-
-
 def _parse_derived_type(derived_type, data: dict):
 
     """
@@ -91,10 +66,6 @@ def _parse_derived_type(derived_type, data: dict):
     for key, value in data.items():
 
         if hasattr(derived_type, key):
-
-            if key == "descriptor_name":
-
-                value = _charlist_to_uint8(value, 20)
 
             setattr(derived_type, key, value)
 
@@ -119,19 +90,19 @@ def _standardize_setup(setup: SetupDT):
             UserWarning,
         )
 
-    if setup.start_time.decode().strip() == "...":
+    if setup.start_time == "...":
         raise ValueError("argument 'start_time' is not defined")
 
-    if setup.end_time.decode().strip() == "...":
+    if setup.end_time == "...":
         raise ValueError("argument 'end_time' is not defined")
 
     try:
-        st = pd.Timestamp(setup.start_time.decode().strip())
+        st = pd.Timestamp(setup.start_time)
     except:
         raise ValueError("argument 'start_time' is not a valid date")
 
     try:
-        et = pd.Timestamp(setup.end_time.decode().strip())
+        et = pd.Timestamp(setup.end_time)
     except:
         raise ValueError("argument 'end_time' is not a valid date")
 
@@ -140,80 +111,78 @@ def _standardize_setup(setup: SetupDT):
             "argument 'end_time' corresponds to an earlier date than 'start_time'"
         )
 
-    if setup.read_qobs and setup.qobs_directory.decode().strip() == "...":
+    if setup.read_qobs and setup.qobs_directory == "...":
         raise ValueError(
             "argument 'read_qobs' is True and 'qobs_directory' is not defined"
         )
 
-    if setup.read_qobs and not os.path.exists(setup.qobs_directory.decode().strip()):
+    if setup.read_qobs and not os.path.exists(setup.qobs_directory):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
-            setup.qobs_directory.decode().strip(),
+            setup.qobs_directory,
         )
 
-    if setup.read_prcp and setup.prcp_directory.decode().strip() == "...":
+    if setup.read_prcp and setup.prcp_directory == "...":
         raise ValueError(
             "argument 'read_prcp' is True and 'prcp_directory' is not defined"
         )
 
-    if setup.read_prcp and not os.path.exists(setup.prcp_directory.decode().strip()):
+    if setup.read_prcp and not os.path.exists(setup.prcp_directory):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
-            setup.prcp_directory.decode().strip(),
+            setup.prcp_directory,
         )
 
-    if not setup.prcp_format.decode().strip() in ["tif", "nc"]:
+    if not setup.prcp_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'prpc_format' must be one of {['tif', 'nc']} not {setup.prcp_format.decode().strip()}"
+            f"argument 'prpc_format' must be one of {['tif', 'nc']} not {setup.prcp_format}"
         )
 
     if setup.prcp_conversion_factor < 0:
         raise ValueError("argument 'prcp_conversion_factor' is lower than 0")
 
-    if setup.read_pet and setup.pet_directory.decode().strip() == "...":
+    if setup.read_pet and setup.pet_directory == "...":
         raise ValueError(
             "argument 'read_pet' is True and 'pet_directory' of SetupDT is not defined"
         )
 
-    if setup.read_pet and not os.path.exists(setup.pet_directory.decode().strip()):
+    if setup.read_pet and not os.path.exists(setup.pet_directory):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
-            setup.pet_directory.decode().strip(),
+            setup.pet_directory,
         )
 
-    if not setup.pet_format.decode().strip() in ["tif", "nc"]:
+    if not setup.pet_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'pet_format' must be one of {['tif', 'nc']} not {setup.pet_format.decode().strip()}"
+            f"argument 'pet_format' must be one of {['tif', 'nc']} not {setup.pet_format}"
         )
 
     if setup.pet_conversion_factor < 0:
         raise ValueError("argument 'pet_conversion_factor' is lower than 0")
 
-    if setup.read_descriptor and setup.descriptor_directory.decode().strip() == "...":
+    if setup.read_descriptor and setup.descriptor_directory == "...":
         raise ValueError(
             "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
         )
 
-    if setup.read_descriptor and not os.path.exists(
-        setup.descriptor_directory.decode().strip()
-    ):
+    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory):
         raise FileNotFoundError(
             errno.ENOENT,
             os.strerror(errno.ENOENT),
-            setup.descriptor_directory.decode().strip(),
+            setup.descriptor_directory,
         )
 
-    if setup.read_descriptor and not _is_allocated(setup, "descriptor_name"):
+    if setup.read_descriptor and setup._nd == 0:
         raise ValueError(
             "argument 'read_descriptor' is True and 'descriptor_name' is not defined"
         )
 
-    if not setup.descriptor_format.decode().strip() in ["tif", "nc"]:
+    if not setup.descriptor_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'descriptor_format' must be one of {['tif', 'nc']} not {setup.descriptor_format.decode().strip()}"
+            f"argument 'descriptor_format' must be one of {['tif', 'nc']} not {setup.descriptor_format}"
         )
 
     if setup.interception_module < 0 or setup.interception_module > 1:
@@ -250,9 +219,9 @@ def _build_setup(setup: SetupDT):
 
     _standardize_setup(setup)
 
-    st = pd.Timestamp(setup.start_time.decode().strip())
+    st = pd.Timestamp(setup.start_time)
 
-    et = pd.Timestamp(setup.end_time.decode().strip())
+    et = pd.Timestamp(setup.end_time)
 
     setup._ntime_step = (et - st).total_seconds() / setup.dt
 
@@ -300,19 +269,15 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
-    st = pd.Timestamp(setup.start_time.decode().strip())
+    st = pd.Timestamp(setup.start_time)
 
-    code = mesh.code.tobytes(order="F").decode("utf-8").split()
+    for i, c in enumerate(mesh.code):
 
-    for i, c in enumerate(code):
-
-        path = glob.glob(
-            f"{setup.qobs_directory.decode().strip()}/**/*{c}*.csv", recursive=True
-        )
+        path = glob.glob(f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True)
 
         if len(path) == 0:
             warnings.warn(
-                f"No observed discharge file for catchment {c} in recursive root directory {setup.qobs_directory.decode().strip()}"
+                f"No observed discharge file for catchment {c} in recursive root directory {setup.qobs_directory}"
             )
 
         elif len(path) > 1:
@@ -383,27 +348,21 @@ def _index_containing_substring(the_list: list, substring: str):
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     date_range = pd.date_range(
-        start=setup.start_time.decode().strip(),
-        end=setup.end_time.decode().strip(),
+        start=setup.start_time,
+        end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.prcp_format.decode().strip() == "tif":
+    if setup.prcp_format == "tif":
 
-        files = sorted(
-            glob.glob(
-                f"{setup.prcp_directory.decode().strip()}/**/*tif*", recursive=True
-            )
-        )
+        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
         files = _adjust_left_files(files, date_range)
 
     #% WIP
-    elif setup.prcp_format.decode().strip() == "nc":
+    elif setup.prcp_format == "nc":
 
-        files = sorted(
-            glob.glob(f"{setup.prcp_directory.decode().strip()}/**/*nc", recursive=True)
-        )
+        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
     for i, date in enumerate(tqdm(date_range, desc="Reading precipitation")):
 
@@ -443,28 +402,22 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     date_range = pd.date_range(
-        start=setup.start_time.decode().strip(),
-        end=setup.end_time.decode().strip(),
+        start=setup.start_time,
+        end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.pet_format.decode().strip() == "tif":
+    if setup.pet_format == "tif":
 
-        files = sorted(
-            glob.glob(
-                f"{setup.pet_directory.decode().strip()}/**/*tif*", recursive=True
-            )
-        )
+        files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
 
         if not setup.daily_interannual_pet:
 
             files = _adjust_left_files(files, date_range)
 
-    elif setup.pet_format.decode().strip() == "nc":
+    elif setup.pet_format == "nc":
 
-        files = sorted(
-            glob.glob(f"{setup.pet_directory.decode().strip()}/**/*nc", recursive=True)
-        )
+        files = sorted(glob.glob(f"{setup.pet_directory}/**/*nc", recursive=True))
 
     if setup.daily_interannual_pet:
 
@@ -585,18 +538,16 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
-    descriptor_name = setup.descriptor_name.tobytes(order="F").decode("utf-8").split()
-
-    for i, name in enumerate(descriptor_name):
+    for i, name in enumerate(setup.descriptor_name):
 
         path = glob.glob(
-            f"{setup.descriptor_directory.decode().strip()}/**/{name}.tif*",
+            f"{setup.descriptor_directory}/**/{name}.tif*",
             recursive=True,
         )
 
         if len(path) == 0:
             warnings.warn(
-                f"No descriptor file '{name}.tif' in recursive root directory '{setup.descriptor_directory.decode().strip()}'"
+                f"No descriptor file '{name}.tif' in recursive root directory '{setup.descriptor_directory}'"
             )
 
         elif len(path) > 1:

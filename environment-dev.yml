@@ -11,8 +11,6 @@ dependencies:
     - gfortran
     
     # required dependencies
-    - pybtex
-    - pillow
     - f90wrap==0.2.7
     - numpy
     - pandas

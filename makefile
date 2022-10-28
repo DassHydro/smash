@@ -27,6 +27,7 @@ OBJEXT := o
 BUILDDIR := obj
 SMASHDIR := smash
 TAPENADEDIR := tapenade
+F90WRAPDIR := f90wrap
 SOLVERDIR := smash/solver
 MESHDIR := smash/mesh
 
@@ -66,7 +67,7 @@ f77: \
  
 #% f90 files
 f90: \
- obj/mwd_common.o \
+ obj/md_common.o \
  obj/m_statistic.o \
  obj/m_array_manipulation.o \
  obj/mwd_setup.o \
@@ -105,7 +106,7 @@ wrappers:
 	@echo ""
 	@echo "********************************************"
 	rm -rf $(BUILDDIR)/f90wrap*
-	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package --py-mod-names py_mod_names
+	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k $(F90WRAPDIR)/kind_map --py-mod-names $(F90WRAPDIR)/py_mod_names --package
 	
 #% Making module extension (f2py-f90wrap)
 module:
@@ -150,7 +151,7 @@ finalize:
 	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
 	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
-	bash finalize_f90wrap.sh
+	python3 $(F90WRAPDIR)/finalize_f90wrap.py
 	
 #% Generating tapenade files (adjoint and tangent linear models)
 tap:
