@@ -71,8 +71,8 @@ def _optimize_sbs(
 
             instance.setup._optim_parameters[ind] = 1
 
-            instance.setup._lb_parameters[ind] = bounds[i][0]
-            instance.setup._ub_parameters[ind] = bounds[i][1]
+            instance.setup._lb_parameters[ind] = bounds[i, 0]
+            instance.setup._ub_parameters[ind] = bounds[i, 1]
 
         #% Already check, must be states if not parameters
         else:
@@ -81,8 +81,8 @@ def _optimize_sbs(
 
             instance.setup._optim_states[ind] = 1
 
-            instance.setup._lb_states[ind] = bounds[i][0]
-            instance.setup._ub_states[ind] = bounds[i][1]
+            instance.setup._lb_states[ind] = bounds[i, 0]
+            instance.setup._ub_states[ind] = bounds[i, 1]
 
     instance.setup._jobs_fun = jobs_fun
 
@@ -146,8 +146,8 @@ def _optimize_lbfgsb(
 
             instance.setup._optim_parameters[ind] = 1
 
-            instance.setup._lb_parameters[ind] = bounds[i][0]
-            instance.setup._ub_parameters[ind] = bounds[i][1]
+            instance.setup._lb_parameters[ind] = bounds[i, 0]
+            instance.setup._ub_parameters[ind] = bounds[i, 1]
 
         #% Already check, must be states if not parameters
         else:
@@ -156,8 +156,8 @@ def _optimize_lbfgsb(
 
             instance.setup._optim_states[ind] = 1
 
-            instance.setup._lb_states[ind] = bounds[i][0]
-            instance.setup._ub_states[ind] = bounds[i][1]
+            instance.setup._lb_states[ind] = bounds[i, 0]
+            instance.setup._ub_states[ind] = bounds[i, 1]
 
     instance.setup._jobs_fun = jobs_fun
 
@@ -177,7 +177,7 @@ def _optimize_lbfgsb(
 
     _optimize_message(instance, control_vector, mapping)
 
-    if mapping.startswith("hyper"):
+    if instance.setup._mapping.startswith("hyper"):
 
         hyper_optimize_lbfgsb(
             instance.setup,
@@ -249,9 +249,6 @@ def _optimize_nelder_mead(
 
         _problem(x, instance, control_vector, parameters_bgd, states_bgd)
 
-        callback_args["nfg"] += 1
-        callback_args["J"] = instance.output.cost
-
         _callback(x)
 
         res = scipy.optimize.minimize(
@@ -321,7 +318,7 @@ def _optimize_nelder_mead(
         print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
 
 
-def _optimize_message(instance: Model, control_vector: list[str], mapping: str):
+def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str):
 
     sp4 = " " * 4
 
@@ -382,13 +379,13 @@ def _optimize_message(instance: Model, control_vector: list[str], mapping: str):
     print(f"\n{sp4}".join(ret) + "\n")
 
 
-def _parameters_states_to_x(instance: Model, control_vector: list[str]) -> np.ndarray:
+def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.ndarray:
 
     ac_ind = np.unravel_index(
         np.argmax(instance.mesh.active_cell, axis=None), instance.mesh.active_cell.shape
     )
 
-    x = np.zeros(shape=len(control_vector), dtype=np.float32)
+    x = np.zeros(shape=control_vector.size, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
 
@@ -404,7 +401,7 @@ def _parameters_states_to_x(instance: Model, control_vector: list[str]) -> np.nd
 
 
 def _hyper_parameters_states_to_x(
-    instance: Model, control_vector: list[str]
+    instance: Model, control_vector: np.ndarray
 ) -> np.ndarray:
 
     ac_ind = np.unravel_index(
@@ -413,7 +410,7 @@ def _hyper_parameters_states_to_x(
 
     nd_step = 1 + instance.setup._nd
 
-    x = np.zeros(shape=len(control_vector) * nd_step, dtype=np.float32)
+    x = np.zeros(shape=control_vector.size * nd_step, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
 
@@ -428,7 +425,7 @@ def _hyper_parameters_states_to_x(
     return x
 
 
-def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: list[str]):
+def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: np.ndarray):
 
     for ind, name in enumerate(control_vector):
 
@@ -458,7 +455,7 @@ def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: list
 
 
 def _x_to_hyper_parameters_states(
-    x: np.ndarray, instance: Model, control_vector: list[str], bounds: list[tuple]
+    x: np.ndarray, instance: Model, control_vector: np.ndarray, bounds: np.ndarray
 ):
 
     nd_step = 1 + instance.setup._nd
@@ -473,7 +470,7 @@ def _x_to_hyper_parameters_states(
 
             value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
 
-        lb, ub = bounds[ind]
+        lb, ub = bounds[ind, :]
         value = np.where(value < lb, lb, value)
         value = np.where(value > ub, ub, value)
 
@@ -489,7 +486,7 @@ def _x_to_hyper_parameters_states(
 def _problem(
     x: np.ndarray,
     instance: Model,
-    control_vector: list[str],
+    control_vector: np.ndarray,
     parameters_bgd: ParametersDT,
     states_bgd: StatesDT,
 ):
@@ -519,10 +516,10 @@ def _problem(
 def _hyper_problem(
     x: np.ndarray,
     instance: Model,
-    control_vector: list[str],
+    control_vector: np.ndarray,
     parameters_bgd: ParametersDT,
     states_bgd: StatesDT,
-    bounds: list[tuple],
+    bounds: np.ndarray,
 ):
 
     global callback_args
@@ -569,47 +566,67 @@ def _standardize_algorithm(algorithm: str) -> str:
 
     if isinstance(algorithm, str):
 
-        if algorithm.lower() in ALGORITHM:
-
-            algorithm = algorithm.lower()
-
-        else:
-
-            raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+        algorithm = algorithm.lower()
 
     else:
 
         raise TypeError(f"'algorithm' argument must be str")
 
+    if algorithm not in ALGORITHM:
+
+        raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+
     return algorithm
 
 
-def _standardize_control_vector(control_vector: list, setup: SetupDT) -> list:
+def _standardize_control_vector(
+    control_vector: (str, list, tuple, set), setup: SetupDT
+) -> np.ndarray:
 
-    if isinstance(control_vector, (list, tuple, set)):
+    if isinstance(control_vector, str):
 
-        control_vector = list(control_vector)
+        control_vector = np.array(control_vector, ndmin=1)
 
-        for name in control_vector:
+    elif isinstance(control_vector, set):
 
-            if not name in [*setup._name_parameters, *setup._name_states]:
+        control_vector = np.array(list(control_vector))
 
-                raise ValueError(
-                    f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*setup._name_parameters, *setup._name_states]}"
-                )
+    elif isinstance(control_vector, (list, tuple)):
+
+        control_vector = np.array(control_vector)
 
     else:
 
-        raise TypeError(f"'control_vector' argument must be list-like object")
+        raise TypeError(f"'control_vector' argument must be str or list-like object")
+
+    for name in control_vector:
+
+        if not name in [*setup._name_parameters, *setup._name_states]:
+
+            raise ValueError(
+                f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*setup._name_parameters, *setup._name_states]}"
+            )
 
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
+def _standardize_jobs_fun(jobs_fun: (str, None), algorithm: str) -> str:
 
-    if isinstance(jobs_fun, str):
+    if jobs_fun is None:
 
-        if not jobs_fun in JOBS_FUN:
+        jobs_fun = "nse"
+
+    else:
+
+        if isinstance(jobs_fun, str):
+
+            jobs_fun = jobs_fun.lower()
+
+        else:
+
+            raise TypeError(f"jobs_fun argument must be str")
+
+        if jobs_fun not in JOBS_FUN:
 
             raise ValueError(
                 f"Unknown objective function '{jobs_fun}'. Choices: {JOBS_FUN}"
@@ -618,23 +635,36 @@ def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
         elif jobs_fun in ["kge"] and algorithm == "l-bfgs-b":
 
             raise ValueError(
-                f"'{jobs_fun}' objective function can not be use with 'l-bfgs-b' algorithm (non convex function)"
+                f"'{jobs_fun}' objective function can not be use with '{algorithm}' algorithm (non convex function)"
             )
-
-    else:
-
-        raise TypeError(f"'jobs_fun' argument must be str")
 
     return jobs_fun
 
 
-def _standardize_mapping(mapping: str, algorithm: str, setup: SetupDT) -> str:
+def _standardize_mapping(mapping: (str, None), algorithm: str, setup: SetupDT) -> str:
 
-    if mapping:
+    #% Default values
+    if mapping is None:
 
-        mapping = mapping.lower()
+        if algorithm in ["sbs", "nelder-mead"]:
 
-        if not mapping in MAPPING:
+            mapping = "uniform"
+
+        elif algorithm == "l-bfgs-b":
+
+            mapping = "distributed"
+
+    else:
+
+        if isinstance(mapping, str):
+
+            mapping = mapping.lower()
+
+        else:
+
+            raise TypeError(f"mapping argument must be str")
+
+        if mapping not in MAPPING:
 
             raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
 
@@ -657,7 +687,7 @@ def _standardize_mapping(mapping: str, algorithm: str, setup: SetupDT) -> str:
             elif mapping == "hyper-linear" and setup._nd == 0:
 
                 raise ValueError(
-                    f"'{mapping}' mapping can not be use if no catchment descriptor are available"
+                    f"'{mapping}' mapping can not be use if no catchment descriptors are available"
                 )
 
         elif algorithm == "l-bfgs-b":
@@ -674,188 +704,108 @@ def _standardize_mapping(mapping: str, algorithm: str, setup: SetupDT) -> str:
                     f"'{mapping}' mapping can not be use if no catchment descriptor are available"
                 )
 
-    #% Default values
-    else:
-
-        if algorithm in ["sbs", "nelder-mead"]:
-
-            mapping = "uniform"
-
-        elif algorithm == "l-bfgs-b":
-
-            mapping = "distributed"
-
     return mapping
 
 
 def _standardize_bounds(
-    bounds: (list, tuple, set), control_vector: str, setup: SetupDT
-) -> list:
+    bounds: (list, tuple, set, None), control_vector: np.ndarray, setup: SetupDT
+) -> np.ndarray:
 
-    if bounds:
+    #% Default values
+    if bounds is None:
 
-        if isinstance(bounds, (list, tuple, set)):
+        bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
 
-            bounds = list(bounds)
-
-            if len(bounds) != len(control_vector):
-
-                raise ValueError(
-                    f"Inconsistent size between 'control_vector' ({len(control_vector)}) and 'bounds' ({len(bounds)})"
-                )
-
-            else:
-
-                for i, lb_ub in enumerate(bounds):
-
-                    if not isinstance(lb_ub, (list, tuple, set)) or len(lb_ub) != 2:
-
-                        raise ValueError(
-                            f"'bounds' values for '{control_vector[i]}' must be list-like object of length 2"
-                        )
-
-                    if lb_ub[0] > lb_ub[1]:
-
-                        raise ValueError(
-                            f"'bounds' values for '{control_vector[i]}' is invalid lower bound ({lb_ub[0]}) greater than upper bound ({lb_ub[1]})"
-                        )
-        else:
-
-            raise TypeError(f"'bounds' argument must be list-like object")
-
-    else:
-
-        bounds = []
-
-        for name in control_vector:
+        for i, name in enumerate(control_vector):
 
             if name in setup._name_parameters:
 
                 ind = np.argwhere(setup._name_parameters == name)
 
-                bounds.append(
-                    (setup._lb_parameters[ind].item(), setup._ub_parameters[ind].item())
+                bounds[i, :] = (
+                    setup._lb_parameters[ind].item(),
+                    setup._ub_parameters[ind].item(),
                 )
 
             elif name in setup._name_states:
 
                 ind = np.argwhere(setup._name_states == name)
 
-                bounds.append(
-                    (setup._lb_states[ind].item(), setup._ub_states[ind].item())
+                bounds[i, :] = (
+                    setup._lb_states[ind].item(),
+                    setup._ub_states[ind].item(),
+                )
+
+    else:
+
+        if isinstance(bounds, set):
+
+            bounds = np.array(list(bounds))
+
+        elif isinstance(bounds, (list, tuple)):
+
+            bounds = np.array(bounds)
+
+        else:
+
+            raise TypeError(f"bounds argument must be list-like object")
+
+        if bounds.shape[0] != control_vector.size:
+
+            raise ValueError(
+                f"Inconsistent size between control_vector ({control_vector.size}) and bounds ({bounds.shape[0]})"
+            )
+
+        for i, b in enumerate(bounds):
+
+            if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
+
+                raise ValueError(
+                    f"bounds values for '{control_vector[i]}' must be list-like object of length 2"
+                )
+
+            if b[0] is None:
+
+                if control_vector[i] in setup._name_parameters:
+
+                    ind = np.argwhere(setup._name_parameters == control_vector[i])
+                    b[0] = setup._lb_parameters[ind].item()
+
+                else:
+
+                    ind = np.argwhere(setup._name_states == control_vector[i])
+                    b[0] = setup._lb_states[ind].item()
+
+            if b[1] is None:
+
+                if control_vector[i] in setup._name_parameters:
+
+                    ind = np.argwhere(setup._name_parameters == control_vector[i])
+                    b[1] = setup._ub_parameters[ind].item()
+
+                else:
+
+                    ind = np.argwhere(setup._name_states == control_vector[i])
+                    b[1] = setup._ub_states[ind].item()
+
+            if b[0] >= b[1]:
+
+                raise ValueError(
+                    f"bounds values for '{control_vector[i]}' is invalid lower bound ({b[0]}) is greater than or equal to upper bound ({b[1]})"
                 )
 
     return bounds
 
 
 def _standardize_gauge(
-    gauge: (list, tuple, set), setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
-) -> list:
+    gauge: (str, list, tuple, set, None),
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+) -> np.ndarray:
 
-    if gauge:
-
-        if isinstance(gauge, (list, tuple, set)):
-
-            gauge_imd = gauge.copy()
-
-            gauge = list(gauge)
-
-            for i, name in enumerate(gauge):
-
-                if name in mesh.code:
-
-                    ind = np.argwhere(mesh.code == name)
-
-                    if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
-
-                        gauge_imd.remove(name)
-
-                        warnings.warn(
-                            f"gauge '{name}' has no available observed discharge. Removed from the optimization"
-                        )
-
-                else:
-
-                    raise ValueError(
-                        f"gauge code '{name}' does not belong to the list of 'Model' gauges code {mesh.code}"
-                    )
-
-            if len(gauge_imd) == 0:
-
-                raise ValueError(
-                    f"No available observed discharge for optimization at gauge {gauge}"
-                )
-
-            else:
-
-                gauge = gauge_imd.copy()
-
-        elif isinstance(gauge, str):
-
-            if gauge == "all":
-
-                gauge = list(mesh.code.copy())
-
-                gauge_imd = gauge.copy()
-
-                for ind, name in enumerate(mesh.code):
-
-                    if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
-
-                        gauge_imd.remove(name)
-
-                        warnings.warn(
-                            f"gauge '{name}' has no available observed discharge. Removed from the optimization"
-                        )
-
-                if len(gauge_imd) == 0:
-
-                    raise ValueError(
-                        f"No available observed discharge for optimization at gauge {gauge}"
-                    )
-
-                else:
-
-                    gauge = gauge_imd.copy()
-
-            elif gauge == "downstream":
-
-                ind = np.argmax(mesh.area)
-
-                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
-
-                    raise ValueError(
-                        f"No available observed discharge for optimization at gauge {gauge}"
-                    )
-
-                else:
-
-                    gauge = [mesh.code[ind]]
-
-            elif gauge in mesh.code:
-
-                ind = np.argwhere(mesh.code == gauge)
-
-                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
-
-                    raise ValueError(
-                        f"No available observed discharge for optimization at gauge {gauge}"
-                    )
-
-                else:
-
-                    gauge = [gauge]
-
-            else:
-
-                raise ValueError(
-                    f"str 'gauge' argument must be either one alias among ['all', 'downstream'] or a gauge code {mesh.code}"
-                )
-
-        else:
-            raise TypeError(f"'gauge' argument must be list-like object or str")
-
-    else:
+    #% Default values
+    if gauge is None:
 
         ind = np.argmax(mesh.area)
 
@@ -867,126 +817,169 @@ def _standardize_gauge(
 
         else:
 
-            gauge = [mesh.code[ind]]
+            gauge = np.array(mesh.code[ind], ndmin=1)
+
+    else:
+
+        if isinstance(gauge, str):
+
+            if gauge == "all":
+
+                gauge = mesh.code.copy()
+
+            elif gauge == "downstream":
+
+                ind = np.argmax(mesh.area)
+
+                gauge = np.array(mesh.code[ind], ndmin=1)
+
+            elif gauge in mesh.code:
+
+                gauge = np.array(gauge, ndmin=1)
+
+            else:
+
+                raise ValueError(
+                    f"Unknown gauge alias or code '{gauge}'. Choices: ['all', 'downstream'] or {mesh.code}"
+                )
+
+        elif isinstance(gauge, set):
+
+            gauge = np.array(list(gauge))
+
+        elif isinstance(gauge, (list, tuple)):
+
+            gauge = np.array(gauge)
+
+        else:
+
+            raise TypeError(f"gauge argument must be str or list-like object")
+
+        gauge_check = np.array([])
+
+        for i, name in enumerate(gauge):
+
+            if name in mesh.code:
+
+                ind = np.argwhere(mesh.code == name).squeeze()
+
+                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
+
+                    warnings.warn(
+                        f"gauge '{name}' has no available observed discharge. Removed from the optimization"
+                    )
+
+                else:
+
+                    gauge_check = np.append(gauge_check, gauge[i])
+
+            else:
+
+                raise ValueError(f"Unknown gauge code '{name}'. Choices: {mesh.code}")
+
+        if gauge_check.size == 0:
+
+            raise ValueError(
+                f"No available observed discharge for optimization at gauge(s) {gauge}"
+            )
+
+        else:
+
+            gauge = gauge_check
 
     return gauge
 
 
 def _standardize_wgauge(
-    wgauge: (list, tuple, set), gauge: (list, tuple, set), mesh: MeshDT
-) -> list:
+    wgauge: (str, list, tuple, set, None), gauge: np.ndarray, mesh: MeshDT
+) -> np.ndarray:
 
-    if wgauge:
+    weight_arr = np.zeros(shape=mesh.code.size, dtype=np.float32)
+    ind = np.in1d(mesh.code, gauge)
 
-        if isinstance(wgauge, (list, tuple, set)):
+    #% Default values
+    if wgauge is None:
 
-            imd_wgauge = list(wgauge)
-
-            if len(imd_wgauge) != len(gauge):
-
-                raise ValueError(
-                    f"Inconsistent size between 'gauge' ({len(gauge)}) and 'wgauge' ({len(imd_wgauge)})"
-                )
-
-            else:
-
-                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
-
-                ind = np.in1d(mesh.code, gauge)
-
-                wgauge[ind] = imd_wgauge
-
-        elif isinstance(wgauge, (int, float)):
-
-            imd_wgauge = [wgauge]
-
-            if len(imd_wgauge) != len(gauge):
-
-                raise ValueError(
-                    f"Inconsistent size between 'gauge' ({len(gauge)}) and 'wgauge' ({len(imd_wgauge)})"
-                )
-
-            else:
-
-                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
-
-                ind = np.in1d(mesh.code, gauge)
-
-                wgauge[ind] = imd_wgauge
-
-        elif isinstance(wgauge, str):
-
-            if wgauge == "mean":
-
-                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
-
-                wgauge = np.where(np.in1d(mesh.code, gauge), 1 / len(gauge), wgauge)
-
-            elif wgauge == "area":
-
-                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
-
-                ind = np.in1d(mesh.code, gauge)
-
-                value = mesh.area[ind] / sum(mesh.area[ind])
-
-                wgauge[ind] = value
-
-            elif wgauge == "area_minv":
-
-                wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
-
-                ind = np.in1d(mesh.code, gauge)
-
-                value = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
-
-                wgauge[ind] = value
-
-            else:
-
-                raise ValueError(
-                    f"str 'wgauge' argument must be either one alias among ['mean', 'area', 'area_minv']"
-                )
-
-        else:
-
-            raise TypeError(
-                f"'wgauge' argument must be list-like object, int, float or str"
-            )
+        weight_arr[ind] = 1 / gauge.size
 
     else:
 
-        #% Default is mean
-        wgauge = np.zeros(shape=len(mesh.code), dtype=np.float32)
+        if isinstance(wgauge, str):
 
-        wgauge = np.where(np.in1d(mesh.code, gauge), 1 / len(gauge), wgauge)
+            if wgauge == "mean":
+
+                weight_arr[ind] = 1 / gauge.size
+
+            elif wgauge == "area":
+
+                weight_arr[ind] = mesh.area[ind] / sum(mesh.area[ind])
+
+            elif wgauge == "minv_area":
+
+                weight_arr[ind] = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
+
+            else:
+
+                raise ValueError(
+                    f"Unknown wgauge alias '{wgauge}'. Choices: ['mean', 'area', 'minv_area']"
+                )
+
+        elif isinstance(wgauge, (list, tuple, set)):
+
+            wgauge = np.array(list(wgauge))
+
+            if wgauge.size != gauge.size:
+
+                raise ValueError(
+                    f"Inconsistent size between gauge ({gauge.size}) and wgauge ({wgauge.size})"
+                )
+
+            else:
+
+                weight_arr[ind] = wgauge
+
+        else:
+
+            raise TypeError(f"wgauge argument must be str or list-like object")
+
+    wgauge = weight_arr
 
     return wgauge
 
 
-def _standardize_ost(ost: str, setup: SetupDT) -> pd.Timestamp:
+def _standardize_ost(ost: (str, pd.Timestamp, None), setup: SetupDT) -> pd.Timestamp:
 
-    st = pd.Timestamp(setup.start_time)
-    et = pd.Timestamp(setup.end_time)
+    if ost is None:
 
-    if ost:
-
-        try:
-            ost = pd.Timestamp(ost)
-
-            if (ost - st).total_seconds() < 0 or (et - ost).total_seconds() < 0:
-
-                raise ValueError(
-                    f"'ost' ({ost}) argument must be between start time ({st}) and end time ({et})"
-                )
-
-        except:
-
-            raise ValueError(f"'ost' ({ost}) argument is an invalid date")
+        ost = pd.Timestamp(setup.start_time)
 
     else:
 
-        ost = st
+        st = pd.Timestamp(setup.start_time)
+        et = pd.Timestamp(setup.end_time)
+
+        if isinstance(ost, str):
+
+            try:
+                ost = pd.Timestamp(ost)
+
+            except:
+
+                raise ValueError(f"ost '{ost}' argument is an invalid date")
+
+        elif isinstance(ost, pd.Timestamp):
+
+            pass
+
+        else:
+
+            raise TypeError(f"ost argument must be str or pandas.Timestamp object")
+
+        if (ost - st).total_seconds() < 0 or (et - ost).total_seconds() < 0:
+
+            raise ValueError(
+                f"ost '{ost}' argument must be between start time '{st}' and end time '{et}'"
+            )
 
     return ost
 

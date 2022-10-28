@@ -78,11 +78,6 @@ def get_flagged_attr(f90f):
     return res
 
 
-def sed_external_package(pyf):
-
-    os.system(f'sed -i "/import logging/a \import numpy" {pyf}')
-
-
 def sed_internal_import(pyf):
 
     os.system(f'sed -i "0,/import _solver/s//from smash.solver import _solver/" {pyf}')
@@ -120,6 +115,7 @@ def sed_private_property(pyf, private):
         os.system(f'sed -i "s/@{attr}/@_{attr}/g" {pyf}')
         os.system(f' sed -i "s/self.{attr}/self._{attr}/g" {pyf}')
         os.system(f' sed -i "/ret.append.*{attr}.*/d" {pyf}')
+
 
 #% Rework
 def sed_copy_derived_type(pyf):
@@ -184,8 +180,6 @@ if __name__ == "__main__":
 
         pyf = pyf90f[0]
         f90f = pyf90f[1]
-
-        sed_external_package(pyf)
 
         sed_internal_import(pyf)
 
