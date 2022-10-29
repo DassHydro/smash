@@ -47,6 +47,7 @@ RATIO_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
+
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
 
     ds = gdal.Open(path)
@@ -363,4 +364,3 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         else:
 
             input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
-

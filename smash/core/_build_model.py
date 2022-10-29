@@ -6,7 +6,12 @@ from smash.solver._mw_routine import (
     compute_prcp_indice,
 )
 
-from smash.core._read_input_data import _read_qobs, _read_prcp, _read_pet, _read_descriptor
+from smash.core._read_input_data import (
+    _read_qobs,
+    _read_prcp,
+    _read_pet,
+    _read_descriptor,
+)
 
 from typing import TYPE_CHECKING
 
@@ -20,6 +25,7 @@ import os
 import errno
 import pandas as pd
 import numpy as np
+
 
 def _parse_derived_type(derived_type, data: dict):
 
@@ -76,9 +82,7 @@ def _standardize_setup(setup: SetupDT):
         )
 
     if setup.read_qobs and setup.qobs_directory == "...":
-        raise ValueError(
-            "argument read_qobs is True and qobs_directory is not defined"
-        )
+        raise ValueError("argument read_qobs is True and qobs_directory is not defined")
 
     if setup.read_qobs and not os.path.exists(setup.qobs_directory):
         raise FileNotFoundError(
@@ -88,9 +92,7 @@ def _standardize_setup(setup: SetupDT):
         )
 
     if setup.read_prcp and setup.prcp_directory == "...":
-        raise ValueError(
-            "argument read_prcp is True and prcp_directory is not defined"
-        )
+        raise ValueError("argument read_prcp is True and prcp_directory is not defined")
 
     if setup.read_prcp and not os.path.exists(setup.prcp_directory):
         raise FileNotFoundError(
@@ -108,9 +110,7 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError("argument prcp_conversion_factor is lower than 0")
 
     if setup.read_pet and setup.pet_directory == "...":
-        raise ValueError(
-            "argument read_pet is True and pet_directory is not defined"
-        )
+        raise ValueError("argument read_pet is True and pet_directory is not defined")
 
     if setup.read_pet and not os.path.exists(setup.pet_directory):
         raise FileNotFoundError(
