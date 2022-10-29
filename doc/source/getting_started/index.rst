@@ -87,7 +87,7 @@ Anaconda
     ``conda`` can be downloaded `here <https://www.anaconda.com/>`__.
         
 1. **Create environment**
-    In the `smash` directory create the ``conda`` environment named ``smash-dev``,
+    In the `smash` directory create the ``conda`` environment named ``smash``,
     
     .. code-block:: none
     
@@ -98,21 +98,21 @@ Anaconda
     
     .. code-block:: none
     
-        conda activate smash-dev
+        conda activate smash
         
 3. **Build**
     Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory,
     
     .. code-block:: none
     
-        (smash-dev) make
+        (smash) make
         
 4. **Check your installation**
     Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
     
     .. code-block:: none
     
-        (smash-dev) python3
+        (smash) python3
         
     .. code-block:: python
         
@@ -135,5 +135,23 @@ Docker
     :align: center
     
 .. warning::
-    
+
     Section in development
+    
+    .. note::
+
+        ``docker`` can be downloaded `here <https://docs.docker.com/engine/install/>`__.
+        
+    1. **Build image**
+        Build docker image,
+        
+        .. code-block:: none
+            
+            docker build --network=host -t smash .
+            
+    2. **Run**
+        Run image
+        
+        .. code-block ::
+            
+            docker run smash

@@ -95,7 +95,9 @@ First part of  ``mesh`` configuration is:
 
 - ``area``: the catchment area in m²,
 
-- ``gauge_pos``: the gauge position in the grid (it must follow **Fortran indexing**).
+- ``gauge_pos``: the gauge position in the grid (it must follow **Fortran indexing** i.e. [1, n]),
+
+- ``code``: the gauge code.
 
 .. ipython:: python
 
@@ -110,6 +112,7 @@ First part of  ``mesh`` configuration is:
         "nac": nrow * ncol,
         "area": nrow * ncol * (dx ** 2),
         "gauge_pos": np.array([10, 10], dtype=np.int32),
+        "code": np.array(["Practice_case"])
     }
 
 Second part of ``mesh`` configuration is:
@@ -153,7 +156,7 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (it must follow **Fortran indexing**).
+Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (it must follow **Fortran indexing** i.e. [1, n]).
 
 .. ipython:: python
 
@@ -395,7 +398,10 @@ To run a simulation, the :class:`.Model` needs at least one precipitation and po
     
     prcp[9:19] = np.flip(tri)
     
-    model.input_data.prcp = np.broadcast_to(prcp, model.input_data.prcp.shape)
+    model.input_data.prcp = np.broadcast_to(
+        prcp,
+        model.input_data.prcp.shape,
+    )
 
     model.input_data.pet = 0.
     
@@ -471,7 +477,7 @@ Finally, perform a spatially uniform calibration of the parameter :math:`\mathrm
 
 .. ipython:: python
 
-    model.optimize("sbs", control_vector=["cp"], inplace=True)
+    model.optimize("sbs", control_vector=["cp"], inplace=True);
     
     model.parameters.cp
 

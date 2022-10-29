@@ -1,61 +1,25 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import SetupDT
 from smash.solver._mw_routine import (
     compute_rowcol_to_ind_sparse,
     compute_mean_forcing,
     compute_prcp_indice,
 )
 
-from smash.core.utils import sparse_matrix_to_vector
-
-from smash.io._raster import _read_windowed_raster
+from smash.core._read_input_data import _read_qobs, _read_prcp, _read_pet, _read_descriptor
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
 
 import warnings
-import glob
 import os
 import errno
-from tqdm import tqdm
 import pandas as pd
 import numpy as np
-import datetime
-
-RATIO_PET_HOURLY = np.array(
-    [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0.035,
-        0.062,
-        0.079,
-        0.097,
-        0.11,
-        0.117,
-        0.117,
-        0.11,
-        0.097,
-        0.079,
-        0.062,
-        0.035,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ],
-    dtype=np.float32,
-)
-
 
 def _parse_derived_type(derived_type, data: dict):
 
@@ -82,38 +46,38 @@ def _standardize_setup(setup: SetupDT):
     """
 
     if setup.dt < 0:
-        raise ValueError("argument 'dt' is lower than 0")
+        raise ValueError("argument dt is lower than 0")
 
     if not setup.dt in [900, 3_600, 86_400]:
         warnings.warn(
-            "argument 'dt' is not set to a classical value (900, 3600, 86400 seconds)",
+            "argument dt is not set to a classical value (900, 3600, 86400 seconds)",
             UserWarning,
         )
 
     if setup.start_time == "...":
-        raise ValueError("argument 'start_time' is not defined")
+        raise ValueError("argument start_time is not defined")
 
     if setup.end_time == "...":
-        raise ValueError("argument 'end_time' is not defined")
+        raise ValueError("argument end_time is not defined")
 
     try:
         st = pd.Timestamp(setup.start_time)
     except:
-        raise ValueError("argument 'start_time' is not a valid date")
+        raise ValueError("argument start_time is not a valid date")
 
     try:
         et = pd.Timestamp(setup.end_time)
     except:
-        raise ValueError("argument 'end_time' is not a valid date")
+        raise ValueError("argument end_time is not a valid date")
 
     if (et - st).total_seconds() < 0:
         raise ValueError(
-            "argument 'end_time' corresponds to an earlier date than 'start_time'"
+            "argument end_time corresponds to an earlier date than start_time"
         )
 
     if setup.read_qobs and setup.qobs_directory == "...":
         raise ValueError(
-            "argument 'read_qobs' is True and 'qobs_directory' is not defined"
+            "argument read_qobs is True and qobs_directory is not defined"
         )
 
     if setup.read_qobs and not os.path.exists(setup.qobs_directory):
@@ -125,7 +89,7 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_prcp and setup.prcp_directory == "...":
         raise ValueError(
-            "argument 'read_prcp' is True and 'prcp_directory' is not defined"
+            "argument read_prcp is True and prcp_directory is not defined"
         )
 
     if setup.read_prcp and not os.path.exists(setup.prcp_directory):
@@ -137,15 +101,15 @@ def _standardize_setup(setup: SetupDT):
 
     if not setup.prcp_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'prpc_format' must be one of {['tif', 'nc']} not {setup.prcp_format}"
+            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {['tif', 'nc']}"
         )
 
     if setup.prcp_conversion_factor < 0:
-        raise ValueError("argument 'prcp_conversion_factor' is lower than 0")
+        raise ValueError("argument prcp_conversion_factor is lower than 0")
 
     if setup.read_pet and setup.pet_directory == "...":
         raise ValueError(
-            "argument 'read_pet' is True and 'pet_directory' of SetupDT is not defined"
+            "argument read_pet is True and pet_directory is not defined"
         )
 
     if setup.read_pet and not os.path.exists(setup.pet_directory):
@@ -157,15 +121,15 @@ def _standardize_setup(setup: SetupDT):
 
     if not setup.pet_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'pet_format' must be one of {['tif', 'nc']} not {setup.pet_format}"
+            f"Unknown pet_format '{setup.pet_format}'. Choices: {['tif', 'nc']}"
         )
 
     if setup.pet_conversion_factor < 0:
-        raise ValueError("argument 'pet_conversion_factor' is lower than 0")
+        raise ValueError("argument pet_conversion_factor is lower than 0")
 
     if setup.read_descriptor and setup.descriptor_directory == "...":
         raise ValueError(
-            "argument 'read_descriptor' is True and 'descriptor_directory' is not defined"
+            "argument read_descriptor is True and descriptor_directory is not defined"
         )
 
     if setup.read_descriptor and not os.path.exists(setup.descriptor_directory):
@@ -177,37 +141,37 @@ def _standardize_setup(setup: SetupDT):
 
     if setup.read_descriptor and setup._nd == 0:
         raise ValueError(
-            "argument 'read_descriptor' is True and 'descriptor_name' is not defined"
+            "argument read_descriptor is True and descriptor_name is not defined"
         )
 
     if not setup.descriptor_format in ["tif", "nc"]:
         raise ValueError(
-            f"argument 'descriptor_format' must be one of {['tif', 'nc']} not {setup.descriptor_format}"
+            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {['tif', 'nc']}"
         )
 
     if setup.interception_module < 0 or setup.interception_module > 1:
         raise ValueError(
-            f"argument 'interception_module' must be in [0, 1] not {setup.interception_module}"
+            f"argument interception_module must be in [0, 1] not {setup.interception_module}"
         )
 
     if setup.production_module < 0 or setup.production_module > 1:
         raise ValueError(
-            f"argument 'production_module' must be in [0, 1] not {setup.production_module}"
+            f"argument production_module must be in [0, 1] not {setup.production_module}"
         )
 
     if setup.exchange_module < 0 or setup.exchange_module > 2:
         raise ValueError(
-            f"argument 'exchange_module' must be in [0, 2] not {setup.exchange_module}"
+            f"argument exchange_module must be in [0, 2] not {setup.exchange_module}"
         )
 
     if setup.transfer_module < 0 or setup.transfer_module > 3:
         raise ValueError(
-            f"argument 'transfer_module' must be in [0, 3] not {setup.transfer_module}"
+            f"argument transfer_module must be in [0, 3] not {setup.transfer_module}"
         )
 
     if setup.routing_module < 0 or setup.routing_module > 3:
         raise ValueError(
-            f"argument 'routing_module' must be in [0, 3] not {setup.routing_module}"
+            f"argument routing_module must be in [0, 3] not {setup.routing_module}"
         )
 
 
@@ -265,299 +229,6 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     if setup.sparse_storage:
 
         compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mw_routine
-
-
-def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
-    st = pd.Timestamp(setup.start_time)
-
-    for i, c in enumerate(mesh.code):
-
-        path = glob.glob(f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True)
-
-        if len(path) == 0:
-            warnings.warn(
-                f"No observed discharge file for catchment {c} in recursive root directory {setup.qobs_directory}"
-            )
-
-        elif len(path) > 1:
-            raise ValueError(
-                f"There is more than one file containing the name of the catchment {c}"
-            )
-
-        else:
-
-            with open(path[0], "r") as f:
-
-                header = pd.Timestamp(f.readline())
-
-                time_diff = int((st - header).total_seconds() / setup.dt) + 1
-
-                if time_diff > 0:
-
-                    k = 0
-
-                    for j, line in enumerate(f):
-
-                        if j >= time_diff:
-
-                            try:
-                                input_data.qobs[i, k] = float(line)
-
-                                k += 1
-
-                            except:
-                                break
-                else:
-
-                    k = -time_diff
-
-                    for line in f:
-
-                        try:
-                            input_data.qobs[i, k] = float(line)
-
-                            k += 1
-
-                        except:
-                            break
-
-
-#% Adjust left files (sorted by date - only works if files have the same name)
-def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
-
-    n = 0
-    ind = -1
-    while ind == -1:
-
-        ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
-
-        n += 1
-
-    return files[ind:]
-
-
-def _index_containing_substring(the_list: list, substring: str):
-
-    for i, s in enumerate(the_list):
-        if substring in s:
-            return i
-    return -1
-
-
-def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
-    date_range = pd.date_range(
-        start=setup.start_time,
-        end=setup.end_time,
-        freq=f"{int(setup.dt)}s",
-    )[1:]
-
-    if setup.prcp_format == "tif":
-
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
-
-        files = _adjust_left_files(files, date_range)
-
-    #% WIP
-    elif setup.prcp_format == "nc":
-
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
-
-    for i, date in enumerate(tqdm(date_range, desc="Reading precipitation")):
-
-        date_strf = date.strftime("%Y%m%d%H%M")
-
-        ind = _index_containing_substring(files, date_strf)
-
-        if ind == -1:
-
-            if setup.sparse_storage:
-
-                input_data.sparse_prcp[:, i] = -99.0
-
-            else:
-
-                input_data.prcp[..., i] = -99.0
-
-            warnings.warn(f"Missing precipitation file for date {date}")
-
-        else:
-
-            matrix = (
-                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
-            )
-
-            if setup.sparse_storage:
-
-                input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
-
-            else:
-
-                input_data.prcp[..., i] = matrix
-
-            files.pop(ind)
-
-
-def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
-    date_range = pd.date_range(
-        start=setup.start_time,
-        end=setup.end_time,
-        freq=f"{int(setup.dt)}s",
-    )[1:]
-
-    if setup.pet_format == "tif":
-
-        files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
-
-        if not setup.daily_interannual_pet:
-
-            files = _adjust_left_files(files, date_range)
-
-    elif setup.pet_format == "nc":
-
-        files = sorted(glob.glob(f"{setup.pet_directory}/**/*nc", recursive=True))
-
-    if setup.daily_interannual_pet:
-
-        leap_year_days = pd.date_range(
-            start="202001010000", end="202012310000", freq="1D"
-        )
-        nstep_per_day = int(86_400 / setup.dt)
-        hourly_ratio = 3_600 / setup.dt
-
-        if hourly_ratio >= 1:
-
-            ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
-
-        else:
-
-            ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
-
-        for i, day in enumerate(
-            tqdm(leap_year_days, desc="Reading daily interannual pet")
-        ):
-
-            if day.day_of_year in date_range.day_of_year:
-
-                day_strf = day.strftime("%m%d")
-
-                ind = _index_containing_substring(files, day_strf)
-
-                ind_day = np.where(day.day_of_year == date_range.day_of_year)
-
-                if ind == -1:
-
-                    if setup.sparse_storage:
-
-                        input_data.sparse_pet[:, ind_day] = -99.0
-
-                    else:
-
-                        input_data.pet[..., ind_day] = -99.0
-
-                    warnings.warn(
-                        f"Missing daily interannual pet file for date {day_strf}"
-                    )
-
-                else:
-
-                    subset_date_range = date_range[ind_day]
-
-                    matrix = (
-                        _read_windowed_raster(files[ind], mesh)
-                        * setup.pet_conversion_factor
-                    )
-
-                    if setup.sparse_storage:
-
-                        vector = sparse_matrix_to_vector(mesh, matrix)
-
-                    for j in range(nstep_per_day):
-
-                        step = day + j * datetime.timedelta(seconds=setup.dt)
-
-                        ind_step = subset_date_range.indexer_at_time(step)
-
-                        if setup.sparse_storage:
-
-                            input_data.sparse_pet[:, ind_day[0][ind_step]] = (
-                                np.repeat(vector[:, np.newaxis], len(ind_step), axis=1)
-                                * ratio[j]
-                            )
-
-                        else:
-
-                            input_data.pet[..., ind_day[0][ind_step]] = (
-                                np.repeat(
-                                    matrix[..., np.newaxis], len(ind_step), axis=2
-                                )
-                                * ratio[j]
-                            )
-
-                    files.pop(ind)
-
-    else:
-
-        for i, date in enumerate(tqdm(date_range, desc="Reading pet")):
-
-            date_strf = date.strftime("%Y%m%d%H%M")
-
-            ind = _index_containing_substring(files, date_strf)
-
-            if ind == -1:
-
-                if setup.sparse_storage:
-
-                    input_data.sparse_pet[:, i] = -99.0
-
-                else:
-
-                    input_data.pet[..., i] = -99.0
-
-                warnings.warn(f"Missing pet file for date {date}")
-
-            else:
-
-                matrix = (
-                    _read_windowed_raster(files[ind], mesh)
-                    * setup.pet_conversion_factor
-                )
-
-                if setup.sparse_storage:
-
-                    input_data.sparse_pet[:, i] = sparse_matrix_to_vector(mesh, matrix)
-
-                else:
-
-                    input_data.pet[..., i] = matrix
-
-                files.pop(ind)
-
-
-def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
-    for i, name in enumerate(setup.descriptor_name):
-
-        path = glob.glob(
-            f"{setup.descriptor_directory}/**/{name}.tif*",
-            recursive=True,
-        )
-
-        if len(path) == 0:
-            warnings.warn(
-                f"No descriptor file '{name}.tif' in recursive root directory '{setup.descriptor_directory}'"
-            )
-
-        elif len(path) > 1:
-            raise ValueError(
-                f"There is more than one file containing the name '{name}.tif'"
-            )
-
-        else:
-
-            input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):

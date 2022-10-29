@@ -12,7 +12,6 @@
 #
 import os
 import sys
-import IPython
 
 sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("./_ext"))
@@ -25,7 +24,7 @@ copyright = "2022, Francois Colleoni"
 author = "Francois Colleoni"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.4"
+release = "0.1.5"
 
 
 # -- General configuration ---------------------------------------------------
@@ -79,13 +78,15 @@ default_role = "autolink"
 #
 html_theme = "pydata_sphinx_theme"
 
-html_logo = "_static/logo_smash.svg"
-
 html_last_updated_fmt = "%b %d, %Y"
 
 html_theme_options = {
     "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
     "collapse_navigation": True,
+    "logo": {
+      "image_light": "logo_smash.svg",
+      "image_dark": "logo_smash_dark.svg",
+    },
 }
 
 html_context = {

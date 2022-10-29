@@ -120,7 +120,7 @@ The name of the file, for any catchment, must contains the code of the gauge whi
 Precipitation
 '''''''''''''
 
-The precipitation files must be store for each each time step of the simulation. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<prcp_format>``.
+The precipitation files must be store for each time step of the simulation. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<prcp_format>``.
 An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
 
 .. warning::
@@ -213,17 +213,8 @@ To get into the details:
 .. ipython:: python
     
     mesh["code"]
-    
-.. warning::
-    
-    This argument is tricky to use because any NumPy uint8 array wrapped must be filled with ASCII values.
-    One way to retrieve the value from uint8 array is:
-    
-    .. ipython:: python
         
-        mesh["code"].tobytes("F").decode().split()
-        
-- ``gauge_pos``: the gauges position in the grid (it must follow **Fortran indexing**),
+- ``gauge_pos``: the gauges position in the grid (it must follow **Fortran indexing**, i.e. [1, n]),
 
 .. ipython:: python
     
@@ -286,7 +277,7 @@ The method required the path to the flow directions ``tif`` file. Once can load 
     
 This path leads to a flow directions ``tif`` file of the whole France at 1km² spatial resolution and Lambert93 projection (*EPSG:2154*)
 
-Get the gauge coordinates, area and code (this data is considered to be known by the user at the time the meshing is generated):
+Get the gauge coordinates, area and code (this data is considered to be known by the user at the time the mesh is generated):
 
 .. ipython:: python
     
@@ -430,6 +421,7 @@ We can visualize the simulated discharges after a forward run for the most downs
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_forward.mesh.code[0]);
     @savefig qsim_fw_rc_user_guide.png
     plt.legend();
 
@@ -460,13 +452,24 @@ We consider here for optimization:
 Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``jobs_fun``, ``control_vector`` and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
 
 .. ipython:: python
+    :suppress:
 
     model_su = model.optimize(
         algorithm="sbs",
         jobs_fun="nse",
         control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 2},
-    )
+        options={"maxiter": 2}
+        )
+
+.. ipython:: python
+    :verbatim:
+
+    model_su = model.optimize(
+        algorithm="sbs",
+        jobs_fun="nse",
+        control_vector=["cp", "cft", "lr", "exc"],
+        options={"maxiter": 2}
+        )
 
 While the optimization routine is in progress, some information are provided.
 
@@ -475,14 +478,15 @@ While the optimization routine is in progress, some information are provided.
     </> Optimize Model J
         Algorithm: 'sbs'
         Jobs function: 'nse'
+        Mapping: 'uniform' k(X)
         Nx: 1
         Np: 4 [ cp cft exc lr ] 
         Ns: 0 [  ] 
         Ng: 1 [ V3524010 ] 
-        wg: 1 [ 1.000000 ] 
+        wg: 1 [ 1.000000 ]
      
-        At iterate      0    nfg =     1    J =  0.677410    ddx = 0.64
-        At iterate      1    nfg =    30    J =  0.130159    ddx = 0.64
+        At iterate      0    nfg =     1    J =  0.677404    ddx = 0.64
+        At iterate      1    nfg =    30    J =  0.130163    ddx = 0.64
         At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
@@ -490,6 +494,7 @@ This information is reminiscent of what we have entered in optimization options:
 
 - ``Algorithm``: the minimization algorithm,
 - ``Jobs_fun``: the objective function,
+- ``Mapping``: the mapping of parameters,
 - ``Nx``: the dimension of the problem (1 means that we perform a spatially uniform optimization),
 - ``Np``: the number of parameters to optimize and their name,
 - ``Ns``: the number of initial states to optimize and their name,
@@ -517,6 +522,7 @@ Once the optimization is complete. We can visualize the simulated discharge,
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_su.mesh.code[0]);
     @savefig qsim_su_rc_user_guide.png
     plt.legend();
     
@@ -552,6 +558,17 @@ Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model_su`` instance which had stored the previous optimized parameters.
 
 .. ipython:: python
+    :suppress:
+
+    model_sd = model_su.optimize(
+        algorithm="l-bfgs-b",
+        jobs_fun="nse",
+        control_vector=["cp", "cft", "lr", "exc"],
+        options={"maxiter": 10},
+    )
+
+.. ipython:: python
+    :verbatim:
 
     model_sd = model_su.optimize(
         algorithm="l-bfgs-b",
@@ -568,24 +585,25 @@ While the optimization routine is in progress, some information are provided.
         Algorithm: 'l-bfgs-b'
         Jobs function: 'nse'
         Jreg function: 'prior'
-        wJreg: .000000
+        wJreg: 0.000000
+        Mapping: 'distributed' k(x)
         Nx: 383
         Np: 4 [ cp cft exc lr ] 
         Ns: 0 [  ] 
         Ng: 1 [ V3524010 ] 
         wg: 1 [ 1.000000 ] 
-     
+         
         At iterate      0    nfg =     1    J =  0.044362    |proj g| =  0.000000
         At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
-        At iterate      2    nfg =     3    J =  0.039256    |proj g| =  0.000075
-        At iterate      3    nfg =     4    J =  0.038600    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035663    |proj g| =  0.000019
-        At iterate      5    nfg =     7    J =  0.034913    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033650    |proj g| =  0.000010
-        At iterate      7    nfg =     9    J =  0.032127    |proj g| =  0.000013
-        At iterate      8    nfg =    10    J =  0.031194    |proj g| =  0.000011
-        At iterate      9    nfg =    11    J =  0.028002    |proj g| =  0.000085
-        At iterate     10    nfg =    12    J =  0.027122    |proj g| =  0.000024
+        At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
+        At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
+        At iterate      4    nfg =     5    J =  0.035662    |proj g| =  0.000019
+        At iterate      5    nfg =     7    J =  0.034911    |proj g| =  0.000011
+        At iterate      6    nfg =     8    J =  0.033658    |proj g| =  0.000010
+        At iterate      7    nfg =     9    J =  0.032118    |proj g| =  0.000013
+        At iterate      8    nfg =    10    J =  0.031269    |proj g| =  0.000010
+        At iterate      9    nfg =    11    J =  0.028352    |proj g| =  0.000076
+        At iterate     10    nfg =    12    J =  0.026779    |proj g| =  0.000024
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
         
@@ -617,6 +635,7 @@ We can once again visualize, the simulated discharges (``su``: spatially uniform
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_sd.mesh.code[0]);
     @savefig qsim_sd_rc_user_guide.png
     plt.legend();
     

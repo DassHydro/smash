@@ -8,7 +8,7 @@ The practical use of `smash` is first done on a :ref:`user_guide.practice_case`,
 
 
 .. toctree::
-    :maxdepth: 2
+    :maxdepth: 1
 
     practice_case
     real_case_cance
