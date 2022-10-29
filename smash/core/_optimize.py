@@ -40,11 +40,11 @@ MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
 def _optimize_sbs(
     instance: Model,
-    control_vector: list[str],
+    control_vector: np.ndarray,
     jobs_fun: str,
     mapping: str,
-    bounds: list[float],
-    wgauge: list[float],
+    bounds: np.ndarray,
+    wgauge: np.ndarray,
     ost: pd.Timestamp,
     maxiter: int = 100,
     **unknown_options,
@@ -112,11 +112,11 @@ def _optimize_sbs(
 
 def _optimize_lbfgsb(
     instance: Model,
-    control_vector: list[str],
+    control_vector: np.ndarray,
     jobs_fun: str,
     mapping: str,
-    bounds: list[float],
-    wgauge: list[float],
+    bounds: np.ndarray,
+    wgauge: np.ndarray,
     ost: pd.Timestamp,
     maxiter: int = 100,
     jreg_fun: str = "prior",
@@ -202,20 +202,20 @@ def _optimize_lbfgsb(
 
 def _optimize_nelder_mead(
     instance: Model,
-    control_vector: list[str],
+    control_vector: np.ndarray,
     jobs_fun: str,
     mapping: str,
-    bounds: list[float],
-    wgauge: list[float],
+    bounds: np.ndarray,
+    wgauge: np.ndarray,
     ost: pd.Timestamp,
-    maxiter=None,
-    maxfev=None,
-    disp=False,
-    return_all=False,
-    initial_simplex=None,
-    xatol=0.0001,
-    fatol=0.0001,
-    adaptive=True,
+    maxiter: (int, None) = None,
+    maxfev: (int, None) = None,
+    disp: bool = False,
+    return_all: bool = False,
+    initial_simplex: (np.ndarray, None) = None,
+    xatol: float = 0.0001,
+    fatol: float = 0.0001,
+    adaptive: bool = True,
     **unknown_options,
 ):
     global callback_args
@@ -992,17 +992,17 @@ def _check_unknown_options(unknown_options: dict):
 
 
 def _standardize_optimize_args(
-    algorithm,
-    control_vector,
-    jobs_fun,
-    mapping,
-    bounds,
-    gauge,
-    wgauge,
-    ost,
-    setup,
-    mesh,
-    input_data,
+    algorithm: str,
+    control_vector: (str, list, tuple, set),
+    jobs_fun: (str, None),
+    mapping: (str, None),
+    bounds: (list, tuple, set, None),
+    gauge: (str, list, tuple, set, None),
+    wgauge: (str, list, tuple, set, None),
+    ost: (str, Timestamp, None),
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
 ):
 
     algorithm = _standardize_algorithm(algorithm)
@@ -1024,7 +1024,7 @@ def _standardize_optimize_args(
     return algorithm, control_vector, jobs_fun, mapping, bounds, wgauge, ost
 
 
-def _standardize_optimize_options(options) -> dict:
+def _standardize_optimize_options(options: (dict, None)) -> dict:
 
     if options is None:
 
