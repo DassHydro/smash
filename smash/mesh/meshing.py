@@ -333,7 +333,6 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     active_cell = mask_dln.astype(np.int32)
 
-    #% Transform from Python to FORTRAN index
     gauge_pos = np.column_stack((row_ol, col_ol))
 
     mesh = {
