@@ -95,7 +95,7 @@ First part of  ``mesh`` configuration is:
 
 - ``area``: the catchment area in m²,
 
-- ``gauge_pos``: the gauge position in the grid (it must follow **Fortran indexing** i.e. [1, n]),
+- ``gauge_pos``: the gauge position in the grid (here lower right corner [9,9]),
 
 - ``code``: the gauge code.
 
@@ -111,7 +111,7 @@ First part of  ``mesh`` configuration is:
         "ng": 1,
         "nac": nrow * ncol,
         "area": nrow * ncol * (dx ** 2),
-        "gauge_pos": np.array([10, 10], dtype=np.int32),
+        "gauge_pos": np.array([9, 9], dtype=np.int32),
         "code": np.array(["Practice_case"])
     }
 
@@ -156,7 +156,7 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (it must follow **Fortran indexing** i.e. [1, n]).
+Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods.
 
 .. ipython:: python
 
@@ -166,8 +166,8 @@ Finally, the calculation path (``path``) must be provided (ascending order of dr
     mesh["path"] = np.zeros(shape=(2, mesh["drained_area"].size), 
         dtype=np.int32)
 
-    mesh["path"][0, :] = ind_path[0] + 1
-    mesh["path"][1, :] = ind_path[1] + 1
+    mesh["path"][0, :] = ind_path[0]
+    mesh["path"][1, :] = ind_path[1]
     
 
 Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be created:

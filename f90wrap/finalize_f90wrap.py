@@ -44,13 +44,12 @@ def get_pyf90_couple_files(py_mod_name):
 
 
 def get_flagged_attr(f90f):
-
-    res = {}
-
+    
+    index = set()
     char = set()
     char_array = set()
     private = set()
-
+    
     with open(f90f) as f:
 
         for l in f:
@@ -60,7 +59,11 @@ def get_flagged_attr(f90f):
                 ind_double_2dots = l.find("::") + 2
 
                 subl = l[ind_double_2dots:].strip()
-                
+
+                if "f90w-index" in subl:
+
+                    index.add(subl.split(" ")[0])
+                    
                 if "f90w-char_array" in subl:
                     
                     char_array.add(subl.split(" ")[0])
@@ -68,12 +71,17 @@ def get_flagged_attr(f90f):
                 elif "f90w-char" in subl:
 
                     char.add(subl.split(" ")[0])
-
+                    
                 if "f90w-private" in subl:
 
                     private.add(subl.split(" ")[0])
-
-    res.update({"char": char, "char_array": char_array, "private": private})
+                    
+    res = {
+        "index": index,
+        "char": char,
+        "char_array": char_array,
+        "private": private,
+    }
 
     return res
 
@@ -82,6 +90,28 @@ def sed_internal_import(pyf):
 
     os.system(f'sed -i "0,/import _solver/s//from smash.solver import _solver/" {pyf}')
     os.system(f'sed -i "s/from solver/from smash.solver/g" {pyf}')
+    
+
+def sed_private_property(pyf, private):
+
+    for attr in private:
+
+        os.system(f'sed -i "s/def {attr}/def _{attr}/g" {pyf}')
+        os.system(f'sed -i "s/@{attr}/@_{attr}/g" {pyf}')
+        os.system(f' sed -i "s/self.{attr}/self._{attr}/g" {pyf}')
+        os.system(f' sed -i "/ret.append.*{attr}.*/d" {pyf}')
+
+
+def sed_index_handler_decorator(pyf, index):
+    
+    os.system(
+        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import getter_index_handler, setter_index_handler" {pyf}'
+    )
+
+    for attr in index:
+
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@getter_index_handler" {pyf}')
+        os.system(f'sed -i "/{attr}.setter/a \\\t\@setter_index_handler" {pyf}')
 
 
 def sed_char_handler_decorator(pyf, char):
@@ -105,16 +135,6 @@ def sed_char_array_handler_decorator(pyf, char_array):
 
         os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_array_getter_handler" {pyf}')
         os.system(f'sed -i "/{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
-    
-
-def sed_private_property(pyf, private):
-
-    for attr in private:
-
-        os.system(f'sed -i "s/def {attr}/def _{attr}/g" {pyf}')
-        os.system(f'sed -i "s/@{attr}/@_{attr}/g" {pyf}')
-        os.system(f' sed -i "s/self.{attr}/self._{attr}/g" {pyf}')
-        os.system(f' sed -i "/ret.append.*{attr}.*/d" {pyf}')
 
 
 #% Rework
@@ -184,11 +204,13 @@ if __name__ == "__main__":
         sed_internal_import(pyf)
 
         flagged_attr = get_flagged_attr(f90f)
+        
+        sed_index_handler_decorator(pyf, flagged_attr["index"])
 
         sed_char_handler_decorator(pyf, flagged_attr["char"])
         
         sed_char_array_handler_decorator(pyf, flagged_attr["char_array"])
-
+        
         sed_private_property(pyf, flagged_attr["private"])
 
         sed_copy_derived_type(pyf)

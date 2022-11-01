@@ -76,3 +76,39 @@ def char_array_setter_handler(func):
         ptr[...] = arr
 
     return wrapper
+
+
+def getter_index_handler(func):
+    @functools.wraps(func)
+    def wrapper(self):
+        value = func(self)
+        return np.add(value, -1)
+
+    return wrapper
+
+
+#! setter completly rewrite (func is not called)
+def setter_index_handler(func):
+    @functools.wraps(func)
+    def wrapper(self, value):
+
+        func_name = func.__name__
+        class_name = self.__class__.__name__.lower()
+
+        getter = eval(f"_solver.f90wrap_{class_name}__array__{func_name}")
+
+        array_ndim, arra_type, array_shape, array_handle = getter(self._handle)
+
+        arr = np.add(value, 1)
+
+        if array_handle in self._arrays:
+            ptr = self._arrays[array_handle]
+        else:
+            ptr = f90wrap.runtime.get_array(
+                f90wrap.runtime.sizeof_fortran_t, self._handle, getter
+            )
+            self._arrays[array_handle] = ptr
+
+        ptr[...] = arr
+
+    return wrapper
