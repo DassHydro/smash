@@ -56,11 +56,11 @@ module mwd_mesh
         
         integer, dimension(:,:), allocatable :: flwdir
         integer, dimension(:,:), allocatable :: drained_area
-        integer, dimension(:,:), allocatable :: path
+        integer, dimension(:,:), allocatable :: path !>f90w-index
         integer, dimension(:,:), allocatable :: active_cell
         
         real(sp), dimension(:,:), allocatable :: flwdst
-        integer, dimension(:,:), allocatable :: gauge_pos
+        integer, dimension(:,:), allocatable :: gauge_pos !>f90w-index
         character(20), dimension(:), allocatable :: code !>f90w-char_array
         real(sp), dimension(:), allocatable :: area
         

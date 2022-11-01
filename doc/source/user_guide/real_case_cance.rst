@@ -214,7 +214,7 @@ To get into the details:
     
     mesh["code"]
         
-- ``gauge_pos``: the gauges position in the grid (it must follow **Fortran indexing**, i.e. [1, n]),
+- ``gauge_pos``: the gauges position in the grid,
 
 .. ipython:: python
     

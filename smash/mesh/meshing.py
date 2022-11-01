@@ -257,9 +257,8 @@ def _get_path(drained_area):
 
     path = np.zeros(shape=(2, drained_area.size), dtype=np.int32, order="F")
 
-    #% Transform from Python to FORTRAN index
-    path[0, :] = ind_path[0] + 1
-    path[1, :] = ind_path[1] + 1
+    path[0, :] = ind_path[0]
+    path[1, :] = ind_path[1]
 
     return path
 
@@ -335,7 +334,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
     active_cell = mask_dln.astype(np.int32)
 
     #% Transform from Python to FORTRAN index
-    gauge_pos = np.column_stack((row_ol + 1, col_ol + 1))
+    gauge_pos = np.column_stack((row_ol, col_ol))
 
     mesh = {
         "dx": dx,
