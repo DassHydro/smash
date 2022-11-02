@@ -4571,7 +4571,7 @@ END SUBROUTINE FORWARD_NODIFF
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
 !                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
 !                *(states.hi) *(states.hp) *(states.hft) *(states.hst)
-!                *(states.hlr) cost
+!                *(states.hlr)
 !   RW status of diff variables: parameters.ci:(loc) *(parameters.ci):out
 !                parameters.cp:(loc) *(parameters.cp):out parameters.beta:(loc)
 !                *(parameters.beta):out parameters.cft:(loc) *(parameters.cft):out
@@ -4581,7 +4581,7 @@ END SUBROUTINE FORWARD_NODIFF
 !                states.hi:(loc) *(states.hi):out states.hp:(loc)
 !                *(states.hp):out states.hft:(loc) *(states.hft):out
 !                states.hst:(loc) *(states.hst):out states.hlr:(loc)
-!                *(states.hlr):out cost:in-zero
+!                *(states.hlr):out cost:in-killed
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
@@ -5114,7 +5114,6 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
     DEALLOCATE(sparse_q)
     DEALLOCATE(sparse_q_b)
   END IF
-  cost_b = 0.0_4
 END SUBROUTINE FORWARD_B
 
 !  Differentiation of hyper_forward in forward (tangent) mode (with options fixinterface):
@@ -5485,7 +5484,6 @@ END SUBROUTINE HYPER_FORWARD_D
 !                *(hyper_parameters.beta) *(hyper_parameters.cft)
 !                *(hyper_parameters.cst) *(hyper_parameters.alpha)
 !                *(hyper_parameters.exc) *(hyper_parameters.lr)
-!                cost
 !   RW status of diff variables: hyper_states.hi:(loc) *(hyper_states.hi):out
 !                hyper_states.hp:(loc) *(hyper_states.hp):out hyper_states.hft:(loc)
 !                *(hyper_states.hft):out hyper_states.hst:(loc)
@@ -5499,7 +5497,7 @@ END SUBROUTINE HYPER_FORWARD_D
 !                *(hyper_parameters.alpha):out hyper_parameters.exc:(loc)
 !                *(hyper_parameters.exc):out hyper_parameters.lr:(loc)
 !                *(hyper_parameters.lr):out *(output.qsim):(loc)
-!                cost:in-zero
+!                cost:in-killed
 !   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
 !                hyper_parameters.ci:in hyper_parameters.cp:in
@@ -6049,7 +6047,6 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
 &                                 parameters_b, setup, input_data)
   CALL STATESDT_INITIALISE_BWD(states, states_b, mesh)
   CALL PARAMETERSDT_INITIALISE_BWD(parameters, parameters_b, mesh)
-  cost_b = 0.0_4
 END SUBROUTINE HYPER_FORWARD_B
 
 !% Subroutine is a copy of forward

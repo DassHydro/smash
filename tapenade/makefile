@@ -14,8 +14,8 @@ bd:
 	-adjvarname %_b \
 	-tgtvarname %_d \
 	-o forward \
-	-head "forward(parameters, states, cost)\(cost)" \
-	-head "hyper_forward(hyper_parameters, hyper_states, cost)\(cost)" \
+	-head "forward(parameters, states)\(cost)" \
+	-head "hyper_forward(hyper_parameters, hyper_states)\(cost)" \
 	-O $(PWD) $(FILES)
 
 

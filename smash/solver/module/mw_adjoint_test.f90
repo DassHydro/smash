@@ -88,9 +88,8 @@ module mw_adjoint_test
             call parameters_to_matrix(parameters_b, parameters_b_matrix)
             call parameters_to_matrix(parameters_d, parameters_d_matrix)
             
-            !% cost_b reset at the end of forward_b ...
             !% No perturbation has been set to states_d
-            output%sp1 = 1._sp * cost_d
+            output%sp1 = cost_b * cost_d
             
             output%sp2 = sum(parameters_b_matrix * parameters_d_matrix)
             
