@@ -19,6 +19,7 @@ module mw_adjoint_test
     & states_to_matrix, matrix_to_states, set0_states, &
     & set1_states
     use mwd_output, only: OutputDT, OutputDT_initialise
+    use mw_forward, only: forward, forward_b, forward_d
     
     implicit none
     

@@ -37,7 +37,7 @@ MOD := -J$(BUILDDIR)
 
 #% f90wrap information
 SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERDIR)/module/mw*.f90
+SOLVERMODWRAP := $(SOLVERDIR)/*/mw*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
@@ -79,11 +79,12 @@ f90: \
  obj/mwd_cost.o \
  obj/md_operator.o \
  obj/mw_routine.o \
+ obj/mw_forward.o \
+ obj/forward.o \
+ obj/forward_db.o \
  obj/mw_run.o \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
- obj/forward.o \
- obj/forward_db.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)

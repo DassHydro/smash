@@ -31,6 +31,8 @@ module mw_optimize
     & matrix_to_hyper_states
     use mwd_output, only: OutputDT, OutputDT_initialise
     use m_statistic, only: mean, std
+    use mw_forward, only: forward, forward_b, hyper_forward, &
+    & hyper_forward_b
     
     implicit none
     

@@ -18,6 +18,7 @@ module mw_run
     use mwd_states, only: StatesDT, StatesDT_initialise, &
     & states_to_matrix, set0_states, set1_states
     use mwd_output, only: OutputDT, OutputDT_initialise
+    use mw_forward, only: forward, forward_b, forward_d
     
     implicit none
     

@@ -30,13 +30,12 @@ def get_pyf90_couple_files(py_mod_name):
 
     res = set()
 
-    py_path = "./smash/solver/"
-    f90_path = "./smash/solver/module/"
+    path = "./smash/solver"
 
     for name in py_mod_name:
 
-        py_file = py_path + "_" + name + ".py"
-        f90_file = f90_path + name + ".f90"
+        py_file = f"{path}/_{name}.py"
+        f90_file = glob.glob(f"{path}/**/{name}.f90")[0]
 
         res.add((py_file, f90_file))
 

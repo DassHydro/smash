@@ -1,4 +1,4 @@
-subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
+subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
     
     use md_common !% only: sp
     use mwd_setup !% only: SetupDT
@@ -325,12 +325,12 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     
     call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
         
-end subroutine forward
+end subroutine base_forward
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-subroutine hyper_forward(setup, mesh, input_data, &
+subroutine base_hyper_forward(setup, mesh, input_data, &
     & hyper_parameters, hyper_parameters_bgd, hyper_states, &
     & hyper_states_bgd, output, cost)
 
@@ -668,4 +668,4 @@ subroutine hyper_forward(setup, mesh, input_data, &
     call hyper_compute_cost(setup, mesh, input_data, hyper_parameters, &
     & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)
 
-end subroutine hyper_forward
+end subroutine base_hyper_forward

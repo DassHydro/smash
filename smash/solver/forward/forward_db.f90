@@ -3956,7 +3956,7 @@ CONTAINS
 
 END MODULE MD_OPERATOR_DIFF
 
-!  Differentiation of forward in forward (tangent) mode (with options fixinterface):
+!  Differentiation of base_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -3978,9 +3978,9 @@ END MODULE MD_OPERATOR_DIFF
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
-& parameters_bgd, states, states_d, states_bgd, output, output_d, cost, &
-& cost_d)
+SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
+& parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
+& output_d, cost, cost_d)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -4298,9 +4298,9 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
 &               , parameters_bgd, states, states_d, states_bgd, output, &
 &               output_d, cost, cost_d)
-END SUBROUTINE FORWARD_D
+END SUBROUTINE BASE_FORWARD_D
 
-SUBROUTINE FORWARD_NODIFF(setup, mesh, input_data, parameters, &
+SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 & parameters_bgd, states, states_bgd, output, cost)
 !% only: sp
   USE MD_COMMON
@@ -4563,9 +4563,9 @@ SUBROUTINE FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
 &             , states, states_bgd, output, cost)
-END SUBROUTINE FORWARD_NODIFF
+END SUBROUTINE BASE_FORWARD_NODIFF
 
-!  Differentiation of forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of base_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -4587,9 +4587,9 @@ END SUBROUTINE FORWARD_NODIFF
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
-& parameters_bgd, states, states_b, states_bgd, output, output_b, cost, &
-& cost_b)
+SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
+& parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
+& output_b, cost, cost_b)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -5114,9 +5114,9 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
     DEALLOCATE(sparse_q)
     DEALLOCATE(sparse_q_b)
   END IF
-END SUBROUTINE FORWARD_B
+END SUBROUTINE BASE_FORWARD_B
 
-!  Differentiation of hyper_forward in forward (tangent) mode (with options fixinterface):
+!  Differentiation of base_hyper_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5148,9 +5148,10 @@ END SUBROUTINE FORWARD_B
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
-& hyper_parameters_d, hyper_parameters_bgd, hyper_states, hyper_states_d&
-& , hyper_states_bgd, output, output_d, cost, cost_d)
+SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
+& hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
+& hyper_states, hyper_states_d, hyper_states_bgd, output, output_d, cost&
+& , cost_d)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -5474,9 +5475,9 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
   CALL HYPER_COMPUTE_COST_D(setup, mesh, input_data, hyper_parameters, &
 &                     hyper_parameters_bgd, hyper_states, &
 &                     hyper_states_bgd, output, output_d, cost, cost_d)
-END SUBROUTINE HYPER_FORWARD_D
+END SUBROUTINE BASE_HYPER_FORWARD_D
 
-!  Differentiation of hyper_forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of base_hyper_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5508,9 +5509,10 @@ END SUBROUTINE HYPER_FORWARD_D
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
-& hyper_parameters_b, hyper_parameters_bgd, hyper_states, hyper_states_b&
-& , hyper_states_bgd, output, output_b, cost, cost_b)
+SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
+& hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
+& hyper_states, hyper_states_b, hyper_states_bgd, output, output_b, cost&
+& , cost_b)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -6047,12 +6049,12 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
 &                                 parameters_b, setup, input_data)
   CALL STATESDT_INITIALISE_BWD(states, states_b, mesh)
   CALL PARAMETERSDT_INITIALISE_BWD(parameters, parameters_b, mesh)
-END SUBROUTINE HYPER_FORWARD_B
+END SUBROUTINE BASE_HYPER_FORWARD_B
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
+SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 & , output, cost)
 !% only: sp
@@ -6322,5 +6324,5 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   CALL HYPER_COMPUTE_COST(setup, mesh, input_data, hyper_parameters, &
 &                   hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 &                   , output, cost)
-END SUBROUTINE HYPER_FORWARD_NODIFF
+END SUBROUTINE BASE_HYPER_FORWARD_NODIFF
 
