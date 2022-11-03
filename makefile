@@ -75,10 +75,14 @@ f90: \
  obj/mwd_states.o \
  obj/mwd_output.o \
  obj/md_operator.o \
+ obj/mwd_parameters_manipulation.o \
+ obj/mwd_states_manipulation.o \
  obj/mwd_cost.o \
  obj/mw_forward.o \
  obj/forward.o \
  obj/forward_db.o \
+ obj/mw_adjoint_test.o \
+ obj/mw_optimize.o \
  obj/m_sort.o \
  obj/m_array_manipulation.o \
  obj/m_statistic.o \
@@ -86,8 +90,6 @@ f90: \
  obj/mw_mask.o \
  obj/mw_sparse_storage.o \
  obj/mw_forcing_statistic.o \
- obj/mw_adjoint_test.o \
- obj/mw_optimize.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)

@@ -12,14 +12,12 @@ module mw_adjoint_test
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
-    use mwd_parameters, only: ParametersDT, ParametersDT_initialise, &
-    & parameters_to_matrix, matrix_to_parameters, set0_parameters, &
-    & set1_parameters
-    use mwd_states, only: StatesDT, StatesDT_initialise, &
-    & states_to_matrix, matrix_to_states, set0_states, &
-    & set1_states
+    use mwd_parameters, only: ParametersDT, ParametersDT_initialise
+    use mwd_states, only: StatesDT, StatesDT_initialise
     use mwd_output, only: OutputDT, OutputDT_initialise
     use mw_forward, only: forward, forward_b, forward_d
+    use mwd_parameters_manipulation, only: get_parameters, set_parameters
+    use mwd_states_manipulation, only: get_states, set_states
     
     implicit none
     
@@ -69,8 +67,8 @@ module mw_adjoint_test
             call OutputDT_initialise(output_d, setup, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
             
-            call set1_parameters(parameters_d)
-            call set0_states(states_d)
+            call set_parameters(parameters_d, 1._sp)
+            call set_states(states_d, 0._sp)
             
             write(*,'(4x,a)') "Tangent Linear Model dY  = (dM/dk) (k) . dk"
             
@@ -86,8 +84,8 @@ module mw_adjoint_test
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
-            call parameters_to_matrix(parameters_b, parameters_b_matrix)
-            call parameters_to_matrix(parameters_d, parameters_d_matrix)
+            call get_parameters(parameters_b, parameters_b_matrix)
+            call get_parameters(parameters_d, parameters_d_matrix)
             
             !% No perturbation has been set to states_d
             output%sp1 = cost_b * cost_d
@@ -162,7 +160,7 @@ module mw_adjoint_test
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
-            call parameters_to_matrix(parameters_b, parameters_b_matrix)
+            call get_parameters(parameters_b, parameters_b_matrix)
             
             write(*,'(4x,a)') "Forward Model Yadk = M (k + a dk)"
             
@@ -170,11 +168,11 @@ module mw_adjoint_test
             
                 output%an(n) = 2._sp ** (- (n - 1))
             
-                call parameters_to_matrix(parameters_bgd, parameters_matrix)
+                call get_parameters(parameters_bgd, parameters_matrix)
                 
                 parameters_matrix = parameters_matrix + output%an(n) * dk
                 
-                call matrix_to_parameters(parameters_matrix, parameters)
+                call set_parameters(parameters, parameters_matrix)
                 
                 call forward(setup, mesh, input_data, parameters, &
                 & parameters_bgd, states, states_bgd, output, cost)

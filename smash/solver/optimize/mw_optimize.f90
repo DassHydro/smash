@@ -20,19 +20,18 @@ module mw_optimize
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
     use mwd_parameters, only: ParametersDT, Hyper_ParametersDT, &
-    & ParametersDT_initialise, Hyper_ParametersDT_initialise, &
-    & parameters_to_matrix, matrix_to_parameters, &
-    & hyper_parameters_to_parameters, hyper_parameters_to_matrix, &
-    & matrix_to_hyper_parameters
+    & ParametersDT_initialise, Hyper_ParametersDT_initialise
     use mwd_states, only: StatesDT, Hyper_StatesDT, &
-    & StatesDT_initialise, Hyper_StatesDT_initialise, &
-    & hyper_states_to_states, &
-    & states_to_matrix, matrix_to_states, hyper_states_to_matrix, &
-    & matrix_to_hyper_states
+    & StatesDT_initialise, Hyper_StatesDT_initialise
     use mwd_output, only: OutputDT, OutputDT_initialise
-    use m_statistic, only: mean, std
     use mw_forward, only: forward, forward_b, hyper_forward, &
     & hyper_forward_b
+    use mwd_parameters_manipulation, only: get_parameters, set_parameters, &
+    & get_hyper_parameters, set_hyper_parameters, &
+    & hyper_parameters_to_parameters
+    use mwd_states_manipulation, only: get_states, set_states, &
+    & get_hyper_states, set_hyper_states, &
+    & hyper_states_to_states
     
     implicit none
     
@@ -90,8 +89,8 @@ module mw_optimize
             call forward(setup, mesh, input_data, parameters, &
             & parameters_bgd, states, states_bgd, output, cost)
             
-            call parameters_to_matrix(parameters, parameters_matrix)
-            call states_to_matrix(states, states_matrix)
+            call get_parameters(parameters, parameters_matrix)
+            call get_states(states, states_matrix)
             
             nps = np + ns
             
@@ -177,8 +176,8 @@ module mw_optimize
                             
                             end do
                             
-                            call matrix_to_parameters(parameters_matrix, parameters)
-                            call matrix_to_states(states_matrix, states)
+                            call set_parameters(parameters, parameters_matrix)
+                            call set_states(states, states_matrix)
 
                             call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                             & states, states_bgd, output, cost)
@@ -229,8 +228,8 @@ module mw_optimize
                         
                     end do
                     
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    call matrix_to_states(states_matrix, states)
+                    call set_parameters(parameters, parameters_matrix)
+                    call set_states(states, states_matrix)
                     
                     sdx = clg * sdx
                     sdx(ia) = (1._sp - clg) * real(jfa) * ddx + clg * sdx(ia)
@@ -293,8 +292,8 @@ module mw_optimize
                     
                     end do
                     
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    call matrix_to_states(states_matrix, states)
+                    call set_parameters(parameters, parameters_matrix)
+                    call set_states(states, states_matrix)
                     
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
@@ -331,8 +330,8 @@ module mw_optimize
                         
                         end do
                         
-                        call matrix_to_parameters(parameters_matrix, parameters)
-                        call matrix_to_states(states_matrix, states)
+                        call set_parameters(parameters, parameters_matrix)
+                        call set_states(states, states_matrix)
                         
                         if (gx .lt. ga - 2) then
                         
@@ -385,8 +384,8 @@ module mw_optimize
                         
                     end do
                     
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    call matrix_to_states(states_matrix, states)
+                    call set_parameters(parameters, parameters_matrix)
+                    call set_states(states, states_matrix)
 
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
@@ -423,8 +422,8 @@ module mw_optimize
                         
                     end do
                     
-                    call matrix_to_parameters(parameters_matrix, parameters)
-                    call matrix_to_states(states_matrix, states)
+                    call set_parameters(parameters, parameters_matrix)
+                    call set_states(states, states_matrix)
 
                     call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                     & states, states_bgd, output, cost)
@@ -656,8 +655,8 @@ module mw_optimize
             real(sp), dimension(np+ns) :: lb, ub
             integer :: i, j, col, row
             
-            call parameters_to_matrix(parameters, matrix(:,:,1:np))
-            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
+            call get_parameters(parameters, matrix(:,:,1:np))
+            call get_states(states, matrix(:,:,np+1:np+ns))
             
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
@@ -723,8 +722,8 @@ module mw_optimize
             real(sp), dimension(np+ns) :: lb, ub
             integer :: i, j, col, row
             
-            call parameters_to_matrix(parameters, matrix(:,:,1:np))
-            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
+            call get_parameters(parameters, matrix(:,:,1:np))
+            call get_states(states, matrix(:,:,np+1:np+ns))
             
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
@@ -771,8 +770,8 @@ module mw_optimize
 
             end do
             
-            call matrix_to_parameters(matrix(:,:,1:np), parameters)
-            call matrix_to_states(matrix(:,:,np+1:ns), states)
+            call set_parameters(parameters, matrix(:,:,1:np))
+            call set_states(states, matrix(:,:,np+1:ns))
 
         end subroutine x_to_parameters_states
 
@@ -995,11 +994,11 @@ module mw_optimize
             
             ind_ac = maxloc(mesh%active_cell)
             
-            call parameters_to_matrix(parameters, matrix(:,:,1:np))
-            call states_to_matrix(states, matrix(:,:,np+1:np+ns))
+            call get_parameters(parameters, matrix(:,:,1:np))
+            call get_states(states, matrix(:,:,np+1:np+ns))
             
-            call hyper_parameters_to_matrix(hyper_parameters, hyper_matrix(:,:,1:np))
-            call hyper_states_to_matrix(hyper_states, hyper_matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(hyper_parameters, hyper_matrix(:,:,1:np))
+            call get_hyper_states(hyper_states, hyper_matrix(:,:,np+1:np+ns))
             
             hyper_matrix(1, 1, :) = matrix(ind_ac(1), ind_ac(2), :)
             
@@ -1013,46 +1012,42 @@ module mw_optimize
             
             do i=1, (np + ns)
                 
-                if (optim(i) .gt. 0) then
+                select case(trim(setup%mapping))
                 
-                    select case(trim(setup%mapping))
+                case("hyper-linear")
+                
+                    hyper_matrix(2: ndc, 1, i) = 0._sp
+                
+                case("hyper-polynomial")
+                
+                    do j=1, 2 * setup%nd
                     
-                    case("hyper-linear")
+                        if (mod(j + 1, 2) .eq. 0) then
                     
-                        hyper_matrix(2: ndc, 1, i) = 0._sp
-                    
-                    case("hyper-polynomial")
-                    
-                        do j=1, 2 * setup%nd
-                        
-                            if (mod(j + 1, 2) .eq. 0) then
-                        
-                                hyper_matrix(j + 1, 1, i) = 0._sp
-                                
-                                nbd(k + (j + 1)) = 0
-                                
-                            else
+                            hyper_matrix(j + 1, 1, i) = 0._sp
                             
-                                hyper_matrix(j + 1, 1, i) = 1._sp
-                                
-                                nbd(k + (j + 1)) = 2
-                                l(k + (j + 1)) = 0.5_dp
-                                u(k + (j + 1)) = 2._dp
+                            nbd(k + (j + 1)) = 0
+                            
+                        else
+                        
+                            hyper_matrix(j + 1, 1, i) = 1._sp
+                            
+                            nbd(k + (j + 1)) = 2
+                            l(k + (j + 1)) = 0.5_dp
+                            u(k + (j + 1)) = 2._dp
 
-                            end if
-                    
-                        end do
-                    
-                    end select
-                    
-                    k = k + ndc
+                        end if
                 
-                end if
-            
+                    end do
+                
+                end select
+                
+                k = k + ndc
+
             end do
             
-            call matrix_to_hyper_parameters(hyper_matrix(:,:,1:np), hyper_parameters)
-            call matrix_to_hyper_states(hyper_matrix(:,:,np+1:np+ns), hyper_states)
+            call set_hyper_parameters(hyper_parameters, hyper_matrix(:,:,1:np))
+            call set_hyper_states(hyper_states, hyper_matrix(:,:,np+1:np+ns))
         
         end subroutine hyper_problem_initialise
 
@@ -1071,8 +1066,8 @@ module mw_optimize
             integer, dimension(np+ns) :: optim
             integer :: i, j, k
             
-            call hyper_parameters_to_matrix(hyper_parameters, matrix(:,:,1:np))
-            call hyper_states_to_matrix(hyper_states, matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(hyper_parameters, matrix(:,:,1:np))
+            call get_hyper_states(hyper_states, matrix(:,:,np+1:np+ns))
             
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
@@ -1111,8 +1106,8 @@ module mw_optimize
             integer, dimension(np+ns) :: optim
             integer :: i, j, k
             
-            call hyper_parameters_to_matrix(hyper_parameters, matrix(:,:,1:np))
-            call hyper_states_to_matrix(hyper_states, matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(hyper_parameters, matrix(:,:,1:np))
+            call get_hyper_states(hyper_states, matrix(:,:,np+1:np+ns))
             
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
@@ -1134,8 +1129,8 @@ module mw_optimize
         
             end do
             
-            call matrix_to_hyper_parameters(matrix(:,:,1:np), hyper_parameters)
-            call matrix_to_hyper_states(matrix(:,:,np+1:np+ns), hyper_states)
+            call set_hyper_parameters(hyper_parameters, matrix(:,:,1:np))
+            call set_hyper_states(hyper_states, matrix(:,:,np+1:np+ns))
         
         end subroutine x_to_hyper_parameters_states
         

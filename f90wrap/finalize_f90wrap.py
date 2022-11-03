@@ -5,37 +5,16 @@ import os
 NAME_DT = ["setup", "mesh", "input_data", "parameters", "states", "output"]
 
 
-def get_py_mod_names(py_mod_names_file):
-
-    res = set()
-
-    with open(py_mod_name_file) as f:
-
-        for l in f:
-
-            ind_2dots = l.find(":")
-
-            if ind_2dots != -1:
-
-                subl = l[0:ind_2dots].strip()
-
-                subl = subl.replace('"', "")
-
-                res.add(subl)
-
-    return res
-
-
-def get_pyf90_couple_files(py_mod_name):
+def get_pyf90_couple_files(py_mod_names):
 
     res = set()
 
     path = "./smash/solver"
 
-    for name in py_mod_name:
+    for f90_name, py_name in py_mod_names.items():
 
-        py_file = f"{path}/_{name}.py"
-        f90_file = glob.glob(f"{path}/**/{name}.f90")[0]
+        f90_file = glob.glob(f"{path}/**/{f90_name}.f90")[0]
+        py_file = f"{path}/{py_name}.py"
 
         res.add((py_file, f90_file))
 
@@ -166,15 +145,14 @@ def sed_copy_derived_type(pyf):
                     
                     if ind_p > ind_cn:
                         
+                        os.system(
+                                f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
+                            )
+                        os.system(
+                            f'sed -i "/from __future__/a \\from smash.solver._mw_copy import copy_{name}" {pyf}'
+                        )
+                    
                         break
-                        
-        os.system(
-            f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
-        )
-        os.system(
-            f'sed -i "/from __future__/a \\from smash.solver._mw_copy import copy_{name}" {pyf}'
-        )
-
 
 def set_finalise_method(pyf):
 
@@ -190,10 +168,10 @@ def sed_tab(pyf):
 
 if __name__ == "__main__":
 
-    py_mod_name_file = "./f90wrap/py_mod_names"
-    py_mod_name = get_py_mod_names(py_mod_name_file)
-
-    pyf90_couple_files = get_pyf90_couple_files(py_mod_name)
+    py_mod_names_file = "./f90wrap/py_mod_names"
+    py_mod_names = eval(open(py_mod_names_file).read())
+    
+    pyf90_couple_files = get_pyf90_couple_files(py_mod_names)
 
     for pyf90f in pyf90_couple_files:
 
