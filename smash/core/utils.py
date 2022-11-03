@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.solver._mw_routine import (
+from smash.solver._mw_sparse_storage import (
     sparse_matrix_to_vector_r,
     sparse_matrix_to_vector_i,
     sparse_vector_to_matrix_r,

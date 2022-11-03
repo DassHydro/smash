@@ -1,14 +1,4 @@
 !%      This module `m_statistic` encapsulates all SMASH statistic.
-!%
-!%      insertionsort interface:
-!%
-!%      module procedure insertionsort_i
-!%      module procedure insertionsort_r
-!%
-!%      quicksort interface:
-!%
-!%      module procedure quicksort_i
-!%      module procedure quicksort_r
 !%      
 !%      quantile interface:
 !%
@@ -40,48 +30,29 @@
 !%
 !%      contains
 !%      
-!%      [1]  insertionsort_i
-!%      [2]  insertionsort_r
-!%      [3]  quicksort_i
-!%      [4]  quicksort_r
-!%      [5]  quantile0d_i
-!%      [6]  quantile0d_r
-!%      [7]  quantile1d_i
-!%      [8]  quantile1d_r
-!%      [9]  mean1d_i
-!%      [10] mean1d_r
-!%      [11] mean2d_i
-!%      [12] mean2d_r
-!%      [13] variance1d_i
-!%      [14] variance1d_r
-!%      [15] variance2d_i
-!%      [16] variance2d_r
-!%      [17] std1d_i
-!%      [18] std1d_r
-!%      [19] std2d_i
-!%      [20] std2d_r
+!%      [1]  quantile0d_i
+!%      [2]  quantile0d_r
+!%      [3]  quantile1d_i
+!%      [4]  quantile1d_r
+!%      [5]  mean1d_i
+!%      [6] mean1d_r
+!%      [7] mean2d_i
+!%      [8] mean2d_r
+!%      [9] variance1d_i
+!%      [10] variance1d_r
+!%      [11] variance2d_i
+!%      [12] variance2d_r
+!%      [13] std1d_i
+!%      [14] std1d_r
+!%      [15] std2d_i
+!%      [16] std2d_r
 
 module m_statistic
 
     use md_common, only: sp
+    use m_sort, only: quicksort
     
     implicit none
-    
-    interface insertionsort
-    
-        module procedure insertionsort_i
-        module procedure insertionsort_r
-    
-    end interface insertionsort
-    
-    
-    interface quicksort
-    
-        module procedure quicksort_i
-        module procedure quicksort_r
-    
-    end interface quicksort
-    
     
     interface quantile
     
@@ -123,207 +94,7 @@ module m_statistic
     end interface
     
     contains
-    
-        subroutine insertionsort_i(a)
-        
-            !% Notes
-            !% -----
-            !%
-            !% Insertion sort subroutine
-            !%
-            !% Given an integer array of dim(1),
-            !% it returns the sorted integer array in-place
-            
-            implicit none
-            
-            integer, dimension(:), intent(inout) :: a
-            
-            integer :: imd
-            integer :: n, i, j
-            
-            n =  size(a)
-            
-            do j=2, n
-                
-                imd = a(j)
-                
-                do i=j-1, 1,-1
-                
-                    if (a(i) .le. imd) goto 1
-                    a(i+1) = a(i)
-                
-                end do 
-                
-                i = 0
-        1       a(i+1) = imd 
-            
-            end do
-        
-        end subroutine insertionsort_i
-        
-        
-        subroutine insertionsort_r(a)
-            
-            !% Notes
-            !% -----
-            !%
-            !% Insertion sort subroutine
-            !%
-            !% Given a single precision array of dim(1),
-            !% it returns the sorted single precision array in-place
-            
-            implicit none
-            
-            real(sp), dimension(:), intent(inout) :: a
-            
-            real(sp) :: imd
-            integer :: n, i, j
-            
-            n = size(a)
-            
-            do j=2, n
-                
-                imd = a(j)
-                
-                do i=j-1, 1,-1
-                
-                    if (a(i) .le. imd) goto 1
-                    a(i+1) = a(i)
-                
-                end do 
-                
-                i = 0
-        1       a(i+1) = imd 
-            
-            end do
-        
-        end subroutine insertionsort_r
-        
-        
-        recursive subroutine quicksort_i(a)
-        
-            !% Notes
-            !% -----
-            !%
-            !% Quicksort sort subroutine
-            !%
-            !% Given an integer array of dim(1),
-            !% it returns the sorted integer array in-place.
-            !% It uses insertion sort for array of size lower than or equal to 20
-            
-            implicit none
-            
-            integer, dimension(:), intent(inout) :: a
-            
-            integer :: x, t
-            integer :: first = 1, last
-            integer :: n, i, j
-            
-            n = size(a)
-            
-            !% Insertion sort for array size lower than or equal to 20
-            if (n .le. 20) then
-                
-                call insertionsort_i(a)
 
-            else
-            
-                last = n
-                x = a((first+last) / 2)
-                i = first
-                j = last
-
-                do
-                    do while (a(i) .lt. x)
-                       
-                        i = i + 1
-                    
-                    end do
-                
-                    do while (x .lt. a(j))
-                        
-                        j = j - 1
-                    
-                    end do
-                    
-                    if (i .ge. j) exit
-                    
-                    t = a(i);  a(i) = a(j);  a(j) = t
-                    i= i + 1
-                    j= j - 1
-                    
-                end do
-
-                if (first .lt. i - 1) call quicksort_i(a(first : i - 1))
-                if (j + 1 .lt. last)  call quicksort_i(a(j + 1 : last))
-                
-            end if
-            
-            end subroutine quicksort_i
-        
-        
-        recursive subroutine quicksort_r(a)
-        
-            !% Notes
-            !% -----
-            !%
-            !% Quicksort sort subroutine
-            !%
-            !% Given a single precision array of dim(1),
-            !% it returns the sorted single precision array in-place.
-            !% It uses insertion sort for array of size lower than or equal to 20
-            
-            implicit none
-            
-            real(sp), dimension(:), intent(inout) :: a
-            
-            real(sp) :: x, t
-            integer :: first = 1, last
-            integer :: n, i, j
-            
-            n = size(a)
-            
-            !% Insertion sort for array size lower than or equal to 20
-            if (n .le. 20) then
-            
-                call insertionsort_r(a)
-                
-            else
-
-                last = n
-                x = a((first+last) / 2)
-                i = first
-                j = last
-
-                do
-                    do while (a(i) .lt. x)
-                       
-                        i = i + 1
-                    
-                    end do
-                
-                    do while (x .lt. a(j))
-                        
-                        j = j - 1
-                    
-                    end do
-                    
-                    if (i .ge. j) exit
-                    
-                    t = a(i);  a(i) = a(j);  a(j) = t
-                    i= i + 1
-                    j= j - 1
-                    
-                end do
-
-                if (first .lt. i - 1) call quicksort_r(a(first : i - 1))
-                if (j + 1 .lt. last)  call quicksort_r(a(j + 1 : last))
-                
-            end if
-            
-            end subroutine quicksort_r
-        
-        
         subroutine quantile0d_i(a, q, res)
         
             !% Notes

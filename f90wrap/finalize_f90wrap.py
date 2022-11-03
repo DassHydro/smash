@@ -172,7 +172,7 @@ def sed_copy_derived_type(pyf):
             f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
         )
         os.system(
-            f'sed -i "/from __future__/a \\from smash.solver._mw_routine import copy_{name}" {pyf}'
+            f'sed -i "/from __future__/a \\from smash.solver._mw_copy import copy_{name}" {pyf}'
         )
 
 

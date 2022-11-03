@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-from smash.solver._mw_routine import (
-    compute_rowcol_to_ind_sparse,
+from smash.solver._mw_sparse_storage import compute_rowcol_to_ind_sparse
+
+from smash.solver._mw_forcing_statistic import (
     compute_mean_forcing,
     compute_prcp_indice,
 )
