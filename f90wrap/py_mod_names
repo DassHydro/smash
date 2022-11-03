@@ -8,7 +8,6 @@
     "mwd_cost": "_mwd_cost",
     "mw_routine": "_mw_routine",
     "mw_forward": "_mw_forward",
-    "mw_run": "_mw_run",
     "mw_adjoint_test": "_mw_adjoint_test",
     "mw_optimize": "_mw_optimize",
 }

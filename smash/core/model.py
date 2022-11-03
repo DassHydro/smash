@@ -6,7 +6,7 @@ from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
-from smash.solver._mw_run import forward_run, adjoint_run, tangent_linear_run
+from smash.solver._mw_forward import forward
 from smash.solver._mw_adjoint_test import scalar_product_test, gradient_test
 
 from smash.core._build_model import (
@@ -224,7 +224,7 @@ class Model(object):
 
         return copy
 
-    def run(self, case: str = "fwd", inplace: bool = False):
+    def run(self, inplace: bool = False):
 
         if inplace:
 
@@ -233,55 +233,25 @@ class Model(object):
         else:
 
             instance = self.copy()
+            
+        print("</> Run Forward Model M (k)")
+            
+        cost = np.float32(0)
 
-        if case == "fwd":
+        forward(
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+            instance.parameters,
+            instance.parameters.copy(),
+            instance.states,
+            instance.states.copy(),
+            instance.output,
+            cost,
+        )
 
-            forward_run(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.parameters.copy(),
-                instance.states,
-                instance.states.copy(),
-                instance.output,
-                True,
-            )
-
-            instance._last_update = "Forward Run"
-
-        elif case == "adj":
-
-            adjoint_run(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
-            )
-
-            instance._last_update = "Adjoint Run"
-
-        elif case == "tl":
-
-            tangent_linear_run(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
-            )
-
-            instance._last_update = "Tangent Linear Run"
-
-        else:
-
-            raise ValueError(
-                f"'case' argument must be one of ['fwd', 'adj', 'tl'] not '{case}'"
-            )
-
+        instance._last_update = "Forward Run"
+            
         if not inplace:
 
             return instance

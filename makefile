@@ -82,7 +82,6 @@ f90: \
  obj/mw_forward.o \
  obj/forward.o \
  obj/forward_db.o \
- obj/mw_run.o \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
  

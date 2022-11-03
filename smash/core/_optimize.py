@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mw_run import forward_run
+from smash.solver._mw_forward import forward
 from smash.solver._mw_optimize import (
     optimize_sbs,
     optimize_lbfgsb,
@@ -494,8 +494,10 @@ def _problem(
     global callback_args
 
     _x_to_parameters_states(x, instance, control_vector)
+    
+    cost = np.float32(0)
 
-    forward_run(
+    forward(
         instance.setup,
         instance.mesh,
         instance.input_data,
@@ -504,7 +506,7 @@ def _problem(
         instance.states,
         states_bgd,
         instance.output,
-        False,
+        cost,
     )
 
     callback_args["nfg"] += 1
@@ -525,8 +527,10 @@ def _hyper_problem(
     global callback_args
 
     _x_to_hyper_parameters_states(x, instance, control_vector, bounds)
+    
+    cost = np.float32(0)
 
-    forward_run(
+    forward(
         instance.setup,
         instance.mesh,
         instance.input_data,
@@ -535,7 +539,7 @@ def _hyper_problem(
         instance.states,
         states_bgd,
         instance.output,
-        False,
+        cost,
     )
 
     callback_args["nfg"] += 1
