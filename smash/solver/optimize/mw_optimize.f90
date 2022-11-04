@@ -771,7 +771,7 @@ module mw_optimize
             end do
             
             call set_parameters(parameters, matrix(:,:,1:np))
-            call set_states(states, matrix(:,:,np+1:ns))
+            call set_states(states, matrix(:,:,np+1:np+ns))
 
         end subroutine x_to_parameters_states
 
@@ -997,6 +997,9 @@ module mw_optimize
             call get_parameters(parameters, matrix(:,:,1:np))
             call get_states(states, matrix(:,:,np+1:np+ns))
             
+            call set_hyper_parameters(hyper_parameters, 0._sp)
+            call set_hyper_states(hyper_states, 0._sp)
+            
             call get_hyper_parameters(hyper_parameters, hyper_matrix(:,:,1:np))
             call get_hyper_states(hyper_states, hyper_matrix(:,:,np+1:np+ns))
             
@@ -1011,38 +1014,42 @@ module mw_optimize
             k = 0
             
             do i=1, (np + ns)
+            
+                if (optim(i) .gt. 0) then
                 
-                select case(trim(setup%mapping))
-                
-                case("hyper-linear")
-                
-                    hyper_matrix(2: ndc, 1, i) = 0._sp
-                
-                case("hyper-polynomial")
-                
-                    do j=1, 2 * setup%nd
+                    select case(trim(setup%mapping))
                     
-                        if (mod(j + 1, 2) .eq. 0) then
+                    case("hyper-linear")
                     
-                            hyper_matrix(j + 1, 1, i) = 0._sp
-                            
-                            nbd(k + (j + 1)) = 0
-                            
-                        else
+                        hyper_matrix(2: ndc, 1, i) = 0._sp
+                    
+                    case("hyper-polynomial")
+                    
+                        do j=1, 2 * setup%nd
                         
-                            hyper_matrix(j + 1, 1, i) = 1._sp
+                            if (mod(j + 1, 2) .eq. 0) then
+                        
+                                hyper_matrix(j + 1, 1, i) = 0._sp
+                                
+                                nbd(k + (j + 1)) = 0
+                                
+                            else
                             
-                            nbd(k + (j + 1)) = 2
-                            l(k + (j + 1)) = 0.5_dp
-                            u(k + (j + 1)) = 2._dp
+                                hyper_matrix(j + 1, 1, i) = 1._sp
+                                
+                                nbd(k + (j + 1)) = 2
+                                l(k + (j + 1)) = 0.5_dp
+                                u(k + (j + 1)) = 2._dp
 
-                        end if
+                            end if
+                    
+                        end do
+                    
+                    end select
+                    
+                    k = k + ndc
                 
-                    end do
-                
-                end select
-                
-                k = k + ndc
+                end if
 
             end do
             
