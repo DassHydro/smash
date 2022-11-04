@@ -7,7 +7,6 @@ from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
 from smash.solver._mw_forward import forward
-from smash.solver._mw_adjoint_test import scalar_product_test, gradient_test
 
 from smash.core._build_model import (
     _parse_derived_type,
@@ -252,52 +251,6 @@ class Model(object):
 
         instance._last_update = "Forward Run"
             
-        if not inplace:
-
-            return instance
-
-    def adjoint_test(self, case: str = "spt", inplace: bool = False):
-
-        if inplace:
-
-            instance = self
-
-        else:
-
-            instance = self.copy()
-
-        if case == "spt":
-
-            scalar_product_test(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
-            )
-
-            instance._last_update = "Scalar Product Test"
-
-        elif case == "gt":
-
-            gradient_test(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
-            )
-
-            instance._last_update = "Gradient Test"
-
-        else:
-
-            raise ValueError(
-                f"'case' argument must be one of ['spt', 'gt'] not '{case}'"
-            )
-
         if not inplace:
 
             return instance
