@@ -24,7 +24,6 @@ import warnings
 import numpy as np
 import scipy.optimize
 import pandas as pd
-import matplotlib.pyplot as plt
 
 ALGORITHM = ["sbs", "l-bfgs-b", "nelder-mead"]
 
