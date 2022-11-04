@@ -989,6 +989,7 @@ module mw_optimize
             real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
             real(sp), dimension(ndc, 1, np+ns) :: hyper_matrix
             integer, dimension(np+ns) :: optim
+            real(sp), dimension(np+ns) :: lb, ub
             integer, dimension(2) :: ind_ac
             integer :: i, j, k
             
@@ -1003,10 +1004,17 @@ module mw_optimize
             call get_hyper_parameters(hyper_parameters, hyper_matrix(:,:,1:np))
             call get_hyper_states(hyper_states, hyper_matrix(:,:,np+1:np+ns))
             
-            hyper_matrix(1, 1, :) = matrix(ind_ac(1), ind_ac(2), :)
-            
             optim(1:np) = setup%optim_parameters 
             optim(np+1:np+ns) = setup%optim_states
+            
+            lb(1:np) = setup%lb_parameters
+            lb(np+1:np+ns) = setup%lb_states
+            
+            ub(1:np) = setup%ub_parameters
+            ub(np+1:np+ns) = setup%ub_states
+            
+            !% inverse sigmoid lambda = 1
+            hyper_matrix(1, 1, :) = log((matrix(ind_ac(1), ind_ac(2), :) - lb) / (ub - matrix(ind_ac(1), ind_ac(2), :)))
             
             nbd = 0
             l = 0._dp

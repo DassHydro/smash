@@ -1877,8 +1877,11 @@ CONTAINS
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
     INTRINSIC TRIM
+    INTRINSIC EXP
     REAL(sp), DIMENSION(size(parameters%cp, 1), size(parameters%cp, 2)) &
 &   :: temp
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: temp0
     CALL GET_HYPER_PARAMETERS_D(hyper_parameters, hyper_parameters_d, &
 &                         hyper_parameters_matrix, &
 &                         hyper_parameters_matrix_d)
@@ -1916,14 +1919,13 @@ CONTAINS
 &         dpb*a_d + a*dpb_d
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) 
-        parameters_matrix_d(:, :, i) = 0.0_4
-        parameters_matrix(:, :, i) = setup%lb_parameters(i)
-      END WHERE
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) 
-        parameters_matrix_d(:, :, i) = 0.0_4
-        parameters_matrix(:, :, i) = setup%ub_parameters(i)
-      END WHERE
+!% sigmoid transformation lambda = 1
+      temp0 = (setup%ub_parameters(i)-setup%lb_parameters(i))/(EXP(-&
+&       parameters_matrix(:, :, i))+1._sp)
+      parameters_matrix_d(:, :, i) = temp0*EXP(-parameters_matrix(:, :, &
+&       i))*parameters_matrix_d(:, :, i)/(EXP(-parameters_matrix(:, :, i&
+&       ))+1._sp)
+      parameters_matrix(:, :, i) = setup%lb_parameters(i) + temp0
     END DO
     CALL SET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
 &                   parameters_matrix_d)
@@ -1968,6 +1970,9 @@ CONTAINS
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
     INTRINSIC TRIM
+    INTRINSIC EXP
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: temp
     INTEGER :: branch
     CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
 !% Add mask later here
@@ -1995,10 +2000,6 @@ CONTAINS
         dpb = d**b
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
-      CALL PUSHREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
-&                   , 1)*SIZE(parameters%cp, 2))
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
     END DO
     CALL SET_PARAMETERS(parameters, parameters_matrix)
     CALL SET_PARAMETERS_B(parameters, parameters_b, parameters_matrix, &
@@ -2007,12 +2008,10 @@ CONTAINS
     a_b = 0.0_4
     b_b = 0.0_4
     DO i=np,1,-1
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
-&       parameters_matrix_b(:, :, i) = 0.0_4
-      CALL POPREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
-&                  , 1)*SIZE(parameters%cp, 2))
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix_b(:, :, i) = 0.0_4
+      temp = EXP(-parameters_matrix(:, :, i)) + 1._sp
+      parameters_matrix_b(:, :, i) = EXP(-parameters_matrix(:, :, i))*(&
+&       setup%ub_parameters(i)-setup%lb_parameters(i))*&
+&       parameters_matrix_b(:, :, i)/temp**2
       DO j=setup%nd,1,-1
         d = input_data%descriptor(:, :, j)
         dpb = d**b
@@ -2068,6 +2067,7 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     INTRINSIC TRIM
+    INTRINSIC EXP
     CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
     CALL GET_PARAMETERS(parameters, parameters_matrix)
 !% Add mask later here
@@ -2087,10 +2087,10 @@ CONTAINS
         dpb = d**b
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%ub_parameters(i)
+!% sigmoid transformation lambda = 1
+      parameters_matrix(:, :, i) = (setup%ub_parameters(i)-setup%&
+&       lb_parameters(i))*(1._sp/(1._sp+EXP(-parameters_matrix(:, :, i))&
+&       )) + setup%lb_parameters(i)
     END DO
     CALL SET_PARAMETERS(parameters, parameters_matrix)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS
@@ -2400,7 +2400,9 @@ CONTAINS
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
     INTRINSIC TRIM
+    INTRINSIC EXP
     REAL(sp), DIMENSION(size(states%hp, 1), size(states%hp, 2)) :: temp
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: temp0
     CALL GET_HYPER_STATES_D(hyper_states, hyper_states_d, &
 &                     hyper_states_matrix, hyper_states_matrix_d)
     CALL GET_STATES(states, states_matrix)
@@ -2437,14 +2439,12 @@ CONTAINS
 &         a*dpb_d
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) 
-        states_matrix_d(:, :, i) = 0.0_4
-        states_matrix(:, :, i) = setup%lb_states(i)
-      END WHERE
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) 
-        states_matrix_d(:, :, i) = 0.0_4
-        states_matrix(:, :, i) = setup%ub_states(i)
-      END WHERE
+!% sigmoid transformation lambda = 1
+      temp0 = (setup%ub_states(i)-setup%lb_states(i))/(EXP(-&
+&       states_matrix(:, :, i))+1._sp)
+      states_matrix_d(:, :, i) = temp0*EXP(-states_matrix(:, :, i))*&
+&       states_matrix_d(:, :, i)/(EXP(-states_matrix(:, :, i))+1._sp)
+      states_matrix(:, :, i) = setup%lb_states(i) + temp0
     END DO
     CALL SET_STATES_D(states, states_d, states_matrix, states_matrix_d)
   END SUBROUTINE HYPER_STATES_TO_STATES_D
@@ -2482,6 +2482,8 @@ CONTAINS
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
     INTRINSIC TRIM
+    INTRINSIC EXP
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: temp
     INTEGER :: branch
     CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
 !% Add mask later here
@@ -2509,10 +2511,6 @@ CONTAINS
         dpb = d**b
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
-      CALL PUSHREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*&
-&                   SIZE(states%hp, 2))
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix(:, :, i) = setup%lb_states(i)
     END DO
     CALL SET_STATES(states, states_matrix)
     CALL SET_STATES_B(states, states_b, states_matrix, states_matrix_b)
@@ -2520,12 +2518,10 @@ CONTAINS
     a_b = 0.0_4
     b_b = 0.0_4
     DO i=ns,1,-1
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
-&       states_matrix_b(:, :, i) = 0.0_4
-      CALL POPREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*SIZE&
-&                  (states%hp, 2))
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix_b(:, :, i) = 0.0_4
+      temp = EXP(-states_matrix(:, :, i)) + 1._sp
+      states_matrix_b(:, :, i) = EXP(-states_matrix(:, :, i))*(setup%&
+&       ub_states(i)-setup%lb_states(i))*states_matrix_b(:, :, i)/temp**&
+&       2
       DO j=setup%nd,1,-1
         d = input_data%descriptor(:, :, j)
         dpb = d**b
@@ -2580,6 +2576,7 @@ CONTAINS
     INTEGER :: i, j
     REAL(sp) :: a, b
     INTRINSIC TRIM
+    INTRINSIC EXP
     CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
     CALL GET_STATES(states, states_matrix)
 !% Add mask later here
@@ -2599,10 +2596,9 @@ CONTAINS
         dpb = d**b
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix(:, :, i) = setup%lb_states(i)
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
-&       states_matrix(:, :, i) = setup%ub_states(i)
+!% sigmoid transformation lambda = 1
+      states_matrix(:, :, i) = (setup%ub_states(i)-setup%lb_states(i))*(&
+&       1._sp/(1._sp+EXP(-states_matrix(:, :, i)))) + setup%lb_states(i)
     END DO
     CALL SET_STATES(states, states_matrix)
   END SUBROUTINE HYPER_STATES_TO_STATES
