@@ -31,7 +31,6 @@ Simulation
    :toctree: smash/
 
    Model.run
-   Model.adjoint_test
    Model.optimize
    
 Others

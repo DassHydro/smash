@@ -293,8 +293,15 @@ def _optimize_nelder_mead(
         #! Change for hyper_ regularization
         parameters_bgd = instance.parameters.copy()
         states_bgd = instance.states.copy()
+        
+        for i in range(instance.setup._nd):
+            
+            minvl = np.amin(instance.input_data.descriptor[..., i])
+            maxvl = np.amax(instance.input_data.descriptor[..., i])
+            
+            instance.input_data.descriptor[..., i] = (instance.input_data.descriptor[..., i] - minvl) / (maxvl - minvl)
 
-        x = _hyper_parameters_states_to_x(instance, control_vector)
+        x = _hyper_parameters_states_to_x(instance, control_vector, bounds)
 
         _hyper_problem(x, instance, control_vector, parameters_bgd, states_bgd, bounds)
 
@@ -416,7 +423,7 @@ def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.n
 
 
 def _hyper_parameters_states_to_x(
-    instance: Model, control_vector: np.ndarray
+    instance: Model, control_vector: np.ndarray, bounds: np.ndarray,
 ) -> np.ndarray:
 
     ac_ind = np.unravel_index(
@@ -428,14 +435,18 @@ def _hyper_parameters_states_to_x(
     x = np.zeros(shape=control_vector.size * nd_step, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
+        
+        lb, ub = bounds[ind, :]
 
         if name in instance.setup._name_parameters:
-
-            x[ind * nd_step] = getattr(instance.parameters, name)[ac_ind]
+            
+            y = getattr(instance.parameters, name)[ac_ind]
 
         else:
-
-            x[ind * nd_step] = getattr(instance.states, name)[ac_ind]
+            
+            y = getattr(instance.states, name)[ac_ind]
+            
+        x[ind * nd_step] = np.log((y - lb) / (ub - y))
 
     return x
 
@@ -486,16 +497,16 @@ def _x_to_hyper_parameters_states(
             value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
 
         lb, ub = bounds[ind, :]
-        value = np.where(value < lb, lb, value)
-        value = np.where(value > ub, ub, value)
+        
+        y = (ub - lb) * (1.0 / (1.0 + np.exp(- value))) + lb
 
         if name in instance.setup._name_parameters:
 
-            setattr(instance.parameters, name, value)
+            setattr(instance.parameters, name, y)
 
         else:
 
-            setattr(instance.states, name, value)
+            setattr(instance.states, name, y)
 
 
 def _problem(

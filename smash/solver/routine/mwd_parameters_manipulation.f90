@@ -224,17 +224,9 @@ module mwd_parameters_manipulation
                 
                 end do
                 
-                where (parameters_matrix(:,:,i) .lt. setup%lb_parameters(i))
-                    
-                    parameters_matrix(:,:,i) = setup%lb_parameters(i)
-                
-                end where
-            
-                where (parameters_matrix(:,:,i) .gt. setup%ub_parameters(i))
-                    
-                    parameters_matrix(:,:,i) = setup%ub_parameters(i)
-                
-                end where
+                !% sigmoid transformation lambda = 1
+                parameters_matrix(:,:,i) = (setup%ub_parameters(i) - setup%lb_parameters(i)) &
+                & * (1._sp / (1._sp + exp(- parameters_matrix(:,:,i)))) + setup%lb_parameters(i)
             
             end do
 

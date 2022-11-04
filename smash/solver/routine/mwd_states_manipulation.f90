@@ -206,17 +206,9 @@ module mwd_states_manipulation
                 
                 end do
                 
-                where (states_matrix(:,:,i) .lt. setup%lb_states(i))
-                    
-                    states_matrix(:,:,i) = setup%lb_states(i)
-                
-                end where
-            
-                where (states_matrix(:,:,i) .gt. setup%ub_states(i))
-                    
-                    states_matrix(:,:,i) = setup%ub_states(i)
-                
-                end where
+                !% sigmoid transformation lambda = 1
+                states_matrix(:,:,i) = (setup%ub_states(i) - setup%lb_states(i)) &
+                & * (1._sp / (1._sp + exp(- states_matrix(:,:,i)))) + setup%lb_states(i)
             
             end do
 
