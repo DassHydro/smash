@@ -1,120 +1,19 @@
-!%      This module `md_operator` encapsulates all SMASH operator.
+!%      This module `md_routing_operator` encapsulates all SMASH routing operator.
 !%      This module is differentiated.
 !%
 !%      contains
 !%
-!%      [1] GR_interception
-!%      [2] GR_production
-!%      [3] GR_exchange
-!%      [4] GR_transferN
-!%      [5] upstream_discharge
-!%      [6] sparse_upstream_discharge
-!%      [7] GR_transfer1
+!%      [1] upstream_discharge
+!%      [2] sparse_upstream_discharge
+!%      [3] linear_routing
 
-module md_operator
+module md_routing_operator
     
     use md_common !% only : sp
 
     implicit none
     
     contains
-        
-        !% TODO comment
-        subroutine GR_interception(prcp, pet, ci, hi, pn, ei)
-        
-            implicit none
-            
-            real(sp), intent(in) :: prcp, pet, ci
-            real(sp), intent(inout) :: hi
-            real(sp), intent(out) :: pn, ei
-            
-            ei = min(pet, prcp + hi * ci)
-            
-            pn = max(0._sp, prcp - ci * (1._sp - hi) - ei)
-            
-            hi = hi + (prcp - ei - pn) / ci
-            
-        end subroutine GR_interception
-    
-    
-        subroutine GR_production(pn, en, cp, beta, hp, pr, perc)
-        
-            implicit none
-            
-            real(sp), intent(in) :: pn, en, cp, beta
-            real(sp), intent(inout) :: hp
-            real(sp), intent(out) :: pr, perc
-            
-            real(sp) :: inv_cp, ps, es, hp_imd
-            
-            inv_cp = 1._sp / cp
-            pr = 0._sp
-            
-            ps = cp * (1._sp - hp * hp) * tanh(pn * inv_cp) / &
-            & (1._sp + hp * tanh(pn * inv_cp))
-            
-            es = (hp * cp) * (2._sp - hp) * tanh(en * inv_cp) / &
-            & (1._sp + (1._sp - hp) * tanh(en * inv_cp))
-            
-            hp_imd = hp + (ps - es) * inv_cp
-            
-            if (pn .gt. 0) then
-            
-                pr = pn - (hp_imd - hp) * cp
-            
-            end if
-            
-            perc = (hp_imd * cp) * (1._sp - (1._sp + (hp_imd / beta) ** 4) ** (- 0.25_sp))
-            
-            hp = hp_imd - perc * inv_cp
-
-        end subroutine GR_production
-        
-        
-        subroutine GR_exchange(exc, hft, l)
-        
-            implicit none
-            
-            real(sp), intent(in) :: exc
-            real(sp), intent(inout) :: hft
-            real(sp), intent(out) :: l
-            
-            l = exc * hft ** 3.5_sp
-        
-        end subroutine GR_exchange
-
-        
-        subroutine GR_transferN(n, prcp, pr, ct, ht, q)
-        
-            implicit none
-            
-            real(sp), intent(in) :: n, prcp, pr, ct
-            real(sp), intent(inout) :: ht
-            real(sp), intent(out) :: q
-            
-            real(sp) :: pr_imd, ht_imd, nm1, d1pnm1
-            
-            nm1 = n - 1._sp
-            d1pnm1 = 1._sp / nm1
-            
-            if (prcp .lt. 0._sp) then
-            
-                pr_imd = ((ht * ct) ** (- nm1) - ct ** (- nm1)) ** (- d1pnm1) - (ht * ct)
-                
-            else
-            
-                pr_imd = pr
-                
-            end if
-            
-            ht_imd = max(1.e-6_sp, ht + pr_imd / ct)
-            
-            ht = (((ht_imd * ct) ** (- nm1) + ct ** (- nm1)) ** (- d1pnm1)) / ct
-            
-            q = (ht_imd - ht) * ct
-        
-        end subroutine GR_transferN
-        
         
         subroutine upstream_discharge(dt, dx, nrow, ncol, &
         & flwdir, drained_area, row, col, q, qup)
@@ -209,7 +108,7 @@ module md_operator
         end subroutine sparse_upstream_discharge
 
 
-        subroutine GR_transfer1(dt, qup, lr, hr, qrout)
+        subroutine linear_routing(dt, qup, lr, hr, qrout)
             
             implicit none
             
@@ -226,7 +125,7 @@ module md_operator
             
             qrout = hr_imd - hr
         
-        end subroutine GR_transfer1
+        end subroutine linear_routing
         
         
-end module md_operator
+end module md_routing_operator

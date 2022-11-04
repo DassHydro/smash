@@ -522,19 +522,16 @@ CONTAINS
 
 END MODULE MWD_OUTPUT_DIFF
 
-!%      This module `md_operator` encapsulates all SMASH operator.
+!%      This module `md_gr_operator` encapsulates all SMASH GR operator.
 !%      This module is differentiated.
 !%
 !%      contains
 !%
-!%      [1] GR_interception
-!%      [2] GR_production
-!%      [3] GR_exchange
-!%      [4] GR_transferN
-!%      [5] upstream_discharge
-!%      [6] sparse_upstream_discharge
-!%      [7] GR_transfer1
-MODULE MD_OPERATOR_DIFF
+!%      [1] gr_interception
+!%      [2] gr_production
+!%      [3] gr_exchange
+!%      [4] gr_transfer
+MODULE MD_GR_OPERATOR_DIFF
 !% only : sp
   USE MD_COMMON
   IMPLICIT NONE
@@ -864,11 +861,11 @@ CONTAINS
     l = exc*hft**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
-!  Differentiation of gr_transfern in forward (tangent) mode (with options fixinterface):
+!  Differentiation of gr_transfer in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: q ht
 !   with respect to varying inputs: ht ct pr
-  SUBROUTINE GR_TRANSFERN_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, &
-&   q_d)
+  SUBROUTINE GR_TRANSFER_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, q_d&
+& )
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: n, prcp, pr, ct
     REAL(sp), INTENT(IN) :: pr_d, ct_d
@@ -967,13 +964,13 @@ CONTAINS
     ht = pwr3/ct
     q_d = ct*(ht_imd_d-ht_d) + (ht_imd-ht)*ct_d
     q = (ht_imd-ht)*ct
-  END SUBROUTINE GR_TRANSFERN_D
+  END SUBROUTINE GR_TRANSFER_D
 
-!  Differentiation of gr_transfern in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of gr_transfer in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: q ht ct
 !   with respect to varying inputs: ht ct pr
-  SUBROUTINE GR_TRANSFERN_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, &
-&   q_b)
+  SUBROUTINE GR_TRANSFER_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, q_b&
+& )
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: n, prcp, pr, ct
     REAL(sp) :: pr_b, ct_b
@@ -1109,9 +1106,9 @@ CONTAINS
       END IF
       pr_b = 0.0_4
     END IF
-  END SUBROUTINE GR_TRANSFERN_B
+  END SUBROUTINE GR_TRANSFER_B
 
-  SUBROUTINE GR_TRANSFERN(n, prcp, pr, ct, ht, q)
+  SUBROUTINE GR_TRANSFER(n, prcp, pr, ct, ht, q)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: n, prcp, pr, ct
     REAL(sp), INTENT(INOUT) :: ht
@@ -1156,8 +1153,24 @@ CONTAINS
     pwr3 = pwx3**pwy3
     ht = pwr3/ct
     q = (ht_imd-ht)*ct
-  END SUBROUTINE GR_TRANSFERN
+  END SUBROUTINE GR_TRANSFER
 
+END MODULE MD_GR_OPERATOR_DIFF
+
+!%      This module `md_routing_operator` encapsulates all SMASH routing operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] upstream_discharge
+!%      [2] sparse_upstream_discharge
+!%      [3] linear_routing
+MODULE MD_ROUTING_OPERATOR_DIFF
+!% only : sp
+  USE MD_COMMON
+  IMPLICIT NONE
+
+CONTAINS
 !  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
@@ -1400,11 +1413,11 @@ CONTAINS
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
 
-!  Differentiation of gr_transfer1 in forward (tangent) mode (with options fixinterface):
+!  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: hr qrout
 !   with respect to varying inputs: qup hr lr
-  SUBROUTINE GR_TRANSFER1_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout, &
-&   qrout_d)
+  SUBROUTINE LINEAR_ROUTING_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout&
+&   , qrout_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(IN) :: qup, lr
@@ -1429,13 +1442,13 @@ CONTAINS
     hr = hr_imd*temp
     qrout_d = hr_imd_d - hr_d
     qrout = hr_imd - hr
-  END SUBROUTINE GR_TRANSFER1_D
+  END SUBROUTINE LINEAR_ROUTING_D
 
-!  Differentiation of gr_transfer1 in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of linear_routing in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: hr qrout lr
 !   with respect to varying inputs: qup hr lr
-  SUBROUTINE GR_TRANSFER1_B(dt, qup, qup_b, lr, lr_b, hr, hr_b, qrout, &
-&   qrout_b)
+  SUBROUTINE LINEAR_ROUTING_B(dt, qup, qup_b, lr, lr_b, hr, hr_b, qrout&
+&   , qrout_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(IN) :: qup, lr
@@ -1458,9 +1471,9 @@ CONTAINS
     lr_b = lr_b + dt*arg1_b/(lr**2*60._sp)
     hr_b = hr_imd_b
     qup_b = hr_imd_b
-  END SUBROUTINE GR_TRANSFER1_B
+  END SUBROUTINE LINEAR_ROUTING_B
 
-  SUBROUTINE GR_TRANSFER1(dt, qup, lr, hr, qrout)
+  SUBROUTINE LINEAR_ROUTING(dt, qup, lr, hr, qrout)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt
     REAL(sp), INTENT(IN) :: qup, lr
@@ -1473,9 +1486,9 @@ CONTAINS
     arg1 = -(dt/(lr*60._sp))
     hr = hr_imd*EXP(arg1)
     qrout = hr_imd - hr
-  END SUBROUTINE GR_TRANSFER1
+  END SUBROUTINE LINEAR_ROUTING
 
-END MODULE MD_OPERATOR_DIFF
+END MODULE MD_ROUTING_OPERATOR_DIFF
 
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MD_COMMON
@@ -3952,9 +3965,11 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost, hyper_compuste_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -4122,10 +4137,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
             prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
 &             pr+perc)*parameters_d%alpha(row, col)
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -4144,14 +4159,14 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prl, prl_d, parameters%cst(&
-&                         row, col), parameters_d%cst(row, col), states%&
-&                         hst(row, col), states_d%hst(row, col), ql, &
-&                         ql_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
+            CALL GR_TRANSFER_D(5._sp, prcp, prl, prl_d, parameters%cst(&
+&                        row, col), parameters_d%cst(row, col), states%&
+&                        hst(row, col), states_d%hst(row, col), ql, ql_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -4200,10 +4215,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 &                                        mesh%rowcol_to_ind_sparse, row&
 &                                        , col, sparse_q, sparse_q_d, &
 &                                        qup, qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -4213,10 +4228,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 &                                 mesh%ncol, mesh%flwdir, mesh%&
 &                                 drained_area, row, col, q, q_d, qup, &
 &                                 qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -4296,9 +4311,11 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost, hyper_compuste_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -4476,8 +4493,8 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(2)
@@ -4491,11 +4508,11 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             CALL PUSHREAL4(states%hst(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(4)
@@ -4540,8 +4557,8 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(3)
@@ -4551,8 +4568,8 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(2)
@@ -4634,9 +4651,10 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
@@ -4651,9 +4669,10 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
 &                                    , mesh%ncol, mesh%nac, mesh%flwdir&
@@ -4715,13 +4734,13 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
         END IF
         prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
         CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
-&                     , col), parameters_b%cst(row, col), states%hst(row&
-&                     , col), states_b%hst(row, col), ql, ql_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
+&                    col), parameters_b%cst(row, col), states%hst(row, &
+&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                     , col), parameters_b%cft(row, col), states%hft(row&
-&                     , col), states_b%hft(row, col), qr, qr_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                    col), parameters_b%cft(row, col), states%hft(row, &
+&                    col), states_b%hft(row, col), qr, qr_b)
         parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
 &         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
         temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
@@ -4735,9 +4754,9 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
         GOTO 100
       END IF
       CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                   col), parameters_b%cft(row, col), states%hft(row, &
-&                   col), states_b%hft(row, col), qr, qr_b)
+      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                  col), parameters_b%cft(row, col), states%hft(row, col&
+&                  ), states_b%hft(row, col), qr, qr_b)
       parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
 &       perc)*prr_b - (pr+perc)*prd_b
       temp_b = (1._sp-parameters%alpha(row, col))*prd_b
@@ -4824,9 +4843,11 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost, hyper_compuste_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -4957,8 +4978,8 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
           CASE (0) 
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -4968,10 +4989,10 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
             prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -5006,16 +5027,16 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 &                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
@@ -5123,9 +5144,11 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -5301,10 +5324,10 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
             prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
 &             pr+perc)*parameters_d%alpha(row, col)
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -5323,14 +5346,14 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prl, prl_d, parameters%cst(&
-&                         row, col), parameters_d%cst(row, col), states%&
-&                         hst(row, col), states_d%hst(row, col), ql, &
-&                         ql_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
+            CALL GR_TRANSFER_D(5._sp, prcp, prl, prl_d, parameters%cst(&
+&                        row, col), parameters_d%cst(row, col), states%&
+&                        hst(row, col), states_d%hst(row, col), ql, ql_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -5379,10 +5402,10 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 &                                        mesh%rowcol_to_ind_sparse, row&
 &                                        , col, sparse_q, sparse_q_d, &
 &                                        qup, qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -5392,10 +5415,10 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 &                                 mesh%ncol, mesh%flwdir, mesh%&
 &                                 drained_area, row, col, q, q_d, qup, &
 &                                 qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -5484,9 +5507,11 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -5670,8 +5695,8 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(2)
@@ -5685,11 +5710,11 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             CALL PUSHREAL4(states%hst(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(4)
@@ -5734,8 +5759,8 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(3)
@@ -5745,8 +5770,8 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(2)
@@ -5827,9 +5852,10 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
@@ -5844,9 +5870,10 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
 &                                    , mesh%ncol, mesh%nac, mesh%flwdir&
@@ -5908,13 +5935,13 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
         END IF
         prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
         CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
-&                     , col), parameters_b%cst(row, col), states%hst(row&
-&                     , col), states_b%hst(row, col), ql, ql_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
+&                    col), parameters_b%cst(row, col), states%hst(row, &
+&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                     , col), parameters_b%cft(row, col), states%hft(row&
-&                     , col), states_b%hft(row, col), qr, qr_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                    col), parameters_b%cft(row, col), states%hft(row, &
+&                    col), states_b%hft(row, col), qr, qr_b)
         parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
 &         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
         temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
@@ -5928,9 +5955,9 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
         GOTO 100
       END IF
       CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                   col), parameters_b%cft(row, col), states%hft(row, &
-&                   col), states_b%hft(row, col), qr, qr_b)
+      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                  col), parameters_b%cft(row, col), states%hft(row, col&
+&                  ), states_b%hft(row, col), qr, qr_b)
       parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
 &       perc)*prr_b - (pr+perc)*prd_b
       temp_b = (1._sp-parameters%alpha(row, col))*prd_b
@@ -6028,9 +6055,11 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -6167,8 +6196,8 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
           CASE (0) 
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -6178,10 +6207,10 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
             prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -6216,16 +6245,16 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 &                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF

@@ -74,7 +74,8 @@ f90: \
  obj/mwd_parameters.o \
  obj/mwd_states.o \
  obj/mwd_output.o \
- obj/md_operator.o \
+ obj/md_gr_operator.o \
+ obj/md_routing_operator.o \
  obj/mwd_parameters_manipulation.o \
  obj/mwd_states_manipulation.o \
  obj/mwd_cost.o \
