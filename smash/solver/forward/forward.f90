@@ -1,4 +1,4 @@
-subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
+subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
     
     use md_common !% only: sp
     use mwd_setup !% only: SetupDT
@@ -7,8 +7,9 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     use mwd_parameters !% only: Hyper_ParametersDT
     use mwd_states !% only: Hyper_StatesDT
     use mwd_output !% only: OutputDT
-    use md_operator !% only: GR_interception, GR_production, GR_exchange, &
-    !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
+    !% & gr_transfer
+    use md_routing_operator !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
     use mwd_cost !% only: compute_cost, hyper_compuste_cost
     
     implicit none
@@ -120,7 +121,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                             
                         case(1)
 
-                            call GR_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
+                            call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
                         
                         end select
                         
@@ -134,7 +135,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
 
                         case(0)
                         
-                            call GR_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
+                            call gr_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
                             & states%hp(row, col), pr, perc)
                             
                         end select
@@ -151,7 +152,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                             
                         case(1)
                         
-                            call GR_exchange(parameters%exc(row, col), states%hft(row, col), l)
+                            call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
                         
                         end select
                         
@@ -168,7 +169,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         prr = parameters%alpha(row, col) * (pr + perc) + l
                         prd = (1._sp - parameters%alpha(row, col)) * (pr + perc)
                         
-                        call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
                         qd = max(0._sp, prd + l)
                         
@@ -179,9 +180,9 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                         prl = 0.9_sp * (1._sp - parameters%alpha(row, col)) * (pr + perc)
                         prd = 0.1_sp * (pr + perc)
                         
-                        call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
-                        call GR_transferN(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
+                        call gr_transfer(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
                         
                         qd = max(0._sp, prd + l)
 
@@ -224,7 +225,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                             & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
                             sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
@@ -234,7 +235,7 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
                             &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
                             q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
@@ -325,12 +326,12 @@ subroutine forward(setup, mesh, input_data, parameters, parameters_bgd, states, 
     
     call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
         
-end subroutine forward
+end subroutine base_forward
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-subroutine hyper_forward(setup, mesh, input_data, &
+subroutine base_hyper_forward(setup, mesh, input_data, &
     & hyper_parameters, hyper_parameters_bgd, hyper_states, &
     & hyper_states_bgd, output, cost)
 
@@ -341,8 +342,9 @@ subroutine hyper_forward(setup, mesh, input_data, &
     use mwd_parameters !% only: Hyper_ParametersDT, ParametersDT_initialise, hyper_parameters_to_parameters
     use mwd_states !% only: Hyper_StatesDT, StatesDT_initialise, hyper_states_to_states
     use mwd_output !% only: OutputDT
-    use md_operator !% only: GR_interception, GR_production, GR_exchange, &
-    !% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
+    !% & gr_transfer
+    use md_routing_operator !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
     use mwd_cost !% only: compute_cost
     
     implicit none
@@ -463,7 +465,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
                             
                         case(1)
 
-                            call GR_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
+                            call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
                         
                         end select
                         
@@ -477,7 +479,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
 
                         case(0)
                         
-                            call GR_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
+                            call gr_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
                             & states%hp(row, col), pr, perc)
                             
                         end select
@@ -494,7 +496,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
                             
                         case(1)
                         
-                            call GR_exchange(parameters%exc(row, col), states%hft(row, col), l)
+                            call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
                         
                         end select
                         
@@ -511,7 +513,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
                         prr = parameters%alpha(row, col) * (pr + perc) + l
                         prd = (1._sp - parameters%alpha(row, col)) * (pr + perc)
                         
-                        call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
                         qd = max(0._sp, prd + l)
                         
@@ -522,9 +524,9 @@ subroutine hyper_forward(setup, mesh, input_data, &
                         prl = 0.9_sp * (1._sp - parameters%alpha(row, col)) * (pr + perc)
                         prd = 0.1_sp * (pr + perc)
                         
-                        call GR_transferN(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
-                        call GR_transferN(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
+                        call gr_transfer(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
                         
                         qd = max(0._sp, prd + l)
 
@@ -567,7 +569,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
                             & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
                             sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
@@ -577,7 +579,7 @@ subroutine hyper_forward(setup, mesh, input_data, &
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
                             &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
                             
-                            call GR_transfer1(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
                             q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
@@ -668,4 +670,4 @@ subroutine hyper_forward(setup, mesh, input_data, &
     call hyper_compute_cost(setup, mesh, input_data, hyper_parameters, &
     & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)
 
-end subroutine hyper_forward
+end subroutine base_hyper_forward

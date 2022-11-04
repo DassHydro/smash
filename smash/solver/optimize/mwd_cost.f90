@@ -23,6 +23,8 @@ module mwd_cost
     use mwd_parameters !% only: ParametersDT, Hyper_ParametersDT
     use mwd_states !% only: StatesDT, Hyper_StatesDT
     use mwd_output !% only: OutputDT
+    use mwd_parameters_manipulation
+    use mwd_states_manipulation
 
     implicit none
     
@@ -150,11 +152,11 @@ module mwd_cost
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_bgd_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix, states_bgd_matrix
             
-            call parameters_to_matrix(parameters, parameters_matrix)
-            call parameters_to_matrix(parameters_bgd, parameters_bgd_matrix)
+            call get_parameters(parameters, parameters_matrix)
+            call get_parameters(parameters_bgd, parameters_bgd_matrix)
             
-            call states_to_matrix(states, states_matrix)
-            call states_to_matrix(states_bgd, states_bgd_matrix)
+            call get_states(states, states_matrix)
+            call get_states(states_bgd, states_bgd_matrix)
             
             jreg = 0._sp
             parameters_jreg = 0._sp

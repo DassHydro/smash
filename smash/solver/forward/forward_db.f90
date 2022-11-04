@@ -239,637 +239,7 @@ CONTAINS
     ALLOCATE(hyper_parameters%alpha(n, 1))
     ALLOCATE(hyper_parameters%exc(n, 1))
     ALLOCATE(hyper_parameters%lr(n, 1))
-    CALL SET0_HYPER_PARAMETERS(hyper_parameters)
   END SUBROUTINE HYPER_PARAMETERSDT_INITIALISE
-
-!  Differentiation of parameters_to_matrix in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: matrix
-!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-!%      TODO comment  
-  SUBROUTINE PARAMETERS_TO_MATRIX_D(parameters, parameters_d, matrix, &
-&   matrix_d)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(INOUT) :: matrix_d
-    matrix_d = 0.0_4
-    matrix_d(:, :, 1) = parameters_d%ci(:, :)
-    matrix(:, :, 1) = parameters%ci(:, :)
-    matrix_d(:, :, 2) = parameters_d%cp(:, :)
-    matrix(:, :, 2) = parameters%cp(:, :)
-    matrix_d(:, :, 3) = parameters_d%beta(:, :)
-    matrix(:, :, 3) = parameters%beta(:, :)
-    matrix_d(:, :, 4) = parameters_d%cft(:, :)
-    matrix(:, :, 4) = parameters%cft(:, :)
-    matrix_d(:, :, 5) = parameters_d%cst(:, :)
-    matrix(:, :, 5) = parameters%cst(:, :)
-    matrix_d(:, :, 6) = parameters_d%alpha(:, :)
-    matrix(:, :, 6) = parameters%alpha(:, :)
-    matrix_d(:, :, 7) = parameters_d%exc(:, :)
-    matrix(:, :, 7) = parameters%exc(:, :)
-    matrix_d(:, :, 8) = parameters_d%lr(:, :)
-    matrix(:, :, 8) = parameters%lr(:, :)
-  END SUBROUTINE PARAMETERS_TO_MATRIX_D
-
-!  Differentiation of parameters_to_matrix in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: matrix
-!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-!%      TODO comment  
-  SUBROUTINE PARAMETERS_TO_MATRIX_B(parameters, parameters_b, matrix, &
-&   matrix_b)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
-    TYPE(PARAMETERSDT) :: parameters_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(INOUT) :: matrix_b
-    parameters_b%lr = 0.0_4
-    parameters_b%lr = parameters_b%lr + matrix_b(:, :, 8)
-    matrix_b(:, :, 8) = 0.0_4
-    parameters_b%exc = 0.0_4
-    parameters_b%exc = parameters_b%exc + matrix_b(:, :, 7)
-    matrix_b(:, :, 7) = 0.0_4
-    parameters_b%alpha = 0.0_4
-    parameters_b%alpha = parameters_b%alpha + matrix_b(:, :, 6)
-    matrix_b(:, :, 6) = 0.0_4
-    parameters_b%cst = 0.0_4
-    parameters_b%cst = parameters_b%cst + matrix_b(:, :, 5)
-    matrix_b(:, :, 5) = 0.0_4
-    parameters_b%cft = 0.0_4
-    parameters_b%cft = parameters_b%cft + matrix_b(:, :, 4)
-    matrix_b(:, :, 4) = 0.0_4
-    parameters_b%beta = 0.0_4
-    parameters_b%beta = parameters_b%beta + matrix_b(:, :, 3)
-    matrix_b(:, :, 3) = 0.0_4
-    parameters_b%cp = 0.0_4
-    parameters_b%cp = parameters_b%cp + matrix_b(:, :, 2)
-    matrix_b(:, :, 2) = 0.0_4
-    parameters_b%ci = 0.0_4
-    parameters_b%ci = parameters_b%ci + matrix_b(:, :, 1)
-  END SUBROUTINE PARAMETERS_TO_MATRIX_B
-
-!%      TODO comment  
-  SUBROUTINE PARAMETERS_TO_MATRIX(parameters, matrix)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(INOUT) :: matrix
-    matrix(:, :, 1) = parameters%ci(:, :)
-    matrix(:, :, 2) = parameters%cp(:, :)
-    matrix(:, :, 3) = parameters%beta(:, :)
-    matrix(:, :, 4) = parameters%cft(:, :)
-    matrix(:, :, 5) = parameters%cst(:, :)
-    matrix(:, :, 6) = parameters%alpha(:, :)
-    matrix(:, :, 7) = parameters%exc(:, :)
-    matrix(:, :, 8) = parameters%lr(:, :)
-  END SUBROUTINE PARAMETERS_TO_MATRIX
-
-!  Differentiation of matrix_to_parameters in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   with respect to varying inputs: matrix
-!   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-!%      TODO comment  
-  SUBROUTINE MATRIX_TO_PARAMETERS_D(matrix, matrix_d, parameters, &
-&   parameters_d)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(IN) :: matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(IN) :: matrix_d
-    parameters_d%ci = 0.0_4
-    parameters_d%ci(:, :) = matrix_d(:, :, 1)
-    parameters%ci(:, :) = matrix(:, :, 1)
-    parameters_d%cp = 0.0_4
-    parameters_d%cp(:, :) = matrix_d(:, :, 2)
-    parameters%cp(:, :) = matrix(:, :, 2)
-    parameters_d%beta = 0.0_4
-    parameters_d%beta(:, :) = matrix_d(:, :, 3)
-    parameters%beta(:, :) = matrix(:, :, 3)
-    parameters_d%cft = 0.0_4
-    parameters_d%cft(:, :) = matrix_d(:, :, 4)
-    parameters%cft(:, :) = matrix(:, :, 4)
-    parameters_d%cst = 0.0_4
-    parameters_d%cst(:, :) = matrix_d(:, :, 5)
-    parameters%cst(:, :) = matrix(:, :, 5)
-    parameters_d%alpha = 0.0_4
-    parameters_d%alpha(:, :) = matrix_d(:, :, 6)
-    parameters%alpha(:, :) = matrix(:, :, 6)
-    parameters_d%exc = 0.0_4
-    parameters_d%exc(:, :) = matrix_d(:, :, 7)
-    parameters%exc(:, :) = matrix(:, :, 7)
-    parameters_d%lr = 0.0_4
-    parameters_d%lr(:, :) = matrix_d(:, :, 8)
-    parameters%lr(:, :) = matrix(:, :, 8)
-  END SUBROUTINE MATRIX_TO_PARAMETERS_D
-
-!  Differentiation of matrix_to_parameters in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   with respect to varying inputs: matrix
-!   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-!%      TODO comment  
-  SUBROUTINE MATRIX_TO_PARAMETERS_B(matrix, matrix_b, parameters, &
-&   parameters_b)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(IN) :: matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: matrix_b
-    matrix_b = 0.0_4
-    matrix_b(:, :, 8) = matrix_b(:, :, 8) + parameters_b%lr
-    matrix_b(:, :, 7) = matrix_b(:, :, 7) + parameters_b%exc
-    matrix_b(:, :, 6) = matrix_b(:, :, 6) + parameters_b%alpha
-    matrix_b(:, :, 5) = matrix_b(:, :, 5) + parameters_b%cst
-    matrix_b(:, :, 4) = matrix_b(:, :, 4) + parameters_b%cft
-    matrix_b(:, :, 3) = matrix_b(:, :, 3) + parameters_b%beta
-    matrix_b(:, :, 2) = matrix_b(:, :, 2) + parameters_b%cp
-    matrix_b(:, :, 1) = matrix_b(:, :, 1) + parameters_b%ci
-  END SUBROUTINE MATRIX_TO_PARAMETERS_B
-
-!%      TODO comment  
-  SUBROUTINE MATRIX_TO_PARAMETERS(matrix, parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np), INTENT(IN) :: matrix
-    parameters%ci(:, :) = matrix(:, :, 1)
-    parameters%cp(:, :) = matrix(:, :, 2)
-    parameters%beta(:, :) = matrix(:, :, 3)
-    parameters%cft(:, :) = matrix(:, :, 4)
-    parameters%cst(:, :) = matrix(:, :, 5)
-    parameters%alpha(:, :) = matrix(:, :, 6)
-    parameters%exc(:, :) = matrix(:, :, 7)
-    parameters%lr(:, :) = matrix(:, :, 8)
-  END SUBROUTINE MATRIX_TO_PARAMETERS
-
-!%      TODO comment  
-  SUBROUTINE VECTOR_TO_PARAMETERS(vector, parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(np), INTENT(IN) :: vector
-    parameters%ci = vector(1)
-    parameters%cp = vector(2)
-    parameters%beta = vector(3)
-    parameters%cft = vector(4)
-    parameters%cst = vector(5)
-    parameters%alpha = vector(6)
-    parameters%exc = vector(7)
-    parameters%lr = vector(8)
-  END SUBROUTINE VECTOR_TO_PARAMETERS
-
-!%      TODO comment  
-  SUBROUTINE SET0_PARAMETERS(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(np) :: vector0
-    vector0 = 0._sp
-    CALL VECTOR_TO_PARAMETERS(vector0, parameters)
-  END SUBROUTINE SET0_PARAMETERS
-
-!%      TODO comment  
-  SUBROUTINE SET1_PARAMETERS(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(np) :: vector1
-    vector1 = 1._sp
-    CALL VECTOR_TO_PARAMETERS(vector1, parameters)
-  END SUBROUTINE SET1_PARAMETERS
-
-!  Differentiation of hyper_parameters_to_matrix in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: matrix
-!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
-!                *(hyper_parameters.beta) *(hyper_parameters.cft)
-!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
-!                *(hyper_parameters.exc) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.lr:in
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_MATRIX_D(hyper_parameters, &
-&   hyper_parameters_d, matrix, matrix_d)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(INOUT) :: matrix_d
-    matrix_d = 0.0_4
-    matrix_d(:, :, 1) = hyper_parameters_d%ci(:, :)
-    matrix(:, :, 1) = hyper_parameters%ci(:, :)
-    matrix_d(:, :, 2) = hyper_parameters_d%cp(:, :)
-    matrix(:, :, 2) = hyper_parameters%cp(:, :)
-    matrix_d(:, :, 3) = hyper_parameters_d%beta(:, :)
-    matrix(:, :, 3) = hyper_parameters%beta(:, :)
-    matrix_d(:, :, 4) = hyper_parameters_d%cft(:, :)
-    matrix(:, :, 4) = hyper_parameters%cft(:, :)
-    matrix_d(:, :, 5) = hyper_parameters_d%cst(:, :)
-    matrix(:, :, 5) = hyper_parameters%cst(:, :)
-    matrix_d(:, :, 6) = hyper_parameters_d%alpha(:, :)
-    matrix(:, :, 6) = hyper_parameters%alpha(:, :)
-    matrix_d(:, :, 7) = hyper_parameters_d%exc(:, :)
-    matrix(:, :, 7) = hyper_parameters%exc(:, :)
-    matrix_d(:, :, 8) = hyper_parameters_d%lr(:, :)
-    matrix(:, :, 8) = hyper_parameters%lr(:, :)
-  END SUBROUTINE HYPER_PARAMETERS_TO_MATRIX_D
-
-!  Differentiation of hyper_parameters_to_matrix in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: matrix
-!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
-!                *(hyper_parameters.beta) *(hyper_parameters.cft)
-!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
-!                *(hyper_parameters.exc) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.lr:in
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_MATRIX_B(hyper_parameters, &
-&   hyper_parameters_b, matrix, matrix_b)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(INOUT) :: matrix_b
-    hyper_parameters_b%lr = 0.0_4
-    hyper_parameters_b%lr = hyper_parameters_b%lr + matrix_b(:, :, 8)
-    matrix_b(:, :, 8) = 0.0_4
-    hyper_parameters_b%exc = 0.0_4
-    hyper_parameters_b%exc = hyper_parameters_b%exc + matrix_b(:, :, 7)
-    matrix_b(:, :, 7) = 0.0_4
-    hyper_parameters_b%alpha = 0.0_4
-    hyper_parameters_b%alpha = hyper_parameters_b%alpha + matrix_b(:, :&
-&     , 6)
-    matrix_b(:, :, 6) = 0.0_4
-    hyper_parameters_b%cst = 0.0_4
-    hyper_parameters_b%cst = hyper_parameters_b%cst + matrix_b(:, :, 5)
-    matrix_b(:, :, 5) = 0.0_4
-    hyper_parameters_b%cft = 0.0_4
-    hyper_parameters_b%cft = hyper_parameters_b%cft + matrix_b(:, :, 4)
-    matrix_b(:, :, 4) = 0.0_4
-    hyper_parameters_b%beta = 0.0_4
-    hyper_parameters_b%beta = hyper_parameters_b%beta + matrix_b(:, :, 3&
-&     )
-    matrix_b(:, :, 3) = 0.0_4
-    hyper_parameters_b%cp = 0.0_4
-    hyper_parameters_b%cp = hyper_parameters_b%cp + matrix_b(:, :, 2)
-    matrix_b(:, :, 2) = 0.0_4
-    hyper_parameters_b%ci = 0.0_4
-    hyper_parameters_b%ci = hyper_parameters_b%ci + matrix_b(:, :, 1)
-  END SUBROUTINE HYPER_PARAMETERS_TO_MATRIX_B
-
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_MATRIX(hyper_parameters, matrix)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(INOUT) :: matrix
-    matrix(:, :, 1) = hyper_parameters%ci(:, :)
-    matrix(:, :, 2) = hyper_parameters%cp(:, :)
-    matrix(:, :, 3) = hyper_parameters%beta(:, :)
-    matrix(:, :, 4) = hyper_parameters%cft(:, :)
-    matrix(:, :, 5) = hyper_parameters%cst(:, :)
-    matrix(:, :, 6) = hyper_parameters%alpha(:, :)
-    matrix(:, :, 7) = hyper_parameters%exc(:, :)
-    matrix(:, :, 8) = hyper_parameters%lr(:, :)
-  END SUBROUTINE HYPER_PARAMETERS_TO_MATRIX
-
-!%      TODO comment
-  SUBROUTINE MATRIX_TO_HYPER_PARAMETERS(matrix, hyper_parameters)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np), INTENT(IN) :: matrix
-    hyper_parameters%ci(:, :) = matrix(:, :, 1)
-    hyper_parameters%cp(:, :) = matrix(:, :, 2)
-    hyper_parameters%beta(:, :) = matrix(:, :, 3)
-    hyper_parameters%cft(:, :) = matrix(:, :, 4)
-    hyper_parameters%cst(:, :) = matrix(:, :, 5)
-    hyper_parameters%alpha(:, :) = matrix(:, :, 6)
-    hyper_parameters%exc(:, :) = matrix(:, :, 7)
-    hyper_parameters%lr(:, :) = matrix(:, :, 8)
-  END SUBROUTINE MATRIX_TO_HYPER_PARAMETERS
-
-!%      TODO comment
-  SUBROUTINE SET0_HYPER_PARAMETERS(hyper_parameters)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: matrix
-    matrix = 0._sp
-    CALL MATRIX_TO_HYPER_PARAMETERS(matrix, hyper_parameters)
-  END SUBROUTINE SET0_HYPER_PARAMETERS
-
-!%      TODO comment
-  SUBROUTINE SET1_HYPER_PARAMETERS(hyper_parameters)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: matrix
-    matrix = 1._sp
-    CALL MATRIX_TO_HYPER_PARAMETERS(matrix, hyper_parameters)
-  END SUBROUTINE SET1_HYPER_PARAMETERS
-
-!  Differentiation of hyper_parameters_to_parameters in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
-!                *(hyper_parameters.beta) *(hyper_parameters.cft)
-!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
-!                *(hyper_parameters.exc) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.lr:in
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
-&   hyper_parameters_d, parameters, parameters_d, setup, input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_d
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix_d
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: dpb_d
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    REAL(sp) :: a_d, b_d
-    INTRINSIC TRIM
-    REAL(sp), DIMENSION(size(parameters%cp, 1), size(parameters%cp, 2)) &
-&   :: temp
-    CALL HYPER_PARAMETERS_TO_MATRIX_D(hyper_parameters, &
-&                               hyper_parameters_d, &
-&                               hyper_parameters_matrix, &
-&                               hyper_parameters_matrix_d)
-    CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
-    parameters_matrix_d = 0.0_4
-    a_d = 0.0_4
-    b_d = 0.0_4
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
-      parameters_matrix_d(:, :, i) = hyper_parameters_matrix_d(1, 1, i)
-      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          a_d = hyper_parameters_matrix_d(j+1, 1, i)
-          a = hyper_parameters_matrix(j+1, 1, i)
-          b = 1._sp
-          b_d = 0.0_4
-        CASE ('hyper-polynomial') 
-          a_d = hyper_parameters_matrix_d(2*j, 1, i)
-          a = hyper_parameters_matrix(2*j, 1, i)
-          b_d = hyper_parameters_matrix_d(2*j+1, 1, i)
-          b = hyper_parameters_matrix(2*j+1, 1, i)
-        END SELECT
-        temp = d**b
-        WHERE (d .LE. 0.0) 
-          dpb_d = 0.0_4
-        ELSEWHERE
-          dpb_d = temp*LOG(d)*b_d
-        END WHERE
-        dpb = temp
-        parameters_matrix_d(:, :, i) = parameters_matrix_d(:, :, i) + &
-&         dpb*a_d + a*dpb_d
-        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
-      END DO
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) 
-        parameters_matrix_d(:, :, i) = 0.0_4
-        parameters_matrix(:, :, i) = setup%lb_parameters(i)
-      END WHERE
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) 
-        parameters_matrix_d(:, :, i) = 0.0_4
-        parameters_matrix(:, :, i) = setup%ub_parameters(i)
-      END WHERE
-    END DO
-    CALL MATRIX_TO_PARAMETERS_D(parameters_matrix, parameters_matrix_d, &
-&                         parameters, parameters_d)
-  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D
-
-!  Differentiation of hyper_parameters_to_parameters in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
-!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
-!                *(hyper_parameters.beta) *(hyper_parameters.cft)
-!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
-!                *(hyper_parameters.exc) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.lr:in
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B(hyper_parameters, &
-&   hyper_parameters_b, parameters, parameters_b, setup, input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_b
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix_b
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: dpb_b
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    REAL(sp) :: a_b, b_b
-    INTRINSIC TRIM
-    INTEGER :: branch
-    CALL HYPER_PARAMETERS_TO_MATRIX(hyper_parameters, &
-&                             hyper_parameters_matrix)
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
-      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          CALL PUSHREAL4(a)
-          a = hyper_parameters_matrix(j+1, 1, i)
-          CALL PUSHREAL4(b)
-          b = 1._sp
-          CALL PUSHCONTROL2B(1)
-        CASE ('hyper-polynomial') 
-          CALL PUSHREAL4(a)
-          a = hyper_parameters_matrix(2*j, 1, i)
-          CALL PUSHREAL4(b)
-          b = hyper_parameters_matrix(2*j+1, 1, i)
-          CALL PUSHCONTROL2B(2)
-        CASE DEFAULT
-          CALL PUSHCONTROL2B(0)
-        END SELECT
-        dpb = d**b
-        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
-      END DO
-      CALL PUSHREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
-&                   , 1)*SIZE(parameters%cp, 2))
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
-    END DO
-    CALL MATRIX_TO_PARAMETERS(parameters_matrix, parameters)
-    CALL MATRIX_TO_PARAMETERS_B(parameters_matrix, parameters_matrix_b, &
-&                         parameters, parameters_b)
-    hyper_parameters_matrix_b = 0.0_4
-    a_b = 0.0_4
-    b_b = 0.0_4
-    DO i=np,1,-1
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
-&       parameters_matrix_b(:, :, i) = 0.0_4
-      CALL POPREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
-&                  , 1)*SIZE(parameters%cp, 2))
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix_b(:, :, i) = 0.0_4
-      DO j=setup%nd,1,-1
-        d = input_data%descriptor(:, :, j)
-        dpb = d**b
-        dpb_b = 0.0_4
-        a_b = a_b + SUM(dpb*parameters_matrix_b(:, :, i))
-        dpb_b = a*parameters_matrix_b(:, :, i)
-        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            CALL POPREAL4(b)
-            CALL POPREAL4(a)
-            hyper_parameters_matrix_b(j+1, 1, i) = &
-&             hyper_parameters_matrix_b(j+1, 1, i) + a_b
-            a_b = 0.0_4
-            b_b = 0.0_4
-          ELSE
-            CALL POPREAL4(b)
-            hyper_parameters_matrix_b(2*j+1, 1, i) = &
-&             hyper_parameters_matrix_b(2*j+1, 1, i) + b_b
-            CALL POPREAL4(a)
-            hyper_parameters_matrix_b(2*j, 1, i) = &
-&             hyper_parameters_matrix_b(2*j, 1, i) + a_b
-            a_b = 0.0_4
-            b_b = 0.0_4
-          END IF
-        END IF
-      END DO
-      hyper_parameters_matrix_b(1, 1, i) = hyper_parameters_matrix_b(1, &
-&       1, i) + SUM(parameters_matrix_b(:, :, i))
-      parameters_matrix_b(:, :, i) = 0.0_4
-    END DO
-    CALL HYPER_PARAMETERS_TO_MATRIX_B(hyper_parameters, &
-&                               hyper_parameters_b, &
-&                               hyper_parameters_matrix, &
-&                               hyper_parameters_matrix_b)
-  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B
-
-!%      TODO comment
-  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters&
-&   , setup, input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    INTRINSIC TRIM
-    CALL HYPER_PARAMETERS_TO_MATRIX(hyper_parameters, &
-&                             hyper_parameters_matrix)
-    CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
-      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          a = hyper_parameters_matrix(j+1, 1, i)
-          b = 1._sp
-        CASE ('hyper-polynomial') 
-          a = hyper_parameters_matrix(2*j, 1, i)
-          b = hyper_parameters_matrix(2*j+1, 1, i)
-        END SELECT
-        dpb = d**b
-        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
-      END DO
-      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
-      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
-&       parameters_matrix(:, :, i) = setup%ub_parameters(i)
-    END DO
-    CALL MATRIX_TO_PARAMETERS(parameters_matrix, parameters)
-  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS
 
 END MODULE MWD_PARAMETERS_DIFF
 
@@ -1058,539 +428,7 @@ CONTAINS
     ALLOCATE(hyper_states%hft(n, 1))
     ALLOCATE(hyper_states%hst(n, 1))
     ALLOCATE(hyper_states%hlr(n, 1))
-    CALL SET0_HYPER_STATES(hyper_states)
   END SUBROUTINE HYPER_STATESDT_INITIALISE
-
-!  Differentiation of states_to_matrix in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: matrix
-!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
-!%      TODO comment 
-  SUBROUTINE STATES_TO_MATRIX_D(states, states_d, matrix, matrix_d)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(IN) :: states
-    TYPE(STATESDT), INTENT(IN) :: states_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(INOUT) :: matrix_d
-    matrix_d = 0.0_4
-    matrix_d(:, :, 1) = states_d%hi(:, :)
-    matrix(:, :, 1) = states%hi(:, :)
-    matrix_d(:, :, 2) = states_d%hp(:, :)
-    matrix(:, :, 2) = states%hp(:, :)
-    matrix_d(:, :, 3) = states_d%hft(:, :)
-    matrix(:, :, 3) = states%hft(:, :)
-    matrix_d(:, :, 4) = states_d%hst(:, :)
-    matrix(:, :, 4) = states%hst(:, :)
-    matrix_d(:, :, 5) = states_d%hlr(:, :)
-    matrix(:, :, 5) = states%hlr(:, :)
-  END SUBROUTINE STATES_TO_MATRIX_D
-
-!  Differentiation of states_to_matrix in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: matrix
-!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
-!%      TODO comment 
-  SUBROUTINE STATES_TO_MATRIX_B(states, states_b, matrix, matrix_b)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(IN) :: states
-    TYPE(STATESDT) :: states_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(INOUT) :: matrix_b
-    states_b%hlr = 0.0_4
-    states_b%hlr = states_b%hlr + matrix_b(:, :, 5)
-    matrix_b(:, :, 5) = 0.0_4
-    states_b%hst = 0.0_4
-    states_b%hst = states_b%hst + matrix_b(:, :, 4)
-    matrix_b(:, :, 4) = 0.0_4
-    states_b%hft = 0.0_4
-    states_b%hft = states_b%hft + matrix_b(:, :, 3)
-    matrix_b(:, :, 3) = 0.0_4
-    states_b%hp = 0.0_4
-    states_b%hp = states_b%hp + matrix_b(:, :, 2)
-    matrix_b(:, :, 2) = 0.0_4
-    states_b%hi = 0.0_4
-    states_b%hi = states_b%hi + matrix_b(:, :, 1)
-  END SUBROUTINE STATES_TO_MATRIX_B
-
-!%      TODO comment 
-  SUBROUTINE STATES_TO_MATRIX(states, matrix)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(IN) :: states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(INOUT) :: matrix
-    matrix(:, :, 1) = states%hi(:, :)
-    matrix(:, :, 2) = states%hp(:, :)
-    matrix(:, :, 3) = states%hft(:, :)
-    matrix(:, :, 4) = states%hst(:, :)
-    matrix(:, :, 5) = states%hlr(:, :)
-  END SUBROUTINE STATES_TO_MATRIX
-
-!  Differentiation of matrix_to_states in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   with respect to varying inputs: matrix
-!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
-!%      TODO comment
-  SUBROUTINE MATRIX_TO_STATES_D(matrix, matrix_d, states, states_d)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(IN) :: matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(IN) :: matrix_d
-    states_d%hi = 0.0_4
-    states_d%hi(:, :) = matrix_d(:, :, 1)
-    states%hi(:, :) = matrix(:, :, 1)
-    states_d%hp = 0.0_4
-    states_d%hp(:, :) = matrix_d(:, :, 2)
-    states%hp(:, :) = matrix(:, :, 2)
-    states_d%hft = 0.0_4
-    states_d%hft(:, :) = matrix_d(:, :, 3)
-    states%hft(:, :) = matrix(:, :, 3)
-    states_d%hst = 0.0_4
-    states_d%hst(:, :) = matrix_d(:, :, 4)
-    states%hst(:, :) = matrix(:, :, 4)
-    states_d%hlr = 0.0_4
-    states_d%hlr(:, :) = matrix_d(:, :, 5)
-    states%hlr(:, :) = matrix(:, :, 5)
-  END SUBROUTINE MATRIX_TO_STATES_D
-
-!  Differentiation of matrix_to_states in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   with respect to varying inputs: matrix
-!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
-!                states.hst:in states.hlr:in
-!%      TODO comment
-  SUBROUTINE MATRIX_TO_STATES_B(matrix, matrix_b, states, states_b)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(IN) :: matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   matrix_b
-    matrix_b = 0.0_4
-    matrix_b(:, :, 5) = matrix_b(:, :, 5) + states_b%hlr
-    matrix_b(:, :, 4) = matrix_b(:, :, 4) + states_b%hst
-    matrix_b(:, :, 3) = matrix_b(:, :, 3) + states_b%hft
-    matrix_b(:, :, 2) = matrix_b(:, :, 2) + states_b%hp
-    matrix_b(:, :, 1) = matrix_b(:, :, 1) + states_b%hi
-  END SUBROUTINE MATRIX_TO_STATES_B
-
-!%      TODO comment
-  SUBROUTINE MATRIX_TO_STATES(matrix, states)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns), &
-&   INTENT(IN) :: matrix
-    states%hi(:, :) = matrix(:, :, 1)
-    states%hp(:, :) = matrix(:, :, 2)
-    states%hft(:, :) = matrix(:, :, 3)
-    states%hst(:, :) = matrix(:, :, 4)
-    states%hlr(:, :) = matrix(:, :, 5)
-  END SUBROUTINE MATRIX_TO_STATES
-
-!%      TODO comment
-  SUBROUTINE VECTOR_TO_STATES(vector, states)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(ns), INTENT(IN) :: vector
-    states%hi = vector(1)
-    states%hp = vector(2)
-    states%hft = vector(3)
-    states%hst = vector(4)
-    states%hlr = vector(5)
-  END SUBROUTINE VECTOR_TO_STATES
-
-!%      TODO comment        
-  SUBROUTINE SET0_STATES(states)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(ns) :: vector0
-    vector0 = 0._sp
-    CALL VECTOR_TO_STATES(vector0, states)
-  END SUBROUTINE SET0_STATES
-
-!%      TODO comment        
-  SUBROUTINE SET1_STATES(states)
-    IMPLICIT NONE
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(ns) :: vector1
-    vector1 = 1._sp
-    CALL VECTOR_TO_STATES(vector1, states)
-  END SUBROUTINE SET1_STATES
-
-!  Differentiation of hyper_states_to_matrix in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: matrix
-!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
-!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-!%      TODO comment
-  SUBROUTINE HYPER_STATES_TO_MATRIX_D(hyper_states, hyper_states_d, &
-&   matrix, matrix_d)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(INOUT) :: matrix_d
-    matrix_d = 0.0_4
-    matrix_d(:, :, 1) = hyper_states_d%hi(:, :)
-    matrix(:, :, 1) = hyper_states%hi(:, :)
-    matrix_d(:, :, 2) = hyper_states_d%hp(:, :)
-    matrix(:, :, 2) = hyper_states%hp(:, :)
-    matrix_d(:, :, 3) = hyper_states_d%hft(:, :)
-    matrix(:, :, 3) = hyper_states%hft(:, :)
-    matrix_d(:, :, 4) = hyper_states_d%hst(:, :)
-    matrix(:, :, 4) = hyper_states%hst(:, :)
-    matrix_d(:, :, 5) = hyper_states_d%hlr(:, :)
-    matrix(:, :, 5) = hyper_states%hlr(:, :)
-  END SUBROUTINE HYPER_STATES_TO_MATRIX_D
-
-!  Differentiation of hyper_states_to_matrix in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: matrix
-!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
-!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-!%      TODO comment
-  SUBROUTINE HYPER_STATES_TO_MATRIX_B(hyper_states, hyper_states_b, &
-&   matrix, matrix_b)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    TYPE(HYPER_STATESDT) :: hyper_states_b
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(INOUT) :: matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(INOUT) :: matrix_b
-    hyper_states_b%hlr = 0.0_4
-    hyper_states_b%hlr = hyper_states_b%hlr + matrix_b(:, :, 5)
-    matrix_b(:, :, 5) = 0.0_4
-    hyper_states_b%hst = 0.0_4
-    hyper_states_b%hst = hyper_states_b%hst + matrix_b(:, :, 4)
-    matrix_b(:, :, 4) = 0.0_4
-    hyper_states_b%hft = 0.0_4
-    hyper_states_b%hft = hyper_states_b%hft + matrix_b(:, :, 3)
-    matrix_b(:, :, 3) = 0.0_4
-    hyper_states_b%hp = 0.0_4
-    hyper_states_b%hp = hyper_states_b%hp + matrix_b(:, :, 2)
-    matrix_b(:, :, 2) = 0.0_4
-    hyper_states_b%hi = 0.0_4
-    hyper_states_b%hi = hyper_states_b%hi + matrix_b(:, :, 1)
-  END SUBROUTINE HYPER_STATES_TO_MATRIX_B
-
-!%      TODO comment
-  SUBROUTINE HYPER_STATES_TO_MATRIX(hyper_states, matrix)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(INOUT) :: matrix
-    matrix(:, :, 1) = hyper_states%hi(:, :)
-    matrix(:, :, 2) = hyper_states%hp(:, :)
-    matrix(:, :, 3) = hyper_states%hft(:, :)
-    matrix(:, :, 4) = hyper_states%hst(:, :)
-    matrix(:, :, 5) = hyper_states%hlr(:, :)
-  END SUBROUTINE HYPER_STATES_TO_MATRIX
-
-!%      TODO comment
-  SUBROUTINE MATRIX_TO_HYPER_STATES(matrix, hyper_states)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns), INTENT(IN) :: matrix
-    hyper_states%hi(:, :) = matrix(:, :, 1)
-    hyper_states%hp(:, :) = matrix(:, :, 2)
-    hyper_states%hft(:, :) = matrix(:, :, 3)
-    hyper_states%hst(:, :) = matrix(:, :, 4)
-    hyper_states%hlr(:, :) = matrix(:, :, 5)
-  END SUBROUTINE MATRIX_TO_HYPER_STATES
-
-!%      TODO comment
-  SUBROUTINE SET0_HYPER_STATES(hyper_states)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: matrix
-    matrix = 0._sp
-    CALL MATRIX_TO_HYPER_STATES(matrix, hyper_states)
-  END SUBROUTINE SET0_HYPER_STATES
-
-!%      TODO comment
-  SUBROUTINE SET1_HYPER_STATES(hyper_states)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: matrix
-    matrix = 1._sp
-    CALL MATRIX_TO_HYPER_STATES(matrix, hyper_states)
-  END SUBROUTINE SET1_HYPER_STATES
-
-!  Differentiation of hyper_states_to_states in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
-!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-!%     TODO comment
-  SUBROUTINE HYPER_STATES_TO_STATES_D(hyper_states, hyper_states_d, &
-&   states, states_d, setup, input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_d
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix_d
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), np) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), np) :: &
-&   states_matrix_d
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_d
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    REAL(sp) :: a_d, b_d
-    INTRINSIC TRIM
-    REAL(sp), DIMENSION(size(states%hp, 1), size(states%hp, 2)) :: temp
-    CALL HYPER_STATES_TO_MATRIX_D(hyper_states, hyper_states_d, &
-&                           hyper_states_matrix, hyper_states_matrix_d)
-    CALL STATES_TO_MATRIX(states, states_matrix)
-    states_matrix_d = 0.0_4
-    a_d = 0.0_4
-    b_d = 0.0_4
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
-      states_matrix_d(:, :, i) = hyper_states_matrix_d(1, 1, i)
-      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          a_d = hyper_states_matrix_d(j+1, 1, i)
-          a = hyper_states_matrix(j+1, 1, i)
-          b = 1._sp
-          b_d = 0.0_4
-        CASE ('hyper-polynomial') 
-          a_d = hyper_states_matrix_d(2*j, 1, i)
-          a = hyper_states_matrix(2*j, 1, i)
-          b_d = hyper_states_matrix_d(2*j+1, 1, i)
-          b = hyper_states_matrix(2*j+1, 1, i)
-        END SELECT
-        temp = d**b
-        WHERE (d .LE. 0.0) 
-          dpb_d = 0.0_4
-        ELSEWHERE
-          dpb_d = temp*LOG(d)*b_d
-        END WHERE
-        dpb = temp
-        states_matrix_d(:, :, i) = states_matrix_d(:, :, i) + dpb*a_d + &
-&         a*dpb_d
-        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
-      END DO
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) 
-        states_matrix_d(:, :, i) = 0.0_4
-        states_matrix(:, :, i) = setup%lb_states(i)
-      END WHERE
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) 
-        states_matrix_d(:, :, i) = 0.0_4
-        states_matrix(:, :, i) = setup%ub_states(i)
-      END WHERE
-    END DO
-    CALL MATRIX_TO_STATES_D(states_matrix, states_matrix_d, states, &
-&                     states_d)
-  END SUBROUTINE HYPER_STATES_TO_STATES_D
-
-!  Differentiation of hyper_states_to_states in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
-!                *(states.hst) *(states.hlr)
-!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
-!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-!%     TODO comment
-  SUBROUTINE HYPER_STATES_TO_STATES_B(hyper_states, hyper_states_b, &
-&   states, states_b, setup, input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    TYPE(HYPER_STATESDT) :: hyper_states_b
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_b
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix_b
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), np) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), np) :: &
-&   states_matrix_b
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_b
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    REAL(sp) :: a_b, b_b
-    INTRINSIC TRIM
-    INTEGER :: branch
-    CALL HYPER_STATES_TO_MATRIX(hyper_states, hyper_states_matrix)
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
-      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          CALL PUSHREAL4(a)
-          a = hyper_states_matrix(j+1, 1, i)
-          CALL PUSHREAL4(b)
-          b = 1._sp
-          CALL PUSHCONTROL2B(1)
-        CASE ('hyper-polynomial') 
-          CALL PUSHREAL4(a)
-          a = hyper_states_matrix(2*j, 1, i)
-          CALL PUSHREAL4(b)
-          b = hyper_states_matrix(2*j+1, 1, i)
-          CALL PUSHCONTROL2B(2)
-        CASE DEFAULT
-          CALL PUSHCONTROL2B(0)
-        END SELECT
-        dpb = d**b
-        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
-      END DO
-      CALL PUSHREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*&
-&                   SIZE(states%hp, 2))
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix(:, :, i) = setup%lb_states(i)
-    END DO
-    CALL MATRIX_TO_STATES(states_matrix, states)
-    CALL MATRIX_TO_STATES_B(states_matrix, states_matrix_b, states, &
-&                     states_b)
-    hyper_states_matrix_b = 0.0_4
-    a_b = 0.0_4
-    b_b = 0.0_4
-    DO i=ns,1,-1
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
-&       states_matrix_b(:, :, i) = 0.0_4
-      CALL POPREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*SIZE&
-&                  (states%hp, 2))
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix_b(:, :, i) = 0.0_4
-      DO j=setup%nd,1,-1
-        d = input_data%descriptor(:, :, j)
-        dpb = d**b
-        dpb_b = 0.0_4
-        a_b = a_b + SUM(dpb*states_matrix_b(:, :, i))
-        dpb_b = a*states_matrix_b(:, :, i)
-        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .EQ. 1) THEN
-            CALL POPREAL4(b)
-            CALL POPREAL4(a)
-            hyper_states_matrix_b(j+1, 1, i) = hyper_states_matrix_b(j+1&
-&             , 1, i) + a_b
-            a_b = 0.0_4
-            b_b = 0.0_4
-          ELSE
-            CALL POPREAL4(b)
-            hyper_states_matrix_b(2*j+1, 1, i) = hyper_states_matrix_b(2&
-&             *j+1, 1, i) + b_b
-            CALL POPREAL4(a)
-            hyper_states_matrix_b(2*j, 1, i) = hyper_states_matrix_b(2*j&
-&             , 1, i) + a_b
-            a_b = 0.0_4
-            b_b = 0.0_4
-          END IF
-        END IF
-      END DO
-      hyper_states_matrix_b(1, 1, i) = hyper_states_matrix_b(1, 1, i) + &
-&       SUM(states_matrix_b(:, :, i))
-      states_matrix_b(:, :, i) = 0.0_4
-    END DO
-    CALL HYPER_STATES_TO_MATRIX_B(hyper_states, hyper_states_b, &
-&                           hyper_states_matrix, hyper_states_matrix_b)
-  END SUBROUTINE HYPER_STATES_TO_STATES_B
-
-!%     TODO comment
-  SUBROUTINE HYPER_STATES_TO_STATES(hyper_states, states, setup, &
-&   input_data)
-    IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), np) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
-    INTEGER :: i, j
-    REAL(sp) :: a, b
-    INTRINSIC TRIM
-    CALL HYPER_STATES_TO_MATRIX(hyper_states, hyper_states_matrix)
-    CALL STATES_TO_MATRIX(states, states_matrix)
-!% Add mask later here
-!% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
-      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
-      DO j=1,setup%nd
-        d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
-        CASE ('hyper-linear') 
-          a = hyper_states_matrix(j+1, 1, i)
-          b = 1._sp
-        CASE ('hyper-polynomial') 
-          a = hyper_states_matrix(2*j, 1, i)
-          b = hyper_states_matrix(2*j+1, 1, i)
-        END SELECT
-        dpb = d**b
-        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
-      END DO
-      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
-&       states_matrix(:, :, i) = setup%lb_states(i)
-      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
-&       states_matrix(:, :, i) = setup%ub_states(i)
-    END DO
-    CALL MATRIX_TO_STATES(states_matrix, states)
-  END SUBROUTINE HYPER_STATES_TO_STATES
 
 END MODULE MWD_STATES_DIFF
 
@@ -1684,6 +522,2093 @@ CONTAINS
 
 END MODULE MWD_OUTPUT_DIFF
 
+!%      This module `md_gr_operator` encapsulates all SMASH GR operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] gr_interception
+!%      [2] gr_production
+!%      [3] gr_exchange
+!%      [4] gr_transfer
+MODULE MD_GR_OPERATOR_DIFF
+!% only : sp
+  USE MD_COMMON
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of gr_interception in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: hi ei pn
+!   with respect to varying inputs: hi ci
+!% TODO comment
+  SUBROUTINE GR_INTERCEPTION_D(prcp, pet, ci, ci_d, hi, hi_d, pn, pn_d, &
+&   ei, ei_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: prcp, pet, ci
+    REAL(sp), INTENT(IN) :: ci_d
+    REAL(sp), INTENT(INOUT) :: hi
+    REAL(sp), INTENT(INOUT) :: hi_d
+    REAL(sp), INTENT(OUT) :: pn, ei
+    REAL(sp), INTENT(OUT) :: pn_d, ei_d
+    INTRINSIC MIN
+    INTRINSIC MAX
+    REAL(sp) :: temp
+    IF (pet .GT. prcp + hi*ci) THEN
+      ei_d = ci*hi_d + hi*ci_d
+      ei = prcp + hi*ci
+    ELSE
+      ei = pet
+      ei_d = 0.0_4
+    END IF
+    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
+      pn_d = ci*hi_d - (1._sp-hi)*ci_d - ei_d
+      pn = prcp - ci*(1._sp-hi) - ei
+    ELSE
+      pn = 0._sp
+      pn_d = 0.0_4
+    END IF
+    temp = (prcp-ei-pn)/ci
+    hi_d = hi_d + (-ei_d-pn_d-temp*ci_d)/ci
+    hi = hi + temp
+  END SUBROUTINE GR_INTERCEPTION_D
+
+!  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: hi ei ci pn
+!   with respect to varying inputs: hi ci
+!% TODO comment
+  SUBROUTINE GR_INTERCEPTION_B(prcp, pet, ci, ci_b, hi, hi_b, pn, pn_b, &
+&   ei, ei_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: prcp, pet, ci
+    REAL(sp) :: ci_b
+    REAL(sp), INTENT(INOUT) :: hi
+    REAL(sp), INTENT(INOUT) :: hi_b
+    REAL(sp) :: pn, ei
+    REAL(sp) :: pn_b, ei_b
+    INTRINSIC MIN
+    INTRINSIC MAX
+    REAL(sp) :: temp_b
+    INTEGER :: branch
+    IF (pet .GT. prcp + hi*ci) THEN
+      ei = prcp + hi*ci
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+      ei = pet
+    END IF
+    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
+      pn = prcp - ci*(1._sp-hi) - ei
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+      pn = 0._sp
+    END IF
+    temp_b = hi_b/ci
+    ei_b = ei_b - temp_b
+    pn_b = pn_b - temp_b
+    ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      ci_b = ci_b - (1._sp-hi)*pn_b
+      hi_b = hi_b + ci*pn_b
+      ei_b = ei_b - pn_b
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      hi_b = hi_b + ci*ei_b
+      ci_b = ci_b + hi*ei_b
+    END IF
+  END SUBROUTINE GR_INTERCEPTION_B
+
+!% TODO comment
+  SUBROUTINE GR_INTERCEPTION(prcp, pet, ci, hi, pn, ei)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: prcp, pet, ci
+    REAL(sp), INTENT(INOUT) :: hi
+    REAL(sp), INTENT(OUT) :: pn, ei
+    INTRINSIC MIN
+    INTRINSIC MAX
+    IF (pet .GT. prcp + hi*ci) THEN
+      ei = prcp + hi*ci
+    ELSE
+      ei = pet
+    END IF
+    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
+      pn = prcp - ci*(1._sp-hi) - ei
+    ELSE
+      pn = 0._sp
+    END IF
+    hi = hi + (prcp-ei-pn)/ci
+  END SUBROUTINE GR_INTERCEPTION
+
+!  Differentiation of gr_production in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: hp perc pr
+!   with respect to varying inputs: hp en beta cp pn
+  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, beta_d&
+&   , hp, hp_d, pr, pr_d, perc, perc_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, beta
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, beta_d
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: hp_d
+    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp), INTENT(OUT) :: pr_d, perc_d
+    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
+    INTRINSIC TANH
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_d
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_d
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    REAL(sp) :: temp1
+    REAL(sp) :: temp2
+    inv_cp_d = -(cp_d/cp**2)
+    inv_cp = 1._sp/cp
+    pr = 0._sp
+    temp = TANH(pn*inv_cp)
+    temp0 = TANH(pn*inv_cp)
+    temp1 = cp*(-(hp*hp)+1._sp)
+    temp2 = temp1*temp0/(hp*temp+1._sp)
+    ps_d = (temp0*((1._sp-hp**2)*cp_d-cp*2*hp*hp_d)+temp1*(1.0-TANH(pn*&
+&     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
+&     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
+    ps = temp2
+    temp2 = TANH(en*inv_cp)
+    temp1 = TANH(en*inv_cp)
+    temp0 = hp*cp*(-hp+2._sp)
+    temp = temp0*temp1/((-hp+1._sp)*temp2+1._sp)
+    es_d = (temp1*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp0*(1.0-&
+&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp*((1._sp-hp)*(&
+&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
+&     1._sp-hp)*temp2+1._sp)
+    es = temp
+    hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pn .GT. 0) THEN
+      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
+      pr = pn - (hp_imd-hp)*cp
+    ELSE
+      pr_d = 0.0_4
+    END IF
+    pwx1_d = 4*hp_imd**3*(hp_imd_d-hp_imd*beta_d/beta)/beta**4
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
+    pwr1 = pwx1**(-0.25_sp)
+    perc_d = (1._sp-pwr1)*(cp*hp_imd_d+hp_imd*cp_d) - hp_imd*cp*pwr1_d
+    perc = hp_imd*cp*(1._sp-pwr1)
+    hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
+    hp = hp_imd - perc*inv_cp
+  END SUBROUTINE GR_PRODUCTION_D
+
+!  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: hp beta cp perc pr
+!   with respect to varying inputs: hp en beta cp pn
+  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, beta_b&
+&   , hp, hp_b, pr, pr_b, perc, perc_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, beta
+    REAL(sp) :: pn_b, en_b, cp_b, beta_b
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(INOUT) :: hp_b
+    REAL(sp) :: pr, perc
+    REAL(sp) :: pr_b, perc_b
+    REAL(sp) :: inv_cp, ps, es, hp_imd
+    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
+    INTRINSIC TANH
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_b
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_b
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    REAL(sp) :: temp_b
+    REAL(sp) :: temp1
+    REAL(sp) :: temp2
+    REAL(sp) :: temp3
+    REAL(sp) :: temp_b0
+    REAL(sp) :: temp_b1
+    REAL(sp) :: temp4
+    REAL(sp) :: temp_b2
+    REAL(sp) :: temp_b3
+    REAL(sp) :: temp_b4
+    REAL(sp) :: temp_b5
+    INTEGER :: branch
+    inv_cp = 1._sp/cp
+    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
+&     inv_cp))
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pn .GT. 0) THEN
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    perc = hp_imd*cp*(1._sp-pwr1)
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    inv_cp = 1._sp/cp
+    perc_b = perc_b - inv_cp*hp_b
+    inv_cp_b = -(perc*hp_b)
+    cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
+    pwr1_b = -(hp_imd*cp*perc_b)
+    pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
+    temp_b5 = 4*hp_imd**3*pwx1_b/beta**4
+    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + temp_b5
+    beta_b = beta_b - hp_imd*temp_b5/beta
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      pn_b = pr_b
+      hp_imd_b = hp_imd_b - cp*pr_b
+      hp_b = cp*pr_b
+      cp_b = cp_b - (hp_imd-hp)*pr_b
+    ELSE
+      hp_b = 0.0_4
+      pn_b = 0.0_4
+    END IF
+    es_b = -(inv_cp*hp_imd_b)
+    temp4 = TANH(en*inv_cp)
+    temp3 = (-hp+1._sp)*temp4 + 1._sp
+    temp1 = TANH(en*inv_cp)
+    temp0 = hp*cp*(-hp+2._sp)
+    temp_b3 = es_b/temp3
+    temp_b = (2._sp-hp)*temp1*temp_b3
+    temp_b0 = -(temp0*temp1*temp_b3/temp3)
+    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
+&     temp_b0
+    ps_b = inv_cp*hp_imd_b
+    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
+    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
+    en_b = inv_cp*temp_b5 + inv_cp*temp_b4
+    cp_b = cp_b + hp*temp_b
+    temp = TANH(pn*inv_cp)
+    temp0 = hp*temp + 1._sp
+    temp1 = TANH(pn*inv_cp)
+    temp2 = cp*(-(hp*hp)+1._sp)
+    temp_b = ps_b/temp0
+    temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
+    temp_b1 = -(temp2*temp1*temp_b/temp0)
+    hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
+    temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
+    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
+&     pn*temp_b2 + pn*temp_b0
+    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
+    pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
+  END SUBROUTINE GR_PRODUCTION_B
+
+  SUBROUTINE GR_PRODUCTION(pn, en, cp, beta, hp, pr, perc)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: pn, en, cp, beta
+    REAL(sp), INTENT(INOUT) :: hp
+    REAL(sp), INTENT(OUT) :: pr, perc
+    REAL(sp) :: inv_cp, ps, es, hp_imd
+    INTRINSIC TANH
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwr1
+    inv_cp = 1._sp/cp
+    pr = 0._sp
+    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
+    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
+&     inv_cp))
+    hp_imd = hp + (ps-es)*inv_cp
+    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
+    pwx1 = 1._sp + (hp_imd/beta)**4
+    pwr1 = pwx1**(-0.25_sp)
+    perc = hp_imd*cp*(1._sp-pwr1)
+    hp = hp_imd - perc*inv_cp
+  END SUBROUTINE GR_PRODUCTION
+
+!  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: l
+!   with respect to varying inputs: hft exc
+  SUBROUTINE GR_EXCHANGE_D(exc, exc_d, hft, hft_d, l, l_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: exc
+    REAL(sp), INTENT(IN) :: exc_d
+    REAL(sp), INTENT(INOUT) :: hft
+    REAL(sp), INTENT(INOUT) :: hft_d
+    REAL(sp), INTENT(OUT) :: l
+    REAL(sp), INTENT(OUT) :: l_d
+    REAL(sp) :: temp
+    temp = hft**3.5_sp
+    l_d = temp*exc_d + exc*3.5_sp*hft**2.5*hft_d
+    l = exc*temp
+  END SUBROUTINE GR_EXCHANGE_D
+
+!  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: l hft exc
+!   with respect to varying inputs: hft exc
+  SUBROUTINE GR_EXCHANGE_B(exc, exc_b, hft, hft_b, l, l_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: exc
+    REAL(sp) :: exc_b
+    REAL(sp), INTENT(INOUT) :: hft
+    REAL(sp), INTENT(INOUT) :: hft_b
+    REAL(sp) :: l
+    REAL(sp) :: l_b
+    exc_b = exc_b + hft**3.5_sp*l_b
+    hft_b = hft_b + 3.5_sp*hft**2.5*exc*l_b
+  END SUBROUTINE GR_EXCHANGE_B
+
+  SUBROUTINE GR_EXCHANGE(exc, hft, l)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: exc
+    REAL(sp), INTENT(INOUT) :: hft
+    REAL(sp), INTENT(OUT) :: l
+    l = exc*hft**3.5_sp
+  END SUBROUTINE GR_EXCHANGE
+
+!  Differentiation of gr_transfer in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: q ht
+!   with respect to varying inputs: ht ct pr
+  SUBROUTINE GR_TRANSFER_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, q_d&
+& )
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
+    REAL(sp), INTENT(IN) :: pr_d, ct_d
+    REAL(sp), INTENT(INOUT) :: ht
+    REAL(sp), INTENT(INOUT) :: ht_d
+    REAL(sp), INTENT(OUT) :: q
+    REAL(sp), INTENT(OUT) :: q_d
+    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
+    REAL(sp) :: pr_imd_d, ht_imd_d
+    INTRINSIC MAX
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_d
+    REAL(sp) :: pwy1
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_d
+    REAL(sp) :: pwy2
+    REAL(sp) :: pwr2
+    REAL(sp) :: pwr2_d
+    REAL(sp) :: pwx3
+    REAL(sp) :: pwx3_d
+    REAL(sp) :: pwy3
+    REAL(sp) :: pwr3
+    REAL(sp) :: pwr3_d
+    nm1 = n - 1._sp
+    d1pnm1 = 1._sp/nm1
+    IF (prcp .LT. 0._sp) THEN
+      pwx1_d = ct*ht_d + ht*ct_d
+      pwx1 = ht*ct
+      pwy1 = -nm1
+      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
+&     THEN
+        pwr1_d = 0.0_4
+      ELSE
+        pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
+      END IF
+      pwr1 = pwx1**pwy1
+      pwy2 = -nm1
+      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
+&     THEN
+        pwr2_d = 0.0_4
+      ELSE
+        pwr2_d = pwy2*ct**(pwy2-1)*ct_d
+      END IF
+      pwr2 = ct**pwy2
+      pwx3_d = pwr1_d - pwr2_d
+      pwx3 = pwr1 - pwr2
+      pwy3 = -d1pnm1
+      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
+&     THEN
+        pwr3_d = 0.0_4
+      ELSE
+        pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
+      END IF
+      pwr3 = pwx3**pwy3
+      pr_imd_d = pwr3_d - ct*ht_d - ht*ct_d
+      pr_imd = pwr3 - ht*ct
+    ELSE
+      pr_imd_d = pr_d
+      pr_imd = pr
+    END IF
+    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
+      ht_imd_d = ht_d + (pr_imd_d-pr_imd*ct_d/ct)/ct
+      ht_imd = ht + pr_imd/ct
+    ELSE
+      ht_imd = 1.e-6_sp
+      ht_imd_d = 0.0_4
+    END IF
+    pwx1_d = ct*ht_imd_d + ht_imd*ct_d
+    pwx1 = ht_imd*ct
+    pwy1 = -nm1
+    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
+&   THEN
+      pwr1_d = 0.0_4
+    ELSE
+      pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
+    END IF
+    pwr1 = pwx1**pwy1
+    pwy2 = -nm1
+    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
+      pwr2_d = 0.0_4
+    ELSE
+      pwr2_d = pwy2*ct**(pwy2-1)*ct_d
+    END IF
+    pwr2 = ct**pwy2
+    pwx3_d = pwr1_d + pwr2_d
+    pwx3 = pwr1 + pwr2
+    pwy3 = -d1pnm1
+    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
+&   THEN
+      pwr3_d = 0.0_4
+    ELSE
+      pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
+    END IF
+    pwr3 = pwx3**pwy3
+    ht_d = (pwr3_d-pwr3*ct_d/ct)/ct
+    ht = pwr3/ct
+    q_d = ct*(ht_imd_d-ht_d) + (ht_imd-ht)*ct_d
+    q = (ht_imd-ht)*ct
+  END SUBROUTINE GR_TRANSFER_D
+
+!  Differentiation of gr_transfer in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: q ht ct
+!   with respect to varying inputs: ht ct pr
+  SUBROUTINE GR_TRANSFER_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, q_b&
+& )
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
+    REAL(sp) :: pr_b, ct_b
+    REAL(sp), INTENT(INOUT) :: ht
+    REAL(sp), INTENT(INOUT) :: ht_b
+    REAL(sp) :: q
+    REAL(sp) :: q_b
+    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
+    REAL(sp) :: pr_imd_b, ht_imd_b
+    INTRINSIC MAX
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwx1_b
+    REAL(sp) :: pwy1
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwr1_b
+    REAL(sp) :: pwy2
+    REAL(sp) :: pwr2
+    REAL(sp) :: pwr2_b
+    REAL(sp) :: pwx3
+    REAL(sp) :: pwx3_b
+    REAL(sp) :: pwy3
+    REAL(sp) :: pwr3
+    REAL(sp) :: pwr3_b
+    INTEGER :: branch
+    nm1 = n - 1._sp
+    d1pnm1 = 1._sp/nm1
+    IF (prcp .LT. 0._sp) THEN
+      pwx1 = ht*ct
+      pwy1 = -nm1
+      pwr1 = pwx1**pwy1
+      pwy2 = -nm1
+      pwr2 = ct**pwy2
+      pwx3 = pwr1 - pwr2
+      pwy3 = -d1pnm1
+      pwr3 = pwx3**pwy3
+      pr_imd = pwr3 - ht*ct
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      pr_imd = pr
+      CALL PUSHCONTROL1B(0)
+    END IF
+    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
+      ht_imd = ht + pr_imd/ct
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      ht_imd = 1.e-6_sp
+      CALL PUSHCONTROL1B(1)
+    END IF
+    CALL PUSHREAL4(pwx1)
+    pwx1 = ht_imd*ct
+    CALL PUSHREAL4(pwy1)
+    pwy1 = -nm1
+    pwr1 = pwx1**pwy1
+    CALL PUSHREAL4(pwy2)
+    pwy2 = -nm1
+    pwr2 = ct**pwy2
+    CALL PUSHREAL4(pwx3)
+    pwx3 = pwr1 + pwr2
+    CALL PUSHREAL4(pwy3)
+    pwy3 = -d1pnm1
+    pwr3 = pwx3**pwy3
+    CALL PUSHREAL4(ht)
+    ht = pwr3/ct
+    pwx1 = ht_imd*ct
+    nm1 = n - 1._sp
+    pwy1 = -nm1
+    pwy2 = -nm1
+    d1pnm1 = 1._sp/nm1
+    pwy3 = -d1pnm1
+    ht_b = ht_b - ct*q_b
+    pwr3_b = ht_b/ct
+    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
+&   THEN
+      pwx3_b = 0.0_4
+    ELSE
+      pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
+    END IF
+    pwr1_b = pwx3_b
+    pwr2_b = pwx3_b
+    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
+&   THEN
+      pwx1_b = 0.0_4
+    ELSE
+      pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
+    END IF
+    ht_imd_b = ct*q_b + ct*pwx1_b
+    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
+      ct_b = ct_b + (ht_imd-ht)*q_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
+    ELSE
+      ct_b = ct_b + (ht_imd-ht)*q_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*&
+&       ht_b/ct**2 + ht_imd*pwx1_b
+    END IF
+    CALL POPREAL4(ht)
+    CALL POPREAL4(pwy3)
+    CALL POPREAL4(pwx3)
+    CALL POPREAL4(pwy2)
+    CALL POPREAL4(pwy1)
+    CALL POPREAL4(pwx1)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      ht_b = ht_imd_b
+      pr_imd_b = ht_imd_b/ct
+      ct_b = ct_b - pr_imd*ht_imd_b/ct**2
+    ELSE
+      ht_b = 0.0_4
+      pr_imd_b = 0.0_4
+    END IF
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      pr_b = pr_imd_b
+    ELSE
+      pwr3_b = pr_imd_b
+      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
+&     THEN
+        pwx3_b = 0.0_4
+      ELSE
+        pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
+      END IF
+      pwr1_b = pwx3_b
+      pwr2_b = -pwx3_b
+      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
+&     THEN
+        pwx1_b = 0.0_4
+      ELSE
+        pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
+      END IF
+      ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
+      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
+&     THEN
+        ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
+      ELSE
+        ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
+      END IF
+      pr_b = 0.0_4
+    END IF
+  END SUBROUTINE GR_TRANSFER_B
+
+  SUBROUTINE GR_TRANSFER(n, prcp, pr, ct, ht, q)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
+    REAL(sp), INTENT(INOUT) :: ht
+    REAL(sp), INTENT(OUT) :: q
+    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
+    INTRINSIC MAX
+    REAL(sp) :: pwx1
+    REAL(sp) :: pwy1
+    REAL(sp) :: pwr1
+    REAL(sp) :: pwy2
+    REAL(sp) :: pwr2
+    REAL(sp) :: pwx3
+    REAL(sp) :: pwy3
+    REAL(sp) :: pwr3
+    nm1 = n - 1._sp
+    d1pnm1 = 1._sp/nm1
+    IF (prcp .LT. 0._sp) THEN
+      pwx1 = ht*ct
+      pwy1 = -nm1
+      pwr1 = pwx1**pwy1
+      pwy2 = -nm1
+      pwr2 = ct**pwy2
+      pwx3 = pwr1 - pwr2
+      pwy3 = -d1pnm1
+      pwr3 = pwx3**pwy3
+      pr_imd = pwr3 - ht*ct
+    ELSE
+      pr_imd = pr
+    END IF
+    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
+      ht_imd = ht + pr_imd/ct
+    ELSE
+      ht_imd = 1.e-6_sp
+    END IF
+    pwx1 = ht_imd*ct
+    pwy1 = -nm1
+    pwr1 = pwx1**pwy1
+    pwy2 = -nm1
+    pwr2 = ct**pwy2
+    pwx3 = pwr1 + pwr2
+    pwy3 = -d1pnm1
+    pwr3 = pwx3**pwy3
+    ht = pwr3/ct
+    q = (ht_imd-ht)*ct
+  END SUBROUTINE GR_TRANSFER
+
+END MODULE MD_GR_OPERATOR_DIFF
+
+!%      This module `md_routing_operator` encapsulates all SMASH routing operator.
+!%      This module is differentiated.
+!%
+!%      contains
+!%
+!%      [1] upstream_discharge
+!%      [2] sparse_upstream_discharge
+!%      [3] linear_routing
+MODULE MD_ROUTING_OPERATOR_DIFF
+!% only : sp
+  USE MD_COMMON
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: qup
+!   with respect to varying inputs: q
+  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flwdir, &
+&   drained_area, row, col, q, q_d, qup, qup_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q_d
+    REAL(sp), INTENT(OUT) :: qup
+    REAL(sp), INTENT(OUT) :: qup_d
+    INTEGER :: i, row_imd, col_imd
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    REAL*4 :: temp
+    qup = 0._sp
+    IF (drained_area(row, col) .GT. 1) THEN
+      qup_d = 0.0_4
+      DO i=1,8
+        col_imd = col + dcol(i)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
+            qup_d = qup_d + q_d(row_imd, col_imd)
+            qup = qup + q(row_imd, col_imd)
+          END IF
+        END IF
+      END DO
+      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
+      qup_d = dt*qup_d/temp
+      qup = dt*(qup/temp)
+    ELSE
+      qup_d = 0.0_4
+    END IF
+  END SUBROUTINE UPSTREAM_DISCHARGE_D
+
+!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: q qup
+!   with respect to varying inputs: q
+  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flwdir, &
+&   drained_area, row, col, q, q_b, qup, qup_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nrow, ncol) :: q_b
+    REAL(sp) :: qup
+    REAL(sp) :: qup_b
+    INTEGER :: i, row_imd, col_imd
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    INTEGER :: branch
+    IF (drained_area(row, col) .GT. 1) THEN
+      DO i=1,8
+        CALL PUSHINTEGER4(col_imd)
+        col_imd = col + dcol(i)
+        CALL PUSHINTEGER4(row_imd)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            CALL PUSHCONTROL2B(1)
+          END IF
+        ELSE
+          CALL PUSHCONTROL2B(0)
+        END IF
+      END DO
+      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
+      DO i=8,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) q_b(row_imd, col_imd) = q_b(row_imd, &
+&             col_imd) + qup_b
+        END IF
+        CALL POPINTEGER4(row_imd)
+        CALL POPINTEGER4(col_imd)
+      END DO
+    END IF
+  END SUBROUTINE UPSTREAM_DISCHARGE_B
+
+  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flwdir, drained_area&
+&   , row, col, q, qup)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
+    REAL(sp), INTENT(OUT) :: qup
+    INTEGER :: i, row_imd, col_imd
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    qup = 0._sp
+    IF (drained_area(row, col) .GT. 1) THEN
+      DO i=1,8
+        col_imd = col + dcol(i)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) qup = qup + q(&
+&             row_imd, col_imd)
+        END IF
+      END DO
+      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
+    END IF
+  END SUBROUTINE UPSTREAM_DISCHARGE
+
+!  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: qup
+!   with respect to varying inputs: q
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flwdir&
+&   , drained_area, ind_sparse, row, col, q, q_d, qup, qup_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+&   ind_sparse
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q_d
+    REAL(sp), INTENT(OUT) :: qup
+    REAL(sp), INTENT(OUT) :: qup_d
+    INTEGER :: i, row_imd, col_imd, k
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    REAL*4 :: temp
+    qup = 0._sp
+    IF (drained_area(row, col) .GT. 1) THEN
+      qup_d = 0.0_4
+      DO i=1,8
+        col_imd = col + dcol(i)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
+            k = ind_sparse(row_imd, col_imd)
+            qup_d = qup_d + q_d(k)
+            qup = qup + q(k)
+          END IF
+        END IF
+      END DO
+      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
+      qup_d = dt*qup_d/temp
+      qup = dt*(qup/temp)
+    ELSE
+      qup_d = 0.0_4
+    END IF
+  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D
+
+!  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: q qup
+!   with respect to varying inputs: q
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flwdir&
+&   , drained_area, ind_sparse, row, col, q, q_b, qup, qup_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+&   ind_sparse
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
+    REAL(sp), DIMENSION(nac) :: q_b
+    REAL(sp) :: qup
+    REAL(sp) :: qup_b
+    INTEGER :: i, row_imd, col_imd, k
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    INTEGER :: branch
+    IF (drained_area(row, col) .GT. 1) THEN
+      DO i=1,8
+        col_imd = col + dcol(i)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
+            CALL PUSHINTEGER4(k)
+            k = ind_sparse(row_imd, col_imd)
+            CALL PUSHCONTROL2B(2)
+          ELSE
+            CALL PUSHCONTROL2B(1)
+          END IF
+        ELSE
+          CALL PUSHCONTROL2B(0)
+        END IF
+      END DO
+      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
+      DO i=8,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
+            q_b(k) = q_b(k) + qup_b
+            CALL POPINTEGER4(k)
+          END IF
+        END IF
+      END DO
+    END IF
+  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B
+
+  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flwdir, &
+&   drained_area, ind_sparse, row, col, q, qup)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt, dx
+    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+&   ind_sparse
+    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
+    REAL(sp), INTENT(OUT) :: qup
+    INTEGER :: i, row_imd, col_imd, k
+    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
+    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
+    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
+    INTRINSIC REAL
+    qup = 0._sp
+    IF (drained_area(row, col) .GT. 1) THEN
+      DO i=1,8
+        col_imd = col + dcol(i)
+        row_imd = row + drow(i)
+        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
+&           .AND. row_imd .LE. nrow) THEN
+          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
+            k = ind_sparse(row_imd, col_imd)
+            qup = qup + q(k)
+          END IF
+        END IF
+      END DO
+      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
+    END IF
+  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
+
+!  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: hr qrout
+!   with respect to varying inputs: qup hr lr
+  SUBROUTINE LINEAR_ROUTING_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout&
+&   , qrout_d)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(IN) :: qup, lr
+    REAL(sp), INTENT(IN) :: qup_d, lr_d
+    REAL(sp), INTENT(INOUT) :: hr
+    REAL(sp), INTENT(INOUT) :: hr_d
+    REAL(sp), INTENT(OUT) :: qrout
+    REAL(sp), INTENT(OUT) :: qrout_d
+    REAL(sp) :: hr_imd
+    REAL(sp) :: hr_imd_d
+    INTRINSIC EXP
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: temp
+    hr_imd_d = hr_d + qup_d
+    hr_imd = hr + qup
+    temp = dt/(60._sp*lr)
+    arg1_d = temp*lr_d/lr
+    arg1 = -temp
+    temp = EXP(arg1)
+    hr_d = temp*hr_imd_d + hr_imd*EXP(arg1)*arg1_d
+    hr = hr_imd*temp
+    qrout_d = hr_imd_d - hr_d
+    qrout = hr_imd - hr
+  END SUBROUTINE LINEAR_ROUTING_D
+
+!  Differentiation of linear_routing in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: hr qrout lr
+!   with respect to varying inputs: qup hr lr
+  SUBROUTINE LINEAR_ROUTING_B(dt, qup, qup_b, lr, lr_b, hr, hr_b, qrout&
+&   , qrout_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(IN) :: qup, lr
+    REAL(sp) :: qup_b, lr_b
+    REAL(sp), INTENT(INOUT) :: hr
+    REAL(sp), INTENT(INOUT) :: hr_b
+    REAL(sp) :: qrout
+    REAL(sp) :: qrout_b
+    REAL(sp) :: hr_imd
+    REAL(sp) :: hr_imd_b
+    INTRINSIC EXP
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    hr_imd = hr + qup
+    arg1 = -(dt/(lr*60._sp))
+    arg1 = -(dt/(lr*60._sp))
+    hr_b = hr_b - qrout_b
+    hr_imd_b = qrout_b + EXP(arg1)*hr_b
+    arg1_b = EXP(arg1)*hr_imd*hr_b
+    lr_b = lr_b + dt*arg1_b/(lr**2*60._sp)
+    hr_b = hr_imd_b
+    qup_b = hr_imd_b
+  END SUBROUTINE LINEAR_ROUTING_B
+
+  SUBROUTINE LINEAR_ROUTING(dt, qup, lr, hr, qrout)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: dt
+    REAL(sp), INTENT(IN) :: qup, lr
+    REAL(sp), INTENT(INOUT) :: hr
+    REAL(sp), INTENT(OUT) :: qrout
+    REAL(sp) :: hr_imd
+    INTRINSIC EXP
+    REAL(sp) :: arg1
+    hr_imd = hr + qup
+    arg1 = -(dt/(lr*60._sp))
+    hr = hr_imd*EXP(arg1)
+    qrout = hr_imd - hr
+  END SUBROUTINE LINEAR_ROUTING
+
+END MODULE MD_ROUTING_OPERATOR_DIFF
+
+MODULE MWD_PARAMETERS_MANIPULATION_DIFF
+  USE MD_COMMON
+  USE MWD_SETUP
+  USE MWD_INPUT_DATA
+  USE MWD_PARAMETERS_DIFF
+  IMPLICIT NONE
+  INTERFACE SET_PARAMETERS
+      MODULE PROCEDURE SET0D_PARAMETERS
+      MODULE PROCEDURE SET1D_PARAMETERS
+      MODULE PROCEDURE SET3D_PARAMETERS
+  END INTERFACE SET_PARAMETERS
+
+  INTERFACE SET_PARAMETERS_D
+      MODULE PROCEDURE SET3D_PARAMETERS_D
+  END INTERFACE
+
+  INTERFACE SET_PARAMETERS_B
+      MODULE PROCEDURE SET3D_PARAMETERS_B
+  END INTERFACE
+
+  INTERFACE SET_HYPER_PARAMETERS
+      MODULE PROCEDURE SET0D_HYPER_PARAMETERS
+      MODULE PROCEDURE SET1D_HYPER_PARAMETERS
+      MODULE PROCEDURE SET3D_HYPER_PARAMETERS
+  END INTERFACE SET_HYPER_PARAMETERS
+
+
+CONTAINS
+!  Differentiation of get_parameters in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: a
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.lr:in
+!%      TODO comment  
+  SUBROUTINE GET_PARAMETERS_D(parameters, parameters_d, a, a_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    a_d = 0.0_4
+    a_d(:, :, 1) = parameters_d%ci(:, :)
+    a(:, :, 1) = parameters%ci(:, :)
+    a_d(:, :, 2) = parameters_d%cp(:, :)
+    a(:, :, 2) = parameters%cp(:, :)
+    a_d(:, :, 3) = parameters_d%beta(:, :)
+    a(:, :, 3) = parameters%beta(:, :)
+    a_d(:, :, 4) = parameters_d%cft(:, :)
+    a(:, :, 4) = parameters%cft(:, :)
+    a_d(:, :, 5) = parameters_d%cst(:, :)
+    a(:, :, 5) = parameters%cst(:, :)
+    a_d(:, :, 6) = parameters_d%alpha(:, :)
+    a(:, :, 6) = parameters%alpha(:, :)
+    a_d(:, :, 7) = parameters_d%exc(:, :)
+    a(:, :, 7) = parameters%exc(:, :)
+    a_d(:, :, 8) = parameters_d%lr(:, :)
+    a(:, :, 8) = parameters%lr(:, :)
+  END SUBROUTINE GET_PARAMETERS_D
+
+!  Differentiation of get_parameters in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: a
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.lr:in
+!%      TODO comment  
+  SUBROUTINE GET_PARAMETERS_B(parameters, parameters_b, a, a_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT) :: parameters_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    parameters_b%lr = 0.0_4
+    parameters_b%lr = parameters_b%lr + a_b(:, :, 8)
+    a_b(:, :, 8) = 0.0_4
+    parameters_b%exc = 0.0_4
+    parameters_b%exc = parameters_b%exc + a_b(:, :, 7)
+    a_b(:, :, 7) = 0.0_4
+    parameters_b%alpha = 0.0_4
+    parameters_b%alpha = parameters_b%alpha + a_b(:, :, 6)
+    a_b(:, :, 6) = 0.0_4
+    parameters_b%cst = 0.0_4
+    parameters_b%cst = parameters_b%cst + a_b(:, :, 5)
+    a_b(:, :, 5) = 0.0_4
+    parameters_b%cft = 0.0_4
+    parameters_b%cft = parameters_b%cft + a_b(:, :, 4)
+    a_b(:, :, 4) = 0.0_4
+    parameters_b%beta = 0.0_4
+    parameters_b%beta = parameters_b%beta + a_b(:, :, 3)
+    a_b(:, :, 3) = 0.0_4
+    parameters_b%cp = 0.0_4
+    parameters_b%cp = parameters_b%cp + a_b(:, :, 2)
+    a_b(:, :, 2) = 0.0_4
+    parameters_b%ci = 0.0_4
+    parameters_b%ci = parameters_b%ci + a_b(:, :, 1)
+  END SUBROUTINE GET_PARAMETERS_B
+
+!%      TODO comment  
+  SUBROUTINE GET_PARAMETERS(parameters, a)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    a(:, :, 1) = parameters%ci(:, :)
+    a(:, :, 2) = parameters%cp(:, :)
+    a(:, :, 3) = parameters%beta(:, :)
+    a(:, :, 4) = parameters%cft(:, :)
+    a(:, :, 5) = parameters%cst(:, :)
+    a(:, :, 6) = parameters%alpha(:, :)
+    a(:, :, 7) = parameters%exc(:, :)
+    a(:, :, 8) = parameters%lr(:, :)
+  END SUBROUTINE GET_PARAMETERS
+
+!  Differentiation of set3d_parameters in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   with respect to varying inputs: a
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.lr:in
+  SUBROUTINE SET3D_PARAMETERS_D(parameters, parameters_d, a, a_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a_d
+    parameters_d%ci = 0.0_4
+    parameters_d%ci(:, :) = a_d(:, :, 1)
+    parameters%ci(:, :) = a(:, :, 1)
+    parameters_d%cp = 0.0_4
+    parameters_d%cp(:, :) = a_d(:, :, 2)
+    parameters%cp(:, :) = a(:, :, 2)
+    parameters_d%beta = 0.0_4
+    parameters_d%beta(:, :) = a_d(:, :, 3)
+    parameters%beta(:, :) = a(:, :, 3)
+    parameters_d%cft = 0.0_4
+    parameters_d%cft(:, :) = a_d(:, :, 4)
+    parameters%cft(:, :) = a(:, :, 4)
+    parameters_d%cst = 0.0_4
+    parameters_d%cst(:, :) = a_d(:, :, 5)
+    parameters%cst(:, :) = a(:, :, 5)
+    parameters_d%alpha = 0.0_4
+    parameters_d%alpha(:, :) = a_d(:, :, 6)
+    parameters%alpha(:, :) = a(:, :, 6)
+    parameters_d%exc = 0.0_4
+    parameters_d%exc(:, :) = a_d(:, :, 7)
+    parameters%exc(:, :) = a(:, :, 7)
+    parameters_d%lr = 0.0_4
+    parameters_d%lr(:, :) = a_d(:, :, 8)
+    parameters%lr(:, :) = a(:, :, 8)
+  END SUBROUTINE SET3D_PARAMETERS_D
+
+!  Differentiation of set3d_parameters in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   with respect to varying inputs: a
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.lr:in
+  SUBROUTINE SET3D_PARAMETERS_B(parameters, parameters_b, a, a_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :, :) :: a_b
+    a_b = 0.0_4
+    a_b(:, :, 8) = a_b(:, :, 8) + parameters_b%lr
+    a_b(:, :, 7) = a_b(:, :, 7) + parameters_b%exc
+    a_b(:, :, 6) = a_b(:, :, 6) + parameters_b%alpha
+    a_b(:, :, 5) = a_b(:, :, 5) + parameters_b%cst
+    a_b(:, :, 4) = a_b(:, :, 4) + parameters_b%cft
+    a_b(:, :, 3) = a_b(:, :, 3) + parameters_b%beta
+    a_b(:, :, 2) = a_b(:, :, 2) + parameters_b%cp
+    a_b(:, :, 1) = a_b(:, :, 1) + parameters_b%ci
+  END SUBROUTINE SET3D_PARAMETERS_B
+
+  SUBROUTINE SET3D_PARAMETERS(parameters, a)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    parameters%ci(:, :) = a(:, :, 1)
+    parameters%cp(:, :) = a(:, :, 2)
+    parameters%beta(:, :) = a(:, :, 3)
+    parameters%cft(:, :) = a(:, :, 4)
+    parameters%cst(:, :) = a(:, :, 5)
+    parameters%alpha(:, :) = a(:, :, 6)
+    parameters%exc(:, :) = a(:, :, 7)
+    parameters%lr(:, :) = a(:, :, 8)
+  END SUBROUTINE SET3D_PARAMETERS
+
+  SUBROUTINE SET1D_PARAMETERS(parameters, a)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), DIMENSION(np), INTENT(IN) :: a
+    parameters%ci(:, :) = a(1)
+    parameters%cp(:, :) = a(2)
+    parameters%beta(:, :) = a(3)
+    parameters%cft(:, :) = a(4)
+    parameters%cst(:, :) = a(5)
+    parameters%alpha(:, :) = a(6)
+    parameters%exc(:, :) = a(7)
+    parameters%lr(:, :) = a(8)
+  END SUBROUTINE SET1D_PARAMETERS
+
+  SUBROUTINE SET0D_PARAMETERS(parameters, a)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(np) :: a1d
+    a1d(:) = a
+    CALL SET1D_PARAMETERS(parameters, a1d)
+  END SUBROUTINE SET0D_PARAMETERS
+
+!  Differentiation of get_hyper_parameters in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: a
+!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
+!                *(hyper_parameters.beta) *(hyper_parameters.cft)
+!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
+!                *(hyper_parameters.exc) *(hyper_parameters.lr)
+!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
+!                hyper_parameters.beta:in hyper_parameters.cft:in
+!                hyper_parameters.cst:in hyper_parameters.alpha:in
+!                hyper_parameters.exc:in hyper_parameters.lr:in
+  SUBROUTINE GET_HYPER_PARAMETERS_D(hyper_parameters, hyper_parameters_d&
+&   , a, a_d)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    a_d = 0.0_4
+    a_d(:, :, 1) = hyper_parameters_d%ci(:, :)
+    a(:, :, 1) = hyper_parameters%ci(:, :)
+    a_d(:, :, 2) = hyper_parameters_d%cp(:, :)
+    a(:, :, 2) = hyper_parameters%cp(:, :)
+    a_d(:, :, 3) = hyper_parameters_d%beta(:, :)
+    a(:, :, 3) = hyper_parameters%beta(:, :)
+    a_d(:, :, 4) = hyper_parameters_d%cft(:, :)
+    a(:, :, 4) = hyper_parameters%cft(:, :)
+    a_d(:, :, 5) = hyper_parameters_d%cst(:, :)
+    a(:, :, 5) = hyper_parameters%cst(:, :)
+    a_d(:, :, 6) = hyper_parameters_d%alpha(:, :)
+    a(:, :, 6) = hyper_parameters%alpha(:, :)
+    a_d(:, :, 7) = hyper_parameters_d%exc(:, :)
+    a(:, :, 7) = hyper_parameters%exc(:, :)
+    a_d(:, :, 8) = hyper_parameters_d%lr(:, :)
+    a(:, :, 8) = hyper_parameters%lr(:, :)
+  END SUBROUTINE GET_HYPER_PARAMETERS_D
+
+!  Differentiation of get_hyper_parameters in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: a
+!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
+!                *(hyper_parameters.beta) *(hyper_parameters.cft)
+!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
+!                *(hyper_parameters.exc) *(hyper_parameters.lr)
+!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
+!                hyper_parameters.beta:in hyper_parameters.cft:in
+!                hyper_parameters.cst:in hyper_parameters.alpha:in
+!                hyper_parameters.exc:in hyper_parameters.lr:in
+  SUBROUTINE GET_HYPER_PARAMETERS_B(hyper_parameters, hyper_parameters_b&
+&   , a, a_b)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    hyper_parameters_b%lr = 0.0_4
+    hyper_parameters_b%lr = hyper_parameters_b%lr + a_b(:, :, 8)
+    a_b(:, :, 8) = 0.0_4
+    hyper_parameters_b%exc = 0.0_4
+    hyper_parameters_b%exc = hyper_parameters_b%exc + a_b(:, :, 7)
+    a_b(:, :, 7) = 0.0_4
+    hyper_parameters_b%alpha = 0.0_4
+    hyper_parameters_b%alpha = hyper_parameters_b%alpha + a_b(:, :, 6)
+    a_b(:, :, 6) = 0.0_4
+    hyper_parameters_b%cst = 0.0_4
+    hyper_parameters_b%cst = hyper_parameters_b%cst + a_b(:, :, 5)
+    a_b(:, :, 5) = 0.0_4
+    hyper_parameters_b%cft = 0.0_4
+    hyper_parameters_b%cft = hyper_parameters_b%cft + a_b(:, :, 4)
+    a_b(:, :, 4) = 0.0_4
+    hyper_parameters_b%beta = 0.0_4
+    hyper_parameters_b%beta = hyper_parameters_b%beta + a_b(:, :, 3)
+    a_b(:, :, 3) = 0.0_4
+    hyper_parameters_b%cp = 0.0_4
+    hyper_parameters_b%cp = hyper_parameters_b%cp + a_b(:, :, 2)
+    a_b(:, :, 2) = 0.0_4
+    hyper_parameters_b%ci = 0.0_4
+    hyper_parameters_b%ci = hyper_parameters_b%ci + a_b(:, :, 1)
+  END SUBROUTINE GET_HYPER_PARAMETERS_B
+
+  SUBROUTINE GET_HYPER_PARAMETERS(hyper_parameters, a)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    a(:, :, 1) = hyper_parameters%ci(:, :)
+    a(:, :, 2) = hyper_parameters%cp(:, :)
+    a(:, :, 3) = hyper_parameters%beta(:, :)
+    a(:, :, 4) = hyper_parameters%cft(:, :)
+    a(:, :, 5) = hyper_parameters%cst(:, :)
+    a(:, :, 6) = hyper_parameters%alpha(:, :)
+    a(:, :, 7) = hyper_parameters%exc(:, :)
+    a(:, :, 8) = hyper_parameters%lr(:, :)
+  END SUBROUTINE GET_HYPER_PARAMETERS
+
+  SUBROUTINE SET3D_HYPER_PARAMETERS(hyper_parameters, a)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    hyper_parameters%ci(:, :) = a(:, :, 1)
+    hyper_parameters%cp(:, :) = a(:, :, 2)
+    hyper_parameters%beta(:, :) = a(:, :, 3)
+    hyper_parameters%cft(:, :) = a(:, :, 4)
+    hyper_parameters%cst(:, :) = a(:, :, 5)
+    hyper_parameters%alpha(:, :) = a(:, :, 6)
+    hyper_parameters%exc(:, :) = a(:, :, 7)
+    hyper_parameters%lr(:, :) = a(:, :, 8)
+  END SUBROUTINE SET3D_HYPER_PARAMETERS
+
+  SUBROUTINE SET1D_HYPER_PARAMETERS(hyper_parameters, a)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
+    REAL(sp), DIMENSION(np), INTENT(IN) :: a
+    hyper_parameters%ci(:, :) = a(1)
+    hyper_parameters%cp(:, :) = a(2)
+    hyper_parameters%beta(:, :) = a(3)
+    hyper_parameters%cft(:, :) = a(4)
+    hyper_parameters%cst(:, :) = a(5)
+    hyper_parameters%alpha(:, :) = a(6)
+    hyper_parameters%exc(:, :) = a(7)
+    hyper_parameters%lr(:, :) = a(8)
+  END SUBROUTINE SET1D_HYPER_PARAMETERS
+
+  SUBROUTINE SET0D_HYPER_PARAMETERS(hyper_parameters, a)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
+    REAL(sp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(np) :: a1d
+    a1d(:) = a
+    CALL SET1D_HYPER_PARAMETERS(hyper_parameters, a1d)
+  END SUBROUTINE SET0D_HYPER_PARAMETERS
+
+!  Differentiation of hyper_parameters_to_parameters in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
+!                *(hyper_parameters.beta) *(hyper_parameters.cft)
+!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
+!                *(hyper_parameters.exc) *(hyper_parameters.lr)
+!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
+!                hyper_parameters.beta:in hyper_parameters.cft:in
+!                hyper_parameters.cst:in hyper_parameters.alpha:in
+!                hyper_parameters.exc:in hyper_parameters.lr:in
+!%      TODO comment
+  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
+&   hyper_parameters_d, parameters, parameters_d, setup, input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
+&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
+    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
+&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_d
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
+&   np) :: parameters_matrix
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
+&   np) :: parameters_matrix_d
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: d, dpb
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: dpb_d
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    REAL(sp) :: a_d, b_d
+    INTRINSIC TRIM
+    REAL(sp), DIMENSION(size(parameters%cp, 1), size(parameters%cp, 2)) &
+&   :: temp
+    CALL GET_HYPER_PARAMETERS_D(hyper_parameters, hyper_parameters_d, &
+&                         hyper_parameters_matrix, &
+&                         hyper_parameters_matrix_d)
+    CALL GET_PARAMETERS(parameters, parameters_matrix)
+    parameters_matrix_d = 0.0_4
+    a_d = 0.0_4
+    b_d = 0.0_4
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,np
+      parameters_matrix_d(:, :, i) = hyper_parameters_matrix_d(1, 1, i)
+      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a_d = hyper_parameters_matrix_d(j+1, 1, i)
+          a = hyper_parameters_matrix(j+1, 1, i)
+          b = 1._sp
+          b_d = 0.0_4
+        CASE ('hyper-polynomial') 
+          a_d = hyper_parameters_matrix_d(2*j, 1, i)
+          a = hyper_parameters_matrix(2*j, 1, i)
+          b_d = hyper_parameters_matrix_d(2*j+1, 1, i)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+        END SELECT
+        temp = d**b
+        WHERE (d .LE. 0.0) 
+          dpb_d = 0.0_4
+        ELSEWHERE
+          dpb_d = temp*LOG(d)*b_d
+        END WHERE
+        dpb = temp
+        parameters_matrix_d(:, :, i) = parameters_matrix_d(:, :, i) + &
+&         dpb*a_d + a*dpb_d
+        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
+      END DO
+      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) 
+        parameters_matrix_d(:, :, i) = 0.0_4
+        parameters_matrix(:, :, i) = setup%lb_parameters(i)
+      END WHERE
+      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) 
+        parameters_matrix_d(:, :, i) = 0.0_4
+        parameters_matrix(:, :, i) = setup%ub_parameters(i)
+      END WHERE
+    END DO
+    CALL SET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
+&                   parameters_matrix_d)
+  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D
+
+!  Differentiation of hyper_parameters_to_parameters in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
+!                *(hyper_parameters.beta) *(hyper_parameters.cft)
+!                *(hyper_parameters.cst) *(hyper_parameters.alpha)
+!                *(hyper_parameters.exc) *(hyper_parameters.lr)
+!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
+!                hyper_parameters.beta:in hyper_parameters.cft:in
+!                hyper_parameters.cst:in hyper_parameters.alpha:in
+!                hyper_parameters.exc:in hyper_parameters.lr:in
+!%      TODO comment
+  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B(hyper_parameters, &
+&   hyper_parameters_b, parameters, parameters_b, setup, input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
+&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
+    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
+&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_b
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
+&   np) :: parameters_matrix
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
+&   np) :: parameters_matrix_b
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: d, dpb
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: dpb_b
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    REAL(sp) :: a_b, b_b
+    INTRINSIC TRIM
+    INTEGER :: branch
+    CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,np
+      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          CALL PUSHREAL4(a)
+          a = hyper_parameters_matrix(j+1, 1, i)
+          CALL PUSHREAL4(b)
+          b = 1._sp
+          CALL PUSHCONTROL2B(1)
+        CASE ('hyper-polynomial') 
+          CALL PUSHREAL4(a)
+          a = hyper_parameters_matrix(2*j, 1, i)
+          CALL PUSHREAL4(b)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+          CALL PUSHCONTROL2B(2)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(0)
+        END SELECT
+        dpb = d**b
+        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
+      END DO
+      CALL PUSHREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
+&                   , 1)*SIZE(parameters%cp, 2))
+      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
+&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
+    END DO
+    CALL SET_PARAMETERS(parameters, parameters_matrix)
+    CALL SET_PARAMETERS_B(parameters, parameters_b, parameters_matrix, &
+&                   parameters_matrix_b)
+    hyper_parameters_matrix_b = 0.0_4
+    a_b = 0.0_4
+    b_b = 0.0_4
+    DO i=np,1,-1
+      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
+&       parameters_matrix_b(:, :, i) = 0.0_4
+      CALL POPREAL4ARRAY(parameters_matrix(:, :, i), SIZE(parameters%cp&
+&                  , 1)*SIZE(parameters%cp, 2))
+      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
+&       parameters_matrix_b(:, :, i) = 0.0_4
+      DO j=setup%nd,1,-1
+        d = input_data%descriptor(:, :, j)
+        dpb = d**b
+        dpb_b = 0.0_4
+        a_b = a_b + SUM(dpb*parameters_matrix_b(:, :, i))
+        dpb_b = a*parameters_matrix_b(:, :, i)
+        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(b)
+            CALL POPREAL4(a)
+            hyper_parameters_matrix_b(j+1, 1, i) = &
+&             hyper_parameters_matrix_b(j+1, 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          ELSE
+            CALL POPREAL4(b)
+            hyper_parameters_matrix_b(2*j+1, 1, i) = &
+&             hyper_parameters_matrix_b(2*j+1, 1, i) + b_b
+            CALL POPREAL4(a)
+            hyper_parameters_matrix_b(2*j, 1, i) = &
+&             hyper_parameters_matrix_b(2*j, 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          END IF
+        END IF
+      END DO
+      hyper_parameters_matrix_b(1, 1, i) = hyper_parameters_matrix_b(1, &
+&       1, i) + SUM(parameters_matrix_b(:, :, i))
+      parameters_matrix_b(:, :, i) = 0.0_4
+    END DO
+    CALL GET_HYPER_PARAMETERS_B(hyper_parameters, hyper_parameters_b, &
+&                         hyper_parameters_matrix, &
+&                         hyper_parameters_matrix_b)
+  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B
+
+!%      TODO comment
+  SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters&
+&   , setup, input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
+&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
+&   np) :: parameters_matrix
+    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
+&   :: d, dpb
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    INTRINSIC TRIM
+    CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
+    CALL GET_PARAMETERS(parameters, parameters_matrix)
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,np
+      parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a = hyper_parameters_matrix(j+1, 1, i)
+          b = 1._sp
+        CASE ('hyper-polynomial') 
+          a = hyper_parameters_matrix(2*j, 1, i)
+          b = hyper_parameters_matrix(2*j+1, 1, i)
+        END SELECT
+        dpb = d**b
+        parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
+      END DO
+      WHERE (parameters_matrix(:, :, i) .LT. setup%lb_parameters(i)) &
+&       parameters_matrix(:, :, i) = setup%lb_parameters(i)
+      WHERE (parameters_matrix(:, :, i) .GT. setup%ub_parameters(i)) &
+&       parameters_matrix(:, :, i) = setup%ub_parameters(i)
+    END DO
+    CALL SET_PARAMETERS(parameters, parameters_matrix)
+  END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS
+
+END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
+
+MODULE MWD_STATES_MANIPULATION_DIFF
+  USE MD_COMMON
+  USE MWD_SETUP
+  USE MWD_INPUT_DATA
+  USE MWD_STATES_DIFF
+  IMPLICIT NONE
+  INTERFACE SET_STATES
+      MODULE PROCEDURE SET0D_STATES
+      MODULE PROCEDURE SET1D_STATES
+      MODULE PROCEDURE SET3D_STATES
+  END INTERFACE SET_STATES
+
+  INTERFACE SET_STATES_D
+      MODULE PROCEDURE SET3D_STATES_D
+  END INTERFACE
+
+  INTERFACE SET_STATES_B
+      MODULE PROCEDURE SET3D_STATES_B
+  END INTERFACE
+
+  INTERFACE SET_HYPER_STATES
+      MODULE PROCEDURE SET0D_HYPER_STATES
+      MODULE PROCEDURE SET1D_HYPER_STATES
+      MODULE PROCEDURE SET3D_HYPER_STATES
+  END INTERFACE SET_HYPER_STATES
+
+
+CONTAINS
+!  Differentiation of get_states in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: a
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.hlr:in
+!%      TODO comment  
+  SUBROUTINE GET_STATES_D(states, states_d, a, a_d)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(IN) :: states
+    TYPE(STATESDT), INTENT(IN) :: states_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    a_d = 0.0_4
+    a_d(:, :, 1) = states_d%hi(:, :)
+    a(:, :, 1) = states%hi(:, :)
+    a_d(:, :, 2) = states_d%hp(:, :)
+    a(:, :, 2) = states%hp(:, :)
+    a_d(:, :, 3) = states_d%hft(:, :)
+    a(:, :, 3) = states%hft(:, :)
+    a_d(:, :, 4) = states_d%hst(:, :)
+    a(:, :, 4) = states%hst(:, :)
+    a_d(:, :, 5) = states_d%hlr(:, :)
+    a(:, :, 5) = states%hlr(:, :)
+  END SUBROUTINE GET_STATES_D
+
+!  Differentiation of get_states in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: a
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.hlr:in
+!%      TODO comment  
+  SUBROUTINE GET_STATES_B(states, states_b, a, a_b)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(IN) :: states
+    TYPE(STATESDT) :: states_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    states_b%hlr = 0.0_4
+    states_b%hlr = states_b%hlr + a_b(:, :, 5)
+    a_b(:, :, 5) = 0.0_4
+    states_b%hst = 0.0_4
+    states_b%hst = states_b%hst + a_b(:, :, 4)
+    a_b(:, :, 4) = 0.0_4
+    states_b%hft = 0.0_4
+    states_b%hft = states_b%hft + a_b(:, :, 3)
+    a_b(:, :, 3) = 0.0_4
+    states_b%hp = 0.0_4
+    states_b%hp = states_b%hp + a_b(:, :, 2)
+    a_b(:, :, 2) = 0.0_4
+    states_b%hi = 0.0_4
+    states_b%hi = states_b%hi + a_b(:, :, 1)
+  END SUBROUTINE GET_STATES_B
+
+!%      TODO comment  
+  SUBROUTINE GET_STATES(states, a)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(IN) :: states
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    a(:, :, 1) = states%hi(:, :)
+    a(:, :, 2) = states%hp(:, :)
+    a(:, :, 3) = states%hft(:, :)
+    a(:, :, 4) = states%hst(:, :)
+    a(:, :, 5) = states%hlr(:, :)
+  END SUBROUTINE GET_STATES
+
+!  Differentiation of set3d_states in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   with respect to varying inputs: a
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.hlr:in
+  SUBROUTINE SET3D_STATES_D(states, states_d, a, a_d)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a_d
+    states_d%hi = 0.0_4
+    states_d%hi(:, :) = a_d(:, :, 1)
+    states%hi(:, :) = a(:, :, 1)
+    states_d%hp = 0.0_4
+    states_d%hp(:, :) = a_d(:, :, 2)
+    states%hp(:, :) = a(:, :, 2)
+    states_d%hft = 0.0_4
+    states_d%hft(:, :) = a_d(:, :, 3)
+    states%hft(:, :) = a(:, :, 3)
+    states_d%hst = 0.0_4
+    states_d%hst(:, :) = a_d(:, :, 4)
+    states%hst(:, :) = a(:, :, 4)
+    states_d%hlr = 0.0_4
+    states_d%hlr(:, :) = a_d(:, :, 5)
+    states%hlr(:, :) = a(:, :, 5)
+  END SUBROUTINE SET3D_STATES_D
+
+!  Differentiation of set3d_states in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   with respect to varying inputs: a
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.hlr:in
+  SUBROUTINE SET3D_STATES_B(states, states_b, a, a_b)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:, :, :) :: a_b
+    a_b = 0.0_4
+    a_b(:, :, 5) = a_b(:, :, 5) + states_b%hlr
+    a_b(:, :, 4) = a_b(:, :, 4) + states_b%hst
+    a_b(:, :, 3) = a_b(:, :, 3) + states_b%hft
+    a_b(:, :, 2) = a_b(:, :, 2) + states_b%hp
+    a_b(:, :, 1) = a_b(:, :, 1) + states_b%hi
+  END SUBROUTINE SET3D_STATES_B
+
+  SUBROUTINE SET3D_STATES(states, a)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    states%hi(:, :) = a(:, :, 1)
+    states%hp(:, :) = a(:, :, 2)
+    states%hft(:, :) = a(:, :, 3)
+    states%hst(:, :) = a(:, :, 4)
+    states%hlr(:, :) = a(:, :, 5)
+  END SUBROUTINE SET3D_STATES
+
+  SUBROUTINE SET1D_STATES(states, a)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), DIMENSION(ns), INTENT(IN) :: a
+    states%hi(:, :) = a(1)
+    states%hp(:, :) = a(2)
+    states%hft(:, :) = a(3)
+    states%hst(:, :) = a(4)
+    states%hlr(:, :) = a(5)
+  END SUBROUTINE SET1D_STATES
+
+  SUBROUTINE SET0D_STATES(states, a)
+    IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(ns) :: a1d
+    a1d(:) = a
+    CALL SET1D_STATES(states, a1d)
+  END SUBROUTINE SET0D_STATES
+
+!  Differentiation of get_hyper_states in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: a
+!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
+!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
+!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
+!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
+  SUBROUTINE GET_HYPER_STATES_D(hyper_states, hyper_states_d, a, a_d)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    a_d = 0.0_4
+    a_d(:, :, 1) = hyper_states_d%hi(:, :)
+    a(:, :, 1) = hyper_states%hi(:, :)
+    a_d(:, :, 2) = hyper_states_d%hp(:, :)
+    a(:, :, 2) = hyper_states%hp(:, :)
+    a_d(:, :, 3) = hyper_states_d%hft(:, :)
+    a(:, :, 3) = hyper_states%hft(:, :)
+    a_d(:, :, 4) = hyper_states_d%hst(:, :)
+    a(:, :, 4) = hyper_states%hst(:, :)
+    a_d(:, :, 5) = hyper_states_d%hlr(:, :)
+    a(:, :, 5) = hyper_states%hlr(:, :)
+  END SUBROUTINE GET_HYPER_STATES_D
+
+!  Differentiation of get_hyper_states in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: a
+!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
+!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
+!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
+!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
+  SUBROUTINE GET_HYPER_STATES_B(hyper_states, hyper_states_b, a, a_b)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    TYPE(HYPER_STATESDT) :: hyper_states_b
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    hyper_states_b%hlr = 0.0_4
+    hyper_states_b%hlr = hyper_states_b%hlr + a_b(:, :, 5)
+    a_b(:, :, 5) = 0.0_4
+    hyper_states_b%hst = 0.0_4
+    hyper_states_b%hst = hyper_states_b%hst + a_b(:, :, 4)
+    a_b(:, :, 4) = 0.0_4
+    hyper_states_b%hft = 0.0_4
+    hyper_states_b%hft = hyper_states_b%hft + a_b(:, :, 3)
+    a_b(:, :, 3) = 0.0_4
+    hyper_states_b%hp = 0.0_4
+    hyper_states_b%hp = hyper_states_b%hp + a_b(:, :, 2)
+    a_b(:, :, 2) = 0.0_4
+    hyper_states_b%hi = 0.0_4
+    hyper_states_b%hi = hyper_states_b%hi + a_b(:, :, 1)
+  END SUBROUTINE GET_HYPER_STATES_B
+
+  SUBROUTINE GET_HYPER_STATES(hyper_states, a)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    a(:, :, 1) = hyper_states%hi(:, :)
+    a(:, :, 2) = hyper_states%hp(:, :)
+    a(:, :, 3) = hyper_states%hft(:, :)
+    a(:, :, 4) = hyper_states%hst(:, :)
+    a(:, :, 5) = hyper_states%hlr(:, :)
+  END SUBROUTINE GET_HYPER_STATES
+
+  SUBROUTINE SET3D_HYPER_STATES(hyper_states, a)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
+    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    hyper_states%hi(:, :) = a(:, :, 1)
+    hyper_states%hp(:, :) = a(:, :, 2)
+    hyper_states%hft(:, :) = a(:, :, 3)
+    hyper_states%hst(:, :) = a(:, :, 4)
+    hyper_states%hlr(:, :) = a(:, :, 5)
+  END SUBROUTINE SET3D_HYPER_STATES
+
+  SUBROUTINE SET1D_HYPER_STATES(hyper_states, a)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
+    REAL(sp), DIMENSION(ns), INTENT(IN) :: a
+    hyper_states%hi(:, :) = a(1)
+    hyper_states%hp(:, :) = a(2)
+    hyper_states%hft(:, :) = a(3)
+    hyper_states%hst(:, :) = a(4)
+    hyper_states%hlr(:, :) = a(5)
+  END SUBROUTINE SET1D_HYPER_STATES
+
+  SUBROUTINE SET0D_HYPER_STATES(hyper_states, a)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
+    REAL(sp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(ns) :: a1d
+    a1d(:) = a
+    CALL SET1D_HYPER_STATES(hyper_states, a1d)
+  END SUBROUTINE SET0D_HYPER_STATES
+
+!  Differentiation of hyper_states_to_states in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
+!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
+!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
+!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
+!%      TODO comment
+  SUBROUTINE HYPER_STATES_TO_STATES_D(hyper_states, hyper_states_d, &
+&   states, states_d, setup, input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_d
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
+&   2), ns) :: hyper_states_matrix
+    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
+&   2), ns) :: hyper_states_matrix_d
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
+&   states_matrix
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
+&   states_matrix_d
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
+&   dpb
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_d
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    REAL(sp) :: a_d, b_d
+    INTRINSIC TRIM
+    REAL(sp), DIMENSION(size(states%hp, 1), size(states%hp, 2)) :: temp
+    CALL GET_HYPER_STATES_D(hyper_states, hyper_states_d, &
+&                     hyper_states_matrix, hyper_states_matrix_d)
+    CALL GET_STATES(states, states_matrix)
+    states_matrix_d = 0.0_4
+    a_d = 0.0_4
+    b_d = 0.0_4
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,ns
+      states_matrix_d(:, :, i) = hyper_states_matrix_d(1, 1, i)
+      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a_d = hyper_states_matrix_d(j+1, 1, i)
+          a = hyper_states_matrix(j+1, 1, i)
+          b = 1._sp
+          b_d = 0.0_4
+        CASE ('hyper-polynomial') 
+          a_d = hyper_states_matrix_d(2*j, 1, i)
+          a = hyper_states_matrix(2*j, 1, i)
+          b_d = hyper_states_matrix_d(2*j+1, 1, i)
+          b = hyper_states_matrix(2*j+1, 1, i)
+        END SELECT
+        temp = d**b
+        WHERE (d .LE. 0.0) 
+          dpb_d = 0.0_4
+        ELSEWHERE
+          dpb_d = temp*LOG(d)*b_d
+        END WHERE
+        dpb = temp
+        states_matrix_d(:, :, i) = states_matrix_d(:, :, i) + dpb*a_d + &
+&         a*dpb_d
+        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
+      END DO
+      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) 
+        states_matrix_d(:, :, i) = 0.0_4
+        states_matrix(:, :, i) = setup%lb_states(i)
+      END WHERE
+      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) 
+        states_matrix_d(:, :, i) = 0.0_4
+        states_matrix(:, :, i) = setup%ub_states(i)
+      END WHERE
+    END DO
+    CALL SET_STATES_D(states, states_d, states_matrix, states_matrix_d)
+  END SUBROUTINE HYPER_STATES_TO_STATES_D
+
+!  Differentiation of hyper_states_to_states in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.hlr)
+!   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
+!                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
+!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
+!                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
+!%      TODO comment
+  SUBROUTINE HYPER_STATES_TO_STATES_B(hyper_states, hyper_states_b, &
+&   states, states_b, setup, input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    TYPE(HYPER_STATESDT) :: hyper_states_b
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_b
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
+&   2), ns) :: hyper_states_matrix
+    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
+&   2), ns) :: hyper_states_matrix_b
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
+&   states_matrix
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
+&   states_matrix_b
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
+&   dpb
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_b
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    REAL(sp) :: a_b, b_b
+    INTRINSIC TRIM
+    INTEGER :: branch
+    CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,ns
+      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          CALL PUSHREAL4(a)
+          a = hyper_states_matrix(j+1, 1, i)
+          CALL PUSHREAL4(b)
+          b = 1._sp
+          CALL PUSHCONTROL2B(1)
+        CASE ('hyper-polynomial') 
+          CALL PUSHREAL4(a)
+          a = hyper_states_matrix(2*j, 1, i)
+          CALL PUSHREAL4(b)
+          b = hyper_states_matrix(2*j+1, 1, i)
+          CALL PUSHCONTROL2B(2)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(0)
+        END SELECT
+        dpb = d**b
+        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
+      END DO
+      CALL PUSHREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*&
+&                   SIZE(states%hp, 2))
+      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
+&       states_matrix(:, :, i) = setup%lb_states(i)
+    END DO
+    CALL SET_STATES(states, states_matrix)
+    CALL SET_STATES_B(states, states_b, states_matrix, states_matrix_b)
+    hyper_states_matrix_b = 0.0_4
+    a_b = 0.0_4
+    b_b = 0.0_4
+    DO i=ns,1,-1
+      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
+&       states_matrix_b(:, :, i) = 0.0_4
+      CALL POPREAL4ARRAY(states_matrix(:, :, i), SIZE(states%hp, 1)*SIZE&
+&                  (states%hp, 2))
+      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
+&       states_matrix_b(:, :, i) = 0.0_4
+      DO j=setup%nd,1,-1
+        d = input_data%descriptor(:, :, j)
+        dpb = d**b
+        dpb_b = 0.0_4
+        a_b = a_b + SUM(dpb*states_matrix_b(:, :, i))
+        dpb_b = a*states_matrix_b(:, :, i)
+        b_b = b_b + SUM(d**b*LOG(d)*dpb_b, MASK=.NOT.d.LE.0.0)
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(b)
+            CALL POPREAL4(a)
+            hyper_states_matrix_b(j+1, 1, i) = hyper_states_matrix_b(j+1&
+&             , 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          ELSE
+            CALL POPREAL4(b)
+            hyper_states_matrix_b(2*j+1, 1, i) = hyper_states_matrix_b(2&
+&             *j+1, 1, i) + b_b
+            CALL POPREAL4(a)
+            hyper_states_matrix_b(2*j, 1, i) = hyper_states_matrix_b(2*j&
+&             , 1, i) + a_b
+            a_b = 0.0_4
+            b_b = 0.0_4
+          END IF
+        END IF
+      END DO
+      hyper_states_matrix_b(1, 1, i) = hyper_states_matrix_b(1, 1, i) + &
+&       SUM(states_matrix_b(:, :, i))
+      states_matrix_b(:, :, i) = 0.0_4
+    END DO
+    CALL GET_HYPER_STATES_B(hyper_states, hyper_states_b, &
+&                     hyper_states_matrix, hyper_states_matrix_b)
+  END SUBROUTINE HYPER_STATES_TO_STATES_B
+
+!%      TODO comment
+  SUBROUTINE HYPER_STATES_TO_STATES(hyper_states, states, setup, &
+&   input_data)
+    IMPLICIT NONE
+    TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
+&   2), ns) :: hyper_states_matrix
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
+&   states_matrix
+    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
+&   dpb
+    INTEGER :: i, j
+    REAL(sp) :: a, b
+    INTRINSIC TRIM
+    CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
+    CALL GET_STATES(states, states_matrix)
+!% Add mask later here
+!% 1 in dim2 will be replace with k and apply where on Omega
+    DO i=1,ns
+      states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
+      DO j=1,setup%nd
+        d = input_data%descriptor(:, :, j)
+        SELECT CASE  (TRIM(setup%mapping)) 
+        CASE ('hyper-linear') 
+          a = hyper_states_matrix(j+1, 1, i)
+          b = 1._sp
+        CASE ('hyper-polynomial') 
+          a = hyper_states_matrix(2*j, 1, i)
+          b = hyper_states_matrix(2*j+1, 1, i)
+        END SELECT
+        dpb = d**b
+        states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
+      END DO
+      WHERE (states_matrix(:, :, i) .LT. setup%lb_states(i)) &
+&       states_matrix(:, :, i) = setup%lb_states(i)
+      WHERE (states_matrix(:, :, i) .GT. setup%ub_states(i)) &
+&       states_matrix(:, :, i) = setup%ub_states(i)
+    END DO
+    CALL SET_STATES(states, states_matrix)
+  END SUBROUTINE HYPER_STATES_TO_STATES
+
+END MODULE MWD_STATES_MANIPULATION_DIFF
+
 !%    This module `mwd_cost` encapsulates all SMASH cost (type, subroutines, functions)
 !%    This module is wrapped and differentiated.
 !%
@@ -1714,6 +2639,8 @@ MODULE MWD_COST_DIFF
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
   PUBLIC :: compute_jobs, compute_jreg, compute_cost
   PUBLIC :: compute_jobs_d, compute_jreg_d, compute_cost_d, &
@@ -2001,12 +2928,11 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
 &   states_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_d
-    CALL PARAMETERS_TO_MATRIX_D(parameters, parameters_d, &
-&                         parameters_matrix, parameters_matrix_d)
-    CALL PARAMETERS_TO_MATRIX(parameters_bgd, parameters_bgd_matrix)
-    CALL STATES_TO_MATRIX_D(states, states_d, states_matrix, &
-&                     states_matrix_d)
-    CALL STATES_TO_MATRIX(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
+&                   parameters_matrix_d)
+    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES_D(states, states_d, states_matrix, states_matrix_d)
+    CALL GET_STATES(states_bgd, states_bgd_matrix)
     SELECT CASE  (setup%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
@@ -2058,10 +2984,10 @@ CONTAINS
     REAL(sp) :: res0
     REAL(sp) :: res_b0
     INTEGER :: branch
-    CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
-    CALL PARAMETERS_TO_MATRIX(parameters_bgd, parameters_bgd_matrix)
-    CALL STATES_TO_MATRIX(states, states_matrix)
-    CALL STATES_TO_MATRIX(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS(parameters, parameters_matrix)
+    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES(states, states_matrix)
+    CALL GET_STATES(states_bgd, states_bgd_matrix)
     SELECT CASE  (setup%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
@@ -2088,10 +3014,9 @@ CONTAINS
       CALL REG_PRIOR_B(mesh, np, parameters_matrix, parameters_matrix_b&
 &                , parameters_bgd_matrix, res_b)
     END IF
-    CALL STATES_TO_MATRIX_B(states, states_b, states_matrix, &
-&                     states_matrix_b)
-    CALL PARAMETERS_TO_MATRIX_B(parameters, parameters_b, &
-&                         parameters_matrix, parameters_matrix_b)
+    CALL GET_STATES_B(states, states_b, states_matrix, states_matrix_b)
+    CALL GET_PARAMETERS_B(parameters, parameters_b, parameters_matrix, &
+&                   parameters_matrix_b)
   END SUBROUTINE COMPUTE_JREG_B
 
 !% WIP
@@ -2108,10 +3033,10 @@ CONTAINS
 &   parameters_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
 &   states_bgd_matrix
-    CALL PARAMETERS_TO_MATRIX(parameters, parameters_matrix)
-    CALL PARAMETERS_TO_MATRIX(parameters_bgd, parameters_bgd_matrix)
-    CALL STATES_TO_MATRIX(states, states_matrix)
-    CALL STATES_TO_MATRIX(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS(parameters, parameters_matrix)
+    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES(states, states_matrix)
+    CALL GET_STATES(states_bgd, states_bgd_matrix)
     jreg = 0._sp
     parameters_jreg = 0._sp
     states_jreg = 0._sp
@@ -3001,962 +3926,7 @@ CONTAINS
 
 END MODULE MWD_COST_DIFF
 
-!%      This module `md_operator` encapsulates all SMASH operator.
-!%      This module is differentiated.
-!%
-!%      contains
-!%
-!%      [1] GR_interception
-!%      [2] GR_production
-!%      [3] GR_exchange
-!%      [4] GR_transferN
-!%      [5] upstream_discharge
-!%      [6] sparse_upstream_discharge
-!%      [7] GR_transfer1
-MODULE MD_OPERATOR_DIFF
-!% only : sp
-  USE MD_COMMON
-  IMPLICIT NONE
-
-CONTAINS
-!  Differentiation of gr_interception in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: hi ei pn
-!   with respect to varying inputs: hi ci
-!% TODO comment
-  SUBROUTINE GR_INTERCEPTION_D(prcp, pet, ci, ci_d, hi, hi_d, pn, pn_d, &
-&   ei, ei_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: prcp, pet, ci
-    REAL(sp), INTENT(IN) :: ci_d
-    REAL(sp), INTENT(INOUT) :: hi
-    REAL(sp), INTENT(INOUT) :: hi_d
-    REAL(sp), INTENT(OUT) :: pn, ei
-    REAL(sp), INTENT(OUT) :: pn_d, ei_d
-    INTRINSIC MIN
-    INTRINSIC MAX
-    REAL(sp) :: temp
-    IF (pet .GT. prcp + hi*ci) THEN
-      ei_d = ci*hi_d + hi*ci_d
-      ei = prcp + hi*ci
-    ELSE
-      ei = pet
-      ei_d = 0.0_4
-    END IF
-    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
-      pn_d = ci*hi_d - (1._sp-hi)*ci_d - ei_d
-      pn = prcp - ci*(1._sp-hi) - ei
-    ELSE
-      pn = 0._sp
-      pn_d = 0.0_4
-    END IF
-    temp = (prcp-ei-pn)/ci
-    hi_d = hi_d + (-ei_d-pn_d-temp*ci_d)/ci
-    hi = hi + temp
-  END SUBROUTINE GR_INTERCEPTION_D
-
-!  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: hi ei ci pn
-!   with respect to varying inputs: hi ci
-!% TODO comment
-  SUBROUTINE GR_INTERCEPTION_B(prcp, pet, ci, ci_b, hi, hi_b, pn, pn_b, &
-&   ei, ei_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: prcp, pet, ci
-    REAL(sp) :: ci_b
-    REAL(sp), INTENT(INOUT) :: hi
-    REAL(sp), INTENT(INOUT) :: hi_b
-    REAL(sp) :: pn, ei
-    REAL(sp) :: pn_b, ei_b
-    INTRINSIC MIN
-    INTRINSIC MAX
-    REAL(sp) :: temp_b
-    INTEGER :: branch
-    IF (pet .GT. prcp + hi*ci) THEN
-      ei = prcp + hi*ci
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-      ei = pet
-    END IF
-    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
-      pn = prcp - ci*(1._sp-hi) - ei
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-      pn = 0._sp
-    END IF
-    temp_b = hi_b/ci
-    ei_b = ei_b - temp_b
-    pn_b = pn_b - temp_b
-    ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      ci_b = ci_b - (1._sp-hi)*pn_b
-      hi_b = hi_b + ci*pn_b
-      ei_b = ei_b - pn_b
-    END IF
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      hi_b = hi_b + ci*ei_b
-      ci_b = ci_b + hi*ei_b
-    END IF
-  END SUBROUTINE GR_INTERCEPTION_B
-
-!% TODO comment
-  SUBROUTINE GR_INTERCEPTION(prcp, pet, ci, hi, pn, ei)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: prcp, pet, ci
-    REAL(sp), INTENT(INOUT) :: hi
-    REAL(sp), INTENT(OUT) :: pn, ei
-    INTRINSIC MIN
-    INTRINSIC MAX
-    IF (pet .GT. prcp + hi*ci) THEN
-      ei = prcp + hi*ci
-    ELSE
-      ei = pet
-    END IF
-    IF (0._sp .LT. prcp - ci*(1._sp-hi) - ei) THEN
-      pn = prcp - ci*(1._sp-hi) - ei
-    ELSE
-      pn = 0._sp
-    END IF
-    hi = hi + (prcp-ei-pn)/ci
-  END SUBROUTINE GR_INTERCEPTION
-
-!  Differentiation of gr_production in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: hp perc pr
-!   with respect to varying inputs: hp en beta cp pn
-  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, beta_d&
-&   , hp, hp_d, pr, pr_d, perc, perc_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, beta_d
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_d
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp), INTENT(OUT) :: pr_d, perc_d
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_d, ps_d, es_d, hp_imd_d
-    INTRINSIC TANH
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_d
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_d
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    inv_cp_d = -(cp_d/cp**2)
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    temp = TANH(pn*inv_cp)
-    temp0 = TANH(pn*inv_cp)
-    temp1 = cp*(-(hp*hp)+1._sp)
-    temp2 = temp1*temp0/(hp*temp+1._sp)
-    ps_d = (temp0*((1._sp-hp**2)*cp_d-cp*2*hp*hp_d)+temp1*(1.0-TANH(pn*&
-&     inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)-temp2*(temp*hp_d+hp*(1.0-&
-&     TANH(pn*inv_cp)**2)*(inv_cp*pn_d+pn*inv_cp_d)))/(hp*temp+1._sp)
-    ps = temp2
-    temp2 = TANH(en*inv_cp)
-    temp1 = TANH(en*inv_cp)
-    temp0 = hp*cp*(-hp+2._sp)
-    temp = temp0*temp1/((-hp+1._sp)*temp2+1._sp)
-    es_d = (temp1*((2._sp-hp)*(cp*hp_d+hp*cp_d)-hp*cp*hp_d)+temp0*(1.0-&
-&     TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp*((1._sp-hp)*(&
-&     1.0-TANH(en*inv_cp)**2)*(inv_cp*en_d+en*inv_cp_d)-temp2*hp_d))/((&
-&     1._sp-hp)*temp2+1._sp)
-    es = temp
-    hp_imd_d = hp_d + inv_cp*(ps_d-es_d) + (ps-es)*inv_cp_d
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      pr_d = pn_d - cp*(hp_imd_d-hp_d) - (hp_imd-hp)*cp_d
-      pr = pn - (hp_imd-hp)*cp
-    ELSE
-      pr_d = 0.0_4
-    END IF
-    pwx1_d = 4*hp_imd**3*(hp_imd_d-hp_imd*beta_d/beta)/beta**4
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
-    pwr1 = pwx1**(-0.25_sp)
-    perc_d = (1._sp-pwr1)*(cp*hp_imd_d+hp_imd*cp_d) - hp_imd*cp*pwr1_d
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp_d = hp_imd_d - inv_cp*perc_d - perc*inv_cp_d
-    hp = hp_imd - perc*inv_cp
-  END SUBROUTINE GR_PRODUCTION_D
-
-!  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: hp beta cp perc pr
-!   with respect to varying inputs: hp en beta cp pn
-  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, beta_b&
-&   , hp, hp_b, pr, pr_b, perc, perc_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp) :: pn_b, en_b, cp_b, beta_b
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(INOUT) :: hp_b
-    REAL(sp) :: pr, perc
-    REAL(sp) :: pr_b, perc_b
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    REAL(sp) :: inv_cp_b, ps_b, es_b, hp_imd_b
-    INTRINSIC TANH
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_b
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_b
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-    REAL(sp) :: temp_b
-    REAL(sp) :: temp1
-    REAL(sp) :: temp2
-    REAL(sp) :: temp3
-    REAL(sp) :: temp_b0
-    REAL(sp) :: temp_b1
-    REAL(sp) :: temp4
-    REAL(sp) :: temp_b2
-    REAL(sp) :: temp_b3
-    REAL(sp) :: temp_b4
-    REAL(sp) :: temp_b5
-    INTEGER :: branch
-    inv_cp = 1._sp/cp
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) THEN
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    perc = hp_imd*cp*(1._sp-pwr1)
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    inv_cp = 1._sp/cp
-    perc_b = perc_b - inv_cp*hp_b
-    inv_cp_b = -(perc*hp_b)
-    cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
-    pwr1_b = -(hp_imd*cp*perc_b)
-    pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
-    temp_b5 = 4*hp_imd**3*pwx1_b/beta**4
-    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + temp_b5
-    beta_b = beta_b - hp_imd*temp_b5/beta
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      pn_b = pr_b
-      hp_imd_b = hp_imd_b - cp*pr_b
-      hp_b = cp*pr_b
-      cp_b = cp_b - (hp_imd-hp)*pr_b
-    ELSE
-      hp_b = 0.0_4
-      pn_b = 0.0_4
-    END IF
-    es_b = -(inv_cp*hp_imd_b)
-    temp4 = TANH(en*inv_cp)
-    temp3 = (-hp+1._sp)*temp4 + 1._sp
-    temp1 = TANH(en*inv_cp)
-    temp0 = hp*cp*(-hp+2._sp)
-    temp_b3 = es_b/temp3
-    temp_b = (2._sp-hp)*temp1*temp_b3
-    temp_b0 = -(temp0*temp1*temp_b3/temp3)
-    hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
-&     temp_b0
-    ps_b = inv_cp*hp_imd_b
-    temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
-    temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
-    en_b = inv_cp*temp_b5 + inv_cp*temp_b4
-    cp_b = cp_b + hp*temp_b
-    temp = TANH(pn*inv_cp)
-    temp0 = hp*temp + 1._sp
-    temp1 = TANH(pn*inv_cp)
-    temp2 = cp*(-(hp*hp)+1._sp)
-    temp_b = ps_b/temp0
-    temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
-    temp_b1 = -(temp2*temp1*temp_b/temp0)
-    hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
-    temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
-    inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
-&     pn*temp_b2 + pn*temp_b0
-    cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
-    pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
-  END SUBROUTINE GR_PRODUCTION_B
-
-  SUBROUTINE GR_PRODUCTION(pn, en, cp, beta, hp, pr, perc)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp), INTENT(INOUT) :: hp
-    REAL(sp), INTENT(OUT) :: pr, perc
-    REAL(sp) :: inv_cp, ps, es, hp_imd
-    INTRINSIC TANH
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwr1
-    inv_cp = 1._sp/cp
-    pr = 0._sp
-    ps = cp*(1._sp-hp*hp)*TANH(pn*inv_cp)/(1._sp+hp*TANH(pn*inv_cp))
-    es = hp*cp*(2._sp-hp)*TANH(en*inv_cp)/(1._sp+(1._sp-hp)*TANH(en*&
-&     inv_cp))
-    hp_imd = hp + (ps-es)*inv_cp
-    IF (pn .GT. 0) pr = pn - (hp_imd-hp)*cp
-    pwx1 = 1._sp + (hp_imd/beta)**4
-    pwr1 = pwx1**(-0.25_sp)
-    perc = hp_imd*cp*(1._sp-pwr1)
-    hp = hp_imd - perc*inv_cp
-  END SUBROUTINE GR_PRODUCTION
-
-!  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: l
-!   with respect to varying inputs: hft exc
-  SUBROUTINE GR_EXCHANGE_D(exc, exc_d, hft, hft_d, l, l_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: exc
-    REAL(sp), INTENT(IN) :: exc_d
-    REAL(sp), INTENT(INOUT) :: hft
-    REAL(sp), INTENT(INOUT) :: hft_d
-    REAL(sp), INTENT(OUT) :: l
-    REAL(sp), INTENT(OUT) :: l_d
-    REAL(sp) :: temp
-    temp = hft**3.5_sp
-    l_d = temp*exc_d + exc*3.5_sp*hft**2.5*hft_d
-    l = exc*temp
-  END SUBROUTINE GR_EXCHANGE_D
-
-!  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: l hft exc
-!   with respect to varying inputs: hft exc
-  SUBROUTINE GR_EXCHANGE_B(exc, exc_b, hft, hft_b, l, l_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: exc
-    REAL(sp) :: exc_b
-    REAL(sp), INTENT(INOUT) :: hft
-    REAL(sp), INTENT(INOUT) :: hft_b
-    REAL(sp) :: l
-    REAL(sp) :: l_b
-    exc_b = exc_b + hft**3.5_sp*l_b
-    hft_b = hft_b + 3.5_sp*hft**2.5*exc*l_b
-  END SUBROUTINE GR_EXCHANGE_B
-
-  SUBROUTINE GR_EXCHANGE(exc, hft, l)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: exc
-    REAL(sp), INTENT(INOUT) :: hft
-    REAL(sp), INTENT(OUT) :: l
-    l = exc*hft**3.5_sp
-  END SUBROUTINE GR_EXCHANGE
-
-!  Differentiation of gr_transfern in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: q ht
-!   with respect to varying inputs: ht ct pr
-  SUBROUTINE GR_TRANSFERN_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, &
-&   q_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
-    REAL(sp), INTENT(IN) :: pr_d, ct_d
-    REAL(sp), INTENT(INOUT) :: ht
-    REAL(sp), INTENT(INOUT) :: ht_d
-    REAL(sp), INTENT(OUT) :: q
-    REAL(sp), INTENT(OUT) :: q_d
-    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
-    REAL(sp) :: pr_imd_d, ht_imd_d
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_d
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_d
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwr2_d
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwx3_d
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-    REAL(sp) :: pwr3_d
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    IF (prcp .LT. 0._sp) THEN
-      pwx1_d = ct*ht_d + ht*ct_d
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&     THEN
-        pwr1_d = 0.0_4
-      ELSE
-        pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
-      END IF
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
-&     THEN
-        pwr2_d = 0.0_4
-      ELSE
-        pwr2_d = pwy2*ct**(pwy2-1)*ct_d
-      END IF
-      pwr2 = ct**pwy2
-      pwx3_d = pwr1_d - pwr2_d
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&     THEN
-        pwr3_d = 0.0_4
-      ELSE
-        pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
-      END IF
-      pwr3 = pwx3**pwy3
-      pr_imd_d = pwr3_d - ct*ht_d - ht*ct_d
-      pr_imd = pwr3 - ht*ct
-    ELSE
-      pr_imd_d = pr_d
-      pr_imd = pr
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd_d = ht_d + (pr_imd_d-pr_imd*ct_d/ct)/ct
-      ht_imd = ht + pr_imd/ct
-    ELSE
-      ht_imd = 1.e-6_sp
-      ht_imd_d = 0.0_4
-    END IF
-    pwx1_d = ct*ht_imd_d + ht_imd*ct_d
-    pwx1 = ht_imd*ct
-    pwy1 = -nm1
-    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&   THEN
-      pwr1_d = 0.0_4
-    ELSE
-      pwr1_d = pwy1*pwx1**(pwy1-1)*pwx1_d
-    END IF
-    pwr1 = pwx1**pwy1
-    pwy2 = -nm1
-    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-      pwr2_d = 0.0_4
-    ELSE
-      pwr2_d = pwy2*ct**(pwy2-1)*ct_d
-    END IF
-    pwr2 = ct**pwy2
-    pwx3_d = pwr1_d + pwr2_d
-    pwx3 = pwr1 + pwr2
-    pwy3 = -d1pnm1
-    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&   THEN
-      pwr3_d = 0.0_4
-    ELSE
-      pwr3_d = pwy3*pwx3**(pwy3-1)*pwx3_d
-    END IF
-    pwr3 = pwx3**pwy3
-    ht_d = (pwr3_d-pwr3*ct_d/ct)/ct
-    ht = pwr3/ct
-    q_d = ct*(ht_imd_d-ht_d) + (ht_imd-ht)*ct_d
-    q = (ht_imd-ht)*ct
-  END SUBROUTINE GR_TRANSFERN_D
-
-!  Differentiation of gr_transfern in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: q ht ct
-!   with respect to varying inputs: ht ct pr
-  SUBROUTINE GR_TRANSFERN_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, &
-&   q_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
-    REAL(sp) :: pr_b, ct_b
-    REAL(sp), INTENT(INOUT) :: ht
-    REAL(sp), INTENT(INOUT) :: ht_b
-    REAL(sp) :: q
-    REAL(sp) :: q_b
-    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
-    REAL(sp) :: pr_imd_b, ht_imd_b
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwx1_b
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwr1_b
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwr2_b
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwx3_b
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-    REAL(sp) :: pwr3_b
-    INTEGER :: branch
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    IF (prcp .LT. 0._sp) THEN
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      pwr2 = ct**pwy2
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      pwr3 = pwx3**pwy3
-      pr_imd = pwr3 - ht*ct
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      pr_imd = pr
-      CALL PUSHCONTROL1B(0)
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd = ht + pr_imd/ct
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      ht_imd = 1.e-6_sp
-      CALL PUSHCONTROL1B(1)
-    END IF
-    CALL PUSHREAL4(pwx1)
-    pwx1 = ht_imd*ct
-    CALL PUSHREAL4(pwy1)
-    pwy1 = -nm1
-    pwr1 = pwx1**pwy1
-    CALL PUSHREAL4(pwy2)
-    pwy2 = -nm1
-    pwr2 = ct**pwy2
-    CALL PUSHREAL4(pwx3)
-    pwx3 = pwr1 + pwr2
-    CALL PUSHREAL4(pwy3)
-    pwy3 = -d1pnm1
-    pwr3 = pwx3**pwy3
-    CALL PUSHREAL4(ht)
-    ht = pwr3/ct
-    pwx1 = ht_imd*ct
-    nm1 = n - 1._sp
-    pwy1 = -nm1
-    pwy2 = -nm1
-    d1pnm1 = 1._sp/nm1
-    pwy3 = -d1pnm1
-    ht_b = ht_b - ct*q_b
-    pwr3_b = ht_b/ct
-    IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&   THEN
-      pwx3_b = 0.0_4
-    ELSE
-      pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
-    END IF
-    pwr1_b = pwx3_b
-    pwr2_b = pwx3_b
-    IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&   THEN
-      pwx1_b = 0.0_4
-    ELSE
-      pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
-    END IF
-    ht_imd_b = ct*q_b + ct*pwx1_b
-    IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-      ct_b = ct_b + (ht_imd-ht)*q_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
-    ELSE
-      ct_b = ct_b + (ht_imd-ht)*q_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*&
-&       ht_b/ct**2 + ht_imd*pwx1_b
-    END IF
-    CALL POPREAL4(ht)
-    CALL POPREAL4(pwy3)
-    CALL POPREAL4(pwx3)
-    CALL POPREAL4(pwy2)
-    CALL POPREAL4(pwy1)
-    CALL POPREAL4(pwx1)
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      ht_b = ht_imd_b
-      pr_imd_b = ht_imd_b/ct
-      ct_b = ct_b - pr_imd*ht_imd_b/ct**2
-    ELSE
-      ht_b = 0.0_4
-      pr_imd_b = 0.0_4
-    END IF
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      pr_b = pr_imd_b
-    ELSE
-      pwr3_b = pr_imd_b
-      IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
-&     THEN
-        pwx3_b = 0.0_4
-      ELSE
-        pwx3_b = pwy3*pwx3**(pwy3-1)*pwr3_b
-      END IF
-      pwr1_b = pwx3_b
-      pwr2_b = -pwx3_b
-      IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
-&     THEN
-        pwx1_b = 0.0_4
-      ELSE
-        pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
-      END IF
-      ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
-      IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
-&     THEN
-        ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
-      ELSE
-        ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
-      END IF
-      pr_b = 0.0_4
-    END IF
-  END SUBROUTINE GR_TRANSFERN_B
-
-  SUBROUTINE GR_TRANSFERN(n, prcp, pr, ct, ht, q)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: n, prcp, pr, ct
-    REAL(sp), INTENT(INOUT) :: ht
-    REAL(sp), INTENT(OUT) :: q
-    REAL(sp) :: pr_imd, ht_imd, nm1, d1pnm1
-    INTRINSIC MAX
-    REAL(sp) :: pwx1
-    REAL(sp) :: pwy1
-    REAL(sp) :: pwr1
-    REAL(sp) :: pwy2
-    REAL(sp) :: pwr2
-    REAL(sp) :: pwx3
-    REAL(sp) :: pwy3
-    REAL(sp) :: pwr3
-    nm1 = n - 1._sp
-    d1pnm1 = 1._sp/nm1
-    IF (prcp .LT. 0._sp) THEN
-      pwx1 = ht*ct
-      pwy1 = -nm1
-      pwr1 = pwx1**pwy1
-      pwy2 = -nm1
-      pwr2 = ct**pwy2
-      pwx3 = pwr1 - pwr2
-      pwy3 = -d1pnm1
-      pwr3 = pwx3**pwy3
-      pr_imd = pwr3 - ht*ct
-    ELSE
-      pr_imd = pr
-    END IF
-    IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
-      ht_imd = ht + pr_imd/ct
-    ELSE
-      ht_imd = 1.e-6_sp
-    END IF
-    pwx1 = ht_imd*ct
-    pwy1 = -nm1
-    pwr1 = pwx1**pwy1
-    pwy2 = -nm1
-    pwr2 = ct**pwy2
-    pwx3 = pwr1 + pwr2
-    pwy3 = -d1pnm1
-    pwr3 = pwx3**pwy3
-    ht = pwr3/ct
-    q = (ht_imd-ht)*ct
-  END SUBROUTINE GR_TRANSFERN
-
-!  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: qup
-!   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flwdir, &
-&   drained_area, row, col, q, q_d, qup, qup_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
-    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q_d
-    REAL(sp), INTENT(OUT) :: qup
-    REAL(sp), INTENT(OUT) :: qup_d
-    INTEGER :: i, row_imd, col_imd
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    REAL*4 :: temp
-    qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
-      qup_d = 0.0_4
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            qup_d = qup_d + q_d(row_imd, col_imd)
-            qup = qup + q(row_imd, col_imd)
-          END IF
-        END IF
-      END DO
-      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
-      qup_d = dt*qup_d/temp
-      qup = dt*(qup/temp)
-    ELSE
-      qup_d = 0.0_4
-    END IF
-  END SUBROUTINE UPSTREAM_DISCHARGE_D
-
-!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: q qup
-!   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flwdir, &
-&   drained_area, row, col, q, q_b, qup, qup_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
-    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nrow, ncol) :: q_b
-    REAL(sp) :: qup
-    REAL(sp) :: qup_b
-    INTEGER :: i, row_imd, col_imd
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    INTEGER :: branch
-    IF (drained_area(row, col) .GT. 1) THEN
-      DO i=1,8
-        CALL PUSHINTEGER4(col_imd)
-        col_imd = col + dcol(i)
-        CALL PUSHINTEGER4(row_imd)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            CALL PUSHCONTROL2B(1)
-          END IF
-        ELSE
-          CALL PUSHCONTROL2B(0)
-        END IF
-      END DO
-      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
-      DO i=8,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .NE. 1) q_b(row_imd, col_imd) = q_b(row_imd, &
-&             col_imd) + qup_b
-        END IF
-        CALL POPINTEGER4(row_imd)
-        CALL POPINTEGER4(col_imd)
-      END DO
-    END IF
-  END SUBROUTINE UPSTREAM_DISCHARGE_B
-
-  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flwdir, drained_area&
-&   , row, col, q, qup)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
-    REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
-    REAL(sp), INTENT(OUT) :: qup
-    INTEGER :: i, row_imd, col_imd
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) qup = qup + q(&
-&             row_imd, col_imd)
-        END IF
-      END DO
-      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
-    END IF
-  END SUBROUTINE UPSTREAM_DISCHARGE
-
-!  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: qup
-!   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flwdir&
-&   , drained_area, ind_sparse, row, col, q, q_d, qup, qup_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q_d
-    REAL(sp), INTENT(OUT) :: qup
-    REAL(sp), INTENT(OUT) :: qup_d
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    REAL*4 :: temp
-    qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
-      qup_d = 0.0_4
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            k = ind_sparse(row_imd, col_imd)
-            qup_d = qup_d + q_d(k)
-            qup = qup + q(k)
-          END IF
-        END IF
-      END DO
-      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
-      qup_d = dt*qup_d/temp
-      qup = dt*(qup/temp)
-    ELSE
-      qup_d = 0.0_4
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D
-
-!  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: q qup
-!   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flwdir&
-&   , drained_area, ind_sparse, row, col, q, q_b, qup, qup_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nac) :: q_b
-    REAL(sp) :: qup
-    REAL(sp) :: qup_b
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    INTEGER :: branch
-    IF (drained_area(row, col) .GT. 1) THEN
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            CALL PUSHINTEGER4(k)
-            k = ind_sparse(row_imd, col_imd)
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            CALL PUSHCONTROL2B(1)
-          END IF
-        ELSE
-          CALL PUSHCONTROL2B(0)
-        END IF
-      END DO
-      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
-      DO i=8,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .NE. 1) THEN
-            q_b(k) = q_b(k) + qup_b
-            CALL POPINTEGER4(k)
-          END IF
-        END IF
-      END DO
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B
-
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flwdir, &
-&   drained_area, ind_sparse, row, col, q, qup)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), INTENT(OUT) :: qup
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            k = ind_sparse(row_imd, col_imd)
-            qup = qup + q(k)
-          END IF
-        END IF
-      END DO
-      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
-
-!  Differentiation of gr_transfer1 in forward (tangent) mode (with options fixinterface):
-!   variations   of useful results: hr qrout
-!   with respect to varying inputs: qup hr lr
-  SUBROUTINE GR_TRANSFER1_D(dt, qup, qup_d, lr, lr_d, hr, hr_d, qrout, &
-&   qrout_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(IN) :: qup, lr
-    REAL(sp), INTENT(IN) :: qup_d, lr_d
-    REAL(sp), INTENT(INOUT) :: hr
-    REAL(sp), INTENT(INOUT) :: hr_d
-    REAL(sp), INTENT(OUT) :: qrout
-    REAL(sp), INTENT(OUT) :: qrout_d
-    REAL(sp) :: hr_imd
-    REAL(sp) :: hr_imd_d
-    INTRINSIC EXP
-    REAL(sp) :: arg1
-    REAL(sp) :: arg1_d
-    REAL(sp) :: temp
-    hr_imd_d = hr_d + qup_d
-    hr_imd = hr + qup
-    temp = dt/(60._sp*lr)
-    arg1_d = temp*lr_d/lr
-    arg1 = -temp
-    temp = EXP(arg1)
-    hr_d = temp*hr_imd_d + hr_imd*EXP(arg1)*arg1_d
-    hr = hr_imd*temp
-    qrout_d = hr_imd_d - hr_d
-    qrout = hr_imd - hr
-  END SUBROUTINE GR_TRANSFER1_D
-
-!  Differentiation of gr_transfer1 in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: hr qrout lr
-!   with respect to varying inputs: qup hr lr
-  SUBROUTINE GR_TRANSFER1_B(dt, qup, qup_b, lr, lr_b, hr, hr_b, qrout, &
-&   qrout_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(IN) :: qup, lr
-    REAL(sp) :: qup_b, lr_b
-    REAL(sp), INTENT(INOUT) :: hr
-    REAL(sp), INTENT(INOUT) :: hr_b
-    REAL(sp) :: qrout
-    REAL(sp) :: qrout_b
-    REAL(sp) :: hr_imd
-    REAL(sp) :: hr_imd_b
-    INTRINSIC EXP
-    REAL(sp) :: arg1
-    REAL(sp) :: arg1_b
-    hr_imd = hr + qup
-    arg1 = -(dt/(lr*60._sp))
-    arg1 = -(dt/(lr*60._sp))
-    hr_b = hr_b - qrout_b
-    hr_imd_b = qrout_b + EXP(arg1)*hr_b
-    arg1_b = EXP(arg1)*hr_imd*hr_b
-    lr_b = lr_b + dt*arg1_b/(lr**2*60._sp)
-    hr_b = hr_imd_b
-    qup_b = hr_imd_b
-  END SUBROUTINE GR_TRANSFER1_B
-
-  SUBROUTINE GR_TRANSFER1(dt, qup, lr, hr, qrout)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt
-    REAL(sp), INTENT(IN) :: qup, lr
-    REAL(sp), INTENT(INOUT) :: hr
-    REAL(sp), INTENT(OUT) :: qrout
-    REAL(sp) :: hr_imd
-    INTRINSIC EXP
-    REAL(sp) :: arg1
-    hr_imd = hr + qup
-    arg1 = -(dt/(lr*60._sp))
-    hr = hr_imd*EXP(arg1)
-    qrout = hr_imd - hr
-  END SUBROUTINE GR_TRANSFER1
-
-END MODULE MD_OPERATOR_DIFF
-
-!  Differentiation of forward in forward (tangent) mode (with options fixinterface):
+!  Differentiation of base_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -3978,9 +3948,9 @@ END MODULE MD_OPERATOR_DIFF
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
-& parameters_bgd, states, states_d, states_bgd, output, output_d, cost, &
-& cost_d)
+SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
+& parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
+& output_d, cost, cost_d)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -3995,9 +3965,11 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost, hyper_compuste_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -4165,10 +4137,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
             prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
 &             pr+perc)*parameters_d%alpha(row, col)
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -4187,14 +4159,14 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prl, prl_d, parameters%cst(&
-&                         row, col), parameters_d%cst(row, col), states%&
-&                         hst(row, col), states_d%hst(row, col), ql, &
-&                         ql_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
+            CALL GR_TRANSFER_D(5._sp, prcp, prl, prl_d, parameters%cst(&
+&                        row, col), parameters_d%cst(row, col), states%&
+&                        hst(row, col), states_d%hst(row, col), ql, ql_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -4243,10 +4215,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 &                                        mesh%rowcol_to_ind_sparse, row&
 &                                        , col, sparse_q, sparse_q_d, &
 &                                        qup, qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -4256,10 +4228,10 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
 &                                 mesh%ncol, mesh%flwdir, mesh%&
 &                                 drained_area, row, col, q, q_d, qup, &
 &                                 qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -4298,274 +4270,9 @@ SUBROUTINE FORWARD_D(setup, mesh, input_data, parameters, parameters_d, &
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
 &               , parameters_bgd, states, states_d, states_bgd, output, &
 &               output_d, cost, cost_d)
-END SUBROUTINE FORWARD_D
+END SUBROUTINE BASE_FORWARD_D
 
-SUBROUTINE FORWARD_NODIFF(setup, mesh, input_data, parameters, &
-& parameters_bgd, states, states_bgd, output, cost)
-!% only: sp
-  USE MD_COMMON
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-!% only: Input_DataDT
-  USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
-  USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
-  USE MWD_STATES_DIFF
-!% only: OutputDT
-  USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
-!% only: compute_cost, hyper_compuste_cost
-  USE MWD_COST_DIFF
-  IMPLICIT NONE
-!% =================================================================================================================== %!
-!%   Derived Type Variables (shared)
-!% =================================================================================================================== %!
-  TYPE(SETUPDT), INTENT(IN) :: setup
-  TYPE(MESHDT), INTENT(IN) :: mesh
-  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-  TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-  TYPE(STATESDT), INTENT(INOUT) :: states, states_bgd
-  TYPE(OUTPUTDT), INTENT(INOUT) :: output
-  REAL(sp), INTENT(INOUT) :: cost
-!% =================================================================================================================== %!
-!%   Local Variables (private)
-!% =================================================================================================================== %!
-  TYPE(STATESDT) :: states_imd
-  REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-  REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
-& , ql, qt, qup, qrout
-  INTEGER :: t, i, row, col, k, g
-  INTRINSIC MIN
-  INTRINSIC MAX
-  INTRINSIC REAL
-  cost = 0._sp
-  states_imd = states
-  IF (setup%sparse_storage) THEN
-    ALLOCATE(sparse_q(mesh%nac))
-  ELSE
-    ALLOCATE(q(mesh%nrow, mesh%ncol))
-  END IF
-!% =================================================================================================================== %!
-!%   Begin subroutine
-!% =================================================================================================================== %!
-!% [ DO TIME ]
-  DO t=1,setup%ntime_step
-!% [ DO SPACE ]
-    DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-      ei = 0._sp
-      pn = 0._sp
-      en = 0._sp
-      pr = 0._sp
-      perc = 0._sp
-      l = 0._sp
-      prr = 0._sp
-      prl = 0._sp
-      prd = 0._sp
-      qd = 0._sp
-      qr = 0._sp
-      ql = 0._sp
-      qup = 0._sp
-      qrout = 0._sp
-!% [ END IF PATH ]
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
-!% =========================================================================================================== %!
-      IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
-!% [ IF PATH ]
-        row = mesh%path(1, i)
-        col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
-!% [ END IF ACTIVE CELL ]
-!% ======================================================================================================= %!
-!%   Global/Local active cell
-!% ======================================================================================================= %!
-        IF (mesh%active_cell(row, col) .EQ. 1 .AND. mesh%&
-&           local_active_cell(row, col) .EQ. 1) THEN
-!% [ IF ACTIVE CELL ]
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%sparse_prcp(k, t)
-            pet = input_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%prcp(row, col, t)
-            pet = input_data%pet(row, col, t)
-          END IF
-!% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
-!% [ IF PRCP GAP ]
-!% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
-!% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
-              IF (pet .GT. prcp) THEN
-                ei = prcp
-              ELSE
-                ei = pet
-              END IF
-              IF (0._sp .LT. prcp - ei) THEN
-                pn = prcp - ei
-              ELSE
-                pn = 0._sp
-              END IF
-            CASE (1) 
-              CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
-&                            states%hi(row, col), pn, ei)
-            END SELECT
-            en = pet - ei
-!% =============================================================================================== %!
-!%   Production module case [ 0 ]
-!% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
-              CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
-&                          parameters%beta(row, col), states%hp(row, col&
-&                          ), pr, perc)
-            END SELECT
-!% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
-!% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              l = 0._sp
-            CASE (1) 
-              CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
-&                        , col), l)
-            END SELECT
-          END IF
-!% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
-!% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
-            IF (0._sp .LT. prd + l) THEN
-              qd = prd + l
-            ELSE
-              qd = 0._sp
-            END IF
-          CASE (1) 
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
-            prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
-            IF (0._sp .LT. prd + l) THEN
-              qd = prd + l
-            ELSE
-              qd = 0._sp
-            END IF
-          END SELECT
-          qt = qd + qr + ql
-!% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
-!% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-          CASE (1) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-          END SELECT
-        END IF
-      END IF
-    END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-    DO g=1,mesh%ng
-      row = mesh%gauge_pos(g, 1)
-      col = mesh%gauge_pos(g, 2)
-      IF (setup%sparse_storage) THEN
-        k = mesh%rowcol_to_ind_sparse(row, col)
-        output%qsim(g, t) = sparse_q(k)
-      ELSE
-        output%qsim(g, t) = q(row, col)
-      END IF
-    END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-    IF (setup%save_qsim_domain) THEN
-      IF (setup%sparse_storage) THEN
-        output%sparse_qsim_domain(:, t) = sparse_q
-      ELSE
-        output%qsim_domain(:, :, t) = q
-      END IF
-    END IF
-!% =============================================================================================================== %!
-!%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
-!% =============================================================================================================== %!
-    IF (setup%save_net_prcp_domain) THEN
-      IF (setup%sparse_storage) THEN
-        output%sparse_net_prcp_domain(:, t) = qt
-      ELSE
-        output%net_prcp_domain(:, :, t) = qt
-      END IF
-    END IF
-  END DO
-!% [ END DO TIME ]
-!% =============================================================================================================== %!
-!%   Store states at final time step and reset states
-!% =============================================================================================================== %!
-  output%fstates = states
-  states = states_imd
-!% =================================================================================================================== %!
-!%   Compute J
-!% =================================================================================================================== %!
-  CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
-&             , states, states_bgd, output, cost)
-END SUBROUTINE FORWARD_NODIFF
-
-!  Differentiation of forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of base_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -4587,9 +4294,9 @@ END SUBROUTINE FORWARD_NODIFF
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
-& parameters_bgd, states, states_b, states_bgd, output, output_b, cost, &
-& cost_b)
+SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
+& parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
+& output_b, cost, cost_b)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -4604,9 +4311,11 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost, hyper_compuste_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -4784,8 +4493,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(2)
@@ -4799,11 +4508,11 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             CALL PUSHREAL4(states%hst(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(4)
@@ -4848,8 +4557,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(3)
@@ -4859,8 +4568,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(2)
@@ -4906,8 +4615,8 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
 &             , states, states_bgd, output, cost)
-  CALL SET0_PARAMETERS(parameters_b)
-  CALL SET0_STATES(states_b)
+  CALL SET_PARAMETERS(parameters_b, 0.0_4)
+  CALL SET_STATES(states_b, 0.0_4)
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , parameters_bgd, states, states_b, states_bgd, output, &
 &               output_b, cost, cost_b)
@@ -4942,9 +4651,10 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
@@ -4959,9 +4669,10 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
 &                                    , mesh%ncol, mesh%nac, mesh%flwdir&
@@ -5023,13 +4734,13 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         END IF
         prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
         CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
-&                     , col), parameters_b%cst(row, col), states%hst(row&
-&                     , col), states_b%hst(row, col), ql, ql_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
+&                    col), parameters_b%cst(row, col), states%hst(row, &
+&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                     , col), parameters_b%cft(row, col), states%hft(row&
-&                     , col), states_b%hft(row, col), qr, qr_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                    col), parameters_b%cft(row, col), states%hft(row, &
+&                    col), states_b%hft(row, col), qr, qr_b)
         parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
 &         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
         temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
@@ -5043,9 +4754,9 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
         GOTO 100
       END IF
       CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                   col), parameters_b%cft(row, col), states%hft(row, &
-&                   col), states_b%hft(row, col), qr, qr_b)
+      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                  col), parameters_b%cft(row, col), states%hft(row, col&
+&                  ), states_b%hft(row, col), qr, qr_b)
       parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
 &       perc)*prr_b - (pr+perc)*prd_b
       temp_b = (1._sp-parameters%alpha(row, col))*prd_b
@@ -5114,9 +4825,276 @@ SUBROUTINE FORWARD_B(setup, mesh, input_data, parameters, parameters_b, &
     DEALLOCATE(sparse_q)
     DEALLOCATE(sparse_q_b)
   END IF
-END SUBROUTINE FORWARD_B
+END SUBROUTINE BASE_FORWARD_B
 
-!  Differentiation of hyper_forward in forward (tangent) mode (with options fixinterface):
+SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
+& parameters_bgd, states, states_bgd, output, cost)
+!% only: sp
+  USE MD_COMMON
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: Hyper_ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: Hyper_StatesDT
+  USE MWD_STATES_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
+!% only: compute_cost, hyper_compuste_cost
+  USE MWD_COST_DIFF
+  IMPLICIT NONE
+!% =================================================================================================================== %!
+!%   Derived Type Variables (shared)
+!% =================================================================================================================== %!
+  TYPE(SETUPDT), INTENT(IN) :: setup
+  TYPE(MESHDT), INTENT(IN) :: mesh
+  TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
+  TYPE(STATESDT), INTENT(INOUT) :: states, states_bgd
+  TYPE(OUTPUTDT), INTENT(INOUT) :: output
+  REAL(sp), INTENT(INOUT) :: cost
+!% =================================================================================================================== %!
+!%   Local Variables (private)
+!% =================================================================================================================== %!
+  TYPE(STATESDT) :: states_imd
+  REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
+  REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+  REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
+& , ql, qt, qup, qrout
+  INTEGER :: t, i, row, col, k, g
+  INTRINSIC MIN
+  INTRINSIC MAX
+  INTRINSIC REAL
+  cost = 0._sp
+  states_imd = states
+  IF (setup%sparse_storage) THEN
+    ALLOCATE(sparse_q(mesh%nac))
+  ELSE
+    ALLOCATE(q(mesh%nrow, mesh%ncol))
+  END IF
+!% =================================================================================================================== %!
+!%   Begin subroutine
+!% =================================================================================================================== %!
+!% [ DO TIME ]
+  DO t=1,setup%ntime_step
+!% [ DO SPACE ]
+    DO i=1,mesh%nrow*mesh%ncol
+!% =============================================================================================================== %!
+!%   Local Variables Initialisation for time step (t) and cell (i)
+!% =============================================================================================================== %!
+      ei = 0._sp
+      pn = 0._sp
+      en = 0._sp
+      pr = 0._sp
+      perc = 0._sp
+      l = 0._sp
+      prr = 0._sp
+      prl = 0._sp
+      prd = 0._sp
+      qd = 0._sp
+      qr = 0._sp
+      ql = 0._sp
+      qup = 0._sp
+      qrout = 0._sp
+!% [ END IF PATH ]
+!% =========================================================================================================== %!
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!% =========================================================================================================== %!
+      IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
+!% [ IF PATH ]
+        row = mesh%path(1, i)
+        col = mesh%path(2, i)
+        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
+&           )
+!% [ END IF ACTIVE CELL ]
+!% ======================================================================================================= %!
+!%   Global/Local active cell
+!% ======================================================================================================= %!
+        IF (mesh%active_cell(row, col) .EQ. 1 .AND. mesh%&
+&           local_active_cell(row, col) .EQ. 1) THEN
+!% [ IF ACTIVE CELL ]
+          IF (setup%sparse_storage) THEN
+            prcp = input_data%sparse_prcp(k, t)
+            pet = input_data%sparse_pet(k, t)
+          ELSE
+            prcp = input_data%prcp(row, col, t)
+            pet = input_data%pet(row, col, t)
+          END IF
+!% [ END IF PRCP GAP ]
+          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+!% [ IF PRCP GAP ]
+!% =============================================================================================== %!
+!%   Interception module case [ 0 - 1 ]
+!% =============================================================================================== %!
+            SELECT CASE  (setup%interception_module) 
+            CASE (0) 
+              IF (pet .GT. prcp) THEN
+                ei = prcp
+              ELSE
+                ei = pet
+              END IF
+              IF (0._sp .LT. prcp - ei) THEN
+                pn = prcp - ei
+              ELSE
+                pn = 0._sp
+              END IF
+            CASE (1) 
+              CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
+&                            states%hi(row, col), pn, ei)
+            END SELECT
+            en = pet - ei
+!% =============================================================================================== %!
+!%   Production module case [ 0 ]
+!% =============================================================================================== %!
+            SELECT CASE  (setup%production_module) 
+            CASE (0) 
+              CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
+&                          parameters%beta(row, col), states%hp(row, col&
+&                          ), pr, perc)
+            END SELECT
+!% =============================================================================================== %!
+!%   Exchange module case [ 0 - 1 ]
+!% =============================================================================================== %!
+            SELECT CASE  (setup%exchange_module) 
+            CASE (0) 
+              l = 0._sp
+            CASE (1) 
+              CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
+&                        , col), l)
+            END SELECT
+          END IF
+!% =================================================================================================== %!
+!%   Transfer module case [ 0 ]
+!% =================================================================================================== %!
+          SELECT CASE  (setup%transfer_module) 
+          CASE (0) 
+            prr = parameters%alpha(row, col)*(pr+perc) + l
+            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
+            IF (0._sp .LT. prd + l) THEN
+              qd = prd + l
+            ELSE
+              qd = 0._sp
+            END IF
+          CASE (1) 
+            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
+            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+            prd = 0.1_sp*(pr+perc)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
+            IF (0._sp .LT. prd + l) THEN
+              qd = prd + l
+            ELSE
+              qd = 0._sp
+            END IF
+          END SELECT
+          qt = qd + qr + ql
+!% =================================================================================================== %!
+!%   Routing module case [ 0 - 1 ]
+!% =================================================================================================== %!
+          SELECT CASE  (setup%routing_module) 
+          CASE (0) 
+            IF (setup%sparse_storage) THEN
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
+&                                      nrow, mesh%ncol, mesh%nac, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
+&                                      rowcol_to_ind_sparse, row, col, &
+&                                      sparse_q, qup)
+              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
+            ELSE
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
+              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
+&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
+            END IF
+          CASE (1) 
+            IF (setup%sparse_storage) THEN
+              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
+&                                      nrow, mesh%ncol, mesh%nac, mesh%&
+&                                      flwdir, mesh%drained_area, mesh%&
+&                                      rowcol_to_ind_sparse, row, col, &
+&                                      sparse_q, qup)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
+              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+            ELSE
+              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%drained_area, &
+&                               row, col, q, qup)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
+              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
+&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+            END IF
+          END SELECT
+        END IF
+      END IF
+    END DO
+!% [ END DO SPACE ]
+!% =============================================================================================================== %!
+!%   Store simulated discharge at gauge
+!% =============================================================================================================== %!
+    DO g=1,mesh%ng
+      row = mesh%gauge_pos(g, 1)
+      col = mesh%gauge_pos(g, 2)
+      IF (setup%sparse_storage) THEN
+        k = mesh%rowcol_to_ind_sparse(row, col)
+        output%qsim(g, t) = sparse_q(k)
+      ELSE
+        output%qsim(g, t) = q(row, col)
+      END IF
+    END DO
+!% =============================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =============================================================================================================== %!
+    IF (setup%save_qsim_domain) THEN
+      IF (setup%sparse_storage) THEN
+        output%sparse_qsim_domain(:, t) = sparse_q
+      ELSE
+        output%qsim_domain(:, :, t) = q
+      END IF
+    END IF
+!% =============================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =============================================================================================================== %!
+    IF (setup%save_net_prcp_domain) THEN
+      IF (setup%sparse_storage) THEN
+        output%sparse_net_prcp_domain(:, t) = qt
+      ELSE
+        output%net_prcp_domain(:, :, t) = qt
+      END IF
+    END IF
+  END DO
+!% [ END DO TIME ]
+!% =============================================================================================================== %!
+!%   Store states at final time step and reset states
+!% =============================================================================================================== %!
+  output%fstates = states
+  states = states_imd
+!% =================================================================================================================== %!
+!%   Compute J
+!% =================================================================================================================== %!
+  CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
+&             , states, states_bgd, output, cost)
+END SUBROUTINE BASE_FORWARD_NODIFF
+
+!  Differentiation of base_hyper_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5148,9 +5126,10 @@ END SUBROUTINE FORWARD_B
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
-& hyper_parameters_d, hyper_parameters_bgd, hyper_states, hyper_states_d&
-& , hyper_states_bgd, output, output_d, cost, cost_d)
+SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
+& hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
+& hyper_states, hyper_states_d, hyper_states_bgd, output, output_d, cost&
+& , cost_d)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -5165,9 +5144,11 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -5343,10 +5324,10 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
             prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
 &             pr+perc)*parameters_d%alpha(row, col)
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -5365,14 +5346,14 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prr, prr_d, parameters%cft(&
-&                         row, col), parameters_d%cft(row, col), states%&
-&                         hft(row, col), states_d%hft(row, col), qr, &
-&                         qr_d)
-            CALL GR_TRANSFERN_D(5._sp, prcp, prl, prl_d, parameters%cst(&
-&                         row, col), parameters_d%cst(row, col), states%&
-&                         hst(row, col), states_d%hst(row, col), ql, &
-&                         ql_d)
+            CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
+&                        row, col), parameters_d%cft(row, col), states%&
+&                        hft(row, col), states_d%hft(row, col), qr, qr_d&
+&                       )
+            CALL GR_TRANSFER_D(5._sp, prcp, prl, prl_d, parameters%cst(&
+&                        row, col), parameters_d%cst(row, col), states%&
+&                        hst(row, col), states_d%hst(row, col), ql, ql_d&
+&                       )
             IF (0._sp .LT. prd + l) THEN
               qd_d = prd_d + l_d
               qd = prd + l
@@ -5421,10 +5402,10 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
 &                                        mesh%rowcol_to_ind_sparse, row&
 &                                        , col, sparse_q, sparse_q_d, &
 &                                        qup, qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -5434,10 +5415,10 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
 &                                 mesh%ncol, mesh%flwdir, mesh%&
 &                                 drained_area, row, col, q, q_d, qup, &
 &                                 qup_d)
-              CALL GR_TRANSFER1_D(setup%dt, qup, qup_d, parameters%lr(&
-&                           row, col), parameters_d%lr(row, col), states&
-&                           %hlr(row, col), states_d%hlr(row, col), &
-&                           qrout, qrout_d)
+              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                             row, col), parameters_d%lr(row, col), &
+&                             states%hlr(row, col), states_d%hlr(row, &
+&                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
               temp0 = REAL(mesh%drained_area(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
@@ -5474,9 +5455,9 @@ SUBROUTINE HYPER_FORWARD_D(setup, mesh, input_data, hyper_parameters, &
   CALL HYPER_COMPUTE_COST_D(setup, mesh, input_data, hyper_parameters, &
 &                     hyper_parameters_bgd, hyper_states, &
 &                     hyper_states_bgd, output, output_d, cost, cost_d)
-END SUBROUTINE HYPER_FORWARD_D
+END SUBROUTINE BASE_HYPER_FORWARD_D
 
-!  Differentiation of hyper_forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of base_hyper_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5508,9 +5489,10 @@ END SUBROUTINE HYPER_FORWARD_D
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
-& hyper_parameters_b, hyper_parameters_bgd, hyper_states, hyper_states_b&
-& , hyper_states_bgd, output, output_b, cost, cost_b)
+SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
+& hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
+& hyper_states, hyper_states_b, hyper_states_bgd, output, output_b, cost&
+& , cost_b)
 !% only: sp
   USE MD_COMMON
 !% only: SetupDT
@@ -5525,9 +5507,11 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -5711,8 +5695,8 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(2)
@@ -5726,11 +5710,11 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             CALL PUSHREAL4(states%hst(row, col))
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
               CALL PUSHCONTROL3B(4)
@@ -5775,8 +5759,8 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(3)
@@ -5786,8 +5770,8 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL3B(2)
@@ -5832,8 +5816,8 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
   CALL HYPER_COMPUTE_COST(setup, mesh, input_data, hyper_parameters, &
 &                   hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 &                   , output, cost)
-  CALL SET0_HYPER_PARAMETERS(hyper_parameters_b)
-  CALL SET0_HYPER_STATES(hyper_states_b)
+  CALL SET_HYPER_PARAMETERS(hyper_parameters_b, 0.0_4)
+  CALL SET_HYPER_STATES(hyper_states_b, 0.0_4)
   CALL HYPER_COMPUTE_COST_B(setup, mesh, input_data, hyper_parameters, &
 &                     hyper_parameters_bgd, hyper_states, &
 &                     hyper_states_bgd, output, output_b, cost, cost_b)
@@ -5868,9 +5852,10 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
@@ -5885,9 +5870,10 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
           qt_b = temp_b0
           qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
           CALL POPREAL4(states%hlr(row, col))
-          CALL GR_TRANSFER1_B(setup%dt, qup, qup_b, parameters%lr(row, &
-&                       col), parameters_b%lr(row, col), states%hlr(row&
-&                       , col), states_b%hlr(row, col), qrout, qrout_b)
+          CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(row&
+&                         , col), parameters_b%lr(row, col), states%hlr(&
+&                         row, col), states_b%hlr(row, col), qrout, &
+&                         qrout_b)
           CALL POPREAL4(qup)
           CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow&
 &                                    , mesh%ncol, mesh%nac, mesh%flwdir&
@@ -5949,13 +5935,13 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
         END IF
         prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
         CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
-&                     , col), parameters_b%cst(row, col), states%hst(row&
-&                     , col), states_b%hst(row, col), ql, ql_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
+&                    col), parameters_b%cst(row, col), states%hst(row, &
+&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
-        CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                     , col), parameters_b%cft(row, col), states%hft(row&
-&                     , col), states_b%hft(row, col), qr, qr_b)
+        CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                    col), parameters_b%cft(row, col), states%hft(row, &
+&                    col), states_b%hft(row, col), qr, qr_b)
         parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
 &         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
         temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
@@ -5969,9 +5955,9 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
         GOTO 100
       END IF
       CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFERN_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                   col), parameters_b%cft(row, col), states%hft(row, &
-&                   col), states_b%hft(row, col), qr, qr_b)
+      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
+&                  col), parameters_b%cft(row, col), states%hft(row, col&
+&                  ), states_b%hft(row, col), qr, qr_b)
       parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
 &       perc)*prr_b - (pr+perc)*prd_b
       temp_b = (1._sp-parameters%alpha(row, col))*prd_b
@@ -6047,12 +6033,12 @@ SUBROUTINE HYPER_FORWARD_B(setup, mesh, input_data, hyper_parameters, &
 &                                 parameters_b, setup, input_data)
   CALL STATESDT_INITIALISE_BWD(states, states_b, mesh)
   CALL PARAMETERSDT_INITIALISE_BWD(parameters, parameters_b, mesh)
-END SUBROUTINE HYPER_FORWARD_B
+END SUBROUTINE BASE_HYPER_FORWARD_B
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
+SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 & , output, cost)
 !% only: sp
@@ -6069,9 +6055,11 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: GR_interception, GR_production, GR_exchange, &
-  USE MD_OPERATOR_DIFF
-!% & GR_transferN, upstream_discharge, sparse_upstream_discharge, GR_transfer1
+!% only: gr_interception, gr_production, gr_exchange, &
+  USE MD_GR_OPERATOR_DIFF
+!% & gr_transfer
+!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+  USE MD_ROUTING_OPERATOR_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
@@ -6208,8 +6196,8 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
           CASE (0) 
             prr = parameters%alpha(row, col)*(pr+perc) + l
             prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -6219,10 +6207,10 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
             prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
             prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
             prd = 0.1_sp*(pr+perc)
-            CALL GR_TRANSFERN(5._sp, prcp, prr, parameters%cft(row, col)&
-&                       , states%hft(row, col), qr)
-            CALL GR_TRANSFERN(5._sp, prcp, prl, parameters%cst(row, col)&
-&                       , states%hst(row, col), ql)
+            CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
+&                      , states%hft(row, col), qr)
+            CALL GR_TRANSFER(5._sp, prcp, prl, parameters%cst(row, col)&
+&                      , states%hst(row, col), ql)
             IF (0._sp .LT. prd + l) THEN
               qd = prd + l
             ELSE
@@ -6257,16 +6245,16 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 &                                      flwdir, mesh%drained_area, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%drained_area, &
 &                               row, col, q, qup)
-              CALL GR_TRANSFER1(setup%dt, qup, parameters%lr(row, col), &
-&                         states%hlr(row, col), qrout)
+              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
+&                           , states%hlr(row, col), qrout)
               q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
 &               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
@@ -6322,5 +6310,5 @@ SUBROUTINE HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   CALL HYPER_COMPUTE_COST(setup, mesh, input_data, hyper_parameters, &
 &                   hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 &                   , output, cost)
-END SUBROUTINE HYPER_FORWARD_NODIFF
+END SUBROUTINE BASE_HYPER_FORWARD_NODIFF
 

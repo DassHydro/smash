@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="smash",
-    version="0.1.5",
+    version="0.1.6",
     description="Spatially distributed Modelling and ASsimilation for Hydrology",
     url="/",
     author="Francois Colleoni",

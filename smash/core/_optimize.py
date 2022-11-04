@@ -1,7 +1,8 @@
 from __future__ import annotations
 
 from smash.solver._mwd_setup import SetupDT
-from smash.solver._mw_run import forward_run
+from smash.solver._mw_forward import forward
+from smash.solver._mw_adjoint_test import scalar_product_test
 from smash.solver._mw_optimize import (
     optimize_sbs,
     optimize_lbfgsb,
@@ -121,6 +122,7 @@ def _optimize_lbfgsb(
     maxiter: int = 100,
     jreg_fun: str = "prior",
     wjreg: float = 0.0,
+    adjoint_test: bool = False,
     **unknown_options,
 ):
 
@@ -175,9 +177,9 @@ def _optimize_lbfgsb(
     instance.setup._jreg_fun = jreg_fun
     instance.setup._wjreg = wjreg
 
-    _optimize_message(instance, control_vector, mapping)
-
     if instance.setup._mapping.startswith("hyper"):
+        
+        _optimize_message(instance, control_vector, mapping)
 
         hyper_optimize_lbfgsb(
             instance.setup,
@@ -189,6 +191,19 @@ def _optimize_lbfgsb(
         )
 
     else:
+        
+        if adjoint_test:
+            
+            scalar_product_test(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+            
+        _optimize_message(instance, control_vector, mapping)
 
         optimize_lbfgsb(
             instance.setup,
@@ -494,8 +509,10 @@ def _problem(
     global callback_args
 
     _x_to_parameters_states(x, instance, control_vector)
+    
+    cost = np.float32(0)
 
-    forward_run(
+    forward(
         instance.setup,
         instance.mesh,
         instance.input_data,
@@ -504,7 +521,7 @@ def _problem(
         instance.states,
         states_bgd,
         instance.output,
-        False,
+        cost,
     )
 
     callback_args["nfg"] += 1
@@ -525,8 +542,10 @@ def _hyper_problem(
     global callback_args
 
     _x_to_hyper_parameters_states(x, instance, control_vector, bounds)
+    
+    cost = np.float32(0)
 
-    forward_run(
+    forward(
         instance.setup,
         instance.mesh,
         instance.input_data,
@@ -535,7 +554,7 @@ def _hyper_problem(
         instance.states,
         states_bgd,
         instance.output,
-        False,
+        cost,
     )
 
     callback_args["nfg"] += 1

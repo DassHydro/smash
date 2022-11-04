@@ -46,7 +46,7 @@ module mwd_input_data
 
     use md_common !% only: sp
     use mwd_setup !% only: SetupDT
-    use mwd_mesh  !% only: MeshDT, mask_gauge
+    use mwd_mesh  !% only: MeshDT
     
     implicit none
     
