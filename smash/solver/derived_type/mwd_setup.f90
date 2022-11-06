@@ -40,23 +40,11 @@
 !%      ========================== =====================================
 !%      `Variables`                Description
 !%      ========================== =====================================
+!%      ``optimize``               Optimize_SetupDT which contains all optimize options
 !%      ``ntime_step``             Number of time step
 !%      ``nd``                     Number of descriptor map(s)
-!%      ``algorithm``              Optimize Algorithm name        (default: '...')
-!%      ``jobs_fun``               Objective function name        (default: 'nse')
-!%      ``mapping``                Mapping name                   (default: '...')
-!%      ``jreg_fun``               Regularization name            (default: 'prior')
-!%      ``wjreg``                  Regularization weight          (default: 0)
-!%      ``optim_start_step``       Optimization start step        (default: 1)
-!%      ``optim_parameters``       Optimized parameters array     (default: 0)
-!%      ``optim_states``           Optimize states array          (default: 0)
-!%      ``lb_parameters``          Parameters lower bounds        (default: see below)
-!%      ``ub_parameters``          Parameters upper bounds        (default: see below)
-!%      ``lb_states``              States lower bounds            (default: see below)
-!%      ``ub_states``              States upper bounds            (default: see below)
 !%      ``name_parameters``        Name of SMASH parameters       (default: see below)
 !%      ``name_states``            Name of SMASH states           (default: see below)
-!%      ``maxiter``                Maximum number of iteration    (default: 100)
 !%      =========================  =====================================
 !%
 !%      contains
@@ -69,7 +57,65 @@ module mwd_setup
     
     implicit none
     
-    type :: SetupDT
+    type Optimize_SetupDT
+    
+        character(lchar) :: algorithm = "..." !>f90w-char
+        
+        character(lchar) :: jobs_fun = "nse" !>f90w-char
+        character(lchar) :: mapping = "..." !>f90w-char
+        character(lchar) :: jreg_fun = "prior" !>f90w-char
+        real(sp) :: wjreg = 0._sp
+
+        integer :: optim_start_step = 1
+        
+        integer :: maxiter = 100
+        
+        integer, dimension(np) :: optim_parameters = 0
+        integer, dimension(ns) :: optim_states = 0
+        
+        real(sp), dimension(np) :: lb_parameters = &
+        
+        & (/1e-6_sp ,& !% ci
+        &   1e-6_sp ,& !% cp
+        &   1e-6_sp ,& !% beta
+        &   1e-6_sp ,& !% cft
+        &   1e-6_sp ,& !% cst
+        &   1e-6_sp ,& !% alpha
+        &   -50._sp ,& !% exc
+        &   1e-6_sp/)  !% lr
+        
+        real(sp), dimension(np) :: ub_parameters = &
+        
+        & (/1e2_sp      ,&  !% ci
+        &   1e3_sp      ,&  !% cp
+        &   1e3_sp      ,&  !% beta
+        &   1e3_sp      ,&  !% cft
+        &   1e4_sp      ,&  !% cst
+        &   0.999999_sp ,&  !% alpha
+        &   50._sp      ,&  !% exc
+        &   1e3_sp/)        !% lr
+        
+        real(sp), dimension(ns) :: lb_states = &
+        
+        & (/1e-6_sp ,& !% hi
+        &   1e-6_sp ,& !% hp
+        &   1e-6_sp ,& !% hft
+        &   1e-6_sp ,& !% hst
+        &   1e-6_sp/)  !% hlr
+        
+        real(sp), dimension(ns) :: ub_states = &
+        
+        & (/0.999999_sp ,& !% hi
+        &   0.999999_sp ,& !% hp
+        &   0.999999_sp ,& !% hft
+        &   0.999999_sp ,& !% hst
+        &   10000._sp/)    !% hlr
+        
+        real(sp), dimension(:), allocatable :: wgauge
+    
+    end type Optimize_SetupDT
+    
+    type SetupDT
     
         !% </> Public
         real(sp) :: dt = 3600._sp
@@ -112,58 +158,10 @@ module mwd_setup
         logical :: save_net_prcp_domain = .false.
         
         !% </> Private
+        type(Optimize_SetupDT) :: optimize !>f90w-private
+        
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
-        
-        character(lchar) :: algorithm = "..." !>f90w-private f90w-char
-        
-        character(lchar) :: jobs_fun = "nse" !>f90w-private f90w-char
-        character(lchar) :: mapping = "..." !>f90w-private f90w-char
-        character(lchar) :: jreg_fun = "prior" !>f90w-private f90w-char
-        real(sp) :: wjreg = 0._sp !>f90w-private 
-
-        integer :: optim_start_step = 1 !>f90w-private
-        
-        integer, dimension(np) :: optim_parameters = 0 !>f90w-private
-        integer, dimension(ns) :: optim_states = 0 !>f90w-private
-        
-        real(sp), dimension(np) :: lb_parameters = & !>f90w-private
-        
-        & (/1e-6_sp ,& !% ci
-        &   1e-6_sp ,& !% cp
-        &   1e-6_sp ,& !% beta
-        &   1e-6_sp ,& !% cft
-        &   1e-6_sp ,& !% cst
-        &   1e-6_sp ,& !% alpha
-        &   -50._sp ,& !% exc
-        &   1e-6_sp/)  !% lr
-        
-        real(sp), dimension(np) :: ub_parameters = & !>f90w-private
-        
-        & (/1e2_sp      ,&  !% ci
-        &   1e3_sp      ,&  !% cp
-        &   1e3_sp      ,&  !% beta
-        &   1e3_sp      ,&  !% cft
-        &   1e4_sp      ,&  !% cst
-        &   0.999999_sp ,&  !% alpha
-        &   50._sp      ,&  !% exc
-        &   1e3_sp/)        !% lr
-        
-        real(sp), dimension(ns) :: lb_states = & !>f90w-private
-        
-        & (/1e-6_sp ,& !% hi
-        &   1e-6_sp ,& !% hp
-        &   1e-6_sp ,& !% hft
-        &   1e-6_sp ,& !% hst
-        &   1e-6_sp/)  !% hlr
-        
-        real(sp), dimension(ns) :: ub_states = & !>f90w-private
-        
-        & (/0.999999_sp ,& !% hi
-        &   0.999999_sp ,& !% hp
-        &   0.999999_sp ,& !% hft
-        &   0.999999_sp ,& !% hst
-        &   10000._sp/)    !% hlr
         
         character(10), dimension(np) :: name_parameters = & !>f90w-private f90w-char_array
         
@@ -184,14 +182,24 @@ module mwd_setup
         &   "hst       ",&
         &   "hlr       "/)
         
-        integer :: maxiter = 100 !>f90w-private
-        
     end type SetupDT
     
     contains
     
+        subroutine Optimize_SetupDT_initialise(this, ng)
+        
+            implicit none
+            
+            type(Optimize_SetupDT), intent(inout) :: this
+            integer, intent(in) :: ng
+            
+            allocate(this%wgauge(ng))
+            this%wgauge = 1._sp / ng
+            
+        end subroutine Optimize_SetupDT_initialise
+    
 
-        subroutine SetupDT_initialise(setup, nd)
+        subroutine SetupDT_initialise(this, nd, ng)
         
             !% Notes
             !% -----
@@ -200,17 +208,19 @@ module mwd_setup
         
             implicit none
             
-            type(SetupDT), intent(inout) :: setup
-            integer, intent(in) :: nd
+            type(SetupDT), intent(inout) :: this
+            integer, intent(in) :: nd, ng
             
-            setup%nd = nd
+            this%nd = nd
             
-            if (setup%nd .gt. 0) then
+            if (this%nd .gt. 0) then
             
-                allocate(setup%descriptor_name(setup%nd))
-                setup%descriptor_name = "..."
+                allocate(this%descriptor_name(this%nd))
+                this%descriptor_name = "..."
             
             end if
+            
+            call Optimize_SetupDT_initialise(this%optimize, ng)
         
         end subroutine SetupDT_initialise
 

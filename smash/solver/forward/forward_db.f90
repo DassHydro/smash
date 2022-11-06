@@ -83,162 +83,152 @@ MODULE MWD_PARAMETERS_DIFF
 
 CONTAINS
 !  Differentiation of parametersdt_initialise in forward (tangent) mode (with options fixinterface):
-!   Plus diff mem management of: parameters.ci:out parameters.cp:out
-!                parameters.beta:out parameters.cft:out parameters.cst:out
-!                parameters.alpha:out parameters.exc:out parameters.lr:out
-  SUBROUTINE PARAMETERSDT_INITIALISE_D(parameters, parameters_d, mesh)
+!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
+!                this.cft:out this.cst:out this.alpha:out this.exc:out
+!                this.lr:out
+  SUBROUTINE PARAMETERSDT_INITIALISE_D(this, this_d, mesh)
     IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this_d
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    INTEGER :: nrow, ncol
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(parameters_d%ci(nrow, ncol))
-    ALLOCATE(parameters%ci(nrow, ncol))
-    ALLOCATE(parameters_d%cp(nrow, ncol))
-    ALLOCATE(parameters%cp(nrow, ncol))
-    ALLOCATE(parameters_d%beta(nrow, ncol))
-    ALLOCATE(parameters%beta(nrow, ncol))
-    ALLOCATE(parameters_d%cft(nrow, ncol))
-    ALLOCATE(parameters%cft(nrow, ncol))
-    ALLOCATE(parameters_d%cst(nrow, ncol))
-    ALLOCATE(parameters%cst(nrow, ncol))
-    ALLOCATE(parameters_d%alpha(nrow, ncol))
-    ALLOCATE(parameters%alpha(nrow, ncol))
-    ALLOCATE(parameters_d%exc(nrow, ncol))
-    ALLOCATE(parameters%exc(nrow, ncol))
-    ALLOCATE(parameters_d%lr(nrow, ncol))
-    ALLOCATE(parameters%lr(nrow, ncol))
-    parameters%ci = 1._sp
-    parameters%cp = 200._sp
-    parameters%beta = 1000._sp
-    parameters%cft = 500._sp
-    parameters%cst = 500._sp
-    parameters%alpha = 0.9_sp
-    parameters%exc = 0._sp
-    parameters%lr = 5._sp
+    ALLOCATE(this_d%ci(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%ci(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%cp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%beta(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%beta(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%cft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%cst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%alpha(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%alpha(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%exc(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%exc(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%lr(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%lr(mesh%nrow, mesh%ncol))
+    this%ci = 1._sp
+    this%cp = 200._sp
+    this%beta = 1000._sp
+    this%cft = 500._sp
+    this%cst = 500._sp
+    this%alpha = 0.9_sp
+    this%exc = 0._sp
+    this%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE_D
 
 !  Differentiation of parametersdt_initialise in reverse (adjoint) mode, forward sweep (with options fixinterface):
-!   Plus diff mem management of: parameters.ci:out parameters.cp:out
-!                parameters.beta:out parameters.cft:out parameters.cst:out
-!                parameters.alpha:out parameters.exc:out parameters.lr:out
-  SUBROUTINE PARAMETERSDT_INITIALISE_FWD(parameters, parameters_b, mesh)
+!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
+!                this.cft:out this.cst:out this.alpha:out this.exc:out
+!                this.lr:out
+  SUBROUTINE PARAMETERSDT_INITIALISE_FWD(this, this_b, mesh)
     IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    INTEGER :: nrow, ncol
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(parameters_b%ci(nrow, ncol))
-    parameters_b%ci = 0.0_4
-    ALLOCATE(parameters%ci(nrow, ncol))
-    ALLOCATE(parameters_b%cp(nrow, ncol))
-    parameters_b%cp = 0.0_4
-    ALLOCATE(parameters%cp(nrow, ncol))
-    ALLOCATE(parameters_b%beta(nrow, ncol))
-    parameters_b%beta = 0.0_4
-    ALLOCATE(parameters%beta(nrow, ncol))
-    ALLOCATE(parameters_b%cft(nrow, ncol))
-    parameters_b%cft = 0.0_4
-    ALLOCATE(parameters%cft(nrow, ncol))
-    ALLOCATE(parameters_b%cst(nrow, ncol))
-    parameters_b%cst = 0.0_4
-    ALLOCATE(parameters%cst(nrow, ncol))
-    ALLOCATE(parameters_b%alpha(nrow, ncol))
-    parameters_b%alpha = 0.0_4
-    ALLOCATE(parameters%alpha(nrow, ncol))
-    ALLOCATE(parameters_b%exc(nrow, ncol))
-    parameters_b%exc = 0.0_4
-    ALLOCATE(parameters%exc(nrow, ncol))
-    ALLOCATE(parameters_b%lr(nrow, ncol))
-    parameters_b%lr = 0.0_4
-    ALLOCATE(parameters%lr(nrow, ncol))
-    parameters%ci = 1._sp
-    parameters%cp = 200._sp
-    parameters%beta = 1000._sp
-    parameters%cft = 500._sp
-    parameters%cst = 500._sp
-    parameters%alpha = 0.9_sp
-    parameters%exc = 0._sp
-    parameters%lr = 5._sp
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this_b
+    ALLOCATE(this_b%ci(mesh%nrow, mesh%ncol))
+    this_b%ci = 0.0_4
+    ALLOCATE(this%ci(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%cp(mesh%nrow, mesh%ncol))
+    this_b%cp = 0.0_4
+    ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%beta(mesh%nrow, mesh%ncol))
+    this_b%beta = 0.0_4
+    ALLOCATE(this%beta(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%cft(mesh%nrow, mesh%ncol))
+    this_b%cft = 0.0_4
+    ALLOCATE(this%cft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%cst(mesh%nrow, mesh%ncol))
+    this_b%cst = 0.0_4
+    ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%alpha(mesh%nrow, mesh%ncol))
+    this_b%alpha = 0.0_4
+    ALLOCATE(this%alpha(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%exc(mesh%nrow, mesh%ncol))
+    this_b%exc = 0.0_4
+    ALLOCATE(this%exc(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%lr(mesh%nrow, mesh%ncol))
+    this_b%lr = 0.0_4
+    ALLOCATE(this%lr(mesh%nrow, mesh%ncol))
+    this%ci = 1._sp
+    this%cp = 200._sp
+    this%beta = 1000._sp
+    this%cft = 500._sp
+    this%cst = 500._sp
+    this%alpha = 0.9_sp
+    this%exc = 0._sp
+    this%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE_FWD
 
 !  Differentiation of parametersdt_initialise in reverse (adjoint) mode, backward sweep (with options fixinterface):
-!   Plus diff mem management of: parameters.ci:out parameters.cp:out
-!                parameters.beta:out parameters.cft:out parameters.cst:out
-!                parameters.alpha:out parameters.exc:out parameters.lr:out
-  SUBROUTINE PARAMETERSDT_INITIALISE_BWD(parameters, parameters_b, mesh)
+!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
+!                this.cft:out this.cst:out this.alpha:out this.exc:out
+!                this.lr:out
+  SUBROUTINE PARAMETERSDT_INITIALISE_BWD(this, this_b, mesh)
     IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this_b
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    INTEGER :: nrow, ncol
-    DEALLOCATE(parameters%lr)
-    DEALLOCATE(parameters_b%lr)
-    DEALLOCATE(parameters%exc)
-    DEALLOCATE(parameters_b%exc)
-    DEALLOCATE(parameters%alpha)
-    DEALLOCATE(parameters_b%alpha)
-    DEALLOCATE(parameters%cst)
-    DEALLOCATE(parameters_b%cst)
-    DEALLOCATE(parameters%cft)
-    DEALLOCATE(parameters_b%cft)
-    DEALLOCATE(parameters%beta)
-    DEALLOCATE(parameters_b%beta)
-    DEALLOCATE(parameters%cp)
-    DEALLOCATE(parameters_b%cp)
-    DEALLOCATE(parameters%ci)
-    DEALLOCATE(parameters_b%ci)
+    DEALLOCATE(this%lr)
+    DEALLOCATE(this_b%lr)
+    DEALLOCATE(this%exc)
+    DEALLOCATE(this_b%exc)
+    DEALLOCATE(this%alpha)
+    DEALLOCATE(this_b%alpha)
+    DEALLOCATE(this%cst)
+    DEALLOCATE(this_b%cst)
+    DEALLOCATE(this%cft)
+    DEALLOCATE(this_b%cft)
+    DEALLOCATE(this%beta)
+    DEALLOCATE(this_b%beta)
+    DEALLOCATE(this%cp)
+    DEALLOCATE(this_b%cp)
+    DEALLOCATE(this%ci)
+    DEALLOCATE(this_b%ci)
   END SUBROUTINE PARAMETERSDT_INITIALISE_BWD
 
-  SUBROUTINE PARAMETERSDT_INITIALISE(parameters, mesh)
+  SUBROUTINE PARAMETERSDT_INITIALISE(this, mesh)
     IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    INTEGER :: nrow, ncol
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(parameters%ci(nrow, ncol))
-    ALLOCATE(parameters%cp(nrow, ncol))
-    ALLOCATE(parameters%beta(nrow, ncol))
-    ALLOCATE(parameters%cft(nrow, ncol))
-    ALLOCATE(parameters%cst(nrow, ncol))
-    ALLOCATE(parameters%alpha(nrow, ncol))
-    ALLOCATE(parameters%exc(nrow, ncol))
-    ALLOCATE(parameters%lr(nrow, ncol))
-    parameters%ci = 1._sp
-    parameters%cp = 200._sp
-    parameters%beta = 1000._sp
-    parameters%cft = 500._sp
-    parameters%cst = 500._sp
-    parameters%alpha = 0.9_sp
-    parameters%exc = 0._sp
-    parameters%lr = 5._sp
+    ALLOCATE(this%ci(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%beta(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%alpha(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%exc(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%lr(mesh%nrow, mesh%ncol))
+    this%ci = 1._sp
+    this%cp = 200._sp
+    this%beta = 1000._sp
+    this%cft = 500._sp
+    this%cst = 500._sp
+    this%alpha = 0.9_sp
+    this%exc = 0._sp
+    this%lr = 5._sp
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
-  SUBROUTINE HYPER_PARAMETERSDT_INITIALISE(hyper_parameters, setup)
+  SUBROUTINE HYPER_PARAMETERSDT_INITIALISE(this, setup)
     IMPLICIT NONE
-    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
+    TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     INTEGER :: n
     INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%mapping)) 
+    SELECT CASE  (TRIM(setup%optimize%mapping)) 
     CASE ('hyper-linear') 
       n = 1 + setup%nd
     CASE ('hyper-polynomial') 
       n = 1 + 2*setup%nd
     END SELECT
-    ALLOCATE(hyper_parameters%ci(n, 1))
-    ALLOCATE(hyper_parameters%cp(n, 1))
-    ALLOCATE(hyper_parameters%beta(n, 1))
-    ALLOCATE(hyper_parameters%cft(n, 1))
-    ALLOCATE(hyper_parameters%cst(n, 1))
-    ALLOCATE(hyper_parameters%alpha(n, 1))
-    ALLOCATE(hyper_parameters%exc(n, 1))
-    ALLOCATE(hyper_parameters%lr(n, 1))
+    ALLOCATE(this%ci(n, 1))
+    ALLOCATE(this%cp(n, 1))
+    ALLOCATE(this%beta(n, 1))
+    ALLOCATE(this%cft(n, 1))
+    ALLOCATE(this%cst(n, 1))
+    ALLOCATE(this%alpha(n, 1))
+    ALLOCATE(this%exc(n, 1))
+    ALLOCATE(this%lr(n, 1))
   END SUBROUTINE HYPER_PARAMETERSDT_INITIALISE
 
 END MODULE MWD_PARAMETERS_DIFF
@@ -311,123 +301,113 @@ MODULE MWD_STATES_DIFF
 
 CONTAINS
 !  Differentiation of statesdt_initialise in forward (tangent) mode (with options fixinterface):
-!   Plus diff mem management of: states.hi:out states.hp:out states.hft:out
-!                states.hst:out states.hlr:out
-  SUBROUTINE STATESDT_INITIALISE_D(states, states_d, mesh)
+!   Plus diff mem management of: this.hi:out this.hp:out this.hft:out
+!                this.hst:out this.hlr:out
+  SUBROUTINE STATESDT_INITIALISE_D(this, this_d, mesh)
     IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: this
+    TYPE(STATESDT), INTENT(INOUT) :: this_d
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_d
-    INTEGER :: nrow, ncol
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(states_d%hi(nrow, ncol))
-    ALLOCATE(states%hi(nrow, ncol))
-    ALLOCATE(states_d%hp(nrow, ncol))
-    ALLOCATE(states%hp(nrow, ncol))
-    ALLOCATE(states_d%hft(nrow, ncol))
-    ALLOCATE(states%hft(nrow, ncol))
-    ALLOCATE(states_d%hst(nrow, ncol))
-    ALLOCATE(states%hst(nrow, ncol))
-    ALLOCATE(states_d%hlr(nrow, ncol))
-    ALLOCATE(states%hlr(nrow, ncol))
-    states%hi = 0.01_sp
-    states%hp = 0.01_sp
-    states%hft = 0.01_sp
-    states%hst = 0.01_sp
-    states%hlr = 0.000001_sp
+    ALLOCATE(this_d%hi(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hi(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%hp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%hft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%hst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_d%hlr(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hlr(mesh%nrow, mesh%ncol))
+    this%hi = 0.01_sp
+    this%hp = 0.01_sp
+    this%hft = 0.01_sp
+    this%hst = 0.01_sp
+    this%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE_D
 
 !  Differentiation of statesdt_initialise in reverse (adjoint) mode, forward sweep (with options fixinterface):
-!   Plus diff mem management of: states.hi:out states.hp:out states.hft:out
-!                states.hst:out states.hlr:out
-  SUBROUTINE STATESDT_INITIALISE_FWD(states, states_b, mesh)
+!   Plus diff mem management of: this.hi:out this.hp:out this.hft:out
+!                this.hst:out this.hlr:out
+  SUBROUTINE STATESDT_INITIALISE_FWD(this, this_b, mesh)
     IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: this
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    INTEGER :: nrow, ncol
-    TYPE(STATESDT), INTENT(INOUT) :: states_b
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(states_b%hi(nrow, ncol))
-    states_b%hi = 0.0_4
-    ALLOCATE(states%hi(nrow, ncol))
-    ALLOCATE(states_b%hp(nrow, ncol))
-    states_b%hp = 0.0_4
-    ALLOCATE(states%hp(nrow, ncol))
-    ALLOCATE(states_b%hft(nrow, ncol))
-    states_b%hft = 0.0_4
-    ALLOCATE(states%hft(nrow, ncol))
-    ALLOCATE(states_b%hst(nrow, ncol))
-    states_b%hst = 0.0_4
-    ALLOCATE(states%hst(nrow, ncol))
-    ALLOCATE(states_b%hlr(nrow, ncol))
-    states_b%hlr = 0.0_4
-    ALLOCATE(states%hlr(nrow, ncol))
-    states%hi = 0.01_sp
-    states%hp = 0.01_sp
-    states%hft = 0.01_sp
-    states%hst = 0.01_sp
-    states%hlr = 0.000001_sp
+    TYPE(STATESDT), INTENT(INOUT) :: this_b
+    ALLOCATE(this_b%hi(mesh%nrow, mesh%ncol))
+    this_b%hi = 0.0_4
+    ALLOCATE(this%hi(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%hp(mesh%nrow, mesh%ncol))
+    this_b%hp = 0.0_4
+    ALLOCATE(this%hp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%hft(mesh%nrow, mesh%ncol))
+    this_b%hft = 0.0_4
+    ALLOCATE(this%hft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%hst(mesh%nrow, mesh%ncol))
+    this_b%hst = 0.0_4
+    ALLOCATE(this%hst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this_b%hlr(mesh%nrow, mesh%ncol))
+    this_b%hlr = 0.0_4
+    ALLOCATE(this%hlr(mesh%nrow, mesh%ncol))
+    this%hi = 0.01_sp
+    this%hp = 0.01_sp
+    this%hft = 0.01_sp
+    this%hst = 0.01_sp
+    this%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE_FWD
 
 !  Differentiation of statesdt_initialise in reverse (adjoint) mode, backward sweep (with options fixinterface):
-!   Plus diff mem management of: states.hi:out states.hp:out states.hft:out
-!                states.hst:out states.hlr:out
-  SUBROUTINE STATESDT_INITIALISE_BWD(states, states_b, mesh)
+!   Plus diff mem management of: this.hi:out this.hp:out this.hft:out
+!                this.hst:out this.hlr:out
+  SUBROUTINE STATESDT_INITIALISE_BWD(this, this_b, mesh)
     IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: this
+    TYPE(STATESDT), INTENT(INOUT) :: this_b
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    TYPE(STATESDT), INTENT(INOUT) :: states_b
-    INTEGER :: nrow, ncol
-    DEALLOCATE(states%hlr)
-    DEALLOCATE(states_b%hlr)
-    DEALLOCATE(states%hst)
-    DEALLOCATE(states_b%hst)
-    DEALLOCATE(states%hft)
-    DEALLOCATE(states_b%hft)
-    DEALLOCATE(states%hp)
-    DEALLOCATE(states_b%hp)
-    DEALLOCATE(states%hi)
-    DEALLOCATE(states_b%hi)
+    DEALLOCATE(this%hlr)
+    DEALLOCATE(this_b%hlr)
+    DEALLOCATE(this%hst)
+    DEALLOCATE(this_b%hst)
+    DEALLOCATE(this%hft)
+    DEALLOCATE(this_b%hft)
+    DEALLOCATE(this%hp)
+    DEALLOCATE(this_b%hp)
+    DEALLOCATE(this%hi)
+    DEALLOCATE(this_b%hi)
   END SUBROUTINE STATESDT_INITIALISE_BWD
 
-  SUBROUTINE STATESDT_INITIALISE(states, mesh)
+  SUBROUTINE STATESDT_INITIALISE(this, mesh)
     IMPLICIT NONE
+    TYPE(STATESDT), INTENT(INOUT) :: this
     TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(STATESDT), INTENT(INOUT) :: states
-    INTEGER :: nrow, ncol
-    nrow = mesh%nrow
-    ncol = mesh%ncol
-    ALLOCATE(states%hi(nrow, ncol))
-    ALLOCATE(states%hp(nrow, ncol))
-    ALLOCATE(states%hft(nrow, ncol))
-    ALLOCATE(states%hst(nrow, ncol))
-    ALLOCATE(states%hlr(nrow, ncol))
-    states%hi = 0.01_sp
-    states%hp = 0.01_sp
-    states%hft = 0.01_sp
-    states%hst = 0.01_sp
-    states%hlr = 0.000001_sp
+    ALLOCATE(this%hi(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hp(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hft(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hst(mesh%nrow, mesh%ncol))
+    ALLOCATE(this%hlr(mesh%nrow, mesh%ncol))
+    this%hi = 0.01_sp
+    this%hp = 0.01_sp
+    this%hft = 0.01_sp
+    this%hst = 0.01_sp
+    this%hlr = 0.000001_sp
   END SUBROUTINE STATESDT_INITIALISE
 
-  SUBROUTINE HYPER_STATESDT_INITIALISE(hyper_states, setup)
+  SUBROUTINE HYPER_STATESDT_INITIALISE(this, setup)
     IMPLICIT NONE
-    TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
+    TYPE(HYPER_STATESDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     INTEGER :: n
     INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%mapping)) 
+    SELECT CASE  (TRIM(setup%optimize%mapping)) 
     CASE ('hyper-linear') 
       n = 1 + setup%nd
     CASE ('hyper-polynomial') 
       n = 1 + 2*setup%nd
     END SELECT
-    ALLOCATE(hyper_states%hi(n, 1))
-    ALLOCATE(hyper_states%hp(n, 1))
-    ALLOCATE(hyper_states%hft(n, 1))
-    ALLOCATE(hyper_states%hst(n, 1))
-    ALLOCATE(hyper_states%hlr(n, 1))
+    ALLOCATE(this%hi(n, 1))
+    ALLOCATE(this%hp(n, 1))
+    ALLOCATE(this%hft(n, 1))
+    ALLOCATE(this%hst(n, 1))
+    ALLOCATE(this%hlr(n, 1))
   END SUBROUTINE HYPER_STATESDT_INITIALISE
 
 END MODULE MWD_STATES_DIFF
@@ -487,37 +467,37 @@ MODULE MWD_OUTPUT_DIFF
   END TYPE OUTPUTDT_DIFF
 
 CONTAINS
-  SUBROUTINE OUTPUTDT_INITIALISE(output, setup, mesh)
+  SUBROUTINE OUTPUTDT_INITIALISE(this, setup, mesh)
     IMPLICIT NONE
-    TYPE(OUTPUTDT), INTENT(INOUT) :: output
+    TYPE(OUTPUTDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(INOUT) :: setup
     TYPE(MESHDT), INTENT(INOUT) :: mesh
     IF (mesh%ng .GT. 0) THEN
-      ALLOCATE(output%qsim(mesh%ng, setup%ntime_step))
-      output%qsim = -99._sp
+      ALLOCATE(this%qsim(mesh%ng, setup%ntime_step))
+      this%qsim = -99._sp
     END IF
     IF (setup%save_qsim_domain) THEN
       IF (setup%sparse_storage) THEN
-        ALLOCATE(output%sparse_qsim_domain(mesh%nac, setup%ntime_step))
-        output%sparse_qsim_domain = -99._sp
+        ALLOCATE(this%sparse_qsim_domain(mesh%nac, setup%ntime_step))
+        this%sparse_qsim_domain = -99._sp
       ELSE
-        ALLOCATE(output%qsim_domain(mesh%nrow, mesh%ncol, setup%&
-&       ntime_step))
-        output%qsim_domain = -99._sp
+        ALLOCATE(this%qsim_domain(mesh%nrow, mesh%ncol, setup%ntime_step&
+&       ))
+        this%qsim_domain = -99._sp
       END IF
     END IF
     IF (setup%save_net_prcp_domain) THEN
       IF (setup%sparse_storage) THEN
-        ALLOCATE(output%sparse_net_prcp_domain(mesh%nac, setup%&
-&       ntime_step))
-        output%sparse_net_prcp_domain = -99._sp
+        ALLOCATE(this%sparse_net_prcp_domain(mesh%nac, setup%ntime_step)&
+&       )
+        this%sparse_net_prcp_domain = -99._sp
       ELSE
-        ALLOCATE(output%net_prcp_domain(mesh%nrow, mesh%ncol, setup%&
+        ALLOCATE(this%net_prcp_domain(mesh%nrow, mesh%ncol, setup%&
 &       ntime_step))
-        output%net_prcp_domain = -99._sp
+        this%net_prcp_domain = -99._sp
       END IF
     END IF
-    CALL STATESDT_INITIALISE(output%fstates, mesh)
+    CALL STATESDT_INITIALISE(this%fstates, mesh)
   END SUBROUTINE OUTPUTDT_INITIALISE
 
 END MODULE MWD_OUTPUT_DIFF
@@ -1896,7 +1876,7 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           a_d = hyper_parameters_matrix_d(j+1, 1, i)
           a = hyper_parameters_matrix(j+1, 1, i)
@@ -1920,12 +1900,13 @@ CONTAINS
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      temp0 = (setup%ub_parameters(i)-setup%lb_parameters(i))/(EXP(-&
-&       parameters_matrix(:, :, i))+1._sp)
+      temp0 = (setup%optimize%ub_parameters(i)-setup%optimize%&
+&       lb_parameters(i))/(EXP(-parameters_matrix(:, :, i))+1._sp)
       parameters_matrix_d(:, :, i) = temp0*EXP(-parameters_matrix(:, :, &
 &       i))*parameters_matrix_d(:, :, i)/(EXP(-parameters_matrix(:, :, i&
 &       ))+1._sp)
-      parameters_matrix(:, :, i) = setup%lb_parameters(i) + temp0
+      parameters_matrix(:, :, i) = setup%optimize%lb_parameters(i) + &
+&       temp0
     END DO
     CALL SET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
 &                   parameters_matrix_d)
@@ -1981,7 +1962,7 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           CALL PUSHREAL4(a)
           a = hyper_parameters_matrix(j+1, 1, i)
@@ -2010,8 +1991,8 @@ CONTAINS
     DO i=np,1,-1
       temp = EXP(-parameters_matrix(:, :, i)) + 1._sp
       parameters_matrix_b(:, :, i) = EXP(-parameters_matrix(:, :, i))*(&
-&       setup%ub_parameters(i)-setup%lb_parameters(i))*&
-&       parameters_matrix_b(:, :, i)/temp**2
+&       setup%optimize%ub_parameters(i)-setup%optimize%lb_parameters(i))&
+&       *parameters_matrix_b(:, :, i)/temp**2
       DO j=setup%nd,1,-1
         d = input_data%descriptor(:, :, j)
         dpb = d**b
@@ -2076,7 +2057,7 @@ CONTAINS
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           a = hyper_parameters_matrix(j+1, 1, i)
           b = 1._sp
@@ -2088,9 +2069,9 @@ CONTAINS
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      parameters_matrix(:, :, i) = (setup%ub_parameters(i)-setup%&
-&       lb_parameters(i))*(1._sp/(1._sp+EXP(-parameters_matrix(:, :, i))&
-&       )) + setup%lb_parameters(i)
+      parameters_matrix(:, :, i) = (setup%optimize%ub_parameters(i)-&
+&       setup%optimize%lb_parameters(i))*(1._sp/(1._sp+EXP(-&
+&       parameters_matrix(:, :, i)))) + setup%optimize%lb_parameters(i)
     END DO
     CALL SET_PARAMETERS(parameters, parameters_matrix)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS
@@ -2416,7 +2397,7 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           a_d = hyper_states_matrix_d(j+1, 1, i)
           a = hyper_states_matrix(j+1, 1, i)
@@ -2440,11 +2421,11 @@ CONTAINS
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      temp0 = (setup%ub_states(i)-setup%lb_states(i))/(EXP(-&
-&       states_matrix(:, :, i))+1._sp)
+      temp0 = (setup%optimize%ub_states(i)-setup%optimize%lb_states(i))/&
+&       (EXP(-states_matrix(:, :, i))+1._sp)
       states_matrix_d(:, :, i) = temp0*EXP(-states_matrix(:, :, i))*&
 &       states_matrix_d(:, :, i)/(EXP(-states_matrix(:, :, i))+1._sp)
-      states_matrix(:, :, i) = setup%lb_states(i) + temp0
+      states_matrix(:, :, i) = setup%optimize%lb_states(i) + temp0
     END DO
     CALL SET_STATES_D(states, states_d, states_matrix, states_matrix_d)
   END SUBROUTINE HYPER_STATES_TO_STATES_D
@@ -2492,7 +2473,7 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           CALL PUSHREAL4(a)
           a = hyper_states_matrix(j+1, 1, i)
@@ -2520,8 +2501,8 @@ CONTAINS
     DO i=ns,1,-1
       temp = EXP(-states_matrix(:, :, i)) + 1._sp
       states_matrix_b(:, :, i) = EXP(-states_matrix(:, :, i))*(setup%&
-&       ub_states(i)-setup%lb_states(i))*states_matrix_b(:, :, i)/temp**&
-&       2
+&       optimize%ub_states(i)-setup%optimize%lb_states(i))*&
+&       states_matrix_b(:, :, i)/temp**2
       DO j=setup%nd,1,-1
         d = input_data%descriptor(:, :, j)
         dpb = d**b
@@ -2585,7 +2566,7 @@ CONTAINS
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
-        SELECT CASE  (TRIM(setup%mapping)) 
+        SELECT CASE  (TRIM(setup%optimize%mapping)) 
         CASE ('hyper-linear') 
           a = hyper_states_matrix(j+1, 1, i)
           b = 1._sp
@@ -2597,8 +2578,9 @@ CONTAINS
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      states_matrix(:, :, i) = (setup%ub_states(i)-setup%lb_states(i))*(&
-&       1._sp/(1._sp+EXP(-states_matrix(:, :, i)))) + setup%lb_states(i)
+      states_matrix(:, :, i) = (setup%optimize%ub_states(i)-setup%&
+&       optimize%lb_states(i))*(1._sp/(1._sp+EXP(-states_matrix(:, :, i)&
+&       ))) + setup%optimize%lb_states(i)
     END DO
     CALL SET_STATES(states, states_matrix)
   END SUBROUTINE HYPER_STATES_TO_STATES
@@ -2657,10 +2639,10 @@ CONTAINS
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), INTENT(OUT) :: jobs_d
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
-&   , qs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
-&   qs_d
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
+&   +1) :: qo, qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
+&   +1) :: qs_d
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_d
     REAL(sp) :: imd
@@ -2670,17 +2652,17 @@ CONTAINS
     INTRINSIC ANY
     gauge_jobs_d = 0.0_4
     DO g=1,mesh%ng
-      qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optim_start_step:&
-&       setup%ntime_step)/mesh%area(g)
-      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
-&       %dt/mesh%area(g)*1e3_sp
+      qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optimize%&
+&       optim_start_step:setup%ntime_step)/mesh%area(g)
+      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
-&       1e3_sp
+      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
+&       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%jobs_fun) 
+        SELECT CASE  (setup%optimize%jobs_fun) 
         CASE ('nse') 
           gauge_jobs_d(g) = NSE_D(qo, qs, qs_d, gauge_jobs(g))
         CASE ('kge') 
@@ -2699,7 +2681,7 @@ CONTAINS
     END DO
     jobs_d = 0.0_4
     DO g=1,mesh%ng
-      jobs_d = jobs_d + mesh%wgauge(g)*gauge_jobs_d(g)
+      jobs_d = jobs_d + setup%optimize%wgauge(g)*gauge_jobs_d(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_D
 
@@ -2717,10 +2699,10 @@ CONTAINS
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
     REAL(sp) :: jobs
     REAL(sp) :: jobs_b
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
-&   , qs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: &
-&   qs_b
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
+&   +1) :: qo, qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
+&   +1) :: qs_b
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_b
     REAL(sp) :: imd
@@ -2740,17 +2722,17 @@ CONTAINS
     REAL :: res_b3
     INTEGER :: branch
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
-&       %dt/mesh%area(g)*1e3_sp
+      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
-      CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step &
-&                   + 1)
-      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
-&       1e3_sp
+      CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
+&                   optim_start_step + 1)
+      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
+&       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%jobs_fun) 
+        SELECT CASE  (setup%optimize%jobs_fun) 
         CASE ('nse') 
           res = NSE(qo, qs)
           CALL PUSHCONTROL3B(6)
@@ -2779,7 +2761,8 @@ CONTAINS
     END DO
     gauge_jobs_b = 0.0_4
     DO g=mesh%ng,1,-1
-      gauge_jobs_b(g) = gauge_jobs_b(g) + mesh%wgauge(g)*jobs_b
+      gauge_jobs_b(g) = gauge_jobs_b(g) + setup%optimize%wgauge(g)*&
+&       jobs_b
     END DO
     output_b%qsim = 0.0_4
     DO g=mesh%ng,1,-1
@@ -2789,23 +2772,23 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             qs_b = 0.0_4
           ELSE
-            qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)&
-&             *setup%dt/mesh%area(g)*1e3_sp
+            qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&             ntime_step)*setup%dt/mesh%area(g)*1e3_sp
             qs_b = 0.0_4
             res_b3 = gauge_jobs_b(g)
             gauge_jobs_b(g) = 0.0_4
             CALL LOGARITHMIQUE_B(qo, qs, qs_b, res_b3)
           END IF
         ELSE IF (branch .EQ. 2) THEN
-          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&           setup%dt/mesh%area(g)*1e3_sp
+          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b2 = gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
           CALL RMSE_B(qo, qs, qs_b, res_b2)
         ELSE
-          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&           setup%dt/mesh%area(g)*1e3_sp
+          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b1 = gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
@@ -2815,21 +2798,21 @@ CONTAINS
         IF (branch .EQ. 4) THEN
           imd_b = 2*imd*gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
-          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&           setup%dt/mesh%area(g)*1e3_sp
+          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           CALL POPREAL4(imd)
           CALL KGE_B(qo, qs, qs_b, imd_b)
         ELSE
-          qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&           setup%dt/mesh%area(g)*1e3_sp
+          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b0 = gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
           CALL KGE_B(qo, qs, qs_b, res_b0)
         END IF
       ELSE IF (branch .EQ. 6) THEN
-        qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*&
-&         setup%dt/mesh%area(g)*1e3_sp
+        qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
         qs_b = 0.0_4
         res_b = gauge_jobs_b(g)
         gauge_jobs_b(g) = 0.0_4
@@ -2837,11 +2820,11 @@ CONTAINS
       ELSE
         qs_b = 0.0_4
       END IF
-      CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optim_start_step +&
-&                  1)
-      output_b%qsim(g, setup%optim_start_step:setup%ntime_step) = &
-&       output_b%qsim(g, setup%optim_start_step:setup%ntime_step) + &
-&       setup%dt*1e3_sp*qs_b/mesh%area(g)
+      CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
+&                  optim_start_step + 1)
+      output_b%qsim(g, setup%optimize%optim_start_step:setup%ntime_step)&
+&      = output_b%qsim(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step) + setup%dt*1e3_sp*qs_b/mesh%area(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
@@ -2852,8 +2835,8 @@ CONTAINS
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     REAL(sp), INTENT(OUT) :: jobs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optim_start_step+1) :: qo&
-&   , qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
+&   +1) :: qo, qs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp) :: imd
     INTEGER :: g, row, col
@@ -2862,15 +2845,15 @@ CONTAINS
     jobs = 0._sp
     gauge_jobs = 0._sp
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optim_start_step:setup%ntime_step)*setup&
-&       %dt/mesh%area(g)*1e3_sp
+      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step)*&
-&       setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*mesh%dx)*&
-&       1e3_sp
+      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
+&       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%jobs_fun) 
+        SELECT CASE  (setup%optimize%jobs_fun) 
         CASE ('nse') 
           gauge_jobs(g) = NSE(qo, qs)
         CASE ('kge') 
@@ -2888,7 +2871,7 @@ CONTAINS
       END IF
     END DO
     DO g=1,mesh%ng
-      jobs = jobs + mesh%wgauge(g)*gauge_jobs(g)
+      jobs = jobs + setup%optimize%wgauge(g)*gauge_jobs(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS
 
@@ -2929,7 +2912,7 @@ CONTAINS
     CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
     CALL GET_STATES_D(states, states_d, states_matrix, states_matrix_d)
     CALL GET_STATES(states_bgd, states_bgd_matrix)
-    SELECT CASE  (setup%jreg_fun) 
+    SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
       parameters_jreg_d = REG_PRIOR_D(mesh, np, parameters_matrix, &
@@ -2984,7 +2967,7 @@ CONTAINS
     CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
     CALL GET_STATES(states, states_matrix)
     CALL GET_STATES(states_bgd, states_bgd_matrix)
-    SELECT CASE  (setup%jreg_fun) 
+    SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
       res = REG_PRIOR(mesh, np, parameters_matrix, parameters_bgd_matrix&
@@ -3036,7 +3019,7 @@ CONTAINS
     jreg = 0._sp
     parameters_jreg = 0._sp
     states_jreg = 0._sp
-    SELECT CASE  (setup%jreg_fun) 
+    SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
       parameters_jreg = REG_PRIOR(mesh, np, parameters_matrix, &
@@ -3079,14 +3062,14 @@ CONTAINS
     CALL COMPUTE_JOBS_D(setup, mesh, input_data, output, output_d, jobs&
 &                 , jobs_d)
 !% Only compute in case wjreg > 0
-    IF (setup%wjreg .GT. 0._sp) THEN
+    IF (setup%optimize%wjreg .GT. 0._sp) THEN
       CALL COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
 &                   parameters_bgd, states, states_d, states_bgd, jreg, &
 &                   jreg_d)
     ELSE
       jreg_d = 0.0_4
     END IF
-    cost_d = jobs_d + setup%wjreg*jreg_d
+    cost_d = jobs_d + setup%optimize%wjreg*jreg_d
   END SUBROUTINE COMPUTE_COST_D
 
 !  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface):
@@ -3121,7 +3104,7 @@ CONTAINS
     INTEGER :: branch
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
 !% Only compute in case wjreg > 0
-    IF (setup%wjreg .GT. 0._sp) THEN
+    IF (setup%optimize%wjreg .GT. 0._sp) THEN
       CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states&
 &                 , states_bgd, jreg)
       CALL PUSHCONTROL1B(0)
@@ -3129,7 +3112,7 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     jobs_b = cost_b
-    jreg_b = setup%wjreg*cost_b
+    jreg_b = setup%optimize%wjreg*cost_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
@@ -3167,13 +3150,13 @@ CONTAINS
     REAL(sp) :: jobs, jreg
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
 !% Only compute in case wjreg > 0
-    IF (setup%wjreg .GT. 0._sp) THEN
+    IF (setup%optimize%wjreg .GT. 0._sp) THEN
       CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states&
 &                 , states_bgd, jreg)
     ELSE
       jreg = 0._sp
     END IF
-    cost = jobs + setup%wjreg*jreg
+    cost = jobs + setup%optimize%wjreg*jreg
     output%cost = cost
   END SUBROUTINE COMPUTE_COST
 
@@ -3246,7 +3229,7 @@ CONTAINS
     REAL(sp) :: jobs, jreg
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
     jreg = 0._sp
-    cost = jobs + setup%wjreg*jreg
+    cost = jobs + setup%optimize%wjreg*jreg
     output%cost = cost
   END SUBROUTINE HYPER_COMPUTE_COST
 

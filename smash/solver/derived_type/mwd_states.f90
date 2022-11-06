@@ -72,34 +72,29 @@ module mwd_states
     
     contains
         
-        subroutine StatesDT_initialise(states, mesh)
+        subroutine StatesDT_initialise(this, mesh)
         
             implicit none
             
+            type(StatesDT), intent(inout) :: this
             type(MeshDT), intent(in) :: mesh
-            type(StatesDT), intent(inout) :: states
             
-            integer :: nrow, ncol
+            allocate(this%hi(mesh%nrow, mesh%ncol))
+            allocate(this%hp(mesh%nrow, mesh%ncol))
+            allocate(this%hft(mesh%nrow, mesh%ncol))
+            allocate(this%hst(mesh%nrow, mesh%ncol))
+            allocate(this%hlr(mesh%nrow, mesh%ncol))
             
-            nrow = mesh%nrow
-            ncol = mesh%ncol
-            
-            allocate(states%hi(nrow, ncol))
-            allocate(states%hp(nrow, ncol))
-            allocate(states%hft(nrow, ncol))
-            allocate(states%hst(nrow, ncol))
-            allocate(states%hlr(nrow, ncol))
-            
-            states%hi  = 0.01_sp
-            states%hp  = 0.01_sp
-            states%hft = 0.01_sp
-            states%hst = 0.01_sp
-            states%hlr = 0.000001_sp
+            this%hi  = 0.01_sp
+            this%hp  = 0.01_sp
+            this%hft = 0.01_sp
+            this%hst = 0.01_sp
+            this%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
         
         
-        subroutine Hyper_StatesDT_initialise(hyper_states, setup)
+        subroutine Hyper_StatesDT_initialise(this, setup)
         
             !% Notes
             !% -----
@@ -108,12 +103,12 @@ module mwd_states
         
             implicit none
             
-            type(Hyper_StatesDT), intent(inout) :: hyper_states
+            type(Hyper_StatesDT), intent(inout) :: this
             type(SetupDT), intent(in) :: setup
             
             integer :: n
             
-            select case(trim(setup%mapping))
+            select case(trim(setup%optimize%mapping))
             
             case("hyper-linear")
             
@@ -125,11 +120,11 @@ module mwd_states
                 
             end select
             
-            allocate(hyper_states%hi(n, 1))
-            allocate(hyper_states%hp(n, 1))
-            allocate(hyper_states%hft(n, 1))
-            allocate(hyper_states%hst(n, 1))
-            allocate(hyper_states%hlr(n, 1))
+            allocate(this%hi(n, 1))
+            allocate(this%hp(n, 1))
+            allocate(this%hft(n, 1))
+            allocate(this%hst(n, 1))
+            allocate(this%hlr(n, 1))
  
         end subroutine Hyper_StatesDT_initialise
 

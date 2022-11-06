@@ -85,7 +85,7 @@ module mwd_parameters
     
     contains
         
-        subroutine ParametersDT_initialise(parameters, mesh)
+        subroutine ParametersDT_initialise(this, mesh)
         
             !% Notes
             !% -----
@@ -94,36 +94,31 @@ module mwd_parameters
         
             implicit none
             
+            type(ParametersDT), intent(inout) :: this
             type(MeshDT), intent(in) :: mesh
-            type(ParametersDT), intent(inout) :: parameters
             
-            integer :: nrow, ncol
+            allocate(this%ci(mesh%nrow, mesh%ncol))
+            allocate(this%cp(mesh%nrow, mesh%ncol))
+            allocate(this%beta(mesh%nrow, mesh%ncol))
+            allocate(this%cft(mesh%nrow, mesh%ncol))
+            allocate(this%cst(mesh%nrow, mesh%ncol))
+            allocate(this%alpha(mesh%nrow, mesh%ncol))
+            allocate(this%exc(mesh%nrow, mesh%ncol))
+            allocate(this%lr(mesh%nrow, mesh%ncol))
             
-            nrow = mesh%nrow
-            ncol = mesh%ncol
-            
-            allocate(parameters%ci(nrow, ncol))
-            allocate(parameters%cp(nrow, ncol))
-            allocate(parameters%beta(nrow, ncol))
-            allocate(parameters%cft(nrow, ncol))
-            allocate(parameters%cst(nrow, ncol))
-            allocate(parameters%alpha(nrow, ncol))
-            allocate(parameters%exc(nrow, ncol))
-            allocate(parameters%lr(nrow, ncol))
-            
-            parameters%ci    = 1._sp
-            parameters%cp    = 200._sp
-            parameters%beta  = 1000._sp
-            parameters%cft   = 500._sp
-            parameters%cst   = 500._sp
-            parameters%alpha = 0.9_sp
-            parameters%exc   = 0._sp
-            parameters%lr    = 5._sp
+            this%ci    = 1._sp
+            this%cp    = 200._sp
+            this%beta  = 1000._sp
+            this%cft   = 500._sp
+            this%cst   = 500._sp
+            this%alpha = 0.9_sp
+            this%exc   = 0._sp
+            this%lr    = 5._sp
  
         end subroutine ParametersDT_initialise
         
         
-        subroutine Hyper_ParametersDT_initialise(hyper_parameters, setup)
+        subroutine Hyper_ParametersDT_initialise(this, setup)
         
             !% Notes
             !% -----
@@ -132,12 +127,12 @@ module mwd_parameters
         
             implicit none
             
-            type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
+            type(Hyper_ParametersDT), intent(inout) :: this
             type(SetupDT), intent(in) :: setup
             
             integer :: n
             
-            select case(trim(setup%mapping))
+            select case(trim(setup%optimize%mapping))
             
             case("hyper-linear")
             
@@ -149,14 +144,14 @@ module mwd_parameters
                 
             end select
             
-            allocate(hyper_parameters%ci(n, 1))
-            allocate(hyper_parameters%cp(n, 1))
-            allocate(hyper_parameters%beta(n, 1))
-            allocate(hyper_parameters%cft(n, 1))
-            allocate(hyper_parameters%cst(n, 1))
-            allocate(hyper_parameters%alpha(n, 1))
-            allocate(hyper_parameters%exc(n, 1))
-            allocate(hyper_parameters%lr(n, 1))
+            allocate(this%ci(n, 1))
+            allocate(this%cp(n, 1))
+            allocate(this%beta(n, 1))
+            allocate(this%cft(n, 1))
+            allocate(this%cst(n, 1))
+            allocate(this%alpha(n, 1))
+            allocate(this%exc(n, 1))
+            allocate(this%lr(n, 1))
  
         end subroutine Hyper_ParametersDT_initialise
 

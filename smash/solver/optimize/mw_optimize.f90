@@ -97,14 +97,14 @@ module mw_optimize
             x(1:np) = parameters_matrix(ind_ac(1), ind_ac(2), :)
             x(np+1:nps) = states_matrix(ind_ac(1), ind_ac(2), :)
             
-            lb(1:np) = setup%lb_parameters
-            lb(np+1:nps) = setup%lb_states
+            lb(1:np) = setup%optimize%lb_parameters
+            lb(np+1:nps) = setup%optimize%lb_states
 
-            ub(1:np) = setup%ub_parameters
-            ub(np+1:nps) = setup%ub_states
+            ub(1:np) = setup%optimize%ub_parameters
+            ub(np+1:nps) = setup%optimize%ub_states
             
-            optim_ps(1:np) = setup%optim_parameters
-            optim_ps(np+1:nps) = setup%optim_states
+            optim_ps(1:np) = setup%optimize%optim_parameters
+            optim_ps(np+1:nps) = setup%optimize%optim_states
             
             call transformation(x, lb, ub, x_tf)
             call transformation(lb, lb, ub, lb_tf)
@@ -127,7 +127,7 @@ module mw_optimize
             write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
             
-            do iter=1, setup%maxiter * nops
+            do iter=1, setup%optimize%maxiter * nops
                 
                 !% ======================================================================================================= %!
                 !%   Optimize
@@ -398,7 +398,7 @@ module mw_optimize
                 !%   Maximum Number of Iteration
                 !% ======================================================================================================= %!
                 
-                if (iter .eq. setup%maxiter * nops) then
+                if (iter .eq. setup%optimize%maxiter * nops) then
                 
                     write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
             
@@ -538,8 +538,8 @@ module mw_optimize
             
             iprint = -1
 
-            n = mesh%nac * (count(setup%optim_parameters .gt. 0) + &
-            & count(setup%optim_states .gt. 0))
+            n = mesh%nac * (count(setup%optimize%optim_parameters .gt. 0) + &
+            & count(setup%optimize%optim_states .gt. 0))
             m = 10
             factr = 1.e7_dp
             pgtol = 1.e-12_dp
@@ -615,7 +615,7 @@ module mw_optimize
                     write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
                         & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
                 
-                    if (isave(30) .ge. setup%maxiter) then
+                    if (isave(30) .ge. setup%optimize%maxiter) then
                         
                         task='STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT'
                         
@@ -658,14 +658,14 @@ module mw_optimize
             call get_parameters(parameters, matrix(:,:,1:np))
             call get_states(states, matrix(:,:,np+1:np+ns))
             
-            optim(1:np) = setup%optim_parameters 
-            optim(np+1:np+ns) = setup%optim_states
+            optim(1:np) = setup%optimize%optim_parameters 
+            optim(np+1:np+ns) = setup%optimize%optim_states
             
-            lb(1:np) = setup%lb_parameters
-            lb(np+1:np+ns) = setup%lb_states
+            lb(1:np) = setup%optimize%lb_parameters
+            lb(np+1:np+ns) = setup%optimize%lb_states
             
-            ub(1:np) = setup%ub_parameters
-            ub(np+1:np+ns) = setup%ub_states
+            ub(1:np) = setup%optimize%ub_parameters
+            ub(np+1:np+ns) = setup%optimize%ub_states
 
             j = 0
             
@@ -725,14 +725,14 @@ module mw_optimize
             call get_parameters(parameters, matrix(:,:,1:np))
             call get_states(states, matrix(:,:,np+1:np+ns))
             
-            optim(1:np) = setup%optim_parameters 
-            optim(np+1:np+ns) = setup%optim_states
+            optim(1:np) = setup%optimize%optim_parameters 
+            optim(np+1:np+ns) = setup%optimize%optim_states
             
-            lb(1:np) = setup%lb_parameters
-            lb(np+1:np+ns) = setup%lb_states
+            lb(1:np) = setup%optimize%lb_parameters
+            lb(np+1:np+ns) = setup%optimize%lb_states
             
-            ub(1:np) = setup%ub_parameters
-            ub(np+1:np+ns) = setup%ub_states
+            ub(1:np) = setup%optimize%ub_parameters
+            ub(np+1:np+ns) = setup%optimize%ub_states
             
             j = 0
             
@@ -807,9 +807,10 @@ module mw_optimize
             
             iprint = -1
             
-            c = count(setup%optim_parameters .gt. 0) + count(setup%optim_states .gt. 0)
+            c = count(setup%optimize%optim_parameters .gt. 0) &
+            & + count(setup%optimize%optim_states .gt. 0)
             
-            select case(trim(setup%mapping))
+            select case(trim(setup%optimize%mapping))
             
             case("hyper-linear")
             
@@ -900,7 +901,7 @@ module mw_optimize
                     write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
                         & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
                 
-                    if (isave(30) .ge. setup%maxiter) then
+                    if (isave(30) .ge. setup%optimize%maxiter) then
                         
                         task='STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT'
                         
@@ -1004,14 +1005,14 @@ module mw_optimize
             call get_hyper_parameters(hyper_parameters, hyper_matrix(:,:,1:np))
             call get_hyper_states(hyper_states, hyper_matrix(:,:,np+1:np+ns))
             
-            optim(1:np) = setup%optim_parameters 
-            optim(np+1:np+ns) = setup%optim_states
+            optim(1:np) = setup%optimize%optim_parameters 
+            optim(np+1:np+ns) = setup%optimize%optim_states
             
-            lb(1:np) = setup%lb_parameters
-            lb(np+1:np+ns) = setup%lb_states
+            lb(1:np) = setup%optimize%lb_parameters
+            lb(np+1:np+ns) = setup%optimize%lb_states
             
-            ub(1:np) = setup%ub_parameters
-            ub(np+1:np+ns) = setup%ub_states
+            ub(1:np) = setup%optimize%ub_parameters
+            ub(np+1:np+ns) = setup%optimize%ub_states
             
             !% inverse sigmoid lambda = 1
             hyper_matrix(1, 1, :) = log((matrix(ind_ac(1), ind_ac(2), :) - lb) / (ub - matrix(ind_ac(1), ind_ac(2), :)))
@@ -1025,7 +1026,7 @@ module mw_optimize
             
                 if (optim(i) .gt. 0) then
                 
-                    select case(trim(setup%mapping))
+                    select case(trim(setup%optimize%mapping))
                     
                     case("hyper-linear")
                     
@@ -1084,8 +1085,8 @@ module mw_optimize
             call get_hyper_parameters(hyper_parameters, matrix(:,:,1:np))
             call get_hyper_states(hyper_states, matrix(:,:,np+1:np+ns))
             
-            optim(1:np) = setup%optim_parameters 
-            optim(np+1:np+ns) = setup%optim_states
+            optim(1:np) = setup%optimize%optim_parameters 
+            optim(np+1:np+ns) = setup%optimize%optim_states
             
             k = 0
             
@@ -1124,8 +1125,8 @@ module mw_optimize
             call get_hyper_parameters(hyper_parameters, matrix(:,:,1:np))
             call get_hyper_states(hyper_states, matrix(:,:,np+1:np+ns))
             
-            optim(1:np) = setup%optim_parameters 
-            optim(np+1:np+ns) = setup%optim_states
+            optim(1:np) = setup%optimize%optim_parameters 
+            optim(np+1:np+ns) = setup%optimize%optim_states
             
             k = 0
             

@@ -59,7 +59,7 @@ module mwd_output
     
     contains
     
-        subroutine OutputDT_initialise(output, setup, mesh)
+        subroutine OutputDT_initialise(this, setup, mesh)
         
             !% Notes
             !% -----
@@ -68,14 +68,14 @@ module mwd_output
         
             implicit none
             
-            type(OutputDT), intent(inout) :: output
+            type(OutputDT), intent(inout) :: this
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
             
             if (mesh%ng .gt. 0) then
                 
-                allocate(output%qsim(mesh%ng, setup%ntime_step))
-                output%qsim = - 99._sp
+                allocate(this%qsim(mesh%ng, setup%ntime_step))
+                this%qsim = - 99._sp
                 
             end if
             
@@ -83,15 +83,15 @@ module mwd_output
                 
                 if (setup%sparse_storage) then
                 
-                    allocate(output%sparse_qsim_domain(mesh%nac, &
+                    allocate(this%sparse_qsim_domain(mesh%nac, &
                     & setup%ntime_step))
-                    output%sparse_qsim_domain = - 99._sp
+                    this%sparse_qsim_domain = - 99._sp
                     
                 else
 
-                    allocate(output%qsim_domain(mesh%nrow, mesh%ncol, &
+                    allocate(this%qsim_domain(mesh%nrow, mesh%ncol, &
                     & setup%ntime_step))
-                    output%qsim_domain = - 99._sp
+                    this%qsim_domain = - 99._sp
                 
                 end if
                 
@@ -101,21 +101,21 @@ module mwd_output
                 
                 if (setup%sparse_storage) then
                 
-                    allocate(output%sparse_net_prcp_domain(mesh%nac, &
+                    allocate(this%sparse_net_prcp_domain(mesh%nac, &
                     & setup%ntime_step))
-                    output%sparse_net_prcp_domain = - 99._sp
+                    this%sparse_net_prcp_domain = - 99._sp
                     
                 else
 
-                    allocate(output%net_prcp_domain(mesh%nrow, mesh%ncol, &
+                    allocate(this%net_prcp_domain(mesh%nrow, mesh%ncol, &
                     & setup%ntime_step))
-                    output%net_prcp_domain = - 99._sp
+                    this%net_prcp_domain = - 99._sp
                 
                 end if
                 
             end if
             
-            call StatesDT_initialise(output%fstates, mesh)
+            call StatesDT_initialise(this%fstates, mesh)
         
         end subroutine OutputDT_initialise
 

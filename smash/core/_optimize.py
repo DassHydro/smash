@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import SetupDT
+from smash.solver._mwd_setup import SetupDT, Optimize_SetupDT
 from smash.solver._mw_forward import forward
 from smash.solver._mw_adjoint_test import scalar_product_test
 from smash.solver._mw_optimize import (
@@ -51,17 +51,11 @@ def _optimize_sbs(
 ):
 
     _check_unknown_options(unknown_options)
+    
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
-    instance.setup._algorithm = "sbs"
-
-    setup_bgd = SetupDT(instance.setup._nd)
-
-    instance.setup._optim_parameters = 0
-    instance.setup._optim_states = 0
-    instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
-    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
-    instance.setup._lb_states = setup_bgd._lb_states.copy()
-    instance.setup._ub_states = setup_bgd._ub_states.copy()
+    instance.setup._optimize.algorithm = "sbs"
 
     for i, name in enumerate(control_vector):
 
@@ -69,34 +63,34 @@ def _optimize_sbs(
 
             ind = np.argwhere(instance.setup._name_parameters == name)
 
-            instance.setup._optim_parameters[ind] = 1
+            instance.setup._optimize.optim_parameters[ind] = 1
 
-            instance.setup._lb_parameters[ind] = bounds[i, 0]
-            instance.setup._ub_parameters[ind] = bounds[i, 1]
+            instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
+            instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
 
         #% Already check, must be states if not parameters
         else:
 
             ind = np.argwhere(instance.setup._name_states == name)
 
-            instance.setup._optim_states[ind] = 1
+            instance.setup._optimize.optim_states[ind] = 1
 
-            instance.setup._lb_states[ind] = bounds[i, 0]
-            instance.setup._ub_states[ind] = bounds[i, 1]
+            instance.setup._optimize.lb_states[ind] = bounds[i, 0]
+            instance.setup._optimize.ub_states[ind] = bounds[i, 1]
 
-    instance.setup._jobs_fun = jobs_fun
+    instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._mapping = mapping
+    instance.setup._optimize.mapping = mapping
 
-    instance.mesh._wgauge = wgauge
+    instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optim_start_step = (
+    instance.setup._optimize.optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    instance.setup._maxiter = maxiter
+    instance.setup._optimize.maxiter = maxiter
 
     _optimize_message(instance, control_vector, mapping)
 
@@ -126,18 +120,11 @@ def _optimize_lbfgsb(
 ):
 
     _check_unknown_options(unknown_options)
+    
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
     instance.setup._algorithm = "l-bfgs-b"
-
-    setup_bgd = SetupDT(instance.setup._nd)
-
-    #% Set default values
-    instance.setup._optim_parameters = 0
-    instance.setup._optim_states = 0
-    instance.setup._ub_parameters = setup_bgd._ub_parameters.copy()
-    instance.setup._lb_parameters = setup_bgd._lb_parameters.copy()
-    instance.setup._lb_states = setup_bgd._lb_states.copy()
-    instance.setup._ub_states = setup_bgd._ub_states.copy()
 
     for i, name in enumerate(control_vector):
 
@@ -145,38 +132,38 @@ def _optimize_lbfgsb(
 
             ind = np.argwhere(instance.setup._name_parameters == name)
 
-            instance.setup._optim_parameters[ind] = 1
+            instance.setup._optimize.optim_parameters[ind] = 1
 
-            instance.setup._lb_parameters[ind] = bounds[i, 0]
-            instance.setup._ub_parameters[ind] = bounds[i, 1]
+            instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
+            instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
 
         #% Already check, must be states if not parameters
         else:
 
             ind = np.argwhere(instance.setup._name_states == name)
 
-            instance.setup._optim_states[ind] = 1
+            instance.setup._optimize.optim_states[ind] = 1
 
-            instance.setup._lb_states[ind] = bounds[i, 0]
-            instance.setup._ub_states[ind] = bounds[i, 1]
+            instance.setup._optimize.lb_states[ind] = bounds[i, 0]
+            instance.setup._optimize.ub_states[ind] = bounds[i, 1]
 
-    instance.setup._jobs_fun = jobs_fun
+    instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._mapping = mapping
+    instance.setup._optimize.mapping = mapping
 
-    instance.mesh._wgauge = wgauge
+    instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optim_start_step = (
+    instance.setup._optimize.optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    instance.setup._maxiter = maxiter
-    instance.setup._jreg_fun = jreg_fun
-    instance.setup._wjreg = wjreg
+    instance.setup._optimize.maxiter = maxiter
+    instance.setup._optimize.jreg_fun = jreg_fun
+    instance.setup._optimize.wjreg = wjreg
 
-    if instance.setup._mapping.startswith("hyper"):
+    if instance.setup._optimize.mapping.startswith("hyper"):
 
         _optimize_message(instance, control_vector, mapping)
 
@@ -235,18 +222,21 @@ def _optimize_nelder_mead(
     global callback_args
 
     _check_unknown_options(unknown_options)
+    
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
-    instance.setup._algorithm = "nelder-mead"
+    instance.setup._optimize.algorithm = "nelder-mead"
 
-    instance.setup._jobs_fun = jobs_fun
+    instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._mapping = mapping
+    instance.setup._optimize.mapping = mapping
 
-    instance.mesh._wgauge = wgauge
+    instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optim_start_step = (
+    instance.setup._optimize.optim_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -343,18 +333,18 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
     sp4 = " " * 4
 
-    algorithm = instance.setup._algorithm
-    jobs_fun = instance.setup._jobs_fun
-    jreg_fun = instance.setup._jreg_fun
-    wjreg = instance.setup._wjreg
+    algorithm = instance.setup._optimize.algorithm
+    jobs_fun = instance.setup._optimize.jobs_fun
+    jreg_fun = instance.setup._optimize.jreg_fun
+    wjreg = instance.setup._optimize.wjreg
     parameters = [el for el in control_vector if el in instance.setup._name_parameters]
     states = [el for el in control_vector if el in instance.setup._name_states]
     code = [
         el
         for ind, el in enumerate(instance.mesh.code)
-        if instance.mesh._wgauge[ind] > 0
+        if instance.setup._optimize.wgauge[ind] > 0
     ]
-    gauge = ["{:.6f}".format(el) for el in instance.mesh._wgauge if el > 0]
+    gauge = ["{:.6f}".format(el) for el in instance.setup._optimize.wgauge if el > 0]
 
     if mapping == "uniform":
         mapping_eq = "k(X)"
@@ -779,8 +769,8 @@ def _standardize_bounds(
                 ind = np.argwhere(setup._name_parameters == name)
 
                 bounds[i, :] = (
-                    setup._lb_parameters[ind].item(),
-                    setup._ub_parameters[ind].item(),
+                    setup._optimize.lb_parameters[ind].item(),
+                    setup._optimize.ub_parameters[ind].item(),
                 )
 
             elif name in setup._name_states:
@@ -788,8 +778,8 @@ def _standardize_bounds(
                 ind = np.argwhere(setup._name_states == name)
 
                 bounds[i, :] = (
-                    setup._lb_states[ind].item(),
-                    setup._ub_states[ind].item(),
+                    setup._optimize.lb_states[ind].item(),
+                    setup._optimize.ub_states[ind].item(),
                 )
 
     else:
@@ -825,24 +815,24 @@ def _standardize_bounds(
                 if control_vector[i] in setup._name_parameters:
 
                     ind = np.argwhere(setup._name_parameters == control_vector[i])
-                    b[0] = setup._lb_parameters[ind].item()
+                    b[0] = setup._optimize.lb_parameters[ind].item()
 
                 else:
 
                     ind = np.argwhere(setup._name_states == control_vector[i])
-                    b[0] = setup._lb_states[ind].item()
+                    b[0] = setup._optimize.lb_states[ind].item()
 
             if b[1] is None:
 
                 if control_vector[i] in setup._name_parameters:
 
                     ind = np.argwhere(setup._name_parameters == control_vector[i])
-                    b[1] = setup._ub_parameters[ind].item()
+                    b[1] = setup._optimize.ub_parameters[ind].item()
 
                 else:
 
                     ind = np.argwhere(setup._name_states == control_vector[i])
-                    b[1] = setup._ub_states[ind].item()
+                    b[1] = setup._optimize.ub_states[ind].item()
 
             if b[0] >= b[1]:
 
@@ -865,7 +855,7 @@ def _standardize_gauge(
 
         ind = np.argmax(mesh.area)
 
-        if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
+        if np.all(input_data.qobs[ind, setup._optimize.optim_start_step :] < 0):
 
             raise ValueError(
                 f"No available observed discharge for optimization at gauge {mesh.code[ind]}"
@@ -919,7 +909,7 @@ def _standardize_gauge(
 
                 ind = np.argwhere(mesh.code == name).squeeze()
 
-                if np.all(input_data.qobs[ind, setup._optim_start_step :] < 0):
+                if np.all(input_data.qobs[ind, setup._optimize.optim_start_step :] < 0):
 
                     warnings.warn(
                         f"gauge '{name}' has no available observed discharge. Removed from the optimization"
