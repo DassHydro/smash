@@ -27,7 +27,6 @@
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
-!%      ``wgauge``               Objective function gauge weight
 !%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
 !%      ``local_active_cell``    Mask of local active cell (\in active_cell)
 !%      ======================== =======================================
@@ -65,7 +64,6 @@ module mwd_mesh
         real(sp), dimension(:), allocatable :: area
         
         !% </> Private
-        real(sp), dimension(:), allocatable :: wgauge !>f90w-private
         integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90w-private
         integer, dimension(:,:), allocatable :: local_active_cell !>f90w-private
 
@@ -73,7 +71,7 @@ module mwd_mesh
     
     contains
     
-        subroutine MeshDT_initialise(mesh, setup, nrow, ncol, ng)
+        subroutine MeshDT_initialise(this, setup, nrow, ncol, ng)
         
             !% Notes
             !% -----
@@ -82,54 +80,51 @@ module mwd_mesh
         
             implicit none
             
+            type(MeshDT), intent(inout) :: this
             type(SetupDT), intent(inout) :: setup
-            type(MeshDT), intent(inout) :: mesh
             integer, intent(in) :: nrow, ncol, ng
             
-            mesh%nrow = nrow
-            mesh%ncol = ncol
-            mesh%ng = ng
+            this%nrow = nrow
+            this%ncol = ncol
+            this%ng = ng
             
-            mesh%xmin = 0
-            mesh%ymax = 0
+            this%xmin = 0
+            this%ymax = 0
             
-            allocate(mesh%flwdir(mesh%nrow, mesh%ncol)) 
-            mesh%flwdir = -99
+            allocate(this%flwdir(this%nrow, this%ncol)) 
+            this%flwdir = -99
             
-            allocate(mesh%drained_area(mesh%nrow, mesh%ncol)) 
-            mesh%drained_area = -99
+            allocate(this%drained_area(this%nrow, this%ncol)) 
+            this%drained_area = -99
             
-            allocate(mesh%path(2, mesh%nrow * mesh%ncol)) 
-            mesh%path = -99
+            allocate(this%path(2, this%nrow * this%ncol)) 
+            this%path = -99
             
-            allocate(mesh%active_cell(mesh%nrow, mesh%ncol))
-            mesh%active_cell = 1
+            allocate(this%active_cell(this%nrow, this%ncol))
+            this%active_cell = 1
             
-            if (mesh%ng .gt. 0) then
+            if (this%ng .gt. 0) then
             
-                allocate(mesh%flwdst(mesh%nrow, mesh%ncol))
-                mesh%flwdst = -99._sp
+                allocate(this%flwdst(this%nrow, this%ncol))
+                this%flwdst = -99._sp
             
-                allocate(mesh%gauge_pos(mesh%ng, 2))
+                allocate(this%gauge_pos(this%ng, 2))
                 
-                allocate(mesh%code(mesh%ng))
-                mesh%code = "..."
+                allocate(this%code(this%ng))
+                this%code = "..."
                 
-                allocate(mesh%area(mesh%ng))
-                
-                allocate(mesh%wgauge(mesh%ng))
-                mesh%wgauge = 1._sp
+                allocate(this%area(this%ng))
                 
             end if
             
             if (setup%sparse_storage) then
                 
-                allocate(mesh%rowcol_to_ind_sparse(mesh%nrow, mesh%ncol))
+                allocate(this%rowcol_to_ind_sparse(this%nrow, this%ncol))
                 
             end if
             
-            allocate(mesh%local_active_cell(mesh%nrow, mesh%ncol))
-            mesh%local_active_cell = 1
+            allocate(this%local_active_cell(this%nrow, this%ncol))
+            this%local_active_cell = 1
             
         end subroutine MeshDT_initialise
 

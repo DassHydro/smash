@@ -186,7 +186,7 @@ module mwd_states_manipulation
                 
                     d = input_data%descriptor(:,:,j)
             
-                    select case(trim(setup%mapping))
+                    select case(trim(setup%optimize%mapping))
                     
                     case("hyper-linear")
                     
@@ -207,8 +207,8 @@ module mwd_states_manipulation
                 end do
                 
                 !% sigmoid transformation lambda = 1
-                states_matrix(:,:,i) = (setup%ub_states(i) - setup%lb_states(i)) &
-                & * (1._sp / (1._sp + exp(- states_matrix(:,:,i)))) + setup%lb_states(i)
+                states_matrix(:,:,i) = (setup%optimize%ub_states(i) - setup%optimize%lb_states(i)) &
+                & * (1._sp / (1._sp + exp(- states_matrix(:,:,i)))) + setup%optimize%lb_states(i)
             
             end do
 

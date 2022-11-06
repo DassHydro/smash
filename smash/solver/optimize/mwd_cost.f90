@@ -60,7 +60,7 @@ module mwd_cost
             type(OutputDT), intent(inout) :: output
             real(sp), intent(out) :: jobs
             
-            real(sp), dimension(setup%ntime_step - setup%optim_start_step + 1) :: qo, qs
+            real(sp), dimension(setup%ntime_step - setup%optimize%optim_start_step + 1) :: qo, qs
             real(sp), dimension(mesh%ng) :: gauge_jobs
             real(sp) :: imd
             integer :: g, row, col
@@ -70,19 +70,19 @@ module mwd_cost
             
             do g=1, mesh%ng
             
-                qs = output%qsim(g, setup%optim_start_step:setup%ntime_step) &
+                qs = output%qsim(g, setup%optimize%optim_start_step:setup%ntime_step) &
                 & * setup%dt / mesh%area(g) * 1e3_sp
                 
                 row = mesh%gauge_pos(g, 1)
                 col = mesh%gauge_pos(g, 2)
                 
-                qo = input_data%qobs(g, setup%optim_start_step:setup%ntime_step) &
+                qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%ntime_step) &
                 & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
                 & * 1e3_sp
                 
                 if (any(qo .ge. 0._sp)) then
                 
-                    select case(setup%jobs_fun)
+                    select case(setup%optimize%jobs_fun)
                     
                     case("nse")
             
@@ -117,7 +117,7 @@ module mwd_cost
             
             do g=1, mesh%ng
                 
-                jobs = jobs + mesh%wgauge(g) * gauge_jobs(g)
+                jobs = jobs + setup%optimize%wgauge(g) * gauge_jobs(g)
             
             end do
 
@@ -162,7 +162,7 @@ module mwd_cost
             parameters_jreg = 0._sp
             states_jreg = 0._sp
             
-            select case(setup%jreg_fun)
+            select case(setup%optimize%jreg_fun)
             
             !% Normalize prior between parameters and states
             case("prior")
@@ -209,7 +209,7 @@ module mwd_cost
             call compute_jobs(setup, mesh, input_data, output, jobs)
             
             !% Only compute in case wjreg > 0
-            if (setup%wjreg .gt. 0._sp) then
+            if (setup%optimize%wjreg .gt. 0._sp) then
             
                 call compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
                 
@@ -219,7 +219,7 @@ module mwd_cost
                 
             end if
             
-            cost = jobs + setup%wjreg * jreg
+            cost = jobs + setup%optimize%wjreg * jreg
             output%cost = cost
             
         end subroutine compute_cost
@@ -261,7 +261,7 @@ module mwd_cost
             
             jreg = 0._sp
             
-            cost = jobs + setup%wjreg * jreg
+            cost = jobs + setup%optimize%wjreg * jreg
             output%cost = cost
         
         end subroutine hyper_compute_cost

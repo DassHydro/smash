@@ -148,7 +148,7 @@ def read_model(path: str) -> Model:
 
                 nd = 0
 
-            instance.setup = SetupDT(nd)
+            instance.setup = SetupDT(nd, f["mesh"].attrs["ng"])
 
             _parse_hdf5_to_derived_type(f["setup"], instance.setup)
 

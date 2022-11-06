@@ -204,7 +204,7 @@ module mwd_parameters_manipulation
                 
                     d = input_data%descriptor(:,:,j)
             
-                    select case(trim(setup%mapping))
+                    select case(trim(setup%optimize%mapping))
                     
                     case("hyper-linear")
                     
@@ -225,8 +225,8 @@ module mwd_parameters_manipulation
                 end do
                 
                 !% sigmoid transformation lambda = 1
-                parameters_matrix(:,:,i) = (setup%ub_parameters(i) - setup%lb_parameters(i)) &
-                & * (1._sp / (1._sp + exp(- parameters_matrix(:,:,i)))) + setup%lb_parameters(i)
+                parameters_matrix(:,:,i) = (setup%optimize%ub_parameters(i) - setup%optimize%lb_parameters(i)) &
+                & * (1._sp / (1._sp + exp(- parameters_matrix(:,:,i)))) + setup%optimize%lb_parameters(i)
             
             end do
 
