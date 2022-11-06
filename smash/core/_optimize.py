@@ -52,17 +52,10 @@ def _optimize_sbs(
 
     _check_unknown_options(unknown_options)
     
-    optimize_setup_bgd = Optimize_SetupDT(instance.mesh.ng)
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
     instance.setup._optimize.algorithm = "sbs"
-
-    #% Set default values
-    instance.setup._optimize.optim_parameters = 0
-    instance.setup._optimize.optim_states = 0
-    instance.setup._optimize.ub_parameters = optimize_setup_bgd.ub_parameters.copy()
-    instance.setup._optimize.lb_parameters = optimize_setup_bgd.lb_parameters.copy()
-    instance.setup._optimize.lb_states = optimize_setup_bgd.lb_states.copy()
-    instance.setup._optimize.ub_states = optimize_setup_bgd.ub_states.copy()
 
     for i, name in enumerate(control_vector):
 
@@ -127,18 +120,11 @@ def _optimize_lbfgsb(
 ):
 
     _check_unknown_options(unknown_options)
+    
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
     instance.setup._algorithm = "l-bfgs-b"
-    
-    optimize_setup_bgd = Optimize_SetupDT(instance.mesh.ng)
-
-    #% Set default values
-    instance.setup._optimize.optim_parameters = 0
-    instance.setup._optimize.optim_states = 0
-    instance.setup._optimize.ub_parameters = optimize_setup_bgd.ub_parameters.copy()
-    instance.setup._optimize.lb_parameters = optimize_setup_bgd.lb_parameters.copy()
-    instance.setup._optimize.lb_states = optimize_setup_bgd.lb_states.copy()
-    instance.setup._optimize.ub_states = optimize_setup_bgd.ub_states.copy()
 
     for i, name in enumerate(control_vector):
 
@@ -236,6 +222,9 @@ def _optimize_nelder_mead(
     global callback_args
 
     _check_unknown_options(unknown_options)
+    
+    #% Reset default values
+    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
     instance.setup._optimize.algorithm = "nelder-mead"
 

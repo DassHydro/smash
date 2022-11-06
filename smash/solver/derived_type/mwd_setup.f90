@@ -40,6 +40,7 @@
 !%      ========================== =====================================
 !%      `Variables`                Description
 !%      ========================== =====================================
+!%      ``optimize``               Optimize_SetupDT which contains all optimize options
 !%      ``ntime_step``             Number of time step
 !%      ``nd``                     Number of descriptor map(s)
 !%      ``name_parameters``        Name of SMASH parameters       (default: see below)
@@ -156,9 +157,9 @@ module mwd_setup
         logical :: save_qsim_domain = .false.
         logical :: save_net_prcp_domain = .false.
         
+        !% </> Private
         type(Optimize_SetupDT) :: optimize !>f90w-private
         
-        !% </> Private
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
         
