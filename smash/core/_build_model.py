@@ -28,7 +28,7 @@ import pandas as pd
 import numpy as np
 
 
-def _parse_derived_type(derived_type, data: dict):
+def _parse_derived_type(derived_type: SetupDT | MeshDT, data: dict):
 
     """
     Derived type parser

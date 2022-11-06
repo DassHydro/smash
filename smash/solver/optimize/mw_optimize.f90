@@ -38,7 +38,7 @@ module mw_optimize
     public :: optimize_sbs, optimize_lbfgsb, hyper_optimize_lbfgsb
     
     private :: transformation, inv_transformation, & 
-    & normalize_descriptor, unnormalize_descriptor, &
+    & normalize_descriptor, denormalize_descriptor, &
     & hyper_problem_initialise, parameters_states_to_x, &
     & x_to_parameters_states, hyper_parameters_states_to_x, &
     & x_to_hyper_parameters_states
@@ -924,7 +924,7 @@ module mw_optimize
         call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, input_data)
         call hyper_states_to_states(hyper_states, states, setup, input_data)
         
-        call unnormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        call denormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
         
         end subroutine hyper_optimize_lbfgsb
         
@@ -952,7 +952,7 @@ module mw_optimize
         end subroutine normalize_descriptor
         
         
-        subroutine unnormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        subroutine denormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
         
             implicit none
             
@@ -969,7 +969,7 @@ module mw_optimize
             
             end do
         
-        end subroutine unnormalize_descriptor
+        end subroutine denormalize_descriptor
         
 
         subroutine hyper_problem_initialise(hyper_parameters, hyper_states, nbd, l, u, setup, mesh, parameters, states, ndc)

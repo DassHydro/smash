@@ -26,7 +26,7 @@ from smash.core._optimize import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from pandas import Timestamp
+    import pandas as pd
 
 import numpy as np
 
@@ -232,9 +232,9 @@ class Model(object):
         else:
 
             instance = self.copy()
-            
+
         print("</> Run Forward Model M (k)")
-            
+
         cost = np.float32(0)
 
         forward(
@@ -250,7 +250,7 @@ class Model(object):
         )
 
         instance._last_update = "Forward Run"
-            
+
         if not inplace:
 
             return instance
@@ -258,14 +258,14 @@ class Model(object):
     def optimize(
         self,
         algorithm: str,
-        control_vector: (str, list, tuple, set),
-        jobs_fun: (str, None) = None,
-        mapping: (str, None) = None,
-        bounds: (list, tuple, set, None) = None,
-        gauge: (str, list, tuple, set, None) = None,
-        wgauge: (str, list, tuple, set, None) = None,
-        ost: (str, Timestamp, None) = None,
-        options: (dict, None) = None,
+        control_vector: str | list | tuple | set,
+        jobs_fun: str | None = None,
+        mapping: str | None = None,
+        bounds: list | tuple | set | None = None,
+        gauge: str | list | tuple | set | None = None,
+        wgauge: str | list | tuple | set | None = None,
+        ost: str | pd.Timestamp | None = None,
+        options: dict | None = None,
         inplace: bool = False,
     ):
 

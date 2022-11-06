@@ -8,7 +8,6 @@ from smash.solver._mw_optimize import (
     optimize_lbfgsb,
     hyper_optimize_lbfgsb,
 )
-from smash.solver._mwd_cost import compute_jobs
 
 from typing import TYPE_CHECKING
 
@@ -178,7 +177,7 @@ def _optimize_lbfgsb(
     instance.setup._wjreg = wjreg
 
     if instance.setup._mapping.startswith("hyper"):
-        
+
         _optimize_message(instance, control_vector, mapping)
 
         hyper_optimize_lbfgsb(
@@ -191,9 +190,9 @@ def _optimize_lbfgsb(
         )
 
     else:
-        
+
         if adjoint_test:
-            
+
             scalar_product_test(
                 instance.setup,
                 instance.mesh,
@@ -202,7 +201,7 @@ def _optimize_lbfgsb(
                 instance.states,
                 instance.output,
             )
-            
+
         _optimize_message(instance, control_vector, mapping)
 
         optimize_lbfgsb(
@@ -223,11 +222,11 @@ def _optimize_nelder_mead(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    maxiter: (int, None) = None,
-    maxfev: (int, None) = None,
+    maxiter: int | None = None,
+    maxfev: int | None = None,
     disp: bool = False,
     return_all: bool = False,
-    initial_simplex: (np.ndarray, None) = None,
+    initial_simplex: np.ndarray | None = None,
     xatol: float = 0.0001,
     fatol: float = 0.0001,
     adaptive: bool = True,
@@ -293,13 +292,11 @@ def _optimize_nelder_mead(
         #! Change for hyper_ regularization
         parameters_bgd = instance.parameters.copy()
         states_bgd = instance.states.copy()
-        
-        for i in range(instance.setup._nd):
-            
-            minvl = np.amin(instance.input_data.descriptor[..., i])
-            maxvl = np.amax(instance.input_data.descriptor[..., i])
-            
-            instance.input_data.descriptor[..., i] = (instance.input_data.descriptor[..., i] - minvl) / (maxvl - minvl)
+
+        min_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
+        max_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
+
+        _normalize_descriptor(instance, min_descriptor, max_descriptor)
 
         x = _hyper_parameters_states_to_x(instance, control_vector, bounds)
 
@@ -328,6 +325,8 @@ def _optimize_nelder_mead(
         _hyper_problem(
             res.x, instance, control_vector, parameters_bgd, states_bgd, bounds
         )
+
+        _denormalize_descriptor(instance, min_descriptor, max_descriptor)
 
     _callback(res.x)
 
@@ -423,7 +422,9 @@ def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.n
 
 
 def _hyper_parameters_states_to_x(
-    instance: Model, control_vector: np.ndarray, bounds: np.ndarray,
+    instance: Model,
+    control_vector: np.ndarray,
+    bounds: np.ndarray,
 ) -> np.ndarray:
 
     ac_ind = np.unravel_index(
@@ -435,17 +436,17 @@ def _hyper_parameters_states_to_x(
     x = np.zeros(shape=control_vector.size * nd_step, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
-        
+
         lb, ub = bounds[ind, :]
 
         if name in instance.setup._name_parameters:
-            
+
             y = getattr(instance.parameters, name)[ac_ind]
 
         else:
-            
+
             y = getattr(instance.states, name)[ac_ind]
-            
+
         x[ind * nd_step] = np.log((y - lb) / (ub - y))
 
     return x
@@ -497,8 +498,8 @@ def _x_to_hyper_parameters_states(
             value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
 
         lb, ub = bounds[ind, :]
-        
-        y = (ub - lb) * (1.0 / (1.0 + np.exp(- value))) + lb
+
+        y = (ub - lb) * (1.0 / (1.0 + np.exp(-value))) + lb
 
         if name in instance.setup._name_parameters:
 
@@ -507,6 +508,31 @@ def _x_to_hyper_parameters_states(
         else:
 
             setattr(instance.states, name, y)
+
+
+def _normalize_descriptor(
+    instance: Model, min_descriptor: np.ndarray, max_descriptor: np.ndarray
+):
+
+    for i in range(instance.setup._nd):
+        min_descriptor[i] = np.amin(instance.input_data.descriptor[..., i])
+        max_descriptor[i] = np.amax(instance.input_data.descriptor[..., i])
+
+        instance.input_data.descriptor[..., i] = (
+            instance.input_data.descriptor[..., i] - min_descriptor[i]
+        ) / (max_descriptor[i] - min_descriptor[i])
+
+
+def _denormalize_descriptor(
+    instance: Model, min_descriptor: np.ndarray, max_descriptor: np.ndarray
+):
+
+    for i in range(instance.setup._nd):
+        instance.input_data.descriptor[..., i] = (
+            instance.input_data.descriptor[..., i]
+            * (max_descriptor[i] - min_descriptor[i])
+            + min_descriptor[i]
+        )
 
 
 def _problem(
@@ -520,7 +546,7 @@ def _problem(
     global callback_args
 
     _x_to_parameters_states(x, instance, control_vector)
-    
+
     cost = np.float32(0)
 
     forward(
@@ -553,7 +579,7 @@ def _hyper_problem(
     global callback_args
 
     _x_to_hyper_parameters_states(x, instance, control_vector, bounds)
-    
+
     cost = np.float32(0)
 
     forward(
@@ -610,7 +636,7 @@ def _standardize_algorithm(algorithm: str) -> str:
 
 
 def _standardize_control_vector(
-    control_vector: (str, list, tuple, set), setup: SetupDT
+    control_vector: str | list | tuple | set, setup: SetupDT
 ) -> np.ndarray:
 
     if isinstance(control_vector, str):
@@ -640,7 +666,7 @@ def _standardize_control_vector(
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun: (str, None), algorithm: str) -> str:
+def _standardize_jobs_fun(jobs_fun: str | None, algorithm: str) -> str:
 
     if jobs_fun is None:
 
@@ -671,7 +697,7 @@ def _standardize_jobs_fun(jobs_fun: (str, None), algorithm: str) -> str:
     return jobs_fun
 
 
-def _standardize_mapping(mapping: (str, None), algorithm: str, setup: SetupDT) -> str:
+def _standardize_mapping(mapping: str | None, algorithm: str, setup: SetupDT) -> str:
 
     #% Default values
     if mapping is None:
@@ -738,7 +764,7 @@ def _standardize_mapping(mapping: (str, None), algorithm: str, setup: SetupDT) -
 
 
 def _standardize_bounds(
-    bounds: (list, tuple, set, None), control_vector: np.ndarray, setup: SetupDT
+    bounds: list | tuple | set | None, control_vector: np.ndarray, setup: SetupDT
 ) -> np.ndarray:
 
     #% Default values
@@ -828,7 +854,7 @@ def _standardize_bounds(
 
 
 def _standardize_gauge(
-    gauge: (str, list, tuple, set, None),
+    gauge: str | list | tuple | set | None,
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
@@ -921,7 +947,7 @@ def _standardize_gauge(
 
 
 def _standardize_wgauge(
-    wgauge: (str, list, tuple, set, None), gauge: np.ndarray, mesh: MeshDT
+    wgauge: str | list | tuple | set | None, gauge: np.ndarray, mesh: MeshDT
 ) -> np.ndarray:
 
     weight_arr = np.zeros(shape=mesh.code.size, dtype=np.float32)
@@ -977,7 +1003,7 @@ def _standardize_wgauge(
     return wgauge
 
 
-def _standardize_ost(ost: (str, pd.Timestamp, None), setup: SetupDT) -> pd.Timestamp:
+def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Timestamp:
 
     if ost is None:
 
@@ -1023,13 +1049,13 @@ def _check_unknown_options(unknown_options: dict):
 
 def _standardize_optimize_args(
     algorithm: str,
-    control_vector: (str, list, tuple, set),
-    jobs_fun: (str, None),
-    mapping: (str, None),
-    bounds: (list, tuple, set, None),
-    gauge: (str, list, tuple, set, None),
-    wgauge: (str, list, tuple, set, None),
-    ost: (str, Timestamp, None),
+    control_vector: str | list | tuple | set,
+    jobs_fun: str | None,
+    mapping: str | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set | None,
+    wgauge: str | list | tuple | set | None,
+    ost: str | pd.Timestamp | None,
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
@@ -1054,7 +1080,7 @@ def _standardize_optimize_args(
     return algorithm, control_vector, jobs_fun, mapping, bounds, wgauge, ost
 
 
-def _standardize_optimize_options(options: (dict, None)) -> dict:
+def _standardize_optimize_options(options: dict | None) -> dict:
 
     if options is None:
 
