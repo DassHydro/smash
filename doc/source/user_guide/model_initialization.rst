@@ -82,7 +82,7 @@ Input data options
     Path to the directory with PET files.
     
 ``sparse_storage``:bolditalic:`: bool, default False`
-    Enables the sparse storage of atmospheric data (i.e. precipitation and PET).
+    Enables the sparse storage of atmospheric data (i.e. precipitation and PET) and simulated discharge.
     
 ``mean_forcing``:bolditalic:`: bool, default False`
     Enables the calculation of average atmospheric data (i.e. precipitation and PET) by catchment.
@@ -90,6 +90,10 @@ Input data options
     
 Operator options
 ****************
+
+.. deprecated:: 0.2.0
+
+    use ``structure`` instead.
 
 
 ``interception_module``:bolditalic:`: int, default 0`
@@ -131,6 +135,9 @@ Output options
 
 ``save_qsim_domain``:bolditalic:`: bool, default False`
     Enables the save of simulated discharge on the entire domain.
+    
+``save_net_prcp_domain``:bolditalic:`: bool, default False`
+    Enables the save of simulated net precipitation on the entire domain.
 
 
 .. _user_guide.model_initialization.mesh:
@@ -165,20 +172,13 @@ Gauge options
     Number of gauges in the grid.
     
 ``gauge_pos``:bolditalic:`: NumPy array, shape=(2, ng), dtype=np.int32`
-    Gauge position in the grid.
-    
-    .. warning::
-        
-        The user must pay attention to the index used for this argument. Indexing in Python is from 0 to N-1 except in Fortran, the basic indexing is from 1 to N. For this argument, the position of the gauges on the grid must be defined according to the Fortran indexing.
-        
+    Position of gauges in the grid.
 
-``code``:bolditalic:`: NumPy array, shape=(20, ng), dtype=np.uint8`
+
+``code``:bolditalic:`: NumPy array, shape=(20, ng), dtype=U`
     Code of gauges.
-    
-    .. warning::
-        
-        This argument is tricky to use because any NumPy uint8 array wrapped must be filled with ASCII values.
-        
+
+
 ``area``:bolditalic:`: NumPy array, shape=(ng), dtype=np.float32`
     Area of gauges in square meters.
     
@@ -187,17 +187,17 @@ Grid options
 ************
 
 ``flow``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
-    Grid flow directions. `smash` is using a D8 flow directions with the following convention (**TODO**)
+    Grid flow directions. `smash` is using a D8 flow directions with the following convention.
+    
+    .. image:: ../_static/flwdir_convention.png
+        :width: 100
+        :align: center
     
 ``drained_area``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
     Grid drained area in number of cells.
     
 ``path``:bolditalic:`: NumPy array, shape=(2, nrow * ncol), dtype=np.int32`
     Grid calculation path. Sorting grid cells in ascending order of drained area.
-    
-    .. warning::
-        
-        The user must pay attention to the index used for this argument. Indexing in Python is from 0 to N-1 except in Fortran, the basic indexing is from 1 to N. For this argument, the path calculation on the grid must be defined according to the Fortran indexing.
     
     
 Active cell options

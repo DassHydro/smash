@@ -75,12 +75,12 @@ smash documentation
 
         +++
 
-        .. button-ref:: getting_started
+        .. button-ref:: model_description
             :expand:
             :color: secondary
             :click-parent:
 
-            To the getting started
+            To the model description
 
 .. toctree::
    :maxdepth: 3
@@ -90,3 +90,4 @@ smash documentation
    getting_started/index
    user_guide/index
    api_reference/index
+   model_description/index

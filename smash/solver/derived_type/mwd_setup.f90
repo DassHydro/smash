@@ -142,7 +142,6 @@ module mwd_setup
         logical :: mean_forcing = .false.
         logical :: prcp_indice = .false.
         
-        
         logical :: read_descriptor = .false.
         character(lchar) :: descriptor_format = "tif" !>f90w-char
         character(lchar) :: descriptor_directory = "..." !>f90w-char

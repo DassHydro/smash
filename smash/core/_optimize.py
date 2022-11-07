@@ -124,7 +124,7 @@ def _optimize_lbfgsb(
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
-    instance.setup._algorithm = "l-bfgs-b"
+    instance.setup._optimize.algorithm = "l-bfgs-b"
 
     for i, name in enumerate(control_vector):
 

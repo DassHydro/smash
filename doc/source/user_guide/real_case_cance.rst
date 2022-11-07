@@ -391,7 +391,7 @@ Make a forward run using the :meth:`.Model.run` method.
 
 .. ipython:: python
 
-    model.run()
+    model.run();
     
 Here, unlike the :ref:`user_guide.practice_case`, we have not specified ``inplace=True``. By default, this argument is assigned to False, i.e. when the :meth:`.Model.run` method is called, the model object is not modified in-place but in a copy which can be returned.
 So if we display the representation of the model, the last update will still be ``Initialization`` and no simulated discharge is available.
@@ -406,7 +406,7 @@ This argument is useful to keep the original :class:`.Model` and store the resul
 
 .. ipython:: python
 
-    model_forward = model.run()
+    model_forward = model.run();
     
     model
     
@@ -532,15 +532,19 @@ The cost function value :math:`J` (should be equal to the last iteration ``J``),
 
     model_su.output.cost
     
-The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and because we performed a spatially uniform optimization, we will only display the parameter set values for one cell wihtin the catchment active cells, which is the most downstream gauge position here),
+The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and because we performed a spatially uniform optimization, we will only display the parameter set values for one cell within the catchment active cells, which is the most downstream gauge position here),
 
 .. ipython:: python
 
+    ind = tuple(model_su.mesh.gauge_pos[0,:])
+    
+    ind
+
     (
-     model_su.parameters.cp[20, 27],
-     model_su.parameters.cft[20, 27],
-     model_su.parameters.lr[20, 27],
-     model_su.parameters.exc[20, 27],
+     model_su.parameters.cp[ind],
+     model_su.parameters.cft[ind],
+     model_su.parameters.lr[ind],
+     model_su.parameters.exc[ind],
     )
 
 Spatially distributed optimization
