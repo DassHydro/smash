@@ -67,7 +67,7 @@ f77: \
  
 #% f90 files
 f90: \
- obj/md_kind.o \
+ obj/md_constant.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \

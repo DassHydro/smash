@@ -47,8 +47,8 @@ class Model(object):
             if isinstance(setup, dict):
 
                 descriptor_name = setup.get("descriptor_name", [])
-                
-                nd = (1 if isinstance(descriptor_name, str) else len(descriptor_name))
+
+                nd = 1 if isinstance(descriptor_name, str) else len(descriptor_name)
 
                 self.setup = SetupDT(nd, mesh["ng"])
 

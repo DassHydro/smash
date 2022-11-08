@@ -52,7 +52,7 @@
 !%      [13] hyper_parameters_to_parameters
 MODULE MWD_PARAMETERS_DIFF
 !% only: sp, np
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -278,7 +278,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      [13] hyper_states_to_states
 MODULE MWD_STATES_DIFF
 !% only: sp, ns
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: MeshDT
   USE MWD_MESH
 !% only: Input_DataDT
@@ -440,7 +440,7 @@ END MODULE MWD_STATES_DIFF
 !%      [1] OutputDT_initialise
 MODULE MWD_OUTPUT_DIFF
 !% only: sp, dp, lchar, np, ns
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !%only: MeshDT
@@ -513,7 +513,7 @@ END MODULE MWD_OUTPUT_DIFF
 !%      [4] gr_transfer
 MODULE MD_GR_OPERATOR_DIFF
 !% only : sp
-  USE MD_KIND
+  USE MD_CONSTANT
   IMPLICIT NONE
 
 CONTAINS
@@ -1147,7 +1147,7 @@ END MODULE MD_GR_OPERATOR_DIFF
 !%      [3] linear_routing
 MODULE MD_ROUTING_OPERATOR_DIFF
 !% only : sp
-  USE MD_KIND
+  USE MD_CONSTANT
   IMPLICIT NONE
 
 CONTAINS
@@ -1471,7 +1471,7 @@ CONTAINS
 END MODULE MD_ROUTING_OPERATOR_DIFF
 
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
-  USE MD_KIND
+  USE MD_CONSTANT
   USE MWD_SETUP
   USE MWD_INPUT_DATA
   USE MWD_PARAMETERS_DIFF
@@ -2079,7 +2079,7 @@ CONTAINS
 END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 
 MODULE MWD_STATES_MANIPULATION_DIFF
-  USE MD_KIND
+  USE MD_CONSTANT
   USE MWD_SETUP
   USE MWD_INPUT_DATA
   USE MWD_STATES_DIFF
@@ -2604,7 +2604,7 @@ END MODULE MWD_STATES_MANIPULATION_DIFF
 !%      [10] reg_prior
 MODULE MWD_COST_DIFF
 !% only: sp, dp, lchar, np, ns
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !%only: MeshDT
@@ -3931,7 +3931,7 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 & parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
 & output_d, cost, cost_d)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -4277,7 +4277,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 & parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
 & output_b, cost, cost_b)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -4809,7 +4809,7 @@ END SUBROUTINE BASE_FORWARD_B
 SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 & parameters_bgd, states, states_bgd, output, cost)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -5110,7 +5110,7 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 & hyper_states, hyper_states_d, hyper_states_bgd, output, output_d, cost&
 & , cost_d)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -5473,7 +5473,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 & hyper_states, hyper_states_b, hyper_states_bgd, output, output_b, cost&
 & , cost_b)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -6021,7 +6021,7 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 & , output, cost)
 !% only: sp
-  USE MD_KIND
+  USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT

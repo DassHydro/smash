@@ -37,7 +37,7 @@
 
 module mwd_mesh
     
-    use md_kind !% only: sp
+    use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     
     implicit none

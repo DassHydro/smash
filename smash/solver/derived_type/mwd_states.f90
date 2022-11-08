@@ -44,7 +44,7 @@
 
 module mwd_states
 
-    use md_kind !% only: sp, ns
+    use md_constant !% only: sp, ns
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     

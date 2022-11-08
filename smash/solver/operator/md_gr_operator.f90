@@ -10,7 +10,7 @@
 
 module md_gr_operator
     
-    use md_kind !% only : sp
+    use md_constant !% only : sp
 
     implicit none
     

@@ -51,7 +51,7 @@ def _optimize_sbs(
 ):
 
     _check_unknown_options(unknown_options)
-    
+
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
@@ -120,7 +120,7 @@ def _optimize_lbfgsb(
 ):
 
     _check_unknown_options(unknown_options)
-    
+
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
@@ -222,7 +222,7 @@ def _optimize_nelder_mead(
     global callback_args
 
     _check_unknown_options(unknown_options)
-    
+
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
 
@@ -909,7 +909,9 @@ def _standardize_gauge(
 
                 ind = np.argwhere(mesh.code == name).squeeze()
 
-                if np.all(input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0):
+                if np.all(
+                    input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0
+                ):
 
                     warnings.warn(
                         f"gauge '{name}' has no available observed discharge. Removed from the optimization"

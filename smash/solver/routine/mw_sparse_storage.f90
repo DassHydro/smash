@@ -2,7 +2,7 @@
 
 module mw_sparse_storage
 
-    use md_kind, only: sp, dp
+    use md_constant, only: sp, dp
     use mwd_mesh, only: MeshDT
 
     implicit none

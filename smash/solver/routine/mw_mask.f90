@@ -3,7 +3,7 @@
 
 module mw_mask
 
-    use md_kind, only: sp, np, ns
+    use md_constant, only: sp, np, ns
     use mwd_mesh, only: MeshDT
     
     contains

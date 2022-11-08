@@ -1,6 +1,6 @@
 module mwd_states_manipulation
     
-    use md_kind
+    use md_constant
     use mwd_setup
     use mwd_input_data
     use mwd_states

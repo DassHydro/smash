@@ -53,7 +53,7 @@
 
 module mwd_setup
     
-    use md_kind !% only: sp, lchar, np, ns
+    use md_constant !% only: sp, lchar, np, ns
     
     implicit none
     

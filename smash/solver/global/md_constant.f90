@@ -1,7 +1,7 @@
-!%      This module `md_kind` encapsulates all SMASH kind value.
+!%      This module `md_constant` encapsulates all SMASH constant value.
 !%      This module is differentiated.
 !%
-!%      md_kind variables
+!%      md_constant variables
 !%
 !%      </> Public
 !%      ======================= ========================================
@@ -14,7 +14,7 @@
 !%      ``ns``                  Number of SMASH states (StatesDT)
 !%      ======================= ========================================
 
-module md_kind
+module md_constant
     
     implicit none
     
@@ -25,4 +25,4 @@ module md_kind
     integer, parameter :: np = 8
     integer, parameter :: ns = 5
 
-end module md_kind
+end module md_constant
