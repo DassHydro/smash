@@ -1,6 +1,6 @@
 module mwd_parameters_manipulation
     
-    use md_common
+    use md_kind
     use mwd_setup
     use mwd_input_data
     use mwd_parameters

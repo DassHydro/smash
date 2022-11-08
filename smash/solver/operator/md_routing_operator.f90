@@ -9,7 +9,7 @@
 
 module md_routing_operator
     
-    use md_common !% only : sp
+    use md_kind !% only : sp
 
     implicit none
     

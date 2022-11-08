@@ -44,7 +44,7 @@
 
 module mwd_input_data
 
-    use md_common !% only: sp
+    use md_kind !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     

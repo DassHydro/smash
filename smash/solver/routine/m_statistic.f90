@@ -49,7 +49,7 @@
 
 module m_statistic
 
-    use md_common, only: sp
+    use md_kind, only: sp
     use m_sort, only: quicksort
     
     implicit none

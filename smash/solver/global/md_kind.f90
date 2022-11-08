@@ -1,7 +1,7 @@
-!%      This module `md_common` encapsulates all SMASH common.
+!%      This module `md_kind` encapsulates all SMASH kind value.
 !%      This module is differentiated.
 !%
-!%      mwd_common variables
+!%      md_kind variables
 !%
 !%      </> Public
 !%      ======================= ========================================
@@ -14,7 +14,7 @@
 !%      ``ns``                  Number of SMASH states (StatesDT)
 !%      ======================= ========================================
 
-module md_common
+module md_kind
     
     implicit none
     
@@ -25,4 +25,4 @@ module md_common
     integer, parameter :: np = 8
     integer, parameter :: ns = 5
 
-end module md_common
+end module md_kind

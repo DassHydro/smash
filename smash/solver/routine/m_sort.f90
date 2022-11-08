@@ -12,7 +12,7 @@
 
 module m_sort
 
-    use md_common, only: sp
+    use md_kind, only: sp
     
     implicit none
     

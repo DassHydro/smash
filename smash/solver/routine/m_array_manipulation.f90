@@ -27,7 +27,7 @@
 
 module m_array_manipulation
 
-    use md_common, only: sp
+    use md_kind, only: sp
     
     implicit none
     

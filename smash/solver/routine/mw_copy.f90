@@ -3,7 +3,7 @@
 
 module mw_copy
 
-    use md_common, only: sp, dp
+    use md_kind, only: sp, dp
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
