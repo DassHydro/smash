@@ -74,10 +74,10 @@ def sed_private_property(pyf, private):
 
     for attr in private:
 
-        os.system(f'sed -i "s/def {attr}/def _{attr}/g" {pyf}')
-        os.system(f'sed -i "s/@{attr}/@_{attr}/g" {pyf}')
-        os.system(f' sed -i "s/self.{attr}/self._{attr}/g" {pyf}')
-        os.system(f' sed -i "/ret.append.*{attr}.*/d" {pyf}')
+        os.system(f'sed -i "s/def {attr}\\b/def _{attr}/g" {pyf}')
+        os.system(f'sed -i "s/@{attr}\\b/@_{attr}/g" {pyf}')
+        os.system(f' sed -i "s/self.{attr}\\b/self._{attr}/g" {pyf}')
+        os.system(f' sed -i "/ret.append.*{attr}\\b/d" {pyf}')
 
 
 def sed_index_handler_decorator(pyf, index):
@@ -154,7 +154,7 @@ def sed_copy_derived_type(pyf):
                     
                         break
 
-def set_finalise_method(pyf):
+def sed_finalise_method(pyf):
 
     os.system(f'sed -i "/.*_finalise/i \\\t\t\ttry:" {pyf}')
     os.system(f'sed -i "/.*finalise/s/^/\t/" {pyf}')
@@ -192,6 +192,6 @@ if __name__ == "__main__":
 
         sed_copy_derived_type(pyf)
 
-        set_finalise_method(pyf)
+        sed_finalise_method(pyf)
 
         sed_tab(pyf)

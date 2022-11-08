@@ -60,7 +60,7 @@ module mwd_cost
             type(OutputDT), intent(inout) :: output
             real(sp), intent(out) :: jobs
             
-            real(sp), dimension(setup%ntime_step - setup%optimize%optim_start_step + 1) :: qo, qs
+            real(sp), dimension(setup%ntime_step - setup%optimize%optimize_start_step + 1) :: qo, qs
             real(sp), dimension(mesh%ng) :: gauge_jobs
             real(sp) :: imd
             integer :: g, row, col
@@ -70,13 +70,13 @@ module mwd_cost
             
             do g=1, mesh%ng
             
-                qs = output%qsim(g, setup%optimize%optim_start_step:setup%ntime_step) &
+                qs = output%qsim(g, setup%optimize%optimize_start_step:setup%ntime_step) &
                 & * setup%dt / mesh%area(g) * 1e3_sp
                 
                 row = mesh%gauge_pos(g, 1)
                 col = mesh%gauge_pos(g, 2)
                 
-                qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%ntime_step) &
+                qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%ntime_step) &
                 & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
                 & * 1e3_sp
                 

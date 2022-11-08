@@ -66,7 +66,7 @@ module mwd_setup
         character(lchar) :: jreg_fun = "prior" !>f90w-char
         real(sp) :: wjreg = 0._sp
 
-        integer :: optim_start_step = 1
+        integer :: optimize_start_step = 1
         
         integer :: maxiter = 100
         
@@ -146,6 +146,8 @@ module mwd_setup
         character(lchar) :: descriptor_format = "tif" !>f90w-char
         character(lchar) :: descriptor_directory = "..." !>f90w-char
         character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
+        
+        character(lchar) :: structure !>f90w-char
         
         integer :: interception_module = 0
         integer :: production_module = 0

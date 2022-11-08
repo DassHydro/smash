@@ -855,7 +855,7 @@ def _standardize_gauge(
 
         ind = np.argmax(mesh.area)
 
-        if np.all(input_data.qobs[ind, setup._optimize.optim_start_step :] < 0):
+        if np.all(input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0):
 
             raise ValueError(
                 f"No available observed discharge for optimization at gauge {mesh.code[ind]}"
@@ -909,7 +909,7 @@ def _standardize_gauge(
 
                 ind = np.argwhere(mesh.code == name).squeeze()
 
-                if np.all(input_data.qobs[ind, setup._optimize.optim_start_step :] < 0):
+                if np.all(input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0):
 
                     warnings.warn(
                         f"gauge '{name}' has no available observed discharge. Removed from the optimization"

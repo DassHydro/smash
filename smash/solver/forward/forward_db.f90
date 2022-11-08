@@ -2639,10 +2639,10 @@ CONTAINS
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), INTENT(OUT) :: jobs_d
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
-&   +1) :: qo, qs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
-&   +1) :: qs_d
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
+&   optimize_start_step+1) :: qo, qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
+&   optimize_start_step+1) :: qs_d
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_d
     REAL(sp) :: imd
@@ -2653,12 +2653,12 @@ CONTAINS
     gauge_jobs_d = 0.0_4
     DO g=1,mesh%ng
       qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optimize%&
-&       optim_start_step:setup%ntime_step)/mesh%area(g)
-      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+&       optimize_start_step:setup%ntime_step)/mesh%area(g)
+      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
 &       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
@@ -2699,10 +2699,10 @@ CONTAINS
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
     REAL(sp) :: jobs
     REAL(sp) :: jobs_b
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
-&   +1) :: qo, qs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
-&   +1) :: qs_b
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
+&   optimize_start_step+1) :: qo, qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
+&   optimize_start_step+1) :: qs_b
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_b
     REAL(sp) :: imd
@@ -2722,13 +2722,13 @@ CONTAINS
     REAL :: res_b3
     INTEGER :: branch
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
       CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
-&                   optim_start_step + 1)
-      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+&                   optimize_start_step + 1)
+      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
 &       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
@@ -2772,22 +2772,22 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             qs_b = 0.0_4
           ELSE
-            qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
-&             ntime_step)*setup%dt/mesh%area(g)*1e3_sp
+            qs = output%qsim(g, setup%optimize%optimize_start_step:setup&
+&             %ntime_step)*setup%dt/mesh%area(g)*1e3_sp
             qs_b = 0.0_4
             res_b3 = gauge_jobs_b(g)
             gauge_jobs_b(g) = 0.0_4
             CALL LOGARITHMIQUE_B(qo, qs, qs_b, res_b3)
           END IF
         ELSE IF (branch .EQ. 2) THEN
-          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b2 = gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
           CALL RMSE_B(qo, qs, qs_b, res_b2)
         ELSE
-          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b1 = gauge_jobs_b(g)
@@ -2798,12 +2798,12 @@ CONTAINS
         IF (branch .EQ. 4) THEN
           imd_b = 2*imd*gauge_jobs_b(g)
           gauge_jobs_b(g) = 0.0_4
-          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           CALL POPREAL4(imd)
           CALL KGE_B(qo, qs, qs_b, imd_b)
         ELSE
-          qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
           qs_b = 0.0_4
           res_b0 = gauge_jobs_b(g)
@@ -2811,7 +2811,7 @@ CONTAINS
           CALL KGE_B(qo, qs, qs_b, res_b0)
         END IF
       ELSE IF (branch .EQ. 6) THEN
-        qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+        qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
         qs_b = 0.0_4
         res_b = gauge_jobs_b(g)
@@ -2821,10 +2821,10 @@ CONTAINS
         qs_b = 0.0_4
       END IF
       CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
-&                  optim_start_step + 1)
-      output_b%qsim(g, setup%optimize%optim_start_step:setup%ntime_step)&
-&      = output_b%qsim(g, setup%optimize%optim_start_step:setup%&
-&       ntime_step) + setup%dt*1e3_sp*qs_b/mesh%area(g)
+&                  optimize_start_step + 1)
+      output_b%qsim(g, setup%optimize%optimize_start_step:setup%&
+&     ntime_step) = output_b%qsim(g, setup%optimize%optimize_start_step:&
+&       setup%ntime_step) + setup%dt*1e3_sp*qs_b/mesh%area(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
@@ -2835,8 +2835,8 @@ CONTAINS
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     REAL(sp), INTENT(OUT) :: jobs
-    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%optim_start_step&
-&   +1) :: qo, qs
+    REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
+&   optimize_start_step+1) :: qo, qs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp) :: imd
     INTEGER :: g, row, col
@@ -2845,11 +2845,11 @@ CONTAINS
     jobs = 0._sp
     gauge_jobs = 0._sp
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optimize%optim_start_step:setup%&
+      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
       row = mesh%gauge_pos(g, 1)
       col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optimize%optim_start_step:setup%&
+      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
 &       mesh%dx)*1e3_sp
       IF (ANY(qo .GE. 0._sp)) THEN
