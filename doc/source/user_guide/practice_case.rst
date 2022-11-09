@@ -473,11 +473,11 @@ Re run to see the difference between the hydrographs.
     @savefig qsim_fwd2_pc_user_guide.png
     plt.legend();
     
-Finally, perform a spatially uniform calibration of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
+Finally, perform a spatially uniform calibration (which is default optimization) of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
 
 .. ipython:: python
 
-    model.optimize("sbs", control_vector=["cp"], inplace=True);
+    model.optimize(control_vector="cp", inplace=True);
     
     model.parameters.cp
 

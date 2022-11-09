@@ -37,6 +37,16 @@ JOBS_FUN = [
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
+STRUCTURE_PARAMETERS = {
+    "gr-a": ["cp", "cft", "exc", "lr"],
+    "gr-b": ["ci", "cp", "cft", "cst", "exc", "lr"],
+}
+
+STRUCTURE_STATES = {
+    "gr-a": ["hp", "hft", "hlr"],
+    "gr-b": ["hi", "hp", "hft", "hst", "hlr"],
+}
+
 
 def _optimize_sbs(
     instance: Model,
@@ -86,7 +96,7 @@ def _optimize_sbs(
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -155,7 +165,7 @@ def _optimize_lbfgsb(
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -236,7 +246,7 @@ def _optimize_nelder_mead(
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -608,50 +618,128 @@ def _callback(x: np.ndarray, *args):
     print(sp4.join(ret))
 
 
-def _standardize_algorithm(algorithm: str) -> str:
+def _standardize_mapping(mapping: str | None, setup: SetupDT) -> str:
 
-    if isinstance(algorithm, str):
+    #% Default values
+    if mapping is None:
 
-        algorithm = algorithm.lower()
+        mapping = "uniform"
 
     else:
 
-        raise TypeError(f"'algorithm' argument must be str")
+        if isinstance(mapping, str):
 
-    if algorithm not in ALGORITHM:
+            mapping = mapping.lower()
 
-        raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+        else:
+
+            raise TypeError(f"mapping argument must be str")
+
+        if mapping not in MAPPING:
+
+            raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
+
+        if mapping.startswith("hyper") and setup._nd == 0:
+
+            raise ValueError(
+                f"'{mapping}' mapping can not be use if no catchment descriptors are available"
+            )
+
+    return mapping
+
+
+def _standardize_algorithm(algorithm: str | None, mapping: str) -> str:
+
+    if algorithm is None:
+
+        if mapping == "uniform":
+
+            algorithm = "sbs"
+
+        elif mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
+
+            algorithm = "l-bfgs-b"
+
+    else:
+
+        if isinstance(algorithm, str):
+
+            algorithm = algorithm.lower()
+
+        else:
+
+            raise TypeError(f"'algorithm' argument must be str")
+
+        if algorithm not in ALGORITHM:
+
+            raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+
+        if algorithm == "sbs":
+
+            if mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
+
+        elif algorithm == "nelder-mead":
+
+            if mapping in ["distributed", "hyper-polynomial"]:
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
+
+        elif algorithm == "l-bfgs-b":
+
+            if mapping == "uniform":
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
 
     return algorithm
 
 
 def _standardize_control_vector(
-    control_vector: str | list | tuple | set, setup: SetupDT
+    control_vector: str | list | tuple | set | None, setup: SetupDT
 ) -> np.ndarray:
 
-    if isinstance(control_vector, str):
-
-        control_vector = np.array(control_vector, ndmin=1)
-
-    elif isinstance(control_vector, set):
-
-        control_vector = np.array(list(control_vector))
-
-    elif isinstance(control_vector, (list, tuple)):
-
-        control_vector = np.array(control_vector)
+    if control_vector is None:
+        control_vector = np.array(STRUCTURE_PARAMETERS[setup.structure])
 
     else:
 
-        raise TypeError(f"'control_vector' argument must be str or list-like object")
+        if isinstance(control_vector, str):
 
-    for name in control_vector:
+            control_vector = np.array(control_vector, ndmin=1)
 
-        if not name in [*setup._name_parameters, *setup._name_states]:
+        elif isinstance(control_vector, set):
 
-            raise ValueError(
-                f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*setup._name_parameters, *setup._name_states]}"
+            control_vector = np.array(list(control_vector))
+
+        elif isinstance(control_vector, (list, tuple)):
+
+            control_vector = np.array(control_vector)
+
+        else:
+
+            raise TypeError(
+                f"'control_vector' argument must be str or list-like object"
             )
+
+        for name in control_vector:
+
+            available = [
+                *STRUCTURE_PARAMETERS[setup.structure],
+                *STRUCTURE_STATES[setup.structure],
+            ]
+
+            if name not in available:
+
+                raise ValueError(
+                    f"Unknown parameter or state '{name}' for structure '{setup.structure}' in 'control_vector'. Choices: {available}"
+                )
 
     return control_vector
 
@@ -685,72 +773,6 @@ def _standardize_jobs_fun(jobs_fun: str | None, algorithm: str) -> str:
             )
 
     return jobs_fun
-
-
-def _standardize_mapping(mapping: str | None, algorithm: str, setup: SetupDT) -> str:
-
-    #% Default values
-    if mapping is None:
-
-        if algorithm in ["sbs", "nelder-mead"]:
-
-            mapping = "uniform"
-
-        elif algorithm == "l-bfgs-b":
-
-            mapping = "distributed"
-
-    else:
-
-        if isinstance(mapping, str):
-
-            mapping = mapping.lower()
-
-        else:
-
-            raise TypeError(f"mapping argument must be str")
-
-        if mapping not in MAPPING:
-
-            raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
-
-        if algorithm == "sbs":
-
-            if mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-        elif algorithm == "nelder-mead":
-
-            if mapping in ["distributed", "hyper-polynomial"]:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-            elif mapping == "hyper-linear" and setup._nd == 0:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use if no catchment descriptors are available"
-                )
-
-        elif algorithm == "l-bfgs-b":
-
-            if mapping == "uniform":
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-            elif mapping in ["hyper-linear", "hyper-polynomial"] and setup._nd == 0:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use if no catchment descriptor are available"
-                )
-
-    return mapping
 
 
 def _standardize_bounds(
@@ -1040,10 +1062,10 @@ def _check_unknown_options(unknown_options: dict):
 
 
 def _standardize_optimize_args(
-    algorithm: str,
-    control_vector: str | list | tuple | set,
-    jobs_fun: str | None,
     mapping: str | None,
+    algorithm: str | None,
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set | None,
     wgauge: str | list | tuple | set | None,
@@ -1053,13 +1075,13 @@ def _standardize_optimize_args(
     input_data: Input_DataDT,
 ):
 
-    algorithm = _standardize_algorithm(algorithm)
+    mapping = _standardize_mapping(mapping, setup)
+
+    algorithm = _standardize_algorithm(algorithm, mapping)
 
     control_vector = _standardize_control_vector(control_vector, setup)
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
-
-    mapping = _standardize_mapping(mapping, algorithm, setup)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
@@ -1069,7 +1091,7 @@ def _standardize_optimize_args(
 
     ost = _standardize_ost(ost, setup)
 
-    return algorithm, control_vector, jobs_fun, mapping, bounds, wgauge, ost
+    return mapping, algorithm, control_vector, jobs_fun, bounds, wgauge, ost
 
 
 def _standardize_optimize_options(options: dict | None) -> dict:

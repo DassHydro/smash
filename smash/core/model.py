@@ -260,10 +260,10 @@ class Model(object):
 
     def optimize(
         self,
-        algorithm: str,
-        control_vector: str | list | tuple | set,
-        jobs_fun: str | None = None,
         mapping: str | None = None,
+        algorithm: str | None = None,
+        control_vector: str | list | tuple | set | None = None,
+        jobs_fun: str | None = None,
         bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set | None = None,
         wgauge: str | list | tuple | set | None = None,
@@ -281,18 +281,18 @@ class Model(object):
             instance = self.copy()
 
         (
+            mapping,
             algorithm,
             control_vector,
             jobs_fun,
-            mapping,
             bounds,
             wgauge,
             ost,
         ) = _standardize_optimize_args(
+            mapping,
             algorithm,
             control_vector,
             jobs_fun,
-            mapping,
             bounds,
             gauge,
             wgauge,

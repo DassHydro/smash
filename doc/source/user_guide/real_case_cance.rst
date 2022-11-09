@@ -455,6 +455,7 @@ Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``
     :suppress:
 
     model_su = model.optimize(
+        mapping="uniform",
         algorithm="sbs",
         jobs_fun="nse",
         control_vector=["cp", "cft", "lr", "exc"],
@@ -465,6 +466,7 @@ Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``
     :verbatim:
 
     model_su = model.optimize(
+        mapping="uniform",
         algorithm="sbs",
         jobs_fun="nse",
         control_vector=["cp", "cft", "lr", "exc"],
@@ -565,6 +567,7 @@ As we run this optimization from the previously generated uniform parameter set,
     :suppress:
 
     model_sd = model_su.optimize(
+        mapping="distributed",
         algorithm="l-bfgs-b",
         jobs_fun="nse",
         control_vector=["cp", "cft", "lr", "exc"],
@@ -575,6 +578,7 @@ As we run this optimization from the previously generated uniform parameter set,
     :verbatim:
 
     model_sd = model_su.optimize(
+        mapping="distributed",
         algorithm="l-bfgs-b",
         jobs_fun="nse",
         control_vector=["cp", "cft", "lr", "exc"],
