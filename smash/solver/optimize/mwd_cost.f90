@@ -152,11 +152,11 @@ module mwd_cost
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_bgd_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix, states_bgd_matrix
             
-            call get_parameters(parameters, parameters_matrix)
-            call get_parameters(parameters_bgd, parameters_bgd_matrix)
+            call get_parameters(mesh, parameters, parameters_matrix)
+            call get_parameters(mesh, parameters_bgd, parameters_bgd_matrix)
             
-            call get_states(states, states_matrix)
-            call get_states(states_bgd, states_bgd_matrix)
+            call get_states(mesh, states, states_matrix)
+            call get_states(mesh, states_bgd, states_bgd_matrix)
             
             jreg = 0._sp
             parameters_jreg = 0._sp

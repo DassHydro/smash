@@ -26,12 +26,13 @@ module mwd_states_manipulation
     contains
     
 !%      TODO comment  
-        subroutine get_states(states, a)
+        subroutine get_states(mesh, states, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(in) :: states
-            real(sp), dimension(:,:,:), intent(inout) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,ns), intent(inout) :: a
             
             a(:,:,1) = states%hi(:,:)
             a(:,:,2) = states%hp(:,:)
@@ -42,12 +43,13 @@ module mwd_states_manipulation
         end subroutine get_states
         
         
-        subroutine set3d_states(states, a)
+        subroutine set3d_states(mesh, states, a)
             
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
-            real(sp), dimension(:,:,:), intent(in) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,ns), intent(in) :: a
             
             states%hi(:,:)  = a(:,:,1)
             states%hp(:,:)  = a(:,:,2)
@@ -58,26 +60,33 @@ module mwd_states_manipulation
         end subroutine set3d_states
         
         
-        subroutine set1d_states(states, a)
+        subroutine set1d_states(mesh, states, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
             real(sp), dimension(ns), intent(in) :: a
             
-            states%hi(:,:)  = a(1)
-            states%hp(:,:)  = a(2)
-            states%hft(:,:) = a(3)
-            states%hst(:,:) = a(4)
-            states%hlr(:,:) = a(5)
+            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: a3d
+            integer :: i
+            
+            do i=1, ns
+            
+                a3d(:,:,i) = a(i)
+            
+            end do
+            
+            call set3d_states(mesh, states, a3d)
         
         end subroutine set1d_states
         
         
-        subroutine set0d_states(states, a)
+        subroutine set0d_states(mesh, states, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
             real(sp), intent(in) :: a
             
@@ -85,17 +94,18 @@ module mwd_states_manipulation
             
             a1d(:) = a
             
-            call set1d_states(states, a1d)
+            call set1d_states(mesh, states, a1d)
         
         end subroutine set0d_states
         
         
-        subroutine get_hyper_states(hyper_states, a)
+        subroutine get_hyper_states(setup, hyper_states, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(in) :: hyper_states
-            real(sp), dimension(:,:,:), intent(inout) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,ns), intent(inout) :: a
 
             a(:,:,1) = hyper_states%hi(:,:)
             a(:,:,2) = hyper_states%hp(:,:)
@@ -106,12 +116,13 @@ module mwd_states_manipulation
         end subroutine get_hyper_states
         
         
-        subroutine set3d_hyper_states(hyper_states, a)
+        subroutine set3d_hyper_states(setup, hyper_states, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(inout) :: hyper_states
-            real(sp), dimension(:,:,:), intent(in) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,ns), intent(in) :: a
             
             hyper_states%hi(:,:)  = a(:,:,1)
             hyper_states%hp(:,:)  = a(:,:,2)
@@ -122,26 +133,33 @@ module mwd_states_manipulation
         end subroutine set3d_hyper_states
         
         
-        subroutine set1d_hyper_states(hyper_states, a)
+        subroutine set1d_hyper_states(setup, hyper_states, a)
             
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             real(sp), dimension(ns), intent(in) :: a
             
-            hyper_states%hi(:,:)  = a(1)
-            hyper_states%hp(:,:)  = a(2)
-            hyper_states%hft(:,:) = a(3)
-            hyper_states%hst(:,:) = a(4)
-            hyper_states%hlr(:,:) = a(5)
+            real(sp), dimension(setup%optimize%nhyper, 1, ns) :: a3d
+            integer :: i
+            
+            do i=1, ns
+            
+                a3d(:,:,i) = a(i)
+            
+            end do
+            
+            call set3d_hyper_states(setup, hyper_states, a3d)
         
         end subroutine set1d_hyper_states
         
         
-        subroutine set0d_hyper_states(hyper_states, a)
+        subroutine set0d_hyper_states(setup, hyper_states, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             real(sp), intent(in) :: a
             
@@ -149,32 +167,30 @@ module mwd_states_manipulation
             
             a1d(:) = a
             
-            call set1d_hyper_states(hyper_states, a1d)
+            call set1d_hyper_states(setup, hyper_states, a1d)
         
         end subroutine set0d_hyper_states
 
 !%      TODO comment
         subroutine hyper_states_to_states(hyper_states, &
-        & states, setup, input_data)
+        & states, setup, mesh, input_data)
         
             implicit none
             
             type(Hyper_StatesDT), intent(in) :: hyper_states
             type(StatesDT), intent(inout) :: states
             type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
             
-            real(sp), dimension(size(hyper_states%hp, 1), &
-            & size(hyper_states%hp, 2), ns) :: hyper_states_matrix
-            real(sp), dimension(size(states%hp, 1), &
-            & size(states%hp, 2), ns) :: states_matrix
-            real(sp), dimension(size(states%hp, 1), &
-            & size(states%hp, 2)) :: d, dpb
+            real(sp), dimension(setup%optimize%nhyper, 1, ns) :: hyper_states_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
             integer :: i, j
             real(sp) :: a, b
             
-            call get_hyper_states(hyper_states, hyper_states_matrix)
-            call get_states(states, states_matrix)
+            call get_hyper_states(setup, hyper_states, hyper_states_matrix)
+            call get_states(mesh, states, states_matrix)
             
             !% Add mask later here
             !% 1 in dim2 will be replace with k and apply where on Omega
@@ -212,7 +228,7 @@ module mwd_states_manipulation
             
             end do
 
-            call set_states(states, states_matrix)
+            call set_states(mesh, states, states_matrix)
         
         end subroutine hyper_states_to_states
 

@@ -83,9 +83,8 @@ MODULE MWD_PARAMETERS_DIFF
 
 CONTAINS
 !  Differentiation of parametersdt_initialise in forward (tangent) mode (with options fixinterface):
-!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
-!                this.cft:out this.cst:out this.alpha:out this.exc:out
-!                this.lr:out
+!   Plus diff mem management of: this.ci:out this.cp:out this.cft:out
+!                this.cst:out this.exc:out this.lr:out
   SUBROUTINE PARAMETERSDT_INITIALISE_D(this, this_d, mesh)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: this
@@ -95,13 +94,11 @@ CONTAINS
     ALLOCATE(this%ci(mesh%nrow, mesh%ncol))
     ALLOCATE(this_d%cp(mesh%nrow, mesh%ncol))
     ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
-    ALLOCATE(this_d%beta(mesh%nrow, mesh%ncol))
     ALLOCATE(this%beta(mesh%nrow, mesh%ncol))
     ALLOCATE(this_d%cft(mesh%nrow, mesh%ncol))
     ALLOCATE(this%cft(mesh%nrow, mesh%ncol))
     ALLOCATE(this_d%cst(mesh%nrow, mesh%ncol))
     ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
-    ALLOCATE(this_d%alpha(mesh%nrow, mesh%ncol))
     ALLOCATE(this%alpha(mesh%nrow, mesh%ncol))
     ALLOCATE(this_d%exc(mesh%nrow, mesh%ncol))
     ALLOCATE(this%exc(mesh%nrow, mesh%ncol))
@@ -118,9 +115,8 @@ CONTAINS
   END SUBROUTINE PARAMETERSDT_INITIALISE_D
 
 !  Differentiation of parametersdt_initialise in reverse (adjoint) mode, forward sweep (with options fixinterface):
-!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
-!                this.cft:out this.cst:out this.alpha:out this.exc:out
-!                this.lr:out
+!   Plus diff mem management of: this.ci:out this.cp:out this.cft:out
+!                this.cst:out this.exc:out this.lr:out
   SUBROUTINE PARAMETERSDT_INITIALISE_FWD(this, this_b, mesh)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: this
@@ -132,8 +128,6 @@ CONTAINS
     ALLOCATE(this_b%cp(mesh%nrow, mesh%ncol))
     this_b%cp = 0.0_4
     ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
-    ALLOCATE(this_b%beta(mesh%nrow, mesh%ncol))
-    this_b%beta = 0.0_4
     ALLOCATE(this%beta(mesh%nrow, mesh%ncol))
     ALLOCATE(this_b%cft(mesh%nrow, mesh%ncol))
     this_b%cft = 0.0_4
@@ -141,8 +135,6 @@ CONTAINS
     ALLOCATE(this_b%cst(mesh%nrow, mesh%ncol))
     this_b%cst = 0.0_4
     ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
-    ALLOCATE(this_b%alpha(mesh%nrow, mesh%ncol))
-    this_b%alpha = 0.0_4
     ALLOCATE(this%alpha(mesh%nrow, mesh%ncol))
     ALLOCATE(this_b%exc(mesh%nrow, mesh%ncol))
     this_b%exc = 0.0_4
@@ -161,9 +153,8 @@ CONTAINS
   END SUBROUTINE PARAMETERSDT_INITIALISE_FWD
 
 !  Differentiation of parametersdt_initialise in reverse (adjoint) mode, backward sweep (with options fixinterface):
-!   Plus diff mem management of: this.ci:out this.cp:out this.beta:out
-!                this.cft:out this.cst:out this.alpha:out this.exc:out
-!                this.lr:out
+!   Plus diff mem management of: this.ci:out this.cp:out this.cft:out
+!                this.cst:out this.exc:out this.lr:out
   SUBROUTINE PARAMETERSDT_INITIALISE_BWD(this, this_b, mesh)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: this
@@ -174,13 +165,11 @@ CONTAINS
     DEALLOCATE(this%exc)
     DEALLOCATE(this_b%exc)
     DEALLOCATE(this%alpha)
-    DEALLOCATE(this_b%alpha)
     DEALLOCATE(this%cst)
     DEALLOCATE(this_b%cst)
     DEALLOCATE(this%cft)
     DEALLOCATE(this_b%cft)
     DEALLOCATE(this%beta)
-    DEALLOCATE(this_b%beta)
     DEALLOCATE(this%cp)
     DEALLOCATE(this_b%cp)
     DEALLOCATE(this%ci)
@@ -213,22 +202,14 @@ CONTAINS
     IMPLICIT NONE
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
-    INTEGER :: n
-    INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%optimize%mapping)) 
-    CASE ('hyper-linear') 
-      n = 1 + setup%nd
-    CASE ('hyper-polynomial') 
-      n = 1 + 2*setup%nd
-    END SELECT
-    ALLOCATE(this%ci(n, 1))
-    ALLOCATE(this%cp(n, 1))
-    ALLOCATE(this%beta(n, 1))
-    ALLOCATE(this%cft(n, 1))
-    ALLOCATE(this%cst(n, 1))
-    ALLOCATE(this%alpha(n, 1))
-    ALLOCATE(this%exc(n, 1))
-    ALLOCATE(this%lr(n, 1))
+    ALLOCATE(this%ci(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cp(setup%optimize%nhyper, 1))
+    ALLOCATE(this%beta(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cft(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cst(setup%optimize%nhyper, 1))
+    ALLOCATE(this%alpha(setup%optimize%nhyper, 1))
+    ALLOCATE(this%exc(setup%optimize%nhyper, 1))
+    ALLOCATE(this%lr(setup%optimize%nhyper, 1))
   END SUBROUTINE HYPER_PARAMETERSDT_INITIALISE
 
 END MODULE MWD_PARAMETERS_DIFF
@@ -395,19 +376,11 @@ CONTAINS
     IMPLICIT NONE
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
-    INTEGER :: n
-    INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%optimize%mapping)) 
-    CASE ('hyper-linear') 
-      n = 1 + setup%nd
-    CASE ('hyper-polynomial') 
-      n = 1 + 2*setup%nd
-    END SELECT
-    ALLOCATE(this%hi(n, 1))
-    ALLOCATE(this%hp(n, 1))
-    ALLOCATE(this%hft(n, 1))
-    ALLOCATE(this%hst(n, 1))
-    ALLOCATE(this%hlr(n, 1))
+    ALLOCATE(this%hi(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hp(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hft(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hst(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hlr(setup%optimize%nhyper, 1))
   END SUBROUTINE HYPER_STATESDT_INITIALISE
 
 END MODULE MWD_STATES_DIFF
@@ -623,12 +596,12 @@ CONTAINS
 
 !  Differentiation of gr_production in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: hp perc pr
-!   with respect to varying inputs: hp en beta cp pn
-  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, beta_d&
-&   , hp, hp_d, pr, pr_d, perc, perc_d)
+!   with respect to varying inputs: hp en cp pn
+  SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, hp, &
+&   hp_d, pr, pr_d, perc, perc_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d, beta_d
+    REAL(sp), INTENT(IN) :: pn_d, en_d, cp_d
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_d
     REAL(sp), INTENT(OUT) :: pr, perc
@@ -672,7 +645,7 @@ CONTAINS
     ELSE
       pr_d = 0.0_4
     END IF
-    pwx1_d = 4*hp_imd**3*(hp_imd_d-hp_imd*beta_d/beta)/beta**4
+    pwx1_d = 4*hp_imd**3*hp_imd_d/beta**4
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1_d = -(0.25_sp*pwx1**(-1.25)*pwx1_d)
     pwr1 = pwx1**(-0.25_sp)
@@ -683,13 +656,13 @@ CONTAINS
   END SUBROUTINE GR_PRODUCTION_D
 
 !  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: hp beta cp perc pr
-!   with respect to varying inputs: hp en beta cp pn
-  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, beta_b&
-&   , hp, hp_b, pr, pr_b, perc, perc_b)
+!   gradient     of useful results: hp cp perc pr
+!   with respect to varying inputs: hp en cp pn
+  SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, hp, &
+&   hp_b, pr, pr_b, perc, perc_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, beta
-    REAL(sp) :: pn_b, en_b, cp_b, beta_b
+    REAL(sp) :: pn_b, en_b, cp_b
     REAL(sp), INTENT(INOUT) :: hp
     REAL(sp), INTENT(INOUT) :: hp_b
     REAL(sp) :: pr, perc
@@ -736,9 +709,8 @@ CONTAINS
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
-    temp_b5 = 4*hp_imd**3*pwx1_b/beta**4
-    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + temp_b5
-    beta_b = beta_b - hp_imd*temp_b5/beta
+    hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
+&     4
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       pn_b = pr_b
@@ -1473,6 +1445,7 @@ END MODULE MD_ROUTING_OPERATOR_DIFF
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MD_CONSTANT
   USE MWD_SETUP
+  USE MWD_MESH
   USE MWD_INPUT_DATA
   USE MWD_PARAMETERS_DIFF
   IMPLICIT NONE
@@ -1507,12 +1480,13 @@ CONTAINS
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !%      TODO comment  
-  SUBROUTINE GET_PARAMETERS_D(parameters, parameters_d, a, a_d)
+  SUBROUTINE GET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a_d
     a_d = 0.0_4
     a_d(:, :, 1) = parameters_d%ci(:, :)
     a(:, :, 1) = parameters%ci(:, :)
@@ -1541,12 +1515,13 @@ CONTAINS
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !%      TODO comment  
-  SUBROUTINE GET_PARAMETERS_B(parameters, parameters_b, a, a_b)
+  SUBROUTINE GET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT) :: parameters_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a_b
     parameters_b%lr = 0.0_4
     parameters_b%lr = parameters_b%lr + a_b(:, :, 8)
     a_b(:, :, 8) = 0.0_4
@@ -1573,10 +1548,11 @@ CONTAINS
   END SUBROUTINE GET_PARAMETERS_B
 
 !%      TODO comment  
-  SUBROUTINE GET_PARAMETERS(parameters, a)
+  SUBROUTINE GET_PARAMETERS(mesh, parameters, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
     a(:, :, 1) = parameters%ci(:, :)
     a(:, :, 2) = parameters%cp(:, :)
     a(:, :, 3) = parameters%beta(:, :)
@@ -1589,36 +1565,31 @@ CONTAINS
 
 !  Differentiation of set3d_parameters in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
+!                *(parameters.lr)
 !   with respect to varying inputs: a
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-  SUBROUTINE SET3D_PARAMETERS_D(parameters, parameters_d, a, a_d)
+!                parameters.cft:in parameters.cst:in parameters.exc:in
+!                parameters.lr:in
+  SUBROUTINE SET3D_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a_d
     parameters_d%ci = 0.0_4
     parameters_d%ci(:, :) = a_d(:, :, 1)
     parameters%ci(:, :) = a(:, :, 1)
     parameters_d%cp = 0.0_4
     parameters_d%cp(:, :) = a_d(:, :, 2)
     parameters%cp(:, :) = a(:, :, 2)
-    parameters_d%beta = 0.0_4
-    parameters_d%beta(:, :) = a_d(:, :, 3)
-    parameters%beta(:, :) = a(:, :, 3)
     parameters_d%cft = 0.0_4
     parameters_d%cft(:, :) = a_d(:, :, 4)
     parameters%cft(:, :) = a(:, :, 4)
     parameters_d%cst = 0.0_4
     parameters_d%cst(:, :) = a_d(:, :, 5)
     parameters%cst(:, :) = a(:, :, 5)
-    parameters_d%alpha = 0.0_4
-    parameters_d%alpha(:, :) = a_d(:, :, 6)
-    parameters%alpha(:, :) = a(:, :, 6)
     parameters_d%exc = 0.0_4
     parameters_d%exc(:, :) = a_d(:, :, 7)
     parameters%exc(:, :) = a(:, :, 7)
@@ -1629,33 +1600,33 @@ CONTAINS
 
 !  Differentiation of set3d_parameters in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
+!                *(parameters.lr)
 !   with respect to varying inputs: a
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.beta:in parameters.cft:in parameters.cst:in
-!                parameters.alpha:in parameters.exc:in parameters.lr:in
-  SUBROUTINE SET3D_PARAMETERS_B(parameters, parameters_b, a, a_b)
+!                parameters.cft:in parameters.cst:in parameters.exc:in
+!                parameters.lr:in
+  SUBROUTINE SET3D_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
-    REAL(sp), DIMENSION(:, :, :) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: a_b
     a_b = 0.0_4
     a_b(:, :, 8) = a_b(:, :, 8) + parameters_b%lr
     a_b(:, :, 7) = a_b(:, :, 7) + parameters_b%exc
-    a_b(:, :, 6) = a_b(:, :, 6) + parameters_b%alpha
     a_b(:, :, 5) = a_b(:, :, 5) + parameters_b%cst
     a_b(:, :, 4) = a_b(:, :, 4) + parameters_b%cft
-    a_b(:, :, 3) = a_b(:, :, 3) + parameters_b%beta
     a_b(:, :, 2) = a_b(:, :, 2) + parameters_b%cp
     a_b(:, :, 1) = a_b(:, :, 1) + parameters_b%ci
   END SUBROUTINE SET3D_PARAMETERS_B
 
-  SUBROUTINE SET3D_PARAMETERS(parameters, a)
+  SUBROUTINE SET3D_PARAMETERS(mesh, parameters, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
     parameters%ci(:, :) = a(:, :, 1)
     parameters%cp(:, :) = a(:, :, 2)
     parameters%beta(:, :) = a(:, :, 3)
@@ -1666,27 +1637,27 @@ CONTAINS
     parameters%lr(:, :) = a(:, :, 8)
   END SUBROUTINE SET3D_PARAMETERS
 
-  SUBROUTINE SET1D_PARAMETERS(parameters, a)
+  SUBROUTINE SET1D_PARAMETERS(mesh, parameters, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     REAL(sp), DIMENSION(np), INTENT(IN) :: a
-    parameters%ci(:, :) = a(1)
-    parameters%cp(:, :) = a(2)
-    parameters%beta(:, :) = a(3)
-    parameters%cft(:, :) = a(4)
-    parameters%cst(:, :) = a(5)
-    parameters%alpha(:, :) = a(6)
-    parameters%exc(:, :) = a(7)
-    parameters%lr(:, :) = a(8)
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: a3d
+    INTEGER :: i
+    DO i=1,np
+      a3d(:, :, i) = a(i)
+    END DO
+    CALL SET3D_PARAMETERS(mesh, parameters, a3d)
   END SUBROUTINE SET1D_PARAMETERS
 
-  SUBROUTINE SET0D_PARAMETERS(parameters, a)
+  SUBROUTINE SET0D_PARAMETERS(mesh, parameters, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     REAL(sp), INTENT(IN) :: a
     REAL(sp), DIMENSION(np) :: a1d
     a1d(:) = a
-    CALL SET1D_PARAMETERS(parameters, a1d)
+    CALL SET1D_PARAMETERS(mesh, parameters, a1d)
   END SUBROUTINE SET0D_PARAMETERS
 
 !  Differentiation of get_hyper_parameters in forward (tangent) mode (with options fixinterface):
@@ -1699,13 +1670,16 @@ CONTAINS
 !                hyper_parameters.beta:in hyper_parameters.cft:in
 !                hyper_parameters.cst:in hyper_parameters.alpha:in
 !                hyper_parameters.exc:in hyper_parameters.lr:in
-  SUBROUTINE GET_HYPER_PARAMETERS_D(hyper_parameters, hyper_parameters_d&
-&   , a, a_d)
+  SUBROUTINE GET_HYPER_PARAMETERS_D(setup, hyper_parameters, &
+&   hyper_parameters_d, a, a_d)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+&   a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+&   a_d
     a_d = 0.0_4
     a_d(:, :, 1) = hyper_parameters_d%ci(:, :)
     a(:, :, 1) = hyper_parameters%ci(:, :)
@@ -1735,13 +1709,16 @@ CONTAINS
 !                hyper_parameters.beta:in hyper_parameters.cft:in
 !                hyper_parameters.cst:in hyper_parameters.alpha:in
 !                hyper_parameters.exc:in hyper_parameters.lr:in
-  SUBROUTINE GET_HYPER_PARAMETERS_B(hyper_parameters, hyper_parameters_b&
-&   , a, a_b)
+  SUBROUTINE GET_HYPER_PARAMETERS_B(setup, hyper_parameters, &
+&   hyper_parameters_b, a, a_b)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+&   a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+&   a_b
     hyper_parameters_b%lr = 0.0_4
     hyper_parameters_b%lr = hyper_parameters_b%lr + a_b(:, :, 8)
     a_b(:, :, 8) = 0.0_4
@@ -1767,10 +1744,12 @@ CONTAINS
     hyper_parameters_b%ci = hyper_parameters_b%ci + a_b(:, :, 1)
   END SUBROUTINE GET_HYPER_PARAMETERS_B
 
-  SUBROUTINE GET_HYPER_PARAMETERS(hyper_parameters, a)
+  SUBROUTINE GET_HYPER_PARAMETERS(setup, hyper_parameters, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+&   a
     a(:, :, 1) = hyper_parameters%ci(:, :)
     a(:, :, 2) = hyper_parameters%cp(:, :)
     a(:, :, 3) = hyper_parameters%beta(:, :)
@@ -1781,10 +1760,11 @@ CONTAINS
     a(:, :, 8) = hyper_parameters%lr(:, :)
   END SUBROUTINE GET_HYPER_PARAMETERS
 
-  SUBROUTINE SET3D_HYPER_PARAMETERS(hyper_parameters, a)
+  SUBROUTINE SET3D_HYPER_PARAMETERS(setup, hyper_parameters, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(IN) :: a
     hyper_parameters%ci(:, :) = a(:, :, 1)
     hyper_parameters%cp(:, :) = a(:, :, 2)
     hyper_parameters%beta(:, :) = a(:, :, 3)
@@ -1795,33 +1775,33 @@ CONTAINS
     hyper_parameters%lr(:, :) = a(:, :, 8)
   END SUBROUTINE SET3D_HYPER_PARAMETERS
 
-  SUBROUTINE SET1D_HYPER_PARAMETERS(hyper_parameters, a)
+  SUBROUTINE SET1D_HYPER_PARAMETERS(setup, hyper_parameters, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
     REAL(sp), DIMENSION(np), INTENT(IN) :: a
-    hyper_parameters%ci(:, :) = a(1)
-    hyper_parameters%cp(:, :) = a(2)
-    hyper_parameters%beta(:, :) = a(3)
-    hyper_parameters%cft(:, :) = a(4)
-    hyper_parameters%cst(:, :) = a(5)
-    hyper_parameters%alpha(:, :) = a(6)
-    hyper_parameters%exc(:, :) = a(7)
-    hyper_parameters%lr(:, :) = a(8)
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: a3d
+    INTEGER :: i
+    DO i=1,np
+      a3d(:, :, i) = a(i)
+    END DO
+    CALL SET3D_HYPER_PARAMETERS(setup, hyper_parameters, a3d)
   END SUBROUTINE SET1D_HYPER_PARAMETERS
 
-  SUBROUTINE SET0D_HYPER_PARAMETERS(hyper_parameters, a)
+  SUBROUTINE SET0D_HYPER_PARAMETERS(setup, hyper_parameters, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
     REAL(sp), INTENT(IN) :: a
     REAL(sp), DIMENSION(np) :: a1d
     a1d(:) = a
-    CALL SET1D_HYPER_PARAMETERS(hyper_parameters, a1d)
+    CALL SET1D_HYPER_PARAMETERS(setup, hyper_parameters, a1d)
   END SUBROUTINE SET0D_HYPER_PARAMETERS
 
 !  Differentiation of hyper_parameters_to_parameters in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
+!                *(parameters.lr)
 !   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
 !                *(hyper_parameters.beta) *(hyper_parameters.cft)
 !                *(hyper_parameters.cst) *(hyper_parameters.alpha)
@@ -1832,40 +1812,34 @@ CONTAINS
 !                hyper_parameters.exc:in hyper_parameters.lr:in
 !%      TODO comment
   SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
-&   hyper_parameters_d, parameters, parameters_d, setup, input_data)
+&   hyper_parameters_d, parameters, parameters_d, setup, mesh, &
+&   input_data)
     IMPLICIT NONE
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_d
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix_d
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: dpb_d
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+&   hyper_parameters_matrix
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+&   hyper_parameters_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_d
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
     INTRINSIC TRIM
     INTRINSIC EXP
-    REAL(sp), DIMENSION(size(parameters%cp, 1), size(parameters%cp, 2)) &
-&   :: temp
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: temp0
-    CALL GET_HYPER_PARAMETERS_D(hyper_parameters, hyper_parameters_d, &
-&                         hyper_parameters_matrix, &
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
+    CALL GET_HYPER_PARAMETERS_D(setup, hyper_parameters, &
+&                         hyper_parameters_d, hyper_parameters_matrix, &
 &                         hyper_parameters_matrix_d)
-    CALL GET_PARAMETERS(parameters, parameters_matrix)
+    CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
     parameters_matrix_d = 0.0_4
     a_d = 0.0_4
     b_d = 0.0_4
@@ -1900,22 +1874,22 @@ CONTAINS
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      temp0 = (setup%optimize%ub_parameters(i)-setup%optimize%&
+      temp = (setup%optimize%ub_parameters(i)-setup%optimize%&
 &       lb_parameters(i))/(EXP(-parameters_matrix(:, :, i))+1._sp)
-      parameters_matrix_d(:, :, i) = temp0*EXP(-parameters_matrix(:, :, &
-&       i))*parameters_matrix_d(:, :, i)/(EXP(-parameters_matrix(:, :, i&
-&       ))+1._sp)
+      parameters_matrix_d(:, :, i) = temp*EXP(-parameters_matrix(:, :, i&
+&       ))*parameters_matrix_d(:, :, i)/(EXP(-parameters_matrix(:, :, i)&
+&       )+1._sp)
       parameters_matrix(:, :, i) = setup%optimize%lb_parameters(i) + &
-&       temp0
+&       temp
     END DO
-    CALL SET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
-&                   parameters_matrix_d)
+    CALL SET_PARAMETERS_D(mesh, parameters, parameters_d, &
+&                   parameters_matrix, parameters_matrix_d)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D
 
 !  Differentiation of hyper_parameters_to_parameters in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
-!                *(parameters.alpha) *(parameters.exc) *(parameters.lr)
+!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
+!                *(parameters.lr)
 !   with respect to varying inputs: *(hyper_parameters.ci) *(hyper_parameters.cp)
 !                *(hyper_parameters.beta) *(hyper_parameters.cft)
 !                *(hyper_parameters.cst) *(hyper_parameters.alpha)
@@ -1926,36 +1900,33 @@ CONTAINS
 !                hyper_parameters.exc:in hyper_parameters.lr:in
 !%      TODO comment
   SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B(hyper_parameters, &
-&   hyper_parameters_b, parameters, parameters_b, setup, input_data)
+&   hyper_parameters_b, parameters, parameters_b, setup, mesh, &
+&   input_data)
     IMPLICIT NONE
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix_b
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix_b
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: dpb_b
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+&   hyper_parameters_matrix
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+&   hyper_parameters_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_b
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
     INTRINSIC TRIM
     INTRINSIC EXP
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: temp
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
     INTEGER :: branch
-    CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
+    CALL GET_HYPER_PARAMETERS(setup, hyper_parameters, &
+&                       hyper_parameters_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,np
@@ -1982,9 +1953,9 @@ CONTAINS
         parameters_matrix(:, :, i) = parameters_matrix(:, :, i) + a*dpb
       END DO
     END DO
-    CALL SET_PARAMETERS(parameters, parameters_matrix)
-    CALL SET_PARAMETERS_B(parameters, parameters_b, parameters_matrix, &
-&                   parameters_matrix_b)
+    CALL SET_PARAMETERS(mesh, parameters, parameters_matrix)
+    CALL SET_PARAMETERS_B(mesh, parameters, parameters_b, &
+&                   parameters_matrix, parameters_matrix_b)
     hyper_parameters_matrix_b = 0.0_4
     a_b = 0.0_4
     b_b = 0.0_4
@@ -2025,32 +1996,31 @@ CONTAINS
 &       1, i) + SUM(parameters_matrix_b(:, :, i))
       parameters_matrix_b(:, :, i) = 0.0_4
     END DO
-    CALL GET_HYPER_PARAMETERS_B(hyper_parameters, hyper_parameters_b, &
-&                         hyper_parameters_matrix, &
+    CALL GET_HYPER_PARAMETERS_B(setup, hyper_parameters, &
+&                         hyper_parameters_b, hyper_parameters_matrix, &
 &                         hyper_parameters_matrix_b)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B
 
 !%      TODO comment
   SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters&
-&   , setup, input_data)
+&   , setup, mesh, input_data)
     IMPLICIT NONE
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_parameters%cp, 1), SIZE(&
-&   hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2), &
-&   np) :: parameters_matrix
-    REAL(sp), DIMENSION(SIZE(parameters%cp, 1), SIZE(parameters%cp, 2)) &
-&   :: d, dpb
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+&   hyper_parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
     INTRINSIC TRIM
     INTRINSIC EXP
-    CALL GET_HYPER_PARAMETERS(hyper_parameters, hyper_parameters_matrix)
-    CALL GET_PARAMETERS(parameters, parameters_matrix)
+    CALL GET_HYPER_PARAMETERS(setup, hyper_parameters, &
+&                       hyper_parameters_matrix)
+    CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,np
@@ -2073,7 +2043,7 @@ CONTAINS
 &       setup%optimize%lb_parameters(i))*(1._sp/(1._sp+EXP(-&
 &       parameters_matrix(:, :, i)))) + setup%optimize%lb_parameters(i)
     END DO
-    CALL SET_PARAMETERS(parameters, parameters_matrix)
+    CALL SET_PARAMETERS(mesh, parameters, parameters_matrix)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS
 
 END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
@@ -2113,12 +2083,13 @@ CONTAINS
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.hlr:in
 !%      TODO comment  
-  SUBROUTINE GET_STATES_D(states, states_d, a, a_d)
+  SUBROUTINE GET_STATES_D(mesh, states, states_d, a, a_d)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
     TYPE(STATESDT), INTENT(IN) :: states_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a_d
     a_d = 0.0_4
     a_d(:, :, 1) = states_d%hi(:, :)
     a(:, :, 1) = states%hi(:, :)
@@ -2139,12 +2110,13 @@ CONTAINS
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.hlr:in
 !%      TODO comment  
-  SUBROUTINE GET_STATES_B(states, states_b, a, a_b)
+  SUBROUTINE GET_STATES_B(mesh, states, states_b, a, a_b)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
     TYPE(STATESDT) :: states_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a_b
     states_b%hlr = 0.0_4
     states_b%hlr = states_b%hlr + a_b(:, :, 5)
     a_b(:, :, 5) = 0.0_4
@@ -2162,10 +2134,11 @@ CONTAINS
   END SUBROUTINE GET_STATES_B
 
 !%      TODO comment  
-  SUBROUTINE GET_STATES(states, a)
+  SUBROUTINE GET_STATES(mesh, states, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
     a(:, :, 1) = states%hi(:, :)
     a(:, :, 2) = states%hp(:, :)
     a(:, :, 3) = states%hft(:, :)
@@ -2179,12 +2152,13 @@ CONTAINS
 !   with respect to varying inputs: a
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.hlr:in
-  SUBROUTINE SET3D_STATES_D(states, states_d, a, a_d)
+  SUBROUTINE SET3D_STATES_D(mesh, states, states_d, a, a_d)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a_d
     states_d%hi = 0.0_4
     states_d%hi(:, :) = a_d(:, :, 1)
     states%hi(:, :) = a(:, :, 1)
@@ -2208,12 +2182,13 @@ CONTAINS
 !   with respect to varying inputs: a
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.hlr:in
-  SUBROUTINE SET3D_STATES_B(states, states_b, a, a_b)
+  SUBROUTINE SET3D_STATES_B(mesh, states, states_b, a, a_b)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
-    REAL(sp), DIMENSION(:, :, :) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: a_b
     a_b = 0.0_4
     a_b(:, :, 5) = a_b(:, :, 5) + states_b%hlr
     a_b(:, :, 4) = a_b(:, :, 4) + states_b%hst
@@ -2222,10 +2197,11 @@ CONTAINS
     a_b(:, :, 1) = a_b(:, :, 1) + states_b%hi
   END SUBROUTINE SET3D_STATES_B
 
-  SUBROUTINE SET3D_STATES(states, a)
+  SUBROUTINE SET3D_STATES(mesh, states, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
     states%hi(:, :) = a(:, :, 1)
     states%hp(:, :) = a(:, :, 2)
     states%hft(:, :) = a(:, :, 3)
@@ -2233,24 +2209,27 @@ CONTAINS
     states%hlr(:, :) = a(:, :, 5)
   END SUBROUTINE SET3D_STATES
 
-  SUBROUTINE SET1D_STATES(states, a)
+  SUBROUTINE SET1D_STATES(mesh, states, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     REAL(sp), DIMENSION(ns), INTENT(IN) :: a
-    states%hi(:, :) = a(1)
-    states%hp(:, :) = a(2)
-    states%hft(:, :) = a(3)
-    states%hst(:, :) = a(4)
-    states%hlr(:, :) = a(5)
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: a3d
+    INTEGER :: i
+    DO i=1,ns
+      a3d(:, :, i) = a(i)
+    END DO
+    CALL SET3D_STATES(mesh, states, a3d)
   END SUBROUTINE SET1D_STATES
 
-  SUBROUTINE SET0D_STATES(states, a)
+  SUBROUTINE SET0D_STATES(mesh, states, a)
     IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     REAL(sp), INTENT(IN) :: a
     REAL(sp), DIMENSION(ns) :: a1d
     a1d(:) = a
-    CALL SET1D_STATES(states, a1d)
+    CALL SET1D_STATES(mesh, states, a1d)
   END SUBROUTINE SET0D_STATES
 
 !  Differentiation of get_hyper_states in forward (tangent) mode (with options fixinterface):
@@ -2259,12 +2238,16 @@ CONTAINS
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
 !   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-  SUBROUTINE GET_HYPER_STATES_D(hyper_states, hyper_states_d, a, a_d)
+  SUBROUTINE GET_HYPER_STATES_D(setup, hyper_states, hyper_states_d, a, &
+&   a_d)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+&   a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+&   a_d
     a_d = 0.0_4
     a_d(:, :, 1) = hyper_states_d%hi(:, :)
     a(:, :, 1) = hyper_states%hi(:, :)
@@ -2284,12 +2267,16 @@ CONTAINS
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
 !   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
-  SUBROUTINE GET_HYPER_STATES_B(hyper_states, hyper_states_b, a, a_b)
+  SUBROUTINE GET_HYPER_STATES_B(setup, hyper_states, hyper_states_b, a, &
+&   a_b)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT) :: hyper_states_b
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+&   a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+&   a_b
     hyper_states_b%hlr = 0.0_4
     hyper_states_b%hlr = hyper_states_b%hlr + a_b(:, :, 5)
     a_b(:, :, 5) = 0.0_4
@@ -2306,10 +2293,12 @@ CONTAINS
     hyper_states_b%hi = hyper_states_b%hi + a_b(:, :, 1)
   END SUBROUTINE GET_HYPER_STATES_B
 
-  SUBROUTINE GET_HYPER_STATES(hyper_states, a)
+  SUBROUTINE GET_HYPER_STATES(setup, hyper_states, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+&   a
     a(:, :, 1) = hyper_states%hi(:, :)
     a(:, :, 2) = hyper_states%hp(:, :)
     a(:, :, 3) = hyper_states%hft(:, :)
@@ -2317,10 +2306,11 @@ CONTAINS
     a(:, :, 5) = hyper_states%hlr(:, :)
   END SUBROUTINE GET_HYPER_STATES
 
-  SUBROUTINE SET3D_HYPER_STATES(hyper_states, a)
+  SUBROUTINE SET3D_HYPER_STATES(setup, hyper_states, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(IN) :: a
     hyper_states%hi(:, :) = a(:, :, 1)
     hyper_states%hp(:, :) = a(:, :, 2)
     hyper_states%hft(:, :) = a(:, :, 3)
@@ -2328,24 +2318,27 @@ CONTAINS
     hyper_states%hlr(:, :) = a(:, :, 5)
   END SUBROUTINE SET3D_HYPER_STATES
 
-  SUBROUTINE SET1D_HYPER_STATES(hyper_states, a)
+  SUBROUTINE SET1D_HYPER_STATES(setup, hyper_states, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
     REAL(sp), DIMENSION(ns), INTENT(IN) :: a
-    hyper_states%hi(:, :) = a(1)
-    hyper_states%hp(:, :) = a(2)
-    hyper_states%hft(:, :) = a(3)
-    hyper_states%hst(:, :) = a(4)
-    hyper_states%hlr(:, :) = a(5)
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: a3d
+    INTEGER :: i
+    DO i=1,ns
+      a3d(:, :, i) = a(i)
+    END DO
+    CALL SET3D_HYPER_STATES(setup, hyper_states, a3d)
   END SUBROUTINE SET1D_HYPER_STATES
 
-  SUBROUTINE SET0D_HYPER_STATES(hyper_states, a)
+  SUBROUTINE SET0D_HYPER_STATES(setup, hyper_states, a)
     IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
     REAL(sp), INTENT(IN) :: a
     REAL(sp), DIMENSION(ns) :: a1d
     a1d(:) = a
-    CALL SET1D_HYPER_STATES(hyper_states, a1d)
+    CALL SET1D_HYPER_STATES(setup, hyper_states, a1d)
   END SUBROUTINE SET0D_HYPER_STATES
 
 !  Differentiation of hyper_states_to_states in forward (tangent) mode (with options fixinterface):
@@ -2357,36 +2350,32 @@ CONTAINS
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
 !%      TODO comment
   SUBROUTINE HYPER_STATES_TO_STATES_D(hyper_states, hyper_states_d, &
-&   states, states_d, setup, input_data)
+&   states, states_d, setup, mesh, input_data)
     IMPLICIT NONE
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_d
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix_d
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   states_matrix_d
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_d
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+&   hyper_states_matrix
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+&   hyper_states_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_d
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_d, b_d
     INTRINSIC TRIM
     INTRINSIC EXP
-    REAL(sp), DIMENSION(size(states%hp, 1), size(states%hp, 2)) :: temp
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: temp0
-    CALL GET_HYPER_STATES_D(hyper_states, hyper_states_d, &
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
+    CALL GET_HYPER_STATES_D(setup, hyper_states, hyper_states_d, &
 &                     hyper_states_matrix, hyper_states_matrix_d)
-    CALL GET_STATES(states, states_matrix)
+    CALL GET_STATES(mesh, states, states_matrix)
     states_matrix_d = 0.0_4
     a_d = 0.0_4
     b_d = 0.0_4
@@ -2421,13 +2410,14 @@ CONTAINS
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
 !% sigmoid transformation lambda = 1
-      temp0 = (setup%optimize%ub_states(i)-setup%optimize%lb_states(i))/&
-&       (EXP(-states_matrix(:, :, i))+1._sp)
-      states_matrix_d(:, :, i) = temp0*EXP(-states_matrix(:, :, i))*&
+      temp = (setup%optimize%ub_states(i)-setup%optimize%lb_states(i))/(&
+&       EXP(-states_matrix(:, :, i))+1._sp)
+      states_matrix_d(:, :, i) = temp*EXP(-states_matrix(:, :, i))*&
 &       states_matrix_d(:, :, i)/(EXP(-states_matrix(:, :, i))+1._sp)
-      states_matrix(:, :, i) = setup%optimize%lb_states(i) + temp0
+      states_matrix(:, :, i) = setup%optimize%lb_states(i) + temp
     END DO
-    CALL SET_STATES_D(states, states_d, states_matrix, states_matrix_d)
+    CALL SET_STATES_D(mesh, states, states_d, states_matrix, &
+&               states_matrix_d)
   END SUBROUTINE HYPER_STATES_TO_STATES_D
 
 !  Differentiation of hyper_states_to_states in reverse (adjoint) mode (with options fixinterface):
@@ -2439,34 +2429,31 @@ CONTAINS
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.hlr:in
 !%      TODO comment
   SUBROUTINE HYPER_STATES_TO_STATES_B(hyper_states, hyper_states_b, &
-&   states, states_b, setup, input_data)
+&   states, states_b, setup, mesh, input_data)
     IMPLICIT NONE
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT) :: hyper_states_b
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_b
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix_b
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   states_matrix_b
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: dpb_b
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+&   hyper_states_matrix
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+&   hyper_states_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_b
     INTEGER :: i, j
     REAL(sp) :: a, b
     REAL(sp) :: a_b, b_b
     INTRINSIC TRIM
     INTRINSIC EXP
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: temp
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
     INTEGER :: branch
-    CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
+    CALL GET_HYPER_STATES(setup, hyper_states, hyper_states_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,ns
@@ -2493,8 +2480,9 @@ CONTAINS
         states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
       END DO
     END DO
-    CALL SET_STATES(states, states_matrix)
-    CALL SET_STATES_B(states, states_b, states_matrix, states_matrix_b)
+    CALL SET_STATES(mesh, states, states_matrix)
+    CALL SET_STATES_B(mesh, states, states_b, states_matrix, &
+&               states_matrix_b)
     hyper_states_matrix_b = 0.0_4
     a_b = 0.0_4
     b_b = 0.0_4
@@ -2535,31 +2523,29 @@ CONTAINS
 &       SUM(states_matrix_b(:, :, i))
       states_matrix_b(:, :, i) = 0.0_4
     END DO
-    CALL GET_HYPER_STATES_B(hyper_states, hyper_states_b, &
+    CALL GET_HYPER_STATES_B(setup, hyper_states, hyper_states_b, &
 &                     hyper_states_matrix, hyper_states_matrix_b)
   END SUBROUTINE HYPER_STATES_TO_STATES_B
 
 !%      TODO comment
-  SUBROUTINE HYPER_STATES_TO_STATES(hyper_states, states, setup, &
+  SUBROUTINE HYPER_STATES_TO_STATES(hyper_states, states, setup, mesh, &
 &   input_data)
     IMPLICIT NONE
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    INTRINSIC SIZE
-    REAL(sp), DIMENSION(SIZE(hyper_states%hp, 1), SIZE(hyper_states%hp, &
-&   2), ns) :: hyper_states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2), ns) :: &
-&   states_matrix
-    REAL(sp), DIMENSION(SIZE(states%hp, 1), SIZE(states%hp, 2)) :: d, &
-&   dpb
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+&   hyper_states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
     INTRINSIC TRIM
     INTRINSIC EXP
-    CALL GET_HYPER_STATES(hyper_states, hyper_states_matrix)
-    CALL GET_STATES(states, states_matrix)
+    CALL GET_HYPER_STATES(setup, hyper_states, hyper_states_matrix)
+    CALL GET_STATES(mesh, states, states_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
     DO i=1,ns
@@ -2582,7 +2568,7 @@ CONTAINS
 &       optimize%lb_states(i))*(1._sp/(1._sp+EXP(-states_matrix(:, :, i)&
 &       ))) + setup%optimize%lb_states(i)
     END DO
-    CALL SET_STATES(states, states_matrix)
+    CALL SET_STATES(mesh, states, states_matrix)
   END SUBROUTINE HYPER_STATES_TO_STATES
 
 END MODULE MWD_STATES_MANIPULATION_DIFF
@@ -2907,11 +2893,12 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
 &   states_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_d
-    CALL GET_PARAMETERS_D(parameters, parameters_d, parameters_matrix, &
-&                   parameters_matrix_d)
-    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
-    CALL GET_STATES_D(states, states_d, states_matrix, states_matrix_d)
-    CALL GET_STATES(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS_D(mesh, parameters, parameters_d, &
+&                   parameters_matrix, parameters_matrix_d)
+    CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES_D(mesh, states, states_d, states_matrix, &
+&               states_matrix_d)
+    CALL GET_STATES(mesh, states_bgd, states_bgd_matrix)
     SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
@@ -2963,10 +2950,10 @@ CONTAINS
     REAL(sp) :: res0
     REAL(sp) :: res_b0
     INTEGER :: branch
-    CALL GET_PARAMETERS(parameters, parameters_matrix)
-    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
-    CALL GET_STATES(states, states_matrix)
-    CALL GET_STATES(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
+    CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES(mesh, states, states_matrix)
+    CALL GET_STATES(mesh, states_bgd, states_bgd_matrix)
     SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
@@ -2993,9 +2980,10 @@ CONTAINS
       CALL REG_PRIOR_B(mesh, np, parameters_matrix, parameters_matrix_b&
 &                , parameters_bgd_matrix, res_b)
     END IF
-    CALL GET_STATES_B(states, states_b, states_matrix, states_matrix_b)
-    CALL GET_PARAMETERS_B(parameters, parameters_b, parameters_matrix, &
-&                   parameters_matrix_b)
+    CALL GET_STATES_B(mesh, states, states_b, states_matrix, &
+&               states_matrix_b)
+    CALL GET_PARAMETERS_B(mesh, parameters, parameters_b, &
+&                   parameters_matrix, parameters_matrix_b)
   END SUBROUTINE COMPUTE_JREG_B
 
 !% WIP
@@ -3012,10 +3000,10 @@ CONTAINS
 &   parameters_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
 &   states_bgd_matrix
-    CALL GET_PARAMETERS(parameters, parameters_matrix)
-    CALL GET_PARAMETERS(parameters_bgd, parameters_bgd_matrix)
-    CALL GET_STATES(states, states_matrix)
-    CALL GET_STATES(states_bgd, states_bgd_matrix)
+    CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
+    CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
+    CALL GET_STATES(mesh, states, states_matrix)
+    CALL GET_STATES(mesh, states_bgd, states_bgd_matrix)
     jreg = 0._sp
     parameters_jreg = 0._sp
     states_jreg = 0._sp
@@ -3905,7 +3893,7 @@ CONTAINS
 
 END MODULE MWD_COST_DIFF
 
-!  Differentiation of base_forward in forward (tangent) mode (with options fixinterface):
+!  Differentiation of gr_base_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -3927,7 +3915,7 @@ END MODULE MWD_COST_DIFF
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
+SUBROUTINE GR_BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 & parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
 & output_d, cost, cost_d)
 !% only: sp
@@ -3980,6 +3968,7 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, &
 & qd_d, qr_d, ql_d, qt_d, qup_d, qrout_d
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -4042,10 +4031,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -4060,7 +4049,7 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
                 ei_d = 0.0_4
                 pn_d = 0.0_4
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL GR_INTERCEPTION_D(prcp, pet, parameters%ci(row, col)&
 &                              , parameters_d%ci(row, col), states%hi(&
 &                              row, col), states_d%hi(row, col), pn, &
@@ -4072,28 +4061,23 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
             en_d = -ei_d
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%cp(row&
-&                            , col), parameters_d%cp(row, col), &
-&                            parameters%beta(row, col), parameters_d%&
-&                            beta(row, col), states%hp(row, col), &
-&                            states_d%hp(row, col), pr, pr_d, perc, &
-&                            perc_d)
+&                            , col), parameters_d%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_d%hp(row, col&
+&                            ), pr, pr_d, perc, perc_d)
             CASE DEFAULT
               perc_d = 0.0_4
               pr_d = 0.0_4
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              l = 0._sp
-              l_d = 0.0_4
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE_D(parameters%exc(row, col), parameters_d%&
 &                          exc(row, col), states%hft(row, col), states_d&
 &                          %hft(row, col), l, l_d)
@@ -4106,16 +4090,14 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
             pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
-            prr_d = (pr+perc)*parameters_d%alpha(row, col) + parameters%&
-&             alpha(row, col)*(pr_d+perc_d) + l_d
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
-&             pr+perc)*parameters_d%alpha(row, col)
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
+            prr_d = 0.9_sp*(pr_d+perc_d) + l_d
+            prr = 0.9_sp*(pr+perc) + l
+            prd_d = 0.1_sp*(pr_d+perc_d)
+            prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
 &                        row, col), parameters_d%cft(row, col), states%&
 &                        hft(row, col), states_d%hft(row, col), qr, qr_d&
@@ -4129,13 +4111,11 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
               qd_d = 0.0_4
               ql_d = 0.0_4
             END IF
-          CASE (1) 
-            prr_d = 0.9_sp*((pr+perc)*parameters_d%alpha(row, col)+&
-&             parameters%alpha(row, col)*(pr_d+perc_d)) + l_d
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl_d = 0.9_sp*((1._sp-parameters%alpha(row, col))*(pr_d+&
-&             perc_d)-(pr+perc)*parameters_d%alpha(row, col))
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+          CASE ('gr-b') 
+            prr_d = 0.6_sp*0.9_sp*(pr_d+perc_d) + l_d
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            prl_d = 0.4_sp*0.9_sp*(pr_d+perc_d)
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
@@ -4161,32 +4141,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
           qt_d = qd_d + qr_d + ql_d
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qup_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qup)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qup_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qup)/setup%dt)
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
@@ -4238,9 +4196,9 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
     END DO
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step and reset states
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
   states_d = states_imd_d
   states = states_imd
 !% =================================================================================================================== %!
@@ -4249,9 +4207,9 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
 &               , parameters_bgd, states, states_d, states_bgd, output, &
 &               output_d, cost, cost_d)
-END SUBROUTINE BASE_FORWARD_D
+END SUBROUTINE GR_BASE_FORWARD_D
 
-!  Differentiation of base_forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of gr_base_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
@@ -4273,7 +4231,7 @@ END SUBROUTINE BASE_FORWARD_D
 !                parameters.alpha:in parameters.exc:in parameters.lr:in
 !                output.qsim:in states.hi:in-out states.hp:in-out
 !                states.hft:in-out states.hst:in-out states.hlr:in-out
-SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
+SUBROUTINE GR_BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 & parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
 & output_b, cost, cost_b)
 !% only: sp
@@ -4326,6 +4284,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, &
 & qd_b, qr_b, ql_b, qt_b, qup_b, qrout_b
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -4358,9 +4317,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
       ei = 0._sp
       CALL PUSHREAL4(pn)
       pn = 0._sp
-      CALL PUSHREAL4(pr)
       pr = 0._sp
-      CALL PUSHREAL4(perc)
       perc = 0._sp
       l = 0._sp
       qd = 0._sp
@@ -4407,10 +4364,10 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -4423,7 +4380,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
                 CALL PUSHCONTROL2B(2)
                 pn = 0._sp
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL PUSHREAL4(states%hi(row, col))
               CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
 &                            states%hi(row, col), pn, ei)
@@ -4434,26 +4391,22 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
             CALL PUSHREAL4(en)
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL PUSHREAL4(states%hp(row, col))
               CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
-&                          parameters%beta(row, col), states%hp(row, col&
-&                          ), pr, perc)
+&                          1000._sp, states%hp(row, col), pr, perc)
               CALL PUSHCONTROL1B(1)
             CASE DEFAULT
               CALL PUSHCONTROL1B(0)
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              CALL PUSHCONTROL2B(0)
-              l = 0._sp
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
 &                        , col), l)
               CALL PUSHCONTROL2B(1)
@@ -4464,13 +4417,13 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
             CALL PUSHCONTROL2B(2)
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
             CALL PUSHREAL4(prr)
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+            prr = 0.9_sp*(pr+perc) + l
+            prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
@@ -4481,10 +4434,11 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
               qd = 0._sp
               CALL PUSHCONTROL3B(1)
             END IF
-          CASE (1) 
+          CASE ('gr-b') 
             CALL PUSHREAL4(prr)
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            CALL PUSHREAL4(prl)
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
@@ -4504,30 +4458,10 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
           END SELECT
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL3B(5)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL3B(4)
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
@@ -4554,7 +4488,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
               CALL PUSHCONTROL3B(2)
             END IF
           CASE DEFAULT
-            CALL PUSHCONTROL3B(6)
+            CALL PUSHCONTROL3B(4)
           END SELECT
         ELSE
           CALL PUSHCONTROL3B(1)
@@ -4584,9 +4518,9 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
     END DO
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step and reset states
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
   states_b = states_imd_b
   states = states_imd
 !% =================================================================================================================== %!
@@ -4594,8 +4528,8 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
 &             , states, states_bgd, output, cost)
-  CALL SET_PARAMETERS(parameters_b, 0.0_4)
-  CALL SET_STATES(states_b, 0.0_4)
+  CALL SET_PARAMETERS(mesh, parameters_b, 0.0_4)
+  CALL SET_STATES(mesh, states_b, 0.0_4)
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , parameters_bgd, states, states_b, states_bgd, output, &
 &               output_b, cost, cost_b)
@@ -4617,12 +4551,10 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
     END DO
     DO i=mesh%nrow*mesh%ncol,1,-1
       CALL POPCONTROL3B(branch)
-      IF (branch .LT. 3) THEN
-        IF (branch .EQ. 0) THEN
-          GOTO 130
-        ELSE IF (branch .EQ. 1) THEN
-          GOTO 120
-        ELSE
+      IF (branch .LT. 2) THEN
+        IF (branch .EQ. 0) GOTO 120
+      ELSE
+        IF (branch .EQ. 2) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
           temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -4638,9 +4570,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
 &                             , col, q, q_b, qup, qup_b)
-        END IF
-      ELSE IF (branch .LT. 5) THEN
-        IF (branch .EQ. 3) THEN
+        ELSE IF (branch .EQ. 3) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
           temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
@@ -4659,141 +4589,107 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 &                                    rowcol_to_ind_sparse, row, col, &
 &                                    sparse_q, sparse_q_b, qup, qup_b)
         ELSE
-          row = mesh%path(1, i)
-          col = mesh%path(2, i)
-          temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
-          q_b(row, col) = 0.0_4
-          qt_b = temp_b0
-          qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
-          CALL POPREAL4(qup)
-          CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
-&                             ncol, mesh%flwdir, mesh%drained_area, row&
-&                             , col, q, q_b, qup, qup_b)
+          qt_b = 0.0_4
         END IF
-      ELSE IF (branch .EQ. 5) THEN
-        row = mesh%path(1, i)
-        col = mesh%path(2, i)
-        temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-        sparse_q_b(k) = 0.0_4
-        qt_b = temp_b0
-        qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
-        CALL POPREAL4(qup)
-        CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, &
-&                                  mesh%ncol, mesh%nac, mesh%flwdir, &
-&                                  mesh%drained_area, mesh%&
-&                                  rowcol_to_ind_sparse, row, col, &
-&                                  sparse_q, sparse_q_b, qup, qup_b)
-      ELSE
-        qt_b = 0.0_4
-      END IF
-      qd_b = qt_b
-      qr_b = qt_b
-      ql_b = qt_b
-      CALL POPCONTROL3B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .EQ. 0) THEN
-          l_b = 0.0_4
-          perc_b = 0.0_4
-          pr_b = 0.0_4
-          GOTO 100
-        ELSE
-          l_b = 0.0_4
-          prd_b = 0.0_4
-        END IF
-      ELSE IF (branch .EQ. 2) THEN
-        prd_b = qd_b
-        l_b = qd_b
-      ELSE
-        IF (branch .EQ. 3) THEN
-          l_b = 0.0_4
-          prd_b = 0.0_4
-        ELSE
+        qd_b = qt_b
+        qr_b = qt_b
+        ql_b = qt_b
+        CALL POPCONTROL3B(branch)
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            l_b = 0.0_4
+            perc_b = 0.0_4
+            pr_b = 0.0_4
+            GOTO 100
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
           prd_b = qd_b
           l_b = qd_b
+        ELSE
+          IF (branch .EQ. 3) THEN
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          ELSE
+            prd_b = qd_b
+            l_b = qd_b
+          END IF
+          CALL POPREAL4(states%hst(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
+&                      , col), parameters_b%cst(row, col), states%hst(&
+&                      row, col), states_b%hst(row, col), ql, ql_b)
+          CALL POPREAL4(states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
+&                      , col), parameters_b%cft(row, col), states%hft(&
+&                      row, col), states_b%hft(row, col), qr, qr_b)
+          CALL POPREAL4(prl)
+          temp_b = 0.4_sp*0.9_sp*prl_b
+          pr_b = 0.1_sp*prd_b + temp_b
+          perc_b = 0.1_sp*prd_b + temp_b
+          CALL POPREAL4(prr)
+          temp_b = 0.6_sp*0.9_sp*prr_b
+          l_b = l_b + prr_b
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
+          GOTO 100
         END IF
-        prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
-        CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
-&                    col), parameters_b%cst(row, col), states%hst(row, &
-&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
         CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
 &                    col), parameters_b%cft(row, col), states%hft(row, &
 &                    col), states_b%hft(row, col), qr, qr_b)
-        parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
-&         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
-        temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
-        pr_b = 0.1_sp*prd_b + temp_b
-        perc_b = 0.1_sp*prd_b + temp_b
+        pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+        perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
         CALL POPREAL4(prr)
-        temp_b = parameters%alpha(row, col)*0.9_sp*prr_b
         l_b = l_b + prr_b
-        pr_b = pr_b + temp_b
-        perc_b = perc_b + temp_b
-        GOTO 100
-      END IF
-      CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                  col), parameters_b%cft(row, col), states%hft(row, col&
-&                  ), states_b%hft(row, col), qr, qr_b)
-      parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
-&       perc)*prr_b - (pr+perc)*prd_b
-      temp_b = (1._sp-parameters%alpha(row, col))*prd_b
-      pr_b = temp_b
-      perc_b = temp_b
-      CALL POPREAL4(prr)
-      temp_b = parameters%alpha(row, col)*prr_b
-      l_b = l_b + prr_b
-      pr_b = pr_b + temp_b
-      perc_b = perc_b + temp_b
- 100  CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .EQ. 1) THEN
-          CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%exc(&
-&                      row, col), states%hft(row, col), states_b%hft(row&
-&                      , col), l, l_b)
+ 100    CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
+&                        exc(row, col), states%hft(row, col), states_b%&
+&                        hft(row, col), l, l_b)
+          ELSE
+            GOTO 110
+          END IF
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          en_b = 0.0_4
+          pn_b = 0.0_4
         ELSE
-          GOTO 110
+          CALL POPREAL4(states%hp(row, col))
+          CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
+&                        col), parameters_b%cp(row, col), 1000._sp, &
+&                        states%hp(row, col), states_b%hp(row, col), pr&
+&                        , pr_b, perc, perc_b)
+        END IF
+        CALL POPREAL4(en)
+        ei_b = -en_b
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(states%hi(row, col))
+            CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
+&                            parameters_b%ci(row, col), states%hi(row, &
+&                            col), states_b%hi(row, col), pn, pn_b, ei, &
+&                            ei_b)
+          END IF
+        END IF
+ 110    CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL4(pet)
+          CALL POPREAL4(prcp)
+        ELSE
+          CALL POPREAL4(pet)
+          CALL POPREAL4(prcp)
         END IF
       END IF
       CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
-        en_b = 0.0_4
-        pn_b = 0.0_4
-      ELSE
-        CALL POPREAL4(states%hp(row, col))
-        CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, col)&
-&                      , parameters_b%cp(row, col), parameters%beta(row&
-&                      , col), parameters_b%beta(row, col), states%hp(&
-&                      row, col), states_b%hp(row, col), pr, pr_b, perc&
-&                      , perc_b)
-      END IF
-      CALL POPREAL4(en)
-      ei_b = -en_b
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .EQ. 1) THEN
-          CALL POPREAL4(states%hi(row, col))
-          CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
-&                          parameters_b%ci(row, col), states%hi(row, col&
-&                          ), states_b%hi(row, col), pn, pn_b, ei, ei_b)
-        END IF
-      END IF
- 110  CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
-        CALL POPREAL4(pet)
-        CALL POPREAL4(prcp)
-      ELSE
-        CALL POPREAL4(pet)
-        CALL POPREAL4(prcp)
-      END IF
- 120  CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) CALL POPINTEGER4(k)
       CALL POPINTEGER4(col)
       CALL POPINTEGER4(row)
- 130  CALL POPREAL4(perc)
-      CALL POPREAL4(pr)
-      CALL POPREAL4(pn)
+ 120  CALL POPREAL4(pn)
     END DO
   END DO
   CALL POPCONTROL1B(branch)
@@ -4804,9 +4700,9 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
     DEALLOCATE(sparse_q)
     DEALLOCATE(sparse_q_b)
   END IF
-END SUBROUTINE BASE_FORWARD_B
+END SUBROUTINE GR_BASE_FORWARD_B
 
-SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
+SUBROUTINE GR_BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 & parameters_bgd, states, states_bgd, output, cost)
 !% only: sp
   USE MD_CONSTANT
@@ -4849,6 +4745,7 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
 & , ql, qt, qup, qrout
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -4911,10 +4808,10 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -4925,38 +4822,35 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
               ELSE
                 pn = 0._sp
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
 &                            states%hi(row, col), pn, ei)
             END SELECT
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
-&                          parameters%beta(row, col), states%hp(row, col&
-&                          ), pr, perc)
+&                          1000._sp, states%hp(row, col), pr, perc)
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              l = 0._sp
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
 &                        , col), l)
             END SELECT
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
+            prr = 0.9_sp*(pr+perc) + l
+            prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
@@ -4964,9 +4858,9 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
             ELSE
               qd = 0._sp
             END IF
-          CASE (1) 
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+          CASE ('gr-b') 
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
@@ -4980,26 +4874,10 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
           END SELECT
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
@@ -5061,9 +4939,9 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
     END IF
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step and reset states
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
   output%fstates = states
   states = states_imd
 !% =================================================================================================================== %!
@@ -5071,9 +4949,9 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 !% =================================================================================================================== %!
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
 &             , states, states_bgd, output, cost)
-END SUBROUTINE BASE_FORWARD_NODIFF
+END SUBROUTINE GR_BASE_FORWARD_NODIFF
 
-!  Differentiation of base_hyper_forward in forward (tangent) mode (with options fixinterface):
+!  Differentiation of gr_base_hyper_forward in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5105,7 +4983,7 @@ END SUBROUTINE BASE_FORWARD_NODIFF
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
+SUBROUTINE GR_BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
 & hyper_states, hyper_states_d, hyper_states_bgd, output, output_d, cost&
 & , cost_d)
@@ -5162,6 +5040,7 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
   REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, &
 & qd_d, qr_d, ql_d, qt_d, qup_d, qrout_d
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -5171,9 +5050,9 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
   CALL STATESDT_INITIALISE_D(states, states_d, mesh)
   CALL HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
 &                                 hyper_parameters_d, parameters, &
-&                                 parameters_d, setup, input_data)
+&                                 parameters_d, setup, mesh, input_data)
   CALL HYPER_STATES_TO_STATES_D(hyper_states, hyper_states_d, states, &
-&                         states_d, setup, input_data)
+&                         states_d, setup, mesh, input_data)
   IF (setup%sparse_storage) THEN
     ALLOCATE(sparse_q_d(mesh%nac))
     ALLOCATE(sparse_q(mesh%nac))
@@ -5229,10 +5108,10 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -5247,7 +5126,7 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
                 ei_d = 0.0_4
                 pn_d = 0.0_4
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL GR_INTERCEPTION_D(prcp, pet, parameters%ci(row, col)&
 &                              , parameters_d%ci(row, col), states%hi(&
 &                              row, col), states_d%hi(row, col), pn, &
@@ -5259,28 +5138,23 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
             en_d = -ei_d
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%cp(row&
-&                            , col), parameters_d%cp(row, col), &
-&                            parameters%beta(row, col), parameters_d%&
-&                            beta(row, col), states%hp(row, col), &
-&                            states_d%hp(row, col), pr, pr_d, perc, &
-&                            perc_d)
+&                            , col), parameters_d%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_d%hp(row, col&
+&                            ), pr, pr_d, perc, perc_d)
             CASE DEFAULT
               perc_d = 0.0_4
               pr_d = 0.0_4
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              l = 0._sp
-              l_d = 0.0_4
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE_D(parameters%exc(row, col), parameters_d%&
 &                          exc(row, col), states%hft(row, col), states_d&
 &                          %hft(row, col), l, l_d)
@@ -5293,16 +5167,14 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
             pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
-            prr_d = (pr+perc)*parameters_d%alpha(row, col) + parameters%&
-&             alpha(row, col)*(pr_d+perc_d) + l_d
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd_d = (1._sp-parameters%alpha(row, col))*(pr_d+perc_d) - (&
-&             pr+perc)*parameters_d%alpha(row, col)
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
+            prr_d = 0.9_sp*(pr_d+perc_d) + l_d
+            prr = 0.9_sp*(pr+perc) + l
+            prd_d = 0.1_sp*(pr_d+perc_d)
+            prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
 &                        row, col), parameters_d%cft(row, col), states%&
 &                        hft(row, col), states_d%hft(row, col), qr, qr_d&
@@ -5316,13 +5188,11 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
               qd_d = 0.0_4
               ql_d = 0.0_4
             END IF
-          CASE (1) 
-            prr_d = 0.9_sp*((pr+perc)*parameters_d%alpha(row, col)+&
-&             parameters%alpha(row, col)*(pr_d+perc_d)) + l_d
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl_d = 0.9_sp*((1._sp-parameters%alpha(row, col))*(pr_d+&
-&             perc_d)-(pr+perc)*parameters_d%alpha(row, col))
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+          CASE ('gr-b') 
+            prr_d = 0.6_sp*0.9_sp*(pr_d+perc_d) + l_d
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            prl_d = 0.4_sp*0.9_sp*(pr_d+perc_d)
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd_d = 0.1_sp*(pr_d+perc_d)
             prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%cft(&
@@ -5348,32 +5218,10 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
           qt_d = qd_d + qr_d + ql_d
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qup_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qup)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qup_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qup)/setup%dt)
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
@@ -5425,18 +5273,18 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
     END DO
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
   CALL HYPER_COMPUTE_COST_D(setup, mesh, input_data, hyper_parameters, &
 &                     hyper_parameters_bgd, hyper_states, &
 &                     hyper_states_bgd, output, output_d, cost, cost_d)
-END SUBROUTINE BASE_HYPER_FORWARD_D
+END SUBROUTINE GR_BASE_HYPER_FORWARD_D
 
-!  Differentiation of base_hyper_forward in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of gr_base_hyper_forward in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: cost
 !   with respect to varying inputs: *(hyper_states.hi) *(hyper_states.hp)
 !                *(hyper_states.hft) *(hyper_states.hst) *(hyper_states.hlr)
@@ -5468,7 +5316,7 @@ END SUBROUTINE BASE_HYPER_FORWARD_D
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
+SUBROUTINE GR_BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
 & hyper_states, hyper_states_b, hyper_states_bgd, output, output_b, cost&
 & , cost_b)
@@ -5525,6 +5373,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
   REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, &
 & qd_b, qr_b, ql_b, qt_b, qup_b, qrout_b
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -5534,8 +5383,9 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
   CALL PARAMETERSDT_INITIALISE_FWD(parameters, parameters_b, mesh)
   CALL STATESDT_INITIALISE_FWD(states, states_b, mesh)
   CALL HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters, &
-&                               setup, input_data)
-  CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, input_data)
+&                               setup, mesh, input_data)
+  CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, mesh, &
+&                       input_data)
   IF (setup%sparse_storage) THEN
     ALLOCATE(sparse_q_b(mesh%nac))
     sparse_q_b = 0.0_4
@@ -5560,9 +5410,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
       ei = 0._sp
       CALL PUSHREAL4(pn)
       pn = 0._sp
-      CALL PUSHREAL4(pr)
       pr = 0._sp
-      CALL PUSHREAL4(perc)
       perc = 0._sp
       l = 0._sp
       qd = 0._sp
@@ -5609,10 +5457,10 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -5625,7 +5473,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
                 CALL PUSHCONTROL2B(2)
                 pn = 0._sp
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL PUSHREAL4(states%hi(row, col))
               CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
 &                            states%hi(row, col), pn, ei)
@@ -5636,26 +5484,22 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
             CALL PUSHREAL4(en)
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL PUSHREAL4(states%hp(row, col))
               CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
-&                          parameters%beta(row, col), states%hp(row, col&
-&                          ), pr, perc)
+&                          1000._sp, states%hp(row, col), pr, perc)
               CALL PUSHCONTROL1B(1)
             CASE DEFAULT
               CALL PUSHCONTROL1B(0)
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              CALL PUSHCONTROL2B(0)
-              l = 0._sp
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
 &                        , col), l)
               CALL PUSHCONTROL2B(1)
@@ -5666,13 +5510,13 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
             CALL PUSHCONTROL2B(2)
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
             CALL PUSHREAL4(prr)
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+            prr = 0.9_sp*(pr+perc) + l
+            prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
@@ -5683,10 +5527,11 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
               qd = 0._sp
               CALL PUSHCONTROL3B(1)
             END IF
-          CASE (1) 
+          CASE ('gr-b') 
             CALL PUSHREAL4(prr)
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            CALL PUSHREAL4(prl)
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL PUSHREAL4(states%hft(row, col))
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
@@ -5706,30 +5551,10 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
           END SELECT
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL3B(5)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL3B(4)
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
@@ -5756,7 +5581,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
               CALL PUSHCONTROL3B(2)
             END IF
           CASE DEFAULT
-            CALL PUSHCONTROL3B(6)
+            CALL PUSHCONTROL3B(4)
           END SELECT
         ELSE
           CALL PUSHCONTROL3B(1)
@@ -5786,17 +5611,17 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
     END DO
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
   CALL HYPER_COMPUTE_COST(setup, mesh, input_data, hyper_parameters, &
 &                   hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 &                   , output, cost)
-  CALL SET_HYPER_PARAMETERS(hyper_parameters_b, 0.0_4)
-  CALL SET_HYPER_STATES(hyper_states_b, 0.0_4)
+  CALL SET_HYPER_PARAMETERS(setup, hyper_parameters_b, 0.0_4)
+  CALL SET_HYPER_STATES(setup, hyper_states_b, 0.0_4)
   CALL HYPER_COMPUTE_COST_B(setup, mesh, input_data, hyper_parameters, &
 &                     hyper_parameters_bgd, hyper_states, &
 &                     hyper_states_bgd, output, output_b, cost, cost_b)
@@ -5818,12 +5643,10 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
     END DO
     DO i=mesh%nrow*mesh%ncol,1,-1
       CALL POPCONTROL3B(branch)
-      IF (branch .LT. 3) THEN
-        IF (branch .EQ. 0) THEN
-          GOTO 130
-        ELSE IF (branch .EQ. 1) THEN
-          GOTO 120
-        ELSE
+      IF (branch .LT. 2) THEN
+        IF (branch .EQ. 0) GOTO 120
+      ELSE
+        IF (branch .EQ. 2) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
           temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -5839,9 +5662,7 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
           CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
 &                             ncol, mesh%flwdir, mesh%drained_area, row&
 &                             , col, q, q_b, qup, qup_b)
-        END IF
-      ELSE IF (branch .LT. 5) THEN
-        IF (branch .EQ. 3) THEN
+        ELSE IF (branch .EQ. 3) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
           temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
@@ -5860,141 +5681,107 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 &                                    rowcol_to_ind_sparse, row, col, &
 &                                    sparse_q, sparse_q_b, qup, qup_b)
         ELSE
-          row = mesh%path(1, i)
-          col = mesh%path(2, i)
-          temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
-          q_b(row, col) = 0.0_4
-          qt_b = temp_b0
-          qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
-          CALL POPREAL4(qup)
-          CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh%&
-&                             ncol, mesh%flwdir, mesh%drained_area, row&
-&                             , col, q, q_b, qup, qup_b)
+          qt_b = 0.0_4
         END IF
-      ELSE IF (branch .EQ. 5) THEN
-        row = mesh%path(1, i)
-        col = mesh%path(2, i)
-        temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-        sparse_q_b(k) = 0.0_4
-        qt_b = temp_b0
-        qup_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
-        CALL POPREAL4(qup)
-        CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, &
-&                                  mesh%ncol, mesh%nac, mesh%flwdir, &
-&                                  mesh%drained_area, mesh%&
-&                                  rowcol_to_ind_sparse, row, col, &
-&                                  sparse_q, sparse_q_b, qup, qup_b)
-      ELSE
-        qt_b = 0.0_4
-      END IF
-      qd_b = qt_b
-      qr_b = qt_b
-      ql_b = qt_b
-      CALL POPCONTROL3B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .EQ. 0) THEN
-          l_b = 0.0_4
-          perc_b = 0.0_4
-          pr_b = 0.0_4
-          GOTO 100
-        ELSE
-          l_b = 0.0_4
-          prd_b = 0.0_4
-        END IF
-      ELSE IF (branch .EQ. 2) THEN
-        prd_b = qd_b
-        l_b = qd_b
-      ELSE
-        IF (branch .EQ. 3) THEN
-          l_b = 0.0_4
-          prd_b = 0.0_4
-        ELSE
+        qd_b = qt_b
+        qr_b = qt_b
+        ql_b = qt_b
+        CALL POPCONTROL3B(branch)
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            l_b = 0.0_4
+            perc_b = 0.0_4
+            pr_b = 0.0_4
+            GOTO 100
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
           prd_b = qd_b
           l_b = qd_b
+        ELSE
+          IF (branch .EQ. 3) THEN
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          ELSE
+            prd_b = qd_b
+            l_b = qd_b
+          END IF
+          CALL POPREAL4(states%hst(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
+&                      , col), parameters_b%cst(row, col), states%hst(&
+&                      row, col), states_b%hst(row, col), ql, ql_b)
+          CALL POPREAL4(states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
+&                      , col), parameters_b%cft(row, col), states%hft(&
+&                      row, col), states_b%hft(row, col), qr, qr_b)
+          CALL POPREAL4(prl)
+          temp_b = 0.4_sp*0.9_sp*prl_b
+          pr_b = 0.1_sp*prd_b + temp_b
+          perc_b = 0.1_sp*prd_b + temp_b
+          CALL POPREAL4(prr)
+          temp_b = 0.6_sp*0.9_sp*prr_b
+          l_b = l_b + prr_b
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
+          GOTO 100
         END IF
-        prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
-        CALL POPREAL4(states%hst(row, col))
-        CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row, &
-&                    col), parameters_b%cst(row, col), states%hst(row, &
-&                    col), states_b%hst(row, col), ql, ql_b)
         CALL POPREAL4(states%hft(row, col))
         CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
 &                    col), parameters_b%cft(row, col), states%hft(row, &
 &                    col), states_b%hft(row, col), qr, qr_b)
-        parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (&
-&         pr+perc)*0.9_sp*prr_b - (pr+perc)*0.9_sp*prl_b
-        temp_b = (1._sp-parameters%alpha(row, col))*0.9_sp*prl_b
-        pr_b = 0.1_sp*prd_b + temp_b
-        perc_b = 0.1_sp*prd_b + temp_b
+        pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+        perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
         CALL POPREAL4(prr)
-        temp_b = parameters%alpha(row, col)*0.9_sp*prr_b
         l_b = l_b + prr_b
-        pr_b = pr_b + temp_b
-        perc_b = perc_b + temp_b
-        GOTO 100
-      END IF
-      CALL POPREAL4(states%hft(row, col))
-      CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row, &
-&                  col), parameters_b%cft(row, col), states%hft(row, col&
-&                  ), states_b%hft(row, col), qr, qr_b)
-      parameters_b%alpha(row, col) = parameters_b%alpha(row, col) + (pr+&
-&       perc)*prr_b - (pr+perc)*prd_b
-      temp_b = (1._sp-parameters%alpha(row, col))*prd_b
-      pr_b = temp_b
-      perc_b = temp_b
-      CALL POPREAL4(prr)
-      temp_b = parameters%alpha(row, col)*prr_b
-      l_b = l_b + prr_b
-      pr_b = pr_b + temp_b
-      perc_b = perc_b + temp_b
- 100  CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .EQ. 1) THEN
-          CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%exc(&
-&                      row, col), states%hft(row, col), states_b%hft(row&
-&                      , col), l, l_b)
+ 100    CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
+&                        exc(row, col), states%hft(row, col), states_b%&
+&                        hft(row, col), l, l_b)
+          ELSE
+            GOTO 110
+          END IF
+        END IF
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          en_b = 0.0_4
+          pn_b = 0.0_4
         ELSE
-          GOTO 110
+          CALL POPREAL4(states%hp(row, col))
+          CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
+&                        col), parameters_b%cp(row, col), 1000._sp, &
+&                        states%hp(row, col), states_b%hp(row, col), pr&
+&                        , pr_b, perc, perc_b)
+        END IF
+        CALL POPREAL4(en)
+        ei_b = -en_b
+        CALL POPCONTROL2B(branch)
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            CALL POPREAL4(states%hi(row, col))
+            CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
+&                            parameters_b%ci(row, col), states%hi(row, &
+&                            col), states_b%hi(row, col), pn, pn_b, ei, &
+&                            ei_b)
+          END IF
+        END IF
+ 110    CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL4(pet)
+          CALL POPREAL4(prcp)
+        ELSE
+          CALL POPREAL4(pet)
+          CALL POPREAL4(prcp)
         END IF
       END IF
       CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
-        en_b = 0.0_4
-        pn_b = 0.0_4
-      ELSE
-        CALL POPREAL4(states%hp(row, col))
-        CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, col)&
-&                      , parameters_b%cp(row, col), parameters%beta(row&
-&                      , col), parameters_b%beta(row, col), states%hp(&
-&                      row, col), states_b%hp(row, col), pr, pr_b, perc&
-&                      , perc_b)
-      END IF
-      CALL POPREAL4(en)
-      ei_b = -en_b
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .EQ. 1) THEN
-          CALL POPREAL4(states%hi(row, col))
-          CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
-&                          parameters_b%ci(row, col), states%hi(row, col&
-&                          ), states_b%hi(row, col), pn, pn_b, ei, ei_b)
-        END IF
-      END IF
- 110  CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
-        CALL POPREAL4(pet)
-        CALL POPREAL4(prcp)
-      ELSE
-        CALL POPREAL4(pet)
-        CALL POPREAL4(prcp)
-      END IF
- 120  CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) CALL POPINTEGER4(k)
       CALL POPINTEGER4(col)
       CALL POPINTEGER4(row)
- 130  CALL POPREAL4(perc)
-      CALL POPREAL4(pr)
-      CALL POPREAL4(pn)
+ 120  CALL POPREAL4(pn)
     END DO
   END DO
   CALL POPCONTROL1B(branch)
@@ -6006,18 +5793,18 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
     DEALLOCATE(sparse_q_b)
   END IF
   CALL HYPER_STATES_TO_STATES_B(hyper_states, hyper_states_b, states, &
-&                         states_b, setup, input_data)
+&                         states_b, setup, mesh, input_data)
   CALL HYPER_PARAMETERS_TO_PARAMETERS_B(hyper_parameters, &
 &                                 hyper_parameters_b, parameters, &
-&                                 parameters_b, setup, input_data)
+&                                 parameters_b, setup, mesh, input_data)
   CALL STATESDT_INITIALISE_BWD(states, states_b, mesh)
   CALL PARAMETERSDT_INITIALISE_BWD(parameters, parameters_b, mesh)
-END SUBROUTINE BASE_HYPER_FORWARD_B
+END SUBROUTINE GR_BASE_HYPER_FORWARD_B
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
+SUBROUTINE GR_BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 & , output, cost)
 !% only: sp
@@ -6063,6 +5850,7 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qd, qr&
 & , ql, qt, qup, qrout
   INTEGER :: t, i, row, col, k, g
+  INTRINSIC TRIM
   INTRINSIC MIN
   INTRINSIC MAX
   INTRINSIC REAL
@@ -6070,8 +5858,9 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   CALL STATESDT_INITIALISE(states, mesh)
   cost = 0._sp
   CALL HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters, &
-&                               setup, input_data)
-  CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, input_data)
+&                               setup, mesh, input_data)
+  CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, mesh, &
+&                       input_data)
   IF (setup%sparse_storage) THEN
     ALLOCATE(sparse_q(mesh%nac))
   ELSE
@@ -6129,10 +5918,10 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
           IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
-!%   Interception module case [ 0 - 1 ]
+!%   Interception module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%interception_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a') 
               IF (pet .GT. prcp) THEN
                 ei = prcp
               ELSE
@@ -6143,38 +5932,35 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
               ELSE
                 pn = 0._sp
               END IF
-            CASE (1) 
+            CASE ('gr-b') 
               CALL GR_INTERCEPTION(prcp, pet, parameters%ci(row, col), &
 &                            states%hi(row, col), pn, ei)
             END SELECT
             en = pet - ei
 !% =============================================================================================== %!
-!%   Production module case [ 0 ]
+!%   Production module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%production_module) 
-            CASE (0) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_PRODUCTION(pn, en, parameters%cp(row, col), &
-&                          parameters%beta(row, col), states%hp(row, col&
-&                          ), pr, perc)
+&                          1000._sp, states%hp(row, col), pr, perc)
             END SELECT
 !% =============================================================================================== %!
-!%   Exchange module case [ 0 - 1 ]
+!%   Exchange module
 !% =============================================================================================== %!
-            SELECT CASE  (setup%exchange_module) 
-            CASE (0) 
-              l = 0._sp
-            CASE (1) 
+            SELECT CASE  (TRIM(setup%structure)) 
+            CASE ('gr-a', 'gr-b') 
               CALL GR_EXCHANGE(parameters%exc(row, col), states%hft(row&
 &                        , col), l)
             END SELECT
           END IF
 !% =================================================================================================== %!
-!%   Transfer module case [ 0 ]
+!%   Transfer module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%transfer_module) 
-          CASE (0) 
-            prr = parameters%alpha(row, col)*(pr+perc) + l
-            prd = (1._sp-parameters%alpha(row, col))*(pr+perc)
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a') 
+            prr = 0.9_sp*(pr+perc) + l
+            prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
             IF (0._sp .LT. prd + l) THEN
@@ -6182,9 +5968,9 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
             ELSE
               qd = 0._sp
             END IF
-          CASE (1) 
-            prr = 0.9_sp*parameters%alpha(row, col)*(pr+perc) + l
-            prl = 0.9_sp*(1._sp-parameters%alpha(row, col))*(pr+perc)
+          CASE ('gr-b') 
+            prr = 0.9_sp*0.6_sp*(pr+perc) + l
+            prl = 0.9_sp*0.4_sp*(pr+perc)
             prd = 0.1_sp*(pr+perc)
             CALL GR_TRANSFER(5._sp, prcp, prr, parameters%cft(row, col)&
 &                      , states%hft(row, col), qr)
@@ -6198,26 +5984,10 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
           END SELECT
           qt = qd + qr + ql
 !% =================================================================================================== %!
-!%   Routing module case [ 0 - 1 ]
+!%   Routing module
 !% =================================================================================================== %!
-          SELECT CASE  (setup%routing_module) 
-          CASE (0) 
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              sparse_q(k) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
-              q(row, col) = (qt+qup*REAL(mesh%drained_area(row, col)-1))&
-&               *mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-          CASE (1) 
+          SELECT CASE  (TRIM(setup%structure)) 
+          CASE ('gr-a', 'gr-b') 
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
@@ -6279,9 +6049,9 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
     END IF
   END DO
 !% [ END DO TIME ]
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
 !%   Store states at final time step
-!% =============================================================================================================== %!
+!% =================================================================================================================== %!
   output%fstates = states
 !% =================================================================================================================== %!
 !%   Compute J
@@ -6289,5 +6059,5 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
   CALL HYPER_COMPUTE_COST(setup, mesh, input_data, hyper_parameters, &
 &                   hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 &                   , output, cost)
-END SUBROUTINE BASE_HYPER_FORWARD_NODIFF
+END SUBROUTINE GR_BASE_HYPER_FORWARD_NODIFF
 

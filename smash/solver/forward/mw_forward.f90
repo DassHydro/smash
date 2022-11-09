@@ -27,9 +27,13 @@ module mw_forward
             type(StatesDT), intent(inout) :: states, states_bgd
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
+
+            if (index(setup%structure, "gr") .ne. 0) then
             
-            call base_forward(setup, mesh, input_data, parameters, &
-            & parameters_bgd, states, states_bgd, output, cost)
+                call gr_base_forward(setup, mesh, input_data, parameters, &
+                & parameters_bgd, states, states_bgd, output, cost)
+                
+            end if
         
         end subroutine forward
 
@@ -47,9 +51,13 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_b
             real(sp), intent(inout) :: cost, cost_b
             
-            call base_forward_b(setup, mesh, input_data, parameters, &
-            & parameters_b, parameters_bgd, states, states_b, &
-            & states_bgd, output, output_b, cost, cost_b)
+            if (index(trim(setup%structure), "gr") .ne. 0) then
+            
+                call gr_base_forward_b(setup, mesh, input_data, parameters, &
+                & parameters_b, parameters_bgd, states, states_b, &
+                & states_bgd, output, output_b, cost, cost_b)
+                
+            end if
         
         end subroutine forward_b
 
@@ -67,9 +75,13 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_d
             real(sp), intent(inout) :: cost, cost_d
             
-            call base_forward_d(setup, mesh, input_data, parameters, &
-            & parameters_d, parameters_bgd, states, states_d, &
-            & states_bgd, output, output_d, cost, cost_d)
+            if (index(trim(setup%structure), "gr") .ne. 0) then
+            
+                call gr_base_forward_d(setup, mesh, input_data, parameters, &
+                & parameters_d, parameters_bgd, states, states_d, &
+                & states_bgd, output, output_d, cost, cost_d)
+            
+            end if
         
         end subroutine forward_d
 
@@ -87,9 +99,13 @@ module mw_forward
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
             
-            call base_hyper_forward(setup, mesh, input_data, &
-            & hyper_parameters, hyper_parameters_bgd, hyper_states, &
-            & hyper_states_bgd, output, cost)
+            if (index(trim(setup%structure), "gr") .ne. 0) then
+            
+                call gr_base_hyper_forward(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_bgd, hyper_states, &
+                & hyper_states_bgd, output, cost)
+            
+            end if
         
         end subroutine hyper_forward
 
@@ -108,10 +124,14 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_b
             real(sp), intent(inout) :: cost, cost_b
             
-            call base_hyper_forward_b(setup, mesh, input_data, &
-            & hyper_parameters, hyper_parameters_b, &
-            & hyper_parameters_bgd, hyper_states, hyper_states_b, &
-            & hyper_states_bgd, output, output_b, cost, cost_b)
+            if (index(trim(setup%structure), "gr") .ne. 0) then
+            
+                call gr_base_hyper_forward_b(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_b, &
+                & hyper_parameters_bgd, hyper_states, hyper_states_b, &
+                & hyper_states_bgd, output, output_b, cost, cost_b)
+            
+            end if
         
         end subroutine hyper_forward_b
 
@@ -130,11 +150,15 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_d
             real(sp), intent(inout) :: cost, cost_d
             
-            call base_hyper_forward_d(setup, mesh, input_data, &
-            & hyper_parameters, hyper_parameters_d, &
-            & hyper_parameters_bgd, hyper_states, hyper_states_d, &
-            & hyper_states_bgd, output, output_d, cost, cost_d)
+            if (index(trim(setup%structure), "gr") .ne. 0) then
+            
+                call gr_base_hyper_forward_d(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_d, &
+                & hyper_parameters_bgd, hyper_states, hyper_states_d, &
+                & hyper_states_bgd, output, output_d, cost, cost_d)
         
+            end if
+            
         end subroutine hyper_forward_d
 
 end module mw_forward

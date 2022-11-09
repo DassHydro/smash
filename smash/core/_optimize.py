@@ -37,12 +37,22 @@ JOBS_FUN = [
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
+STRUCTURE_PARAMETERS = {
+    "gr-a": ["cp", "cft", "exc", "lr"],
+    "gr-b": ["ci", "cp", "cft", "cst", "exc", "lr"],
+}
+
+STRUCTURE_STATES = {
+    "gr-a": ["hp", "hft", "hlr"],
+    "gr-b": ["hi", "hp", "hft", "hst", "hlr"],
+}
+
 
 def _optimize_sbs(
     instance: Model,
     control_vector: np.ndarray,
-    jobs_fun: str,
     mapping: str,
+    jobs_fun: str,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -53,15 +63,15 @@ def _optimize_sbs(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
+    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
 
     instance.setup._optimize.algorithm = "sbs"
 
     for i, name in enumerate(control_vector):
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
-            ind = np.argwhere(instance.setup._name_parameters == name)
+            ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
 
@@ -71,7 +81,7 @@ def _optimize_sbs(
         #% Already check, must be states if not parameters
         else:
 
-            ind = np.argwhere(instance.setup._name_states == name)
+            ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
 
@@ -80,13 +90,11 @@ def _optimize_sbs(
 
     instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._optimize.mapping = mapping
-
     instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -107,8 +115,8 @@ def _optimize_sbs(
 def _optimize_lbfgsb(
     instance: Model,
     control_vector: np.ndarray,
-    jobs_fun: str,
     mapping: str,
+    jobs_fun: str,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -122,15 +130,15 @@ def _optimize_lbfgsb(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
+    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
 
     instance.setup._optimize.algorithm = "l-bfgs-b"
 
     for i, name in enumerate(control_vector):
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
-            ind = np.argwhere(instance.setup._name_parameters == name)
+            ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
 
@@ -140,7 +148,7 @@ def _optimize_lbfgsb(
         #% Already check, must be states if not parameters
         else:
 
-            ind = np.argwhere(instance.setup._name_states == name)
+            ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
 
@@ -149,13 +157,11 @@ def _optimize_lbfgsb(
 
     instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._optimize.mapping = mapping
-
     instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -204,8 +210,8 @@ def _optimize_lbfgsb(
 def _optimize_nelder_mead(
     instance: Model,
     control_vector: np.ndarray,
-    jobs_fun: str,
     mapping: str,
+    jobs_fun: str,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -224,19 +230,17 @@ def _optimize_nelder_mead(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.mesh.ng)
+    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
 
     instance.setup._optimize.algorithm = "nelder-mead"
 
     instance.setup._optimize.jobs_fun = jobs_fun
 
-    instance.setup._optimize.mapping = mapping
-
     instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
 
-    instance.setup._optimize.optim_start_step = (
+    instance.setup._optimize.optimize_start_step = (
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
@@ -337,8 +341,8 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     jobs_fun = instance.setup._optimize.jobs_fun
     jreg_fun = instance.setup._optimize.jreg_fun
     wjreg = instance.setup._optimize.wjreg
-    parameters = [el for el in control_vector if el in instance.setup._name_parameters]
-    states = [el for el in control_vector if el in instance.setup._name_states]
+    parameters = [el for el in control_vector if el in instance.setup._parameters_name]
+    states = [el for el in control_vector if el in instance.setup._states_name]
     code = [
         el
         for ind, el in enumerate(instance.mesh.code)
@@ -400,7 +404,7 @@ def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.n
 
     for ind, name in enumerate(control_vector):
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
             x[ind] = getattr(instance.parameters, name)[ac_ind]
 
@@ -429,7 +433,7 @@ def _hyper_parameters_states_to_x(
 
         lb, ub = bounds[ind, :]
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
             y = getattr(instance.parameters, name)[ac_ind]
 
@@ -446,7 +450,7 @@ def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: np.n
 
     for ind, name in enumerate(control_vector):
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
             setattr(
                 instance.parameters,
@@ -491,7 +495,7 @@ def _x_to_hyper_parameters_states(
 
         y = (ub - lb) * (1.0 / (1.0 + np.exp(-value))) + lb
 
-        if name in instance.setup._name_parameters:
+        if name in instance.setup._parameters_name:
 
             setattr(instance.parameters, name, y)
 
@@ -608,50 +612,128 @@ def _callback(x: np.ndarray, *args):
     print(sp4.join(ret))
 
 
-def _standardize_algorithm(algorithm: str) -> str:
+def _standardize_mapping(mapping: str | None, setup: SetupDT) -> str:
 
-    if isinstance(algorithm, str):
+    #% Default values
+    if mapping is None:
 
-        algorithm = algorithm.lower()
+        mapping = "uniform"
 
     else:
 
-        raise TypeError(f"'algorithm' argument must be str")
+        if isinstance(mapping, str):
 
-    if algorithm not in ALGORITHM:
+            mapping = mapping.lower()
 
-        raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+        else:
+
+            raise TypeError(f"mapping argument must be str")
+
+        if mapping not in MAPPING:
+
+            raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
+
+        if mapping.startswith("hyper") and setup._nd == 0:
+
+            raise ValueError(
+                f"'{mapping}' mapping can not be use if no catchment descriptors are available"
+            )
+
+    return mapping
+
+
+def _standardize_algorithm(algorithm: str | None, mapping: str) -> str:
+
+    if algorithm is None:
+
+        if mapping == "uniform":
+
+            algorithm = "sbs"
+
+        elif mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
+
+            algorithm = "l-bfgs-b"
+
+    else:
+
+        if isinstance(algorithm, str):
+
+            algorithm = algorithm.lower()
+
+        else:
+
+            raise TypeError(f"'algorithm' argument must be str")
+
+        if algorithm not in ALGORITHM:
+
+            raise ValueError(f"Unknown algorithm '{algorithm}'. Choices: {ALGORITHM}")
+
+        if algorithm == "sbs":
+
+            if mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
+
+        elif algorithm == "nelder-mead":
+
+            if mapping in ["distributed", "hyper-polynomial"]:
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
+
+        elif algorithm == "l-bfgs-b":
+
+            if mapping == "uniform":
+
+                raise ValueError(
+                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                )
 
     return algorithm
 
 
 def _standardize_control_vector(
-    control_vector: str | list | tuple | set, setup: SetupDT
+    control_vector: str | list | tuple | set | None, setup: SetupDT
 ) -> np.ndarray:
 
-    if isinstance(control_vector, str):
-
-        control_vector = np.array(control_vector, ndmin=1)
-
-    elif isinstance(control_vector, set):
-
-        control_vector = np.array(list(control_vector))
-
-    elif isinstance(control_vector, (list, tuple)):
-
-        control_vector = np.array(control_vector)
+    if control_vector is None:
+        control_vector = np.array(STRUCTURE_PARAMETERS[setup.structure])
 
     else:
 
-        raise TypeError(f"'control_vector' argument must be str or list-like object")
+        if isinstance(control_vector, str):
 
-    for name in control_vector:
+            control_vector = np.array(control_vector, ndmin=1)
 
-        if not name in [*setup._name_parameters, *setup._name_states]:
+        elif isinstance(control_vector, set):
 
-            raise ValueError(
-                f"Unknown parameter or state '{name}' in 'control_vector'. Choices: {[*setup._name_parameters, *setup._name_states]}"
+            control_vector = np.array(list(control_vector))
+
+        elif isinstance(control_vector, (list, tuple)):
+
+            control_vector = np.array(control_vector)
+
+        else:
+
+            raise TypeError(
+                f"'control_vector' argument must be str or list-like object"
             )
+
+        for name in control_vector:
+
+            available = [
+                *STRUCTURE_PARAMETERS[setup.structure],
+                *STRUCTURE_STATES[setup.structure],
+            ]
+
+            if name not in available:
+
+                raise ValueError(
+                    f"Unknown parameter or state '{name}' for structure '{setup.structure}' in 'control_vector'. Choices: {available}"
+                )
 
     return control_vector
 
@@ -687,72 +769,6 @@ def _standardize_jobs_fun(jobs_fun: str | None, algorithm: str) -> str:
     return jobs_fun
 
 
-def _standardize_mapping(mapping: str | None, algorithm: str, setup: SetupDT) -> str:
-
-    #% Default values
-    if mapping is None:
-
-        if algorithm in ["sbs", "nelder-mead"]:
-
-            mapping = "uniform"
-
-        elif algorithm == "l-bfgs-b":
-
-            mapping = "distributed"
-
-    else:
-
-        if isinstance(mapping, str):
-
-            mapping = mapping.lower()
-
-        else:
-
-            raise TypeError(f"mapping argument must be str")
-
-        if mapping not in MAPPING:
-
-            raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
-
-        if algorithm == "sbs":
-
-            if mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-        elif algorithm == "nelder-mead":
-
-            if mapping in ["distributed", "hyper-polynomial"]:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-            elif mapping == "hyper-linear" and setup._nd == 0:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use if no catchment descriptors are available"
-                )
-
-        elif algorithm == "l-bfgs-b":
-
-            if mapping == "uniform":
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use with '{algorithm}' algorithm"
-                )
-
-            elif mapping in ["hyper-linear", "hyper-polynomial"] and setup._nd == 0:
-
-                raise ValueError(
-                    f"'{mapping}' mapping can not be use if no catchment descriptor are available"
-                )
-
-    return mapping
-
-
 def _standardize_bounds(
     bounds: list | tuple | set | None, control_vector: np.ndarray, setup: SetupDT
 ) -> np.ndarray:
@@ -764,18 +780,18 @@ def _standardize_bounds(
 
         for i, name in enumerate(control_vector):
 
-            if name in setup._name_parameters:
+            if name in setup._parameters_name:
 
-                ind = np.argwhere(setup._name_parameters == name)
+                ind = np.argwhere(setup._parameters_name == name)
 
                 bounds[i, :] = (
                     setup._optimize.lb_parameters[ind].item(),
                     setup._optimize.ub_parameters[ind].item(),
                 )
 
-            elif name in setup._name_states:
+            elif name in setup._states_name:
 
-                ind = np.argwhere(setup._name_states == name)
+                ind = np.argwhere(setup._states_name == name)
 
                 bounds[i, :] = (
                     setup._optimize.lb_states[ind].item(),
@@ -812,26 +828,26 @@ def _standardize_bounds(
 
             if b[0] is None:
 
-                if control_vector[i] in setup._name_parameters:
+                if control_vector[i] in setup._parameters_name:
 
-                    ind = np.argwhere(setup._name_parameters == control_vector[i])
+                    ind = np.argwhere(setup._parameters_name == control_vector[i])
                     b[0] = setup._optimize.lb_parameters[ind].item()
 
                 else:
 
-                    ind = np.argwhere(setup._name_states == control_vector[i])
+                    ind = np.argwhere(setup._states_name == control_vector[i])
                     b[0] = setup._optimize.lb_states[ind].item()
 
             if b[1] is None:
 
-                if control_vector[i] in setup._name_parameters:
+                if control_vector[i] in setup._parameters_name:
 
-                    ind = np.argwhere(setup._name_parameters == control_vector[i])
+                    ind = np.argwhere(setup._parameters_name == control_vector[i])
                     b[1] = setup._optimize.ub_parameters[ind].item()
 
                 else:
 
-                    ind = np.argwhere(setup._name_states == control_vector[i])
+                    ind = np.argwhere(setup._states_name == control_vector[i])
                     b[1] = setup._optimize.ub_states[ind].item()
 
             if b[0] >= b[1]:
@@ -1040,10 +1056,10 @@ def _check_unknown_options(unknown_options: dict):
 
 
 def _standardize_optimize_args(
-    algorithm: str,
-    control_vector: str | list | tuple | set,
-    jobs_fun: str | None,
     mapping: str | None,
+    algorithm: str | None,
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set | None,
     wgauge: str | list | tuple | set | None,
@@ -1053,13 +1069,13 @@ def _standardize_optimize_args(
     input_data: Input_DataDT,
 ):
 
-    algorithm = _standardize_algorithm(algorithm)
+    mapping = _standardize_mapping(mapping, setup)
+
+    algorithm = _standardize_algorithm(algorithm, mapping)
 
     control_vector = _standardize_control_vector(control_vector, setup)
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
-
-    mapping = _standardize_mapping(mapping, algorithm, setup)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
@@ -1069,7 +1085,7 @@ def _standardize_optimize_args(
 
     ost = _standardize_ost(ost, setup)
 
-    return algorithm, control_vector, jobs_fun, mapping, bounds, wgauge, ost
+    return mapping, algorithm, control_vector, jobs_fun, bounds, wgauge, ost
 
 
 def _standardize_optimize_options(options: dict | None) -> dict:

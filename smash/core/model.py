@@ -87,10 +87,11 @@ class Model(object):
 
     def __repr__(self):
 
-        dim = f"Model dimension: (time: {self.setup._ntime_step}, nrow: {self.mesh.nrow}, ncol: {self.mesh.ncol})"
-        last_update = f"Model last update: {self._last_update}"
+        structure = f"Structure: '{self.setup.structure}'"
+        dim = f"Spatio-Temporal dimension: (x: {self.mesh.ncol}, y: {self.mesh.nrow}, time: {self.setup._ntime_step})"
+        last_update = f"Last update: {self._last_update}"
 
-        return f"{dim}\n{last_update}"
+        return f"{structure}\n{dim}\n{last_update}"
 
     @property
     def setup(self):
@@ -259,10 +260,10 @@ class Model(object):
 
     def optimize(
         self,
-        algorithm: str,
-        control_vector: str | list | tuple | set,
-        jobs_fun: str | None = None,
         mapping: str | None = None,
+        algorithm: str | None = None,
+        control_vector: str | list | tuple | set | None = None,
+        jobs_fun: str | None = None,
         bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set | None = None,
         wgauge: str | list | tuple | set | None = None,
@@ -280,18 +281,18 @@ class Model(object):
             instance = self.copy()
 
         (
+            mapping,
             algorithm,
             control_vector,
             jobs_fun,
-            mapping,
             bounds,
             wgauge,
             ost,
         ) = _standardize_optimize_args(
+            mapping,
             algorithm,
             control_vector,
             jobs_fun,
-            mapping,
             bounds,
             gauge,
             wgauge,
@@ -308,8 +309,8 @@ class Model(object):
             _optimize_sbs(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -323,8 +324,8 @@ class Model(object):
             _optimize_lbfgsb(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -338,8 +339,8 @@ class Model(object):
             _optimize_nelder_mead(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,

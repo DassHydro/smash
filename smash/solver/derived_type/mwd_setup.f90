@@ -28,11 +28,6 @@
 !%      ``descriptor_format``      Descriptor map(s) format                               (default: .false.)
 !%      ``descriptor_directory``   Descriptor map(s) directory                            (default: "...")
 !%      ``descriptor_name``        Descriptor map(s) names
-!%      ``interception_module``    Choice of interception module                          (default: 0)
-!%      ``production_module``      Choice of production module                            (default: 0)
-!%      ``transfer_module``        Choice of transfer module                              (default: 0)
-!%      ``exchange_module``        Choice of exchange module                              (default: 0)
-!%      ``routing_module``         Choice of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      ``save_net_prcp_domain``   Save net precipitation on the domain                   (default: .false.)
 !%
@@ -62,7 +57,10 @@ module mwd_setup
         character(lchar) :: algorithm = "..." !>f90w-char
         
         character(lchar) :: jobs_fun = "nse" !>f90w-char
+        
         character(lchar) :: mapping = "..." !>f90w-char
+        integer :: nhyper = 0
+        
         character(lchar) :: jreg_fun = "prior" !>f90w-char
         real(sp) :: wjreg = 0._sp
 
@@ -118,6 +116,8 @@ module mwd_setup
     type SetupDT
     
         !% </> Public
+        character(lchar) :: structure = "gr-a" !>f90w-char
+        
         real(sp) :: dt = 3600._sp
         
         character(lchar) :: start_time = "..." !>f90w-char
@@ -147,14 +147,6 @@ module mwd_setup
         character(lchar) :: descriptor_directory = "..." !>f90w-char
         character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
         
-        character(lchar) :: structure !>f90w-char
-        
-        integer :: interception_module = 0
-        integer :: production_module = 0
-        integer :: transfer_module = 0
-        integer :: exchange_module = 0
-        integer :: routing_module = 0
-        
         logical :: save_qsim_domain = .false.
         logical :: save_net_prcp_domain = .false.
         
@@ -164,7 +156,7 @@ module mwd_setup
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
         
-        character(10), dimension(np) :: name_parameters = & !>f90w-private f90w-char_array
+        character(10), dimension(np) :: parameters_name = & !>f90w-private f90w-char_array
         
         & (/"ci        ",&
         &   "cp        ",&
@@ -175,7 +167,7 @@ module mwd_setup
         &   "exc       ",&
         &   "lr        "/)
         
-        character(10), dimension(ns) :: name_states = & !>f90w-private f90w-char_array
+        character(10), dimension(ns) :: states_name = & !>f90w-private f90w-char_array
     
         & (/"hi        ",&
         &   "hp        ",&
@@ -187,15 +179,31 @@ module mwd_setup
     
     contains
     
-        subroutine Optimize_SetupDT_initialise(this, ng)
+        subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping)
         
             implicit none
             
             type(Optimize_SetupDT), intent(inout) :: this
+            type(SetupDT), intent(in) :: setup
             integer, intent(in) :: ng
-            
+            character(len=*), optional, intent(in) :: mapping
+
             allocate(this%wgauge(ng))
             this%wgauge = 1._sp / ng
+            
+            if (present(mapping)) this%mapping = mapping
+            
+            select case(trim(this%mapping))
+            
+            case("hyper-linear")
+                
+                this%nhyper = (1 + setup%nd)
+                
+            case("hyper-polynomial")
+            
+                this%nhyper = (1 + 2 * setup%nd)
+                
+            end select
             
         end subroutine Optimize_SetupDT_initialise
     
@@ -221,7 +229,7 @@ module mwd_setup
             
             end if
             
-            call Optimize_SetupDT_initialise(this%optimize, ng)
+            call Optimize_SetupDT_initialise(this%optimize, this, ng)
         
         end subroutine SetupDT_initialise
 

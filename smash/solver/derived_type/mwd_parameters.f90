@@ -130,28 +130,15 @@ module mwd_parameters
             type(Hyper_ParametersDT), intent(inout) :: this
             type(SetupDT), intent(in) :: setup
             
-            integer :: n
             
-            select case(trim(setup%optimize%mapping))
-            
-            case("hyper-linear")
-            
-                n = (1 + setup%nd)
-                
-            case("hyper-polynomial")
-            
-                n = (1 + 2 * setup%nd)
-                
-            end select
-            
-            allocate(this%ci(n, 1))
-            allocate(this%cp(n, 1))
-            allocate(this%beta(n, 1))
-            allocate(this%cft(n, 1))
-            allocate(this%cst(n, 1))
-            allocate(this%alpha(n, 1))
-            allocate(this%exc(n, 1))
-            allocate(this%lr(n, 1))
+            allocate(this%ci(setup%optimize%nhyper, 1))
+            allocate(this%cp(setup%optimize%nhyper, 1))
+            allocate(this%beta(setup%optimize%nhyper, 1))
+            allocate(this%cft(setup%optimize%nhyper, 1))
+            allocate(this%cst(setup%optimize%nhyper, 1))
+            allocate(this%alpha(setup%optimize%nhyper, 1))
+            allocate(this%exc(setup%optimize%nhyper, 1))
+            allocate(this%lr(setup%optimize%nhyper, 1))
  
         end subroutine Hyper_ParametersDT_initialise
 

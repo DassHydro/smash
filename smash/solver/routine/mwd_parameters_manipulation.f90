@@ -2,6 +2,7 @@ module mwd_parameters_manipulation
     
     use md_constant
     use mwd_setup
+    use mwd_mesh
     use mwd_input_data
     use mwd_parameters
     
@@ -26,12 +27,13 @@ module mwd_parameters_manipulation
     contains
     
 !%      TODO comment  
-        subroutine get_parameters(parameters, a)
+        subroutine get_parameters(mesh, parameters, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(in) :: parameters
-            real(sp), dimension(:,:,:), intent(inout) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,np), intent(inout) :: a
             
             a(:,:,1) = parameters%ci(:,:)
             a(:,:,2) = parameters%cp(:,:)
@@ -45,12 +47,13 @@ module mwd_parameters_manipulation
         end subroutine get_parameters
         
         
-        subroutine set3d_parameters(parameters, a)
+        subroutine set3d_parameters(mesh, parameters, a)
             
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
-            real(sp), dimension(:,:,:), intent(in) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,np), intent(in) :: a
             
             parameters%ci(:,:)    = a(:,:,1)
             parameters%cp(:,:)    = a(:,:,2)
@@ -64,29 +67,33 @@ module mwd_parameters_manipulation
         end subroutine set3d_parameters
         
         
-        subroutine set1d_parameters(parameters, a)
+        subroutine set1d_parameters(mesh, parameters, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
             real(sp), dimension(np), intent(in) :: a
             
-            parameters%ci(:,:)    = a(1)
-            parameters%cp(:,:)    = a(2)
-            parameters%beta(:,:)  = a(3)
-            parameters%cft(:,:)   = a(4)
-            parameters%cst(:,:)   = a(5)
-            parameters%alpha(:,:) = a(6)
-            parameters%exc(:,:)   = a(7)
-            parameters%lr(:,:)    = a(8)
+            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: a3d
+            integer :: i
+            
+            do i=1, np
+            
+                a3d(:,:,i) = a(i)
+            
+            end do
+            
+            call set3d_parameters(mesh, parameters, a3d)
         
         end subroutine set1d_parameters
         
         
-        subroutine set0d_parameters(parameters, a)
+        subroutine set0d_parameters(mesh, parameters, a)
         
             implicit none
             
+            type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
             real(sp), intent(in) :: a
             
@@ -94,17 +101,18 @@ module mwd_parameters_manipulation
             
             a1d(:) = a
             
-            call set1d_parameters(parameters, a1d)
+            call set1d_parameters(mesh, parameters, a1d)
         
         end subroutine set0d_parameters
         
         
-        subroutine get_hyper_parameters(hyper_parameters, a)
+        subroutine get_hyper_parameters(setup, hyper_parameters, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters
-            real(sp), dimension(:,:,:), intent(inout) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,np), intent(inout) :: a
 
             a(:,:,1) = hyper_parameters%ci(:,:)
             a(:,:,2) = hyper_parameters%cp(:,:)
@@ -118,12 +126,13 @@ module mwd_parameters_manipulation
         end subroutine get_hyper_parameters
         
         
-        subroutine set3d_hyper_parameters(hyper_parameters, a)
+        subroutine set3d_hyper_parameters(setup, hyper_parameters, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
-            real(sp), dimension(:,:,:), intent(in) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,np), intent(in) :: a
             
             hyper_parameters%ci(:,:)    = a(:,:,1)
             hyper_parameters%cp(:,:)    = a(:,:,2)
@@ -137,29 +146,33 @@ module mwd_parameters_manipulation
         end subroutine set3d_hyper_parameters
         
         
-        subroutine set1d_hyper_parameters(hyper_parameters, a)
+        subroutine set1d_hyper_parameters(setup, hyper_parameters, a)
             
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
             real(sp), dimension(np), intent(in) :: a
             
-            hyper_parameters%ci(:,:)    = a(1)
-            hyper_parameters%cp(:,:)    = a(2)
-            hyper_parameters%beta(:,:)  = a(3)
-            hyper_parameters%cft(:,:)   = a(4)
-            hyper_parameters%cst(:,:)   = a(5)
-            hyper_parameters%alpha(:,:) = a(6)
-            hyper_parameters%exc(:,:)   = a(7)
-            hyper_parameters%lr(:,:)    = a(8)
-        
+            real(sp), dimension(setup%optimize%nhyper, 1, np) :: a3d
+            integer :: i
+            
+            do i=1, np
+            
+                a3d(:,:,i) = a(i)
+            
+            end do
+            
+            call set3d_hyper_parameters(setup, hyper_parameters, a3d)
+            
         end subroutine set1d_hyper_parameters
         
         
-        subroutine set0d_hyper_parameters(hyper_parameters, a)
+        subroutine set0d_hyper_parameters(setup, hyper_parameters, a)
         
             implicit none
             
+            type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
             real(sp), intent(in) :: a
             
@@ -167,32 +180,30 @@ module mwd_parameters_manipulation
             
             a1d(:) = a
             
-            call set1d_hyper_parameters(hyper_parameters, a1d)
+            call set1d_hyper_parameters(setup, hyper_parameters, a1d)
         
         end subroutine set0d_hyper_parameters
 
 !%      TODO comment
         subroutine hyper_parameters_to_parameters(hyper_parameters, &
-        & parameters, setup, input_data)
+        & parameters, setup, mesh, input_data)
         
             implicit none
             
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters
             type(ParametersDT), intent(inout) :: parameters
             type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
             
-            real(sp), dimension(size(hyper_parameters%cp, 1), &
-            & size(hyper_parameters%cp, 2), np) :: hyper_parameters_matrix
-            real(sp), dimension(size(parameters%cp, 1), &
-            & size(parameters%cp, 2), np) :: parameters_matrix
-            real(sp), dimension(size(parameters%cp, 1), &
-            & size(parameters%cp, 2)) :: d, dpb
+            real(sp), dimension(setup%optimize%nhyper, 1, np) :: hyper_parameters_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
             integer :: i, j
             real(sp) :: a, b
             
-            call get_hyper_parameters(hyper_parameters, hyper_parameters_matrix)
-            call get_parameters(parameters, parameters_matrix)
+            call get_hyper_parameters(setup, hyper_parameters, hyper_parameters_matrix)
+            call get_parameters(mesh, parameters, parameters_matrix)
             
             !% Add mask later here
             !% 1 in dim2 will be replace with k and apply where on Omega
@@ -230,7 +241,7 @@ module mwd_parameters_manipulation
             
             end do
 
-            call set_parameters(parameters, parameters_matrix)
+            call set_parameters(mesh, parameters, parameters_matrix)
         
         end subroutine hyper_parameters_to_parameters
 
