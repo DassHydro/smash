@@ -67,8 +67,8 @@ module mw_adjoint_test
             call OutputDT_initialise(output_d, setup, mesh)
             call OutputDT_initialise(output_b, setup, mesh)
             
-            call set_parameters(parameters_d, 1._sp)
-            call set_states(states_d, 0._sp)
+            call set_parameters(mesh, parameters_d, 1._sp)
+            call set_states(mesh, states_d, 0._sp)
             
             write(*,'(4x,a)') "Tangent Linear Model dY  = (dM/dk) (k) . dk"
             
@@ -84,8 +84,8 @@ module mw_adjoint_test
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
-            call get_parameters(parameters_b, parameters_b_matrix)
-            call get_parameters(parameters_d, parameters_d_matrix)
+            call get_parameters(mesh, parameters_b, parameters_b_matrix)
+            call get_parameters(mesh, parameters_d, parameters_d_matrix)
             
             !% No perturbation has been set to states_d
             output%sp1 = cost_b * cost_d
@@ -160,7 +160,7 @@ module mw_adjoint_test
             & parameters_b, parameters_bgd, states, states_b, states_bgd, &
             & output, output_b, cost, cost_b)
             
-            call get_parameters(parameters_b, parameters_b_matrix)
+            call get_parameters(mesh, parameters_b, parameters_b_matrix)
             
             write(*,'(4x,a)') "Forward Model Yadk = M (k + a dk)"
             
@@ -168,11 +168,11 @@ module mw_adjoint_test
             
                 output%an(n) = 2._sp ** (- (n - 1))
             
-                call get_parameters(parameters_bgd, parameters_matrix)
+                call get_parameters(mesh, parameters_bgd, parameters_matrix)
                 
                 parameters_matrix = parameters_matrix + output%an(n) * dk
                 
-                call set_parameters(parameters, parameters_matrix)
+                call set_parameters(mesh, parameters, parameters_matrix)
                 
                 call forward(setup, mesh, input_data, parameters, &
                 & parameters_bgd, states, states_bgd, output, cost)

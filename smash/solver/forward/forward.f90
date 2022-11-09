@@ -356,8 +356,8 @@ subroutine gr_base_hyper_forward(setup, mesh, input_data, &
     
     cost = 0._sp
     
-    call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, input_data)
-    call hyper_states_to_states(hyper_states, states, setup, input_data)
+    call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, mesh, input_data)
+    call hyper_states_to_states(hyper_states, states, setup, mesh, input_data)
     
      if (setup%sparse_storage) then
         

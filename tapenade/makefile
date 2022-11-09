@@ -21,10 +21,10 @@ bd:
 
 finalize:
 	# sed forward_b
-	sed -i "s/.*CALL.COMPUTE\_COST\_B.*/  CALL SET\_PARAMETERS(parameters\_b, 0.0_4)\n  CALL SET\_STATES(states\_b, 0.0_4)\n&/" forward_db.f90
+	sed -i "s/.*CALL.COMPUTE\_COST\_B.*/  CALL SET\_PARAMETERS(mesh, parameters\_b, 0.0_4)\n  CALL SET\_STATES(mesh, states\_b, 0.0_4)\n&/" forward_db.f90
 	
 	# sed hyper_forward_b
-	sed -i "s/.*CALL.HYPER\_COMPUTE\_COST\_B.*/  CALL SET\_HYPER\_PARAMETERS(hyper\_parameters\_b, 0.0_4)\n  CALL SET\_HYPER\_STATES(hyper\_states\_b, 0.0_4)\n&/" forward_db.f90
+	sed -i "s/.*CALL.HYPER\_COMPUTE\_COST\_B.*/  CALL SET\_HYPER\_PARAMETERS(setup, hyper\_parameters\_b, 0.0_4)\n  CALL SET\_HYPER\_STATES(setup, hyper\_states\_b, 0.0_4)\n&/" forward_db.f90
 	
 	# sed \t for 4 spaces
 	sed -i "s/\t/    /g" forward_db.f90
