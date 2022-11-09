@@ -57,7 +57,10 @@ module mwd_setup
         character(lchar) :: algorithm = "..." !>f90w-char
         
         character(lchar) :: jobs_fun = "nse" !>f90w-char
+        
         character(lchar) :: mapping = "..." !>f90w-char
+        integer :: nhyper = 0
+        
         character(lchar) :: jreg_fun = "prior" !>f90w-char
         real(sp) :: wjreg = 0._sp
 
@@ -153,7 +156,7 @@ module mwd_setup
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
         
-        character(10), dimension(np) :: name_parameters = & !>f90w-private f90w-char_array
+        character(10), dimension(np) :: parameters_name = & !>f90w-private f90w-char_array
         
         & (/"ci        ",&
         &   "cp        ",&
@@ -164,7 +167,7 @@ module mwd_setup
         &   "exc       ",&
         &   "lr        "/)
         
-        character(10), dimension(ns) :: name_states = & !>f90w-private f90w-char_array
+        character(10), dimension(ns) :: states_name = & !>f90w-private f90w-char_array
     
         & (/"hi        ",&
         &   "hp        ",&
@@ -176,15 +179,31 @@ module mwd_setup
     
     contains
     
-        subroutine Optimize_SetupDT_initialise(this, ng)
+        subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping)
         
             implicit none
             
             type(Optimize_SetupDT), intent(inout) :: this
+            type(SetupDT), intent(in) :: setup
             integer, intent(in) :: ng
-            
+            character(len=*), optional, intent(in) :: mapping
+
             allocate(this%wgauge(ng))
             this%wgauge = 1._sp / ng
+            
+            if (present(mapping)) this%mapping = mapping
+            
+            select case(trim(this%mapping))
+            
+            case("hyper-linear")
+                
+                this%nhyper = (1 + setup%nd)
+                
+            case("hyper-polynomial")
+            
+                this%nhyper = (1 + 2 * setup%nd)
+                
+            end select
             
         end subroutine Optimize_SetupDT_initialise
     
@@ -210,7 +229,7 @@ module mwd_setup
             
             end if
             
-            call Optimize_SetupDT_initialise(this%optimize, ng)
+            call Optimize_SetupDT_initialise(this%optimize, this, ng)
         
         end subroutine SetupDT_initialise
 

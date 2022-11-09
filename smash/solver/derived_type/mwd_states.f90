@@ -106,25 +106,11 @@ module mwd_states
             type(Hyper_StatesDT), intent(inout) :: this
             type(SetupDT), intent(in) :: setup
             
-            integer :: n
-            
-            select case(trim(setup%optimize%mapping))
-            
-            case("hyper-linear")
-            
-                n = (1 + setup%nd)
-                
-            case("hyper-polynomial")
-            
-                n = (1 + 2 * setup%nd)
-                
-            end select
-            
-            allocate(this%hi(n, 1))
-            allocate(this%hp(n, 1))
-            allocate(this%hft(n, 1))
-            allocate(this%hst(n, 1))
-            allocate(this%hlr(n, 1))
+            allocate(this%hi(setup%optimize%nhyper, 1))
+            allocate(this%hp(setup%optimize%nhyper, 1))
+            allocate(this%hft(setup%optimize%nhyper, 1))
+            allocate(this%hst(setup%optimize%nhyper, 1))
+            allocate(this%hlr(setup%optimize%nhyper, 1))
  
         end subroutine Hyper_StatesDT_initialise
 

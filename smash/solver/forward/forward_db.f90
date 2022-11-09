@@ -202,22 +202,14 @@ CONTAINS
     IMPLICIT NONE
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
-    INTEGER :: n
-    INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%optimize%mapping)) 
-    CASE ('hyper-linear') 
-      n = 1 + setup%nd
-    CASE ('hyper-polynomial') 
-      n = 1 + 2*setup%nd
-    END SELECT
-    ALLOCATE(this%ci(n, 1))
-    ALLOCATE(this%cp(n, 1))
-    ALLOCATE(this%beta(n, 1))
-    ALLOCATE(this%cft(n, 1))
-    ALLOCATE(this%cst(n, 1))
-    ALLOCATE(this%alpha(n, 1))
-    ALLOCATE(this%exc(n, 1))
-    ALLOCATE(this%lr(n, 1))
+    ALLOCATE(this%ci(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cp(setup%optimize%nhyper, 1))
+    ALLOCATE(this%beta(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cft(setup%optimize%nhyper, 1))
+    ALLOCATE(this%cst(setup%optimize%nhyper, 1))
+    ALLOCATE(this%alpha(setup%optimize%nhyper, 1))
+    ALLOCATE(this%exc(setup%optimize%nhyper, 1))
+    ALLOCATE(this%lr(setup%optimize%nhyper, 1))
   END SUBROUTINE HYPER_PARAMETERSDT_INITIALISE
 
 END MODULE MWD_PARAMETERS_DIFF
@@ -384,19 +376,11 @@ CONTAINS
     IMPLICIT NONE
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
-    INTEGER :: n
-    INTRINSIC TRIM
-    SELECT CASE  (TRIM(setup%optimize%mapping)) 
-    CASE ('hyper-linear') 
-      n = 1 + setup%nd
-    CASE ('hyper-polynomial') 
-      n = 1 + 2*setup%nd
-    END SELECT
-    ALLOCATE(this%hi(n, 1))
-    ALLOCATE(this%hp(n, 1))
-    ALLOCATE(this%hft(n, 1))
-    ALLOCATE(this%hst(n, 1))
-    ALLOCATE(this%hlr(n, 1))
+    ALLOCATE(this%hi(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hp(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hft(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hst(setup%optimize%nhyper, 1))
+    ALLOCATE(this%hlr(setup%optimize%nhyper, 1))
   END SUBROUTINE HYPER_STATESDT_INITIALISE
 
 END MODULE MWD_STATES_DIFF

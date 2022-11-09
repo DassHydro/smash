@@ -309,8 +309,8 @@ class Model(object):
             _optimize_sbs(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -324,8 +324,8 @@ class Model(object):
             _optimize_lbfgsb(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -339,8 +339,8 @@ class Model(object):
             _optimize_nelder_mead(
                 instance,
                 control_vector,
-                jobs_fun,
                 mapping,
+                jobs_fun,
                 bounds,
                 wgauge,
                 ost,
