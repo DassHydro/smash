@@ -120,7 +120,7 @@ def _standardize_setup(setup: SetupDT):
             setup.pet_directory,
         )
 
-    if not setup.pet_format in ["tif", "nc"]:
+    if setup.pet_format not in ["tif", "nc"]:
         raise ValueError(
             f"Unknown pet_format '{setup.pet_format}'. Choices: {['tif', 'nc']}"
         )
@@ -145,34 +145,15 @@ def _standardize_setup(setup: SetupDT):
             "argument read_descriptor is True and descriptor_name is not defined"
         )
 
-    if not setup.descriptor_format in ["tif", "nc"]:
+    if setup.descriptor_format not in ["tif", "nc"]:
         raise ValueError(
             f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {['tif', 'nc']}"
         )
 
-    if setup.interception_module < 0 or setup.interception_module > 1:
+    setup.structure = setup.structure.lower()
+    if setup.structure not in ["gr-a", "gr-b"]:
         raise ValueError(
-            f"argument interception_module must be in [0, 1] not {setup.interception_module}"
-        )
-
-    if setup.production_module < 0 or setup.production_module > 1:
-        raise ValueError(
-            f"argument production_module must be in [0, 1] not {setup.production_module}"
-        )
-
-    if setup.exchange_module < 0 or setup.exchange_module > 2:
-        raise ValueError(
-            f"argument exchange_module must be in [0, 2] not {setup.exchange_module}"
-        )
-
-    if setup.transfer_module < 0 or setup.transfer_module > 3:
-        raise ValueError(
-            f"argument transfer_module must be in [0, 3] not {setup.transfer_module}"
-        )
-
-    if setup.routing_module < 0 or setup.routing_module > 3:
-        raise ValueError(
-            f"argument routing_module must be in [0, 3] not {setup.routing_module}"
+            f"Unknown structure '{setup.structure}'. Choices: {['gr-a', 'gr-b']}"
         )
 
 

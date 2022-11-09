@@ -1,4 +1,4 @@
-subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
+subroutine gr_base_forward(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
     
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
@@ -108,18 +108,18 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
                     if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
                 
                         !% =============================================================================================== %!
-                        !%   Interception module case [ 0 - 1 ]
+                        !%   Interception module
                         !% =============================================================================================== %!
                     
-                        select case(setup%interception_module)
+                        select case(trim(setup%structure))
                         
-                        case(0)
+                        case("gr-a")
                         
                             ei = min(pet, prcp)
                             
                             pn = max(0._sp, prcp - ei)
                             
-                        case(1)
+                        case("gr-b")
 
                             call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
                         
@@ -128,56 +128,52 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
                         en = pet - ei
                         
                         !% =============================================================================================== %!
-                        !%   Production module case [ 0 ]
+                        !%   Production module
                         !% =============================================================================================== %!
                         
-                        select case(setup%production_module)
-
-                        case(0)
+                        select case(trim(setup%structure))
                         
-                            call gr_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
+                        case("gr-a", "gr-b")
+                        
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
                             & states%hp(row, col), pr, perc)
                             
                         end select
                             
                         !% =============================================================================================== %!
-                        !%   Exchange module case [ 0 - 1 ]
+                        !%   Exchange module
                         !% =============================================================================================== %!
                     
-                        select case(setup%exchange_module)
+                        select case(trim(setup%structure))
                         
-                        case(0)
-                        
-                            l = 0._sp
-                            
-                        case(1)
+                        case("gr-a", "gr-b")
                         
                             call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
-                        
+
                         end select
                         
                     end if !% [ END IF PRCP GAP ]
                     
                     !% =================================================================================================== %!
-                    !%   Transfer module case [ 0 ]
+                    !%   Transfer module
                     !% =================================================================================================== %!
                     
-                    select case(setup%transfer_module)
+                    select case(trim(setup%structure))
+                        
+                    case("gr-a")
                     
-                    case(0)
-                    
-                        prr = parameters%alpha(row, col) * (pr + perc) + l
-                        prd = (1._sp - parameters%alpha(row, col)) * (pr + perc)
+                        prr = 0.9_sp * (pr + perc) + l
+                        prd = 0.1_sp * (pr + perc)
                         
                         call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
                         qd = max(0._sp, prd + l)
                         
                         
-                    case(1)
+                    case("gr-b")
                     
-                        prr = 0.9_sp * parameters%alpha(row, col) * (pr + perc) + l
-                        prl = 0.9_sp * (1._sp - parameters%alpha(row, col)) * (pr + perc)
+                        prr = 0.9_sp * 0.6_sp * (pr + perc) + l
+                        prl = 0.9_sp * 0.4_sp * (pr + perc)
                         prd = 0.1_sp * (pr + perc)
                         
                         call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
@@ -191,33 +187,12 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
                     qt = (qd + qr + ql)
                     
                     !% =================================================================================================== %!
-                    !%   Routing module case [ 0 - 1 ]
+                    !%   Routing module
                     !% =================================================================================================== %!
                     
-                    select case(setup%routing_module)
-                
-                    case(0)
-                    
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
+                    select case(trim(setup%structure))
                         
-                            sparse_q(k) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
-                        
-                            q(row, col) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-                    
-                        end if
-                        
-                    case(1)
+                    case("gr-a", "gr-b")
                         
                         if (setup%sparse_storage) then
                     
@@ -313,9 +288,9 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
         
     end do !% [ END DO TIME ]
     
-    !% =============================================================================================================== %!
+    !% =================================================================================================================== %!
     !%   Store states at final time step and reset states
-    !% =============================================================================================================== %!
+    !% =================================================================================================================== %!
     
     output%fstates = states
     states = states_imd
@@ -326,12 +301,12 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
     
     call compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
         
-end subroutine base_forward
+end subroutine gr_base_forward
 
 !% Subroutine is a copy of forward
 !% Find a way to avoid a full copy
 !% WARNING: Differentiated module
-subroutine base_hyper_forward(setup, mesh, input_data, &
+subroutine gr_base_hyper_forward(setup, mesh, input_data, &
     & hyper_parameters, hyper_parameters_bgd, hyper_states, &
     & hyper_states_bgd, output, cost)
 
@@ -452,18 +427,18 @@ subroutine base_hyper_forward(setup, mesh, input_data, &
                     if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
                 
                         !% =============================================================================================== %!
-                        !%   Interception module case [ 0 - 1 ]
+                        !%   Interception module
                         !% =============================================================================================== %!
                     
-                        select case(setup%interception_module)
+                        select case(trim(setup%structure))
                         
-                        case(0)
+                        case("gr-a")
                         
                             ei = min(pet, prcp)
                             
                             pn = max(0._sp, prcp - ei)
                             
-                        case(1)
+                        case("gr-b")
 
                             call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
                         
@@ -472,56 +447,52 @@ subroutine base_hyper_forward(setup, mesh, input_data, &
                         en = pet - ei
                         
                         !% =============================================================================================== %!
-                        !%   Production module case [ 0 ]
+                        !%   Production module
                         !% =============================================================================================== %!
                         
-                        select case(setup%production_module)
-
-                        case(0)
+                        select case(trim(setup%structure))
                         
-                            call gr_production(pn, en, parameters%cp(row, col), parameters%beta(row, col), &
+                        case("gr-a", "gr-b")
+                        
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
                             & states%hp(row, col), pr, perc)
                             
                         end select
                             
                         !% =============================================================================================== %!
-                        !%   Exchange module case [ 0 - 1 ]
+                        !%   Exchange module
                         !% =============================================================================================== %!
                     
-                        select case(setup%exchange_module)
+                        select case(trim(setup%structure))
                         
-                        case(0)
-                        
-                            l = 0._sp
-                            
-                        case(1)
+                        case("gr-a", "gr-b")
                         
                             call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
-                        
+
                         end select
                         
                     end if !% [ END IF PRCP GAP ]
                     
                     !% =================================================================================================== %!
-                    !%   Transfer module case [ 0 ]
+                    !%   Transfer module
                     !% =================================================================================================== %!
                     
-                    select case(setup%transfer_module)
+                    select case(trim(setup%structure))
+                        
+                    case("gr-a")
                     
-                    case(0)
-                    
-                        prr = parameters%alpha(row, col) * (pr + perc) + l
-                        prd = (1._sp - parameters%alpha(row, col)) * (pr + perc)
+                        prr = 0.9_sp * (pr + perc) + l
+                        prd = 0.1_sp * (pr + perc)
                         
                         call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
                         
                         qd = max(0._sp, prd + l)
                         
                         
-                    case(1)
+                    case("gr-b")
                     
-                        prr = 0.9_sp * parameters%alpha(row, col) * (pr + perc) + l
-                        prl = 0.9_sp * (1._sp - parameters%alpha(row, col)) * (pr + perc)
+                        prr = 0.9_sp * 0.6_sp * (pr + perc) + l
+                        prl = 0.9_sp * 0.4_sp * (pr + perc)
                         prd = 0.1_sp * (pr + perc)
                         
                         call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
@@ -535,33 +506,12 @@ subroutine base_hyper_forward(setup, mesh, input_data, &
                     qt = (qd + qr + ql)
                     
                     !% =================================================================================================== %!
-                    !%   Routing module case [ 0 - 1 ]
+                    !%   Routing module
                     !% =================================================================================================== %!
                     
-                    select case(setup%routing_module)
-                
-                    case(0)
-                    
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
+                    select case(trim(setup%structure))
                         
-                            sparse_q(k) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
-                        
-                            q(row, col) = (qt + qup * real(mesh%drained_area(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-                    
-                        end if
-                        
-                    case(1)
+                    case("gr-a", "gr-b")
                         
                         if (setup%sparse_storage) then
                     
@@ -657,9 +607,9 @@ subroutine base_hyper_forward(setup, mesh, input_data, &
         
     end do !% [ END DO TIME ]
     
-    !% =============================================================================================================== %!
+    !% =================================================================================================================== %!
     !%   Store states at final time step
-    !% =============================================================================================================== %!
+    !% =================================================================================================================== %!
     
     output%fstates = states
     
@@ -670,4 +620,4 @@ subroutine base_hyper_forward(setup, mesh, input_data, &
     call hyper_compute_cost(setup, mesh, input_data, hyper_parameters, &
     & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)
 
-end subroutine base_hyper_forward
+end subroutine gr_base_hyper_forward

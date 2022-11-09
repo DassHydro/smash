@@ -217,7 +217,7 @@ The other :attr:`.Model.setup` arguments can also be viewed even if they have no
 
 .. ipython:: python
 
-    model.setup.production_module, model.setup.routing_module
+    model.setup.structure
     
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 

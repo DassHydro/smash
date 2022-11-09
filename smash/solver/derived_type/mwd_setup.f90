@@ -28,11 +28,6 @@
 !%      ``descriptor_format``      Descriptor map(s) format                               (default: .false.)
 !%      ``descriptor_directory``   Descriptor map(s) directory                            (default: "...")
 !%      ``descriptor_name``        Descriptor map(s) names
-!%      ``interception_module``    Choice of interception module                          (default: 0)
-!%      ``production_module``      Choice of production module                            (default: 0)
-!%      ``transfer_module``        Choice of transfer module                              (default: 0)
-!%      ``exchange_module``        Choice of exchange module                              (default: 0)
-!%      ``routing_module``         Choice of routing module                               (default: 0)
 !%      ``save_qsim_domain``       Save simulated discharge on the domain                 (default: .false.)
 !%      ``save_net_prcp_domain``   Save net precipitation on the domain                   (default: .false.)
 !%
@@ -118,6 +113,8 @@ module mwd_setup
     type SetupDT
     
         !% </> Public
+        character(lchar) :: structure = "gr-a" !>f90w-char
+        
         real(sp) :: dt = 3600._sp
         
         character(lchar) :: start_time = "..." !>f90w-char
@@ -146,14 +143,6 @@ module mwd_setup
         character(lchar) :: descriptor_format = "tif" !>f90w-char
         character(lchar) :: descriptor_directory = "..." !>f90w-char
         character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
-        
-        character(lchar) :: structure !>f90w-char
-        
-        integer :: interception_module = 0
-        integer :: production_module = 0
-        integer :: transfer_module = 0
-        integer :: exchange_module = 0
-        integer :: routing_module = 0
         
         logical :: save_qsim_domain = .false.
         logical :: save_net_prcp_domain = .false.

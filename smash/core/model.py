@@ -87,10 +87,11 @@ class Model(object):
 
     def __repr__(self):
 
-        dim = f"Model dimension: (time: {self.setup._ntime_step}, nrow: {self.mesh.nrow}, ncol: {self.mesh.ncol})"
-        last_update = f"Model last update: {self._last_update}"
+        structure = f"Structure: '{self.setup.structure}'"
+        dim = f"Spatio-Temporal dimension: (x: {self.mesh.ncol}, y: {self.mesh.nrow}, time: {self.setup._ntime_step})"
+        last_update = f"Last update: {self._last_update}"
 
-        return f"{dim}\n{last_update}"
+        return f"{structure}\n{dim}\n{last_update}"
 
     @property
     def setup(self):
