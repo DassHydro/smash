@@ -11,7 +11,7 @@ dependencies:
     - gfortran
     
     # required dependencies
-    - f90wrap==0.2.7
+    - f90wrap
     - numpy
     - pandas
     - matplotlib
