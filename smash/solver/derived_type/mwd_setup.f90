@@ -80,6 +80,16 @@ module mwd_setup
         &   1e-6_sp ,& !% cst
         &   1e-6_sp ,& !% alpha
         &   -50._sp ,& !% exc
+        
+        &   1e-6_sp ,& !% b
+        &   1e-6_sp ,& !% cusl1
+        &   1e-6_sp ,& !% cusl2
+        &   1e-6_sp ,& !% clsl
+        &   1e-6_sp ,& !% ks
+        &   1e-6_sp ,& !% ds
+        &   1e-6_sp ,& !% dsm
+        &   1e-6_sp ,& !% ws
+        
         &   1e-6_sp/)  !% lr
         
         real(sp), dimension(np) :: ub_parameters = &
@@ -91,6 +101,16 @@ module mwd_setup
         &   1e4_sp      ,&  !% cst
         &   0.999999_sp ,&  !% alpha
         &   50._sp      ,&  !% exc
+        
+        &   1e1_sp      ,&  !% b
+        &   2e3_sp      ,&  !% cusl1
+        &   2e3_sp      ,&  !% cusl2
+        &   2e3_sp      ,&  !% clsl
+        &   1e4_sp      ,&  !% ks
+        &   0.999999_sp ,&  !% ds
+        &   30._sp      ,&  !% dsm
+        &   0.999999_sp ,&  !% ws
+        
         &   1e3_sp/)        !% lr
         
         real(sp), dimension(ns) :: lb_states = &
@@ -99,6 +119,11 @@ module mwd_setup
         &   1e-6_sp ,& !% hp
         &   1e-6_sp ,& !% hft
         &   1e-6_sp ,& !% hst
+        
+        &   1e-6_sp ,& !% husl1
+        &   1e-6_sp ,& !% husl2
+        &   1e-6_sp ,& !% hlsl
+        
         &   1e-6_sp/)  !% hlr
         
         real(sp), dimension(ns) :: ub_states = &
@@ -107,6 +132,11 @@ module mwd_setup
         &   0.999999_sp ,& !% hp
         &   0.999999_sp ,& !% hft
         &   0.999999_sp ,& !% hst
+        
+        &   0.999999_sp ,& !% husl1
+        &   0.999999_sp ,& !% husl2
+        &   0.999999_sp ,& !% hlsl
+        
         &   10000._sp/)    !% hlr
         
         real(sp), dimension(:), allocatable :: wgauge
@@ -165,6 +195,16 @@ module mwd_setup
         &   "cst       ",&
         &   "alpha     ",&
         &   "exc       ",&
+        
+        &   "b         ",&
+        &   "cusl1     ",&
+        &   "cusl2     ",&
+        &   "clsl      ",&
+        &   "ks        ",&
+        &   "ds        ",&
+        &   "dsm       ",&
+        &   "ws        ",&
+        
         &   "lr        "/)
         
         character(10), dimension(ns) :: states_name = & !>f90w-private f90w-char_array
@@ -173,6 +213,11 @@ module mwd_setup
         &   "hp        ",&
         &   "hft       ",&
         &   "hst       ",&
+        
+        &   "husl1     ",&
+        &   "husl2     ",&
+        &   "hlsl      ",&
+        
         &   "hlr       "/)
         
     end type SetupDT

@@ -1,3 +1,30 @@
+!%      This module `mwd_states_manipulation` encapsulates all SMASH states manipulation.
+!%      This module is wrapped and differentiated.
+!%      
+!%      set_states interface:
+!%      
+!%      module procedure set0d_states
+!%      module procedure set1d_states
+!%      module procedure set3d_states
+!%      
+!%      set_hyper_states interface:
+!%      
+!%      module procedure set0d_hyper_states
+!%      module procedure set1d_hyper_states
+!%      module procedure set3d_hyper_states
+!%
+!%      contains
+!%
+!%      [1]  get_states
+!%      [2]  set0d_states
+!%      [3]  set1d_states
+!%      [4]  set3d_states
+!%      [5]  get_hyper_states
+!%      [6]  set0d_hyper_states
+!%      [7]  set1d_hyper_states
+!%      [8]  set3d_hyper_states
+!%      [9]  hyper_states_to_states
+
 module mwd_states_manipulation
     
     use md_constant
@@ -38,7 +65,12 @@ module mwd_states_manipulation
             a(:,:,2) = states%hp(:,:)
             a(:,:,3) = states%hft(:,:)
             a(:,:,4) = states%hst(:,:)
-            a(:,:,5) = states%hlr(:,:)
+            
+            a(:,:,5) = states%husl1(:,:)
+            a(:,:,6) = states%husl2(:,:)
+            a(:,:,7) = states%hlsl(:,:)
+            
+            a(:,:,8) = states%hlr(:,:)
         
         end subroutine get_states
         
@@ -51,11 +83,16 @@ module mwd_states_manipulation
             type(StatesDT), intent(inout) :: states
             real(sp), dimension(mesh%nrow,mesh%ncol,ns), intent(in) :: a
             
-            states%hi(:,:)  = a(:,:,1)
-            states%hp(:,:)  = a(:,:,2)
-            states%hft(:,:) = a(:,:,3)
-            states%hst(:,:) = a(:,:,4)
-            states%hlr(:,:) = a(:,:,5)
+            states%hi(:,:)    = a(:,:,1)
+            states%hp(:,:)    = a(:,:,2)
+            states%hft(:,:)   = a(:,:,3)
+            states%hst(:,:)   = a(:,:,4)
+            
+            states%husl1(:,:) = a(:,:,5)
+            states%husl2(:,:) = a(:,:,6)
+            states%hlsl(:,:)  = a(:,:,7)
+            
+            states%hlr(:,:)   = a(:,:,8)
         
         end subroutine set3d_states
         
@@ -111,7 +148,12 @@ module mwd_states_manipulation
             a(:,:,2) = hyper_states%hp(:,:)
             a(:,:,3) = hyper_states%hft(:,:)
             a(:,:,4) = hyper_states%hst(:,:)
-            a(:,:,5) = hyper_states%hlr(:,:)
+            
+            a(:,:,5) = hyper_states%husl1(:,:)
+            a(:,:,6) = hyper_states%husl2(:,:)
+            a(:,:,7) = hyper_states%hlsl(:,:)
+            
+            a(:,:,8) = hyper_states%hlr(:,:)
 
         end subroutine get_hyper_states
         
@@ -124,11 +166,16 @@ module mwd_states_manipulation
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             real(sp), dimension(setup%optimize%nhyper,1,ns), intent(in) :: a
             
-            hyper_states%hi(:,:)  = a(:,:,1)
-            hyper_states%hp(:,:)  = a(:,:,2)
-            hyper_states%hft(:,:) = a(:,:,3)
-            hyper_states%hst(:,:) = a(:,:,4)
-            hyper_states%hlr(:,:) = a(:,:,5)
+            hyper_states%hi(:,:)    = a(:,:,1)
+            hyper_states%hp(:,:)    = a(:,:,2)
+            hyper_states%hft(:,:)   = a(:,:,3)
+            hyper_states%hst(:,:)   = a(:,:,4)
+            
+            hyper_states%husl1(:,:) = a(:,:,5)
+            hyper_states%husl2(:,:) = a(:,:,6)
+            hyper_states%hlsl(:,:)  = a(:,:,7)
+            
+            hyper_states%hlr(:,:)   = a(:,:,8)
         
         end subroutine set3d_hyper_states
         

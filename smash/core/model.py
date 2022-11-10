@@ -236,7 +236,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Run Forward Model M (k)")
+        print("</> Forward Model M (k)")
 
         cost = np.float32(0)
 

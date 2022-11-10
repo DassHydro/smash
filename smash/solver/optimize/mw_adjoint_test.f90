@@ -36,9 +36,6 @@ module mw_adjoint_test
             !% it returns the results of scalar product test.
             !% sp1 = <dY*, dY>
             !% sp2 = <dk*, dk>
-            !%
-            !% Calling forward_d from forward/forward_d.f90  dY  = (dM/dk) (k) . dk
-            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*
             
             type(SetupDT), intent(inout) :: setup
             type(MeshDT), intent(inout) :: mesh
@@ -100,6 +97,7 @@ module mw_adjoint_test
         end subroutine scalar_product_test
         
         
+        !% WIP
         subroutine gradient_test(setup, mesh, input_data, parameters, states, output)
         
             !% Notes
@@ -110,9 +108,6 @@ module mw_adjoint_test
             !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
             !% it returns the results of gradient test.
             !% Ia = (Yadk - Y) / (a dk* . dk)
-            !% 
-            !% Calling forward from forward/forward.f90      Y   = M (k)
-            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*"
         
             implicit none
             

@@ -40,11 +40,13 @@ MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 STRUCTURE_PARAMETERS = {
     "gr-a": ["cp", "cft", "exc", "lr"],
     "gr-b": ["ci", "cp", "cft", "cst", "exc", "lr"],
+    "vic-a": ["b", "cusl1", "cusl2", "clsl", "ks", "ds", "dsm", "ws", "lr"],
 }
 
 STRUCTURE_STATES = {
     "gr-a": ["hp", "hft", "hlr"],
     "gr-b": ["hi", "hp", "hft", "hst", "hlr"],
+    "vic-a": ["husl1", "husl2", "hlsl"],
 }
 
 
@@ -170,6 +172,8 @@ def _optimize_lbfgsb(
     instance.setup._optimize.wjreg = wjreg
 
     if instance.setup._optimize.mapping.startswith("hyper"):
+
+        #% Add Adjoint test for hyper
 
         _optimize_message(instance, control_vector, mapping)
 

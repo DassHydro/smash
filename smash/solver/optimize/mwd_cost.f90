@@ -23,8 +23,8 @@ module mwd_cost
     use mwd_parameters !% only: ParametersDT, Hyper_ParametersDT
     use mwd_states !% only: StatesDT, Hyper_StatesDT
     use mwd_output !% only: OutputDT
-    use mwd_parameters_manipulation
-    use mwd_states_manipulation
+    use mwd_parameters_manipulation !% only: get_parameters
+    use mwd_states_manipulation !%only: get_states
 
     implicit none
     

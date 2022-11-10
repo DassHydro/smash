@@ -10,8 +10,8 @@
 !%      ``sp``                  Single precision value
 !%      ``dp``                  Double precision value
 !%      ``lchar``               Characeter length value
-!%      ``np``                  Number of SMASH parameters (ParametersDT)
-!%      ``ns``                  Number of SMASH states (StatesDT)
+!%      ``np``                  Total number of SMASH parameters (ParametersDT)
+!%      ``ns``                  Total number of SMASH states (StatesDT)
 !%      ======================= ========================================
 
 module md_constant
@@ -22,7 +22,7 @@ module md_constant
     integer, parameter :: dp = 8
     integer, parameter :: lchar = 128
     
-    integer, parameter :: np = 8
-    integer, parameter :: ns = 5
+    integer, parameter :: np = 16
+    integer, parameter :: ns = 8
 
 end module md_constant
