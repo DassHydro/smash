@@ -17,7 +17,7 @@ setup(
     package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_meshing*.so"]},
     include_package_data=True,
     install_requires=[
-        "f90wrap==0.2.7",
+        "f90wrap",
         "numpy",
         "pandas",
         "matplotlib",
