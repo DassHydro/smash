@@ -7,25 +7,21 @@
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
-!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
-!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
-!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
+!%      ``hi``                   Interception state       [-]   (default: 0.01)   ]0, 1[
+!%      ``hp``                   Production state         [-]   (default: 0.01)   ]0, 1[
+!%      ``hft``                  Fast transfer state      [-]   (default: 0.01)   ]0, 1[
+!%      ``hst``                  Slow transfer state      [-]   (default: 0.01)   ]0, 1[
+!%
+!%      ``husl1``                Upper soil layer 1 state [-]   (default: 0.01)   ]0, 1[
+!%      ``husl2``                Upper soil layer 2 state [-]   (default: 0.01)   ]0, 1[
+!%      ``hlsl``                 Lower soil layer state   [-]   (default: 0.01)   ]0, 1[
+!%
+!%      ``hlr``                  Linear routing state     [mm]  (default: 1e-6)   ]0, +Inf[
 !%      ======================== =======================================
 !%
 !%      Hyper_StatesDT type:
 !%      
-!%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
-!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
-!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
-!%      ======================== =======================================
+!%      It contains same States variables (see above)
 !%
 !%      contains
 !%
@@ -52,20 +48,36 @@ module mwd_states
 
     type StatesDT
         
+        !% GR
         real(sp), dimension(:,:), allocatable :: hi
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
         real(sp), dimension(:,:), allocatable :: hst
+        
+        !% VIC
+        real(sp), dimension(:,:), allocatable :: husl1
+        real(sp), dimension(:,:), allocatable :: husl2
+        real(sp), dimension(:,:), allocatable :: hlsl
+        
+        !% Routing
         real(sp), dimension(:,:), allocatable :: hlr
         
     end type StatesDT
     
     type Hyper_StatesDT
     
+        !% GR
         real(sp), dimension(:,:), allocatable :: hi
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
         real(sp), dimension(:,:), allocatable :: hst
+        
+        !% VIC
+        real(sp), dimension(:,:), allocatable :: husl1
+        real(sp), dimension(:,:), allocatable :: husl2
+        real(sp), dimension(:,:), allocatable :: hlsl
+        
+        !% Routing
         real(sp), dimension(:,:), allocatable :: hlr
     
     end type Hyper_StatesDT
@@ -73,6 +85,11 @@ module mwd_states
     contains
         
         subroutine StatesDT_initialise(this, mesh)
+        
+            !% Notes
+            !% -----
+            !%
+            !% StatesDT initialisation subroutine
         
             implicit none
             
@@ -83,12 +100,22 @@ module mwd_states
             allocate(this%hp(mesh%nrow, mesh%ncol))
             allocate(this%hft(mesh%nrow, mesh%ncol))
             allocate(this%hst(mesh%nrow, mesh%ncol))
+            
+            allocate(this%husl1(mesh%nrow, mesh%ncol))
+            allocate(this%husl2(mesh%nrow, mesh%ncol))
+            allocate(this%hlsl(mesh%nrow, mesh%ncol))
+            
             allocate(this%hlr(mesh%nrow, mesh%ncol))
             
             this%hi  = 0.01_sp
             this%hp  = 0.01_sp
             this%hft = 0.01_sp
             this%hst = 0.01_sp
+            
+            this%husl1 = 0.01_sp
+            this%husl2 = 0.01_sp
+            this%hlsl = 0.01_sp
+            
             this%hlr = 0.000001_sp
             
         end subroutine StatesDT_initialise
@@ -110,6 +137,11 @@ module mwd_states
             allocate(this%hp(setup%optimize%nhyper, 1))
             allocate(this%hft(setup%optimize%nhyper, 1))
             allocate(this%hst(setup%optimize%nhyper, 1))
+            
+            allocate(this%husl1(setup%optimize%nhyper, 1))
+            allocate(this%husl2(setup%optimize%nhyper, 1))
+            allocate(this%hlsl(setup%optimize%nhyper, 1))
+            
             allocate(this%hlr(setup%optimize%nhyper, 1))
  
         end subroutine Hyper_StatesDT_initialise

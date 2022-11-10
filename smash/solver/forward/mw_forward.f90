@@ -18,6 +18,11 @@ module mw_forward
         subroutine forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
         
+            !% Notes
+            !% -----
+            !%
+            !% forward interface wrapping *_base_forward
+        
             implicit none
             
             type(SetupDT), intent(in) :: setup
@@ -33,6 +38,11 @@ module mw_forward
                 call gr_base_forward(setup, mesh, input_data, parameters, &
                 & parameters_bgd, states, states_bgd, output, cost)
                 
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_forward(setup, mesh, input_data, parameters, &
+                & parameters_bgd, states, states_bgd, output, cost)
+                
             end if
         
         end subroutine forward
@@ -40,6 +50,11 @@ module mw_forward
         subroutine forward_b(setup, mesh, input_data, parameters, &
         & parameters_b, parameters_bgd, states, states_b, states_bgd, &
         & output, output_b, cost, cost_b)
+        
+            !% Notes
+            !% -----
+            !%
+            !% forward_b interface wrapping *_base_forward_b
         
             implicit none
             
@@ -57,6 +72,12 @@ module mw_forward
                 & parameters_b, parameters_bgd, states, states_b, &
                 & states_bgd, output, output_b, cost, cost_b)
                 
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_forward_b(setup, mesh, input_data, parameters, &
+                & parameters_b, parameters_bgd, states, states_b, &
+                & states_bgd, output, output_b, cost, cost_b)
+                
             end if
         
         end subroutine forward_b
@@ -64,6 +85,11 @@ module mw_forward
         subroutine forward_d(setup, mesh, input_data, parameters, &
         & parameters_d, parameters_bgd, states, states_d, states_bgd, &
         & output, output_d, cost, cost_d)
+            
+            !% Notes
+            !% -----
+            !%
+            !% forward_d interface wrapping *_base_forward_d
         
             implicit none
             
@@ -80,6 +106,12 @@ module mw_forward
                 call gr_base_forward_d(setup, mesh, input_data, parameters, &
                 & parameters_d, parameters_bgd, states, states_d, &
                 & states_bgd, output, output_d, cost, cost_d)
+                
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_forward_d(setup, mesh, input_data, parameters, &
+                & parameters_d, parameters_bgd, states, states_d, &
+                & states_bgd, output, output_d, cost, cost_d)
             
             end if
         
@@ -88,6 +120,11 @@ module mw_forward
         subroutine hyper_forward(setup, mesh, input_data, &
         & hyper_parameters, hyper_parameters_bgd, hyper_states, &
         & hyper_states_bgd, output, cost)
+        
+            !% Notes
+            !% -----
+            !%
+            !% hyper_forward interface wrapping *_base_hyper_forward
         
             implicit none
             
@@ -104,6 +141,12 @@ module mw_forward
                 call gr_base_hyper_forward(setup, mesh, input_data, &
                 & hyper_parameters, hyper_parameters_bgd, hyper_states, &
                 & hyper_states_bgd, output, cost)
+                
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_hyper_forward(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_bgd, hyper_states, &
+                & hyper_states_bgd, output, cost)
             
             end if
         
@@ -113,6 +156,11 @@ module mw_forward
         & hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
         & hyper_states, hyper_states_b, hyper_states_bgd, output, &
         & output_b, cost, cost_b)
+        
+            !% Notes
+            !% -----
+            !%
+            !% hyper_forward_b interface wrapping *_base_hyper_forward_b
         
             implicit none
             
@@ -130,6 +178,13 @@ module mw_forward
                 & hyper_parameters, hyper_parameters_b, &
                 & hyper_parameters_bgd, hyper_states, hyper_states_b, &
                 & hyper_states_bgd, output, output_b, cost, cost_b)
+                
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_hyper_forward_b(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_b, &
+                & hyper_parameters_bgd, hyper_states, hyper_states_b, &
+                & hyper_states_bgd, output, output_b, cost, cost_b)
             
             end if
         
@@ -139,6 +194,11 @@ module mw_forward
         & hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
         & hyper_states, hyper_states_d, hyper_states_bgd, &
         & output, output_d, cost, cost_d)
+        
+            !% Notes
+            !% -----
+            !%
+            !% hyper_forward_d interface wrapping *_base_hyper_forward_d
         
             implicit none
             
@@ -153,6 +213,13 @@ module mw_forward
             if (index(trim(setup%structure), "gr") .ne. 0) then
             
                 call gr_base_hyper_forward_d(setup, mesh, input_data, &
+                & hyper_parameters, hyper_parameters_d, &
+                & hyper_parameters_bgd, hyper_states, hyper_states_d, &
+                & hyper_states_bgd, output, output_d, cost, cost_d)
+                
+            else if (index(setup%structure, "vic") .ne. 0) then
+            
+                call vic_base_hyper_forward_d(setup, mesh, input_data, &
                 & hyper_parameters, hyper_parameters_d, &
                 & hyper_parameters_bgd, hyper_states, hyper_states_d, &
                 & hyper_states_bgd, output, output_d, cost, cost_d)

@@ -151,9 +151,9 @@ def _standardize_setup(setup: SetupDT):
         )
 
     setup.structure = setup.structure.lower()
-    if setup.structure not in ["gr-a", "gr-b"]:
+    if setup.structure not in ["gr-a", "gr-b", "vic-a"]:
         raise ValueError(
-            f"Unknown structure '{setup.structure}'. Choices: {['gr-a', 'gr-b']}"
+            f"Unknown structure '{setup.structure}'. Choices: {['gr-a', 'gr-b', 'vic-a']}"
         )
 
 

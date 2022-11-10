@@ -2,7 +2,7 @@ from setuptools import setup
 
 setup(
     name="smash",
-    version="0.1.7",
+    version="0.1.8",
     description="Spatially distributed Modelling and ASsimilation for Hydrology",
     url="/",
     author="Francois Colleoni",
@@ -17,7 +17,7 @@ setup(
     package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_meshing*.so"]},
     include_package_data=True,
     install_requires=[
-        "f90wrap==0.2.7",
+        "f90wrap",
         "numpy",
         "pandas",
         "matplotlib",

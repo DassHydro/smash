@@ -1,4 +1,4 @@
-!%      This module `md_gr_operator` encapsulates all SMASH GR operator.
+!%      This module `md_gr_operator` encapsulates all SMASH GR operators.
 !%      This module is differentiated.
 !%
 !%      contains

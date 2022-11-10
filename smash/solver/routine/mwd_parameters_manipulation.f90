@@ -1,3 +1,31 @@
+!%      This module `mwd_parameters_manipulation` encapsulates all SMASH parameters manipulation.
+!%      This module is wrapped and differentiated.
+!%      
+!%      set_parameters interface:
+!%      
+!%      module procedure set0d_parameters
+!%      module procedure set1d_parameters
+!%      module procedure set3d_parameters
+!%      
+!%      set_hyper_parameters interface:
+!%      
+!%      module procedure set0d_hyper_parameters
+!%      module procedure set1d_hyper_parameters
+!%      module procedure set3d_hyper_parameters
+!%
+!%      contains
+!%
+!%      [1]  get_parameters
+!%      [2]  set0d_parameters
+!%      [3]  set1d_parameters
+!%      [4]  set3d_parameters
+!%      [5]  get_hyper_parameters
+!%      [6]  set0d_hyper_parameters
+!%      [7]  set1d_hyper_parameters
+!%      [8]  set3d_hyper_parameters
+!%      [9]  hyper_parameters_to_parameters
+
+
 module mwd_parameters_manipulation
     
     use md_constant
@@ -35,14 +63,24 @@ module mwd_parameters_manipulation
             type(ParametersDT), intent(in) :: parameters
             real(sp), dimension(mesh%nrow,mesh%ncol,np), intent(inout) :: a
             
-            a(:,:,1) = parameters%ci(:,:)
-            a(:,:,2) = parameters%cp(:,:)
-            a(:,:,3) = parameters%beta(:,:)
-            a(:,:,4) = parameters%cft(:,:)
-            a(:,:,5) = parameters%cst(:,:)
-            a(:,:,6) = parameters%alpha(:,:)
-            a(:,:,7) = parameters%exc(:,:)
-            a(:,:,8) = parameters%lr(:,:)
+            a(:,:,1)  = parameters%ci(:,:)
+            a(:,:,2)  = parameters%cp(:,:)
+            a(:,:,3)  = parameters%beta(:,:)
+            a(:,:,4)  = parameters%cft(:,:)
+            a(:,:,5)  = parameters%cst(:,:)
+            a(:,:,6)  = parameters%alpha(:,:)
+            a(:,:,7)  = parameters%exc(:,:)
+            
+            a(:,:,8)  = parameters%b(:,:)
+            a(:,:,9)  = parameters%cusl1(:,:)
+            a(:,:,10)  = parameters%cusl2(:,:)
+            a(:,:,11) = parameters%clsl(:,:)
+            a(:,:,12) = parameters%ks(:,:)
+            a(:,:,13) = parameters%ds(:,:)
+            a(:,:,14) = parameters%dsm(:,:)
+            a(:,:,15) = parameters%ws(:,:)
+            
+            a(:,:,16) = parameters%lr(:,:)
         
         end subroutine get_parameters
         
@@ -62,7 +100,17 @@ module mwd_parameters_manipulation
             parameters%cst(:,:)   = a(:,:,5)
             parameters%alpha(:,:) = a(:,:,6)
             parameters%exc(:,:)   = a(:,:,7)
-            parameters%lr(:,:)    = a(:,:,8)
+            
+            parameters%b(:,:)     = a(:,:,8)
+            parameters%cusl1(:,:) = a(:,:,9)
+            parameters%cusl2(:,:) = a(:,:,10)
+            parameters%clsl(:,:)  = a(:,:,11)
+            parameters%ks(:,:)    = a(:,:,12)
+            parameters%ds(:,:)    = a(:,:,13)
+            parameters%dsm(:,:)   = a(:,:,14)
+            parameters%ws(:,:)    = a(:,:,15)
+            
+            parameters%lr(:,:)    = a(:,:,16)
         
         end subroutine set3d_parameters
         
@@ -114,14 +162,24 @@ module mwd_parameters_manipulation
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters
             real(sp), dimension(setup%optimize%nhyper,1,np), intent(inout) :: a
 
-            a(:,:,1) = hyper_parameters%ci(:,:)
-            a(:,:,2) = hyper_parameters%cp(:,:)
-            a(:,:,3) = hyper_parameters%beta(:,:)
-            a(:,:,4) = hyper_parameters%cft(:,:)
-            a(:,:,5) = hyper_parameters%cst(:,:)
-            a(:,:,6) = hyper_parameters%alpha(:,:)
-            a(:,:,7) = hyper_parameters%exc(:,:)
-            a(:,:,8) = hyper_parameters%lr(:,:)
+            a(:,:,1)  = hyper_parameters%ci(:,:)
+            a(:,:,2)  = hyper_parameters%cp(:,:)
+            a(:,:,3)  = hyper_parameters%beta(:,:)
+            a(:,:,4)  = hyper_parameters%cft(:,:)
+            a(:,:,5)  = hyper_parameters%cst(:,:)
+            a(:,:,6)  = hyper_parameters%alpha(:,:)
+            a(:,:,7)  = hyper_parameters%exc(:,:)
+            
+            a(:,:,8)  = hyper_parameters%b(:,:)
+            a(:,:,9)  = hyper_parameters%cusl1(:,:)
+            a(:,:,10)  = hyper_parameters%cusl2(:,:)
+            a(:,:,11) = hyper_parameters%clsl(:,:)
+            a(:,:,12) = hyper_parameters%ks(:,:)
+            a(:,:,13) = hyper_parameters%ds(:,:)
+            a(:,:,14) = hyper_parameters%dsm(:,:)
+            a(:,:,15) = hyper_parameters%ws(:,:)
+            
+            a(:,:,16) = hyper_parameters%lr(:,:)
         
         end subroutine get_hyper_parameters
         
@@ -141,7 +199,17 @@ module mwd_parameters_manipulation
             hyper_parameters%cst(:,:)   = a(:,:,5)
             hyper_parameters%alpha(:,:) = a(:,:,6)
             hyper_parameters%exc(:,:)   = a(:,:,7)
-            hyper_parameters%lr(:,:)    = a(:,:,8)
+            
+            hyper_parameters%b(:,:)     = a(:,:,8)
+            hyper_parameters%cusl1(:,:) = a(:,:,9)
+            hyper_parameters%cusl2(:,:) = a(:,:,10)
+            hyper_parameters%clsl(:,:)  = a(:,:,11)
+            hyper_parameters%ks(:,:)    = a(:,:,12)
+            hyper_parameters%ds(:,:)    = a(:,:,13)
+            hyper_parameters%dsm(:,:)   = a(:,:,14)
+            hyper_parameters%ws(:,:)    = a(:,:,15)
+            
+            hyper_parameters%lr(:,:)    = a(:,:,16)
         
         end subroutine set3d_hyper_parameters
         
