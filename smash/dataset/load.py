@@ -8,7 +8,7 @@ __all__ = ["load_dataset"]
 
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
 
-DATASET_NAME = ["flwdir", "cance"]
+DATASET_NAME = ["flwdir", "cance", "france"]
 
 
 def load_dataset(name: str):
