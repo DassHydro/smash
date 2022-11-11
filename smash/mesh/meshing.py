@@ -422,16 +422,18 @@ def generate_mesh(
 
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-    if bbox:
+    if bbox is None:
 
-        return _get_mesh_from_bbox(ds_flwdir, bbox, epsg)
-
-    else:
-
-        if not x or not y or not area:
+        if x is None or y is None or area is None:
 
             raise ValueError(
                 "'bbox' argument or 'x', 'y' and 'area' arguments must be defined"
             )
+        
+        else:
 
-        return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)
+            return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)
+
+    else:
+
+        return _get_mesh_from_bbox(ds_flwdir, bbox, epsg)
