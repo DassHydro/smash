@@ -46,7 +46,7 @@ Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 Setup argument creation
 ***********************
     
-``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary setup Fortran arrays). 
+``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -73,7 +73,7 @@ A minimal ``setup`` configuration is:
 Mesh argument creation
 **********************
 
-``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary mesh Fortran arrays). 
+``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -180,7 +180,7 @@ Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be creat
 
 .. note::
 
-    The representation of the :class:`.Model` object is very simple and only displays the dimensions and the last action that updated the object. More information on what the object contains is available below.
+    The representation of the :class:`.Model` object is very simple and only displays the structure used, the dimensions and the last action that updated the object. More information on what the object contains is available below.
     
 -------------
 Viewing Model
@@ -217,7 +217,7 @@ The other :attr:`.Model.setup` arguments can also be viewed even if they have no
 
 .. ipython:: python
 
-    model.setup.structure
+    model.setup.structure, model.setup.prcp_indice
     
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
@@ -225,21 +225,19 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.setup.<TAB>
-    model.setup.copy(                   model.setup.prcp_directory
-    model.setup.daily_interannual_pet   model.setup.prcp_format
-    model.setup.descriptor_directory    model.setup.prcp_indice
-    model.setup.descriptor_format       model.setup.production_module
-    model.setup.descriptor_name         model.setup.qobs_directory
-    model.setup.dt                      model.setup.read_descriptor
-    model.setup.end_time                model.setup.read_pet
-    model.setup.exchange_module         model.setup.read_prcp
-    model.setup.from_handle(            model.setup.read_qobs
-    model.setup.interception_module     model.setup.routing_module
-    model.setup.mean_forcing            model.setup.save_qsim_domain
-    model.setup.pet_conversion_factor   model.setup.sparse_storage
-    model.setup.pet_directory           model.setup.start_time
-    model.setup.pet_format              model.setup.transfer_module
-    model.setup.prcp_conversion_factor 
+    mo.setup.copy(                   mo.setup.prcp_directory
+    mo.setup.daily_interannual_pet   mo.setup.prcp_format
+    mo.setup.descriptor_directory    mo.setup.prcp_indice
+    mo.setup.descriptor_format       mo.setup.qobs_directory
+    mo.setup.descriptor_name         mo.setup.read_descriptor
+    mo.setup.dt                      mo.setup.read_pet
+    mo.setup.end_time                mo.setup.read_prcp
+    mo.setup.from_handle(            mo.setup.read_qobs
+    mo.setup.mean_forcing            mo.setup.save_net_prcp_domain
+    mo.setup.pet_conversion_factor   mo.setup.save_qsim_domain
+    mo.setup.pet_directory           mo.setup.sparse_storage
+    mo.setup.pet_format              mo.setup.start_time
+    mo.setup.prcp_conversion_factor  mo.setup.structure
     
 Mesh
 ****
@@ -271,15 +269,15 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.mesh.<TAB>
-    model.mesh.active_cell   model.mesh.gauge_pos
-    model.mesh.area          model.mesh.nac
-    model.mesh.code          model.mesh.ncol
-    model.mesh.copy(         model.mesh.ng
-    model.mesh.drained_area  model.mesh.nrow
-    model.mesh.dx            model.mesh.path
-    model.mesh.flwdir        model.mesh.xmin
-    model.mesh.flwdst        model.mesh.ymax
-    model.mesh.from_handle( 
+    mo.mesh.active_cell   mo.mesh.gauge_pos
+    mo.mesh.area          mo.mesh.nac
+    mo.mesh.code          mo.mesh.ncol
+    mo.mesh.copy(         mo.mesh.ng
+    mo.mesh.drained_area  mo.mesh.nrow
+    mo.mesh.dx            mo.mesh.path
+    mo.mesh.flwdir        mo.mesh.xmin
+    mo.mesh.flwdst        mo.mesh.ymax
+    mo.mesh.from_handle(
 
 
 Input Data
@@ -348,20 +346,26 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.parameters.<TAB>
-    model.parameters.alpha         model.parameters.cp
-    model.parameters.beta          model.parameters.cst
-    model.parameters.cft           model.parameters.exc
-    model.parameters.ci            model.parameters.from_handle(
-    model.parameters.copy(         model.parameters.lr
+    mo.parameters.alpha         mo.parameters.cusl1
+    mo.parameters.b             mo.parameters.cusl2
+    mo.parameters.beta          mo.parameters.ds
+    mo.parameters.cft           mo.parameters.dsm
+    mo.parameters.ci            mo.parameters.exc
+    mo.parameters.clsl          mo.parameters.from_handle(
+    mo.parameters.copy(         mo.parameters.ks
+    mo.parameters.cp            mo.parameters.lr
+    mo.parameters.cst           mo.parameters.ws
+
     
 .. ipython:: python
     
     @verbatim
     model.states.<TAB>
-    model.states.copy(         model.states.hlr
-    model.states.from_handle(  model.states.hp
-    model.states.hft           model.states.hst
-    model.states.hi
+    mo.states.copy(         mo.states.hlsl
+    mo.states.from_handle(  mo.states.hp
+    mo.states.hft           mo.states.hst
+    mo.states.hi            mo.states.husl1
+    mo.states.hlr           mo.states.husl2
     
 Output
 ******
@@ -412,8 +416,10 @@ Checking on any cell the precipitation values:
     plt.plot(model.input_data.prcp[0,0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    @savefig prpc_pc_user_guide.png
     plt.ylabel("Precipitation $(mm/h)$");
+    @savefig prpc_pc_user_guide.png
+    plt.title("Precipitation on cell (0,0)");
+   
     
 ---
 Run
@@ -426,7 +432,7 @@ The :class:`.Model` is finally ready to be run using the :meth:`.Model.run` meth
     
 .. ipython:: python
 
-    model.run(inplace=True)
+    model.run(inplace=True);
 
     model
     
@@ -438,11 +444,13 @@ Once the run is done, it is possible to access the simulated discharge on the ga
     plt.plot(model.output.qsim[0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    @savefig qsim_fwd_pc_user_guide.png
     plt.ylabel("Simulated discharge $(m^3/s)$");
+    @savefig qsim_fwd_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
+    
     
 
-This hydrograph is the result of a forward run of the code with the default structure, parameters and initial states.
+This hydrograph is the result of a forward run of the code with the default structure (``gr-a``), parameters and initial states.
     
 Optimization
 ************
@@ -463,15 +471,16 @@ Re run to see the difference between the hydrographs.
 
 .. ipython:: python
 
-    model.run(inplace=True)
+    model.run(inplace=True);
     
     plt.plot(model.input_data.qobs[0,:], label="Observed discharge");
     plt.plot(model.output.qsim[0,:], label="Simulated discharge");
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
-    @savefig qsim_fwd2_pc_user_guide.png
     plt.legend();
+    @savefig qsim_fwd2_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
     
 Finally, perform a spatially uniform calibration (which is default optimization) of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
 
@@ -490,8 +499,9 @@ Finally, perform a spatially uniform calibration (which is default optimization)
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
-    @savefig qsim_opt_pc_user_guide.png
     plt.legend();
+    @savefig qsim_opt_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
     
 .. note::
     
@@ -568,6 +578,6 @@ A file named ``model.hdf5`` has been created in the current working directory co
 
 .. ipython:: python
 
-    model3.run(inplace=True)
+    model3.run(inplace=True);
 
     model3

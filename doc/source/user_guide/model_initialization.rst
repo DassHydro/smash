@@ -15,6 +15,22 @@ Setup
 In this section all the setup options that can be passed to the ``setup`` dictionary needed to initialize the :class:`.Model` object will be presented.
 
 
+Structure options
+*****************
+
+``structure``:bolditalic:`: str, default "gr-a"`
+    Model structure. Possible model structures are:
+
+    - "gr-a"
+        4 parameters and 3 states structure. Structure most similar to ``GR4`` (TODO ref).
+
+    - "gr-b"
+        6 parameters and 5 states structure. Structure most similar to ``GR6`` (TODO ref)
+    
+    - "vic-a"
+        8 parameters and 3 states structure. Structure most similar to ``VIC3L`` (TODO ref)
+
+
 Time options
 ************
 
@@ -86,49 +102,6 @@ Input data options
     
 ``mean_forcing``:bolditalic:`: bool, default False`
     Enables the calculation of average atmospheric data (i.e. precipitation and PET) by catchment.
-    
-    
-Operator options
-****************
-
-.. deprecated:: 0.2.0
-
-    use ``structure`` instead.
-
-
-``interception_module``:bolditalic:`: int, default 0`
-    Interception module selection:
-    
-    - 0: No interception
-    
-    - 1: ``GR`` interception
-    
-``production_module``:bolditalic:`: int, default 0`
-    Production module selection:
-    
-    - 0: ``GR`` production
-    
-``transfer_module``:bolditalic:`: int, default 0`
-    Transfer module selection:
-    
-    - 0: ``GR4`` transfer
-    
-    - 1: ``GR6`` transfer
-    
-``exchange_module``:bolditalic:`: int, default 0`
-    Exchange module selection:
-    
-    - 0: No exchange
-    
-    - 1: ``GR4`` exchange
-    
-``routing_module``:bolditalic:`: int, default 0`
-    Routing module selection:
-    
-    - 0: No routing (direct sum of cells discharges)
-    
-    - 1: Linear routing module
-
 
 Output options
 **************

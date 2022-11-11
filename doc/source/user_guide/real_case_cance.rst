@@ -56,6 +56,8 @@ Compared to the :ref:`user_guide.practice_case`, more options have been filled i
     
 To get into the details:
 
+- ``structure``: the model structure (TODO ref),
+
 - ``dt``: the calculation time step in s,
 
 - ``start_time``: the beginning of the simulation,
@@ -83,10 +85,6 @@ To get into the details:
 - ``daily_interannual_pet``: whether or not to read potential evapotranspiration file as daily interannual value desaggregated to the corresponding time step ``dt``,
 
 - ``pet_directory``: the path to the potential evapotranspiration files (this path is automatically generated when you load the data),
-
-- ``exchange_module``: Choice of the exchange module (``1`` is GR4 exchange module (TODO ref)),
-
-- ``routing module``: Choice of the routing module (``1`` is linear routing (TODO ref)).
 
 Before going into the explanation of the ``mesh``, the following section details the structure of the observed discharges, precipitation and potential evapotranspiration files read.
 
@@ -303,7 +301,7 @@ Call the :meth:`smash.generate_mesh` method:
         code=code,
     )
     
-This ``mesh`` created is a dictionnary which is identical to the ``mesh`` loaded with the :meth:`smash.load_dataset` method.
+This ``mesh2`` created is a dictionnary which is identical to the ``mesh`` loaded with the :meth:`smash.load_dataset` method.
 
 .. ipython:: python
 
@@ -438,40 +436,22 @@ observed quantities, such as discharge. Note that :math:`J` depends on the sough
     \hat{\theta} = \underset{\theta}{\mathrm{argmin}} \; J\left( \theta \right)
     
 Several calibration strategies are available in `smash`. They are based on different optimization algorithms and are for example adapted to inverse problems of various complexity, including high dimensional ones.
-For the purposes of the user guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge (TODO ref).
+For the purposes of the User Guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge (TODO ref).
 
 Spatially uniform optimization
 ''''''''''''''''''''''''''''''
 
-We consider here for optimization:
+We consider here for optimization (which is the default setup with ``gr-a`` structure):
 
 - a global minimization algorithm :math:`\mathrm{SBS}`,
 - a single :math:`\mathrm{NSE}` objective function from discharge time series at the most downstream gauge ``V3524010``,
 - a spatially uniform parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``jobs_fun``, ``control_vector`` and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
+Call the :meth:`.Model.optimize` method and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
 
 .. ipython:: python
-    :suppress:
 
-    model_su = model.optimize(
-        mapping="uniform",
-        algorithm="sbs",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 2}
-        )
-
-.. ipython:: python
-    :verbatim:
-
-    model_su = model.optimize(
-        mapping="uniform",
-        algorithm="sbs",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 2}
-        )
+    model_su = model.optimize(options={"maxiter": 2});
 
 While the optimization routine is in progress, some information are provided.
 
@@ -492,7 +472,7 @@ While the optimization routine is in progress, some information are provided.
         At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
-This information is reminiscent of what we have entered in optimization options:
+This information remainds the ptimization options:
 
 - ``Algorithm``: the minimization algorithm,
 - ``Jobs_fun``: the objective function,
@@ -559,7 +539,7 @@ We consider here for optimization:
 - a spatially distributed parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 - a prior set of parameters :math:`\bar{\theta}^*` generated from the previous spatially uniform global optimization.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``jobs_fun``, ``control_vector`` and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
+Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
 
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model_su`` instance which had stored the previous optimized parameters.
 
@@ -567,23 +547,17 @@ As we run this optimization from the previously generated uniform parameter set,
     :suppress:
 
     model_sd = model_su.optimize(
-        mapping="distributed",
-        algorithm="l-bfgs-b",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 10},
-    )
+            mapping="distributed",
+            options={"maxiter": 10}
+        )
 
 .. ipython:: python
     :verbatim:
 
     model_sd = model_su.optimize(
-        mapping="distributed",
-        algorithm="l-bfgs-b",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 10},
-    )
+            mapping="distributed",
+            options={"maxiter": 10}
+        )
     
 While the optimization routine is in progress, some information are provided.
 
@@ -605,14 +579,14 @@ While the optimization routine is in progress, some information are provided.
         At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
         At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
         At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035662    |proj g| =  0.000019
-        At iterate      5    nfg =     7    J =  0.034911    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033658    |proj g| =  0.000010
-        At iterate      7    nfg =     9    J =  0.032118    |proj g| =  0.000013
-        At iterate      8    nfg =    10    J =  0.031269    |proj g| =  0.000010
-        At iterate      9    nfg =    11    J =  0.028352    |proj g| =  0.000076
-        At iterate     10    nfg =    12    J =  0.026779    |proj g| =  0.000024
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
+        At iterate      4    nfg =     5    J =  0.035661    |proj g| =  0.000019
+        At iterate      5    nfg =     7    J =  0.034909    |proj g| =  0.000011
+        At iterate      6    nfg =     8    J =  0.033656    |proj g| =  0.000010
+        At iterate      7    nfg =     9    J =  0.032117    |proj g| =  0.000013
+        At iterate      8    nfg =    10    J =  0.031270    |proj g| =  0.000010
+        At iterate      9    nfg =    11    J =  0.028340    |proj g| =  0.000076
+        At iterate     10    nfg =    12    J =  0.026773    |proj g| =  0.000024
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT 
         
         
 The information are broadly similar to the spatially uniform optimization, except for
