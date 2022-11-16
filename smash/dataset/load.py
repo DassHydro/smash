@@ -34,7 +34,7 @@ def load_dataset(name: str):
         )
 
         return setup, mesh
-        
+
     elif name == "france":
 
         setup = smash.read_setup(os.path.join(DATASET_PATH, "France/setup_France.yaml"))
@@ -42,7 +42,6 @@ def load_dataset(name: str):
 
         setup.update(
             {
-
                 "prcp_directory": os.path.join(DATASET_PATH, "France/prcp"),
                 "pet_directory": os.path.join(DATASET_PATH, "France/pet"),
             }

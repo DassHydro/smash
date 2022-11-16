@@ -5,6 +5,13 @@
 !%      This module is differentiated.
 !%
 !%      contains
+!%
+!%      [1] vic_infiltration
+!%      [2] vic_vertical_transfer
+!%      [3] vic_interflow
+!%      [4] vic_baseflow
+!%      [5] brooks_and_corey_flow
+!%      [6] linear_evapotranspiration
 MODULE MD_VIC_OPERATOR_DIFF
 !% only : sp
   USE MD_CONSTANT
@@ -1074,31 +1081,29 @@ END MODULE MD_VIC_OPERATOR_DIFF
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
-!%      ``ci``                   Interception parameter          [mm]    (default: 1)     ]0, +Inf[
-!%      ``cp``                   Production parameter            [mm]    (default: 200)   ]0, +Inf[
-!%      ``beta``                 Percolation parameter           [-]     (default: 1000)  ]0, +Inf[
-!%      ``cft``                  Fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
-!%      ``cst``                  Slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
-!%      ``alpha``                Transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
-!%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
-!%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
+!%      ``ci``                   GR interception parameter          [mm]    (default: 1)     ]0, +Inf[
+!%      ``cp``                   GR production parameter            [mm]    (default: 200)   ]0, +Inf[
+!%      ``beta``                 GR percolation parameter           [-]     (default: 1000)  ]0, +Inf[
+!%      ``cft``                  GR fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``cst``                  GR slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
+!%      ``alpha``                GR transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
+!%      ``exc``                  GR exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
+!%
+!%      ``b``                    VIC infiltration parameter         [-]     (default: 0.3)   ]0, +Inf[
+!%      ``cusl1``                VIC upper soil layer 1 capacity    [mm]    (default: 100)   ]0, +Inf[
+!%      ``cusl2``                VIC upper soil layer 2 capacity    [mm]    (default: 500)   ]0, +Inf[
+!%      ``clsl``                 VIC lower soil layer capacity      [mm]    (default: 2000)  ]0, +Inf[
+!%      ``ks``                   VIC sat. hydraulic conductivity    [mm/dt] (default: 20)    ]0, +Inf[
+!%      ``ds``                   VIC baseflow ds parameter          [-]     (default: 0.02)  ]0, 1[
+!%      ``dsm``                  VIC baseflow max discharge         [mm/dt] (default: 0.33)  ]0, +Inf[
+!%      ``ws``                   VIC baseflow linear threshold      [-]     (default: 0.8)  ]0, 1[
+!%
+!%      ``lr``                   Linear routing parameter           [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
 !%      
 !%      Hyper_ParametersDT type:
-!%
-!%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``ci``                   Interception parameter          [mm]    (default: 1)     ]0, +Inf[
-!%      ``cp``                   Production parameter            [mm]    (default: 200)   ]0, +Inf[
-!%      ``beta``                 Percolation parameter           [-]     (default: 1000)  ]0, +Inf[
-!%      ``cft``                  Fast transfer parameter         [mm]    (default: 500)   ]0, +Inf[
-!%      ``cst``                  Slow transfer parameter         [mm]    (default: 500)   ]0, +Inf[
-!%      ``alpha``                Transfer partitioning parameter [-]     (default: 0.9)   ]0, 1[
-!%      ``exc``                  Exchange parameter              [mm/dt] (default: 0)     ]-Inf, +Inf[
-!%      ``lr``                   Linear routing parameter        [min]   (default: 5)     ]0, +Inf[
-!%      ======================== =======================================
+!%      
+!%      It contains same Parameters variables (see above)
 !%
 !%      contains
 !%
@@ -1373,25 +1378,21 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ======================== =======================================
 !%      `Variables`              Description
 !%      ======================== =======================================
-!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
-!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
-!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
+!%      ``hi``                   Interception state       [-]   (default: 0.01)   ]0, 1[
+!%      ``hp``                   Production state         [-]   (default: 0.01)   ]0, 1[
+!%      ``hft``                  Fast transfer state      [-]   (default: 0.01)   ]0, 1[
+!%      ``hst``                  Slow transfer state      [-]   (default: 0.01)   ]0, 1[
+!%
+!%      ``husl1``                Upper soil layer 1 state [-]   (default: 0.01)   ]0, 1[
+!%      ``husl2``                Upper soil layer 2 state [-]   (default: 0.01)   ]0, 1[
+!%      ``hlsl``                 Lower soil layer state   [-]   (default: 0.01)   ]0, 1[
+!%
+!%      ``hlr``                  Linear routing state     [mm]  (default: 1e-6)   ]0, +Inf[
 !%      ======================== =======================================
 !%
 !%      Hyper_StatesDT type:
 !%      
-!%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``hi``                   Interception state    [-]   (default: 0.01)   ]0, 1[
-!%      ``hp``                   Production state      [-]   (default: 0.01)   ]0, 1[
-!%      ``hft``                  Fast transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hst``                  Slow transfer state   [-]   (default: 0.01)   ]0, 1[
-!%      ``hlr``                  Linear routing state  [mm]  (default: 0.01)   ]0, +Inf[
-!%      ======================== =======================================
+!%      It contains same States variables (see above)
 !%
 !%      contains
 !%
@@ -2628,6 +2629,32 @@ CONTAINS
 
 END MODULE MD_ROUTING_OPERATOR_DIFF
 
+!%      This module `mwd_parameters_manipulation` encapsulates all SMASH parameters manipulation.
+!%      This module is wrapped and differentiated.
+!%      
+!%      set_parameters interface:
+!%      
+!%      module procedure set0d_parameters
+!%      module procedure set1d_parameters
+!%      module procedure set3d_parameters
+!%      
+!%      set_hyper_parameters interface:
+!%      
+!%      module procedure set0d_hyper_parameters
+!%      module procedure set1d_hyper_parameters
+!%      module procedure set3d_hyper_parameters
+!%
+!%      contains
+!%
+!%      [1]  get_parameters
+!%      [2]  set0d_parameters
+!%      [3]  set1d_parameters
+!%      [4]  set3d_parameters
+!%      [5]  get_hyper_parameters
+!%      [6]  set0d_hyper_parameters
+!%      [7]  set1d_hyper_parameters
+!%      [8]  set3d_hyper_parameters
+!%      [9]  hyper_parameters_to_parameters
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MD_CONSTANT
   USE MWD_SETUP
@@ -3390,6 +3417,32 @@ CONTAINS
 
 END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 
+!%      This module `mwd_states_manipulation` encapsulates all SMASH states manipulation.
+!%      This module is wrapped and differentiated.
+!%      
+!%      set_states interface:
+!%      
+!%      module procedure set0d_states
+!%      module procedure set1d_states
+!%      module procedure set3d_states
+!%      
+!%      set_hyper_states interface:
+!%      
+!%      module procedure set0d_hyper_states
+!%      module procedure set1d_hyper_states
+!%      module procedure set3d_hyper_states
+!%
+!%      contains
+!%
+!%      [1]  get_states
+!%      [2]  set0d_states
+!%      [3]  set1d_states
+!%      [4]  set3d_states
+!%      [5]  get_hyper_states
+!%      [6]  set0d_hyper_states
+!%      [7]  set1d_hyper_states
+!%      [8]  set3d_hyper_states
+!%      [9]  hyper_states_to_states
 MODULE MWD_STATES_MANIPULATION_DIFF
   USE MD_CONSTANT
   USE MWD_SETUP
@@ -3982,7 +4035,7 @@ END MODULE MWD_STATES_MANIPULATION_DIFF
 !%      [6]  kge
 !%      [7]  se
 !%      [8]  rmse
-!%      [9]  logarithmique
+!%      [9]  logarithmic
 !%      [10] reg_prior
 MODULE MWD_COST_DIFF
 !% only: sp, dp, lchar, np, ns
@@ -3999,7 +4052,9 @@ MODULE MWD_COST_DIFF
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
+!% only: get_parameters
   USE MWD_PARAMETERS_MANIPULATION_DIFF
+!%only: get_states
   USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
   PUBLIC :: compute_jobs, compute_jreg, compute_cost
@@ -4056,8 +4111,8 @@ CONTAINS
           gauge_jobs_d(g) = SE_D(qo, qs, qs_d, gauge_jobs(g))
         CASE ('rmse') 
           gauge_jobs_d(g) = RMSE_D(qo, qs, qs_d, gauge_jobs(g))
-        CASE ('logarithmique') 
-          gauge_jobs_d(g) = LOGARITHMIQUE_D(qo, qs, qs_d, gauge_jobs(g))
+        CASE ('logarithmic') 
+          gauge_jobs_d(g) = LOGARITHMIC_D(qo, qs, qs_d, gauge_jobs(g))
         END SELECT
       END IF
     END DO
@@ -4131,8 +4186,8 @@ CONTAINS
         CASE ('rmse') 
           res2 = RMSE(qo, qs)
           CALL PUSHCONTROL3B(2)
-        CASE ('logarithmique') 
-          res3 = LOGARITHMIQUE(qo, qs)
+        CASE ('logarithmic') 
+          res3 = LOGARITHMIC(qo, qs)
           CALL PUSHCONTROL3B(1)
         CASE DEFAULT
           CALL PUSHCONTROL3B(7)
@@ -4159,7 +4214,7 @@ CONTAINS
             qs_b = 0.0_4
             res_b3 = gauge_jobs_b(g)
             gauge_jobs_b(g) = 0.0_4
-            CALL LOGARITHMIQUE_B(qo, qs, qs_b, res_b3)
+            CALL LOGARITHMIC_B(qo, qs, qs_b, res_b3)
           END IF
         ELSE IF (branch .EQ. 2) THEN
           qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
@@ -4247,8 +4302,8 @@ CONTAINS
           gauge_jobs(g) = SE(qo, qs)
         CASE ('rmse') 
           gauge_jobs(g) = RMSE(qo, qs)
-        CASE ('logarithmique') 
-          gauge_jobs(g) = LOGARITHMIQUE(qo, qs)
+        CASE ('logarithmic') 
+          gauge_jobs(g) = LOGARITHMIC(qo, qs)
         END SELECT
       END IF
     END DO
@@ -5181,10 +5236,10 @@ CONTAINS
     res = SQRT(result1/n)
   END FUNCTION RMSE
 
-!  Differentiation of logarithmique in forward (tangent) mode (with options fixinterface):
+!  Differentiation of logarithmic in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
-  FUNCTION LOGARITHMIQUE_D(x, y, y_d, res) RESULT (RES_D)
+  FUNCTION LOGARITHMIC_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
     REAL, DIMENSION(:), INTENT(IN) :: y_d
@@ -5211,12 +5266,12 @@ CONTAINS
         res_d = res_d + x(i)*(temp*arg1_d/arg1+temp0*arg2_d/arg2)
       END IF
     END DO
-  END FUNCTION LOGARITHMIQUE_D
+  END FUNCTION LOGARITHMIC_D
 
-!  Differentiation of logarithmique in reverse (adjoint) mode (with options fixinterface):
+!  Differentiation of logarithmic in reverse (adjoint) mode (with options fixinterface):
 !   gradient     of useful results: res
 !   with respect to varying inputs: y
-  SUBROUTINE LOGARITHMIQUE_B(x, y, y_b, res_b)
+  SUBROUTINE LOGARITHMIC_B(x, y, y_b, res_b)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
     REAL, DIMENSION(:) :: y_b
@@ -5254,9 +5309,9 @@ CONTAINS
         CALL POPREAL4(arg1)
       END IF
     END DO
-  END SUBROUTINE LOGARITHMIQUE_B
+  END SUBROUTINE LOGARITHMIC_B
 
-  FUNCTION LOGARITHMIQUE(x, y) RESULT (RES)
+  FUNCTION LOGARITHMIC(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL, DIMENSION(:), INTENT(IN) :: x, y
     REAL :: res
@@ -5273,7 +5328,7 @@ CONTAINS
         res = res + x(i)*LOG(arg1)*LOG(arg2)
       END IF
     END DO
-  END FUNCTION LOGARITHMIQUE
+  END FUNCTION LOGARITHMIC
 
 !  Differentiation of reg_prior in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: res
@@ -5376,9 +5431,9 @@ SUBROUTINE GR_BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
@@ -5387,7 +5442,7 @@ SUBROUTINE GR_BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -5707,9 +5762,9 @@ SUBROUTINE GR_BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
@@ -5718,7 +5773,7 @@ SUBROUTINE GR_BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -6177,9 +6232,9 @@ SUBROUTINE GR_BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
@@ -6188,7 +6243,7 @@ SUBROUTINE GR_BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -6492,7 +6547,7 @@ SUBROUTINE GR_BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost
+!% only: compute_hyper_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -6846,7 +6901,7 @@ SUBROUTINE GR_BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost
+!% only: compute_hyper_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -7333,7 +7388,7 @@ SUBROUTINE GR_BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 !% & gr_transfer
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost
+!% only: compute_hyper_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -7616,17 +7671,17 @@ SUBROUTINE VIC_BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: 
+!% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
   USE MD_VIC_OPERATOR_DIFF
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -7887,17 +7942,17 @@ SUBROUTINE VIC_BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: 
+!% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
   USE MD_VIC_OPERATOR_DIFF
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -8270,17 +8325,17 @@ SUBROUTINE VIC_BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT
+!% only: ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT
+!% only: StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
-!% only: 
+!% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
   USE MD_VIC_OPERATOR_DIFF
 !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
-!% only: compute_cost, hyper_compuste_cost
+!% only: compute_cost
   USE MWD_COST_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
@@ -8492,6 +8547,7 @@ END SUBROUTINE VIC_BASE_FORWARD_NODIFF
 !                hyper_parameters.ws:(loc) *(hyper_parameters.ws):(loc)
 !                hyper_parameters.lr:(loc) *(hyper_parameters.lr):(loc)
 !                cost:(loc)
+!% WIP
 SUBROUTINE VIC_BASE_HYPER_FORWARD_D(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
 & hyper_states, hyper_states_d, hyper_states_bgd, output, cost, cost_d)
@@ -8574,6 +8630,7 @@ END SUBROUTINE VIC_BASE_HYPER_FORWARD_D
 !                hyper_parameters.ws:(loc) *(hyper_parameters.ws):(loc)
 !                hyper_parameters.lr:(loc) *(hyper_parameters.lr):(loc)
 !                cost:(loc)
+!% WIP
 SUBROUTINE VIC_BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
 & hyper_states, hyper_states_b, hyper_states_bgd, output, cost, cost_b)
@@ -8654,6 +8711,7 @@ SUBROUTINE VIC_BASE_HYPER_FORWARD_B(setup, mesh, input_data, &
   hyper_parameters_b%lr = 0.0_4
 END SUBROUTINE VIC_BASE_HYPER_FORWARD_B
 
+!% WIP
 SUBROUTINE VIC_BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, &
 & hyper_parameters, hyper_parameters_bgd, hyper_states, hyper_states_bgd&
 & , output, cost)

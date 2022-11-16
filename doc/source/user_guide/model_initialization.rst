@@ -73,7 +73,6 @@ Input data options
 ``prcp_directory``:bolditalic:`: str`
     Path to the directory with precipitaton files.
 
-
 ``read_pet``:bolditalic:`: bool, default False`
     Enables the reading of evapotranspiration (PET) files.
     
@@ -102,6 +101,19 @@ Input data options
     
 ``mean_forcing``:bolditalic:`: bool, default False`
     Enables the calculation of average atmospheric data (i.e. precipitation and PET) by catchment.
+
+``read_descriptor``:bolditalic:`: bool, default False`
+    Enables the reading of physiographic descriptor files.
+
+``descriptor_directory``:bolditalic:`: str`
+    Path to the directory with physiographic descriptor files.
+
+``descriptor_name``:bolditalic:`: list[str]`
+    List of physiographic descriptor names (the size of the list will be used to allocate the descriptor array and used to read the corresponding files).
+
+Conventions for input data files
+````````````````````````````````
+TODO
 
 Output options
 **************

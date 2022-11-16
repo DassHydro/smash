@@ -58,7 +58,7 @@ On your own environment
         sudo apt-get install gdal-bin libgdal-dev
         
 3. **Build**
-    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory,
+    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory,
     
     .. code-block:: none
     
@@ -87,7 +87,7 @@ Anaconda
     ``conda`` can be downloaded `here <https://www.anaconda.com/>`__.
         
 1. **Create environment**
-    In the `smash` directory create the ``conda`` environment named ``smash``,
+    In the ``smash`` directory create the ``conda`` environment named **smash**,
     
     .. code-block:: none
     
@@ -101,7 +101,7 @@ Anaconda
         conda activate smash
         
 3. **Build**
-    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the `smash` directory,
+    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory,
     
     .. code-block:: none
     

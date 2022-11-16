@@ -429,7 +429,7 @@ def generate_mesh(
             raise ValueError(
                 "'bbox' argument or 'x', 'y' and 'area' arguments must be defined"
             )
-        
+
         else:
 
             return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)

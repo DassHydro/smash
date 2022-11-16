@@ -11,7 +11,7 @@
 !%      [6]  kge
 !%      [7]  se
 !%      [8]  rmse
-!%      [9]  logarithmique
+!%      [9]  logarithmic
 !%      [10] reg_prior
 
 module mwd_cost
@@ -50,7 +50,7 @@ module mwd_cost
             !% kge
             !% se
             !% rmse
-            !% logarithmique
+            !% logarithmic
             
             implicit none
             
@@ -105,9 +105,9 @@ module mwd_cost
                     
                         gauge_jobs(g) = rmse(qo, qs)
                         
-                    case("logarithmique")
+                    case("logarithmic")
                     
-                        gauge_jobs(g) = logarithmique(qo, qs)
+                        gauge_jobs(g) = logarithmic(qo, qs)
 
                     end select
     
@@ -483,12 +483,12 @@ module mwd_cost
         end function rmse
         
         
-        function logarithmique(x, y) result(res)
+        function logarithmic(x, y) result(res)
             
             !% Notes
             !% -----
             !%
-            !% Logarithmique (LGRM) computation function
+            !% Logarithmic (LGRM) computation function
             !%
             !% Given two single precision array (x, y) of dim(1) and size(n),
             !% it returns the result of LGRM computation
@@ -514,7 +514,7 @@ module mwd_cost
             
             end do
 
-        end function logarithmique
+        end function logarithmic
 
 
         !% TODO refactorize

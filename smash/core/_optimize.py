@@ -32,7 +32,7 @@ JOBS_FUN = [
     "kge2",
     "se",
     "rmse",
-    "logarithmique",
+    "logarithmic",
 ]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
@@ -65,7 +65,9 @@ def _optimize_sbs(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
+    instance.setup._optimize = Optimize_SetupDT(
+        instance.setup, instance.mesh.ng, mapping
+    )
 
     instance.setup._optimize.algorithm = "sbs"
 
@@ -132,7 +134,9 @@ def _optimize_lbfgsb(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
+    instance.setup._optimize = Optimize_SetupDT(
+        instance.setup, instance.mesh.ng, mapping
+    )
 
     instance.setup._optimize.algorithm = "l-bfgs-b"
 
@@ -234,7 +238,9 @@ def _optimize_nelder_mead(
     _check_unknown_options(unknown_options)
 
     #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(instance.setup, instance.mesh.ng, mapping)
+    instance.setup._optimize = Optimize_SetupDT(
+        instance.setup, instance.mesh.ng, mapping
+    )
 
     instance.setup._optimize.algorithm = "nelder-mead"
 
@@ -616,32 +622,25 @@ def _callback(x: np.ndarray, *args):
     print(sp4.join(ret))
 
 
-def _standardize_mapping(mapping: str | None, setup: SetupDT) -> str:
+def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
 
-    #% Default values
-    if mapping is None:
+    if isinstance(mapping, str):
 
-        mapping = "uniform"
+        mapping = mapping.lower()
 
     else:
 
-        if isinstance(mapping, str):
+        raise TypeError(f"mapping argument must be str")
 
-            mapping = mapping.lower()
+    if mapping not in MAPPING:
 
-        else:
+        raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
 
-            raise TypeError(f"mapping argument must be str")
+    if mapping.startswith("hyper") and setup._nd == 0:
 
-        if mapping not in MAPPING:
-
-            raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
-
-        if mapping.startswith("hyper") and setup._nd == 0:
-
-            raise ValueError(
-                f"'{mapping}' mapping can not be use if no catchment descriptors are available"
-            )
+        raise ValueError(
+            f"'{mapping}' mapping can not be use if no catchment descriptors are available"
+        )
 
     return mapping
 
@@ -742,33 +741,27 @@ def _standardize_control_vector(
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun: str | None, algorithm: str) -> str:
+def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
 
-    if jobs_fun is None:
+    if isinstance(jobs_fun, str):
 
-        jobs_fun = "nse"
+        jobs_fun = jobs_fun.lower()
 
     else:
 
-        if isinstance(jobs_fun, str):
+        raise TypeError(f"jobs_fun argument must be str")
 
-            jobs_fun = jobs_fun.lower()
+    if jobs_fun not in JOBS_FUN:
 
-        else:
+        raise ValueError(
+            f"Unknown objective function '{jobs_fun}'. Choices: {JOBS_FUN}"
+        )
 
-            raise TypeError(f"jobs_fun argument must be str")
+    elif jobs_fun in ["kge"] and algorithm == "l-bfgs-b":
 
-        if jobs_fun not in JOBS_FUN:
-
-            raise ValueError(
-                f"Unknown objective function '{jobs_fun}'. Choices: {JOBS_FUN}"
-            )
-
-        elif jobs_fun in ["kge"] and algorithm == "l-bfgs-b":
-
-            raise ValueError(
-                f"'{jobs_fun}' objective function can not be use with '{algorithm}' algorithm (non convex function)"
-            )
+        raise ValueError(
+            f"'{jobs_fun}' objective function can not be use with '{algorithm}' algorithm (non convex function)"
+        )
 
     return jobs_fun
 
@@ -864,151 +857,125 @@ def _standardize_bounds(
 
 
 def _standardize_gauge(
-    gauge: str | list | tuple | set | None,
+    gauge: str | list | tuple | set,
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
 ) -> np.ndarray:
 
-    #% Default values
-    if gauge is None:
+    if isinstance(gauge, str):
 
-        ind = np.argmax(mesh.area)
+        if gauge == "all":
 
-        if np.all(input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0):
+            gauge = mesh.code.copy()
 
-            raise ValueError(
-                f"No available observed discharge for optimization at gauge {mesh.code[ind]}"
-            )
+        elif gauge == "downstream":
 
-        else:
+            ind = np.argmax(mesh.area)
 
             gauge = np.array(mesh.code[ind], ndmin=1)
 
-    else:
+        elif gauge in mesh.code:
 
-        if isinstance(gauge, str):
-
-            if gauge == "all":
-
-                gauge = mesh.code.copy()
-
-            elif gauge == "downstream":
-
-                ind = np.argmax(mesh.area)
-
-                gauge = np.array(mesh.code[ind], ndmin=1)
-
-            elif gauge in mesh.code:
-
-                gauge = np.array(gauge, ndmin=1)
-
-            else:
-
-                raise ValueError(
-                    f"Unknown gauge alias or code '{gauge}'. Choices: ['all', 'downstream'] or {mesh.code}"
-                )
-
-        elif isinstance(gauge, set):
-
-            gauge = np.array(list(gauge))
-
-        elif isinstance(gauge, (list, tuple)):
-
-            gauge = np.array(gauge)
+            gauge = np.array(gauge, ndmin=1)
 
         else:
-
-            raise TypeError(f"gauge argument must be str or list-like object")
-
-        gauge_check = np.array([])
-
-        for i, name in enumerate(gauge):
-
-            if name in mesh.code:
-
-                ind = np.argwhere(mesh.code == name).squeeze()
-
-                if np.all(
-                    input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0
-                ):
-
-                    warnings.warn(
-                        f"gauge '{name}' has no available observed discharge. Removed from the optimization"
-                    )
-
-                else:
-
-                    gauge_check = np.append(gauge_check, gauge[i])
-
-            else:
-
-                raise ValueError(f"Unknown gauge code '{name}'. Choices: {mesh.code}")
-
-        if gauge_check.size == 0:
 
             raise ValueError(
-                f"No available observed discharge for optimization at gauge(s) {gauge}"
+                f"Unknown gauge alias or code '{gauge}'. Choices: ['all', 'downstream'] or {mesh.code}"
             )
+
+    elif isinstance(gauge, set):
+
+        gauge = np.array(list(gauge))
+
+    elif isinstance(gauge, (list, tuple)):
+
+        gauge = np.array(gauge)
+
+    else:
+
+        raise TypeError(f"gauge argument must be str or list-like object")
+
+    gauge_check = np.array([])
+
+    for i, name in enumerate(gauge):
+
+        if name in mesh.code:
+
+            ind = np.argwhere(mesh.code == name).squeeze()
+
+            if np.all(input_data.qobs[ind, setup._optimize.optimize_start_step :] < 0):
+
+                warnings.warn(
+                    f"gauge '{name}' has no available observed discharge. Removed from the optimization"
+                )
+
+            else:
+
+                gauge_check = np.append(gauge_check, gauge[i])
 
         else:
 
-            gauge = gauge_check
+            raise ValueError(f"Unknown gauge code '{name}'. Choices: {mesh.code}")
+
+    if gauge_check.size == 0:
+
+        raise ValueError(
+            f"No available observed discharge for optimization at gauge(s) {gauge}"
+        )
+
+    else:
+
+        gauge = gauge_check
 
     return gauge
 
 
 def _standardize_wgauge(
-    wgauge: str | list | tuple | set | None, gauge: np.ndarray, mesh: MeshDT
+    wgauge: str | list | tuple | set, gauge: np.ndarray, mesh: MeshDT
 ) -> np.ndarray:
 
     weight_arr = np.zeros(shape=mesh.code.size, dtype=np.float32)
     ind = np.in1d(mesh.code, gauge)
 
-    #% Default values
-    if wgauge is None:
+    if isinstance(wgauge, str):
 
-        weight_arr[ind] = 1 / gauge.size
+        if wgauge == "mean":
 
-    else:
+            weight_arr[ind] = 1 / gauge.size
 
-        if isinstance(wgauge, str):
+        elif wgauge == "area":
 
-            if wgauge == "mean":
+            weight_arr[ind] = mesh.area[ind] / sum(mesh.area[ind])
 
-                weight_arr[ind] = 1 / gauge.size
+        elif wgauge == "minv_area":
 
-            elif wgauge == "area":
-
-                weight_arr[ind] = mesh.area[ind] / sum(mesh.area[ind])
-
-            elif wgauge == "minv_area":
-
-                weight_arr[ind] = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
-
-            else:
-
-                raise ValueError(
-                    f"Unknown wgauge alias '{wgauge}'. Choices: ['mean', 'area', 'minv_area']"
-                )
-
-        elif isinstance(wgauge, (list, tuple, set)):
-
-            wgauge = np.array(list(wgauge))
-
-            if wgauge.size != gauge.size:
-
-                raise ValueError(
-                    f"Inconsistent size between gauge ({gauge.size}) and wgauge ({wgauge.size})"
-                )
-
-            else:
-
-                weight_arr[ind] = wgauge
+            weight_arr[ind] = (1 / mesh.area[ind]) / sum(1 / mesh.area[ind])
 
         else:
 
-            raise TypeError(f"wgauge argument must be str or list-like object")
+            raise ValueError(
+                f"Unknown wgauge alias '{wgauge}'. Choices: ['mean', 'area', 'minv_area']"
+            )
+
+    elif isinstance(wgauge, (list, tuple, set)):
+
+        wgauge = np.array(list(wgauge))
+
+        if wgauge.size != gauge.size:
+
+            raise ValueError(
+                f"Inconsistent size between gauge ({gauge.size}) and wgauge ({wgauge.size})"
+            )
+
+        else:
+
+            weight_arr[ind] = wgauge
+
+    else:
+
+        raise TypeError(f"wgauge argument must be str or list-like object")
 
     wgauge = weight_arr
 
@@ -1060,13 +1027,13 @@ def _check_unknown_options(unknown_options: dict):
 
 
 def _standardize_optimize_args(
-    mapping: str | None,
+    mapping: str,
     algorithm: str | None,
     control_vector: str | list | tuple | set | None,
-    jobs_fun: str | None,
+    jobs_fun: str,
     bounds: list | tuple | set | None,
-    gauge: str | list | tuple | set | None,
-    wgauge: str | list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
     ost: str | pd.Timestamp | None,
     setup: SetupDT,
     mesh: MeshDT,

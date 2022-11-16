@@ -225,19 +225,19 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.setup.<TAB>
-    mo.setup.copy(                   mo.setup.prcp_directory
-    mo.setup.daily_interannual_pet   mo.setup.prcp_format
-    mo.setup.descriptor_directory    mo.setup.prcp_indice
-    mo.setup.descriptor_format       mo.setup.qobs_directory
-    mo.setup.descriptor_name         mo.setup.read_descriptor
-    mo.setup.dt                      mo.setup.read_pet
-    mo.setup.end_time                mo.setup.read_prcp
-    mo.setup.from_handle(            mo.setup.read_qobs
-    mo.setup.mean_forcing            mo.setup.save_net_prcp_domain
-    mo.setup.pet_conversion_factor   mo.setup.save_qsim_domain
-    mo.setup.pet_directory           mo.setup.sparse_storage
-    mo.setup.pet_format              mo.setup.start_time
-    mo.setup.prcp_conversion_factor  mo.setup.structure
+    model.setup.copy(                   model.setup.prcp_directory
+    model.setup.daily_interannual_pet   model.setup.prcp_format
+    model.setup.descriptor_directory    model.setup.prcp_indice
+    model.setup.descriptor_format       model.setup.qobs_directory
+    model.setup.descriptor_name         model.setup.read_descriptor
+    model.setup.dt                      model.setup.read_pet
+    model.setup.end_time                model.setup.read_prcp
+    model.setup.from_handle(            model.setup.read_qobs
+    model.setup.mean_forcing            model.setup.save_net_prcp_domain
+    model.setup.pet_conversion_factor   model.setup.save_qsim_domain
+    model.setup.pet_directory           model.setup.sparse_storage
+    model.setup.pet_format              model.setup.start_time
+    model.setup.prcp_conversion_factor  model.setup.structure
     
 Mesh
 ****
@@ -269,15 +269,15 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.mesh.<TAB>
-    mo.mesh.active_cell   mo.mesh.gauge_pos
-    mo.mesh.area          mo.mesh.nac
-    mo.mesh.code          mo.mesh.ncol
-    mo.mesh.copy(         mo.mesh.ng
-    mo.mesh.drained_area  mo.mesh.nrow
-    mo.mesh.dx            mo.mesh.path
-    mo.mesh.flwdir        mo.mesh.xmin
-    mo.mesh.flwdst        mo.mesh.ymax
-    mo.mesh.from_handle(
+    model.mesh.active_cell   model.mesh.gauge_pos
+    model.mesh.area          model.mesh.nac
+    model.mesh.code          model.mesh.ncol
+    model.mesh.copy(         model.mesh.ng
+    model.mesh.drained_area  model.mesh.nrow
+    model.mesh.dx            model.mesh.path
+    model.mesh.flwdir        model.mesh.xmin
+    model.mesh.flwdst        model.mesh.ymax
+    model.mesh.from_handle(
 
 
 Input Data
@@ -346,26 +346,26 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.parameters.<TAB>
-    mo.parameters.alpha         mo.parameters.cusl1
-    mo.parameters.b             mo.parameters.cusl2
-    mo.parameters.beta          mo.parameters.ds
-    mo.parameters.cft           mo.parameters.dsm
-    mo.parameters.ci            mo.parameters.exc
-    mo.parameters.clsl          mo.parameters.from_handle(
-    mo.parameters.copy(         mo.parameters.ks
-    mo.parameters.cp            mo.parameters.lr
-    mo.parameters.cst           mo.parameters.ws
+    model.parameters.alpha         model.parameters.cusl1
+    model.parameters.b             model.parameters.cusl2
+    model.parameters.beta          model.parameters.ds
+    model.parameters.cft           model.parameters.dsm
+    model.parameters.ci            model.parameters.exc
+    model.parameters.clsl          model.parameters.from_handle(
+    model.parameters.copy(         model.parameters.ks
+    model.parameters.cp            model.parameters.lr
+    model.parameters.cst           model.parameters.ws
 
     
 .. ipython:: python
     
     @verbatim
     model.states.<TAB>
-    mo.states.copy(         mo.states.hlsl
-    mo.states.from_handle(  mo.states.hp
-    mo.states.hft           mo.states.hst
-    mo.states.hi            mo.states.husl1
-    mo.states.hlr           mo.states.husl2
+    model.states.copy(         model.states.hlsl
+    model.states.from_handle(  model.states.hp
+    model.states.hft           model.states.hst
+    model.states.hi            model.states.husl1
+    model.states.hlr           model.states.husl2
     
 Output
 ******
