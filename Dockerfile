@@ -19,9 +19,7 @@ ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
 RUN export JAVA_HOME
 
 RUN pip3 install \
-    pybtex \
-    pillow \
-    f90wrap==0.2.7 \
+    f90wrap \
     numpy \
     pandas \
     matplotlib \

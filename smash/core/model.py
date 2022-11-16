@@ -58,7 +58,7 @@ class Model(object):
 
     See Also
     --------
-    smash.generate_mesh: Automatic mesh generation.
+    generate_mesh: Automatic mesh generation.
     """
 
     def __init__(self, setup: dict, mesh: dict):
@@ -428,7 +428,7 @@ class Model(object):
 
     def run(self, inplace: bool = False):
         """
-        Compute a run of the Model.
+        Run the Model.
 
         Parameters
         ----------
@@ -507,6 +507,9 @@ class Model(object):
         """
         Optimize the Model.
 
+        .. hint::
+            See the :ref:`user_guide` for more.
+
         Parameters
         ----------
         mapping : str, default 'uniform'
@@ -569,7 +572,7 @@ class Model(object):
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
-            optimization start time (``ost``) and the end time. The value can be a str which can be interpreted by
+            optimization start time ``ost`` and the end time. The value can be a str which can be interpreted by
             pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
             The ``ost`` date value must be between the start time and the end time defined in the Model setup.
 
@@ -604,6 +607,23 @@ class Model(object):
         Last update: Step By Step Optimization
 
         Access to simulated discharge
+
+        >>> model.output.qsim[0,:]
+        array([5.7140866e-04, 4.7018618e-04, 3.5345653e-04, ..., 1.9009293e+01,
+               1.8772749e+01, 1.8541389e+01], dtype=float32)
+
+        Access to optimized parameters
+
+        >>> ind = tuple(model.mesh.gauge_pos[0,:])
+        >>> ind
+        (20, 27)
+        >>> (
+        ... "cp", model.parameters.cp[ind],
+        ... "cft", model.parameters.cft[ind],
+        ... "exc", model.parameters.exc[ind],
+        ... "lr", model.parameters.lr[ind],
+        ... )
+        ('cp', 76.57858, 'cft', 263.64627, 'exc', -1.4613823, 'lr', 30.859276)
         """
 
         if inplace:

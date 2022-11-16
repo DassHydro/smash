@@ -49,7 +49,7 @@ On your own environment
             sudo apt install python3-pip
             
 2. **Install gdal**
-    Install the `gdal <https://gdal.org/api/python.html>`__ package,
+    Install the `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__ package,
 
     .. code-block:: none
         

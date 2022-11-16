@@ -24,7 +24,7 @@ smash documentation
 
         .. button-ref:: getting_started
             :expand:
-            :color: secondary
+            :color: muted
             :click-parent:
 
             To the getting started
@@ -41,7 +41,7 @@ smash documentation
 
         .. button-ref:: user_guide
             :expand:
-            :color: secondary
+            :color: muted
             :click-parent:
 
             To the user guide
@@ -59,7 +59,7 @@ smash documentation
 
         .. button-ref:: api_reference
             :expand:
-            :color: secondary
+            :color: muted
             :click-parent:
 
             To the api reference
@@ -77,7 +77,7 @@ smash documentation
 
         .. button-ref:: model_description
             :expand:
-            :color: secondary
+            :color: muted 
             :click-parent:
 
             To the model description

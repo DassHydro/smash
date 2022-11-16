@@ -405,14 +405,100 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
 def generate_mesh(
     path: str,
-    bbox: (None, tuple(float)) = None,
-    x: (None, float, list[float]) = None,
-    y: (None, float, list[float]) = None,
-    area: (None, float, list[float]) = None,
-    code: (None, str, list[str]) = None,
+    bbox: None | list | tuple | set = None,
+    x: None | float | list | tuple | set = None,
+    y: None | float | list | tuple | set = None,
+    area: None | float | list | tuple | set = None,
+    code: None | str | list | tuple | set = None,
     max_depth: int = 1,
-    epsg: (None, str, int) = None,
+    epsg: None | str | int = None,
 ) -> dict:
+    """
+    Automatic mesh generation.
+
+    .. hint::
+        See the :ref:`User Guide <user_guide.automatic_meshing>` for more.
+
+    Parameters
+    ----------
+    path : str
+        Path to the flow directions file. The file will be opened with `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__.
+
+    bbox : sequence or None, default None
+        Bounding box with the following convention:
+
+        ``(xmin, xmax, ymin, ymax)``.
+        The bounding box values must respect the CRS of the flow directions file.
+
+        .. note::
+            If not given, ``x``, ``y`` and ``area`` must be filled in.
+
+    x : float, sequence or None, default None
+        The x coordinate(s) of the catchment outlet(s) to mesh.
+        The x value(s) must respect the CRS of the flow directions file.
+        The x size must be equal to y and area.
+
+    y : float, sequence or None, default None
+        The y coordinate(s) of the catchment outlet(s) to mesh.
+        The y value(s) must respect the CRS of the flow directions file.
+        The y size must be equal to x and area.
+
+    area : float, sequence or None, default None
+        The area of the catchment(s) to mesh in **m²**.
+        The area size must be equal to x and y.
+
+    code : str, sequence or None, default None
+        The code of the catchment(s) to mesh.
+        The code size must be equal to x, y and area.
+        In case of bouding box meshing, the code argument is not used.
+
+        .. note::
+            If not given, the default code is:
+
+            ``['_c0', '_c1', ..., '_cn']`` with ``n``, the number of gauges.
+
+    max_depth : int, default 1
+        The maximum depth accepted by the algorithm to find the catchment outlet.
+        A ``max_depth`` of 1 means that the algorithm will search among the 2-length combinations in:
+
+        ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
+        the given catchment area and the modeled catchment area calculated from the flow directions file.
+        This can be generalized to n.
+
+        .. image:: ../../_static/max_depth.png
+            :align: center
+            :width: 350
+
+    epsg : str, int or None, default None
+        The EPSG value of the flow directions file. By default, if the CRS is well
+        defined in the flow directions file. It is not necessary to provide the value of
+        the EPSG. On the other hand, if the CRS is not well defined in the flow directions file
+        (in ASCII file). The ``epsg`` argument must be filled in.
+
+    Returns
+    -------
+    dict
+        A mesh dictionary that can be used to initialize the `Model` object.
+
+    See Also
+    --------
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> flwdir = smash.load_dataset("flwdir")
+    >>> mesh = smash.generate_mesh(
+    ... flwdir,
+    ... x=[840_261, 826_553, 828_269],
+    ... y=[6_457_807, 6_467_115, 6_469_198],
+    ... area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
+    ... code=["V3524010", "V3515010", "V3517010"],
+    ... )
+    >>> mesh.keys()
+    dict_keys(['dx', 'nrow', 'ncol', 'ng', 'nac', 'xmin', 'ymax',
+               'flwdir', 'flwdst', 'drained_area', 'path', 'gauge_pos',
+               'code', 'area', 'active_cell'])
+    """
 
     if os.path.isfile(path):
 
