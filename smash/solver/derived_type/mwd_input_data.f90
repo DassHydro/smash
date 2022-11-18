@@ -52,6 +52,10 @@ module mwd_input_data
     
     type Prcp_IndiceDT
     
+        !% Notes
+        !% -----
+        !% Prcp_IndiceDT Derived Type.
+    
         real(sp), dimension(:,:), allocatable :: p0
         real(sp), dimension(:,:), allocatable :: p1
         real(sp), dimension(:,:), allocatable :: p2
@@ -76,6 +80,10 @@ module mwd_input_data
     
     type Input_DataDT
     
+        !% Notes
+        !% -----
+        !% Input_DataDT Derived Type.
+    
         real(sp), dimension(:,:), allocatable :: qobs
         real(sp), dimension(:,:,:), allocatable :: prcp
         real(sp), dimension(:,:,:), allocatable :: pet
@@ -99,8 +107,7 @@ module mwd_input_data
         
             !% Notes
             !% -----
-            !%
-            !% Prcp_IndiceDT initialisation subroutine
+            !% Prcp_IndiceDT initialisation subroutine.
             
             implicit none
             
@@ -147,8 +154,7 @@ module mwd_input_data
         
             !% Notes
             !% -----
-            !%
-            !% Input_DataDT initialisation subroutine
+            !% Input_DataDT initialisation subroutine.
         
             implicit none
             

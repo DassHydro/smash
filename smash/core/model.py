@@ -37,7 +37,6 @@ class Model(object):
 
     """
     Primary data structure of the hydrological model `smash`.
-    **S**\patially distributed **M**\odelling and **AS**\simillation for **H**\ydrology.
 
     Parameters
     ----------
@@ -47,6 +46,16 @@ class Model(object):
     mesh : dict
         Model initialization mesh dictionary. (see: :ref:`mesh arguments <user_guide.model_initialization.mesh>`).
 
+    See Also
+    --------
+    save_setup: Save Model initialization setup dictionary.
+    read_setup: Read Model initialization setup dictionary.
+    save_mesh: Save Model initialization mesh dictionary.
+    read_mesh: Read Model initialization mesh dictionary.
+    generate_mesh: Automatic mesh generation.
+    save_model: Save Model object.
+    read_model: Read Model object.
+
     Examples
     --------
     >>> setup, mesh = smash.load_dataset("cance")
@@ -55,10 +64,6 @@ class Model(object):
     Structure: 'gr-a'
     Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
     Last update: Initialization
-
-    See Also
-    --------
-    generate_mesh: Automatic mesh generation.
     """
 
     def __init__(self, setup: dict, mesh: dict):

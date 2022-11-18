@@ -47,37 +47,45 @@ module mwd_states
     implicit none
 
     type StatesDT
+    
+        !% Notes
+        !% -----
+        !% StatesDT Derived Type.
         
-        !% GR
+        ! GR
         real(sp), dimension(:,:), allocatable :: hi
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
         real(sp), dimension(:,:), allocatable :: hst
         
-        !% VIC
+        ! VIC
         real(sp), dimension(:,:), allocatable :: husl1
         real(sp), dimension(:,:), allocatable :: husl2
         real(sp), dimension(:,:), allocatable :: hlsl
         
-        !% Routing
+        ! Routing
         real(sp), dimension(:,:), allocatable :: hlr
         
     end type StatesDT
     
     type Hyper_StatesDT
     
-        !% GR
+        !% Notes
+        !% -----
+        !% Hyper_StatesDT Derived Type.
+    
+        ! GR
         real(sp), dimension(:,:), allocatable :: hi
         real(sp), dimension(:,:), allocatable :: hp
         real(sp), dimension(:,:), allocatable :: hft
         real(sp), dimension(:,:), allocatable :: hst
         
-        !% VIC
+        ! VIC
         real(sp), dimension(:,:), allocatable :: husl1
         real(sp), dimension(:,:), allocatable :: husl2
         real(sp), dimension(:,:), allocatable :: hlsl
         
-        !% Routing
+        ! Routing
         real(sp), dimension(:,:), allocatable :: hlr
     
     end type Hyper_StatesDT
@@ -88,8 +96,7 @@ module mwd_states
         
             !% Notes
             !% -----
-            !%
-            !% StatesDT initialisation subroutine
+            !% StatesDT initialisation subroutine.
         
             implicit none
             
@@ -125,8 +132,7 @@ module mwd_states
         
             !% Notes
             !% -----
-            !%
-            !% Hyper_StatesDT initialisation subroutine
+            !% Hyper_StatesDT initialisation subroutine.
         
             implicit none
             

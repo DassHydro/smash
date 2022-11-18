@@ -49,14 +49,7 @@ module mw_optimize
         
             !% Notes
             !% -----
-            !%
-            !% Step By Step optimization subroutine
-            !%
-            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
-            !% it returns the result of a step by step optimization.
-            !% argmin(theta) = J(theta)
-            !%
-            !% Calling forward from forward/forward.f90  Y  = M (k)
+            !% Step By Step optimization subroutine.
             
             implicit none
             
@@ -77,9 +70,9 @@ module mw_optimize
             integer, dimension(np+ns) :: optim_ps
             real(sp) :: gx, ga, clg, ddx, dxn, f, cost
             
-            !% =========================================================================================================== %!
-            !%   Initialisation
-            !% =========================================================================================================== %!
+            ! =========================================================================================================== !
+            !   Initialisation
+            ! =========================================================================================================== !
         
             ind_ac = maxloc(mesh%active_cell)
             
@@ -129,9 +122,9 @@ module mw_optimize
             
             do iter=1, setup%optimize%maxiter * nops
                 
-                !% ======================================================================================================= %!
-                !%   Optimize
-                !% ======================================================================================================= %!
+                ! ======================================================================================================= !
+                !   Optimize
+                ! ======================================================================================================= !
 
                 if (dxn .gt. ddx) dxn = ddx
                 if (ddx .gt. 2._sp) ddx = dxn
@@ -345,9 +338,9 @@ module mw_optimize
                 
                 ia = 0
                 
-                !% ======================================================================================================= %!
-                !%   Iterate writting
-                !% ======================================================================================================= %!
+                ! ======================================================================================================= !
+                !   Iterate writting
+                ! ======================================================================================================= !
             
                 if (mod(iter, nops) .eq. 0) then
                     
@@ -356,9 +349,9 @@ module mw_optimize
                 
                 end if
                 
-                !% ======================================================================================================= %!
-                !%   Convergence DDX < 0.01
-                !% ======================================================================================================= %!
+                ! ======================================================================================================= !
+                !   Convergence DDX < 0.01
+                ! ======================================================================================================= !
             
                 if (ddx .lt. 0.01_sp) then
                 
@@ -394,9 +387,9 @@ module mw_optimize
                 
                 end if
                 
-                !% ======================================================================================================= %!
-                !%   Maximum Number of Iteration
-                !% ======================================================================================================= %!
+                ! ======================================================================================================= !
+                !   Maximum Number of Iteration
+                ! ======================================================================================================= !
                 
                 if (iter .eq. setup%optimize%maxiter * nops) then
                 
@@ -503,15 +496,7 @@ module mw_optimize
         
             !% Notes
             !% -----
-            !%
-            !% L-BFGS-B optimization subroutine
-            !%
-            !% Given SetupDT, MeshDT, Input_DataDT, ParametersDT, StatesDT, OutputDT,
-            !% it returns the result of a l-bfgs-b optimization.
-            !% argmin(theta) = J(theta)
-            !%
-            !% Calling forward_b from forward/forward_b.f90  dk* = (dM/dk)* (k) . dY*
-            !% Calling setulb from optimize/lbfgsb.f
+            !% L-BFGS-B optimization subroutine.
             
             implicit none
             
@@ -777,6 +762,10 @@ module mw_optimize
 
 
         subroutine hyper_optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
+            
+            !% Notes
+            !% -----
+            !% L-BFGS-B hyper optimization subroutine.
         
             implicit none
             

@@ -1,15 +1,14 @@
-.. _api_reference.solver:
+.. _api_reference.derived_type:
 
-======
-Solver
-======
+============
+Derived Type
+============
 
 .. currentmodule:: smash
 
-Constructor
-***********
 .. autosummary::
    :toctree: smash/
+   :template: derived_type_class.rst
 
    smash.solver._mwd_setup.SetupDT
    smash.solver._mwd_mesh.MeshDT
@@ -18,5 +17,3 @@ Constructor
    smash.solver._mwd_parameters.ParametersDT
    smash.solver._mwd_states.StatesDT
    smash.solver._mwd_output.OutputDT
-   
-   

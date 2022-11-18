@@ -3,7 +3,6 @@
 .. currentmodule:: {{ module }}
 
 .. autoclass:: {{ objname }}
-   :show-inheritance:
 
    {% block methods %}
    {% if methods %}
@@ -12,11 +11,9 @@
    .. rubric:: {{ _('Methods') }}
 
    .. autosummary::
-      :nosignatures:
+      :nohidden:
    {% for item in methods %}
-      {%- if not item.startswith('_') and item != 'from_handle' %}
       ~{{ name }}.{{ item }}
-      {%- endif -%}
    {%- endfor %}
    {% endif %}
    {% endblock %}
@@ -28,6 +25,7 @@
    .. rubric:: {{ _('Attributes') }}
 
    .. autosummary::
+      :hidden:
    {% for item in attributes %}
       ~{{ name }}.{{ item }}
    {%- endfor %}

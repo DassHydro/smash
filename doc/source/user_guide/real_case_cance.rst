@@ -37,7 +37,7 @@ Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
     setup, mesh = smash.load_dataset("Cance")
     
-.. _user_guide.setup_argument:
+.. _user_guide.real_case_cance.setup_argument:
 
 Setup argument
 **************
@@ -138,7 +138,7 @@ An example of file name in tif format for the date 2014-09-15 00:00: ``pet_20140
 In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%m%d>*.<pet_format>``.
 An example of file name in tif format for the date 09-15: ``dia_pet_0915.tif``. This file will be desaggregated to the corresponding time step ``dt``.
 
-.. _user_guide.mesh_argument:
+.. _user_guide.real_case_cance.mesh_argument:
 
 Mesh argument
 *************

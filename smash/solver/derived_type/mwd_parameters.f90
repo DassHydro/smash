@@ -56,8 +56,12 @@ module mwd_parameters
     implicit none
     
     type ParametersDT
+    
+        !% Notes
+        !% -----
+        !% ParametersDT Derived Type.
         
-        !% GR
+        ! GR
         real(sp), dimension(:,:), allocatable :: ci
         real(sp), dimension(:,:), allocatable :: cp
         real(sp), dimension(:,:), allocatable :: beta
@@ -66,7 +70,7 @@ module mwd_parameters
         real(sp), dimension(:,:), allocatable :: alpha
         real(sp), dimension(:,:), allocatable :: exc
         
-        !% VIC
+        ! VIC
         real(sp), dimension(:,:), allocatable :: b
         real(sp), dimension(:,:), allocatable :: cusl1
         real(sp), dimension(:,:), allocatable :: cusl2
@@ -76,14 +80,18 @@ module mwd_parameters
         real(sp), dimension(:,:), allocatable :: dsm
         real(sp), dimension(:,:), allocatable :: ws
         
-        !% Routing
+        ! Routing
         real(sp), dimension(:,:), allocatable :: lr
         
     end type ParametersDT
     
     type Hyper_ParametersDT
     
-        !% GR
+        !% Notes
+        !% -----
+        !% Hyper_ParametersDT Derived Type.
+    
+        ! GR
         real(sp), dimension(:,:), allocatable :: ci
         real(sp), dimension(:,:), allocatable :: cp
         real(sp), dimension(:,:), allocatable :: beta
@@ -92,7 +100,7 @@ module mwd_parameters
         real(sp), dimension(:,:), allocatable :: alpha
         real(sp), dimension(:,:), allocatable :: exc
         
-        !% VIC
+        ! VIC
         real(sp), dimension(:,:), allocatable :: b
         real(sp), dimension(:,:), allocatable :: cusl1
         real(sp), dimension(:,:), allocatable :: cusl2
@@ -102,7 +110,7 @@ module mwd_parameters
         real(sp), dimension(:,:), allocatable :: dsm
         real(sp), dimension(:,:), allocatable :: ws
         
-        !% Routing
+        ! Routing
         real(sp), dimension(:,:), allocatable :: lr
     
     end type Hyper_ParametersDT
@@ -113,8 +121,7 @@ module mwd_parameters
         
             !% Notes
             !% -----
-            !%
-            !% ParametersDT initialisation subroutine
+            !% ParametersDT initialisation subroutine.
         
             implicit none
             
@@ -166,8 +173,7 @@ module mwd_parameters
         
             !% Notes
             !% -----
-            !%
-            !% Hyper_ParametersDT initialisation subroutine
+            !% Hyper_ParametersDT initialisation subroutine.
         
             implicit none
             

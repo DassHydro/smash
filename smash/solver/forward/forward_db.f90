@@ -1129,9 +1129,12 @@ MODULE MWD_PARAMETERS_DIFF
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
   IMPLICIT NONE
-!% GR
-!% VIC
-!% Routing
+!% Notes
+!% -----
+!% ParametersDT Derived Type.
+! GR
+! VIC
+! Routing
   TYPE PARAMETERSDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ci
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: cp
@@ -1150,9 +1153,12 @@ MODULE MWD_PARAMETERS_DIFF
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ws
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: lr
   END TYPE PARAMETERSDT
-!% GR
-!% VIC
-!% Routing
+!% Notes
+!% -----
+!% Hyper_ParametersDT Derived Type.
+! GR
+! VIC
+! Routing
   TYPE HYPER_PARAMETERSDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ci
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: cp
@@ -1416,9 +1422,12 @@ MODULE MWD_STATES_DIFF
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
   IMPLICIT NONE
-!% GR
-!% VIC
-!% Routing
+!% Notes
+!% -----
+!% StatesDT Derived Type.
+! GR
+! VIC
+! Routing
   TYPE STATESDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hi
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hp
@@ -1429,9 +1438,12 @@ MODULE MWD_STATES_DIFF
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hlsl
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hlr
   END TYPE STATESDT
-!% GR
-!% VIC
-!% Routing
+!% Notes
+!% -----
+!% Hyper_StatesDT Derived Type.
+! GR
+! VIC
+! Routing
   TYPE HYPER_STATESDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hi
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hp
@@ -1608,6 +1620,9 @@ MODULE MWD_OUTPUT_DIFF
 !%only: StatesDT, StatesDT_initialise
   USE MWD_STATES_DIFF
   IMPLICIT NONE
+!% Notes
+!% -----
+!% OutputDT Derived Type.
   TYPE OUTPUTDT
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qsim
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qsim_domain

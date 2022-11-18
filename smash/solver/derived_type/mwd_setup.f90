@@ -53,6 +53,10 @@ module mwd_setup
     implicit none
     
     type Optimize_SetupDT
+        
+        !% Notes
+        !% -----
+        !% Optimize_SetupDT Derived Type.
     
         character(lchar) :: algorithm = "..." !>f90w-char
         
@@ -145,7 +149,10 @@ module mwd_setup
     
     type SetupDT
     
-        !% </> Public
+        !% Notes
+        !% -----
+        !% SetupDT Derived Type.
+        
         character(lchar) :: structure = "gr-a" !>f90w-char
         
         real(sp) :: dt = 3600._sp
@@ -180,7 +187,6 @@ module mwd_setup
         logical :: save_qsim_domain = .false.
         logical :: save_net_prcp_domain = .false.
         
-        !% </> Private
         type(Optimize_SetupDT) :: optimize !>f90w-private
         
         integer :: ntime_step = 0 !>f90w-private
@@ -226,6 +232,10 @@ module mwd_setup
     
         subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping)
         
+            !% Notes
+            !% -----
+            !% Optimize_SetupDT initialisation subroutine
+        
             implicit none
             
             type(Optimize_SetupDT), intent(inout) :: this
@@ -257,7 +267,6 @@ module mwd_setup
         
             !% Notes
             !% -----
-            !%
             !% SetupDT initialisation subroutine
         
             implicit none

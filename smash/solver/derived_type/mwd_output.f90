@@ -36,6 +36,10 @@ module mwd_output
     
     type :: OutputDT
     
+        !% Notes
+        !% -----
+        !% OutputDT Derived Type.
+    
         real(sp), dimension(:,:), allocatable :: qsim
         real(sp), dimension(:,:,:), allocatable :: qsim_domain
         real(sp), dimension(:,:), allocatable :: sparse_qsim_domain
@@ -63,8 +67,7 @@ module mwd_output
         
             !% Notes
             !% -----
-            !%
-            !% OutputDT initialisation subroutine
+            !% OutputDT initialisation subroutine.
         
             implicit none
             

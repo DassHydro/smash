@@ -44,7 +44,10 @@ module mwd_mesh
     
     type :: MeshDT
         
-        !% </> Public
+        !% Notes
+        !% -----
+        !% MeshDT Derived Type.
+        
         real(sp) :: dx
         integer :: nrow
         integer :: ncol
@@ -63,7 +66,6 @@ module mwd_mesh
         character(20), dimension(:), allocatable :: code !>f90w-char_array
         real(sp), dimension(:), allocatable :: area
         
-        !% </> Private
         integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse !>f90w-private
         integer, dimension(:,:), allocatable :: local_active_cell !>f90w-private
 
@@ -75,8 +77,7 @@ module mwd_mesh
         
             !% Notes
             !% -----
-            !%
-            !% MeshDT initialisation subroutine
+            !% MeshDT initialisation subroutine.
         
             implicit none
             
