@@ -1,3 +1,5 @@
+structure: gr-a
+
 dt: 3_600
 start_time: 2014-09-15 00:00
 end_time: 2014-11-14 00:00
@@ -16,5 +18,5 @@ pet_conversion_factor: 1
 daily_interannual_pet: True
 pet_directory: pet
 
-exchange_module: 1
-routing_module: 1
+read_descriptor: True
+descriptor_name: ["slope", "dd"]

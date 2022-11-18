@@ -6,9 +6,8 @@ Mesh
 
 .. currentmodule:: smash
 
-
-Mesh generator
-**************
+Generate mesh
+*************
 
 .. autosummary::
    :toctree: smash/

@@ -170,37 +170,25 @@ def _standardize_gauge(ds_flwdir, x, y, area, code):
     #% Setting _c0, _c1, ... _cN as default codes
     if code is None:
 
-        code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
-
-        for i in range(x.size):
-
-            code[0:3, i] = [ord(l) for l in ["_", "c", str(i)]]
+        code = np.array([f"_c{i}" for i in range(x.size)])
 
     elif isinstance(code, (str, list)):
 
-        code_imd = np.array(code, ndmin=1)
+        code = np.array(code, ndmin=1)
 
         #% Only check x (y and area already check above)
-        if code_imd.size != x.size:
+        if code.size != x.size:
 
             raise ValueError(
-                f"Inconsistent size for 'code' ({code_imd.size}) and 'x' ({x.size})"
+                f"Inconsistent size for 'code' ({code.size}) and 'x' ({x.size})"
             )
-
-        else:
-
-            code = np.zeros(shape=(20, x.size), dtype="uint8") + np.uint8(32)
-
-            for i in range(x.size):
-
-                code[0 : len(code_imd[i]), i] = [ord(l) for l in code_imd[i]]
 
     return x, y, area, code
 
 
 def _standardize_bbox(ds_flwdir, bbox):
 
-    #% Bounding Box (xmin, ymin, xmax, ymax)
+    #% Bounding Box (xmin, xmax, ymin, ymax)
 
     if isinstance(bbox, (list, tuple, set)):
 
@@ -269,9 +257,8 @@ def _get_path(drained_area):
 
     path = np.zeros(shape=(2, drained_area.size), dtype=np.int32, order="F")
 
-    #% Transform from Python to FORTRAN index
-    path[0, :] = ind_path[0] + 1
-    path[1, :] = ind_path[1] + 1
+    path[0, :] = ind_path[0]
+    path[1, :] = ind_path[1]
 
     return path
 
@@ -346,8 +333,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     active_cell = mask_dln.astype(np.int32)
 
-    #% Transform from Python to FORTRAN index
-    gauge_pos = np.column_stack((row_ol + 1, col_ol + 1))
+    gauge_pos = np.column_stack((row_ol, col_ol))
 
     mesh = {
         "dx": dx,
@@ -419,14 +405,100 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
 def generate_mesh(
     path: str,
-    bbox: (None, tuple(float)) = None,
-    x: (None, float, list[float]) = None,
-    y: (None, float, list[float]) = None,
-    area: (None, float, list[float]) = None,
-    code: (None, str, list[str]) = None,
+    bbox: None | list | tuple | set = None,
+    x: None | float | list | tuple | set = None,
+    y: None | float | list | tuple | set = None,
+    area: None | float | list | tuple | set = None,
+    code: None | str | list | tuple | set = None,
     max_depth: int = 1,
-    epsg: (None, str, int) = None,
+    epsg: None | str | int = None,
 ) -> dict:
+    """
+    Automatic mesh generation.
+
+    .. hint::
+        See the :ref:`User Guide <user_guide.automatic_meshing>` for more.
+
+    Parameters
+    ----------
+    path : str
+        Path to the flow directions file. The file will be opened with `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__.
+
+    bbox : sequence or None, default None
+        Bounding box with the following convention:
+
+        ``(xmin, xmax, ymin, ymax)``.
+        The bounding box values must respect the CRS of the flow directions file.
+
+        .. note::
+            If not given, ``x``, ``y`` and ``area`` must be filled in.
+
+    x : float, sequence or None, default None
+        The x coordinate(s) of the catchment outlet(s) to mesh.
+        The x value(s) must respect the CRS of the flow directions file.
+        The x size must be equal to y and area.
+
+    y : float, sequence or None, default None
+        The y coordinate(s) of the catchment outlet(s) to mesh.
+        The y value(s) must respect the CRS of the flow directions file.
+        The y size must be equal to x and area.
+
+    area : float, sequence or None, default None
+        The area of the catchment(s) to mesh in **m²**.
+        The area size must be equal to x and y.
+
+    code : str, sequence or None, default None
+        The code of the catchment(s) to mesh.
+        The code size must be equal to x, y and area.
+        In case of bouding box meshing, the code argument is not used.
+
+        .. note::
+            If not given, the default code is:
+
+            ``['_c0', '_c1', ..., '_cn']`` with ``n``, the number of gauges.
+
+    max_depth : int, default 1
+        The maximum depth accepted by the algorithm to find the catchment outlet.
+        A ``max_depth`` of 1 means that the algorithm will search among the 2-length combinations in:
+
+        ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
+        the given catchment area and the modeled catchment area calculated from the flow directions file.
+        This can be generalized to n.
+
+        .. image:: ../../_static/max_depth.png
+            :align: center
+            :width: 350
+
+    epsg : str, int or None, default None
+        The EPSG value of the flow directions file. By default, if the CRS is well
+        defined in the flow directions file. It is not necessary to provide the value of
+        the EPSG. On the other hand, if the CRS is not well defined in the flow directions file
+        (in ASCII file). The ``epsg`` argument must be filled in.
+
+    Returns
+    -------
+    dict
+        A mesh dictionary that can be used to initialize the `Model` object.
+
+    See Also
+    --------
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> flwdir = smash.load_dataset("flwdir")
+    >>> mesh = smash.generate_mesh(
+    ... flwdir,
+    ... x=[840_261, 826_553, 828_269],
+    ... y=[6_457_807, 6_467_115, 6_469_198],
+    ... area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
+    ... code=["V3524010", "V3515010", "V3517010"],
+    ... )
+    >>> mesh.keys()
+    dict_keys(['dx', 'nrow', 'ncol', 'ng', 'nac', 'xmin', 'ymax',
+               'flwdir', 'flwdst', 'drained_area', 'path', 'gauge_pos',
+               'code', 'area', 'active_cell'])
+    """
 
     if os.path.isfile(path):
 
@@ -436,16 +508,18 @@ def generate_mesh(
 
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-    if bbox:
+    if bbox is None:
 
-        return _get_mesh_from_bbox(ds_flwdir, bbox, epsg)
-
-    else:
-
-        if not x or not y or not area:
+        if x is None or y is None or area is None:
 
             raise ValueError(
                 "'bbox' argument or 'x', 'y' and 'area' arguments must be defined"
             )
 
-        return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)
+        else:
+
+            return _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg)
+
+    else:
+
+        return _get_mesh_from_bbox(ds_flwdir, bbox, epsg)

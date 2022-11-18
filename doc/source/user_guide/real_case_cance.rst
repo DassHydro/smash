@@ -37,7 +37,7 @@ Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
     setup, mesh = smash.load_dataset("Cance")
     
-.. _user_guide.setup_argument:
+.. _user_guide.real_case_cance.setup_argument:
 
 Setup argument
 **************
@@ -55,6 +55,8 @@ Compared to the :ref:`user_guide.practice_case`, more options have been filled i
     setup
     
 To get into the details:
+
+- ``structure``: the model structure (TODO ref),
 
 - ``dt``: the calculation time step in s,
 
@@ -83,10 +85,6 @@ To get into the details:
 - ``daily_interannual_pet``: whether or not to read potential evapotranspiration file as daily interannual value desaggregated to the corresponding time step ``dt``,
 
 - ``pet_directory``: the path to the potential evapotranspiration files (this path is automatically generated when you load the data),
-
-- ``exchange_module``: Choice of the exchange module (``1`` is GR4 exchange module (TODO ref)),
-
-- ``routing module``: Choice of the routing module (``1`` is linear routing (TODO ref)).
 
 Before going into the explanation of the ``mesh``, the following section details the structure of the observed discharges, precipitation and potential evapotranspiration files read.
 
@@ -120,7 +118,7 @@ The name of the file, for any catchment, must contains the code of the gauge whi
 Precipitation
 '''''''''''''
 
-The precipitation files must be store for each each time step of the simulation. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<prcp_format>``.
+The precipitation files must be store for each time step of the simulation. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<prcp_format>``.
 An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
 
 .. warning::
@@ -140,7 +138,7 @@ An example of file name in tif format for the date 2014-09-15 00:00: ``pet_20140
 In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%m%d>*.<pet_format>``.
 An example of file name in tif format for the date 09-15: ``dia_pet_0915.tif``. This file will be desaggregated to the corresponding time step ``dt``.
 
-.. _user_guide.mesh_argument:
+.. _user_guide.real_case_cance.mesh_argument:
 
 Mesh argument
 *************
@@ -213,17 +211,8 @@ To get into the details:
 .. ipython:: python
     
     mesh["code"]
-    
-.. warning::
-    
-    This argument is tricky to use because any NumPy uint8 array wrapped must be filled with ASCII values.
-    One way to retrieve the value from uint8 array is:
-    
-    .. ipython:: python
         
-        mesh["code"].tobytes("F").decode().split()
-        
-- ``gauge_pos``: the gauges position in the grid (it must follow **Fortran indexing**),
+- ``gauge_pos``: the gauges position in the grid,
 
 .. ipython:: python
     
@@ -286,7 +275,7 @@ The method required the path to the flow directions ``tif`` file. Once can load 
     
 This path leads to a flow directions ``tif`` file of the whole France at 1km² spatial resolution and Lambert93 projection (*EPSG:2154*)
 
-Get the gauge coordinates, area and code (this data is considered to be known by the user at the time the meshing is generated):
+Get the gauge coordinates, area and code (this data is considered to be known by the user at the time the mesh is generated):
 
 .. ipython:: python
     
@@ -312,7 +301,7 @@ Call the :meth:`smash.generate_mesh` method:
         code=code,
     )
     
-This ``mesh`` created is a dictionnary which is identical to the ``mesh`` loaded with the :meth:`smash.load_dataset` method.
+This ``mesh2`` created is a dictionnary which is identical to the ``mesh`` loaded with the :meth:`smash.load_dataset` method.
 
 .. ipython:: python
 
@@ -349,15 +338,13 @@ Input Data - Observed discharge
 3 gauges were placed in the meshing. For the sake of clarity, only the most downstream gauge discharge ``V3524010`` is plotted.
 
 .. ipython:: python
-
-    code = model.mesh.code.tobytes("F").decode().split()
     
     plt.plot(model.input_data.qobs[0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge ($m^3/s$)");
     @savefig qobs_rc_Cance_user_guide.png
-    plt.title(code[0]);
+    plt.title(model.mesh.code[0]);
     
 Input Data - Atmospheric forcings
 *********************************
@@ -402,7 +389,7 @@ Make a forward run using the :meth:`.Model.run` method.
 
 .. ipython:: python
 
-    model.run()
+    model.run();
     
 Here, unlike the :ref:`user_guide.practice_case`, we have not specified ``inplace=True``. By default, this argument is assigned to False, i.e. when the :meth:`.Model.run` method is called, the model object is not modified in-place but in a copy which can be returned.
 So if we display the representation of the model, the last update will still be ``Initialization`` and no simulated discharge is available.
@@ -417,7 +404,7 @@ This argument is useful to keep the original :class:`.Model` and store the resul
 
 .. ipython:: python
 
-    model_forward = model.run()
+    model_forward = model.run();
     
     model
     
@@ -432,6 +419,7 @@ We can visualize the simulated discharges after a forward run for the most downs
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_forward.mesh.code[0]);
     @savefig qsim_fw_rc_user_guide.png
     plt.legend();
 
@@ -448,27 +436,22 @@ observed quantities, such as discharge. Note that :math:`J` depends on the sough
     \hat{\theta} = \underset{\theta}{\mathrm{argmin}} \; J\left( \theta \right)
     
 Several calibration strategies are available in `smash`. They are based on different optimization algorithms and are for example adapted to inverse problems of various complexity, including high dimensional ones.
-For the purposes of the user guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge (TODO ref).
+For the purposes of the User Guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge (TODO ref).
 
 Spatially uniform optimization
 ''''''''''''''''''''''''''''''
 
-We consider here for optimization:
+We consider here for optimization (which is the default setup with ``gr-a`` structure):
 
 - a global minimization algorithm :math:`\mathrm{SBS}`,
 - a single :math:`\mathrm{NSE}` objective function from discharge time series at the most downstream gauge ``V3524010``,
 - a spatially uniform parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``jobs_fun``, ``control_vector`` and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
+Call the :meth:`.Model.optimize` method and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
 
 .. ipython:: python
 
-    model_su = model.optimize(
-        algorithm="sbs",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 2},
-    )
+    model_su = model.optimize(options={"maxiter": 2});
 
 While the optimization routine is in progress, some information are provided.
 
@@ -477,21 +460,23 @@ While the optimization routine is in progress, some information are provided.
     </> Optimize Model J
         Algorithm: 'sbs'
         Jobs function: 'nse'
+        Mapping: 'uniform' k(X)
         Nx: 1
         Np: 4 [ cp cft exc lr ] 
         Ns: 0 [  ] 
         Ng: 1 [ V3524010 ] 
-        wg: 1 [ 1.000000 ] 
+        wg: 1 [ 1.000000 ]
      
-        At iterate      0    nfg =     1    J =  0.677410    ddx = 0.64
-        At iterate      1    nfg =    30    J =  0.130159    ddx = 0.64
+        At iterate      0    nfg =     1    J =  0.677404    ddx = 0.64
+        At iterate      1    nfg =    30    J =  0.130163    ddx = 0.64
         At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
-This information is reminiscent of what we have entered in optimization options:
+This information remainds the ptimization options:
 
 - ``Algorithm``: the minimization algorithm,
 - ``Jobs_fun``: the objective function,
+- ``Mapping``: the mapping of parameters,
 - ``Nx``: the dimension of the problem (1 means that we perform a spatially uniform optimization),
 - ``Np``: the number of parameters to optimize and their name,
 - ``Ns``: the number of initial states to optimize and their name,
@@ -519,6 +504,7 @@ Once the optimization is complete. We can visualize the simulated discharge,
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_su.mesh.code[0]);
     @savefig qsim_su_rc_user_guide.png
     plt.legend();
     
@@ -528,15 +514,19 @@ The cost function value :math:`J` (should be equal to the last iteration ``J``),
 
     model_su.output.cost
     
-The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and because we performed a spatially uniform optimization, we will only display the parameter set values for one cell wihtin the catchment active cells, which is the most downstream gauge position here),
+The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and because we performed a spatially uniform optimization, we will only display the parameter set values for one cell within the catchment active cells, which is the most downstream gauge position here),
 
 .. ipython:: python
 
+    ind = tuple(model_su.mesh.gauge_pos[0,:])
+    
+    ind
+
     (
-     model_su.parameters.cp[20, 27],
-     model_su.parameters.cft[20, 27],
-     model_su.parameters.lr[20, 27],
-     model_su.parameters.exc[20, 27],
+     model_su.parameters.cp[ind],
+     model_su.parameters.cft[ind],
+     model_su.parameters.lr[ind],
+     model_su.parameters.exc[ind],
     )
 
 Spatially distributed optimization
@@ -549,18 +539,25 @@ We consider here for optimization:
 - a spatially distributed parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 - a prior set of parameters :math:`\bar{\theta}^*` generated from the previous spatially uniform global optimization.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``algorithm``, ``jobs_fun``, ``control_vector`` and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
+Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
 
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model_su`` instance which had stored the previous optimized parameters.
 
 .. ipython:: python
+    :suppress:
 
     model_sd = model_su.optimize(
-        algorithm="l-bfgs-b",
-        jobs_fun="nse",
-        control_vector=["cp", "cft", "lr", "exc"],
-        options={"maxiter": 10},
-    )
+            mapping="distributed",
+            options={"maxiter": 10}
+        )
+
+.. ipython:: python
+    :verbatim:
+
+    model_sd = model_su.optimize(
+            mapping="distributed",
+            options={"maxiter": 10}
+        )
     
 While the optimization routine is in progress, some information are provided.
 
@@ -570,25 +567,26 @@ While the optimization routine is in progress, some information are provided.
         Algorithm: 'l-bfgs-b'
         Jobs function: 'nse'
         Jreg function: 'prior'
-        wJreg: .000000
+        wJreg: 0.000000
+        Mapping: 'distributed' k(x)
         Nx: 383
         Np: 4 [ cp cft exc lr ] 
         Ns: 0 [  ] 
         Ng: 1 [ V3524010 ] 
         wg: 1 [ 1.000000 ] 
-     
+         
         At iterate      0    nfg =     1    J =  0.044362    |proj g| =  0.000000
         At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
-        At iterate      2    nfg =     3    J =  0.039256    |proj g| =  0.000075
-        At iterate      3    nfg =     4    J =  0.038600    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035663    |proj g| =  0.000019
-        At iterate      5    nfg =     7    J =  0.034913    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033650    |proj g| =  0.000010
-        At iterate      7    nfg =     9    J =  0.032127    |proj g| =  0.000013
-        At iterate      8    nfg =    10    J =  0.031194    |proj g| =  0.000011
-        At iterate      9    nfg =    11    J =  0.028002    |proj g| =  0.000085
-        At iterate     10    nfg =    12    J =  0.027122    |proj g| =  0.000024
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
+        At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
+        At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
+        At iterate      4    nfg =     5    J =  0.035661    |proj g| =  0.000019
+        At iterate      5    nfg =     7    J =  0.034909    |proj g| =  0.000011
+        At iterate      6    nfg =     8    J =  0.033656    |proj g| =  0.000010
+        At iterate      7    nfg =     9    J =  0.032117    |proj g| =  0.000013
+        At iterate      8    nfg =    10    J =  0.031270    |proj g| =  0.000010
+        At iterate      9    nfg =    11    J =  0.028340    |proj g| =  0.000076
+        At iterate     10    nfg =    12    J =  0.026773    |proj g| =  0.000024
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT 
         
         
 The information are broadly similar to the spatially uniform optimization, except for
@@ -619,6 +617,7 @@ We can once again visualize, the simulated discharges (``su``: spatially uniform
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
+    plt.title(model_sd.mesh.code[0]);
     @savefig qsim_sd_rc_user_guide.png
     plt.legend();
     

@@ -1,0 +1,37 @@
+name: smash-dev
+channels:
+    - conda-forge
+dependencies:
+    - python=3.8
+    - pip
+
+    # compile
+    - make
+    - gcc
+    - gfortran
+    
+    # required dependencies
+    - f90wrap
+    - numpy
+    - pandas
+    - matplotlib
+    - h5py
+    - tqdm
+    - gdal
+    - scipy
+    - pyyaml
+    
+    # documentation
+    - sphinx
+    - numpydoc
+    - pydata-sphinx-theme
+    - ipython
+    - sphinxcontrib-bibtex
+    - sphinx-design
+    - sphinx-autosummary-accessors
+    
+    # test
+    - pytest
+    
+    # format
+    - black

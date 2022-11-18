@@ -15,6 +15,22 @@ Setup
 In this section all the setup options that can be passed to the ``setup`` dictionary needed to initialize the :class:`.Model` object will be presented.
 
 
+Structure options
+*****************
+
+``structure``:bolditalic:`: str, default "gr-a"`
+    Model structure. Possible model structures are:
+
+    - "gr-a"
+        4 parameters and 3 states structure. Structure most similar to ``GR4`` (TODO ref).
+
+    - "gr-b"
+        6 parameters and 5 states structure. Structure most similar to ``GR6`` (TODO ref)
+    
+    - "vic-a"
+        8 parameters and 3 states structure. Structure most similar to ``VIC3L`` (TODO ref)
+
+
 Time options
 ************
 
@@ -57,7 +73,6 @@ Input data options
 ``prcp_directory``:bolditalic:`: str`
     Path to the directory with precipitaton files.
 
-
 ``read_pet``:bolditalic:`: bool, default False`
     Enables the reading of evapotranspiration (PET) files.
     
@@ -82,55 +97,32 @@ Input data options
     Path to the directory with PET files.
     
 ``sparse_storage``:bolditalic:`: bool, default False`
-    Enables the sparse storage of atmospheric data (i.e. precipitation and PET).
+    Enables the sparse storage of atmospheric data (i.e. precipitation and PET) and simulated discharge.
     
 ``mean_forcing``:bolditalic:`: bool, default False`
     Enables the calculation of average atmospheric data (i.e. precipitation and PET) by catchment.
-    
-    
-Operator options
-****************
 
+``read_descriptor``:bolditalic:`: bool, default False`
+    Enables the reading of physiographic descriptor files.
 
-``interception_module``:bolditalic:`: int, default 0`
-    Interception module selection:
-    
-    - 0: No interception
-    
-    - 1: ``GR`` interception
-    
-``production_module``:bolditalic:`: int, default 0`
-    Production module selection:
-    
-    - 0: ``GR`` production
-    
-``transfer_module``:bolditalic:`: int, default 0`
-    Transfer module selection:
-    
-    - 0: ``GR4`` transfer
-    
-    - 1: ``GR6`` transfer
-    
-``exchange_module``:bolditalic:`: int, default 0`
-    Exchange module selection:
-    
-    - 0: No exchange
-    
-    - 1: ``GR4`` exchange
-    
-``routing_module``:bolditalic:`: int, default 0`
-    Routing module selection:
-    
-    - 0: No routing (direct sum of cells discharges)
-    
-    - 1: Linear routing module
+``descriptor_directory``:bolditalic:`: str`
+    Path to the directory with physiographic descriptor files.
 
+``descriptor_name``:bolditalic:`: list[str]`
+    List of physiographic descriptor names (the size of the list will be used to allocate the descriptor array and used to read the corresponding files).
+
+Conventions for input data files
+````````````````````````````````
+TODO
 
 Output options
 **************
 
 ``save_qsim_domain``:bolditalic:`: bool, default False`
     Enables the save of simulated discharge on the entire domain.
+    
+``save_net_prcp_domain``:bolditalic:`: bool, default False`
+    Enables the save of simulated net precipitation on the entire domain.
 
 
 .. _user_guide.model_initialization.mesh:
@@ -165,20 +157,13 @@ Gauge options
     Number of gauges in the grid.
     
 ``gauge_pos``:bolditalic:`: NumPy array, shape=(2, ng), dtype=np.int32`
-    Gauge position in the grid.
-    
-    .. warning::
-        
-        The user must pay attention to the index used for this argument. Indexing in Python is from 0 to N-1 except in Fortran, the basic indexing is from 1 to N. For this argument, the position of the gauges on the grid must be defined according to the Fortran indexing.
-        
+    Position of gauges in the grid.
 
-``code``:bolditalic:`: NumPy array, shape=(20, ng), dtype=np.uint8`
+
+``code``:bolditalic:`: NumPy array, shape=(20, ng), dtype=U`
     Code of gauges.
-    
-    .. warning::
-        
-        This argument is tricky to use because any NumPy uint8 array wrapped must be filled with ASCII values.
-        
+
+
 ``area``:bolditalic:`: NumPy array, shape=(ng), dtype=np.float32`
     Area of gauges in square meters.
     
@@ -187,17 +172,17 @@ Grid options
 ************
 
 ``flow``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
-    Grid flow directions. `smash` is using a D8 flow directions with the following convention (**TODO**)
+    Grid flow directions. `smash` is using a D8 flow directions with the following convention.
+    
+    .. image:: ../_static/flwdir_convention.png
+        :width: 100
+        :align: center
     
 ``drained_area``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
     Grid drained area in number of cells.
     
 ``path``:bolditalic:`: NumPy array, shape=(2, nrow * ncol), dtype=np.int32`
     Grid calculation path. Sorting grid cells in ascending order of drained area.
-    
-    .. warning::
-        
-        The user must pay attention to the index used for this argument. Indexing in Python is from 0 to N-1 except in Fortran, the basic indexing is from 1 to N. For this argument, the path calculation on the grid must be defined according to the Fortran indexing.
     
     
 Active cell options

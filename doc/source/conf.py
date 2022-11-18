@@ -12,7 +12,6 @@
 #
 import os
 import sys
-import IPython
 
 sys.path.insert(0, os.path.abspath("../.."))
 sys.path.insert(0, os.path.abspath("./_ext"))
@@ -25,7 +24,7 @@ copyright = "2022, Francois Colleoni"
 author = "Francois Colleoni"
 
 # The full version, including alpha/beta/rc tags
-release = "0.1.0"
+release = "0.2.0"
 
 
 # -- General configuration ---------------------------------------------------
@@ -42,10 +41,9 @@ extensions = [
     "sphinx.ext.duration",
     "sphinx.ext.autosummary",
     "numpydoc",
-    "sphinx_panels",
+    "sphinx_design",
     "IPython.sphinxext.ipython_directive",
     "IPython.sphinxext.ipython_console_highlighting",
-    # "matplotlib.sphinxext.only_directives",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_autosummary_accessors",
     "optimize_directive",
@@ -78,33 +76,30 @@ default_role = "autolink"
 # The theme to use for HTML and HTML Help pages.  See the documentation for
 # a list of builtin themes.
 #
-html_theme = "pydata_sphinx_theme"
+html_favicon = "_static/favicon.ico"
 
-html_logo = "_static/logo_smash.svg"
+html_theme = "pydata_sphinx_theme"
 
 html_last_updated_fmt = "%b %d, %Y"
 
 html_theme_options = {
-"gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
-"collapse_navigation": False,
-"google_analytics_id": "UA-27880019-2",
+    "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
+    "collapse_navigation": True,
+    "logo": {
+      "image_light": "logo_smash.svg",
+      "image_dark": "logo_smash_dark.svg",
+    },
 }
 
-# html_context = {
-# "gitlab_url": "https://gitlab.irstea.fr", # or your self-hosted GitLab
-# "gitlab_user": "francois.colleoni",
-# "gitlab_repo": "smash",
-# "gitlab_version": "master",
-# "doc_path": "src/py/docs/source",
-# }
+html_context = {
+    "default_mode": "light"
+}
 
 html_css_files = [
     "css/smash.css",
 ]
 
 html_use_modindex = True
-
-panels_add_bootstrap_css = False
 
 bibtex_bibfiles = ["_static/bib/references.bib"]
 

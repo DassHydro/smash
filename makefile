@@ -12,10 +12,10 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -ffast-math -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC
 debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -ffast-math -fPIC
-CFLAGS := -g -O3 -march=native -ffast-math -fPIC
+F77FLAGS := -O3 -march=native -funroll-loops -fPIC
+CFLAGS := -g -O3 -march=native -fPIC
 
 #% Files extension
 F90EXT := f90
@@ -27,6 +27,7 @@ OBJEXT := o
 BUILDDIR := obj
 SMASHDIR := smash
 TAPENADEDIR := tapenade
+F90WRAPDIR := f90wrap
 SOLVERDIR := smash/solver
 MESHDIR := smash/mesh
 
@@ -36,7 +37,7 @@ MOD := -J$(BUILDDIR)
 
 #% f90wrap information
 SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERDIR)/module/mw*.f90
+SOLVERMODWRAP := $(SOLVERDIR)/*/mw*.f90
 OBJWRAP := $(BUILDDIR)/*.o
 SOLVERWRAPPERS := f90wrap*.f90
 
@@ -62,29 +63,35 @@ c: \
  
 #% f77 files
 f77: \
- obj/adBuffer.o \
  obj/lbfgsb.o \
  
 #% f90 files
 f90: \
- obj/mwd_common.o \
- obj/m_statistic.o \
- obj/m_array_manipulation.o \
+ obj/md_constant.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_input_data.o \
  obj/mwd_parameters.o \
  obj/mwd_states.o \
  obj/mwd_output.o \
+ obj/md_gr_operator.o \
+ obj/md_vic_operator.o \
+ obj/md_routing_operator.o \
+ obj/mwd_parameters_manipulation.o \
+ obj/mwd_states_manipulation.o \
  obj/mwd_cost.o \
- obj/md_operator.o \
- obj/mw_routine.o \
- obj/mw_run.o \
+ obj/mw_forward.o \
+ obj/forward.o \
+ obj/forward_db.o \
  obj/mw_adjoint_test.o \
  obj/mw_optimize.o \
- obj/forward.o \
- obj/forward_d.o \
- obj/forward_b.o \
+ obj/m_sort.o \
+ obj/m_array_manipulation.o \
+ obj/m_statistic.o \
+ obj/mw_copy.o \
+ obj/mw_mask.o \
+ obj/mw_sparse_storage.o \
+ obj/mw_forcing_statistic.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
@@ -106,7 +113,8 @@ wrappers:
 	@echo " Making wrappers "
 	@echo ""
 	@echo "********************************************"
-	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k kind_map --package --py-mod-names py_mod_names
+	rm -rf $(BUILDDIR)/f90wrap*
+	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k $(F90WRAPDIR)/kind_map --py-mod-names $(F90WRAPDIR)/py_mod_names --package
 	
 #% Making module extension (f2py-f90wrap)
 module:
@@ -151,7 +159,7 @@ finalize:
 	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
 	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
 	rm -rf $(SHAREDLIB)
-	bash finalize_f90wrap.sh
+	python3 $(F90WRAPDIR)/finalize_f90wrap.py
 	
 #% Generating tapenade files (adjoint and tangent linear models)
 tap:

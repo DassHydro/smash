@@ -41,12 +41,12 @@ Model object creation
 Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
 
-.. _practice_case.setup_argument_creation:
+.. _user_guide.practice_case.setup_argument_creation:
 
 Setup argument creation
 ***********************
     
-``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary setup Fortran arrays). 
+``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -68,12 +68,12 @@ A minimal ``setup`` configuration is:
         "end_time": "2020-01-04 00:00",
     }
     
-.. _practice_case.mesh_argument_creation:
+.. _user_guide.practice_case.mesh_argument_creation:
     
 Mesh argument creation
 **********************
 
-``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary mesh Fortran arrays). 
+``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -95,7 +95,9 @@ First part of  ``mesh`` configuration is:
 
 - ``area``: the catchment area in m²,
 
-- ``gauge_pos``: the gauge position in the grid (it must follow **Fortran indexing**).
+- ``gauge_pos``: the gauge position in the grid (here lower right corner [9,9]),
+
+- ``code``: the gauge code.
 
 .. ipython:: python
 
@@ -109,7 +111,8 @@ First part of  ``mesh`` configuration is:
         "ng": 1,
         "nac": nrow * ncol,
         "area": nrow * ncol * (dx ** 2),
-        "gauge_pos": np.array([10, 10], dtype=np.int32),
+        "gauge_pos": np.array([9, 9], dtype=np.int32),
+        "code": np.array(["Practice_case"])
     }
 
 Second part of ``mesh`` configuration is:
@@ -153,7 +156,7 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods (it must follow **Fortran indexing**).
+Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods.
 
 .. ipython:: python
 
@@ -163,8 +166,8 @@ Finally, the calculation path (``path``) must be provided (ascending order of dr
     mesh["path"] = np.zeros(shape=(2, mesh["drained_area"].size), 
         dtype=np.int32)
 
-    mesh["path"][0, :] = ind_path[0] + 1
-    mesh["path"][1, :] = ind_path[1] + 1
+    mesh["path"][0, :] = ind_path[0]
+    mesh["path"][1, :] = ind_path[1]
     
 
 Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be created:
@@ -177,7 +180,7 @@ Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be creat
 
 .. note::
 
-    The representation of the :class:`.Model` object is very simple and only displays the dimensions and the last action that updated the object. More information on what the object contains is available below.
+    The representation of the :class:`.Model` object is very simple and only displays the structure used, the dimensions and the last action that updated the object. More information on what the object contains is available below.
     
 -------------
 Viewing Model
@@ -204,7 +207,7 @@ Once the :class:`.Model` object is created, it is possible to visualize what it 
 Setup
 *****
 
-The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`practice_case.setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
+The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`user_guide.practice_case.setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -214,7 +217,7 @@ The other :attr:`.Model.setup` arguments can also be viewed even if they have no
 
 .. ipython:: python
 
-    model.setup.production_module, model.setup.routing_module
+    model.setup.structure, model.setup.prcp_indice
     
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
@@ -225,23 +228,21 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.setup.copy(                   model.setup.prcp_directory
     model.setup.daily_interannual_pet   model.setup.prcp_format
     model.setup.descriptor_directory    model.setup.prcp_indice
-    model.setup.descriptor_format       model.setup.production_module
-    model.setup.descriptor_name         model.setup.qobs_directory
-    model.setup.dt                      model.setup.read_descriptor
-    model.setup.end_time                model.setup.read_pet
-    model.setup.exchange_module         model.setup.read_prcp
+    model.setup.descriptor_format       model.setup.qobs_directory
+    model.setup.descriptor_name         model.setup.read_descriptor
+    model.setup.dt                      model.setup.read_pet
+    model.setup.end_time                model.setup.read_prcp
     model.setup.from_handle(            model.setup.read_qobs
-    model.setup.interception_module     model.setup.routing_module
-    model.setup.mean_forcing            model.setup.save_qsim_domain
-    model.setup.pet_conversion_factor   model.setup.sparse_storage
-    model.setup.pet_directory           model.setup.start_time
-    model.setup.pet_format              model.setup.transfer_module
-    model.setup.prcp_conversion_factor 
+    model.setup.mean_forcing            model.setup.save_net_prcp_domain
+    model.setup.pet_conversion_factor   model.setup.save_qsim_domain
+    model.setup.pet_directory           model.setup.sparse_storage
+    model.setup.pet_format              model.setup.start_time
+    model.setup.prcp_conversion_factor  model.setup.structure
     
 Mesh
 ****
 
-The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`practice_case.mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`user_guide.practice_case.mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -276,13 +277,13 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.mesh.dx            model.mesh.path
     model.mesh.flwdir        model.mesh.xmin
     model.mesh.flwdst        model.mesh.ymax
-    model.mesh.from_handle( 
+    model.mesh.from_handle(
 
 
 Input Data
 **********
 
-The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
+The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`user_guide.practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
 
 For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
 
@@ -345,20 +346,26 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.parameters.<TAB>
-    model.parameters.alpha         model.parameters.cp
-    model.parameters.beta          model.parameters.cst
-    model.parameters.cft           model.parameters.exc
-    model.parameters.ci            model.parameters.from_handle(
-    model.parameters.copy(         model.parameters.lr
+    model.parameters.alpha         model.parameters.cusl1
+    model.parameters.b             model.parameters.cusl2
+    model.parameters.beta          model.parameters.ds
+    model.parameters.cft           model.parameters.dsm
+    model.parameters.ci            model.parameters.exc
+    model.parameters.clsl          model.parameters.from_handle(
+    model.parameters.copy(         model.parameters.ks
+    model.parameters.cp            model.parameters.lr
+    model.parameters.cst           model.parameters.ws
+
     
 .. ipython:: python
     
     @verbatim
     model.states.<TAB>
-    model.states.copy(         model.states.hlr
+    model.states.copy(         model.states.hlsl
     model.states.from_handle(  model.states.hp
     model.states.hft           model.states.hst
-    model.states.hi
+    model.states.hi            model.states.husl1
+    model.states.hlr           model.states.husl2
     
 Output
 ******
@@ -395,7 +402,10 @@ To run a simulation, the :class:`.Model` needs at least one precipitation and po
     
     prcp[9:19] = np.flip(tri)
     
-    model.input_data.prcp = np.broadcast_to(prcp, model.input_data.prcp.shape)
+    model.input_data.prcp = np.broadcast_to(
+        prcp,
+        model.input_data.prcp.shape,
+    )
 
     model.input_data.pet = 0.
     
@@ -406,8 +416,10 @@ Checking on any cell the precipitation values:
     plt.plot(model.input_data.prcp[0,0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    @savefig prpc_pc_user_guide.png
     plt.ylabel("Precipitation $(mm/h)$");
+    @savefig prpc_pc_user_guide.png
+    plt.title("Precipitation on cell (0,0)");
+   
     
 ---
 Run
@@ -420,7 +432,7 @@ The :class:`.Model` is finally ready to be run using the :meth:`.Model.run` meth
     
 .. ipython:: python
 
-    model.run(inplace=True)
+    model.run(inplace=True);
 
     model
     
@@ -432,11 +444,13 @@ Once the run is done, it is possible to access the simulated discharge on the ga
     plt.plot(model.output.qsim[0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
-    @savefig qsim_fwd_pc_user_guide.png
     plt.ylabel("Simulated discharge $(m^3/s)$");
+    @savefig qsim_fwd_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
+    
     
 
-This hydrograph is the result of a forward run of the code with the default structure, parameters and initial states.
+This hydrograph is the result of a forward run of the code with the default structure (``gr-a``), parameters and initial states.
     
 Optimization
 ************
@@ -457,21 +471,22 @@ Re run to see the difference between the hydrographs.
 
 .. ipython:: python
 
-    model.run(inplace=True)
+    model.run(inplace=True);
     
     plt.plot(model.input_data.qobs[0,:], label="Observed discharge");
     plt.plot(model.output.qsim[0,:], label="Simulated discharge");
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
-    @savefig qsim_fwd2_pc_user_guide.png
     plt.legend();
+    @savefig qsim_fwd2_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
     
-Finally, perform a spatially uniform calibration of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
+Finally, perform a spatially uniform calibration (which is default optimization) of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
 
 .. ipython:: python
 
-    model.optimize("sbs", control_vector=["cp"], inplace=True)
+    model.optimize(control_vector="cp", inplace=True);
     
     model.parameters.cp
 
@@ -484,8 +499,9 @@ Finally, perform a spatially uniform calibration of the parameter :math:`\mathrm
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
-    @savefig qsim_opt_pc_user_guide.png
     plt.legend();
+    @savefig qsim_opt_pc_user_guide.png
+    plt.title(model.mesh.code[0]);
     
 .. note::
     
@@ -502,7 +518,7 @@ The last step is to save what we have entered in :class:`.Model` (i.e. ``setup``
 Setup argument in/out
 *********************
 
-The setup dictionary ``setup``, which was created in the section :ref:`practice_case.setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
+The setup dictionary ``setup``, which was created in the section :ref:`user_guide.practice_case.setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
 
 .. ipython:: python
 
@@ -519,7 +535,7 @@ A file named ``setup.yaml`` has been created in the current working directory co
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 
@@ -562,6 +578,6 @@ A file named ``model.hdf5`` has been created in the current working directory co
 
 .. ipython:: python
 
-    model3.run(inplace=True)
+    model3.run(inplace=True);
 
     model3

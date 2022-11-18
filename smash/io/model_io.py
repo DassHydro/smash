@@ -87,12 +87,6 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
                         chunks=True,
                     )
 
-                elif isinstance(value, bytes):
-
-                    value = value.strip()
-
-                    hdf5_ins.attrs[attr] = value
-
                 else:
 
                     hdf5_ins.attrs[attr] = value
@@ -105,7 +99,41 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
 def save_model(model: Model, path: str):
 
     """
-    Save model
+    Save Model object.
+
+    Parameters
+    ----------
+    model : Model
+        The Model object to be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file.
+
+    path : str
+        The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
+
+    See Also
+    --------
+    read_model: Read Model object.
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> model
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
+
+    Save Model
+
+    >>> smash.save_model(model, "model.hdf5")
+
+    Read Model
+
+    >>> model_rld = smash.read_model("model.hdf5")
+    >>> model_rld
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
     """
 
     if not path.endswith(".hdf5"):
@@ -137,7 +165,43 @@ def save_model(model: Model, path: str):
 def read_model(path: str) -> Model:
 
     """
-    Read model
+    Read Model object.
+
+    Parameters
+    ----------
+    path : str
+        The file path.
+
+    Returns
+    -------
+    Model :
+        A Model object loaded from HDF5 file.
+
+    See Also
+    --------
+    save_model: Save Model object.
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> model
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
+
+    Save Model
+
+    >>> smash.save_model(model, "model.hdf5")
+
+    Read Model
+
+    >>> model_rld = smash.read_model("model.hdf5")
+    >>> model_rld
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
     """
 
     if os.path.isfile(path):
@@ -148,13 +212,13 @@ def read_model(path: str) -> Model:
 
             if "descriptor_name" in f["setup"].keys():
 
-                nd = f["setup"]["descriptor_name"].shape[1]
+                nd = f["setup"]["descriptor_name"].size
 
             else:
 
                 nd = 0
 
-            instance.setup = SetupDT(nd)
+            instance.setup = SetupDT(nd, f["mesh"].attrs["ng"])
 
             _parse_hdf5_to_derived_type(f["setup"], instance.setup)
 
