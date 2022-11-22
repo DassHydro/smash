@@ -23,7 +23,7 @@ from smash.core._optimize import (
     _optimize_nelder_mead,
 )
 
-from smash.core._event_segmentation import _date_segmentation
+from smash.core._event_segmentation import _segmentation
 
 from typing import TYPE_CHECKING
 
@@ -717,13 +717,13 @@ class Model(object):
 
             return instance
 
-    def hydrograph_segmentation(self):
+    def event_segmentation(self):
         """
-        Return a DataFrame containing segmentation information of flood events over all catchments of `Model` object. 
+        Return a DataFrame containing segmentation information of flood events over all catchments of Model object.
 
         Returns
-        ----------
-        df : DataFrame
+        -------
+        df : pandas.DataFrame
             flood events information obtained from segmentation algorithm.
 
         Examples
@@ -741,6 +741,6 @@ class Model(object):
         2  V3517010 2014-11-03 08:00:00 2014-11-11 00:00:00 2014-11-04 11:00:00 2014-11-04 16:00:00  autumn
         """
 
-        df = _date_segmentation(self)
-        
+        df = _segmentation(self)
+
         return df

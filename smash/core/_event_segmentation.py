@@ -1,13 +1,13 @@
 from __future__ import annotations
 
-import numpy as np
-import pandas as pd
-from datetime import date, datetime
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model import Model
+
+import numpy as np
+import pandas as pd
+from datetime import date, datetime
 
 
 def _missing_values(p, q, keep=0.2, method="nearest"):
@@ -222,9 +222,8 @@ def _events_grad(
 
 def _mask_event(instance: Model, season="all"):
 
-    po = instance.input_data.mean_prcp 
+    po = instance.input_data.mean_prcp
     qo = instance.input_data.qobs
-
 
     first_ts = instance.setup.start_time
     dtserie = pd.date_range(
@@ -256,7 +255,7 @@ def _mask_event(instance: Model, season="all"):
             list_events = _events_grad(pobs_tmp, qobs_tmp)
             list_events_all += [list_events]
 
-            for event_number,t in enumerate(list_events):
+            for event_number, t in enumerate(list_events):
                 ts = t["start"]
                 te = t["end"]
                 if season == "all":
@@ -276,18 +275,18 @@ def _mask_event(instance: Model, season="all"):
 
     return (pobs, qobs, list_events_all, dtserie), mask
 
-def _date_segmentation(instance: Model):
 
-    po = instance.input_data.mean_prcp 
+def _segmentation(instance: Model):
+
+    po = instance.input_data.mean_prcp
     qo = instance.input_data.qobs
-
 
     first_ts = instance.setup.start_time
     dtserie = pd.date_range(
         start=first_ts, periods=qo.shape[1], freq=f"{int(instance.setup.dt)}s"
     )
 
-    col_name = ['catchment', 'start', 'end', 'maxrainfall', 'flood', 'season']
+    col_name = ["catchment", "start", "end", "maxrainfall", "flood", "season"]
     df = pd.DataFrame(columns=col_name)
 
     for i, catchment in enumerate(instance.mesh.code):
@@ -312,8 +311,8 @@ def _date_segmentation(instance: Model):
             for t in list_events:
                 ts = dtserie[t["start"]]
                 te = dtserie[t["end"]]
-                peakQ = dtserie[t['peakQ']]
-                peakP = dtserie[t['peakP']]
+                peakQ = dtserie[t["peakQ"]]
+                peakP = dtserie[t["peakP"]]
                 season = _get_season(ts)
 
                 pdrow = pd.DataFrame(
