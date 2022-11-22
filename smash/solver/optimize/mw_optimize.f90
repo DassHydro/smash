@@ -989,7 +989,10 @@ module mw_optimize
             ub(np+1:np+ns) = setup%optimize%ub_states
             
             !% inverse sigmoid lambda = 1
-            hyper_matrix(1, 1, :) = log((matrix(ind_ac(1), ind_ac(2), :) - lb) / (ub - matrix(ind_ac(1), ind_ac(2), :)))
+            hyper_matrix(1, 1, :) = &
+                log(max(1e-8_sp, (matrix(ind_ac(1), ind_ac(2), :) - lb)) / &
+                max(1e-8_sp, (ub - matrix(ind_ac(1), ind_ac(2), :))) &
+            )
             
             nbd = 0
             l = 0._dp
