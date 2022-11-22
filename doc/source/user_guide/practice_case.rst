@@ -314,12 +314,12 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
 .. warning::
 
-    It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the ``setup`` to calculate the precipitation indices. Access to this variable is therefore impossible and the code will return the following error:
+    It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the ``setup`` to store catchment descriptors. Access to this variable is therefore impossible and the code will return the following error:
     
     .. ipython:: python
         :okexcept:
             
-        model.input_data.prcp_indice
+        model.input_data.descriptor
         
 Parameters and States
 *********************
