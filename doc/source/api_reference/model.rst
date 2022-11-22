@@ -39,3 +39,4 @@ Others
    :toctree: smash/
 
    Model.copy
+   Model.hydrograph_segmentation

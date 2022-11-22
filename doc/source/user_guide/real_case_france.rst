@@ -104,7 +104,7 @@ This ``mesh2`` created is a dictionnary which is identical to the ``mesh`` loade
     
     mesh2["nrow"], mesh2["ncol"]
 
-Finally, create the :class:`smash.Model`` object using the ``setup`` and ``mesh`` loaded.
+Finally, create the :class:`smash.Model` object using the ``setup`` and ``mesh`` loaded.
 
 .. ipython:: python
 
