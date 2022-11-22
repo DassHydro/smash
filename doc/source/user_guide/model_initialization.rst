@@ -99,7 +99,7 @@ Input data options
 ``sparse_storage``:bolditalic:`: bool, default False`
     Enables the sparse storage of atmospheric data (i.e. precipitation and PET) and simulated discharge.
     
-``mean_forcing``:bolditalic:`: bool, default False`
+``mean_forcing``:bolditalic:`: bool, default True`
     Enables the calculation of average atmospheric data (i.e. precipitation and PET) by catchment.
 
 ``read_descriptor``:bolditalic:`: bool, default False`
