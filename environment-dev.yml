@@ -20,6 +20,8 @@ dependencies:
     - gdal
     - scipy
     - pyyaml
+    - SALib
+    - sobol_seq
     
     # documentation
     - sphinx

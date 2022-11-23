@@ -1,4 +1,5 @@
 from smash.core.model import Model
+from smash.core.generate_samples import generate_samples
 from smash.core.utils import sparse_matrix_to_vector, sparse_vector_to_matrix
 
 from smash.mesh.meshing import generate_mesh
@@ -19,6 +20,7 @@ def __getattr__(name):
 
 __all__ = [
     "Model",
+    "generate_samples"
     "sparse_matrix_to_vector",
     "sparse_vector_to_matrix",
     "generate_mesh",
