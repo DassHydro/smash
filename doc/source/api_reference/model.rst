@@ -39,3 +39,4 @@ Others
    :toctree: smash/
 
    Model.copy
+   Model.event_segmentation
