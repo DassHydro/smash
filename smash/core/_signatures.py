@@ -344,7 +344,7 @@ def _signatures_sensitivity(
     df_cs = []
     df_es = []
 
-    for i in tqdm(range(len(sample)), desc="Computing signatures"):
+    for i in tqdm(range(len(sample)), desc="Computing signatures sensitivity"):
 
         for k in sample.keys():
             setattr(instance.parameters, k, sample[k][i])

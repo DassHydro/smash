@@ -512,7 +512,8 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        jobs_fun: str = "nse",
+        jobs_fun: str | list = "nse",
+        wjobs_fun: None | list = None,
         bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
@@ -553,7 +554,7 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
-        jobs_fun : str, default 'nse'
+        jobs_fun : str or list, default 'nse'
             Type of objective function to be minimized. Should be one of
 
             - 'nse'
@@ -562,6 +563,9 @@ class Model(object):
             - 'se'
             - 'rmse'
             - 'logarithmic'
+
+        wjobs_fun : None or list, default None
+            (TO DO)...
 
         bounds : sequence or None, default None
             Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
@@ -655,6 +659,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             wgauge,
             ost,
@@ -663,6 +668,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             gauge,
             wgauge,
@@ -681,6 +687,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -696,6 +703,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -711,6 +719,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,

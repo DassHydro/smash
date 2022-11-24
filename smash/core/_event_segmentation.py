@@ -279,20 +279,9 @@ def _events_grad(
     return list_events
 
 
-def _mask_event(instance: Model, season: str = "all"):
-
-    date_range = pd.date_range(
-        start=instance.setup.start_time,
-        periods=instance.input_data.qobs.shape[1],
-        freq=f"{int(instance.setup.dt)}s",
-    )
+def _mask_event(instance: Model):
 
     mask = np.zeros(instance.input_data.qobs.shape)
-
-    pobs = []
-    qobs = []
-
-    list_events_all = []
 
     for i, catchment in enumerate(instance.mesh.code):
 
@@ -308,34 +297,16 @@ def _mask_event(instance: Model, season: str = "all"):
 
         else:
 
-            prcp += [prcp_tmp]  # in mm for plotting
-            qobs += [qobs_tmp]  # in m3/s for plotting
-
             list_events = _events_grad(prcp_tmp, qobs_tmp)
-            list_events_all += [list_events]
 
             for event_number, t in enumerate(list_events):
+                
                 ts = t["start"]
                 te = t["end"]
 
-                if season == "all":
-                    mask[i, ts : te + 1] = event_number + 1
+                mask[i, ts : te + 1] = event_number + 1
 
-                elif season in ["spring", "summer", "autumn", "winter"]:
-
-                    if season == _get_season(date_range[ts].date()):
-                        mask[i, ts : te + 1] = event_number + 1
-                    else:
-                        pass
-                else:
-                    raise ValueError(
-                        f"Unknown season '{season}'. Choices: ['spring', 'summer', 'autumn', 'winter', 'all']"
-                    )
-
-    prcp = np.array(prcp)
-    qobs = np.array(qobs)
-
-    return (prcp, qobs, list_events_all, date_range), mask
+    return mask
 
 
 def _event_segmentation(instance: Model):
