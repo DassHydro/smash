@@ -2,14 +2,14 @@
 
 .. module:: generate_samples
 
-=================
+================
 Sample Generator
-=================
+================
 
 .. currentmodule:: smash
 
-Sample Generator tool
-**********************
+Sample generator tool
+*********************
 .. autosummary::
    :toctree: smash/
    

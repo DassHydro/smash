@@ -8,9 +8,6 @@ from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
 from smash.solver._mw_forward import forward
 
-import os
-import errno
-
 from smash.core._build_model import (
     _parse_derived_type,
     _build_setup,
@@ -26,17 +23,15 @@ from smash.core._optimize import (
     _optimize_nelder_mead,
 )
 
-from smash.core._event_segmentation import _segmentation
+from smash.core._event_segmentation import _event_segmentation
 
 from smash.core._signatures import (
     _standardize_signatures,
-    _signatures_one_basin,
-    _signatures_sensitivity_one_basin,
+    _signatures,
+    _signatures_sensitivity,
 )
 
-from smash.core.generate_samples import generate_samples, _model2problem
-
-from smash.io.model_io import save_model
+from smash.core.generate_samples import generate_samples, _get_generate_samples_problem
 
 from typing import TYPE_CHECKING
 
@@ -44,6 +39,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
 import numpy as np
+
 
 __all__ = ["Model"]
 
@@ -489,7 +485,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Forward Model Y = M (k)")
+        print("</> Model Run Y = M (k)")
 
         cost = np.float32(0)
 
@@ -732,12 +728,12 @@ class Model(object):
 
     def event_segmentation(self):
         """
-        Return a DataFrame containing segmentation information of flood events over all catchments of Model object.
+        Compute segmentation information of flood events over all catchments of the Model.
 
         Returns
         -------
-        df : pandas.DataFrame
-            flood events information obtained from segmentation algorithm.
+        res : pandas.DataFrame
+            Flood events information obtained from segmentation algorithm.
 
         Examples
         --------
@@ -746,41 +742,37 @@ class Model(object):
 
         Perform segmentation algorithm and display flood events infomation:
 
-        >>> df = model.event_segmentation()
-        >>> df
-          catchment               start                 end         maxrainfall               flood  season
-        0  V3524010 2014-11-03 03:00:00 2014-11-10 15:00:00 2014-11-04 12:00:00 2014-11-04 19:00:00  autumn
-        1  V3515010 2014-11-03 10:00:00 2014-11-08 10:00:00 2014-11-04 12:00:00 2014-11-04 20:00:00  autumn
-        2  V3517010 2014-11-03 08:00:00 2014-11-11 00:00:00 2014-11-04 11:00:00 2014-11-04 16:00:00  autumn
+        >>> res = model.event_segmentation()
+        >>> res
+               code               start                   flood  season
+        0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
+        1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
+        2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
         """
+        print("</> Model Event Segmentation")
 
-        df = _segmentation(self.copy())
+        return _event_segmentation(self)
 
-        return df
-
-    def signatures(self, sign=None):
+    def signatures(self, sign: str | list[str] | None = None):
 
         """
         Compute continuous or/and flood event signatures of the Model.
 
         Parameters
         ----------
-        sign : str, list or None, default None
-                Define signature(s) to compute.
-                List of all continuous and flood event signatures:
+        sign : str, list of str or None, default None
+            Define signature(s) to compute. Should be one of
 
-                    'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-                    'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
 
-                If None, all of continuous and flood event signatures will be computed.
+            .. note::
+                If not given, all of continuous and flood event signatures will be computed.
 
         Returns
         -------
-        df : dict
-                `df` with two DataFrames of i. observed and simulated continuous signatures and ii. observed and simulated flood event signatures.
-
-        Sname : dict
-                `Sname` with two lists of i. computed continuous signatures and ii. computed flood event signatures.
+        res : dict
+            Two pandas.DataFrames of i. observed and simulated continuous signatures and ii. observed and simulated flood event signatures.
 
         Examples
         --------
@@ -790,87 +782,66 @@ class Model(object):
 
         Compute all continuous and flood event signatures:
 
-        >>> df, Sname = model.signatures()
-        >>> df["C"]
-          catchment   Crc_obs  Crchf_obs  Crclf_obs  Crch2r_obs  Cfp2_obs  ...  Crclf_sim  Crch2r_sim      Cfp2_sim     Cfp10_sim  Cfp50_sim  Cfp90_sim
-        0  V3524010  0.516207   0.191349   0.324854    0.370684   1.02456  ...   0.289188    0.411256  1.714191e-10  2.570761e-03   3.616916  39.241742
-        1  V3515010  0.509180   0.147217   0.361951    0.289125   0.31100  ...   0.278125    0.385084  1.559969e-15  5.540762e-05   0.984099   9.691529
-        2  V3517010  0.514302   0.148364   0.365926    0.288476   0.06500  ...   0.273115    0.398862  8.358947e-38  4.860812e-14   0.319221   2.687196
+        >>> res = model.signatures()
+        >>> res["C"]
+               code   Crc_obs  Crchf_obs    Cfp50_sim  Cfp90_sim
+        0  V3524010  0.516207   0.191349 ... 3.616916  39.241742
+        1  V3515010  0.509180   0.147217 ... 0.984099   9.691529
+        2  V3517010  0.514302   0.148364 ... 0.319221   2.687196
 
-        [3 rows x 17 columns]
-
-        >>> df["E"]
-          catchment  season               start                 end    Eff_obs    Ebf_obs  ...   Erc_sim  Erchf_sim  Erclf_sim  Erch2r_sim Elt_sim     Epf_sim
-        0  V3524010  autumn 2014-11-03 03:00:00 2014-11-10 15:00:00  28.146225  34.729198  ...  0.588040   0.288424   0.299594    0.490484       8  280.677338
-        1  V3515010  autumn 2014-11-03 10:00:00 2014-11-08 10:00:00   7.068919   9.895721  ...  0.563045   0.279523   0.283470    0.496448       6   61.226574
-        2  V3517010  autumn 2014-11-03 08:00:00 2014-11-11 00:00:00   1.336155   2.453123  ...  0.586809   0.275075   0.311709    0.468764       6   18.758123
-
-        [3 rows x 20 columns]
-
-        >>> Sname["C"]
-        ['Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90']
-
-        >>> Sname["E"]
-        ['Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf']
-
+        >>> res["E"]
+               code  season               start     Elt_sim     Epf_sim
+        0  V3524010  autumn 2014-11-03 03:00:00 ...       8  280.677338
+        1  V3515010  autumn 2014-11-03 10:00:00 ...       6   61.226574
+        2  V3517010  autumn 2014-11-03 08:00:00 ...       6   18.758123
         """
+        print("</> Model Signatures")
 
-        instance = self.copy()
+        cs, es = _standardize_signatures(sign)
 
-        CS, ES = _standardize_signatures(sign)
-
-        df, Sname = _signatures_one_basin(instance, CS, ES)
-
-        return df, Sname
+        return _signatures(self, cs, es)
 
     def signatures_sensitivity(
         self,
-        N=64,
-        sign=None,
-        save=False,
-        path=None,
+        n: int = 64,
+        sign: str | list[str] | None = None,
+        return_sample: bool = False,
     ):
         """
-        Compute variance-based sensitivity (Sobol indices) of signatures.
+        Compute variance-based sensitivity (Sobol indices) of signatures of the Model.
 
         Parameters
         ----------
-        N : int, default 64
-                Number of trajectories to generate for each model parameter (ideally a power of 2).
-                Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
-                where :math:`D` is the number of model parameters.
+        n : int, default 64
+            Number of trajectories to generate for each model parameter (ideally a power of 2).
+            Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
+            where :math:`D` is the number of model parameters.
 
-                See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
+            See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
 
         sign : str, list or None, default None
-                Define signature(s) to compute.
-                List of all continuous and flood event signatures:
+            Define signature(s) to compute. Should be one of
 
-                    'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-                    'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
 
-                If None, all of continuous and flood event signatures will be computed.
+            .. note::
+                If not given, all of continuous and flood event signatures will be computed.
 
-        save : bool, default False
-                If True, save simulation results under HDF5 file.
-
-        path : None, str, path object, or file-like object, default None
-                `path` should be provided when ``save=True`` and correspond to a folder where the files will be saved.
+        return_sample : bool, default False
+            If True, also return the generated sample used to compute sensitivity computation.
 
         Returns
         -------
-        sample : DataFrame
-                Generated sample for sensititvity computation.
+        res : dict
+            Two pandas.DataFrames of i. continuous signatures sensitivity and ii. flood event signatures sensitivity.
 
-        dfSens : dict
-                `dfSens` with two DataFrames of i. continuous signatures sensitivity and ii. flood event signatures sensitivity.
-
-        Sname : dict
-                `Sname` with two lists of i. computed continuous signatures and ii. computed flood event signatures.
+        sample : pandas.DataFrame
+            Generated sample for sensititvity computation. Returned if ``return_sample`` is True.
 
         See Also
         --------
-        save_model : Save Model object.
+        save_model: Save Model object.
 
         Examples
         --------
@@ -880,60 +851,37 @@ class Model(object):
 
         Continuous signatures sensitivity computation:
 
-        >>> res[1]["C"]
-          catchment  Crc_sim.ST_cp  Crc_sim.ST_cft  Crc_sim.ST_exc  ...  Cfp90_sim.S2_cp-lr  Cfp90_sim.S2_cft-exc  Cfp90_sim.S2_cft-lr  Cfp90_sim.S2_exc-lr
-        0  V3524010       0.025848        0.322964        0.492531  ...           -0.008993              0.604393             0.084209             0.081659
-        1  V3515010       0.009877        0.288598        0.492263  ...           -0.011919              0.628929             0.111150             0.109329
-        2  V3517010       0.009662        0.300603        0.518927  ...           -0.014917              0.609301             0.105303             0.120858
-
-        [3 rows x 113 columns]
+        >>> res["C"]
+               code  Crc_sim.ST_cp  Crc_sim.ST_cft ... Cfp90_sim.S2_cft-lr  Cfp90_sim.S2_exc-lr
+        0  V3524010       0.025848        0.322964 ...            0.084209             0.081659
+        1  V3515010       0.009877        0.288598 ...            0.111150             0.109329
+        2  V3517010       0.009662        0.300603 ...            0.105303             0.120858
 
         Flood event signatures sensitivity computation:
 
-        >>> res[1]["E"]
-          catchment  season               start                 end  ...  Epf_sim.S2_cp-lr  Epf_sim.S2_cft-exc  Epf_sim.S2_cft-lr  Epf_sim.S2_exc-lr
-        0  V3524010  autumn 2014-11-03 03:00:00 2014-11-10 15:00:00  ...         -0.007437            0.588443           0.056097           0.072928
-        1  V3515010  autumn 2014-11-03 10:00:00 2014-11-08 10:00:00  ...         -0.004476            0.565173           0.073368           0.098639
-        2  V3517010  autumn 2014-11-03 08:00:00 2014-11-11 00:00:00  ...         -0.009714            0.467997           0.041326           0.086835
-
-        [3 rows x 116 columns]
-
-        Lists of studied signatures:
-
-        >>> print(res[2])
-        {'C': ['Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90'], 'E': ['Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf']}
-        
+        >>> res["E"]
+               code  season               start ... Epf_sim.S2_cft-lr  Epf_sim.S2_exc-lr
+        0  V3524010  autumn 2014-11-03 03:00:00 ...          0.056097           0.072928
+        1  V3515010  autumn 2014-11-03 10:00:00 ...          0.073368           0.098639
+        2  V3517010  autumn 2014-11-03 08:00:00 ...          0.041326           0.086835
         """
+
+        print("</> Model Signatures Sensitivity")
 
         instance = self.copy()
 
-        CS, ES = _standardize_signatures(sign)
+        cs, es = _standardize_signatures(sign)
 
-        problem = _model2problem(instance.setup)
-        sample = generate_samples(problem=problem, generator='saltelli', n=N)
+        problem = _get_generate_samples_problem(instance.setup)
 
-        if save and not os.path.isdir(path):
-            raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+        sample = generate_samples(problem=problem, generator="saltelli", n=n)
 
-        dfC = []
-        dfE = []
+        res = _signatures_sensitivity(instance, problem, sample, cs, es)
 
-        for i in range(len(sample)):
+        if return_sample:
 
-            for k in sample.keys():
-                setattr(instance.parameters, k, sample[k][i])
+            return res, sample
 
-            instance.run(inplace=True)
+        else:
 
-            if save:
-                save_model(instance, f"{path}/run_{i+1}.hdf5")
-
-            df, Sname = _signatures_one_basin(instance, CS, ES, sign_obs=False)
-
-            dfC += [df["C"]]
-            dfE += [df["E"]]
-
-        dfSens = _signatures_sensitivity_one_basin(problem, {"C": dfC, "E": dfE}, Sname)
-
-        return sample, dfSens, Sname
-
+            return res

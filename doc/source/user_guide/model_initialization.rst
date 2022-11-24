@@ -156,32 +156,32 @@ Gauge options
 ``ng``:bolditalic:`: int`
     Number of gauges in the grid.
     
-``gauge_pos``:bolditalic:`: NumPy array, shape=(2, ng), dtype=np.int32`
+``gauge_pos``:bolditalic:`: numpy.ndarray, shape=(2, ng), dtype=np.int32`
     Position of gauges in the grid.
 
 
-``code``:bolditalic:`: NumPy array, shape=(20, ng), dtype=U`
+``code``:bolditalic:`: numpy.ndarray, shape=(20, ng), dtype=U`
     Code of gauges.
 
 
-``area``:bolditalic:`: NumPy array, shape=(ng), dtype=np.float32`
+``area``:bolditalic:`: numpy.ndarray, shape=(ng), dtype=np.float32`
     Area of gauges in square meters.
     
 
 Grid options
 ************
 
-``flow``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
+``flow``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
     Grid flow directions. `smash` is using a D8 flow directions with the following convention.
     
     .. image:: ../_static/flwdir_convention.png
         :width: 100
         :align: center
     
-``drained_area``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
+``drained_area``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
     Grid drained area in number of cells.
     
-``path``:bolditalic:`: NumPy array, shape=(2, nrow * ncol), dtype=np.int32`
+``path``:bolditalic:`: numpy.ndarray, shape=(2, nrow * ncol), dtype=np.int32`
     Grid calculation path. Sorting grid cells in ascending order of drained area.
     
     
@@ -191,9 +191,8 @@ Active cell options
 ``nac``:bolditalic:`: int`
     Number of active cells.
     
-``active_cell``:bolditalic:`: NumPy array, shape=(nrow, ncol), dtype=np.int32`
+``active_cell``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
     Grid active cells. Cells that contribute to the discharge of any gauge on the grid.
-        
         
         
         

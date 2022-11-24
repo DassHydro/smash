@@ -20,7 +20,7 @@ def __getattr__(name):
 
 __all__ = [
     "Model",
-    "generate_samples"
+    "generate_samples",
     "sparse_matrix_to_vector",
     "sparse_vector_to_matrix",
     "generate_mesh",
