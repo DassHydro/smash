@@ -32,6 +32,14 @@ Simulation
 
    Model.run
    Model.optimize
+
+Signatures
+**********
+.. autosummary::
+   :toctree: smash/
+
+   Model.signatures
+   Model.signatures_sensitivity
    
 Others
 ******
