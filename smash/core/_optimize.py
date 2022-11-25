@@ -8,6 +8,7 @@ from smash.solver._mw_optimize import (
     optimize_lbfgsb,
     hyper_optimize_lbfgsb,
 )
+
 from smash.core._event_segmentation import _mask_event
 
 from typing import TYPE_CHECKING
@@ -36,8 +37,8 @@ JOBS_FUN = [
     "logarithmic",
 ]
 
-CSIGN_OPTIM = ['Crc']
-ESIGN_OPTIM = ['Erc', 'Elt', 'Epf']
+CSIGN_OPTIM = ["Crc"]
+ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
@@ -75,7 +76,7 @@ def _optimize_sbs(
     )
 
     # send mask_event to Fortran in case of event signatures based optimization
-    if any([fn[0]=='E' for fn in jobs_fun]):
+    if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "sbs"
@@ -151,7 +152,7 @@ def _optimize_lbfgsb(
     )
 
     # send mask_event to Fortran in case of event signatures based optimization
-    if any([fn[0]=='E' for fn in jobs_fun]):
+    if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "l-bfgs-b"
@@ -262,7 +263,7 @@ def _optimize_nelder_mead(
     )
 
     # send mask_event to Fortran in case of event signatures based optimization
-    if any([fn[0]=='E' for fn in jobs_fun]):
+    if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "nelder-mead"
@@ -384,7 +385,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
         for ind, el in enumerate(instance.mesh.code)
         if instance.setup._optimize.wgauge[ind] > 0
     ]
-    gauge = ["{:.6f}".format(el) for el in instance.setup._optimize.wgauge if el > 0]
+    wgauge = np.array([el for el in instance.setup._optimize.wgauge if el > 0])
 
     if mapping == "uniform":
         mapping_eq = "k(X)"
@@ -413,20 +414,20 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     ret = []
 
     ret.append("</> Optimize Model J")
+    ret.append(f"Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Algorithm: '{algorithm}'")
-    ret.append(f"Jobs function: {jobs_fun}")
-    ret.append(f"Weight Jobs: {wjobs_fun}")
+    ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
+    ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
 
     if algorithm == "l-bfgs-b":
         ret.append(f"Jreg function: '{jreg_fun}'")
         ret.append(f"wJreg: {'{:.6f}'.format(wjreg)}")
 
-    ret.append(f"Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Nx: {nx}")
     ret.append(f"Np: {len_parameters} [ {' '.join(parameters)} ]")
     ret.append(f"Ns: {len_states} [ {' '.join(states)} ]")
     ret.append(f"Ng: {len(code)} [ {' '.join(code)} ]")
-    ret.append(f"wg: {len(gauge)} [ {' '.join(gauge)} ]")
+    ret.append(f"wg: {len(wgauge)} [ {' '.join(wgauge.astype('U'))} ]")
 
     print(f"\n{sp4}".join(ret) + "\n")
 
@@ -768,16 +769,24 @@ def _standardize_control_vector(
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun: str | list, algorithm: str) -> list:
+def _standardize_jobs_fun(
+    jobs_fun: str | list | tuple | set, algorithm: str
+) -> np.ndarray:
 
     if isinstance(jobs_fun, str):
-        jobs_fun = [jobs_fun]
 
-    elif isinstance(jobs_fun, list):
-        jobs_fun = [o for o in jobs_fun]
-    
+        jobs_fun = np.array(jobs_fun, ndmin=1)
+
+    elif isinstance(jobs_fun, set):
+
+        jobs_fun = np.array(list(jobs_fun))
+
+    elif isinstance(jobs_fun, (list, tuple)):
+
+        jobs_fun = np.array(jobs_fun)
+
     else:
-        raise ValueError("Objective function(s) should be a str or a list of string")
+        raise TypeError("jobs_fun argument must be str or list-like object")
 
     if "kge" in jobs_fun and algorithm == "l-bfgs-b":
         raise ValueError(
@@ -788,26 +797,48 @@ def _standardize_jobs_fun(jobs_fun: str | list, algorithm: str) -> list:
 
     check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
 
-    if sum(check_obj)<len(check_obj):
+    if sum(check_obj) < len(check_obj):
         raise ValueError(
-            f'Unknown objective function: {np.array(jobs_fun)[np.where(check_obj==0)]}. Choices {list_jobs_fun}'
-            )
+            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
+        )
 
     return jobs_fun
 
 
-def _standardize_wjobs(wjobs_fun: str | list, jobs_fun: list, algorithm: str) -> list | None:
+def _standardize_wjobs(
+    wjobs_fun: list | None, jobs_fun: np.ndarray, algorithm: str
+) -> np.ndarray:
 
-    if wjobs_fun == None and algorithm != 'nsga':
+    if wjobs_fun is None:
 
-        wjobs_fun = np.ones(len(jobs_fun))/len(jobs_fun)
+        #% WIP
+        if algorithm == "nsga":
 
-    elif isinstance(wjobs_fun, list):
-        if len(wjobs_fun) != len(jobs_fun):
-            raise ValueError('jobs_fun and wjobs_fun should have the same size')
+            pass
+
+        else:
+
+            wjobs_fun = np.ones(jobs_fun.size) / jobs_fun.size
 
     else:
-        raise ValueError(f'wjobs_fun should be a list or None, and not {wjobs_fun}')
+
+        if isinstance(wjobs_fun, set):
+
+            wjobs_fun = np.array(list(wjobs_fun))
+
+        elif isinstance(wjobs_fun, (list, tuple)):
+
+            wjobs_fun = np.array(wjobs_fun)
+
+        else:
+
+            raise TypeError("wjobs_fun argument must list-like object")
+
+        if wjobs_fun.size != jobs_fun.size:
+
+            raise ValueError(
+                f"Inconsistent size between jobs_fun ({jobs_fun.size}) and wjobs_fun ({wjobs_fun.size})"
+            )
 
     return wjobs_fun
 
@@ -1076,8 +1107,8 @@ def _standardize_optimize_args(
     mapping: str,
     algorithm: str | None,
     control_vector: str | list | tuple | set | None,
-    jobs_fun: str | list,
-    wjobs_fun: None | list,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,

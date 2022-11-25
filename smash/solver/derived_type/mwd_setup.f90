@@ -60,13 +60,12 @@ module mwd_setup
     
         character(lchar) :: algorithm = "..." !>f90w-char
 
-        integer :: njf = 0
-        
         character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
-
         real(sp), dimension(:), allocatable :: wjobs_fun
+        integer :: njf = 0
 
         character(lchar) :: mapping = "..." !>f90w-char
+        
         integer :: nhyper = 0
         
         character(lchar) :: jreg_fun = "prior" !>f90w-char
@@ -276,7 +275,7 @@ module mwd_setup
             this%wjobs_fun = 0._sp
 
             allocate(this%mask_event(ng, setup%ntime_step))
-            this%mask_event = 0._sp
+            this%mask_event = 0
         
         end subroutine Optimize_SetupDT_initialise
     

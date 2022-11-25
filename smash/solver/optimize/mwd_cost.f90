@@ -31,124 +31,9 @@ module mwd_cost
     public :: compute_jobs, compute_jreg, compute_cost
     
     contains
-
-        function cost_sign(po, qo, qs, mask_e, stype) result(res)
-
-            implicit none
-
-            real, dimension(:), intent(in) :: po, qo, qs
-            integer, dimension(:), intent(in) :: mask_e
-            character(len=*), intent(in) :: stype
-
-            real :: res, tmp, tmp_o, tmp_s
-            integer :: i, j, n_event, indm_po, indm_qo, indm_qs
-
-            res = 0.
-
-            n_event = 0
-
-            if (stype(:1) .eq. 'E') then
-                
-                do i=1, size(mask_e)
-                    if (mask_e(i) > n_event) n_event = mask_e(i)
-                end do
-
-                do i=1, n_event
-
-                    tmp_o = 0.
-                    tmp_s = 0.
-
-                    select case(stype)
-
-                    case('Epf')
-
-                        do j=1, size(mask_e)
-                            if (mask_e(j) .eq. i .and. qo(j)>tmp_o) tmp_o = qo(j)
-                            if (mask_e(j) .eq. i .and. qs(j)>tmp_s) tmp_s = qs(j)
-                        end do
-
-                    case('Elt')
-
-                        indm_po = 0
-                        indm_qo = 0 
-                        indm_qs = 0
-
-                        tmp = 0.
-
-                        do j=1, size(mask_e)
-                            if (mask_e(j) .eq. i .and. qo(j)>tmp_o) then 
-                                tmp_o = qo(j)
-                                indm_qo = j
-                            end if
-                            if (mask_e(j) .eq. i .and. qs(j)>tmp_s) then 
-                                tmp_s = qs(j)
-                                indm_qs = j
-                            end if
-                            if (mask_e(j) .eq. i .and. po(j)>tmp) then 
-                                tmp = po(j)
-                                indm_po = j
-                            end if
-                        end do
-
-                        tmp_o = indm_qo - indm_po
-                        tmp_s = indm_qs - indm_po
-
-                    case('Erc')
-
-                        tmp = 0.
-
-                        do j=1, size(mask_e)
-                            
-                            if (mask_e(j) .eq. i .and. po(j) .ge. 0 .and. qo(j) .ge. 0 .and. qs(j) .ge. 0) then 
-                                tmp = tmp + po(j)
-                                tmp_o = tmp_o + qo(j)
-                                tmp_s = tmp_s + qs(j)
-                            end if
         
-                        end do
-        
-                        if (tmp > 0) tmp_o = tmp_o/tmp
-                        if (tmp > 0) tmp_s = tmp_s/tmp
-
-                    end select
-
-                    if (tmp_o > 0) res = res + abs(tmp_s/tmp_o - 1)
-
-                end do
-
-                if (n_event > 0) res = res/n_event
-
-            else if (stype(:1) .eq. 'C') then
-
-                tmp_o = 0.
-                tmp_s = 0.
-                tmp = 0.
-
-                select case(stype)
-
-                case('Crc')
-
-                    do i=1, size(po)
-                        
-                        if (po(i) .ge. 0 .and. qo(i) .ge. 0 .and. qs(i) .ge. 0) then 
-                            tmp = tmp + po(i)
-                            tmp_o = tmp_o + qo(i)
-                            tmp_s = tmp_s + qs(i)
-                        end if
-
-                    end do
-
-                    if (tmp > 0) tmp_o = tmp_o/tmp
-                    if (tmp > 0) tmp_s = tmp_s/tmp
-
-                end select
-
-                if (tmp_o > 0) res = res + abs(tmp_s/tmp_o - 1)
-
-            end if
-
-        end function
-            
+        !% Way to improve: try do one single for loop to compute all cost function
+        !% ATM, each cost function are computed separately with n for loop
         subroutine compute_jobs(setup, mesh, input_data, output, jobs)
         
             !% Notes
@@ -179,80 +64,78 @@ module mwd_cost
             
             real(sp), dimension(setup%ntime_step - setup%optimize%optimize_start_step + 1) :: po, qo, qs
             real(sp), dimension(mesh%ng) :: gauge_jobs
-            real(sp) :: imd
+            real(sp) :: imd, j_imd
             integer :: g, row, col, j
-            real :: j_tmp
-            character(20) :: jn_tmp
             
             jobs = 0._sp
-            gauge_jobs = 0._sp
             
             do g=1, mesh%ng
-
-                po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:setup%ntime_step)
             
-                qs = output%qsim(g, setup%optimize%optimize_start_step:setup%ntime_step) &
-                & * setup%dt / mesh%area(g) * 1e3_sp
-                
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%ntime_step) &
-                & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
-                & * 1e3_sp
-                
-                do j=1, setup%optimize%njf
+                gauge_jobs = 0._sp
+            
+                if (setup%optimize%wgauge(g) .gt. 0._sp) then
 
-                    if (any(qo .ge. 0._sp)) then
-
-                        jn_tmp = setup%optimize%jobs_fun(j)
+                    po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:setup%ntime_step)
+                
+                    qs = output%qsim(g, setup%optimize%optimize_start_step:setup%ntime_step) &
+                    & * setup%dt / mesh%area(g) * 1e3_sp
                     
-                        select case(jn_tmp)
-                        
-                        case("nse")
-                
-                            j_tmp = nse(qo, qs)
-                            
-                        case("kge")
-                        
-                            j_tmp = kge(qo, qs)
-                            
-                        case("kge2")
-                        
-                            imd = kge(qo, qs)
-                            j_tmp = imd * imd
-                            
-                        case("se")
-                        
-                            j_tmp = se(qo, qs)
-                            
-                        case("rmse")
-                        
-                            j_tmp = rmse(qo, qs)
-                            
-                        case("logarithmic")
-                        
-                            j_tmp = logarithmic(qo, qs)
+                    row = mesh%gauge_pos(g, 1)
+                    col = mesh%gauge_pos(g, 2)
+                    
+                    qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%ntime_step) &
+                    & * setup%dt / (real(mesh%drained_area(row, col)) * mesh%dx * mesh%dx) &
+                    & * 1e3_sp
+                    
+                    do j=1, setup%optimize%njf
 
-                        case('Crc', 'Erc', 'Elt', 'Epf') ! CASE OF SIGNATURES
+                        if (any(qo .ge. 0._sp)) then
+                        
+                            select case(setup%optimize%jobs_fun(j))
+                            
+                            case("nse")
+                    
+                                j_imd = nse(qo, qs)
+                                
+                            case("kge")
+                            
+                                j_imd = kge(qo, qs)
+                                
+                            case("kge2")
+                            
+                                imd = kge(qo, qs)
+                                j_imd = imd * imd
+                                
+                            case("se")
+                            
+                                j_imd = se(qo, qs)
+                                
+                            case("rmse")
+                            
+                                j_imd = rmse(qo, qs)
+                                
+                            case("logarithmic")
+                            
+                                j_imd = logarithmic(qo, qs)
 
-                            j_tmp = cost_sign(po, qo, qs, & 
-                            & setup%optimize%mask_event(g, setup%optimize%optimize_start_step:setup%ntime_step), jn_tmp) 
+                            case("Crc", "Erc", "Elt", "Epf") ! CASE OF SIGNATURES
 
-                        end select
-        
-                    end if
+                                j_imd = signature(po, qo, qs, & 
+                                & setup%optimize%mask_event(g, setup%optimize%optimize_start_step:setup%ntime_step), &
+                                & setup%optimize%jobs_fun(j)) 
 
-                    gauge_jobs(g) = gauge_jobs(g) + j_tmp * setup%optimize%wjobs_fun(j)
-
-                end do
-                
-            end do
+                            end select
             
-            do g=1, mesh%ng
+                        end if
+
+                        gauge_jobs(g) = gauge_jobs(g) + setup%optimize%wjobs_fun(j) * j_imd 
+
+                    end do
+                    
+                end if
                 
                 jobs = jobs + setup%optimize%wgauge(g) * gauge_jobs(g)
-            
+                
             end do
 
         end subroutine compute_jobs
@@ -400,6 +283,7 @@ module mwd_cost
         
         end subroutine hyper_compute_cost
         
+
         function nse(x, y) result(res)
             
             !% Notes
@@ -452,8 +336,8 @@ module mwd_cost
             res = num / den
 
         end function nse
-        
-        
+
+
         subroutine kge_components(x, y, r, a, b)
         
             !% Notes
@@ -511,7 +395,7 @@ module mwd_cost
             b = mean_y / mean_x
     
         end subroutine kge_components
-    
+
 
         function kge(x, y) result(res)
         
@@ -543,7 +427,7 @@ module mwd_cost
             & )
         
         end function kge
-        
+
 
         function se(x, y) result(res)
         
@@ -576,7 +460,7 @@ module mwd_cost
             end do
         
         end function se
-        
+
 
         function rmse(x, y) result(res)
         
@@ -615,8 +499,9 @@ module mwd_cost
             res = sqrt(se(x,y) / n)
             
         end function rmse
-        
-        
+
+
+
         function logarithmic(x, y) result(res)
             
             !% Notes
@@ -649,7 +534,182 @@ module mwd_cost
             end do
 
         end function logarithmic
+    
+    
+        function signature(po, qo, qs, mask_event, stype) result(res)
 
+            implicit none
+
+            real(sp), dimension(:), intent(in) :: po, qo, qs
+            integer, dimension(:), intent(in) :: mask_event
+            character(len=*), intent(in) :: stype
+            
+            real(sp) :: res
+            
+            logical, dimension(size(mask_event)) :: lgc_mask_event
+            integer :: n_event, i, j, start_event, ntime_step_event
+            real(sp) :: sum_qo, sum_qs, sum_po, &
+            & max_qo, max_qs, max_po, num, den
+            integer :: imax_qo, imax_qs, imax_po
+            
+            res = 0._sp
+            
+            n_event = 0
+            
+            if (stype(:1) .eq. "E") then
+                
+                ! Reverse loop on mask_event to find number of event (array sorted filled with 0)
+                do i=size(mask_event), 1, -1
+                    
+                    if (mask_event(i) .gt. 0) then
+                        
+                        n_event = mask_event(i)
+                        exit
+                        
+                    end if
+                
+                end do
+                
+                do i=1, n_event
+                
+                    lgc_mask_event = (mask_event .eq. i)
+                    
+                    do j=1, size(mask_event)
+                    
+                        if (lgc_mask_event(j)) then
+                            
+                            start_event = j
+                            exit
+                            
+                        end if
+                    
+                    end do
+                
+                    ntime_step_event = count(lgc_mask_event)
+                    
+                    sum_qo = 0._sp
+                    sum_qs = 0._sp
+                    sum_po = 0._sp
+                    
+                    max_qo = 0._sp
+                    max_qs = 0._sp
+                    max_po = 0._sp
+                    
+                    imax_qo = 0
+                    imax_qs = 0
+                    imax_po = 0
+                    
+                    do j=start_event, start_event + ntime_step_event - 1
+                    
+                        if (qo(j) .ge. 0._sp .and. po(j) .ge. 0._sp) then
+                    
+                            sum_qo = sum_qo + qo(j)
+                            sum_qs = sum_qs + qs(j)
+                            sum_po = sum_po + po(j)
+                            
+                            if (qo(j) .gt. max_qo) then
+                            
+                                max_qo = qo(j)
+                                imax_qo = j
+                            
+                            end if
+                            
+                            if (qs(j) .gt. max_qs) then
+                            
+                                max_qs = qs(j)
+                                imax_qs = j
+                            
+                            end if
+                            
+                            if (po(j) .gt. max_po) then
+                            
+                                max_po = po(j)
+                                imax_po = j
+                            
+                            end if
+                            
+                        end if
+                        
+                    end do
+                    
+                    select case(stype)
+                    
+                    case("Epf")
+                    
+                        num = max_qs
+                        den = max_qo
+                        
+                    case("Elt")
+                    
+                        num = imax_qs - imax_po
+                        den = imax_qo - imax_po
+                        
+                    case("Erc")
+                    
+                        if (sum_po .gt. 0._sp) then
+                        
+                            num = sum_qs / sum_po
+                            den = sum_qo / sum_po
+                        
+                        end if
+                    
+                    end select
+                    
+                    if (den .gt. 0._sp) then
+                    
+                        res = res + abs(num / den - 1._sp)
+                    
+                    end if
+                    
+                end do
+                
+                if (n_event .gt. 0) then
+                
+                    res = res / n_event
+                
+                end if
+                
+            else
+                
+                sum_qo = 0._sp
+                sum_qs = 0._sp
+                sum_po = 0._sp
+                
+                do i=1, size(qo)
+                    
+                    if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
+                        
+                        sum_qo = sum_qo + qo(i)
+                        sum_qs = sum_qs + qs(i)
+                        sum_po = sum_po + po(i)
+                    
+                    end if
+                    
+                end do
+                
+                select case(stype)
+                
+                case("Crc")
+                    
+                    if (sum_po .gt. 0._sp) then
+                        
+                        num = sum_qs / sum_po
+                        den = sum_qo / sum_po
+                    
+                    end if
+                
+                end select
+                
+                if (den .gt. 0._sp) then
+                
+                    res = abs(num / den - 1._sp) 
+                
+                end if
+            
+            end if
+
+        end function signature
+            
 
         !% TODO refactorize
         function reg_prior(mesh, size_mat3, matrix, matrix_bgd) result(res)

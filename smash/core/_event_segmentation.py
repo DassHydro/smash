@@ -300,7 +300,7 @@ def _mask_event(instance: Model):
             list_events = _events_grad(prcp_tmp, qobs_tmp)
 
             for event_number, t in enumerate(list_events):
-                
+
                 ts = t["start"]
                 te = t["end"]
 
