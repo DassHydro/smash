@@ -28,6 +28,7 @@ RUN pip3 install \
     gdal \
     scipy \
     pyyaml \
+    SALib \
     sphinx \
     numpydoc \
     pydata-sphinx-theme \
