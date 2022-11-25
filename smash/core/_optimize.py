@@ -9,6 +9,8 @@ from smash.solver._mw_optimize import (
     hyper_optimize_lbfgsb,
 )
 
+from smash.core._event_segmentation import _mask_event
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -35,6 +37,9 @@ JOBS_FUN = [
     "logarithmic",
 ]
 
+CSIGN_OPTIM = ["Crc"]
+ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
+
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
 STRUCTURE_PARAMETERS = {
@@ -54,7 +59,8 @@ def _optimize_sbs(
     instance: Model,
     control_vector: np.ndarray,
     mapping: str,
-    jobs_fun: str,
+    jobs_fun: str | list,
+    wjobs_fun: None | list,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -66,8 +72,12 @@ def _optimize_sbs(
 
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping
+        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
     )
+
+    # send mask_event to Fortran in case of event signatures based optimization
+    if any([fn[0] == "E" for fn in jobs_fun]):
+        instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "sbs"
 
@@ -93,6 +103,8 @@ def _optimize_sbs(
             instance.setup._optimize.ub_states[ind] = bounds[i, 1]
 
     instance.setup._optimize.jobs_fun = jobs_fun
+
+    instance.setup._optimize.wjobs_fun = wjobs_fun
 
     instance.setup._optimize.wgauge = wgauge
 
@@ -120,7 +132,8 @@ def _optimize_lbfgsb(
     instance: Model,
     control_vector: np.ndarray,
     mapping: str,
-    jobs_fun: str,
+    jobs_fun: str | list,
+    wjobs_fun: None | list,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -135,8 +148,12 @@ def _optimize_lbfgsb(
 
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping
+        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
     )
+
+    # send mask_event to Fortran in case of event signatures based optimization
+    if any([fn[0] == "E" for fn in jobs_fun]):
+        instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "l-bfgs-b"
 
@@ -162,6 +179,8 @@ def _optimize_lbfgsb(
             instance.setup._optimize.ub_states[ind] = bounds[i, 1]
 
     instance.setup._optimize.jobs_fun = jobs_fun
+
+    instance.setup._optimize.wjobs_fun = wjobs_fun
 
     instance.setup._optimize.wgauge = wgauge
 
@@ -219,7 +238,8 @@ def _optimize_nelder_mead(
     instance: Model,
     control_vector: np.ndarray,
     mapping: str,
-    jobs_fun: str,
+    jobs_fun: str | list,
+    wjobs_fun: None | list,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -239,12 +259,18 @@ def _optimize_nelder_mead(
 
     #% Reset default values
     instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping
+        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
     )
+
+    # send mask_event to Fortran in case of event signatures based optimization
+    if any([fn[0] == "E" for fn in jobs_fun]):
+        instance.setup._optimize.mask_event = _mask_event(instance)
 
     instance.setup._optimize.algorithm = "nelder-mead"
 
     instance.setup._optimize.jobs_fun = jobs_fun
+
+    instance.setup._optimize.wjobs_fun = wjobs_fun
 
     instance.setup._optimize.wgauge = wgauge
 
@@ -349,6 +375,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
     algorithm = instance.setup._optimize.algorithm
     jobs_fun = instance.setup._optimize.jobs_fun
+    wjobs_fun = instance.setup._optimize.wjobs_fun
     jreg_fun = instance.setup._optimize.jreg_fun
     wjreg = instance.setup._optimize.wjreg
     parameters = [el for el in control_vector if el in instance.setup._parameters_name]
@@ -358,7 +385,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
         for ind, el in enumerate(instance.mesh.code)
         if instance.setup._optimize.wgauge[ind] > 0
     ]
-    gauge = ["{:.6f}".format(el) for el in instance.setup._optimize.wgauge if el > 0]
+    wgauge = np.array([el for el in instance.setup._optimize.wgauge if el > 0])
 
     if mapping == "uniform":
         mapping_eq = "k(X)"
@@ -387,19 +414,20 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     ret = []
 
     ret.append("</> Optimize Model J")
+    ret.append(f"Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Algorithm: '{algorithm}'")
-    ret.append(f"Jobs function: '{jobs_fun}'")
+    ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
+    ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
 
     if algorithm == "l-bfgs-b":
         ret.append(f"Jreg function: '{jreg_fun}'")
         ret.append(f"wJreg: {'{:.6f}'.format(wjreg)}")
 
-    ret.append(f"Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Nx: {nx}")
     ret.append(f"Np: {len_parameters} [ {' '.join(parameters)} ]")
     ret.append(f"Ns: {len_states} [ {' '.join(states)} ]")
     ret.append(f"Ng: {len(code)} [ {' '.join(code)} ]")
-    ret.append(f"wg: {len(gauge)} [ {' '.join(gauge)} ]")
+    ret.append(f"wg: {len(wgauge)} [ {' '.join(wgauge.astype('U'))} ]")
 
     print(f"\n{sp4}".join(ret) + "\n")
 
@@ -741,29 +769,78 @@ def _standardize_control_vector(
     return control_vector
 
 
-def _standardize_jobs_fun(jobs_fun: str, algorithm: str) -> str:
+def _standardize_jobs_fun(
+    jobs_fun: str | list | tuple | set, algorithm: str
+) -> np.ndarray:
 
     if isinstance(jobs_fun, str):
 
-        jobs_fun = jobs_fun.lower()
+        jobs_fun = np.array(jobs_fun, ndmin=1)
+
+    elif isinstance(jobs_fun, set):
+
+        jobs_fun = np.array(list(jobs_fun))
+
+    elif isinstance(jobs_fun, (list, tuple)):
+
+        jobs_fun = np.array(jobs_fun)
 
     else:
+        raise TypeError("jobs_fun argument must be str or list-like object")
 
-        raise TypeError(f"jobs_fun argument must be str")
-
-    if jobs_fun not in JOBS_FUN:
-
-        raise ValueError(
-            f"Unknown objective function '{jobs_fun}'. Choices: {JOBS_FUN}"
-        )
-
-    elif jobs_fun in ["kge"] and algorithm == "l-bfgs-b":
-
+    if "kge" in jobs_fun and algorithm == "l-bfgs-b":
         raise ValueError(
             f"'{jobs_fun}' objective function can not be use with '{algorithm}' algorithm (non convex function)"
         )
 
+    list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
+
+    check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
+
+    if sum(check_obj) < len(check_obj):
+        raise ValueError(
+            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
+        )
+
     return jobs_fun
+
+
+def _standardize_wjobs(
+    wjobs_fun: list | None, jobs_fun: np.ndarray, algorithm: str
+) -> np.ndarray:
+
+    if wjobs_fun is None:
+
+        #% WIP
+        if algorithm == "nsga":
+
+            pass
+
+        else:
+
+            wjobs_fun = np.ones(jobs_fun.size) / jobs_fun.size
+
+    else:
+
+        if isinstance(wjobs_fun, set):
+
+            wjobs_fun = np.array(list(wjobs_fun))
+
+        elif isinstance(wjobs_fun, (list, tuple)):
+
+            wjobs_fun = np.array(wjobs_fun)
+
+        else:
+
+            raise TypeError("wjobs_fun argument must list-like object")
+
+        if wjobs_fun.size != jobs_fun.size:
+
+            raise ValueError(
+                f"Inconsistent size between jobs_fun ({jobs_fun.size}) and wjobs_fun ({wjobs_fun.size})"
+            )
+
+    return wjobs_fun
 
 
 def _standardize_bounds(
@@ -1030,7 +1107,8 @@ def _standardize_optimize_args(
     mapping: str,
     algorithm: str | None,
     control_vector: str | list | tuple | set | None,
-    jobs_fun: str,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,
@@ -1048,6 +1126,8 @@ def _standardize_optimize_args(
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 
+    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
     gauge = _standardize_gauge(gauge, setup, mesh, input_data)
@@ -1056,7 +1136,7 @@ def _standardize_optimize_args(
 
     ost = _standardize_ost(ost, setup)
 
-    return mapping, algorithm, control_vector, jobs_fun, bounds, wgauge, ost
+    return mapping, algorithm, control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
 
 
 def _standardize_optimize_options(options: dict | None) -> dict:

@@ -61,7 +61,7 @@ def generate_samples(
         and do not require a random seed.
 
         .. note::
-            If not given, generates parameters sets with a random seed.
+            If not given, generates parameters sets with a random seed with Gaussian or uniform generators.
 
     backg_sol : numpy.ndarray or None, default None
         Prior solutions could be included in parameters sets, except Saltelli generator, and are

@@ -512,7 +512,8 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        jobs_fun: str = "nse",
+        jobs_fun: str | list | tuple | set = "nse",
+        wjobs_fun: list | tuple | set | None = None,
         bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
@@ -553,15 +554,21 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
-        jobs_fun : str, default 'nse'
-            Type of objective function to be minimized. Should be one of
+        jobs_fun : str or sequence, default 'nse'
+            Type of objective function(s) to be minimized. Should be one or a sequence of any
 
-            - 'nse'
-            - 'kge'
-            - 'kge2'
-            - 'se'
-            - 'rmse'
-            - 'logarithmic'
+            - ``Classical Objective Function``
+                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
+            - ``Continuous Signature``
+                'Crc'
+            - ``Event Signature``
+                'Epf', 'Elt', 'Erc'
+
+        wjobs_fun : sequence or None, default None
+            Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
+
+            .. note::
+                If not given, the weights will correspond to the mean of the objective functions.
 
         bounds : sequence or None, default None
             Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
@@ -655,6 +662,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             wgauge,
             ost,
@@ -663,6 +671,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             gauge,
             wgauge,
@@ -681,6 +690,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -696,6 +706,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -711,6 +722,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -753,7 +765,7 @@ class Model(object):
 
         return _event_segmentation(self)
 
-    def signatures(self, sign: str | list[str] | None = None):
+    def signatures(self, sign: str | list | None = None):
 
         """
         Compute continuous or/and flood event signatures of the Model.
