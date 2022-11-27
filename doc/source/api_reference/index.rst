@@ -13,6 +13,7 @@ Core Python
    :maxdepth: 2
 
    model
+   generate_samples
    mesh
    sparse_storage
    io

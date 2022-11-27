@@ -89,7 +89,7 @@ def sed_index_handler_decorator(pyf, index):
     for attr in index:
 
         os.system(f'sed -i "/def {attr}(self)/i \\\t\@getter_index_handler" {pyf}')
-        os.system(f'sed -i "/{attr}.setter/a \\\t\@setter_index_handler" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@setter_index_handler" {pyf}')
 
 
 def sed_char_handler_decorator(pyf, char):
@@ -112,7 +112,7 @@ def sed_char_array_handler_decorator(pyf, char_array):
     for attr in char_array:
 
         os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_array_getter_handler" {pyf}')
-        os.system(f'sed -i "/{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
 
 
 #% Rework

@@ -59,10 +59,13 @@ module mwd_setup
         !% Optimize_SetupDT Derived Type.
     
         character(lchar) :: algorithm = "..." !>f90w-char
-        
-        character(lchar) :: jobs_fun = "nse" !>f90w-char
-        
+
+        character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
+        real(sp), dimension(:), allocatable :: wjobs_fun
+        integer :: njf = 0
+
         character(lchar) :: mapping = "..." !>f90w-char
+        
         integer :: nhyper = 0
         
         character(lchar) :: jreg_fun = "prior" !>f90w-char
@@ -144,6 +147,8 @@ module mwd_setup
         &   10000._sp/)    !% hlr
         
         real(sp), dimension(:), allocatable :: wgauge
+
+        integer, dimension(:,:), allocatable :: mask_event
     
     end type Optimize_SetupDT
     
@@ -230,7 +235,7 @@ module mwd_setup
     
     contains
     
-        subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping)
+        subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping, njf)
         
             !% Notes
             !% -----
@@ -242,12 +247,13 @@ module mwd_setup
             type(SetupDT), intent(in) :: setup
             integer, intent(in) :: ng
             character(len=*), optional, intent(in) :: mapping
+            integer, optional, intent(in) :: njf
 
             allocate(this%wgauge(ng))
             this%wgauge = 1._sp / ng
             
             if (present(mapping)) this%mapping = mapping
-            
+
             select case(trim(this%mapping))
             
             case("hyper-linear")
@@ -259,7 +265,18 @@ module mwd_setup
                 this%nhyper = (1 + 2 * setup%nd)
                 
             end select
+
+            if (present(njf)) this%njf = njf
             
+            allocate(this%jobs_fun(this%njf))
+            this%jobs_fun = "..."
+
+            allocate(this%wjobs_fun(this%njf))
+            this%wjobs_fun = 0._sp
+
+            allocate(this%mask_event(ng, setup%ntime_step))
+            this%mask_event = 0
+        
         end subroutine Optimize_SetupDT_initialise
     
 

@@ -4081,6 +4081,8 @@ CONTAINS
 !   variations   of useful results: jobs
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
+!% Way to improve: try do one single for loop to compute all cost function
+!% ATM, each cost function are computed separately with n for loop
   SUBROUTINE COMPUTE_JOBS_D(setup, mesh, input_data, output, output_d, &
 &   jobs, jobs_d)
     IMPLICIT NONE
@@ -4092,47 +4094,61 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), INTENT(OUT) :: jobs_d
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
-&   optimize_start_step+1) :: qo, qs
+&   optimize_start_step+1) :: po, qo, qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
 &   optimize_start_step+1) :: qs_d
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_d
-    REAL(sp) :: imd
-    REAL(sp) :: imd_d
-    INTEGER :: g, row, col
+    REAL(sp) :: imd, j_imd
+    REAL(sp) :: imd_d, j_imd_d
+    INTEGER :: g, row, col, j
     INTRINSIC REAL
     INTRINSIC ANY
-    gauge_jobs_d = 0.0_4
-    DO g=1,mesh%ng
-      qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optimize%&
-&       optimize_start_step:setup%ntime_step)/mesh%area(g)
-      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-      row = mesh%gauge_pos(g, 1)
-      col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
-&       mesh%dx)*1e3_sp
-      IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%optimize%jobs_fun) 
-        CASE ('nse') 
-          gauge_jobs_d(g) = NSE_D(qo, qs, qs_d, gauge_jobs(g))
-        CASE ('kge') 
-          gauge_jobs_d(g) = KGE_D(qo, qs, qs_d, gauge_jobs(g))
-        CASE ('kge2') 
-          imd_d = KGE_D(qo, qs, qs_d, imd)
-          gauge_jobs_d(g) = 2*imd*imd_d
-        CASE ('se') 
-          gauge_jobs_d(g) = SE_D(qo, qs, qs_d, gauge_jobs(g))
-        CASE ('rmse') 
-          gauge_jobs_d(g) = RMSE_D(qo, qs, qs_d, gauge_jobs(g))
-        CASE ('logarithmic') 
-          gauge_jobs_d(g) = LOGARITHMIC_D(qo, qs, qs_d, gauge_jobs(g))
-        END SELECT
-      END IF
-    END DO
     jobs_d = 0.0_4
+    j_imd_d = 0.0_4
     DO g=1,mesh%ng
+      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+        po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
+&         setup%ntime_step)
+        qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optimize%&
+&         optimize_start_step:setup%ntime_step)/mesh%area(g)
+        qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
+&         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
+        row = mesh%gauge_pos(g, 1)
+        col = mesh%gauge_pos(g, 2)
+        qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
+&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
+&         dx*mesh%dx)*1e3_sp
+        gauge_jobs_d = 0.0_4
+        DO j=1,setup%optimize%njf
+          IF (ANY(qo .GE. 0._sp)) THEN
+            SELECT CASE  (setup%optimize%jobs_fun(j)) 
+            CASE ('nse') 
+              j_imd_d = NSE_D(qo, qs, qs_d, j_imd)
+            CASE ('kge') 
+              j_imd_d = KGE_D(qo, qs, qs_d, j_imd)
+            CASE ('kge2') 
+              imd_d = KGE_D(qo, qs, qs_d, imd)
+              j_imd_d = 2*imd*imd_d
+            CASE ('se') 
+              j_imd_d = SE_D(qo, qs, qs_d, j_imd)
+            CASE ('rmse') 
+              j_imd_d = RMSE_D(qo, qs, qs_d, j_imd)
+            CASE ('logarithmic') 
+              j_imd_d = LOGARITHMIC_D(qo, qs, qs_d, j_imd)
+            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+! CASE OF SIGNATURES
+              j_imd_d = SIGNATURE_D(po, qo, qs, qs_d, setup%optimize%&
+&               mask_event(g, setup%optimize%optimize_start_step:setup%&
+&               ntime_step), setup%optimize%jobs_fun(j), j_imd)
+            END SELECT
+          END IF
+          gauge_jobs_d(g) = gauge_jobs_d(g) + setup%optimize%wjobs_fun(j&
+&           )*j_imd_d
+        END DO
+      ELSE
+        gauge_jobs_d = 0.0_4
+      END IF
       jobs_d = jobs_d + setup%optimize%wgauge(g)*gauge_jobs_d(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS_D
@@ -4141,6 +4157,8 @@ CONTAINS
 !   gradient     of useful results: jobs
 !   with respect to varying inputs: *(output.qsim)
 !   Plus diff mem management of: output.qsim:in
+!% Way to improve: try do one single for loop to compute all cost function
+!% ATM, each cost function are computed separately with n for loop
   SUBROUTINE COMPUTE_JOBS_B(setup, mesh, input_data, output, output_b, &
 &   jobs, jobs_b)
     IMPLICIT NONE
@@ -4152,14 +4170,14 @@ CONTAINS
     REAL(sp) :: jobs
     REAL(sp) :: jobs_b
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
-&   optimize_start_step+1) :: qo, qs
+&   optimize_start_step+1) :: po, qo, qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
 &   optimize_start_step+1) :: qs_b
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_b
-    REAL(sp) :: imd
-    REAL(sp) :: imd_b
-    INTEGER :: g, row, col
+    REAL(sp) :: imd, j_imd
+    REAL(sp) :: imd_b, j_imd_b
+    INTEGER :: g, row, col, j
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: res
@@ -4172,114 +4190,134 @@ CONTAINS
     REAL :: res_b2
     REAL :: res3
     REAL :: res_b3
+    REAL(sp) :: res4
+    REAL(sp) :: res_b4
     INTEGER :: branch
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-      row = mesh%gauge_pos(g, 1)
-      col = mesh%gauge_pos(g, 2)
-      CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
-&                   optimize_start_step + 1)
-      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
-&       mesh%dx)*1e3_sp
-      IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%optimize%jobs_fun) 
-        CASE ('nse') 
-          res = NSE(qo, qs)
-          CALL PUSHCONTROL3B(6)
-        CASE ('kge') 
-          res0 = KGE(qo, qs)
-          CALL PUSHCONTROL3B(5)
-        CASE ('kge2') 
-          CALL PUSHREAL4(imd)
-          imd = KGE(qo, qs)
-          CALL PUSHCONTROL3B(4)
-        CASE ('se') 
-          res1 = SE(qo, qs)
-          CALL PUSHCONTROL3B(3)
-        CASE ('rmse') 
-          res2 = RMSE(qo, qs)
-          CALL PUSHCONTROL3B(2)
-        CASE ('logarithmic') 
-          res3 = LOGARITHMIC(qo, qs)
-          CALL PUSHCONTROL3B(1)
-        CASE DEFAULT
-          CALL PUSHCONTROL3B(7)
-        END SELECT
-      ELSE
-        CALL PUSHCONTROL3B(0)
-      END IF
-    END DO
-    gauge_jobs_b = 0.0_4
-    DO g=mesh%ng,1,-1
-      gauge_jobs_b(g) = gauge_jobs_b(g) + setup%optimize%wgauge(g)*&
-&       jobs_b
-    END DO
-    output_b%qsim = 0.0_4
-    DO g=mesh%ng,1,-1
-      CALL POPCONTROL3B(branch)
-      IF (branch .LT. 4) THEN
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) THEN
-            qs_b = 0.0_4
-          ELSE
-            qs = output%qsim(g, setup%optimize%optimize_start_step:setup&
-&             %ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-            qs_b = 0.0_4
-            res_b3 = gauge_jobs_b(g)
-            gauge_jobs_b(g) = 0.0_4
-            CALL LOGARITHMIC_B(qo, qs, qs_b, res_b3)
-          END IF
-        ELSE IF (branch .EQ. 2) THEN
-          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-          qs_b = 0.0_4
-          res_b2 = gauge_jobs_b(g)
-          gauge_jobs_b(g) = 0.0_4
-          CALL RMSE_B(qo, qs, qs_b, res_b2)
-        ELSE
-          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-          qs_b = 0.0_4
-          res_b1 = gauge_jobs_b(g)
-          gauge_jobs_b(g) = 0.0_4
-          CALL SE_B(qo, qs, qs_b, res_b1)
-        END IF
-      ELSE IF (branch .LT. 6) THEN
-        IF (branch .EQ. 4) THEN
-          imd_b = 2*imd*gauge_jobs_b(g)
-          gauge_jobs_b(g) = 0.0_4
-          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-          CALL POPREAL4(imd)
-          CALL KGE_B(qo, qs, qs_b, imd_b)
-        ELSE
-          qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&           ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-          qs_b = 0.0_4
-          res_b0 = gauge_jobs_b(g)
-          gauge_jobs_b(g) = 0.0_4
-          CALL KGE_B(qo, qs, qs_b, res_b0)
-        END IF
-      ELSE IF (branch .EQ. 6) THEN
+      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+        CALL PUSHREAL4ARRAY(po, setup%ntime_step - setup%optimize%&
+&                     optimize_start_step + 1)
+        po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
+&         setup%ntime_step)
+        CALL PUSHREAL4ARRAY(qs, setup%ntime_step - setup%optimize%&
+&                     optimize_start_step + 1)
         qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-        qs_b = 0.0_4
-        res_b = gauge_jobs_b(g)
-        gauge_jobs_b(g) = 0.0_4
-        CALL NSE_B(qo, qs, qs_b, res_b)
+        row = mesh%gauge_pos(g, 1)
+        col = mesh%gauge_pos(g, 2)
+        CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
+&                     optimize_start_step + 1)
+        qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
+&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
+&         dx*mesh%dx)*1e3_sp
+        DO j=1,setup%optimize%njf
+          IF (ANY(qo .GE. 0._sp)) THEN
+            SELECT CASE  (setup%optimize%jobs_fun(j)) 
+            CASE ('nse') 
+              res = NSE(qo, qs)
+              CALL PUSHCONTROL4B(1)
+            CASE ('kge') 
+              res0 = KGE(qo, qs)
+              CALL PUSHCONTROL4B(2)
+            CASE ('kge2') 
+              CALL PUSHREAL4(imd)
+              imd = KGE(qo, qs)
+              CALL PUSHCONTROL4B(3)
+            CASE ('se') 
+              res1 = SE(qo, qs)
+              CALL PUSHCONTROL4B(4)
+            CASE ('rmse') 
+              res2 = RMSE(qo, qs)
+              CALL PUSHCONTROL4B(5)
+            CASE ('logarithmic') 
+              res3 = LOGARITHMIC(qo, qs)
+              CALL PUSHCONTROL4B(6)
+            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+! CASE OF SIGNATURES
+              res4 = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g, &
+&               setup%optimize%optimize_start_step:setup%ntime_step), &
+&               setup%optimize%jobs_fun(j))
+              CALL PUSHCONTROL4B(7)
+            CASE DEFAULT
+              CALL PUSHCONTROL4B(0)
+            END SELECT
+          ELSE
+            CALL PUSHCONTROL4B(8)
+          END IF
+        END DO
+        CALL PUSHCONTROL1B(0)
       ELSE
-        qs_b = 0.0_4
+        CALL PUSHCONTROL1B(1)
       END IF
-      CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
-&                  optimize_start_step + 1)
-      output_b%qsim(g, setup%optimize%optimize_start_step:setup%&
-&     ntime_step) = output_b%qsim(g, setup%optimize%optimize_start_step:&
-&       setup%ntime_step) + setup%dt*1e3_sp*qs_b/mesh%area(g)
+    END DO
+    output_b%qsim = 0.0_4
+    j_imd_b = 0.0_4
+    DO g=mesh%ng,1,-1
+      gauge_jobs_b = 0.0_4
+      gauge_jobs_b(g) = gauge_jobs_b(g) + setup%optimize%wgauge(g)*&
+&       jobs_b
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        qs_b = 0.0_4
+        DO j=setup%optimize%njf,1,-1
+          j_imd_b = j_imd_b + setup%optimize%wjobs_fun(j)*gauge_jobs_b(g&
+&           )
+          CALL POPCONTROL4B(branch)
+          IF (branch .LT. 4) THEN
+            IF (branch .LT. 2) THEN
+              IF (branch .NE. 0) THEN
+                res_b = j_imd_b
+                CALL NSE_B(qo, qs, qs_b, res_b)
+                j_imd_b = 0.0_4
+              END IF
+            ELSE IF (branch .EQ. 2) THEN
+              res_b0 = j_imd_b
+              CALL KGE_B(qo, qs, qs_b, res_b0)
+              j_imd_b = 0.0_4
+            ELSE
+              imd_b = 2*imd*j_imd_b
+              CALL POPREAL4(imd)
+              CALL KGE_B(qo, qs, qs_b, imd_b)
+              j_imd_b = 0.0_4
+            END IF
+          ELSE IF (branch .LT. 6) THEN
+            IF (branch .EQ. 4) THEN
+              res_b1 = j_imd_b
+              CALL SE_B(qo, qs, qs_b, res_b1)
+              j_imd_b = 0.0_4
+            ELSE
+              res_b2 = j_imd_b
+              CALL RMSE_B(qo, qs, qs_b, res_b2)
+              j_imd_b = 0.0_4
+            END IF
+          ELSE IF (branch .EQ. 6) THEN
+            res_b3 = j_imd_b
+            CALL LOGARITHMIC_B(qo, qs, qs_b, res_b3)
+            j_imd_b = 0.0_4
+          ELSE IF (branch .EQ. 7) THEN
+            res_b4 = j_imd_b
+            CALL SIGNATURE_B(po, qo, qs, qs_b, setup%optimize%mask_event&
+&                      (g, setup%optimize%optimize_start_step:setup%&
+&                      ntime_step), setup%optimize%jobs_fun(j), res_b4)
+            j_imd_b = 0.0_4
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
+&                    optimize_start_step + 1)
+        CALL POPREAL4ARRAY(qs, setup%ntime_step - setup%optimize%&
+&                    optimize_start_step + 1)
+        output_b%qsim(g, setup%optimize%optimize_start_step:setup%&
+&       ntime_step) = output_b%qsim(g, setup%optimize%&
+&         optimize_start_step:setup%ntime_step) + setup%dt*1e3_sp*qs_b/&
+&         mesh%area(g)
+        CALL POPREAL4ARRAY(po, setup%ntime_step - setup%optimize%&
+&                    optimize_start_step + 1)
+      END IF
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
 
+!% Way to improve: try do one single for loop to compute all cost function
+!% ATM, each cost function are computed separately with n for loop
   SUBROUTINE COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -4288,41 +4326,52 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
-&   optimize_start_step+1) :: qo, qs
+&   optimize_start_step+1) :: po, qo, qs
     REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
-    REAL(sp) :: imd
-    INTEGER :: g, row, col
+    REAL(sp) :: imd, j_imd
+    INTEGER :: g, row, col, j
     INTRINSIC REAL
     INTRINSIC ANY
     jobs = 0._sp
-    gauge_jobs = 0._sp
     DO g=1,mesh%ng
-      qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/mesh%area(g)*1e3_sp
-      row = mesh%gauge_pos(g, 1)
-      col = mesh%gauge_pos(g, 2)
-      qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup%&
-&       ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%dx*&
-&       mesh%dx)*1e3_sp
-      IF (ANY(qo .GE. 0._sp)) THEN
-        SELECT CASE  (setup%optimize%jobs_fun) 
-        CASE ('nse') 
-          gauge_jobs(g) = NSE(qo, qs)
-        CASE ('kge') 
-          gauge_jobs(g) = KGE(qo, qs)
-        CASE ('kge2') 
-          imd = KGE(qo, qs)
-          gauge_jobs(g) = imd*imd
-        CASE ('se') 
-          gauge_jobs(g) = SE(qo, qs)
-        CASE ('rmse') 
-          gauge_jobs(g) = RMSE(qo, qs)
-        CASE ('logarithmic') 
-          gauge_jobs(g) = LOGARITHMIC(qo, qs)
-        END SELECT
+      gauge_jobs = 0._sp
+      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+        po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
+&         setup%ntime_step)
+        qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
+&         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
+        row = mesh%gauge_pos(g, 1)
+        col = mesh%gauge_pos(g, 2)
+        qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
+&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
+&         dx*mesh%dx)*1e3_sp
+        DO j=1,setup%optimize%njf
+          IF (ANY(qo .GE. 0._sp)) THEN
+            SELECT CASE  (setup%optimize%jobs_fun(j)) 
+            CASE ('nse') 
+              j_imd = NSE(qo, qs)
+            CASE ('kge') 
+              j_imd = KGE(qo, qs)
+            CASE ('kge2') 
+              imd = KGE(qo, qs)
+              j_imd = imd*imd
+            CASE ('se') 
+              j_imd = SE(qo, qs)
+            CASE ('rmse') 
+              j_imd = RMSE(qo, qs)
+            CASE ('logarithmic') 
+              j_imd = LOGARITHMIC(qo, qs)
+            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+! CASE OF SIGNATURES
+              j_imd = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g&
+&               , setup%optimize%optimize_start_step:setup%ntime_step), &
+&               setup%optimize%jobs_fun(j))
+            END SELECT
+          END IF
+          gauge_jobs(g) = gauge_jobs(g) + setup%optimize%wjobs_fun(j)*&
+&           j_imd
+        END DO
       END IF
-    END DO
-    DO g=1,mesh%ng
       jobs = jobs + setup%optimize%wgauge(g)*gauge_jobs(g)
     END DO
   END SUBROUTINE COMPUTE_JOBS
@@ -4763,7 +4812,7 @@ CONTAINS
   END FUNCTION NSE_D
 
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE NSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -4799,7 +4848,6 @@ CONTAINS
     num_b = res_b/den
     sum_yy_b = num_b
     sum_xy_b = -(2*num_b)
-    y_b = 0.0_4
     CALL POPINTEGER4(ad_to)
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
@@ -4916,7 +4964,7 @@ CONTAINS
   END SUBROUTINE KGE_COMPONENTS_D
 
 !  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: r a b
+!   gradient     of useful results: r y a b
 !   with respect to varying inputs: y
   SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
     IMPLICIT NONE
@@ -4984,7 +5032,6 @@ CONTAINS
     sum_xy_b = cov_b/n
     sum_yy_b = var_y_b/n
     sum_y_b = mean_y_b/n
-    y_b = 0.0
     CALL POPINTEGER4(ad_to)
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
@@ -5065,7 +5112,7 @@ CONTAINS
   END FUNCTION KGE_D
 
 !  Differentiation of kge in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE KGE_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -5128,7 +5175,7 @@ CONTAINS
   END FUNCTION SE_D
 
 !  Differentiation of se in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE SE_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -5148,7 +5195,6 @@ CONTAINS
       END IF
     END DO
     ad_to = i - 1
-    y_b = 0.0
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) y_b(i) = y_b(i) - 2*(x(i)-y(i))*res_b
@@ -5197,7 +5243,7 @@ CONTAINS
   END FUNCTION RMSE_D
 
 !  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE RMSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -5284,7 +5330,7 @@ CONTAINS
   END FUNCTION LOGARITHMIC_D
 
 !  Differentiation of logarithmic in reverse (adjoint) mode (with options fixinterface):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE LOGARITHMIC_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -5303,25 +5349,20 @@ CONTAINS
     INTEGER :: branch
     DO i=1,SIZE(x)
       IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
-        CALL PUSHREAL4(arg1)
-        arg1 = y(i)/x(i)
-        CALL PUSHREAL4(arg2)
-        arg2 = y(i)/x(i)
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
     ad_to = i - 1
-    y_b = 0.0
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
+        arg1 = y(i)/x(i)
+        arg2 = y(i)/x(i)
         arg1_b = LOG(arg2)*x(i)*res_b/arg1
         arg2_b = LOG(arg1)*x(i)*res_b/arg2
-        CALL POPREAL4(arg2)
         y_b(i) = y_b(i) + arg2_b/x(i) + arg1_b/x(i)
-        CALL POPREAL4(arg1)
       END IF
     END DO
   END SUBROUTINE LOGARITHMIC_B
@@ -5344,6 +5385,507 @@ CONTAINS
       END IF
     END DO
   END FUNCTION LOGARITHMIC
+
+!  Differentiation of signature in forward (tangent) mode (with options fixinterface):
+!   variations   of useful results: res
+!   with respect to varying inputs: qs
+  FUNCTION SIGNATURE_D(po, qo, qs, qs_d, mask_event, stype, res) RESULT &
+& (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
+    REAL(sp), DIMENSION(:), INTENT(IN) :: qs_d
+    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
+    CHARACTER(len=*), INTENT(IN) :: stype
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
+    INTEGER :: n_event, i, j, start_event, ntime_step_event
+    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    REAL(sp) :: sum_qs_d, max_qs_d, num_d
+    INTEGER :: imax_qo, imax_qs, imax_po
+    INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_d
+    n_event = 0
+    IF (stype(:1) .EQ. 'E') THEN
+! Reverse loop on mask_event to find number of event (array sorted filled with 0)
+      DO i=SIZE(mask_event),1,-1
+        IF (mask_event(i) .GT. 0) GOTO 100
+      END DO
+      res_d = 0.0_4
+      num_d = 0.0_4
+      GOTO 130
+ 100  n_event = mask_event(i)
+      res_d = 0.0_4
+      num_d = 0.0_4
+ 130  DO i=1,n_event
+        lgc_mask_event = mask_event .EQ. i
+        DO j=1,SIZE(mask_event)
+          IF (lgc_mask_event(j)) GOTO 110
+        END DO
+        GOTO 120
+ 110    start_event = j
+ 120    ntime_step_event = COUNT(lgc_mask_event)
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        max_qo = 0._sp
+        max_qs = 0._sp
+        max_po = 0._sp
+        imax_qo = 0
+        imax_qs = 0
+        imax_po = 0
+        max_qs_d = 0.0_4
+        sum_qs_d = 0.0_4
+        DO j=start_event,start_event+ntime_step_event-1
+          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(j)
+            sum_qs_d = sum_qs_d + qs_d(j)
+            sum_qs = sum_qs + qs(j)
+            sum_po = sum_po + po(j)
+            IF (qo(j) .GT. max_qo) THEN
+              max_qo = qo(j)
+              imax_qo = j
+            END IF
+            IF (qs(j) .GT. max_qs) THEN
+              max_qs_d = qs_d(j)
+              max_qs = qs(j)
+              imax_qs = j
+            END IF
+            IF (po(j) .GT. max_po) THEN
+              max_po = po(j)
+              imax_po = j
+            END IF
+          END IF
+        END DO
+        SELECT CASE  (stype) 
+        CASE ('Epf') 
+          num_d = max_qs_d
+          num = max_qs
+          den = max_qo
+        CASE ('Elt') 
+          num = imax_qs - imax_po
+          den = imax_qo - imax_po
+          num_d = 0.0_4
+        CASE ('Erc') 
+          IF (sum_po .GT. 0._sp) THEN
+            num_d = sum_qs_d/sum_po
+            num = sum_qs/sum_po
+            den = sum_qo/sum_po
+          END IF
+        END SELECT
+        IF (den .GT. 0._sp) THEN
+          IF (num/den - 1._sp .GE. 0.) THEN
+            abs0_d = num_d/den
+          ELSE
+            abs0_d = -(num_d/den)
+          END IF
+          res_d = res_d + abs0_d
+        END IF
+      END DO
+      IF (n_event .GT. 0) res_d = res_d/n_event
+    ELSE
+      sum_qo = 0._sp
+      sum_qs = 0._sp
+      sum_po = 0._sp
+      sum_qs_d = 0.0_4
+      DO i=1,SIZE(qo)
+        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          sum_qo = sum_qo + qo(i)
+          sum_qs_d = sum_qs_d + qs_d(i)
+          sum_qs = sum_qs + qs(i)
+          sum_po = sum_po + po(i)
+        END IF
+      END DO
+      SELECT CASE  (stype) 
+      CASE ('Crc') 
+        IF (sum_po .GT. 0._sp) THEN
+          num_d = sum_qs_d/sum_po
+          num = sum_qs/sum_po
+          den = sum_qo/sum_po
+        ELSE
+          num_d = 0.0_4
+        END IF
+      CASE DEFAULT
+        num_d = 0.0_4
+      END SELECT
+      IF (den .GT. 0._sp) THEN
+        IF (num/den - 1._sp .GE. 0.) THEN
+          res_d = num_d/den
+        ELSE
+          res_d = -(num_d/den)
+        END IF
+      ELSE
+        res_d = 0.0_4
+      END IF
+    END IF
+  END FUNCTION SIGNATURE_D
+
+!  Differentiation of signature in reverse (adjoint) mode (with options fixinterface):
+!   gradient     of useful results: res qs
+!   with respect to varying inputs: qs
+  SUBROUTINE SIGNATURE_B(po, qo, qs, qs_b, mask_event, stype, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
+    REAL(sp), DIMENSION(:) :: qs_b
+    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
+    CHARACTER(len=*), INTENT(IN) :: stype
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
+    INTEGER :: n_event, i, j, start_event, ntime_step_event
+    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    REAL(sp) :: sum_qs_b, max_qs_b, num_b
+    INTEGER :: imax_qo, imax_qs, imax_po
+    INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_b
+    INTEGER :: ad_count
+    INTEGER :: i0
+    INTEGER :: branch
+    INTEGER :: ad_count0
+    INTEGER :: i1
+    INTEGER :: ad_from
+    INTEGER :: ad_to
+    INTEGER :: ad_to0
+    n_event = 0
+    IF (stype(:1) .EQ. 'E') THEN
+      ad_count = 1
+! Reverse loop on mask_event to find number of event (array sorted filled with 0)
+      DO i=SIZE(mask_event),1,-1
+        IF (mask_event(i) .GT. 0) THEN
+          GOTO 100
+        ELSE
+          ad_count = ad_count + 1
+        END IF
+      END DO
+      CALL PUSHCONTROL1B(0)
+      CALL PUSHINTEGER4(ad_count)
+      GOTO 130
+ 100  CALL PUSHCONTROL1B(1)
+      CALL PUSHINTEGER4(ad_count)
+      n_event = mask_event(i)
+ 130  DO i=1,n_event
+        lgc_mask_event = mask_event .EQ. i
+        ad_count0 = 1
+        DO j=1,SIZE(mask_event)
+          IF (lgc_mask_event(j)) THEN
+            GOTO 110
+          ELSE
+            ad_count0 = ad_count0 + 1
+          END IF
+        END DO
+        CALL PUSHCONTROL1B(0)
+        CALL PUSHINTEGER4(ad_count0)
+        GOTO 120
+ 110    CALL PUSHCONTROL1B(1)
+        CALL PUSHINTEGER4(ad_count0)
+        start_event = j
+ 120    ntime_step_event = COUNT(lgc_mask_event)
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        CALL PUSHREAL4(sum_po)
+        sum_po = 0._sp
+        max_qo = 0._sp
+        max_qs = 0._sp
+        max_po = 0._sp
+        imax_qo = 0
+        imax_qs = 0
+        imax_po = 0
+        ad_from = start_event
+        DO j=ad_from,start_event+ntime_step_event-1
+          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(j)
+            sum_qs = sum_qs + qs(j)
+            sum_po = sum_po + po(j)
+            IF (qo(j) .GT. max_qo) THEN
+              max_qo = qo(j)
+              imax_qo = j
+            END IF
+            IF (qs(j) .GT. max_qs) THEN
+              max_qs = qs(j)
+              imax_qs = j
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHCONTROL1B(1)
+            END IF
+            IF (po(j) .GT. max_po) THEN
+              CALL PUSHCONTROL2B(2)
+              max_po = po(j)
+              imax_po = j
+            ELSE
+              CALL PUSHCONTROL2B(1)
+            END IF
+          ELSE
+            CALL PUSHCONTROL2B(0)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHINTEGER4(ad_from)
+        SELECT CASE  (stype) 
+        CASE ('Epf') 
+          num = max_qs
+          CALL PUSHREAL4(den)
+          den = max_qo
+          CALL PUSHCONTROL3B(1)
+        CASE ('Elt') 
+          num = imax_qs - imax_po
+          CALL PUSHREAL4(den)
+          den = imax_qo - imax_po
+          CALL PUSHCONTROL3B(2)
+        CASE ('Erc') 
+          IF (sum_po .GT. 0._sp) THEN
+            num = sum_qs/sum_po
+            CALL PUSHREAL4(den)
+            den = sum_qo/sum_po
+            CALL PUSHCONTROL3B(3)
+          ELSE
+            CALL PUSHCONTROL3B(4)
+          END IF
+        CASE DEFAULT
+          CALL PUSHCONTROL3B(0)
+        END SELECT
+        IF (den .GT. 0._sp) THEN
+          IF (num/den - 1._sp .GE. 0.) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      IF (n_event .GT. 0) res_b = res_b/n_event
+      num_b = 0.0_4
+      DO i=n_event,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          abs0_b = res_b
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            num_b = num_b + abs0_b/den
+          ELSE
+            num_b = num_b - abs0_b/den
+          END IF
+        END IF
+        CALL POPCONTROL3B(branch)
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            max_qs_b = 0.0_4
+            sum_qs_b = 0.0_4
+          ELSE
+            CALL POPREAL4(den)
+            max_qs_b = num_b
+            num_b = 0.0_4
+            sum_qs_b = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
+          CALL POPREAL4(den)
+          max_qs_b = 0.0_4
+          num_b = 0.0_4
+          sum_qs_b = 0.0_4
+        ELSE
+          IF (branch .EQ. 3) THEN
+            CALL POPREAL4(den)
+            sum_qs_b = num_b/sum_po
+            num_b = 0.0_4
+          ELSE
+            sum_qs_b = 0.0_4
+          END IF
+          max_qs_b = 0.0_4
+        END IF
+        CALL POPINTEGER4(ad_from)
+        CALL POPINTEGER4(ad_to)
+        DO 140 j=ad_to,ad_from,-1
+          CALL POPCONTROL2B(branch)
+          IF (branch .LT. 2) THEN
+            IF (branch .EQ. 0) GOTO 140
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            qs_b(j) = qs_b(j) + max_qs_b
+            max_qs_b = 0.0_4
+          END IF
+          qs_b(j) = qs_b(j) + sum_qs_b
+ 140    CONTINUE
+        CALL POPREAL4(sum_po)
+        CALL POPINTEGER4(ad_count0)
+        DO i1=1,ad_count0
+          IF (i1 .EQ. 1) CALL POPCONTROL1B(branch)
+        END DO
+      END DO
+      CALL POPINTEGER4(ad_count)
+      DO i0=1,ad_count
+        IF (i0 .EQ. 1) CALL POPCONTROL1B(branch)
+      END DO
+    ELSE
+      sum_qo = 0._sp
+      sum_qs = 0._sp
+      sum_po = 0._sp
+      DO i=1,SIZE(qo)
+        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          sum_qo = sum_qo + qo(i)
+          sum_qs = sum_qs + qs(i)
+          sum_po = sum_po + po(i)
+          CALL PUSHCONTROL1B(1)
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(i - 1)
+      SELECT CASE  (stype) 
+      CASE ('Crc') 
+        IF (sum_po .GT. 0._sp) THEN
+          num = sum_qs/sum_po
+          den = sum_qo/sum_po
+          CALL PUSHCONTROL2B(1)
+        ELSE
+          CALL PUSHCONTROL2B(2)
+        END IF
+      CASE DEFAULT
+        CALL PUSHCONTROL2B(0)
+      END SELECT
+      IF (den .GT. 0._sp) THEN
+        IF (num/den - 1._sp .GE. 0.) THEN
+          num_b = res_b/den
+        ELSE
+          num_b = -(res_b/den)
+        END IF
+      ELSE
+        num_b = 0.0_4
+      END IF
+      CALL POPCONTROL2B(branch)
+      IF (branch .EQ. 0) THEN
+        sum_qs_b = 0.0_4
+      ELSE IF (branch .EQ. 1) THEN
+        sum_qs_b = num_b/sum_po
+      ELSE
+        sum_qs_b = 0.0_4
+      END IF
+      CALL POPINTEGER4(ad_to0)
+      DO i=ad_to0,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) qs_b(i) = qs_b(i) + sum_qs_b
+      END DO
+    END IF
+  END SUBROUTINE SIGNATURE_B
+
+  FUNCTION SIGNATURE(po, qo, qs, mask_event, stype) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
+    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
+    CHARACTER(len=*), INTENT(IN) :: stype
+    REAL(sp) :: res
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
+    INTEGER :: n_event, i, j, start_event, ntime_step_event
+    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    INTEGER :: imax_qo, imax_qs, imax_po
+    INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    res = 0._sp
+    n_event = 0
+    IF (stype(:1) .EQ. 'E') THEN
+! Reverse loop on mask_event to find number of event (array sorted filled with 0)
+      DO i=SIZE(mask_event),1,-1
+        IF (mask_event(i) .GT. 0) THEN
+          n_event = mask_event(i)
+          GOTO 110
+        END IF
+      END DO
+ 110  DO i=1,n_event
+        lgc_mask_event = mask_event .EQ. i
+        DO j=1,SIZE(mask_event)
+          IF (lgc_mask_event(j)) THEN
+            start_event = j
+            GOTO 100
+          END IF
+        END DO
+ 100    ntime_step_event = COUNT(lgc_mask_event)
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        max_qo = 0._sp
+        max_qs = 0._sp
+        max_po = 0._sp
+        imax_qo = 0
+        imax_qs = 0
+        imax_po = 0
+        DO j=start_event,start_event+ntime_step_event-1
+          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(j)
+            sum_qs = sum_qs + qs(j)
+            sum_po = sum_po + po(j)
+            IF (qo(j) .GT. max_qo) THEN
+              max_qo = qo(j)
+              imax_qo = j
+            END IF
+            IF (qs(j) .GT. max_qs) THEN
+              max_qs = qs(j)
+              imax_qs = j
+            END IF
+            IF (po(j) .GT. max_po) THEN
+              max_po = po(j)
+              imax_po = j
+            END IF
+          END IF
+        END DO
+        SELECT CASE  (stype) 
+        CASE ('Epf') 
+          num = max_qs
+          den = max_qo
+        CASE ('Elt') 
+          num = imax_qs - imax_po
+          den = imax_qo - imax_po
+        CASE ('Erc') 
+          IF (sum_po .GT. 0._sp) THEN
+            num = sum_qs/sum_po
+            den = sum_qo/sum_po
+          END IF
+        END SELECT
+        IF (den .GT. 0._sp) THEN
+          IF (num/den - 1._sp .GE. 0.) THEN
+            abs0 = num/den - 1._sp
+          ELSE
+            abs0 = -(num/den-1._sp)
+          END IF
+          res = res + abs0
+        END IF
+      END DO
+      IF (n_event .GT. 0) res = res/n_event
+    ELSE
+      sum_qo = 0._sp
+      sum_qs = 0._sp
+      sum_po = 0._sp
+      DO i=1,SIZE(qo)
+        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          sum_qo = sum_qo + qo(i)
+          sum_qs = sum_qs + qs(i)
+          sum_po = sum_po + po(i)
+        END IF
+      END DO
+      SELECT CASE  (stype) 
+      CASE ('Crc') 
+        IF (sum_po .GT. 0._sp) THEN
+          num = sum_qs/sum_po
+          den = sum_qo/sum_po
+        END IF
+      END SELECT
+      IF (den .GT. 0._sp) THEN
+        IF (num/den - 1._sp .GE. 0.) THEN
+          res = num/den - 1._sp
+        ELSE
+          res = -(num/den-1._sp)
+        END IF
+      END IF
+    END IF
+  END FUNCTION SIGNATURE
 
 !  Differentiation of reg_prior in forward (tangent) mode (with options fixinterface):
 !   variations   of useful results: res

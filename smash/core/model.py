@@ -23,7 +23,15 @@ from smash.core._optimize import (
     _optimize_nelder_mead,
 )
 
-from smash.core._event_segmentation import _segmentation
+from smash.core._event_segmentation import _event_segmentation
+
+from smash.core._signatures import (
+    _standardize_signatures,
+    _signatures,
+    _signatures_sensitivity,
+)
+
+from smash.core.generate_samples import generate_samples, _get_generate_samples_problem
 
 from typing import TYPE_CHECKING
 
@@ -31,6 +39,7 @@ if TYPE_CHECKING:
     import pandas as pd
 
 import numpy as np
+
 
 __all__ = ["Model"]
 
@@ -476,7 +485,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Forward Model Y = M (k)")
+        print("</> Model Run Y = M (k)")
 
         cost = np.float32(0)
 
@@ -503,7 +512,8 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        jobs_fun: str = "nse",
+        jobs_fun: str | list | tuple | set = "nse",
+        wjobs_fun: list | tuple | set | None = None,
         bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
@@ -544,15 +554,21 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
-        jobs_fun : str, default 'nse'
-            Type of objective function to be minimized. Should be one of
+        jobs_fun : str or sequence, default 'nse'
+            Type of objective function(s) to be minimized. Should be one or a sequence of any
 
-            - 'nse'
-            - 'kge'
-            - 'kge2'
-            - 'se'
-            - 'rmse'
-            - 'logarithmic'
+            - ``Classical Objective Function``
+                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
+            - ``Continuous Signature``
+                'Crc'
+            - ``Event Signature``
+                'Epf', 'Elt', 'Erc'
+
+        wjobs_fun : sequence or None, default None
+            Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
+
+            .. note::
+                If not given, the weights will correspond to the mean of the objective functions.
 
         bounds : sequence or None, default None
             Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
@@ -646,6 +662,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             wgauge,
             ost,
@@ -654,6 +671,7 @@ class Model(object):
             algorithm,
             control_vector,
             jobs_fun,
+            wjobs_fun,
             bounds,
             gauge,
             wgauge,
@@ -672,6 +690,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -687,6 +706,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -702,6 +722,7 @@ class Model(object):
                 control_vector,
                 mapping,
                 jobs_fun,
+                wjobs_fun,
                 bounds,
                 wgauge,
                 ost,
@@ -719,12 +740,12 @@ class Model(object):
 
     def event_segmentation(self):
         """
-        Return a DataFrame containing segmentation information of flood events over all catchments of Model object.
+        Compute segmentation information of flood events over all catchments of the Model.
 
         Returns
         -------
-        df : pandas.DataFrame
-            flood events information obtained from segmentation algorithm.
+        res : pandas.DataFrame
+            Flood events information obtained from segmentation algorithm.
 
         Examples
         --------
@@ -733,14 +754,146 @@ class Model(object):
 
         Perform segmentation algorithm and display flood events infomation:
 
-        >>> df = model.hydrograph_segmentation()
-        >>> df
-          catchment               start                 end         maxrainfall               flood  season
-        0  V3524010 2014-11-03 03:00:00 2014-11-10 15:00:00 2014-11-04 12:00:00 2014-11-04 19:00:00  autumn
-        1  V3515010 2014-11-03 10:00:00 2014-11-08 10:00:00 2014-11-04 12:00:00 2014-11-04 20:00:00  autumn
-        2  V3517010 2014-11-03 08:00:00 2014-11-11 00:00:00 2014-11-04 11:00:00 2014-11-04 16:00:00  autumn
+        >>> res = model.event_segmentation()
+        >>> res
+               code               start                   flood  season
+        0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
+        1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
+        2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
+        """
+        print("</> Model Event Segmentation")
+
+        return _event_segmentation(self)
+
+    def signatures(self, sign: str | list | None = None):
+
+        """
+        Compute continuous or/and flood event signatures of the Model.
+
+        Parameters
+        ----------
+        sign : str, list of str or None, default None
+            Define signature(s) to compute. Should be one of
+
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+
+            .. note::
+                If not given, all of continuous and flood event signatures will be computed.
+
+        Returns
+        -------
+        res : dict
+            Two pandas.DataFrames of i. observed and simulated continuous signatures and ii. observed and simulated flood event signatures.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> model.optimize(inplace=True)
+
+        Compute all continuous and flood event signatures:
+
+        >>> res = model.signatures()
+        >>> res["C"]
+               code   Crc_obs  Crchf_obs    Cfp50_sim  Cfp90_sim
+        0  V3524010  0.516207   0.191349 ... 3.616916  39.241742
+        1  V3515010  0.509180   0.147217 ... 0.984099   9.691529
+        2  V3517010  0.514302   0.148364 ... 0.319221   2.687196
+
+        >>> res["E"]
+               code  season               start     Elt_sim     Epf_sim
+        0  V3524010  autumn 2014-11-03 03:00:00 ...       8  280.677338
+        1  V3515010  autumn 2014-11-03 10:00:00 ...       6   61.226574
+        2  V3517010  autumn 2014-11-03 08:00:00 ...       6   18.758123
+        """
+        print("</> Model Signatures")
+
+        cs, es = _standardize_signatures(sign)
+
+        return _signatures(self, cs, es)
+
+    def signatures_sensitivity(
+        self,
+        n: int = 64,
+        sign: str | list[str] | None = None,
+        return_sample: bool = False,
+    ):
+        """
+        Compute variance-based sensitivity (Sobol indices) of signatures of the Model.
+
+        Parameters
+        ----------
+        n : int, default 64
+            Number of trajectories to generate for each model parameter (ideally a power of 2).
+            Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
+            where :math:`D` is the number of model parameters.
+
+            See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
+
+        sign : str, list or None, default None
+            Define signature(s) to compute. Should be one of
+
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+
+            .. note::
+                If not given, all of continuous and flood event signatures will be computed.
+
+        return_sample : bool, default False
+            If True, also return the generated sample used to compute sensitivity computation.
+
+        Returns
+        -------
+        res : dict
+            Two pandas.DataFrames of i. continuous signatures sensitivity and ii. flood event signatures sensitivity.
+
+        sample : pandas.DataFrame
+            Generated sample for sensititvity computation. Returned if ``return_sample`` is True.
+
+        See Also
+        --------
+        save_model: Save Model object.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> res = model.signatures_sensitivity()
+
+        Continuous signatures sensitivity computation:
+
+        >>> res["C"]
+               code  Crc_sim.ST_cp  Crc_sim.ST_cft ... Cfp90_sim.S2_cft-lr  Cfp90_sim.S2_exc-lr
+        0  V3524010       0.025848        0.322964 ...            0.084209             0.081659
+        1  V3515010       0.009877        0.288598 ...            0.111150             0.109329
+        2  V3517010       0.009662        0.300603 ...            0.105303             0.120858
+
+        Flood event signatures sensitivity computation:
+
+        >>> res["E"]
+               code  season               start ... Epf_sim.S2_cft-lr  Epf_sim.S2_exc-lr
+        0  V3524010  autumn 2014-11-03 03:00:00 ...          0.056097           0.072928
+        1  V3515010  autumn 2014-11-03 10:00:00 ...          0.073368           0.098639
+        2  V3517010  autumn 2014-11-03 08:00:00 ...          0.041326           0.086835
         """
 
-        df = _segmentation(self)
+        print("</> Model Signatures Sensitivity")
 
-        return df
+        instance = self.copy()
+
+        cs, es = _standardize_signatures(sign)
+
+        problem = _get_generate_samples_problem(instance.setup)
+
+        sample = generate_samples(problem=problem, generator="saltelli", n=n)
+
+        res = _signatures_sensitivity(instance, problem, sample, cs, es)
+
+        if return_sample:
+
+            return res, sample
+
+        else:
+
+            return res

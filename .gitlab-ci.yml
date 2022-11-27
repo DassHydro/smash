@@ -21,6 +21,7 @@ build-code:
 
 build-doc:
   stage: build-doc
-  script: 
+  script:
+    - make library
     - cd doc
     - make html
