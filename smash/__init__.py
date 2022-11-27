@@ -30,3 +30,6 @@ __all__ = [
     "read_model",
     "load_dataset",
 ]
+
+from . import _version
+__version__ = _version.get_versions()['version']
