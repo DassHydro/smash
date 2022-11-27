@@ -378,11 +378,13 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.output.<TAB>
-    mo.output.copy(                   mo.output.qsim
-    mo.output.cost                    mo.output.qsim_domain
-    mo.output.from_handle(            mo.output.sparse_net_prcp_domain
-    mo.output.fstates                 mo.output.sparse_qsim_domain
-    mo.output.net_prcp_domain
+    model.output.an                   model.output.parameters_gradient
+    model.output.copy(                model.output.qsim
+    model.output.cost                 model.output.qsim_domain
+    model.output.from_handle(         model.output.sp1
+    model.output.fstates              model.output.sp2
+    model.output.ian                  model.output.sparse_qsim_domain
+
 
 ------------------
 Input Data filling
