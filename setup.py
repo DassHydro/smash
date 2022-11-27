@@ -1,10 +1,8 @@
 from setuptools import setup
-import versioneer
 
 setup(
     name="smash",
-    version=versioneer.get_version(),
-    cmdclass=versioneer.get_cmdclass(),
+    version="0.2.1",
     description="Spatially distributed Modelling and ASsimilation for Hydrology",
     url="/",
     author="Francois Colleoni",
