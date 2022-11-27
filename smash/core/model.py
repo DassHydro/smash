@@ -851,10 +851,6 @@ class Model(object):
         sample : pandas.DataFrame
             Generated sample for sensititvity computation. Returned if ``return_sample`` is True.
 
-        See Also
-        --------
-        save_model: Save Model object.
-
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
