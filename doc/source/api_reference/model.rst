@@ -32,6 +32,7 @@ Simulation
 
    Model.run
    Model.optimize
+   Model.ann_optimize
 
 Signatures
 **********

@@ -17,35 +17,7 @@ import numpy as np
 import datetime
 from osgeo import gdal
 
-RATIO_PET_HOURLY = np.array(
-    [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0.035,
-        0.062,
-        0.079,
-        0.097,
-        0.11,
-        0.117,
-        0.117,
-        0.11,
-        0.097,
-        0.079,
-        0.062,
-        0.035,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ],
-    dtype=np.float32,
-)
+from smash.core._constant import RATIO_PET_HOURLY
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:

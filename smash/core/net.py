@@ -15,14 +15,58 @@ __all__ = ["Net"]
 
 
 class Net(object):
+    """
+    Artificial Neural Network initialization.
 
-    def __init__(self, optimizer='adam', learning_rate=0.002, validation=None):
+    TODO
+    """
 
-        self.optimizer = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
+    def __init__(self):
 
         self.layers = []
 
-        self.history = {"loss_train": []}
+        self.history = {"loss_train": [], "loss_valid": []}
+
+    @property
+    def layers(self):
+        """
+        List of layers of the network.
+
+        TODO
+        """
+
+        return self._layers
+    @layers.setter
+    def layers(self, value):
+
+        #TODO: add checktype
+        self._layers = value
+        
+
+    @property
+    def history(self):
+        """
+        Training history.
+
+        TODO
+        """
+
+        return self._history
+    @history.setter
+    def history(self, value):
+
+        #TODO: add checktype
+        self._history = value
+
+    def _compile(self, optimizer: str, learning_rate: float):
+
+        self.optimizer = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
+
+        for layer in self.layers:
+
+            if hasattr(layer, 'initialize'):
+            
+                layer.initialize(optimizer=self.optimizer)
 
     def add(self, layer: Layer):
         """ Add layers to the neural network """
@@ -31,10 +75,6 @@ class Net(object):
         # to the output shape of the last added layer
         if self.layers:
             layer.set_input_shape(shape=self.layers[-1].output_shape())
-
-        # If the layer has weights that needs to be initialized 
-        if hasattr(layer, 'initialize'):
-            layer.initialize(optimizer=self.optimizer)
 
         # Add layer to the network
         self.layers.append(layer)
@@ -55,12 +95,19 @@ class Net(object):
             model: Model, 
             control_vector: np.ndarray, 
             mask: np.ndarray, 
+            optimizer: str,
+            learning_rate: float,
+            validation: float | None,
             epochs: int, 
             early_stopping: bool, 
             verbose: bool):
 
+        # compile model
+        self._compile(optimizer, learning_rate)
+
         loss_opt = 0 # only use for early stopping purpose
 
+        # train model
         for epo in tqdm(range(epochs), desc="Training"):
 
             # Forward propogation
