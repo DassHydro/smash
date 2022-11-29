@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core._optimize import STRUCTURE_PARAMETERS
+from smash.core._deterministic_optimize import STRUCTURE_PARAMETERS
 
 from typing import TYPE_CHECKING
 

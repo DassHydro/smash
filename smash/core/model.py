@@ -15,7 +15,7 @@ from smash.core._build_model import (
     _build_input_data,
 )
 
-from smash.core._optimize import (
+from smash.core._deterministic_optimize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
     _optimize_sbs,
@@ -507,7 +507,7 @@ class Model(object):
 
             return instance
 
-    def optimize(
+    def deterministic_optimize(
         self,
         mapping: str = "uniform",
         algorithm: str | None = None,
