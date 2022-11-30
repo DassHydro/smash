@@ -152,7 +152,7 @@ def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.
     return net
 
 
-def _training_message(instance: Model, control_vector: np.ndarray, n_train: int, opt, lr):
+def _training_message(instance: Model, control_vector: np.ndarray, n_train: int, opt: str, lr: float):
 
     sp4 = " " * 4
 
@@ -183,7 +183,7 @@ def _training_message(instance: Model, control_vector: np.ndarray, n_train: int,
     ret.append(f"Optimizer: {opt}")
     ret.append(f"Learning rate: {lr}")
 
-    ret.append(f"Loss function: wJobs * Jobs + wJreg * Jreg")
+    ret.append(f"Loss function: Jobs + wJreg * Jreg")
 
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
