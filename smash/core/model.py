@@ -758,8 +758,6 @@ class Model(object):
         wjreg: float = 0.0,
         net: Net | None = None,
         validation: float | None = None,
-        optimizer: str = 'adam',
-        learning_rate: float = 0.002,
         epochs: int = 500,
         early_stopping: bool = False,
         verbose: bool = False,
@@ -849,14 +847,6 @@ class Model(object):
             .. note::
                 If not given, training on the whole time series.
 
-        optimizer : str, default adam
-            Optimizer.
-            TODO
-
-        learning_rate : float, default 0.002
-            Learning rate.
-            TODO
-
         epochs : int, default 500
             The number of epochs to train the network.
 
@@ -888,7 +878,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> net = model.ann_optimize(optimizer='adam', learning_rate=0.002, epochs=200, inplace=True, return_net=True)
+        >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True)
 
         Access to some training information
 
@@ -896,6 +886,27 @@ class Model(object):
         >>> net.layers[0].weight  # trained weights of the first layer 
         >>> net.history['loss_train']  # training loss
 
+        Display a summary of the neural network
+
+        >>> net.summary()
+        +-------------+
+        | Net summary |
+        +-------------+
+        Input Shape: (2,)
+        +----------------------+--------------+---------+
+        | Layer (type)         | Output Shape | Param # |
+        +----------------------+--------------+---------+
+        | Dense                | (8,)         | 24      |
+        | Activation (ReLU)    | (8,)         | 0       |
+        | Dense                | (12,)        | 108     |
+        | Activation (ReLU)    | (12,)        | 0       |
+        | Dense                | (4,)         | 52      |
+        | Activation (Sigmoid) | (4,)         | 0       |
+        | Scale (MinMaxScale)  | (4,)         | 0       |
+        +----------------------+--------------+---------+
+        Total params: 184
+        Trainable params: 184
+        Non-trainable params: 0
         """
 
         if inplace:
@@ -938,8 +949,6 @@ class Model(object):
             wjreg,
             net,
             validation,
-            optimizer,
-            learning_rate,
             epochs,
             early_stopping,
             verbose,

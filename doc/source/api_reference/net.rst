@@ -27,5 +27,6 @@ Functions
    :toctree: smash/
 
    Net.add
-   Net.summary
+   Net.compile
    Net.set_trainable
+   Net.summary

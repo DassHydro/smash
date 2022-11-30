@@ -9,7 +9,7 @@ from smash.core.net import Net
 from smash.core.net import (
     Dense,
     Activation,
-    Unscale,
+    Scale,
 )
 
 import numpy as np
@@ -33,8 +33,6 @@ def _ann_optimize(
     wjreg: float,
     net: Net | None,
     validation: float | None,
-    optimizer: str,
-    learning_rate: float,
     epochs: int,
     early_stopping: bool,
     verbose: bool,
@@ -104,19 +102,16 @@ def _ann_optimize(
                             np.nanmin(x_train[..., i])
                             )
 
-    _training_message(instance, control_vector, len(x_train))
+    net = _set_graph(net, nd, control_vector, bounds)
+    _training_message(instance, control_vector, len(x_train), net.optimizer, net.learning_rate)
 
     # train the network
-    net = _set_graph(net, nd, control_vector, bounds)
-
     net._fit(x_train, 
                 instance, 
                 control_vector, 
                 mask,
                 parameters_bgd,
                 states_bgd,
-                optimizer,
-                learning_rate,
                 validation, 
                 epochs, 
                 early_stopping, 
@@ -141,7 +136,9 @@ def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.
         net.add(Dense(len(control_vector)))
         net.add(Activation("sigmoid"))
         
-        net.add(Unscale(bounds[:,0], bounds[:,1]))
+        net.add(Scale("minmaxscale", bounds[:,0], bounds[:,1]))
+
+        net.compile(optimizer='adam', learning_rate=0.002)
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
@@ -155,7 +152,7 @@ def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.
     return net
 
 
-def _training_message(instance: Model, control_vector: np.ndarray, n_train: int):
+def _training_message(instance: Model, control_vector: np.ndarray, n_train: int, opt, lr):
 
     sp4 = " " * 4
 
@@ -183,6 +180,8 @@ def _training_message(instance: Model, control_vector: np.ndarray, n_train: int)
     ret.append(f"Mapping: 'ANN' {mapping_eq}")
 
     ret.append(f"Training set size: {n_train}")
+    ret.append(f"Optimizer: {opt}")
+    ret.append(f"Learning rate: {lr}")
 
     ret.append(f"Loss function: wJobs * Jobs + wJreg * Jreg")
 

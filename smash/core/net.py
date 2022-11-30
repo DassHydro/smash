@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import numpy as np
+from terminaltables import AsciiTable
 import math
 import copy
 from tqdm import tqdm
@@ -28,6 +29,9 @@ class Net(object):
         self.layers = []
 
         self.history = {"loss_train": [], "loss_valid": []}
+
+        self.compiled = False
+
 
     @property
     def layers(self):
@@ -60,18 +64,16 @@ class Net(object):
         #TODO: add checktype
         self._history = value
 
-    def _compile(self, optimizer: str, learning_rate: float):
-
-        self.optimizer = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
-
-        for layer in self.layers:
-
-            if hasattr(layer, 'initialize'):
-            
-                layer.initialize(optimizer=self.optimizer)
 
     def add(self, layer: Layer):
-        """ Add layers to the neural network """
+        """ 
+        Add layers to the neural network.
+
+        Parameters
+        ----------
+        layer : Layer
+            TODO
+        """
         
         # If this is not the first layer added then set the input shape
         # to the output shape of the last added layer
@@ -81,33 +83,92 @@ class Net(object):
         # Add layer to the network
         self.layers.append(layer)
 
-    def summary(self):
-        """ Display a summary of the network """
 
-        #TODO
+    def compile(self, optimizer: str = 'adam', learning_rate: float = 0.001):
+        """
+        Compile the network and set optimizer.
 
-        return
+        Parameters
+        ----------
+        optimizer : str, default adam
+            Optimizer algorithm. Should be one of 
 
-    def set_trainable(self, trainable: bool): # TO DEVELOP while using transfer learning
-        """ Method which enables freezing of the weights of the network's layers """
+            - 'sgd'
+            - 'adam'
+            - 'adagrad'
+            - 'rmsprop'
+
+        learning_rate : float, default 0.001
+            Learning rate that determines the step size of the optimization problem.
+        """
+
+        self.optimizer = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
+
         for layer in self.layers:
-            layer.trainable = trainable
+
+            if hasattr(layer, 'initialize'):
+            
+                layer.initialize(optimizer=self.optimizer)
+
+        self.compiled = True
+        self.optimizer = optimizer
+        self.learning_rate = learning_rate
+
+
+    def set_trainable(self, trainable: list[bool]):
+        """
+        Method which enables to train or freeze the weights and biases of the network's layers.
+
+        Parameters
+        ----------
+        trainable : list of bool
+            List of booleans with a length of the total number of the network's layers.
+
+            .. note::
+                Activation and scaling functions do not have any weights and biases, 
+                so it is not important to set trainable weights at these layers.
+        """
+
+        if len(trainable) == len(self.layers):
+
+            for i, layer in enumerate(self.layers):
+                layer.trainable = trainable[i]
+
+        else:
+            raise ValueError(
+                f"Inconsistent length between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
+            )
+
+
+    def summary(self, name="Net summary"):
+        """
+        Display a summary of the network.
+
+        Parameters
+        ----------
+        name : str, default Net summary
+            Summary name.
+        """
+
+        if not self.compiled:
+            raise ValueError(f"The network has not been compiled yet")
+        
+        _get_summary(name, self.layers)
+
 
     def _fit(self, x_train: np.ndarray, 
             instance: Model, 
             control_vector: np.ndarray, 
             mask: np.ndarray, 
             parameters_bgd: ParametersDT, 
-            states_bgd: StatesDT, 
-            optimizer: str,
-            learning_rate: float,
+            states_bgd: StatesDT,
             validation: float | None,
             epochs: int, 
             early_stopping: bool, 
             verbose: bool):
 
-        # compile model
-        self._compile(optimizer, learning_rate)
+        if not self.compiled:
+            raise ValueError(f"The network has not been compiled yet")
 
         loss_opt = 0 # only use for early stopping purpose
 
@@ -180,6 +241,39 @@ class Net(object):
         return preds
 
 
+def _get_summary(name, layers):
+
+    print(AsciiTable([[name]]).table)
+
+    print(f"Input Shape: {layers[0].input_shape}")
+
+    tab = [["Layer (type)", "Output Shape", "Param #"]]
+
+    tot_params = 0
+    trainable_params = 0
+
+    for layer in layers:
+
+        layer_name = layer.layer_name()
+
+        n_params = layer.parameters()
+
+        out_shape = layer.output_shape()
+
+        tab.append([layer_name, str(out_shape), str(n_params)])
+
+        tot_params += n_params
+
+        if layer.trainable:
+            trainable_params += n_params
+
+    print(AsciiTable(tab).table)
+
+    print(f"Total params: {tot_params}")
+    print(f"Trainable params: {trainable_params}")
+    print(f"Non-trainable params: {tot_params - trainable_params}")
+
+
 ### LAYER ###
 
 class Layer(object):
@@ -240,22 +334,22 @@ class Activation(Layer):
         return self.input_shape
 
 
-class Unscale(Layer):
-    """ Unscale function to unscale output from last layer w.r.t. parameters bounds. """
-    def __init__(self, lower: np.ndarray, upper: np.ndarray):
-        self.upper = upper
-        self.lower = lower
+class Scale(Layer):
+    """ Scale function for outputs from the last layer w.r.t. parameters bounds. """
+    def __init__(self, name: str, lower: np.ndarray, upper: np.ndarray):
+        self.scale_name = name
+        self.scale_func = SCALE_FUNC[name.lower()](lower, upper)
         self.trainable = True
 
     def layer_name(self):
-        return "Unscale (%s)" % (self.__class__.__name__)
+        return "Scale (%s)" % (self.scale_func.__class__.__name__)
 
     def _forward_pass(self, x, training=True):
         self.layer_input = x
-        return self.lower + x*(self.upper-self.lower)
+        return self.scale_func(x)
 
     def _backward_pass(self, accum_grad):
-        return accum_grad * (self.upper-self.lower)
+        return accum_grad * self.scale_func.gradient(self.layer_input)
 
     def output_shape(self):
         return self.input_shape
@@ -275,6 +369,7 @@ class Dense(Layer):
         the network.
     """
     def __init__(self, neurons: int, input_shape: tuple | None = None):
+
         self.layer_input = None
         self.input_shape = input_shape
         self.neurons = neurons
@@ -282,13 +377,16 @@ class Dense(Layer):
         self.weight = None
         self.bias = None
 
-    def initialize(self, optimizer: str):
-        # Initialize the weights
+    def initialize(self, optimizer: function):
+        # Initialize weights and biases
         limit = 1 / math.sqrt(self.input_shape[0])
+
         self.weight  = np.random.uniform(-limit, limit, (self.input_shape[0], self.neurons))
         self.bias = np.zeros((1, self.neurons))
-        # Weight optimizers
+
+        # Set optimizer
         self.weight_opt  = copy.copy(optimizer)
+
         self.bias_opt = copy.copy(optimizer)
 
     def parameters(self):
@@ -400,6 +498,23 @@ ACTIVATION_FUNC = {
     'leaky_relu': LeakyReLU,
     'tanh': TanH,
     'softplus': SoftPlus,
+}
+
+### Scaling functions ###
+
+class MinMaxScale():
+    def __init__(self, lower, upper):
+        self.lower = lower
+        self.upper = upper
+        
+    def __call__(self, x):
+        return self.lower + x * (self.upper - self.lower)
+
+    def gradient(self, x):
+        return self.upper - self.lower
+
+SCALE_FUNC = {
+    'minmaxscale': MinMaxScale,
 }
 
 
