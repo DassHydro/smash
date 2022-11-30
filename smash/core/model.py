@@ -866,11 +866,11 @@ class Model(object):
         verbose : bool, default False
             Display loss information while training.
 
-        return_net : bool, default False
-            If True, also return the trained neural network. 
-
         inplace : bool, default False
             if True, perform operation in-place.
+
+        return_net : bool, default False
+            If True, also return the trained neural network. 
 
         Returns
         -------
@@ -878,7 +878,7 @@ class Model(object):
             Model with optimize outputs or None if inplace.
 
         Net : Net or None
-            Net with trained weights and biases or None return_net=False.
+            Net with trained weights and biases or None if not return_net.
 
         See Also
         --------
@@ -888,7 +888,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> net = model.ann_optimize(optimizer='adam', learning_rate=0.002, epochs=200, return_net=True, inplace=True)
+        >>> net = model.ann_optimize(optimizer='adam', learning_rate=0.002, epochs=200, inplace=True, return_net=True)
 
         Access to some training information
 

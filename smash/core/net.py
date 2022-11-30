@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model import Model
+    from smash.solver._mwd_parameters import ParametersDT
+    from smash.solver._mwd_states import StatesDT
 
 __all__ = ["Net"]
 
@@ -92,9 +94,11 @@ class Net(object):
             layer.trainable = trainable
 
     def _fit(self, x_train: np.ndarray, 
-            model: Model, 
+            instance: Model, 
             control_vector: np.ndarray, 
             mask: np.ndarray, 
+            parameters_bgd: ParametersDT, 
+            states_bgd: StatesDT, 
             optimizer: str,
             learning_rate: float,
             validation: float | None,
@@ -114,10 +118,10 @@ class Net(object):
             y_pred = self._forward_pass(x_train)
 
             # Calculate the gradient of the loss function wrt y_pred
-            loss_grad = _hcost_prime(y_pred, control_vector, mask, model)
+            loss_grad = _hcost_prime(y_pred, control_vector, mask, instance, parameters_bgd, states_bgd)
 
             # Compute loss
-            loss = _hcost(model)
+            loss = _hcost(instance)
 
             # early stopping
             if early_stopping:
@@ -489,15 +493,18 @@ def _hcost(instance: Model):
     
     return instance.output.cost
 
-def _hcost_prime(y: np.ndarray, control_vector, mask, instance: Model):
+def _hcost_prime(y: np.ndarray, 
+                control_vector: np.ndarray, 
+                mask: np.ndarray, 
+                instance: Model, 
+                parameters_bgd: ParametersDT, 
+                states_bgd: StatesDT):
 
     for i,p in enumerate(control_vector):
         getattr(instance.parameters, p)[mask] = y[:,i]
 
-    parameters_bgd = instance.parameters.copy()
     parameters_b = instance.parameters.copy()
 
-    states_bgd = instance.states.copy()
     states_b = instance.states.copy()
 
     output_b = instance.output.copy()

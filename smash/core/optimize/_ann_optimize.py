@@ -85,6 +85,10 @@ def _ann_optimize(
     instance.setup._optimize.jreg_fun = jreg_fun
     instance.setup._optimize.wjreg = wjreg
 
+    # initial parameters and states
+    parameters_bgd = instance.parameters.copy()
+    states_bgd = instance.states.copy()
+
     nd = instance.setup._nd
 
     # preprocessing data
@@ -104,11 +108,13 @@ def _ann_optimize(
 
     # train the network
     net = _set_graph(net, nd, control_vector, bounds)
-    
+
     net._fit(x_train, 
                 instance, 
                 control_vector, 
-                mask,  
+                mask,
+                parameters_bgd,
+                states_bgd,
                 optimizer,
                 learning_rate,
                 validation, 
@@ -120,7 +126,7 @@ def _ann_optimize(
     return net
 
 
-def _set_graph(net: None | Net, nd, control_vector, bounds):
+def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.ndarray):
 
     if net is None: # set a default graph
 
