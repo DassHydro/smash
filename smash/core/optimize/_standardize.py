@@ -1,9 +1,6 @@
 from __future__ import annotations
 
-import numpy as np
-import pandas as pd
-
-from smash.core._constant import(
+from smash.core._constant import (
     ALGORITHM,
     MAPPING,
     STRUCTURE_PARAMETERS,
@@ -13,14 +10,16 @@ from smash.core._constant import(
     ESIGN_OPTIM,
 )
 
-import warnings
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
+
+import numpy as np
+import pandas as pd
+import warnings
 
 
 def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
@@ -543,9 +542,7 @@ def _standardize_jobs_fun_ann(jobs_fun: str | list | tuple | set) -> np.ndarray:
     return jobs_fun
 
 
-def _standardize_wjobs_ann(
-    wjobs_fun: list | None, jobs_fun: np.ndarray
-) -> np.ndarray:
+def _standardize_wjobs_ann(wjobs_fun: list | None, jobs_fun: np.ndarray) -> np.ndarray:
 
     if wjobs_fun is None:
 

@@ -760,7 +760,7 @@ class Model(object):
         validation: float | None = None,
         epochs: int = 500,
         early_stopping: bool = False,
-        verbose: bool = False,
+        verbose: bool = True,
         return_net: bool = False,
         inplace: bool = False,
     ):
@@ -853,14 +853,14 @@ class Model(object):
         early_stopping : bool, default False
             Stop updating weights and biases when the loss function stops decreasing.
 
-        verbose : bool, default False
-            Display loss information while training.
+        verbose : bool, default True
+            Display information while training.
 
         inplace : bool, default False
             if True, perform operation in-place.
 
         return_net : bool, default False
-            If True, also return the trained neural network. 
+            If True, also return the trained neural network.
 
         Returns
         -------
@@ -883,12 +883,12 @@ class Model(object):
         Access to some training information
 
         >>> net.layers  # defined graph
-        >>> net.layers[0].weight  # trained weights of the first layer 
+        >>> net.layers[0].weight  # trained weights of the first layer
         >>> net.history['loss_train']  # training loss
 
         Display a summary of the neural network
 
-        >>> net.summary()
+        >>> net
         +-------------+
         | Net summary |
         +-------------+
@@ -918,12 +918,12 @@ class Model(object):
             instance = self.copy()
 
         (
-            control_vector, 
-            jobs_fun, 
-            wjobs_fun, 
-            bounds, 
-            wgauge, 
-            ost
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
         ) = _standardize_ann_optimize_args(
             control_vector,
             jobs_fun,
@@ -963,10 +963,9 @@ class Model(object):
                 return net
 
         else:
-            
+
             if not inplace:
                 return instance
-
 
     def event_segmentation(self):
         """

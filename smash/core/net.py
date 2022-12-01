@@ -1,10 +1,5 @@
 from __future__ import annotations
 
-import numpy as np
-from terminaltables import AsciiTable
-import math
-import copy
-from tqdm import tqdm
 from smash.solver._mw_forward import forward_b
 
 from typing import TYPE_CHECKING
@@ -13,6 +8,10 @@ if TYPE_CHECKING:
     from smash.core.model import Model
     from smash.solver._mwd_parameters import ParametersDT
     from smash.solver._mwd_states import StatesDT
+
+import numpy as np
+from terminaltables import AsciiTable
+import copy
 
 __all__ = ["Net"]
 
@@ -32,6 +31,47 @@ class Net(object):
 
         self.compiled = False
 
+    def __repr__(self):
+
+        if self.compiled and len(self.layers) > 0:
+
+            ret = []
+
+            ret.append(AsciiTable([["Net summary"]]).table)
+
+            ret.append(f"Input Shape: {self.layers[0].input_shape}")
+
+            tab = [["Layer (type)", "Output Shape", "Param #"]]
+
+            tot_params = 0
+            trainable_params = 0
+
+            for layer in self.layers:
+
+                layer_name = layer.layer_name()
+
+                n_params = layer.parameters()
+
+                out_shape = layer.output_shape()
+
+                tab.append([layer_name, str(out_shape), str(n_params)])
+
+                tot_params += n_params
+
+                if layer.trainable:
+                    trainable_params += n_params
+
+            ret.append(AsciiTable(tab).table)
+
+            ret.append(f"Total params: {tot_params}")
+            ret.append(f"Trainable params: {trainable_params}")
+            ret.append(f"Non-trainable params: {tot_params - trainable_params}")
+
+            return "\n".join(ret)
+
+        else:
+
+            return "The network does not contain layers or has not been compiled yet"
 
     @property
     def layers(self):
@@ -42,12 +82,12 @@ class Net(object):
         """
 
         return self._layers
+
     @layers.setter
     def layers(self, value):
 
-        #TODO: add checktype
+        # TODO: add checktype
         self._layers = value
-        
 
     @property
     def history(self):
@@ -58,15 +98,15 @@ class Net(object):
         """
 
         return self._history
+
     @history.setter
     def history(self, value):
 
-        #TODO: add checktype
+        # TODO: add checktype
         self._history = value
 
-
     def add(self, layer: Layer):
-        """ 
+        """
         Add layers to the neural network.
 
         Parameters
@@ -74,7 +114,7 @@ class Net(object):
         layer : Layer
             TODO
         """
-        
+
         # If this is not the first layer added then set the input shape
         # to the output shape of the last added layer
         if self.layers:
@@ -83,15 +123,14 @@ class Net(object):
         # Add layer to the network
         self.layers.append(layer)
 
-
-    def compile(self, optimizer: str = 'adam', learning_rate: float = 0.001):
+    def compile(self, optimizer: str = "adam", learning_rate: float = 0.001):
         """
         Compile the network and set optimizer.
 
         Parameters
         ----------
         optimizer : str, default adam
-            Optimizer algorithm. Should be one of 
+            Optimizer algorithm. Should be one of
 
             - 'sgd'
             - 'adam'
@@ -106,14 +145,13 @@ class Net(object):
 
         for layer in self.layers:
 
-            if hasattr(layer, 'initialize'):
-            
+            if hasattr(layer, "initialize"):
+
                 layer.initialize(optimizer=self.optimizer)
 
         self.compiled = True
         self.optimizer = optimizer
         self.learning_rate = learning_rate
-
 
     def set_trainable(self, trainable: list[bool]):
         """
@@ -125,7 +163,7 @@ class Net(object):
             List of booleans with a length of the total number of the network's layers.
 
             .. note::
-                Activation and scaling functions do not have any weights and biases, 
+                Activation and scaling functions do not have any weights and biases,
                 so it is not important to set trainable weights at these layers.
         """
 
@@ -139,70 +177,68 @@ class Net(object):
                 f"Inconsistent length between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
             )
 
-
-    def summary(self, name="Net summary"):
-        """
-        Display a summary of the network.
-
-        Parameters
-        ----------
-        name : str, default Net summary
-            Summary name.
-        """
-
-        if not self.compiled:
-            raise ValueError(f"The network has not been compiled yet")
-        
-        _get_summary(name, self.layers)
-
-
-    def _fit(self, x_train: np.ndarray, 
-            instance: Model, 
-            control_vector: np.ndarray, 
-            mask: np.ndarray, 
-            parameters_bgd: ParametersDT, 
-            states_bgd: StatesDT,
-            validation: float | None,
-            epochs: int, 
-            early_stopping: bool, 
-            verbose: bool):
+    def _fit(
+        self,
+        x_train: np.ndarray,
+        instance: Model,
+        control_vector: np.ndarray,
+        mask: np.ndarray,
+        parameters_bgd: ParametersDT,
+        states_bgd: StatesDT,
+        validation: float | None,
+        epochs: int,
+        early_stopping: bool,
+        verbose: bool,
+    ):
 
         if not self.compiled:
             raise ValueError(f"The network has not been compiled yet")
 
-        loss_opt = 0 # only use for early stopping purpose
+        loss_opt = 0  # only use for early stopping purpose
 
         # train model
-        for epo in tqdm(range(epochs), desc="Training"):
+        for epo in range(epochs):
 
             # Forward propogation
             y_pred = self._forward_pass(x_train)
 
             # Calculate the gradient of the loss function wrt y_pred
-            loss_grad = _hcost_prime(y_pred, control_vector, mask, instance, parameters_bgd, states_bgd)
+            loss_grad = _hcost_prime(
+                y_pred, control_vector, mask, instance, parameters_bgd, states_bgd
+            )
 
             # Compute loss
             loss = _hcost(instance)
 
+            # Calculate the infinity norm of the projected gradient
+            proj_g = _inf_norm(loss_grad)
+
             # early stopping
             if early_stopping:
 
-                if loss_opt > loss or epo==0:
+                if loss_opt > loss or epo == 0:
                     loss_opt = loss
 
                     for layer in self.layers:
 
-                        if hasattr(layer, 'weight'):
+                        if hasattr(layer, "weight"):
                             layer._weight = np.copy(layer.weight)
 
-                        if hasattr(layer, 'bias'):
+                        if hasattr(layer, "bias"):
                             layer._bias = np.copy(layer.bias)
 
             # Backpropagation
             self._backward_pass(loss_grad=loss_grad)
 
             if verbose:
-                print(f'Epoch {epo+1}/{epochs}. Loss: {loss}.')
+                ret = []
+
+                ret.append(f"{' ' * 4}At epoch")
+                ret.append("{:3}".format(epo + 1))
+                ret.append("J =" + "{:10.6f}".format(loss))
+                ret.append("|proj g| =" + "{:10.6f}".format(proj_g))
+
+                print((" " * 4).join(ret))
 
             self.history["loss_train"].append(loss)
 
@@ -210,11 +246,13 @@ class Net(object):
 
             for layer in self.layers:
 
-                if hasattr(layer, 'weight'):
+                if hasattr(layer, "weight"):
                     layer.weight = np.copy(layer._weight)
 
-                if hasattr(layer, 'bias'):
+                if hasattr(layer, "bias"):
                     layer.bias = np.copy(layer._bias)
+
+        print(f"{' ' * 4}STOP: TOTAL NO. OF EPOCH EXCEEDS LIMIT")
 
         return self.history["loss_train"]
 
@@ -236,75 +274,43 @@ class Net(object):
 
     def _predict(self, x_train: np.ndarray):
 
-        preds = self._forward_pass(x_train,training=False)
+        preds = self._forward_pass(x_train, training=False)
 
         return preds
 
 
-def _get_summary(name, layers):
-
-    print(AsciiTable([[name]]).table)
-
-    print(f"Input Shape: {layers[0].input_shape}")
-
-    tab = [["Layer (type)", "Output Shape", "Param #"]]
-
-    tot_params = 0
-    trainable_params = 0
-
-    for layer in layers:
-
-        layer_name = layer.layer_name()
-
-        n_params = layer.parameters()
-
-        out_shape = layer.output_shape()
-
-        tab.append([layer_name, str(out_shape), str(n_params)])
-
-        tot_params += n_params
-
-        if layer.trainable:
-            trainable_params += n_params
-
-    print(AsciiTable(tab).table)
-
-    print(f"Total params: {tot_params}")
-    print(f"Trainable params: {trainable_params}")
-    print(f"Non-trainable params: {tot_params - trainable_params}")
-
-
 ### LAYER ###
 
-class Layer(object):
 
+class Layer(object):
     def set_input_shape(self, shape: tuple):
-        """ Sets the shape that the layer expects of the input in the forward
-        pass method """
+        """Sets the shape that the layer expects of the input in the forward
+        pass method"""
         self.input_shape = shape
 
     def layer_name(self):
-        """ The name of the layer. Used in model summary. """
+        """The name of the layer. Used in model summary."""
         return self.__class__.__name__
 
     def parameters(self):
-        """ The number of trainable parameters used by the layer """
+        """The number of trainable parameters used by the layer"""
         return 0
 
     def _forward_pass(self, x: np.ndarray, training: bool):
-        """ Propogates the signal forward in the network """
+        """Propogates the signal forward in the network"""
         raise NotImplementedError()
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        """ Propogates the accumulated gradient backwards in the network.
+        """Propogates the accumulated gradient backwards in the network.
         If the has trainable weights then these weights are also tuned in this method.
         As input (accum_grad) it receives the gradient with respect to the output of the layer and
-        returns the gradient with respect to the output of the previous layer. """
+        returns the gradient with respect to the output of the previous layer."""
         raise NotImplementedError()
 
     def output_shape(self):
-        """ The shape of the output produced by forward_pass """
+        """The shape of the output produced by forward_pass"""
         raise NotImplementedError()
+
 
 class Activation(Layer):
     """A layer that applies an activation operation to the input.
@@ -335,7 +341,8 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    """ Scale function for outputs from the last layer w.r.t. parameters bounds. """
+    """Scale function for outputs from the last layer w.r.t. parameters bounds."""
+
     def __init__(self, name: str, lower: np.ndarray, upper: np.ndarray):
         self.scale_name = name
         self.scale_func = SCALE_FUNC[name.lower()](lower, upper)
@@ -357,6 +364,7 @@ class Scale(Layer):
 
 ### LAYERS ###
 
+
 class Dense(Layer):
     """A fully-connected NN layer.
     Parameters:
@@ -368,6 +376,7 @@ class Dense(Layer):
         the number of features of the input. Must be specified if it is the first layer in
         the network.
     """
+
     def __init__(self, neurons: int, input_shape: tuple | None = None):
 
         self.layer_input = None
@@ -379,13 +388,15 @@ class Dense(Layer):
 
     def initialize(self, optimizer: function):
         # Initialize weights and biases
-        limit = 1 / math.sqrt(self.input_shape[0])
+        limit = 1 / np.sqrt(self.input_shape[0])
 
-        self.weight  = np.random.uniform(-limit, limit, (self.input_shape[0], self.neurons))
+        self.weight = np.random.uniform(
+            -limit, limit, (self.input_shape[0], self.neurons)
+        )
         self.bias = np.zeros((1, self.neurons))
 
         # Set optimizer
-        self.weight_opt  = copy.copy(optimizer)
+        self.weight_opt = copy.copy(optimizer)
 
         self.bias_opt = copy.copy(optimizer)
 
@@ -402,7 +413,7 @@ class Dense(Layer):
         weight = self.weight
 
         if self.trainable:
-        # Calculate gradient w.r.t layer weights
+            # Calculate gradient w.r.t layer weights
             grad_w = self.layer_input.T.dot(accum_grad)
             grad_w0 = np.sum(accum_grad, axis=0, keepdims=True)
 
@@ -416,19 +427,21 @@ class Dense(Layer):
         return accum_grad
 
     def output_shape(self):
-        return (self.neurons, )
+        return (self.neurons,)
 
 
 ### ACTIVATION FUNCTIONS ###
 
-class Sigmoid():
+
+class Sigmoid:
     def __call__(self, x):
         return 1 / (1 + np.exp(-x))
 
     def gradient(self, x):
         return self.__call__(x) * (1 - self.__call__(x))
 
-class Softmax():
+
+class Softmax:
     def __call__(self, x):
         e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
@@ -437,21 +450,24 @@ class Softmax():
         p = self.__call__(x)
         return p * (1 - p)
 
-class TanH():
+
+class TanH:
     def __call__(self, x):
-        return 2 / (1 + np.exp(-2*x)) - 1
+        return 2 / (1 + np.exp(-2 * x)) - 1
 
     def gradient(self, x):
         return 1 - np.power(self.__call__(x), 2)
 
-class ReLU():
+
+class ReLU:
     def __call__(self, x):
         return np.where(x >= 0, x, 0)
 
     def gradient(self, x):
         return np.where(x >= 0, 1, 0)
 
-class LeakyReLU():
+
+class LeakyReLU:
     def __init__(self, alpha=0.2):
         self.alpha = alpha
 
@@ -461,9 +477,10 @@ class LeakyReLU():
     def gradient(self, x):
         return np.where(x >= 0, 1, self.alpha)
 
-class ELU():
+
+class ELU:
     def __init__(self, alpha=0.1):
-        self.alpha = alpha 
+        self.alpha = alpha
 
     def __call__(self, x):
         return np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
@@ -471,58 +488,64 @@ class ELU():
     def gradient(self, x):
         return np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
 
-class SELU():
+
+class SELU:
     def __init__(self):
         self.alpha = 1.6732632423543772848170429916717
-        self.scale = 1.0507009873554804934193349852946 
+        self.scale = 1.0507009873554804934193349852946
 
     def __call__(self, x):
-        return self.scale * np.where(x >= 0.0, x, self.alpha*(np.exp(x)-1))
+        return self.scale * np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
 
     def gradient(self, x):
         return self.scale * np.where(x >= 0.0, 1, self.alpha * np.exp(x))
 
-class SoftPlus():
+
+class SoftPlus:
     def __call__(self, x):
         return np.log(1 + np.exp(x))
 
     def gradient(self, x):
         return 1 / (1 + np.exp(-x))
 
+
 ACTIVATION_FUNC = {
-    'relu': ReLU,
-    'sigmoid': Sigmoid,
-    'selu': SELU,
-    'elu': ELU,
-    'softmax': Softmax,
-    'leaky_relu': LeakyReLU,
-    'tanh': TanH,
-    'softplus': SoftPlus,
+    "relu": ReLU,
+    "sigmoid": Sigmoid,
+    "selu": SELU,
+    "elu": ELU,
+    "softmax": Softmax,
+    "leaky_relu": LeakyReLU,
+    "tanh": TanH,
+    "softplus": SoftPlus,
 }
 
 ### Scaling functions ###
 
-class MinMaxScale():
+
+class MinMaxScale:
     def __init__(self, lower, upper):
         self.lower = lower
         self.upper = upper
-        
+
     def __call__(self, x):
         return self.lower + x * (self.upper - self.lower)
 
     def gradient(self, x):
         return self.upper - self.lower
 
+
 SCALE_FUNC = {
-    'minmaxscale': MinMaxScale,
+    "minmaxscale": MinMaxScale,
 }
 
 
 ### OPTIMIZER ###
 
-class StochasticGradientDescent():
+
+class StochasticGradientDescent:
     def __init__(self, learning_rate: float, momentum: float = 0):
-        self.learning_rate = learning_rate 
+        self.learning_rate = learning_rate
         self.momentum = momentum
         self.w_updt = None
 
@@ -535,7 +558,8 @@ class StochasticGradientDescent():
         # Move against the gradient to minimize loss
         return w - self.learning_rate * self.w_updt
 
-class Adam():
+
+class Adam:
     def __init__(self, learning_rate: float, b1: float = 0.9, b2: float = 0.999):
         self.learning_rate = learning_rate
         self.eps = 1e-8
@@ -550,7 +574,7 @@ class Adam():
         if self.m is None:
             self.m = np.zeros(np.shape(grad_wrt_w))
             self.v = np.zeros(np.shape(grad_wrt_w))
-        
+
         self.m = self.b1 * self.m + (1 - self.b1) * grad_wrt_w
         self.v = self.b2 * self.v + (1 - self.b2) * np.power(grad_wrt_w, 2)
 
@@ -561,10 +585,11 @@ class Adam():
 
         return w - self.w_updt
 
-class Adagrad():
+
+class Adagrad:
     def __init__(self, learning_rate):
         self.learning_rate = learning_rate
-        self.G = None # Sum of squares of the gradients
+        self.G = None  # Sum of squares of the gradients
         self.eps = 1e-8
 
     def update(self, w: np.ndarray, grad_wrt_w: np.ndarray):
@@ -576,10 +601,11 @@ class Adagrad():
         # Adaptive gradient with higher learning rate for sparse data
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.G + self.eps)
 
-class RMSprop():
+
+class RMSprop:
     def __init__(self, learning_rate: float, rho: float = 0.9):
         self.learning_rate = learning_rate
-        self.Eg = None # Running average of the square gradients at w
+        self.Eg = None  # Running average of the square gradients at w
         self.eps = 1e-8
         self.rho = rho
 
@@ -592,31 +618,42 @@ class RMSprop():
 
         # Divide the learning rate for a weight by a running average of the magnitudes of recent
         # gradients for that weight
-        return w - self.learning_rate *  grad_wrt_w / np.sqrt(self.Eg + self.eps)
+        return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)
+
 
 OPTIMIZERS = {
-    'sgd': StochasticGradientDescent,
-    'adam': Adam,
-    'adagrad': Adagrad,
-    'rmsprop': RMSprop
+    "sgd": StochasticGradientDescent,
+    "adam": Adam,
+    "adagrad": Adagrad,
+    "rmsprop": RMSprop,
 }
-        
+
 
 ### LOSS ###
 
+
 def _hcost(instance: Model):
-    
+
     return instance.output.cost
 
-def _hcost_prime(y: np.ndarray, 
-                control_vector: np.ndarray, 
-                mask: np.ndarray, 
-                instance: Model, 
-                parameters_bgd: ParametersDT, 
-                states_bgd: StatesDT):
 
-    for i,p in enumerate(control_vector):
-        getattr(instance.parameters, p)[mask] = y[:,i]
+def _hcost_prime(
+    y: np.ndarray,
+    control_vector: np.ndarray,
+    mask: np.ndarray,
+    instance: Model,
+    parameters_bgd: ParametersDT,
+    states_bgd: StatesDT,
+):
+
+    #% Set parameters and states
+    for i, name in enumerate(control_vector):
+
+        if name in instance.setup._parameters_name:
+            getattr(instance.parameters, name)[mask] = y[:, i]
+
+        else:
+            getattr(instance.states, name)[mask] = y[:, i]
 
     parameters_b = instance.parameters.copy()
 
@@ -627,9 +664,34 @@ def _hcost_prime(y: np.ndarray,
     cost = np.float32(0)
     cost_b = np.float32(1)
 
-    forward_b(instance.setup, instance.mesh, instance.input_data, instance.parameters, parameters_b, parameters_bgd, 
-    instance.states, states_b, states_bgd, instance.output, output_b, cost, cost_b)
+    forward_b(
+        instance.setup,
+        instance.mesh,
+        instance.input_data,
+        instance.parameters,
+        parameters_b,
+        parameters_bgd,
+        instance.states,
+        states_b,
+        states_bgd,
+        instance.output,
+        output_b,
+        cost,
+        cost_b,
+    )
 
-    grad = np.transpose([getattr(parameters_b, p) for p in control_vector])[mask]
-    
+    grad = np.transpose(
+        [
+            getattr(parameters_b, name)
+            if name in instance.setup._parameters_name
+            else getattr(states_b, name)
+            for name in control_vector
+        ]
+    )[mask]
+
     return grad
+
+
+def _inf_norm(grad: np.ndarray):
+
+    return np.amax(np.abs(grad))

@@ -4,28 +4,27 @@ from smash.solver._mwd_setup import Optimize_SetupDT
 
 from smash.core._event_segmentation import _mask_event
 
-from smash.core.net import Net
-
 from smash.core.net import (
+    Net,
     Dense,
     Activation,
     Scale,
 )
 
-import numpy as np
-import pandas as pd
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model import Model
-    
+
+import numpy as np
+import pandas as pd
+
 
 def _ann_optimize(
     instance: Model,
     control_vector: np.ndarray,
-    jobs_fun: str | list,
-    wjobs_fun: None | list,
+    jobs_fun: np.ndarray,
+    wjobs_fun: np.ndarray,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -95,35 +94,38 @@ def _ann_optimize(
     x_train = instance.input_data.descriptor.copy()
     x_train = x_train[mask]
 
-    for i in range(nd) :
-        x_train[..., i] = (
-                            x_train[..., i] - 
-                            np.nanmin(x_train[..., i])) / (np.nanmax(x_train[..., i]) - 
-                            np.nanmin(x_train[..., i])
-                            )
+    for i in range(nd):
+        x_train[..., i] = (x_train[..., i] - np.nanmin(x_train[..., i])) / (
+            np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
+        )
 
     net = _set_graph(net, nd, control_vector, bounds)
-    _training_message(instance, control_vector, len(x_train), net.optimizer, net.learning_rate)
+    _training_message(
+        instance, control_vector, len(x_train), net.optimizer, net.learning_rate
+    )
 
     # train the network
-    net._fit(x_train, 
-                instance, 
-                control_vector, 
-                mask,
-                parameters_bgd,
-                states_bgd,
-                validation, 
-                epochs, 
-                early_stopping, 
-                verbose
-            )
+    net._fit(
+        x_train,
+        instance,
+        control_vector,
+        mask,
+        parameters_bgd,
+        states_bgd,
+        validation,
+        epochs,
+        early_stopping,
+        verbose,
+    )
 
     return net
 
 
-def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.ndarray):
+def _set_graph(
+    net: Net | None, nd: int, control_vector: np.ndarray, bounds: np.ndarray
+):
 
-    if net is None: # set a default graph
+    if net is None:  # set a default graph
 
         net = Net()
 
@@ -135,14 +137,14 @@ def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.
 
         net.add(Dense(len(control_vector)))
         net.add(Activation("sigmoid"))
-        
-        net.add(Scale("minmaxscale", bounds[:,0], bounds[:,1]))
 
-        net.compile(optimizer='adam', learning_rate=0.002)
+        net.add(Scale("minmaxscale", bounds[:, 0], bounds[:, 1]))
+
+        net.compile(optimizer="adam", learning_rate=0.002)
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
-    
+
     elif len(net.layers) == 0:
         raise ValueError(f"Cannot train the network. The graph has not been set yet")
 
@@ -152,7 +154,9 @@ def _set_graph(net: None | Net, nd: int, control_vector: np.ndarray, bounds: np.
     return net
 
 
-def _training_message(instance: Model, control_vector: np.ndarray, n_train: int, opt: str, lr: float):
+def _training_message(
+    instance: Model, control_vector: np.ndarray, n_train: int, opt: str, lr: float
+):
 
     sp4 = " " * 4
 
@@ -196,4 +200,3 @@ def _training_message(instance: Model, control_vector: np.ndarray, n_train: int,
     ret.append(f"wg: {len(wgauge)} [ {' '.join(wgauge.astype('U'))} ]")
 
     print(f"\n{sp4}".join(ret) + "\n")
-

@@ -29,4 +29,3 @@ Functions
    Net.add
    Net.compile
    Net.set_trainable
-   Net.summary
