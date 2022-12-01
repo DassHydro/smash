@@ -187,8 +187,6 @@ def _training_message(
     ret.append(f"Optimizer: {opt}")
     ret.append(f"Learning rate: {lr}")
 
-    ret.append(f"Loss function: Jobs + wJreg * Jreg")
-
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
     ret.append(f"Jreg function: '{jreg_fun}'")

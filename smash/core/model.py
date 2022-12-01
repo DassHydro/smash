@@ -880,12 +880,6 @@ class Model(object):
         >>> model = smash.Model(setup, mesh)
         >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True)
 
-        Access to some training information
-
-        >>> net.layers  # defined graph
-        >>> net.layers[0].weight  # trained weights of the first layer
-        >>> net.history['loss_train']  # training loss
-
         Display a summary of the neural network
 
         >>> net
@@ -907,6 +901,12 @@ class Model(object):
         Total params: 184
         Trainable params: 184
         Non-trainable params: 0
+
+        Access to some training information
+
+        >>> net.layers  # defined graph
+        >>> net.layers[0].weight  # trained weights of the first layer
+        >>> net.history['loss_train']  # training loss
         """
 
         if inplace:
