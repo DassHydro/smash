@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward
 
+from smash.core._constant import CSIGN, ESIGN
+
 from smash.core._event_segmentation import (
     _detect_peaks,
     _missing_values,
@@ -19,10 +21,6 @@ import numpy as np
 import pandas as pd
 from SALib.analyze import sobol
 from tqdm import tqdm
-
-
-CSIGN = ["Crc", "Crchf", "Crclf", "Crch2r", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
-ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
 
 def _standardize_signatures(sign: str | list[str] | None):

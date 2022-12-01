@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.core.utils import sparse_matrix_to_vector
 
+from smash.core._constant import RATIO_PET_HOURLY
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -16,36 +18,6 @@ import pandas as pd
 import numpy as np
 import datetime
 from osgeo import gdal
-
-RATIO_PET_HOURLY = np.array(
-    [
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0,
-        0.035,
-        0.062,
-        0.079,
-        0.097,
-        0.11,
-        0.117,
-        0.117,
-        0.11,
-        0.097,
-        0.079,
-        0.062,
-        0.035,
-        0,
-        0,
-        0,
-        0,
-        0,
-    ],
-    dtype=np.float32,
-)
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:

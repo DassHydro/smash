@@ -29,6 +29,7 @@ RUN pip3 install \
     scipy \
     pyyaml \
     SALib \
+    terminaltables \
     sphinx \
     numpydoc \
     pydata-sphinx-theme \

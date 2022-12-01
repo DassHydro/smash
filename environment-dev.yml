@@ -21,6 +21,7 @@ dependencies:
     - scipy
     - pyyaml
     - SALib
+    - terminaltables
     
     # documentation
     - sphinx

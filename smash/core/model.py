@@ -15,12 +15,18 @@ from smash.core._build_model import (
     _build_input_data,
 )
 
-from smash.core._optimize import (
-    _standardize_optimize_args,
-    _standardize_optimize_options,
+from smash.core.optimize._optimize import (
     _optimize_sbs,
     _optimize_lbfgsb,
     _optimize_nelder_mead,
+)
+
+from smash.core.optimize._ann_optimize import _ann_optimize
+
+from smash.core.optimize._standardize import (
+    _standardize_optimize_args,
+    _standardize_optimize_options,
+    _standardize_ann_optimize_args,
 )
 
 from smash.core._event_segmentation import _event_segmentation
@@ -37,6 +43,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     import pandas as pd
+    from smash.core.net import Net
 
 import numpy as np
 
@@ -737,6 +744,228 @@ class Model(object):
         if not inplace:
 
             return instance
+
+    def ann_optimize(
+        self,
+        control_vector: str | list | tuple | set | None = None,
+        jobs_fun: str | list | tuple | set = "nse",
+        wjobs_fun: list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
+        gauge: str | list | tuple | set = "downstream",
+        wgauge: str | list | tuple | set = "mean",
+        ost: str | pd.Timestamp | None = None,
+        jreg_fun: str = "prior",
+        wjreg: float = 0.0,
+        net: Net | None = None,
+        validation: float | None = None,
+        epochs: int = 500,
+        early_stopping: bool = False,
+        verbose: bool = True,
+        return_net: bool = False,
+        inplace: bool = False,
+    ):
+        """
+        Optimize the Model using artificial neural network.
+
+        .. hint::
+            See the :ref:`user_guide` for more.
+
+        Parameters
+        ----------
+        control_vector : str, sequence or None, default None
+            Parameters and/or states to be optimized. The control vector argument
+            can be any parameter or state name or any sequence of parameter and/or state names.
+
+            .. note::
+                If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
+
+        jobs_fun : str or sequence, default 'nse'
+            Type of objective function(s) to be minimized. Should be one or a sequence of any
+
+            - ``Classical Objective Function``
+                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
+            - ``Continuous Signature``
+                'Crc'
+            - ``Event Signature``
+                'Epf', 'Elt', 'Erc'
+
+        wjobs_fun : sequence or None, default None
+            Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
+
+            .. note::
+                If not given, the weights will correspond to the mean of the objective functions.
+
+        bounds : sequence or None, default None
+            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
+            The size of the bounds sequence must be equal to the control vector size.
+            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
+            None value inside the sequence will be filled in with default bound values.
+
+            .. note::
+                If not given, the bounds will be filled in with default bound values.
+
+        gauge : str, sequence, default 'downstream'
+            Type of gauge to be optimized. There are two ways to specify it:
+
+            1. A gauge code or any sequence of gauge codes.
+               The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+            2. An alias among ``all`` and ``downstream``. ``all`` is equivalent to a sequence of all gauge codes.
+               ``downstream`` is equivalent to the gauge code of the most downstream gauge.
+
+        wgauge : str, sequence, default 'mean'
+            Type of gauge weights. There are two ways to specify it:
+
+            1. A sequence of value whose size must be equal to the number of gauges optimized.
+            2. An alias among ``mean``, ``area`` or ``minv_area``.
+
+        ost : str, pandas.Timestamp or None, default None
+            The optimization start time. The optimization will only be performed between the
+            optimization start time ``ost`` and the end time. The value can be a str which can be interpreted by
+            pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
+            The ``ost`` date value must be between the start time and the end time defined in the Model setup.
+
+            .. note::
+                If not given, the optimization start time will be equal to the start time.
+
+        jreg_fun : str, default prior
+            TODO
+
+        wjreg : float, dafault 0.0
+            TODO
+
+        net : Net or None, default None
+            The neural network Net will be trained to learn the descriptors to parameters mapping.
+            Net initialization (see user guide TODO).
+
+            .. note::
+                If not given, a default network will be used.
+
+        validation : float or None, default None
+            Temporal validation percentage to split simulated discharge into training-validation sets.
+            See user guide (TODO)
+
+            .. note::
+                If not given, training on the whole time series.
+
+        epochs : int, default 500
+            The number of epochs to train the network.
+
+        early_stopping : bool, default False
+            Stop updating weights and biases when the loss function stops decreasing.
+
+        verbose : bool, default True
+            Display information while training.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
+        return_net : bool, default False
+            If True, also return the trained neural network.
+
+        Returns
+        -------
+        Model : Model or None
+            Model with optimize outputs or None if inplace.
+
+        Net : Net or None
+            Net with trained weights and biases or None if not return_net.
+
+        See Also
+        --------
+        Net : Artificial Neural Network initialization.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True)
+
+        Display a summary of the neural network
+
+        >>> net
+        +-------------+
+        | Net summary |
+        +-------------+
+        Input Shape: (2,)
+        +----------------------+--------------+---------+
+        | Layer (type)         | Output Shape | Param # |
+        +----------------------+--------------+---------+
+        | Dense                | (8,)         | 24      |
+        | Activation (ReLU)    | (8,)         | 0       |
+        | Dense                | (12,)        | 108     |
+        | Activation (ReLU)    | (12,)        | 0       |
+        | Dense                | (4,)         | 52      |
+        | Activation (Sigmoid) | (4,)         | 0       |
+        | Scale (MinMaxScale)  | (4,)         | 0       |
+        +----------------------+--------------+---------+
+        Total params: 184
+        Trainable params: 184
+        Non-trainable params: 0
+
+        Access to some training information
+
+        >>> net.layers  # defined graph
+        >>> net.layers[0].weight  # trained weights of the first layer
+        >>> net.history['loss_train']  # training loss
+        """
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        (
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+        ) = _standardize_ann_optimize_args(
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            gauge,
+            wgauge,
+            ost,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+        )
+
+        net = _ann_optimize(
+            instance,
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            jreg_fun,
+            wjreg,
+            net,
+            validation,
+            epochs,
+            early_stopping,
+            verbose,
+        )
+
+        if return_net:
+
+            if not inplace:
+                return instance, net
+
+            else:
+                return net
+
+        else:
+
+            if not inplace:
+                return instance
 
     def event_segmentation(self):
         """
