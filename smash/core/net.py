@@ -29,15 +29,15 @@ class Net(object):
 
         self.history = {"loss_train": [], "loss_valid": []}
 
-        self.compiled = False
+        self._compiled = False
 
     def __repr__(self):
 
-        if self.compiled and len(self.layers) > 0:
+        ret = []
 
-            ret = []
+        ret.append(AsciiTable([["Net summary"]]).table)
 
-            ret.append(AsciiTable([["Net summary"]]).table)
+        if self._compiled and len(self.layers) > 0:
 
             ret.append(f"Input Shape: {self.layers[0].input_shape}")
 
@@ -67,11 +67,11 @@ class Net(object):
             ret.append(f"Trainable params: {trainable_params}")
             ret.append(f"Non-trainable params: {tot_params - trainable_params}")
 
-            return "\n".join(ret)
-
         else:
 
-            return "The network does not contain layers or has not been compiled yet"
+            ret.append("The network does not contain layers or has not been compiled yet")
+
+        return "\n".join(ret)
 
     @property
     def layers(self):
@@ -149,7 +149,7 @@ class Net(object):
 
                 layer.initialize(optimizer=self.optimizer)
 
-        self.compiled = True
+        self._compiled = True
         self.optimizer = optimizer
         self.learning_rate = learning_rate
 
@@ -191,7 +191,7 @@ class Net(object):
         verbose: bool,
     ):
 
-        if not self.compiled:
+        if not self._compiled:
             raise ValueError(f"The network has not been compiled yet")
 
         loss_opt = 0  # only use for early stopping purpose
