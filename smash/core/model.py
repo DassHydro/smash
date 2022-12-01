@@ -761,8 +761,8 @@ class Model(object):
         epochs: int = 500,
         early_stopping: bool = False,
         verbose: bool = True,
-        return_net: bool = False,
         inplace: bool = False,
+        return_net: bool = False,
     ):
         """
         Optimize the Model using artificial neural network.
