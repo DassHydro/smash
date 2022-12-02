@@ -172,19 +172,7 @@ class Net(object):
             A copy of Net.
         """
 
-        net_copy = Net()
-
-        net_copy._compiled = self._compiled
-
-        net_copy.history = self.history.copy()
-
-        net_copy.layers = [copy.copy(layer) for layer in self.layers]
-
-        net_copy.optimizer = self.optimizer
-
-        net_copy.learning_rate = self.learning_rate
-
-        return net_copy
+        return copy.deepcopy(self)
 
     def set_trainable(self, trainable: list[bool]):
         """
