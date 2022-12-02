@@ -878,7 +878,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True)
+        >>> net = model.ann_optimize(inplace=True, return_net=True)
 
         Display a summary of the neural network
 
@@ -890,16 +890,16 @@ class Model(object):
         +----------------------+--------------+---------+
         | Layer (type)         | Output Shape | Param # |
         +----------------------+--------------+---------+
-        | Dense                | (8,)         | 24      |
+        | Dense                | (16,)        | 48      |
+        | Activation (ReLU)    | (16,)        | 0       |
+        | Dense                | (8,)         | 136     |
         | Activation (ReLU)    | (8,)         | 0       |
-        | Dense                | (12,)        | 108     |
-        | Activation (ReLU)    | (12,)        | 0       |
-        | Dense                | (4,)         | 52      |
+        | Dense                | (4,)         | 36      |
         | Activation (Sigmoid) | (4,)         | 0       |
         | Scale (MinMaxScale)  | (4,)         | 0       |
         +----------------------+--------------+---------+
-        Total params: 184
-        Trainable params: 184
+        Total params: 220
+        Trainable params: 220
         Non-trainable params: 0
 
         Access to some training information
