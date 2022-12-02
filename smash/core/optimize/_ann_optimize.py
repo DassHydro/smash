@@ -4,12 +4,7 @@ from smash.solver._mwd_setup import Optimize_SetupDT
 
 from smash.core._event_segmentation import _mask_event
 
-from smash.core.net import (
-    Net,
-    Dense,
-    Activation,
-    Scale,
-)
+from smash.core.net import Net
 
 from typing import TYPE_CHECKING
 
@@ -99,7 +94,7 @@ def _ann_optimize(
             np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
         )
 
-    net = _set_graph(net, nd, control_vector, bounds)
+    net = _set_graph(net, nd, len(control_vector), bounds)
     _training_message(
         instance, control_vector, len(x_train), net.optimizer, net.learning_rate
     )
@@ -122,25 +117,25 @@ def _ann_optimize(
 
 
 def _set_graph(
-    net: Net | None, nd: int, control_vector: np.ndarray, bounds: np.ndarray
+    net: Net | None, nd: int, ncv: int, bounds: np.ndarray
 ):
 
     if net is None:  # set a default graph
 
         net = Net()
 
-        net.add(Dense(input_shape=(nd,), neurons=8))
-        net.add(Activation("relu"))
+        net.add(layer="dense", options={"input_shape": (nd,), "neurons": 16})
+        net.add(layer="activation", options={"name": "relu"})
 
-        net.add(Dense(12))
-        net.add(Activation("relu"))
+        net.add(layer="dense", options={"neurons": 8})
+        net.add(layer="activation", options={"name": "relu"})
 
-        net.add(Dense(len(control_vector)))
-        net.add(Activation("sigmoid"))
+        net.add(layer="dense", options={"neurons": ncv})
+        net.add(layer="activation", options={"name": "sigmoid"})
 
-        net.add(Scale("minmaxscale", bounds[:, 0], bounds[:, 1]))
+        net.add(layer="scale", options={"name": "minmaxscale", "lower": bounds[:, 0], "upper": bounds[:, 1]})
 
-        net.compile(optimizer="adam", learning_rate=0.002)
+        net.compile()
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
