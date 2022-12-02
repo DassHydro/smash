@@ -287,8 +287,6 @@ class Net(object):
 
         print(f"{' ' * 4}STOP: TOTAL NO. OF EPOCH EXCEEDS LIMIT")
 
-        return self.history["loss_train"]
-
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
 
         layer_output = x_train
