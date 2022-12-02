@@ -512,7 +512,7 @@ class Dense(Layer):
 
     def __init__(self, neurons: int, input_shape: tuple | None = None, **unknown_options):
 
-        _check_unknown_options("Dense layer", unknown_options)
+        _check_unknown_options("Dense Layer", unknown_options)
 
         self.layer_input = None
         self.input_shape = input_shape
