@@ -4,12 +4,7 @@ from smash.solver._mwd_setup import Optimize_SetupDT
 
 from smash.core._event_segmentation import _mask_event
 
-from smash.core.net import (
-    Net,
-    Dense,
-    Activation,
-    Scale,
-)
+from smash.core.net import Net
 
 from typing import TYPE_CHECKING
 
