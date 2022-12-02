@@ -765,7 +765,7 @@ class Model(object):
         return_net: bool = False,
     ):
         """
-        Optimize the Model using artificial neural network.
+        Optimize the Model using Artificial Neural Network.
 
         .. hint::
             See the :ref:`user_guide` for more.
@@ -838,7 +838,7 @@ class Model(object):
             Net initialization (see user guide TODO).
 
             .. note::
-                If not given, a default network will be used.
+                If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
         validation : float or None, default None
             Temporal validation percentage to split simulated discharge into training-validation sets.
@@ -860,7 +860,7 @@ class Model(object):
             if True, perform operation in-place.
 
         return_net : bool, default False
-            If True, also return the trained neural network.
+            If True and the default graph is used (net is None), also return the trained neural network.
 
         Returns
         -------
@@ -868,7 +868,7 @@ class Model(object):
             Model with optimize outputs or None if inplace.
 
         Net : Net or None
-            Net with trained weights and biases or None if not return_net.
+            Net with trained weights and biases if return_net and the default graph is used.
 
         See Also
         --------
@@ -904,9 +904,11 @@ class Model(object):
 
         Access to some training information
 
+        >>> net.history['loss_train']  # training loss
+        >>> net.optimizer  # optimizer algorithm
+        >>> net.learning_rate  # learning rate
         >>> net.layers  # defined graph
         >>> net.layers[0].weight  # trained weights of the first layer
-        >>> net.history['loss_train']  # training loss
         """
 
         if inplace:
@@ -916,6 +918,12 @@ class Model(object):
         else:
 
             instance = self.copy()
+
+        if net is None:
+            use_default_graph = True
+
+        else:
+            use_default_graph = False
 
         (
             control_vector,
@@ -954,7 +962,9 @@ class Model(object):
             verbose,
         )
 
-        if return_net:
+        instance._last_update = "ANN Optimization"
+
+        if return_net and use_default_graph:
 
             if not inplace:
                 return instance, net

@@ -28,4 +28,5 @@ Functions
 
    Net.add
    Net.compile
+   Net.copy
    Net.set_trainable

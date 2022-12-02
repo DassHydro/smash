@@ -18,6 +18,7 @@ from smash.core._build_model import (
 )
 
 import os
+import errno
 import h5py
 import numpy as np
 

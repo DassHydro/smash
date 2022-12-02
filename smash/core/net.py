@@ -29,6 +29,10 @@ class Net(object):
 
         self.history = {"loss_train": [], "loss_valid": []}
 
+        self.optimizer = None
+
+        self.learning_rate = None
+
         self._compiled = False
 
     def __repr__(self):
@@ -141,17 +145,34 @@ class Net(object):
             Learning rate that determines the step size of the optimization problem.
         """
 
-        self.optimizer = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
+        if len(self.layers) > 0:
 
-        for layer in self.layers:
+            opt = OPTIMIZERS[optimizer.lower()](learning_rate=learning_rate)
 
-            if hasattr(layer, "initialize"):
+            for layer in self.layers:
 
-                layer.initialize(optimizer=self.optimizer)
+                if hasattr(layer, "initialize"):
 
-        self._compiled = True
-        self.optimizer = optimizer
-        self.learning_rate = learning_rate
+                    layer.initialize(optimizer=opt)
+
+            self._compiled = True
+            self.optimizer = optimizer
+            self.learning_rate = learning_rate
+
+        else:
+            raise ValueError("The network does not contain layers")
+
+    def copy(self):
+        """
+        Make a deepcopy of the Net.
+
+        Returns
+        -------
+        Net
+            A copy of Net.
+        """
+
+        return copy.deepcopy(self)
 
     def set_trainable(self, trainable: list[bool]):
         """
@@ -185,7 +206,7 @@ class Net(object):
         mask: np.ndarray,
         parameters_bgd: ParametersDT,
         states_bgd: StatesDT,
-        validation: float | None,
+        validation: float | None,  # TODO: add validation criteria
         epochs: int,
         early_stopping: bool,
         verbose: bool,
@@ -253,8 +274,6 @@ class Net(object):
                     layer.bias = np.copy(layer._bias)
 
         print(f"{' ' * 4}STOP: TOTAL NO. OF EPOCH EXCEEDS LIMIT")
-
-        return self.history["loss_train"]
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
 
@@ -360,9 +379,6 @@ class Scale(Layer):
 
     def output_shape(self):
         return self.input_shape
-
-
-### LAYERS ###
 
 
 class Dense(Layer):
