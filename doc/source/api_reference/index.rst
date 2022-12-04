@@ -13,6 +13,7 @@ Core Python
    :maxdepth: 2
 
    model
+   result_object
    net
    mesh
    dataset

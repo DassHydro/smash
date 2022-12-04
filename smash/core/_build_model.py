@@ -4,7 +4,6 @@ from smash.solver._mw_sparse_storage import compute_rowcol_to_ind_sparse
 
 from smash.solver._mw_forcing_statistic import (
     compute_mean_forcing,
-    compute_prcp_indice,
 )
 
 from smash.core._read_input_data import (
@@ -234,10 +233,6 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.mean_forcing:
 
         compute_mean_forcing(setup, mesh, input_data)  #% Fortran subroutine mw_routine
-
-    if setup.prcp_indice:
-
-        compute_prcp_indice(setup, mesh, input_data)  #% Fortran subroutine mw_routine
 
     if setup.read_descriptor:
 

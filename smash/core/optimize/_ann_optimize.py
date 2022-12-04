@@ -116,9 +116,7 @@ def _ann_optimize(
     return net
 
 
-def _set_graph(
-    net: Net | None, nd: int, ncv: int, bounds: np.ndarray
-):
+def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
 
     if net is None:  # set a default graph
 
@@ -133,7 +131,14 @@ def _set_graph(
         net.add(layer="dense", options={"neurons": ncv})
         net.add(layer="activation", options={"name": "sigmoid"})
 
-        net.add(layer="scale", options={"name": "minmaxscale", "lower": bounds[:, 0], "upper": bounds[:, 1]})
+        net.add(
+            layer="scale",
+            options={
+                "name": "minmaxscale",
+                "lower": bounds[:, 0],
+                "upper": bounds[:, 1],
+            },
+        )
 
         net.compile()
 

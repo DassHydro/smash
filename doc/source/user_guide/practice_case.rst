@@ -79,7 +79,7 @@ Mesh argument creation
     
     - Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.mesh>`.
     
-    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method :meth:`smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.real_case_cance`.
+    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method :meth:`smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.automatic_meshing`.
 
 First part of  ``mesh`` configuration is:
 
@@ -156,7 +156,7 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and NumPy methods.
+Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and numpy methods.
 
 .. ipython:: python
 
@@ -217,8 +217,8 @@ The other :attr:`.Model.setup` arguments can also be viewed even if they have no
 
 .. ipython:: python
 
-    model.setup.structure, model.setup.prcp_indice
-    
+    model.setup.structure
+
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
 .. ipython:: python
@@ -227,17 +227,17 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.setup.<TAB>
     model.setup.copy(                   model.setup.prcp_directory
     model.setup.daily_interannual_pet   model.setup.prcp_format
-    model.setup.descriptor_directory    model.setup.prcp_indice
-    model.setup.descriptor_format       model.setup.qobs_directory
-    model.setup.descriptor_name         model.setup.read_descriptor
-    model.setup.dt                      model.setup.read_pet
-    model.setup.end_time                model.setup.read_prcp
-    model.setup.from_handle(            model.setup.read_qobs
-    model.setup.mean_forcing            model.setup.save_net_prcp_domain
-    model.setup.pet_conversion_factor   model.setup.save_qsim_domain
-    model.setup.pet_directory           model.setup.sparse_storage
-    model.setup.pet_format              model.setup.start_time
-    model.setup.prcp_conversion_factor  model.setup.structure
+    model.setup.descriptor_directory    model.setup.qobs_directory
+    model.setup.descriptor_format       model.setup.read_descriptor
+    model.setup.descriptor_name         model.setup.read_pet
+    model.setup.dt                      model.setup.read_prcp
+    model.setup.end_time                model.setup.read_qobs
+    model.setup.from_handle(            model.setup.save_net_prcp_domain
+    model.setup.mean_forcing            model.setup.save_qsim_domain
+    model.setup.pet_conversion_factor   model.setup.sparse_storage
+    model.setup.pet_directory           model.setup.start_time
+    model.setup.pet_format              model.setup.structure
+    model.setup.prcp_conversion_factor  
     
 Mesh
 ****
@@ -248,7 +248,7 @@ The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initi
 
     model.mesh.dx, model.mesh.nrow, model.mesh.ncol
     
-NumPy array can also be viewed:
+numpy array can also be viewed:
 
 .. ipython:: python
 
@@ -285,7 +285,7 @@ Input Data
 
 The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`user_guide.practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
 
-For example, the observed discharge is a NumPy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
+For example, the observed discharge is a numpy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
 
 .. ipython:: python
 
@@ -293,7 +293,7 @@ For example, the observed discharge is a NumPy array of shape (1, 72). There is 
     
     model.input_data.qobs.shape
     
-Precipitation is also a NumPy array but of shape (10, 10, 72). The number of rows and columns is 10 and same as the observed dicharge, the simulation period is up to 72 time steps.
+Precipitation is also a numpy array but of shape (10, 10, 72). The number of rows and columns is 10 and same as the observed dicharge, the simulation period is up to 72 time steps.
 
 .. ipython:: python
 
@@ -305,16 +305,15 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.input_data.<TAB>
-    model.input_data.copy(         model.input_data.prcp
-    model.input_data.descriptor    model.input_data.prcp_indice
+    model.input_data.copy(         model.input_data.pet
+    model.input_data.descriptor    model.input_data.prcp
     model.input_data.from_handle(  model.input_data.qobs
     model.input_data.mean_pet      model.input_data.sparse_pet
     model.input_data.mean_prcp     model.input_data.sparse_prcp
-    model.input_data.pet    
     
 .. warning::
 
-    It can happen, depending on the :class:`.Model` initialization, that some arguments of type NumPy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the ``setup`` to store catchment descriptors. Access to this variable is therefore impossible and the code will return the following error:
+    It can happen, depending on the :class:`.Model` initialization, that some arguments of type numpy array are not accessible (unallocated array in the Fortran code). For example, we did not ask in the ``setup`` to store catchment descriptors. Access to this variable is therefore impossible and the code will return the following error:
     
     .. ipython:: python
         :okexcept:
@@ -324,7 +323,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Parameters and States
 *********************
 
-The :attr:`.Model.parameters` and :attr:`.Model.states` attributes contain a set of arguments storing :class:`.Model` parameters and states. This attributes contain only NumPy arrays of shape (10, 10) (i.e. number of rows and columns in the grid).
+The :attr:`.Model.parameters` and :attr:`.Model.states` attributes contain a set of arguments storing :class:`.Model` parameters and states. This attributes contain only numpy arrays of shape (10, 10) (i.e. number of rows and columns in the grid).
 
 .. ipython:: python
     
@@ -465,7 +464,7 @@ Next, we will perturb the production parameter :math:`\mathrm{cp}` to generate a
 
     model.parameters.cp = 1
     
-Re run to see the difference between the hydrographs.
+Run again to see the difference between the hydrographs.
 
 .. ipython:: python
 
@@ -533,7 +532,7 @@ A file named ``setup.yaml`` has been created in the current working directory co
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D NumPy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D numpy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 

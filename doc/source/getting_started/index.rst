@@ -25,55 +25,6 @@ A ``smash`` directory should've been cloned into your current working directory.
 *******
 Compile
 *******
-
-On your own environment
-'''''''''''''''''''''''
-
-.. image:: ../_static/logo_terminal.svg
-    :width: 75
-    :align: center
-
-1. **Install f90wrap**
-    Install the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package using ``pip3``,
-
-    .. code-block:: none
-        
-        sudo pip3 install f90wrap
-        
-    .. note ::
-        
-        ``pip3`` can be installed as follows,
-        
-        .. code-block:: none
-        
-            sudo apt install python3-pip
-            
-2. **Install gdal**
-    Install the `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__ package,
-
-    .. code-block:: none
-        
-        sudo add-apt-repository ppa:ubuntugis/ppa
-        sudo apt-get update
-        sudo apt-get install gdal-bin libgdal-dev
-        
-3. **Build**
-    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory,
-    
-    .. code-block:: none
-    
-        make
-        
-4. **Check your installation**
-    Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
-    
-    .. code-block:: none
-    
-        python3
-        
-    .. code-block:: python
-        
-        import smash
         
 Anaconda
 ''''''''
@@ -126,6 +77,55 @@ Anaconda
     .. code-block::
     
         conda config --set auto_activate_base false
+
+On your own environment
+'''''''''''''''''''''''
+
+.. image:: ../_static/logo_terminal.svg
+    :width: 75
+    :align: center
+
+1. **Install f90wrap**
+    Install the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package using ``pip3``,
+
+    .. code-block:: none
+        
+        sudo pip3 install f90wrap
+        
+    .. note ::
+        
+        ``pip3`` can be installed as follows,
+        
+        .. code-block:: none
+        
+            sudo apt install python3-pip
+            
+2. **Install gdal**
+    Install the `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__ package,
+
+    .. code-block:: none
+        
+        sudo add-apt-repository ppa:ubuntugis/ppa
+        sudo apt-get update
+        sudo apt-get install gdal-bin libgdal-dev
+        
+3. **Build**
+    Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory,
+    
+    .. code-block:: none
+    
+        make
+        
+4. **Check your installation**
+    Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
+    
+    .. code-block:: none
+    
+        python3
+        
+    .. code-block:: python
+        
+        import smash
     
 Docker
 ''''''

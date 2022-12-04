@@ -7,7 +7,7 @@ if TYPE_CHECKING:
 
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT
-from smash.solver._mwd_input_data import Input_DataDT, Prcp_IndiceDT
+from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
@@ -62,7 +62,6 @@ def _parse_derived_type_to_hdf5(derived_type, hdf5_ins):
                         SetupDT,
                         MeshDT,
                         Input_DataDT,
-                        Prcp_IndiceDT,
                         ParametersDT,
                         StatesDT,
                         OutputDT,
