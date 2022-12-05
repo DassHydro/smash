@@ -60,6 +60,11 @@ CSIGN = ["Crc", "Crchf", "Crclf", "Crch2r", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 
 ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
+### PRCP INDICES ###
+####################
+
+PRCP_INDICES = ["std", "d1", "d2", "vg"]
+
 
 ### OPTIMIZE ###
 ################

@@ -74,7 +74,9 @@ class Net(object):
 
         else:
 
-            ret.append("The network does not contain layers or has not been compiled yet")
+            ret.append(
+                "The network does not contain layers or has not been compiled yet"
+            )
 
         return "\n".join(ret)
 
@@ -192,9 +194,9 @@ class Net(object):
         self.layers.append(layer)
 
     def compile(
-        self, 
-        optimizer: str = "adam", 
-        learning_rate: float = 0.001,  
+        self,
+        optimizer: str = "adam",
+        learning_rate: float = 0.001,
         options: dict | None = None,
         random_state: int | None = None,
     ):
@@ -226,14 +228,14 @@ class Net(object):
         Examples
         --------
         >>> net = smash.Net()
-        
+
         Define graph
-        
+
         >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 16})
         >>> net.add(layer="activation", options={"name": "relu"})
-        
+
         Compile the network
-        
+
         >>> net.compile(optimizer='sgd', learning_rate=0.01, options={'momentum': 0.001})
         >>> net
         +-------------+
@@ -476,7 +478,9 @@ class Activation(Layer):
 class Scale(Layer):
     """Scale function for outputs from the last layer w.r.t. parameters bounds."""
 
-    def __init__(self, name: str, lower: np.ndarray, upper: np.ndarray, **unknown_options):
+    def __init__(
+        self, name: str, lower: np.ndarray, upper: np.ndarray, **unknown_options
+    ):
 
         _check_unknown_options("Scale Layer", unknown_options)
 
@@ -510,7 +514,9 @@ class Dense(Layer):
         the network.
     """
 
-    def __init__(self, neurons: int, input_shape: tuple | None = None, **unknown_options):
+    def __init__(
+        self, neurons: int, input_shape: tuple | None = None, **unknown_options
+    ):
 
         _check_unknown_options("Dense Layer", unknown_options)
 
@@ -566,10 +572,9 @@ class Dense(Layer):
 
 
 LAYERS = {
-    'dense': Dense,
-    'activation': Activation,
-    'scale': Scale,
-    
+    "dense": Dense,
+    "activation": Activation,
+    "scale": Scale,
 }
 
 
@@ -692,7 +697,7 @@ class StochasticGradientDescent:
         _check_unknown_options("SGD optimizer", unknown_options)
 
         self.learning_rate = learning_rate
-        
+
         self.momentum = momentum
         self.w_updt = None
 
@@ -707,12 +712,18 @@ class StochasticGradientDescent:
 
 
 class Adam:
-    def __init__(self, learning_rate: float, b1: float = 0.9, b2: float = 0.999, **unknown_options):
+    def __init__(
+        self,
+        learning_rate: float,
+        b1: float = 0.9,
+        b2: float = 0.999,
+        **unknown_options,
+    ):
 
         _check_unknown_options("Adam optimizer", unknown_options)
 
         self.learning_rate = learning_rate
-        
+
         self.eps = 1e-8
         self.m = None
         self.v = None
@@ -764,7 +775,7 @@ class RMSprop:
         _check_unknown_options("RMSprop optimizer", unknown_options)
 
         self.learning_rate = learning_rate
-        
+
         self.Eg = None  # Running average of the square gradients at w
         self.eps = 1e-8
         self.rho = rho

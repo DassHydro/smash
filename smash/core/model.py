@@ -37,6 +37,8 @@ from smash.core._signatures import (
     _signatures_sensitivity,
 )
 
+from smash.core.prcp_indices import _prcp_indices
+
 from smash.core.generate_samples import generate_samples, _get_generate_samples_problem
 
 from typing import TYPE_CHECKING
@@ -155,17 +157,17 @@ class Model(object):
         >>> model.setup.<TAB>
         model.setup.copy(                   model.setup.prcp_directory
         model.setup.daily_interannual_pet   model.setup.prcp_format
-        model.setup.descriptor_directory    model.setup.prcp_indice
-        model.setup.descriptor_format       model.setup.qobs_directory
-        model.setup.descriptor_name         model.setup.read_descriptor
-        model.setup.dt                      model.setup.read_pet
-        model.setup.end_time                model.setup.read_prcp
-        model.setup.from_handle(            model.setup.read_qobs
-        model.setup.mean_forcing            model.setup.save_net_prcp_domain
-        model.setup.pet_conversion_factor   model.setup.save_qsim_domain
-        model.setup.pet_directory           model.setup.sparse_storage
-        model.setup.pet_format              model.setup.start_time
-        model.setup.prcp_conversion_factor  model.setup.structure
+        model.setup.descriptor_directory    model.setup.qobs_directory
+        model.setup.descriptor_format       model.setup.read_descriptor
+        model.setup.descriptor_name         model.setup.read_pet
+        model.setup.dt                      model.setup.read_prcp
+        model.setup.end_time                model.setup.read_qobs
+        model.setup.from_handle(            model.setup.save_net_prcp_domain
+        model.setup.mean_forcing            model.setup.save_qsim_domain
+        model.setup.pet_conversion_factor   model.setup.sparse_storage
+        model.setup.pet_directory           model.setup.start_time
+        model.setup.pet_format              model.setup.structure
+        model.setup.prcp_conversion_factor
 
         Notes
         -----
@@ -243,12 +245,11 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.input_data.<TAB>
-        model.input_data.copy(         model.input_data.prcp
-        model.input_data.descriptor    model.input_data.prcp_indice
+        model.input_data.copy(         model.input_data.pet
+        model.input_data.descriptor    model.input_data.prcp
         model.input_data.from_handle(  model.input_data.qobs
         model.input_data.mean_pet      model.input_data.sparse_pet
         model.input_data.mean_prcp     model.input_data.sparse_prcp
-        model.input_data.pet
 
         Notes
         -----
@@ -1132,3 +1133,76 @@ class Model(object):
         else:
 
             return res
+
+    def prcp_indices(self):
+
+        """
+        Compute precipitations indices of the Model.
+
+        4 precipitation indices are calculated for each gauge and each time step:
+
+        - ``std`` : The precipitation spatial standard deviation,
+        - ``d1`` : The first scaled moment, [1]_
+        - ``d1`` : The second scaled moment, [1]_
+        - ``vg`` : The vertical gap. [2]_
+
+        Returns
+        -------
+        res : PrcpIndicesResult
+            The precipitation indices results represented as a ``PrcpIndicesResult`` object.
+
+        See Also
+        --------
+        PrcpIndicesResult: Represents the precipitation indices result.
+
+        References
+        ----------
+        .. [1]
+
+            Zoccatelli, D., Borga, M., Viglione, A., Chirico, G. B., and Blöschl, G.:
+            Spatial moments of catchment rainfall: rainfall spatial organisation,
+            basin morphology, and flood response,
+            Hydrol. Earth Syst. Sci., 15, 3767–3783,
+            https://doi.org/10.5194/hess-15-3767-2011, 2011.
+
+        .. [2]
+
+            I. Emmanuel, H. Andrieu, E. Leblois, N. Janey, O. Payrastre,
+            Influence of rainfall spatial variability on rainfall–runoff modelling:
+            Benefit of a simulation approach?
+            Journal of Hydrology
+            https://doi.org/10.1016/j.jhydrol.2015.04.058, 2015
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> res = model.prcp_indices()
+        >>> res
+        d1: array([[nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan]], dtype=float32)
+        ...
+        vg: array([[nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan]], dtype=float32)
+
+        Each attribute is a numpy.ndarray of shape (number of gauge, number of time step)
+
+        >>> res.d1.shape
+        (3, 1440)
+
+        NaN value means that there is no precipitation at this specific gauge and time step.
+        Using numpy.where to find the index where precipitation indices were calculated.
+
+        >>> ind = np.where(~np.isnan(res.d1))
+
+        Viewing any index
+
+        >>> res.d1[ind][0]
+        1.209175
+        """
+
+        print("</> Model Precipitation Indices")
+
+        return _prcp_indices(self)

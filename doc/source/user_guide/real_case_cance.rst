@@ -359,7 +359,7 @@ Precipitation and potential evapotranspiration files were read for each time ste
     plt.colorbar(label="Precipitation ($mm/h$)");
     
     
-It is possible to mask the precipitation grid to only visualize the precipitation on active cells using NumPy method ``np.where``.
+It is possible to mask the precipitation grid to only visualize the precipitation on active cells using numpy method ``np.where``.
 
 .. ipython:: python
 
