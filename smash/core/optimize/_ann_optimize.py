@@ -96,7 +96,7 @@ def _ann_optimize(
 
     net = _set_graph(net, nd, len(control_vector), bounds)
     _training_message(
-        instance, control_vector, len(x_train), net.optimizer, net.learning_rate
+        instance, control_vector, len(x_train), net._optimizer, net._learning_rate
     )
 
     # train the network

@@ -880,6 +880,10 @@ class Model(object):
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
         >>> net = model.ann_optimize(inplace=True, return_net=True)
+        >>> model
+        Structure: 'gr-a'
+        Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+        Last update: ANN Optimization
 
         Display a summary of the neural network
 
@@ -906,8 +910,6 @@ class Model(object):
         Access to some training information
 
         >>> net.history['loss_train']  # training loss
-        >>> net.optimizer  # optimizer algorithm
-        >>> net.learning_rate  # learning rate
         >>> net.layers  # defined graph
         >>> net.layers[0].weight  # trained weights of the first layer
         """

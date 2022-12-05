@@ -13,6 +13,7 @@ import warnings
 import copy
 import numpy as np
 from terminaltables import AsciiTable
+from tqdm import tqdm
 
 __all__ = ["Net"]
 
@@ -21,7 +22,14 @@ class Net(object):
     """
     Artificial Neural Network initialization.
 
-    TODO
+    Examples
+    --------
+    >>> net = smash.Net()
+    >>> net
+    +-------------+
+    | Net summary |
+    +-------------+
+    The network does not contain layers or has not been compiled yet
     """
 
     def __init__(self):
@@ -30,9 +38,9 @@ class Net(object):
 
         self.history = {"loss_train": [], "loss_valid": []}
 
-        self.optimizer = None
+        self._optimizer = None
 
-        self.learning_rate = None
+        self._learning_rate = None
 
         self._compiled = False
 
@@ -83,9 +91,32 @@ class Net(object):
     @property
     def layers(self):
         """
-        List of layers of the network.
+        List of Layer objects defining the graph of the network.
 
-        TODO
+        The graph is set using `smash.Net.add` method.
+
+        Examples
+        --------
+        >>> net = smash.Net()
+        >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 32})
+        >>> net.add(layer="activation", options={"name": "sigmoid"})
+        >>> net.compile()
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods of each Layer object:
+
+        >>> layer_1 = net.layers[0]
+        >>> layer_1.<TAB>
+        layer_1.bias           layer_1.output_shape(
+        layer_1.input_shape    layer_1.parameters(
+        layer_1.layer_input    layer_1.trainable
+        layer_1.layer_name(    layer_1.weight
+        layer_1.neurons
+
+        >>> layer_2 = net.layers[1]
+        >>> layer_2.<TAB>
+        layer_2.activation_name  layer_2.output_shape(
+        layer_2.input_shape      layer_2.parameters(
+        layer_2.layer_name(      layer_2.trainable
         """
 
         return self._layers
@@ -93,15 +124,17 @@ class Net(object):
     @layers.setter
     def layers(self, value):
 
-        # TODO: add checktype
         self._layers = value
 
     @property
     def history(self):
         """
-        Training history.
+        A dictionary saving the training and validation losses.
 
-        TODO
+        The keys are
+
+        - 'loss_train'
+        - 'loss_valid'
         """
 
         return self._history
@@ -109,7 +142,6 @@ class Net(object):
     @history.setter
     def history(self, value):
 
-        # TODO: add checktype
         self._history = value
 
     def add(self, layer: str, options: dict):
@@ -188,7 +220,7 @@ class Net(object):
         # to the output shape of the last added layer
         if self.layers:
 
-            layer.set_input_shape(shape=self.layers[-1].output_shape())
+            layer._set_input_shape(shape=self.layers[-1].output_shape())
 
         # Add layer to the network
         self.layers.append(layer)
@@ -264,13 +296,13 @@ class Net(object):
 
             for layer in self.layers:
 
-                if hasattr(layer, "initialize"):
+                if hasattr(layer, "_initialize"):
 
-                    layer.initialize(optimizer=opt)
+                    layer._initialize(optimizer=opt)
 
             self._compiled = True
-            self.optimizer = optimizer
-            self.learning_rate = learning_rate
+            self._optimizer = optimizer
+            self._learning_rate = learning_rate
 
         else:
             raise ValueError("The network does not contain layers")
@@ -331,7 +363,7 @@ class Net(object):
         loss_opt = 0  # only use for early stopping purpose
 
         # train model
-        for epo in range(epochs):
+        for epo in tqdm(range(epochs), desc="Training"):
 
             # Forward propogation
             y_pred = self._forward_pass(x_train)
@@ -372,7 +404,7 @@ class Net(object):
                 ret.append("J =" + "{:10.6f}".format(loss))
                 ret.append("|proj g| =" + "{:10.6f}".format(proj_g))
 
-                print((" " * 4).join(ret))
+                tqdm.write((" " * 4).join(ret))
 
             self.history["loss_train"].append(loss)
 
@@ -385,8 +417,6 @@ class Net(object):
 
                 if hasattr(layer, "bias"):
                     layer.bias = np.copy(layer._bias)
-
-        print(f"{' ' * 4}STOP: TOTAL NO. OF EPOCH EXCEEDS LIMIT")
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
 
@@ -415,7 +445,7 @@ class Net(object):
 
 
 class Layer(object):
-    def set_input_shape(self, shape: tuple):
+    def _set_input_shape(self, shape: tuple):
         """Sets the shape that the layer expects of the input in the forward
         pass method"""
         self.input_shape = shape
@@ -458,18 +488,18 @@ class Activation(Layer):
         _check_unknown_options("Activation Layer", unknown_options)
 
         self.activation_name = name
-        self.activation_func = ACTIVATION_FUNC[name.lower()]()
+        self._activation_func = ACTIVATION_FUNC[name.lower()]()
         self.trainable = True
 
     def layer_name(self):
-        return "Activation (%s)" % (self.activation_func.__class__.__name__)
+        return "Activation (%s)" % (self._activation_func.__class__.__name__)
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
         self.layer_input = x
-        return self.activation_func(x)
+        return self._activation_func(x)
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        return accum_grad * self.activation_func.gradient(self.layer_input)
+        return accum_grad * self._activation_func.gradient(self.layer_input)
 
     def output_shape(self):
         return self.input_shape
@@ -485,18 +515,18 @@ class Scale(Layer):
         _check_unknown_options("Scale Layer", unknown_options)
 
         self.scale_name = name
-        self.scale_func = SCALE_FUNC[name.lower()](lower, upper)
+        self._scale_func = SCALE_FUNC[name.lower()](lower, upper)
         self.trainable = True
 
     def layer_name(self):
-        return "Scale (%s)" % (self.scale_func.__class__.__name__)
+        return "Scale (%s)" % (self._scale_func.__class__.__name__)
 
     def _forward_pass(self, x, training=True):
         self.layer_input = x
-        return self.scale_func(x)
+        return self._scale_func(x)
 
     def _backward_pass(self, accum_grad):
-        return accum_grad * self.scale_func.gradient(self.layer_input)
+        return accum_grad * self._scale_func.gradient(self.layer_input)
 
     def output_shape(self):
         return self.input_shape
@@ -527,7 +557,7 @@ class Dense(Layer):
         self.weight = None
         self.bias = None
 
-    def initialize(self, optimizer: function):
+    def _initialize(self, optimizer: function):
         # Initialize weights and biases
         limit = 1 / np.sqrt(self.input_shape[0])
 
@@ -537,9 +567,9 @@ class Dense(Layer):
         self.bias = np.zeros((1, self.neurons))
 
         # Set optimizer
-        self.weight_opt = copy.copy(optimizer)
+        self._weight_opt = copy.copy(optimizer)
 
-        self.bias_opt = copy.copy(optimizer)
+        self._bias_opt = copy.copy(optimizer)
 
     def parameters(self):
         return np.prod(self.weight.shape) + np.prod(self.bias.shape)
@@ -559,8 +589,8 @@ class Dense(Layer):
             grad_w0 = np.sum(accum_grad, axis=0, keepdims=True)
 
         # Update the layer weights
-        self.weight = self.weight_opt.update(self.weight, grad_w)
-        self.bias = self.bias_opt.update(self.bias, grad_w0)
+        self.weight = self._weight_opt.update(self.weight, grad_w)
+        self.bias = self._bias_opt.update(self.bias, grad_w0)
 
         # Return accumulated gradient for next layer
         # Calculated based on the weights used during the forward pass
@@ -667,6 +697,7 @@ ACTIVATION_FUNC = {
     "tanh": TanH,
     "softplus": SoftPlus,
 }
+
 
 ### Scaling functions ###
 
@@ -861,6 +892,9 @@ def _hcost_prime(
     )[mask]
 
     return grad
+
+
+### OTHERS ###
 
 
 def _inf_norm(grad: np.ndarray):

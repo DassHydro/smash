@@ -21,6 +21,7 @@ import numpy as np
 import pandas as pd
 from SALib.analyze import sobol
 from tqdm import tqdm
+import warnings
 
 
 def _standardize_signatures(sign: str | list[str] | None):
@@ -174,7 +175,13 @@ def _event_signatures(
     return res
 
 
-def _signatures(instance: Model, cs: list[str], es: list[str], sign_obs: bool = True):
+def _signatures(
+    instance: Model,
+    cs: list[str],
+    es: list[str],
+    sign_obs: bool = True,
+    warn: bool = True,
+):
 
     prcp_cvt = (
         instance.input_data.mean_prcp.copy()
@@ -211,9 +218,10 @@ def _signatures(instance: Model, cs: list[str], es: list[str], sign_obs: bool = 
 
             if prcp_tmp is None:
 
-                print(
-                    f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
-                )
+                if warn:
+                    warnings.warn(
+                        f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
+                    )
 
                 row_cs = pd.DataFrame(
                     [[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs
@@ -361,7 +369,7 @@ def _signatures_sensitivity(
             cost,
         )
 
-        res_sign = _signatures(instance, cs, es, sign_obs=False)
+        res_sign = _signatures(instance, cs, es, sign_obs=False, warn=(i == 0))
 
         df_cs += [res_sign["C"]]
         df_es += [res_sign["E"]]

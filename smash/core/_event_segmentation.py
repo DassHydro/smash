@@ -8,6 +8,7 @@ if TYPE_CHECKING:
 import numpy as np
 import pandas as pd
 from datetime import date, datetime
+import warnings
 
 
 def _missing_values(
@@ -291,7 +292,7 @@ def _mask_event(instance: Model):
 
         if prcp_tmp is None:
 
-            print(
+            warnings.warn(
                 f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
             )
 
@@ -329,7 +330,7 @@ def _event_segmentation(instance: Model):
 
         if prcp_tmp is None:
 
-            print(
+            warnings.warn(
                 f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
             )
 
