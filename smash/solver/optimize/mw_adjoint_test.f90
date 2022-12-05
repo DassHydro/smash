@@ -49,6 +49,7 @@ module mw_adjoint_test
             type(OutputDT) ::  output_d, output_b
             real(sp) :: cost, cost_d, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
+            real(sp) :: sp1, sp2
 
             write(*,'(a)') "</> Scalar Product Test"
             
@@ -84,15 +85,14 @@ module mw_adjoint_test
             call get_parameters(mesh, parameters_b, parameters_b_matrix)
             call get_parameters(mesh, parameters_d, parameters_d_matrix)
             
-            !% No perturbation has been set to states_d
-            output%sp1 = cost_b * cost_d
+            ! No perturbation has been set to states_d
+            sp1 = cost_b * cost_d
             
-            output%sp2 = sum(parameters_b_matrix * parameters_d_matrix)
+            sp2 = sum(parameters_b_matrix * parameters_d_matrix)
             
-            write(*,'(4x,a,f12.8)') "<dY*, dY> (sp1) = ", output%sp1
-            write(*,'(4x,a,f12.8)') "<dk*, dk> (sp2) = ", output%sp2
-            write(*,'(4x,a,f12.8)') "Relative Error  = ", (output%sp1 - output%sp2) &
-            & / output%sp1
+            write(*,'(4x,a,f12.8)') "<dY*, dY> (sp1) = ", sp1
+            write(*,'(4x,a,f12.8)') "<dk*, dk> (sp2) = ", sp2
+            write(*,'(4x,a,f12.8)') "Relative Error  = ", (sp1 - sp2) / sp1
         
         end subroutine scalar_product_test
         
@@ -123,14 +123,10 @@ module mw_adjoint_test
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_b_matrix
-            real(sp) :: yk, yadk, dk
+            real(sp) :: yk, yadk, dk, an, ian
             integer :: n
             
             write(*,'(a)') "</> Gradient Test"
-            
-            if (.not. allocated(output%an)) allocate(output%an(16))
-    
-            if (.not. allocated(output%ian)) allocate(output%ian(16))
             
             parameters_bgd = parameters
             states_bgd = states
@@ -161,11 +157,11 @@ module mw_adjoint_test
             
             do n=1, 16
             
-                output%an(n) = 2._sp ** (- (n - 1))
+                an = 2._sp ** (- (n - 1))
             
                 call get_parameters(mesh, parameters_bgd, parameters_matrix)
                 
-                parameters_matrix = parameters_matrix + output%an(n) * dk
+                parameters_matrix = parameters_matrix + an * dk
                 
                 call set_parameters(mesh, parameters, parameters_matrix)
                 
@@ -174,15 +170,14 @@ module mw_adjoint_test
                 
                 yadk = cost
                 
-                output%ian(n) = (yadk - yk) / (output%an(n) * sum(parameters_b_matrix * dk)) 
+                ian = (yadk - yk) / (an * sum(parameters_b_matrix * dk)) 
                 
-                write(*,'(4x,a,f12.8,4x,a,f12.8)') "a = ", output%an(n), "|Ia - 1| = ", abs(output%ian(n) - 1)
+                write(*,'(4x,a,f12.8,4x,a,f12.8)') "a = ", an, "|Ia - 1| = ", abs(ian - 1)
                 
             end do
             
             write(*,'(4x,a)') "Ia = (Yadk - Y) / (a dk* . dk)"
         
         end subroutine gradient_test
-        
 
 end module mw_adjoint_test

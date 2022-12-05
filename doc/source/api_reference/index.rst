@@ -13,11 +13,13 @@ Core Python
    :maxdepth: 2
 
    model
-   generate_samples
+   result_object
+   net
    mesh
-   sparse_storage
-   io
    dataset
+   io
+   generate_samples
+   sparse_storage
 
 
 Wrapped Fortran

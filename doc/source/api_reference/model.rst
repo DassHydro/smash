@@ -32,6 +32,14 @@ Simulation
 
    Model.run
    Model.optimize
+   Model.ann_optimize
+
+Event segmentation
+******************
+.. autosummary::
+   :toctree: smash/
+
+   Model.event_segmentation
 
 Signatures
 **********
@@ -40,6 +48,13 @@ Signatures
 
    Model.signatures
    Model.signatures_sensitivity
+
+Precipitation indices
+*********************
+.. autosummary::
+   :toctree: smash/
+
+   Model.prcp_indices
    
 Others
 ******
@@ -47,4 +62,3 @@ Others
    :toctree: smash/
 
    Model.copy
-   Model.event_segmentation

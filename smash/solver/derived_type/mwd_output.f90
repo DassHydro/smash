@@ -12,12 +12,7 @@
 !%      ``sparse_qsim_domain``     Sparse simulated discharge whole domain [m3/s]
 !%      ``net_prcp_domain``        Net precipitaition whole domain         [mm/dt]
 !%      ``sparse_net_prcp_domain`` Sparse net precipitation whole domain   [mm/dt]
-!%      ``parameters_gradient``    Parameters gradients
 !%      ``cost``                   Cost value
-!%      ``sp1``                    Scalar product <dY*, dY>
-!%      ``sp2``                    Scalar product <dk*, dk>
-!%      ``an``                     Alpha gradient test 
-!%      ``ian``                    Ialpha gradient test
 !%      ``fstates``                Final states (StatesDT)
 !%      ========================== =====================================
 !%
@@ -47,15 +42,7 @@ module mwd_output
         real(sp), dimension(:,:,:), allocatable :: net_prcp_domain
         real(sp), dimension(:,:), allocatable   :: sparse_net_prcp_domain
         
-        real(sp), dimension(:,:,:), allocatable :: parameters_gradient
-        
         real(sp) :: cost
-        
-        real(sp) :: sp1
-        real(sp) :: sp2
-        
-        real(sp), dimension(:), allocatable :: an
-        real(sp), dimension(:), allocatable :: ian
         
         type(StatesDT) :: fstates
         
