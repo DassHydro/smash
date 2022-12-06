@@ -117,8 +117,10 @@ module mw_optimize
             jfaa = 0
             nfg = 1
             
-            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            if (setup%optimize%verbose) then
+                write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            end if
             
             do iter=1, setup%optimize%maxiter * nops
                 
@@ -344,8 +346,10 @@ module mw_optimize
             
                 if (mod(iter, nops) .eq. 0) then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-                    & "At iterate", (iter / nops), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                        & "At iterate", (iter / nops), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    end if
                 
                 end if
                 
@@ -355,7 +359,9 @@ module mw_optimize
             
                 if (ddx .lt. 0.01_sp) then
                 
-                    write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    end if
 
                     do p=1, np
                         
@@ -393,7 +399,9 @@ module mw_optimize
                 
                 if (iter .eq. setup%optimize%maxiter * nops) then
                 
-                    write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    end if
             
                     do p=1, np
                         
@@ -588,8 +596,10 @@ module mw_optimize
                     
                     if (task(4:8) .eq. 'START') then
                     
-                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        if (setup%optimize%verbose) then
+                            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        end if
                     
                     end if
  
@@ -597,8 +607,10 @@ module mw_optimize
                 
                 if (task(1:5) .eq. 'NEW_X') then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    end if
                 
                     if (isave(30) .ge. setup%optimize%maxiter) then
                         
@@ -615,8 +627,10 @@ module mw_optimize
                 end if
                     
             end do
-            
-        write(*, '(4x,a)') task
+        
+        if (setup%optimize%verbose) then
+            write(*, '(4x,a)') task
+        end if
         
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
@@ -864,8 +878,10 @@ module mw_optimize
                     
                     if (task(4:8) .eq. 'START') then
                         
-                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        if (setup%optimize%verbose) then
+                            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        end if
                     
                     end if
  
@@ -873,8 +889,10 @@ module mw_optimize
                 
                 if (task(1:5) .eq. 'NEW_X') then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    end if
                 
                     if (isave(30) .ge. setup%optimize%maxiter) then
                         
@@ -891,8 +909,10 @@ module mw_optimize
                 end if
                     
             end do
-            
-        write(*, '(4x,a)') task
+        
+        if (setup%optimize%verbose) then
+            write(*, '(4x,a)') task
+        end if
 
         call hyper_forward(setup, mesh, input_data, hyper_parameters, &
         & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)

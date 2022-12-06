@@ -33,6 +33,7 @@ def _optimize_sbs(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
+    verbose: bool,
     maxiter: int = 100,
     **unknown_options,
 ):
@@ -43,6 +44,9 @@ def _optimize_sbs(
     instance.setup._optimize = Optimize_SetupDT(
         instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
     )
+
+    #% Fortran verbose
+    instance.setup._optimize.verbose = verbose
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
@@ -85,7 +89,8 @@ def _optimize_sbs(
 
     instance.setup._optimize.maxiter = maxiter
 
-    _optimize_message(instance, control_vector, mapping)
+    if verbose:
+        _optimize_message(instance, control_vector, mapping)
 
     optimize_sbs(
         instance.setup,
@@ -106,6 +111,7 @@ def _optimize_lbfgsb(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
+    verbose: bool,
     maxiter: int = 100,
     jreg_fun: str = "prior",
     wjreg: float = 0.0,
@@ -119,6 +125,9 @@ def _optimize_lbfgsb(
     instance.setup._optimize = Optimize_SetupDT(
         instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
     )
+
+    #% Fortran verbose
+    instance.setup._optimize.verbose = verbose
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
@@ -167,7 +176,8 @@ def _optimize_lbfgsb(
 
         #% Add Adjoint test for hyper
 
-        _optimize_message(instance, control_vector, mapping)
+        if verbose:
+            _optimize_message(instance, control_vector, mapping)
 
         hyper_optimize_lbfgsb(
             instance.setup,
@@ -191,7 +201,8 @@ def _optimize_lbfgsb(
                 instance.output,
             )
 
-        _optimize_message(instance, control_vector, mapping)
+        if verbose:
+            _optimize_message(instance, control_vector, mapping)
 
         optimize_lbfgsb(
             instance.setup,
@@ -212,6 +223,7 @@ def _optimize_nelder_mead(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
+    verbose: bool,
     maxiter: int | None = None,
     maxfev: int | None = None,
     disp: bool = False,
@@ -249,9 +261,10 @@ def _optimize_nelder_mead(
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    _optimize_message(instance, control_vector, mapping)
+    if verbose:
+        _optimize_message(instance, control_vector, mapping)
 
-    callback_args = {"iterate": 0, "nfg": 0, "J": 0}
+    callback_args = {"iterate": 0, "nfg": 0, "J": 0, "verbose": verbose}
 
     if mapping == "uniform":
 
@@ -329,13 +342,13 @@ def _optimize_nelder_mead(
 
     _callback(res.x)
 
-    if res.success:
+    if verbose:
 
-        print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
+        if res.success:
+            print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
 
-    else:
-
-        print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
+        else:
+            print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
 
 
 def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str):
@@ -382,7 +395,6 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
     ret = []
 
-    ret.append("</> Optimize Model J")
     ret.append(f"Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Algorithm: '{algorithm}'")
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
@@ -605,18 +617,20 @@ def _callback(x: np.ndarray, *args):
 
     global callback_args
 
-    sp4 = " " * 4
+    if callback_args["verbose"]:
 
-    ret = []
+        sp4 = " " * 4
 
-    ret.append(f"{sp4}At iterate")
-    ret.append("{:3}".format(callback_args["iterate"]))
-    ret.append("nfg =" + "{:5}".format(callback_args["nfg"]))
-    ret.append("J =" + "{:10.6f}".format(callback_args["J"]))
+        ret = []
 
-    callback_args["iterate"] += 1
+        ret.append(f"{sp4}At iterate")
+        ret.append("{:3}".format(callback_args["iterate"]))
+        ret.append("nfg =" + "{:5}".format(callback_args["nfg"]))
+        ret.append("J =" + "{:10.6f}".format(callback_args["J"]))
 
-    print(sp4.join(ret))
+        callback_args["iterate"] += 1
+
+        print(sp4.join(ret))
 
 
 def _check_unknown_options(unknown_options: dict):

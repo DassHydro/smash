@@ -32,6 +32,8 @@ Simulation
 
    Model.run
    Model.optimize
+   Model.Bayes_estimate
+   Model.Bayes_optimize
    Model.ann_optimize
 
 Event segmentation
