@@ -64,3 +64,4 @@ Others
    :toctree: smash/
 
    Model.copy
+   Model.get_bound_constraints

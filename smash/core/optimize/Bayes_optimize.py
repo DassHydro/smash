@@ -5,6 +5,7 @@ from smash.core._constant import OPTIM_FUNC
 from smash.solver._mw_forward import forward
 from smash.solver._mwd_setup import Optimize_SetupDT
 from smash.core._event_segmentation import _mask_event
+from smash.core.generate_samples import generate_samples
 
 from typing import TYPE_CHECKING
 
@@ -53,39 +54,56 @@ class BayesResult(dict):
 
 def _Bayes_computation(
     instance: Model,
-    samples: pd.DataFrame,
-    k: range | list | tuple | set | np.ndarray,
+    generator: str,
+    n: int,
+    random_state: int | None,
+    backg_sol: np.ndarray | None,
+    coef_std: float | None,
+    k: int | float | list,
     density_estimate: bool,
     bw_method: str | None,
-    weights: np.ndarray | None,
+    weights: np.ndarray,
     algorithm: str | None,
     control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
-    bounds: np.ndarray | None,
+    bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
     options: dict | None,
     ncpu: int,
-):
+) -> BayesResult:
 
     ret_data = {}
     ret_density = {}
     ret_l_curve = {}
 
-    active_mask = np.where(instance.mesh.active_cell == 1)
+    ### Generate sample
+    problem = {
+        "num_vars": len(control_vector),
+        "names": list(control_vector),
+        "bounds": [list(bound) for bound in bounds],
+    }
+    sample = generate_samples(
+        problem=problem,
+        generator=generator,
+        n=n,
+        random_state=random_state,
+        backg_sol=backg_sol,
+        coef_std=coef_std,
+    )
 
     #% verbose
     if verbose:
-        _bayes_message(len(samples), density_estimate)
+        _bayes_message(n, generator, backg_sol, density_estimate, k)
 
-    ### Build samples
+    ### Build data from sample
 
     res_simu = _multi_simu(
         instance,
-        samples,
+        sample,
         algorithm,
         control_vector,
         mapping,
@@ -109,7 +127,9 @@ def _Bayes_computation(
 
         ret_density[p] = np.ones(dat_p.shape)
 
-    #% Density estimate
+    ### Density estimate
+
+    active_mask = np.where(instance.mesh.active_cell == 1)
 
     if density_estimate:
         _estimate_density(
@@ -122,42 +142,72 @@ def _Bayes_computation(
             weights,
         )
 
-    #% Bayes compute
+    ### Bayes compute
 
-    _lcurve_compute_param(
-        instance,
-        jobs_fun,
-        wjobs_fun,
-        wgauge,
-        ost,
-        active_mask,
-        control_vector,
-        ret_data,
-        ret_density,
-        ret_l_curve,
-        k,
-    )
+    if isinstance(k, list):
+
+        _lcurve_compute_param(
+            instance,
+            jobs_fun,
+            wjobs_fun,
+            wgauge,
+            ost,
+            active_mask,
+            control_vector,
+            ret_data,
+            ret_density,
+            ret_l_curve,
+            k,
+        )
+
+    else:
+
+        _compute_param(
+            instance,
+            jobs_fun,
+            wjobs_fun,
+            wgauge,
+            ost,
+            active_mask,
+            control_vector,
+            ret_data,
+            ret_density,
+            k,
+        )
 
     return BayesResult(
         dict(zip(["data", "density", "l_curve"], [ret_data, ret_density, ret_l_curve]))
     )
 
 
-def _bayes_message(n_set, density_estimate):
+def _bayes_message(
+    n_set: int,
+    generator: str,
+    backg_sol: np.ndarray | None,
+    density_estimate: bool,
+    k: int | float | list,
+):
 
     sp4 = " " * 4
+
+    if isinstance(k, list):
+        lcurve = True
+
+    else:
+        lcurve = False
 
     ret = []
 
     ret.append(f"Parameters/States set size: {n_set}")
-    ret.append(f"Sample generator: ")  # TODO
-    ret.append(f"Prior solution: ")  # TODO
+    ret.append(f"Generator: {generator}")
+    ret.append(f"Spatially uniform prior parameters/states: {backg_sol}")
     ret.append(f"Density estimation: {density_estimate}")
+    ret.append(f"L-curve approach: {lcurve}")
 
     print(f"\n{sp4}".join(ret) + "\n")
 
 
-### BUILD SAMPLES ###
+### BUILD sample ###
 
 
 def _run(
@@ -211,27 +261,27 @@ def _run(
 def _unit_simu(
     i: int,
     instance: Model,
-    samples: pd.DataFrame,
+    sample: pd.DataFrame,
     algorithm: str | None,
     control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
-    bounds: np.ndarray | None,
+    bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
     options: dict | None,
-):
+) -> dict:
 
     #% SET PARAMS/STATES
     for name in control_vector:
 
         if name in instance.setup._parameters_name:
-            setattr(instance.parameters, name, samples.iloc[i][name])
+            setattr(instance.parameters, name, sample.iloc[i][name])
 
         else:
-            setattr(instance.states, name, samples.iloc[i][name])
+            setattr(instance.states, name, sample.iloc[i][name])
 
     #% verbose
     if verbose:
@@ -272,22 +322,22 @@ def _unit_simu(
 
 def _multi_simu(
     instance: Model,
-    samples: pd.DataFrame,
+    sample: pd.DataFrame,
     algorithm: str | None,
     control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
-    bounds: np.ndarray | None,
+    bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
     options: dict | None,
     ncpu: int,
-):
+) -> dict:
 
     #% !!! trick to DEBUG on multiple simu
-    list_instance = [instance.copy() for i in range(len(samples))]
+    list_instance = [instance.copy() for i in range(len(sample))]
 
     if ncpu > 1:
 
@@ -298,7 +348,7 @@ def _multi_simu(
                 (
                     i,
                     instance,
-                    samples,
+                    sample,
                     algorithm,
                     control_vector,
                     mapping,
@@ -320,7 +370,7 @@ def _multi_simu(
             _unit_simu(
                 i,
                 instance,
-                samples,
+                sample,
                 algorithm,
                 control_vector,
                 mapping,
@@ -388,7 +438,9 @@ def _estimate_density(
 ### BAYES ESTIMATE AND L-CURVE
 
 
-def _compute_mean_U(U, J, rho, k, mask):
+def _compute_mean_U(
+    U: np.ndarray, J: np.ndarray, rho: np.ndarray, k: float, mask: np.ndarray
+) -> tuple:
 
     # U is 3-D array
     # rho is 3-D array
@@ -421,8 +473,8 @@ def _compute_param(
     control_vector: np.ndarray,
     ret_data: dict,
     ret_density: dict,
-    k: float,
-):
+    k: int | float,
+) -> tuple:
 
     Dk = []
 
@@ -469,7 +521,7 @@ def _lcurve_compute_param(
     ret_data: dict,
     ret_density: dict,
     ret_l_curve: dict,
-    k: range | list | tuple | set | np.ndarray,
+    k: list,
 ):
 
     cost = []
@@ -491,7 +543,7 @@ def _lcurve_compute_param(
             control_vector,
             ret_data,
             ret_density,
-            i,
+            k[i],
         )
 
         cost.append(co)

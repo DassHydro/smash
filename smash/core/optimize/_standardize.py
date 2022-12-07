@@ -605,31 +605,22 @@ def _standardize_wo_optimize_args(
     return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
 
 
-def _standardize_bayes_estimate_args(
-    control_vector: str | list | tuple | set | None,
-    jobs_fun: str | list | tuple | set,
-    wjobs_fun: list | None,
-    bounds: list | tuple | set | None,
-    gauge: str | list | tuple | set,
-    wgauge: str | list | tuple | set,
-    ost: str | pd.Timestamp | None,
-    setup: SetupDT,
-    mesh: MeshDT,
-    input_data: Input_DataDT,
-):  # add more standardize params (param for build sample, k, .....)!!!!!!!!!!
+def _standardize_bayes_k(
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
 
-    control_vector = _standardize_control_vector(control_vector, setup)
+    if isinstance(k, int) or isinstance(k, float) or isinstance(k, list):
+        pass
 
-    jobs_fun = _standardize_jobs_fun_wo_optimize(jobs_fun)
+    elif (
+        isinstance(k, range)
+        or isinstance(k, np.ndarray)
+        or isinstance(k, tuple)
+        or isinstance(k, set)
+    ):
+        k = list(k)
 
-    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
+    else:
+        raise TypeError("k argument must be numerical or list-like object")
 
-    bounds = _standardize_bounds(bounds, control_vector, setup)
-
-    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
-
-    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
-
-    ost = _standardize_ost(ost, setup)
-
-    return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
+    return k

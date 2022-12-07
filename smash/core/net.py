@@ -166,8 +166,7 @@ class Net(object):
 
         >>> nd = 6  # number of hydrological descriptors
         >>> ncv = 4  # number of control vectors ("cp", "cft", "exc", "lr")
-        >>> lower = [1.e-06, 1.e-06, -50, 1.e-06]  # lower bound constraints
-        >>> upper = [1000, 1000, 50, 1000]  # upper bound constraints
+        >>> bounds = [[1.e-06,1000], [1.e-06,1000], [-50, 50], [1.e-06,1000]]  # bound constraints
 
         Initialize the neural network
 
@@ -188,7 +187,7 @@ class Net(object):
         >>> # Activation function following the third dense layer
         >>> net.add(layer="activation", options={"name": "sigmoid"})
         >>> # Scaling layer for the output of the network
-        >>> net.add(layer="scale", options={"lower": lower, "upper": upper})
+        >>> net.add(layer="scale", options={"bounds": bounds})
 
         Compile and display a summary of the network
 
@@ -508,12 +507,12 @@ class Activation(Layer):
 class Scale(Layer):
     """Scale function for outputs from the last layer w.r.t. parameters bounds."""
 
-    def __init__(self, lower: np.ndarray, upper: np.ndarray, **unknown_options):
+    def __init__(self, bounds: list | tuple, **unknown_options):
 
         _check_unknown_options("Scale Layer", unknown_options)
 
         self.scale_name = "minmaxscale"
-        self._scale_func = MinMaxScale(lower, upper)
+        self._scale_func = MinMaxScale(bounds)
         self.trainable = True
 
     def layer_name(self):
@@ -701,9 +700,10 @@ ACTIVATION_FUNC = {
 
 
 class MinMaxScale:
-    def __init__(self, lower, upper):
-        self.lower = np.array(lower)
-        self.upper = np.array(upper)
+    def __init__(self, bounds):
+        self._bounds = bounds
+        self.lower = np.array([b[0] for b in bounds])
+        self.upper = np.array([b[1] for b in bounds])
 
     def __call__(self, x):
         return self.lower + x * (self.upper - self.lower)

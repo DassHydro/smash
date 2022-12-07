@@ -25,6 +25,7 @@ from smash.core.optimize._standardize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
     _standardize_wo_optimize_args,
+    _standardize_bayes_k,
 )
 
 from smash.core._event_segmentation import _event_segmentation
@@ -37,7 +38,7 @@ from smash.core._signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import generate_samples, _get_generate_samples_problem
+from smash.core.generate_samples import generate_samples, _get_problem
 
 from typing import TYPE_CHECKING
 
@@ -716,11 +717,15 @@ class Model(object):
 
     def Bayes_estimate(
         self,
-        k: range | list | tuple | set | np.ndarray = range(-2, 11),
-        samples: pd.DataFrame = None,
+        k: int | float | range | list | tuple | set | np.ndarray = range(-2, 10),
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
+        generator: str = "uniform",
+        n: int = 1000,
+        random_state: int | None = None,
+        backg_sol: np.ndarray | None = None,
+        coef_std: float | None = None,
         control_vector: str | list | tuple | set | None = None,
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
@@ -755,6 +760,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
+        >>> br = model.Bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
 
         TODO
 
@@ -791,23 +797,27 @@ class Model(object):
         )
 
         res = _Bayes_computation(
-            instance=instance,
-            samples=samples,
-            k=k,
-            density_estimate=density_estimate,
-            bw_method=de_bw_method,
-            weights=de_weights,
-            algorithm=None,
-            control_vector=control_vector,
-            mapping=None,
-            jobs_fun=jobs_fun,
-            wjobs_fun=wjobs_fun,
-            bounds=bounds,
-            wgauge=wgauge,
-            ost=ost,
-            verbose=verbose,
-            options=None,
-            ncpu=ncpu,
+            instance,
+            generator,
+            n,
+            random_state,
+            backg_sol,
+            coef_std,
+            _standardize_bayes_k(k),
+            density_estimate,
+            de_bw_method,
+            de_weights,
+            None,
+            control_vector,
+            None,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            None,
+            ncpu,
         )
 
         instance._last_update = "Bayesian Estimation"
@@ -827,11 +837,15 @@ class Model(object):
 
     def Bayes_optimize(
         self,
-        k: range | list | tuple | set | np.ndarray = range(-2, 11),
-        samples: pd.DataFrame = None,
+        k: int | float | range | list | tuple | set | np.ndarray = range(-2, 10),
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
+        generator: str = "uniform",
+        n: int = 1000,
+        random_state: int | None = None,
+        backg_sol: np.ndarray | None = None,
+        coef_std: float | None = None,
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
@@ -869,8 +883,13 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
+        >>> br = model.Bayes_optimize(n=100, inplace=True, ncpu=50, options={"maxiter": 5}, return_br = True, random_state=99)
 
         TODO
+
+        .. note::
+                Multi-processing ... (TODO)
+
         """
 
         if inplace:
@@ -910,23 +929,27 @@ class Model(object):
         options = _standardize_optimize_options(options)
 
         res = _Bayes_computation(
-            instance=instance,
-            samples=samples,
-            k=k,
-            density_estimate=density_estimate,
-            bw_method=de_bw_method,
-            weights=de_weights,
-            algorithm=algorithm,
-            control_vector=control_vector,
-            mapping=mapping,
-            jobs_fun=jobs_fun,
-            wjobs_fun=wjobs_fun,
-            bounds=bounds,
-            wgauge=wgauge,
-            ost=ost,
-            verbose=verbose,
-            options=options,
-            ncpu=ncpu,
+            instance,
+            generator,
+            n,
+            random_state,
+            backg_sol,
+            coef_std,
+            _standardize_bayes_k(k),
+            density_estimate,
+            de_bw_method,
+            de_weights,
+            algorithm,
+            control_vector,
+            mapping,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            options,
+            ncpu,
         )
 
         instance._last_update = "Bayesian Optimization"
@@ -1201,7 +1224,7 @@ class Model(object):
         return_sample: bool = False,
     ):
         """
-        Compute variance-based sensitivity (Sobol indices) of signatures of the Model.
+        Compute variance-based sensitivity (Sobol indices) of the Model parameters on the output signatures.
 
         Parameters
         ----------
@@ -1261,7 +1284,7 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        problem = _get_generate_samples_problem(instance.setup)
+        problem = _get_problem(instance.setup, states=False)
 
         sample = generate_samples(problem=problem, generator="saltelli", n=n)
 
@@ -1347,3 +1370,38 @@ class Model(object):
         print("</> Model Precipitation Indices")
 
         return _prcp_indices(self)
+
+    def get_bound_constraints(self, states: bool = False):
+
+        """
+        Get the boundary constraints of the Model parameters/states.
+
+        Parameters
+        ----------
+        states : bool, default True
+            If True, return boundary constraints of the Model states instead of Model parameters.
+
+        Returns
+        -------
+        problem : dict
+            The boundary constraint problem of the Model parameters/states. The keys are
+
+            - 'num_vars': The number of Model parameters/states.
+            - 'names': The name of Model parameters/states.
+            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> problem = model.get_bound_constraints()
+        >>> problem
+        {
+            'num_vars': 4,
+            'names': ['cp', 'cft', 'exc', 'lr'],
+            'bounds': [[1e-06, 1000.0], [1e-06, 1000.0], [-50.0, 50.0], [1e-06, 1000.0]]
+        }
+
+        """
+
+        return _get_problem(self.setup, states)
