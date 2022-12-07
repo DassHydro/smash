@@ -199,7 +199,7 @@ def _bayes_message(
     ret = []
 
     ret.append(f"Parameters/States set size: {n_set}")
-    ret.append(f"Generator: {generator}")
+    ret.append(f"Sample generator: {generator}")
     ret.append(f"Spatially uniform prior parameters/states: {backg_sol}")
     ret.append(f"Density estimation: {density_estimate}")
     ret.append(f"L-curve approach: {lcurve}")

@@ -717,7 +717,7 @@ class Model(object):
 
     def Bayes_estimate(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = range(-2, 10),
+        k: int | float | range | list | tuple | set | np.ndarray = 5,
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
@@ -837,7 +837,7 @@ class Model(object):
 
     def Bayes_optimize(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = range(-2, 10),
+        k: int | float | range | list | tuple | set | np.ndarray = 5,
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
