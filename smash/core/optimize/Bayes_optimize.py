@@ -3,7 +3,6 @@ from __future__ import annotations
 from smash.core._constant import OPTIM_FUNC
 
 from smash.solver._mw_forward import forward
-from smash.solver._mwd_setup import Optimize_SetupDT
 from smash.core._event_segmentation import _mask_event
 from smash.core.generate_samples import generate_samples
 
