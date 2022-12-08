@@ -170,7 +170,7 @@ def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):
     return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
-def _get_problem(setup: SetupDT, states: bool):
+def _get_bound_constraints(setup: SetupDT, states: bool):
 
     if states:
         control_vector = STRUCTURE_STATES[setup.structure]

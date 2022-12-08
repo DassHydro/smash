@@ -38,7 +38,7 @@ from smash.core._signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import generate_samples, _get_problem
+from smash.core.generate_samples import generate_samples, _get_bound_constraints
 
 from typing import TYPE_CHECKING
 
@@ -1383,7 +1383,7 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        problem = _get_problem(instance.setup, states=False)
+        problem = _get_bound_constraints(instance.setup, states=False)
 
         sample = generate_samples(problem=problem, generator="saltelli", n=n)
 
@@ -1503,4 +1503,4 @@ class Model(object):
 
         """
 
-        return _get_problem(self.setup, states)
+        return _get_bound_constraints(self.setup, states)

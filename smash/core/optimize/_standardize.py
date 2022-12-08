@@ -609,15 +609,10 @@ def _standardize_bayes_k(
     k: int | float | range | list | tuple | set | np.ndarray,
 ):
 
-    if isinstance(k, int) or isinstance(k, float) or isinstance(k, list):
+    if isinstance(k, (int, float, list)):
         pass
 
-    elif (
-        isinstance(k, range)
-        or isinstance(k, np.ndarray)
-        or isinstance(k, tuple)
-        or isinstance(k, set)
-    ):
+    elif isinstance(k, (range, np.ndarray, tuple, set)):
         k = list(k)
 
     else:
