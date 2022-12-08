@@ -754,6 +754,7 @@ class Model(object):
 
         generator, n, random_state, backg_sol, coef_std : multiple types
             Multiple arguments to generate spatially uniform Model parameters/states.
+            See `smash.generate_samples` for more.
 
             .. note::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
@@ -932,6 +933,7 @@ class Model(object):
 
         generator, n, random_state, backg_sol, coef_std : multiple types
             Multiple arguments to generate spatially uniform Model parameters/states.
+            See `smash.generate_samples` for more.
 
             .. note::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
