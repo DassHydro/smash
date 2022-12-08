@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import Optimize_SetupDT
-
 from smash.core._event_segmentation import _mask_event
 
 from smash.core.net import Net
@@ -29,11 +27,6 @@ def _ann_optimize(
     early_stopping: bool,
     verbose: bool,
 ):
-
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, njf=len(jobs_fun)
-    )
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
@@ -130,10 +123,7 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
 
         net.add(
             layer="scale",
-            options={
-                "lower": bounds[:, 0],
-                "upper": bounds[:, 1],
-            },
+            options={"bounds": bounds},
         )
 
         net.compile()

@@ -26,7 +26,27 @@ class BayesResult(dict):
     -----
     This class is essentially a subclass of dict with attribute accessors.
 
-    TODO
+    Attributes
+    ----------
+    data : dict
+        Rrepresenting the generated Model parameters/sates and the corresponding cost values after
+        running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
+    density : dict
+        Representing the estimated distribution at pixel scale of Model parameters/states after
+        running the simulations. The keys are the names of Model parameters/states considered.
+    l_curve : dict
+        The optimization results on the regularisation parameter if the L-curve approach is used. The keys are
+
+        - 'k' : a list of regularisation parameters to optimize.
+        - 'cost' : a list of corresponding cost values.
+        - 'Mahalanobis_distance' : a list of corresponding Mahalanobis distance values.
+        - 'var' : a list of corresponding dictionaries. Each represents the variance of Model parameters/states. The keys are the names of Model parameters/states considered.
+        - 'k_opt' : the optimal regularisation value.
+
+    See Also
+    --------
+    Model.Bayes_estimate: Estimate prior Model parameters/states using Bayesian approach.
+    Model.Bayes_optimize: Optimize the Model using Bayesian approach.
 
     """
 
@@ -233,11 +253,6 @@ def _run(
 
     ### SETTING MODEL TO COMPUTE COST VALUES ###
 
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, njf=len(jobs_fun)
-    )
-
     #% send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance)
@@ -349,10 +364,9 @@ def _multi_simu(
     ncpu: int,
 ) -> dict:
 
-    #% !!! trick to DEBUG on multiple simu
-    list_instance = [instance.copy() for i in range(len(sample))]
-
     if ncpu > 1:
+
+        list_instance = [instance.copy() for i in range(len(sample))]
 
         pool = mp.Pool(ncpu)
         list_result = pool.starmap(
@@ -378,25 +392,32 @@ def _multi_simu(
         )
         pool.close()
 
-    else:
-        list_result = [
-            _unit_simu(
-                i,
-                instance,
-                sample,
-                algorithm,
-                control_vector,
-                mapping,
-                jobs_fun,
-                wjobs_fun,
-                bounds,
-                wgauge,
-                ost,
-                verbose,
-                options,
+    elif ncpu == 1:
+
+        list_result = []
+
+        for i in range(len(sample)):
+
+            list_result.append(
+                _unit_simu(
+                    i,
+                    instance,
+                    sample,
+                    algorithm,
+                    control_vector,
+                    mapping,
+                    jobs_fun,
+                    wjobs_fun,
+                    bounds,
+                    wgauge,
+                    ost,
+                    verbose,
+                    options,
+                )
             )
-            for i, instance in enumerate(list_instance)
-        ]
+
+    else:
+        raise ValueError(f"ncpu should be a positive integer, not {ncpu}")
 
     res_keys = list(control_vector)
     res_keys.append("cost")
@@ -541,13 +562,10 @@ def _lcurve_compute_param(
     Dk = []
     var = []
 
-    #% !!! trick to DEBUG on multiple simu
-    list_instance = [instance.copy() for j in k]
-
-    for i, inst in enumerate(list_instance):
+    for k_i in k:
 
         co, dk, vr = _compute_param(
-            inst,
+            instance,
             jobs_fun,
             wjobs_fun,
             wgauge,
@@ -556,7 +574,7 @@ def _lcurve_compute_param(
             control_vector,
             ret_data,
             ret_density,
-            k[i],
+            k_i,
         )
 
         cost.append(co)

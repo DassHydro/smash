@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import Optimize_SetupDT
 from smash.solver._mw_forward import forward
 from smash.solver._mw_adjoint_test import scalar_product_test
 from smash.solver._mw_optimize import (
@@ -39,11 +38,6 @@ def _optimize_sbs(
 ):
 
     _check_unknown_options(unknown_options)
-
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
-    )
 
     #% Fortran verbose
     instance.setup._optimize.verbose = verbose
@@ -120,11 +114,6 @@ def _optimize_lbfgsb(
 ):
 
     _check_unknown_options(unknown_options)
-
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
-    )
 
     #% Fortran verbose
     instance.setup._optimize.verbose = verbose
@@ -237,11 +226,6 @@ def _optimize_nelder_mead(
     global callback_args
 
     _check_unknown_options(unknown_options)
-
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
-    )
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):

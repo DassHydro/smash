@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.core._constant import OPTIM_FUNC
 
-from smash.solver._mwd_setup import SetupDT
+from smash.solver._mwd_setup import SetupDT, Optimize_SetupDT
 from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
@@ -519,9 +519,9 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -670,6 +670,7 @@ class Model(object):
 
         print("</> Optimize Model J")
 
+        #% standardize args
         (
             mapping,
             algorithm,
@@ -695,6 +696,11 @@ class Model(object):
         )
 
         options = _standardize_optimize_options(options)
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
+        )
 
         OPTIM_FUNC[algorithm](
             instance,
@@ -736,16 +742,44 @@ class Model(object):
         return_br: bool = False,
     ):
         """
-        Estimate the Model paramters/states using Bayesian approach.
+        Estimate prior Model parameters/states using Bayesian approach.
 
         Parameters
         ----------
-        TODO
+        k : int, float or array-like or sequence, default 4
+            A regularisation parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
+
+        generator, n, random_state, backg_sol, coef_std : multiple types
+            Multiple arguments to generate spatially uniform Model parameters/states.
+
+            .. note::
+                The generating samples problem can be redefined by using control_vector and bounds arguments.
+
+        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+                Optimization setting to run the forward hydrological model and compute the cost values.
+                See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+                If ncpu > 1, perform a parallel computation for all parameter sets.
+
+        verbose : bool, default True
+            Display information while estimating.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
+        return_br : bool, default False
+            If True, also return the Bayesian estimation results ``BayesResult``.
+
 
         Returns
         -------
         Model : Model or None
             Model with optimize outputs if not inplace.
+
         res : BayesResult
             The Bayesian estimation results represented as a ``BayesResult`` object if return_br.
 
@@ -759,7 +793,7 @@ class Model(object):
         >>> model = smash.Model(setup, mesh)
         >>> br = model.Bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
 
-        TODO
+        Add more info (TODO)
 
         """
 
@@ -773,6 +807,7 @@ class Model(object):
 
         print("</> Bayes Estimate Model J")
 
+        #% standardize args
         (
             control_vector,
             jobs_fun,
@@ -791,6 +826,11 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+        )
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
         )
 
         res = _Bayes_computation(
@@ -846,9 +886,9 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -859,16 +899,64 @@ class Model(object):
         return_br: bool = False,
     ):
         """
-        Optimize the Model paramters/states using Bayesian approach.
+        Optimize the Model using Bayesian approach.
 
         Parameters
         ----------
-        TODO
+        k : int, float or array-like or sequence, default 4
+            A regularisation parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
+
+        density_estimate : bool, default True
+            Take into account the density function in Equation ? (TODO).
+            The density function is estimated using Gaussian kernel.
+
+        de_bw_method : str, scalar, callable or None, default None
+            The method used to calculate the estimator bandwidth if density_estimate.
+            This can be 'scott', 'silverman', a scalar constant or a callable.
+
+            .. note::
+                If not given and density_estimate=True, 'scott' is used as default.
+
+            See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
+
+        de_weights : array-like or None, default None
+            A parameter related to weights of datapoints when estimating the density distribution.
+
+            .. note::
+                If not given and density_estimate=True, the samples are assumed to be equally weighted.
+
+            See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
+
+        generator, n, random_state, backg_sol, coef_std : multiple types
+            Multiple arguments to generate spatially uniform Model parameters/states.
+
+            .. note::
+                The generating samples problem can be redefined by using control_vector and bounds arguments.
+
+        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost, options : multiple types
+                Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
+                See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+                If ncpu > 1, perform a parallel computation for all parameter sets.
+
+        verbose : bool, default True
+            Display cost information while optimizing.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
+        return_br : bool, default False
+            If True, also return the Bayesian optimization results ``BayesResult``.
 
         Returns
         -------
         Model : Model or None
             Model with optimize outputs if not inplace.
+
         res : BayesResult
             The Bayesian optimization results represented as a ``BayesResult`` object if return_br.
 
@@ -880,12 +968,12 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.Bayes_optimize(n=100, inplace=True, ncpu=50, options={"maxiter": 5}, return_br = True, random_state=99)
+        >>> br = model.Bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
 
-        TODO
+        Add more info (TODO)
 
         .. note::
-                Multi-processing ... (TODO)
+            Multi-processing ... (TODO)
 
         """
 
@@ -899,6 +987,7 @@ class Model(object):
 
         print("</> Bayes Optimize Model J")
 
+        #% standardize args
         (
             mapping,
             algorithm,
@@ -924,6 +1013,11 @@ class Model(object):
         )
 
         options = _standardize_optimize_options(options)
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
+        )
 
         res = _Bayes_computation(
             instance,
@@ -996,9 +1090,9 @@ class Model(object):
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, gauge , wgauge, ost : multiple types
-                Optimization setting to run the forward hydrological model and compute the cost function.
-                Please refer to `smash.Model.optimize` for choosing these arguments.
+        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+                Optimization setting to run the forward hydrological model and compute the cost values.
+                See `smash.Model.optimize` for more.
 
         validation : float or None, default None
             Temporal validation percentage to split simulated discharge into training-validation sets.
@@ -1089,6 +1183,7 @@ class Model(object):
         else:
             use_default_graph = False
 
+        #% standardize args
         (
             control_vector,
             jobs_fun,
@@ -1107,6 +1202,11 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+        )
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
         )
 
         net = _ann_optimize(
