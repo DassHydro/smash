@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import Optimize_SetupDT
-
 from smash.core._event_segmentation import _mask_event
 
 from smash.core.net import Net
@@ -23,19 +21,12 @@ def _ann_optimize(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    jreg_fun: str,
-    wjreg: float,
     net: Net | None,
     validation: float | None,
     epochs: int,
     early_stopping: bool,
     verbose: bool,
 ):
-
-    #% Reset default values
-    instance.setup._optimize = Optimize_SetupDT(
-        instance.setup, instance.mesh.ng, njf=len(jobs_fun)
-    )
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
@@ -74,9 +65,6 @@ def _ann_optimize(
         ost - st
     ).total_seconds() / instance.setup.dt + 1
 
-    instance.setup._optimize.jreg_fun = jreg_fun
-    instance.setup._optimize.wjreg = wjreg
-
     # initial parameters and states
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
@@ -95,9 +83,11 @@ def _ann_optimize(
         )
 
     net = _set_graph(net, nd, len(control_vector), bounds)
-    _training_message(
-        instance, control_vector, len(x_train), net._optimizer, net._learning_rate
-    )
+
+    if verbose:
+        _training_message(
+            instance, control_vector, len(x_train), net._optimizer, net._learning_rate
+        )
 
     # train the network
     net._fit(
@@ -133,11 +123,7 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
 
         net.add(
             layer="scale",
-            options={
-                "name": "minmaxscale",
-                "lower": bounds[:, 0],
-                "upper": bounds[:, 1],
-            },
+            options={"bounds": bounds},
         )
 
         net.compile()
@@ -162,8 +148,6 @@ def _training_message(
 
     jobs_fun = instance.setup._optimize.jobs_fun
     wjobs_fun = instance.setup._optimize.wjobs_fun
-    jreg_fun = instance.setup._optimize.jreg_fun
-    wjreg = instance.setup._optimize.wjreg
     parameters = [el for el in control_vector if el in instance.setup._parameters_name]
     states = [el for el in control_vector if el in instance.setup._states_name]
     code = [
@@ -179,8 +163,6 @@ def _training_message(
 
     ret = []
 
-    ret.append("</> Optimize Model J")
-
     ret.append(f"Mapping: 'ANN' {mapping_eq}")
 
     ret.append(f"Training set size: {n_train}")
@@ -189,8 +171,6 @@ def _training_message(
 
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
-    ret.append(f"Jreg function: '{jreg_fun}'")
-    ret.append(f"wJreg: {'{:.6f}'.format(wjreg)}")
 
     ret.append(f"Np: {len_parameters} [ {' '.join(parameters)} ]")
     ret.append(f"Ns: {len_states} [ {' '.join(states)} ]")

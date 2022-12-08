@@ -63,7 +63,7 @@ class Net(object):
 
                 layer_name = layer.layer_name()
 
-                n_params = layer.parameters()
+                n_params = layer.n_params()
 
                 out_shape = layer.output_shape()
 
@@ -107,7 +107,7 @@ class Net(object):
         >>> layer_1 = net.layers[0]
         >>> layer_1.<TAB>
         layer_1.bias           layer_1.output_shape(
-        layer_1.input_shape    layer_1.parameters(
+        layer_1.input_shape    layer_1.n_params(
         layer_1.layer_input    layer_1.trainable
         layer_1.layer_name(    layer_1.weight
         layer_1.neurons
@@ -115,7 +115,7 @@ class Net(object):
         >>> layer_2 = net.layers[1]
         >>> layer_2.<TAB>
         layer_2.activation_name  layer_2.output_shape(
-        layer_2.input_shape      layer_2.parameters(
+        layer_2.input_shape      layer_2.n_params(
         layer_2.layer_name(      layer_2.trainable
         """
 
@@ -166,8 +166,7 @@ class Net(object):
 
         >>> nd = 6  # number of hydrological descriptors
         >>> ncv = 4  # number of control vectors ("cp", "cft", "exc", "lr")
-        >>> lower = np.array([1.e-06,1.e-06,-50,1.e-06])  # lower bounds constraint
-        >>> upper = np.array([1000,1000,50,1000])  # upper bounds constraint
+        >>> bounds = [[1.e-06,1000], [1.e-06,1000], [-50, 50], [1.e-06,1000]]  # bound constraints
 
         Initialize the neural network
 
@@ -188,7 +187,7 @@ class Net(object):
         >>> # Activation function following the third dense layer
         >>> net.add(layer="activation", options={"name": "sigmoid"})
         >>> # Scaling layer for the output of the network
-        >>> net.add(layer="scale", options={"name": "minmaxscale", "lower": lower, "upper": upper})
+        >>> net.add(layer="scale", options={"bounds": bounds})
 
         Compile and display a summary of the network
 
@@ -454,7 +453,7 @@ class Layer(object):
         """The name of the layer. Used in model summary."""
         return self.__class__.__name__
 
-    def parameters(self):
+    def n_params(self):
         """The number of trainable parameters used by the layer"""
         return 0
 
@@ -508,14 +507,12 @@ class Activation(Layer):
 class Scale(Layer):
     """Scale function for outputs from the last layer w.r.t. parameters bounds."""
 
-    def __init__(
-        self, name: str, lower: np.ndarray, upper: np.ndarray, **unknown_options
-    ):
+    def __init__(self, bounds: list | tuple, **unknown_options):
 
         _check_unknown_options("Scale Layer", unknown_options)
 
-        self.scale_name = name
-        self._scale_func = SCALE_FUNC[name.lower()](lower, upper)
+        self.scale_name = "minmaxscale"
+        self._scale_func = MinMaxScale(bounds)
         self.trainable = True
 
     def layer_name(self):
@@ -571,7 +568,7 @@ class Dense(Layer):
 
         self._bias_opt = copy.copy(optimizer)
 
-    def parameters(self):
+    def n_params(self):
         return np.prod(self.weight.shape) + np.prod(self.bias.shape)
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
@@ -703,20 +700,16 @@ ACTIVATION_FUNC = {
 
 
 class MinMaxScale:
-    def __init__(self, lower, upper):
-        self.lower = lower
-        self.upper = upper
+    def __init__(self, bounds):
+        self._bounds = bounds
+        self.lower = np.array([b[0] for b in bounds])
+        self.upper = np.array([b[1] for b in bounds])
 
     def __call__(self, x):
         return self.lower + x * (self.upper - self.lower)
 
     def gradient(self, x):
         return self.upper - self.lower
-
-
-SCALE_FUNC = {
-    "minmaxscale": MinMaxScale,
-}
 
 
 ### OPTIMIZER ###
@@ -848,7 +841,7 @@ def _hcost_prime(
     states_bgd: StatesDT,
 ):
 
-    #% Set parameters and states
+    #% Set parameters or states
     for i, name in enumerate(control_vector):
 
         if name in instance.setup._parameters_name:

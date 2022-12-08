@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import SetupDT
+from smash.core._constant import OPTIM_FUNC
+
+from smash.solver._mwd_setup import SetupDT, Optimize_SetupDT
 from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
@@ -15,18 +17,15 @@ from smash.core._build_model import (
     _build_input_data,
 )
 
-from smash.core.optimize._optimize import (
-    _optimize_sbs,
-    _optimize_lbfgsb,
-    _optimize_nelder_mead,
-)
-
 from smash.core.optimize._ann_optimize import _ann_optimize
+
+from smash.core.optimize.Bayes_optimize import _Bayes_computation
 
 from smash.core.optimize._standardize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
-    _standardize_ann_optimize_args,
+    _standardize_wo_optimize_args,
+    _standardize_bayes_k,
 )
 
 from smash.core._event_segmentation import _event_segmentation
@@ -39,7 +38,7 @@ from smash.core._signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import generate_samples, _get_generate_samples_problem
+from smash.core.generate_samples import generate_samples, _get_bound_constraints
 
 from typing import TYPE_CHECKING
 
@@ -520,13 +519,14 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
         options: dict | None = None,
+        verbose: bool = True,
         inplace: bool = False,
     ):
         """
@@ -562,6 +562,15 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
+        bounds : sequence or None, default None
+            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
+            The size of the bounds sequence must be equal to the control vector size.
+            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
+            None value inside the sequence will be filled in with default bound values.
+
+            .. note::
+                If not given, the bounds will be filled in with default bound values.
+
         jobs_fun : str or sequence, default 'nse'
             Type of objective function(s) to be minimized. Should be one or a sequence of any
 
@@ -577,15 +586,6 @@ class Model(object):
 
             .. note::
                 If not given, the weights will correspond to the mean of the objective functions.
-
-        bounds : sequence or None, default None
-            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
-            The size of the bounds sequence must be equal to the control vector size.
-            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
-            None value inside the sequence will be filled in with default bound values.
-
-            .. note::
-                If not given, the bounds will be filled in with default bound values.
 
         gauge : str, sequence, default 'downstream'
             Type of gauge to be optimized. There are two ways to specify it:
@@ -612,6 +612,9 @@ class Model(object):
 
         options : dict or None, default None
             A dictionary of algorithm options.
+
+        verbose : bool, default True
+            Display cost information while optimizing.
 
         inplace : bool, default False
             if True, perform operation in-place.
@@ -665,6 +668,9 @@ class Model(object):
 
             instance = self.copy()
 
+        print("</> Optimize Model J")
+
+        #% standardize args
         (
             mapping,
             algorithm,
@@ -691,73 +697,379 @@ class Model(object):
 
         options = _standardize_optimize_options(options)
 
-        if algorithm == "sbs":
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
+        )
 
-            _optimize_sbs(
-                instance,
-                control_vector,
-                mapping,
-                jobs_fun,
-                wjobs_fun,
-                bounds,
-                wgauge,
-                ost,
-                **options,
-            )
+        OPTIM_FUNC[algorithm](
+            instance,
+            control_vector,
+            mapping,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            **options,
+        )
 
-            instance._last_update = "Step By Step Optimization"
-
-        elif algorithm == "l-bfgs-b":
-
-            _optimize_lbfgsb(
-                instance,
-                control_vector,
-                mapping,
-                jobs_fun,
-                wjobs_fun,
-                bounds,
-                wgauge,
-                ost,
-                **options,
-            )
-
-            instance._last_update = "L-BFGS-B Optimization"
-
-        elif algorithm == "nelder-mead":
-
-            _optimize_nelder_mead(
-                instance,
-                control_vector,
-                mapping,
-                jobs_fun,
-                wjobs_fun,
-                bounds,
-                wgauge,
-                ost,
-                **options,
-            )
-
-            instance._last_update = "Nelder-Mead Optimization"
-
-        #% TODO
-        # elif algorithm == "nsga":
+        instance._last_update = f"{algorithm.upper()} Optimization"
 
         if not inplace:
 
             return instance
 
-    def ann_optimize(
+    def Bayes_estimate(
         self,
+        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        generator: str = "uniform",
+        n: int = 1000,
+        random_state: int | None = None,
+        backg_sol: np.ndarray | None = None,
+        coef_std: float | None = None,
         control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
-        jreg_fun: str = "prior",
-        wjreg: float = 0.0,
+        ncpu: int = 1,
+        verbose: bool = True,
+        inplace: bool = False,
+        return_br: bool = False,
+    ):
+        """
+        Estimate prior Model parameters/states using Bayesian approach.
+
+        Parameters
+        ----------
+        k : int, float or array-like or sequence, default 4
+            A regularisation parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
+
+        generator, n, random_state, backg_sol, coef_std : multiple types
+            Multiple arguments to generate spatially uniform Model parameters/states.
+            See `smash.generate_samples` for more.
+
+            .. note::
+                The generating samples problem can be redefined by using control_vector and bounds arguments.
+
+        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+                Optimization setting to run the forward hydrological model and compute the cost values.
+                See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+                If ncpu > 1, perform a parallel computation for all parameter sets.
+
+        verbose : bool, default True
+            Display information while estimating.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
+        return_br : bool, default False
+            If True, also return the Bayesian estimation results ``BayesResult``.
+
+
+        Returns
+        -------
+        Model : Model or None
+            Model with optimize outputs if not inplace.
+
+        res : BayesResult
+            The Bayesian estimation results represented as a ``BayesResult`` object if return_br.
+
+        See Also
+        --------
+        BayesResult: Represents the Bayesian estimation or optimization results.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> br = model.Bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
+
+        Add more info (TODO)
+
+        """
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        print("</> Bayes Estimate Model J")
+
+        #% standardize args
+        (
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+        ) = _standardize_wo_optimize_args(
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            gauge,
+            wgauge,
+            ost,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+        )
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
+        )
+
+        res = _Bayes_computation(
+            instance,
+            generator,
+            n,
+            random_state,
+            backg_sol,
+            coef_std,
+            _standardize_bayes_k(k),
+            None,
+            None,
+            None,
+            None,
+            control_vector,
+            None,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            None,
+            ncpu,
+        )
+
+        instance._last_update = "Bayesian Estimation"
+
+        if return_br:
+
+            if not inplace:
+                return instance, res
+
+            else:
+                return res
+
+        else:
+
+            if not inplace:
+                return instance
+
+    def Bayes_optimize(
+        self,
+        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        density_estimate: bool = True,
+        de_bw_method: str | None = None,
+        de_weights: np.ndarray | None = None,
+        generator: str = "uniform",
+        n: int = 1000,
+        random_state: int | None = None,
+        backg_sol: np.ndarray | None = None,
+        coef_std: float | None = None,
+        mapping: str = "uniform",
+        algorithm: str | None = None,
+        control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
+        jobs_fun: str | list | tuple | set = "nse",
+        wjobs_fun: list | tuple | set | None = None,
+        gauge: str | list | tuple | set = "downstream",
+        wgauge: str | list | tuple | set = "mean",
+        ost: str | pd.Timestamp | None = None,
+        options: dict | None = None,
+        ncpu: int = 1,
+        verbose: bool = True,
+        inplace: bool = False,
+        return_br: bool = False,
+    ):
+        """
+        Optimize the Model using Bayesian approach.
+
+        Parameters
+        ----------
+        k : int, float or array-like or sequence, default 4
+            A regularisation parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
+
+        density_estimate : bool, default True
+            Take into account the density function in Equation ? (TODO).
+            The density function is estimated using Gaussian kernel.
+
+        de_bw_method : str, scalar, callable or None, default None
+            The method used to calculate the estimator bandwidth if density_estimate.
+            This can be 'scott', 'silverman', a scalar constant or a callable.
+
+            .. note::
+                If not given and density_estimate=True, 'scott' is used as default.
+
+            See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
+
+        de_weights : array-like or None, default None
+            A parameter related to weights of datapoints when estimating the density distribution.
+
+            .. note::
+                If not given and density_estimate=True, the samples are assumed to be equally weighted.
+
+            See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
+
+        generator, n, random_state, backg_sol, coef_std : multiple types
+            Multiple arguments to generate spatially uniform Model parameters/states.
+            See `smash.generate_samples` for more.
+
+            .. note::
+                The generating samples problem can be redefined by using control_vector and bounds arguments.
+
+        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost, options : multiple types
+                Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
+                See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+                If ncpu > 1, perform a parallel computation for all parameter sets.
+
+        verbose : bool, default True
+            Display cost information while optimizing.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
+        return_br : bool, default False
+            If True, also return the Bayesian optimization results ``BayesResult``.
+
+        Returns
+        -------
+        Model : Model or None
+            Model with optimize outputs if not inplace.
+
+        res : BayesResult
+            The Bayesian optimization results represented as a ``BayesResult`` object if return_br.
+
+        See Also
+        --------
+        BayesResult: Represents the Bayesian estimation or optimization results.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> br = model.Bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
+
+        Add more info (TODO)
+
+        .. note::
+            Multi-processing ... (TODO)
+
+        """
+
+        if inplace:
+
+            instance = self
+
+        else:
+
+            instance = self.copy()
+
+        print("</> Bayes Optimize Model J")
+
+        #% standardize args
+        (
+            mapping,
+            algorithm,
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+        ) = _standardize_optimize_args(
+            mapping,
+            algorithm,
+            control_vector,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            gauge,
+            wgauge,
+            ost,
+            instance.setup,
+            instance.mesh,
+            instance.input_data,
+        )
+
+        options = _standardize_optimize_options(options)
+
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
+        )
+
+        res = _Bayes_computation(
+            instance,
+            generator,
+            n,
+            random_state,
+            backg_sol,
+            coef_std,
+            _standardize_bayes_k(k),
+            density_estimate,
+            de_bw_method,
+            de_weights,
+            algorithm,
+            control_vector,
+            mapping,
+            jobs_fun,
+            wjobs_fun,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            options,
+            ncpu,
+        )
+
+        instance._last_update = "Bayesian Optimization"
+
+        if return_br:
+
+            if not inplace:
+                return instance, res
+
+            else:
+                return res
+
+        else:
+
+            if not inplace:
+                return instance
+
+    def ann_optimize(
+        self,
         net: Net | None = None,
+        control_vector: str | list | tuple | set | None = None,
+        bounds: list | tuple | set | None = None,
+        jobs_fun: str | list | tuple | set = "nse",
+        wjobs_fun: list | tuple | set | None = None,
+        gauge: str | list | tuple | set = "downstream",
+        wgauge: str | list | tuple | set = "mean",
+        ost: str | pd.Timestamp | None = None,
         validation: float | None = None,
         epochs: int = 500,
         early_stopping: bool = False,
@@ -773,73 +1085,16 @@ class Model(object):
 
         Parameters
         ----------
-        control_vector : str, sequence or None, default None
-            Parameters and/or states to be optimized. The control vector argument
-            can be any parameter or state name or any sequence of parameter and/or state names.
-
-            .. note::
-                If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
-
-        jobs_fun : str or sequence, default 'nse'
-            Type of objective function(s) to be minimized. Should be one or a sequence of any
-
-            - ``Classical Objective Function``
-                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
-            - ``Continuous Signature``
-                'Crc'
-            - ``Event Signature``
-                'Epf', 'Elt', 'Erc'
-
-        wjobs_fun : sequence or None, default None
-            Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
-
-            .. note::
-                If not given, the weights will correspond to the mean of the objective functions.
-
-        bounds : sequence or None, default None
-            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
-            The size of the bounds sequence must be equal to the control vector size.
-            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
-            None value inside the sequence will be filled in with default bound values.
-
-            .. note::
-                If not given, the bounds will be filled in with default bound values.
-
-        gauge : str, sequence, default 'downstream'
-            Type of gauge to be optimized. There are two ways to specify it:
-
-            1. A gauge code or any sequence of gauge codes.
-               The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            2. An alias among ``all`` and ``downstream``. ``all`` is equivalent to a sequence of all gauge codes.
-               ``downstream`` is equivalent to the gauge code of the most downstream gauge.
-
-        wgauge : str, sequence, default 'mean'
-            Type of gauge weights. There are two ways to specify it:
-
-            1. A sequence of value whose size must be equal to the number of gauges optimized.
-            2. An alias among ``mean``, ``area`` or ``minv_area``.
-
-        ost : str, pandas.Timestamp or None, default None
-            The optimization start time. The optimization will only be performed between the
-            optimization start time ``ost`` and the end time. The value can be a str which can be interpreted by
-            pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
-            The ``ost`` date value must be between the start time and the end time defined in the Model setup.
-
-            .. note::
-                If not given, the optimization start time will be equal to the start time.
-
-        jreg_fun : str, default prior
-            TODO
-
-        wjreg : float, dafault 0.0
-            TODO
-
         net : Net or None, default None
             The neural network Net will be trained to learn the descriptors to parameters mapping.
             Net initialization (see user guide TODO).
 
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
+
+        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+                Optimization setting to run the forward hydrological model and compute the cost values.
+                See `smash.Model.optimize` for more.
 
         validation : float or None, default None
             Temporal validation percentage to split simulated discharge into training-validation sets.
@@ -855,7 +1110,7 @@ class Model(object):
             Stop updating weights and biases when the loss function stops decreasing.
 
         verbose : bool, default True
-            Display information while training.
+            Display cost information while training.
 
         inplace : bool, default False
             if True, perform operation in-place.
@@ -866,7 +1121,7 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs or None if inplace.
+            Model with optimize outputs if not inplace.
 
         Net : Net or None
             Net with trained weights and biases if return_net and the default graph is used.
@@ -922,12 +1177,15 @@ class Model(object):
 
             instance = self.copy()
 
+        print("</> ANN Optimize Model J")
+
         if net is None:
             use_default_graph = True
 
         else:
             use_default_graph = False
 
+        #% standardize args
         (
             control_vector,
             jobs_fun,
@@ -935,7 +1193,7 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-        ) = _standardize_ann_optimize_args(
+        ) = _standardize_wo_optimize_args(
             control_vector,
             jobs_fun,
             wjobs_fun,
@@ -948,6 +1206,11 @@ class Model(object):
             instance.input_data,
         )
 
+        #% Reset default values
+        instance.setup._optimize = Optimize_SetupDT(
+            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
+        )
+
         net = _ann_optimize(
             instance,
             control_vector,
@@ -956,8 +1219,6 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-            jreg_fun,
-            wjreg,
             net,
             validation,
             epochs,
@@ -1062,7 +1323,7 @@ class Model(object):
         return_sample: bool = False,
     ):
         """
-        Compute variance-based sensitivity (Sobol indices) of signatures of the Model.
+        Compute variance-based sensitivity (Sobol indices) of the Model parameters on the output signatures.
 
         Parameters
         ----------
@@ -1122,7 +1383,7 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        problem = _get_generate_samples_problem(instance.setup)
+        problem = _get_bound_constraints(instance.setup, states=False)
 
         sample = generate_samples(problem=problem, generator="saltelli", n=n)
 
@@ -1208,3 +1469,38 @@ class Model(object):
         print("</> Model Precipitation Indices")
 
         return _prcp_indices(self)
+
+    def get_bound_constraints(self, states: bool = False):
+
+        """
+        Get the boundary constraints of the Model parameters/states.
+
+        Parameters
+        ----------
+        states : bool, default True
+            If True, return boundary constraints of the Model states instead of Model parameters.
+
+        Returns
+        -------
+        problem : dict
+            The boundary constraint problem of the Model parameters/states. The keys are
+
+            - 'num_vars': The number of Model parameters/states.
+            - 'names': The name of Model parameters/states.
+            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+        >>> problem = model.get_bound_constraints()
+        >>> problem
+        {
+            'num_vars': 4,
+            'names': ['cp', 'cft', 'exc', 'lr'],
+            'bounds': [[1e-06, 1000.0], [1e-06, 1000.0], [-50.0, 50.0], [1e-06, 1000.0]]
+        }
+
+        """
+
+        return _get_bound_constraints(self.setup, states)

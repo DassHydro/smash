@@ -63,6 +63,8 @@ module mwd_setup
         real(sp), dimension(:), allocatable :: wjobs_fun
         integer :: njf = 0
 
+        logical :: verbose = .true.
+
         character(lchar) :: mapping = "..." !>f90w-char
         
         integer :: nhyper = 0

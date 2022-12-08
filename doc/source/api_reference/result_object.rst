@@ -11,4 +11,5 @@ Precipitation indices result
 .. autosummary::
     :toctree: smash/
 
+    BayesResult
     PrcpIndicesResult
