@@ -717,10 +717,7 @@ class Model(object):
 
     def Bayes_estimate(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 5,
-        density_estimate: bool = True,
-        de_bw_method: str | None = None,
-        de_weights: np.ndarray | None = None,
+        k: int | float | range | list | tuple | set | np.ndarray = 4,
         generator: str = "uniform",
         n: int = 1000,
         random_state: int | None = None,
@@ -804,9 +801,9 @@ class Model(object):
             backg_sol,
             coef_std,
             _standardize_bayes_k(k),
-            density_estimate,
-            de_bw_method,
-            de_weights,
+            None,
+            None,
+            None,
             None,
             control_vector,
             None,
@@ -837,7 +834,7 @@ class Model(object):
 
     def Bayes_optimize(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 5,
+        k: int | float | range | list | tuple | set | np.ndarray = 4,
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,

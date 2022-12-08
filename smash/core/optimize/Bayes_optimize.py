@@ -60,9 +60,9 @@ def _Bayes_computation(
     backg_sol: np.ndarray | None,
     coef_std: float | None,
     k: int | float | list,
-    density_estimate: bool,
+    density_estimate: bool | None,
     bw_method: str | None,
-    weights: np.ndarray,
+    weights: np.ndarray | None,
     algorithm: str | None,
     control_vector: np.ndarray,
     mapping: str | None,
@@ -76,9 +76,23 @@ def _Bayes_computation(
     ncpu: int,
 ) -> BayesResult:
 
+    #% returns
     ret_data = {}
     ret_density = {}
     ret_l_curve = {}
+
+    #% verbose
+    if verbose:
+        _bayes_message(n, generator, backg_sol, density_estimate, k)
+
+    #% standardize density_estimate
+    if density_estimate is None:
+
+        if generator.lower() == "uniform":
+            density_estimate = False
+
+        else:
+            density_estimate = True
 
     ### Generate sample
     problem = {
@@ -94,10 +108,6 @@ def _Bayes_computation(
         backg_sol=backg_sol,
         coef_std=coef_std,
     )
-
-    #% verbose
-    if verbose:
-        _bayes_message(n, generator, backg_sol, density_estimate, k)
 
     ### Build data from sample
 
@@ -201,7 +211,10 @@ def _bayes_message(
     ret.append(f"Parameters/States set size: {n_set}")
     ret.append(f"Sample generator: {generator}")
     ret.append(f"Spatially uniform prior parameters/states: {backg_sol}")
-    ret.append(f"Density estimation: {density_estimate}")
+
+    if density_estimate is not None:
+        ret.append(f"Density estimation: {density_estimate}")
+
     ret.append(f"L-curve approach: {lcurve}")
 
     print(f"\n{sp4}".join(ret) + "\n")
