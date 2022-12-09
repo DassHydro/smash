@@ -59,7 +59,7 @@ module mwd_states_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(in) :: states
-            real(sp), dimension(mesh%nrow,mesh%ncol,ns), intent(inout) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,GNS), intent(inout) :: a
             
             a(:,:,1) = states%hi(:,:)
             a(:,:,2) = states%hp(:,:)
@@ -81,7 +81,7 @@ module mwd_states_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
-            real(sp), dimension(mesh%nrow,mesh%ncol,ns), intent(in) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,GNS), intent(in) :: a
             
             states%hi(:,:)    = a(:,:,1)
             states%hp(:,:)    = a(:,:,2)
@@ -103,12 +103,12 @@ module mwd_states_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(StatesDT), intent(inout) :: states
-            real(sp), dimension(ns), intent(in) :: a
+            real(sp), dimension(GNS), intent(in) :: a
             
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: a3d
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a3d
             integer :: i
             
-            do i=1, ns
+            do i=1, GNS
             
                 a3d(:,:,i) = a(i)
             
@@ -127,7 +127,7 @@ module mwd_states_manipulation
             type(StatesDT), intent(inout) :: states
             real(sp), intent(in) :: a
             
-            real(sp), dimension(ns) :: a1d
+            real(sp), dimension(GNS) :: a1d
             
             a1d(:) = a
             
@@ -142,7 +142,7 @@ module mwd_states_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(in) :: hyper_states
-            real(sp), dimension(setup%optimize%nhyper,1,ns), intent(inout) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,GNS), intent(inout) :: a
 
             a(:,:,1) = hyper_states%hi(:,:)
             a(:,:,2) = hyper_states%hp(:,:)
@@ -164,7 +164,7 @@ module mwd_states_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(inout) :: hyper_states
-            real(sp), dimension(setup%optimize%nhyper,1,ns), intent(in) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,GNS), intent(in) :: a
             
             hyper_states%hi(:,:)    = a(:,:,1)
             hyper_states%hp(:,:)    = a(:,:,2)
@@ -186,12 +186,12 @@ module mwd_states_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_StatesDT), intent(inout) :: hyper_states
-            real(sp), dimension(ns), intent(in) :: a
+            real(sp), dimension(GNS), intent(in) :: a
             
-            real(sp), dimension(setup%optimize%nhyper, 1, ns) :: a3d
+            real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: a3d
             integer :: i
             
-            do i=1, ns
+            do i=1, GNS
             
                 a3d(:,:,i) = a(i)
             
@@ -210,7 +210,7 @@ module mwd_states_manipulation
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             real(sp), intent(in) :: a
             
-            real(sp), dimension(ns) :: a1d
+            real(sp), dimension(GNS) :: a1d
             
             a1d(:) = a
             
@@ -230,8 +230,8 @@ module mwd_states_manipulation
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
             
-            real(sp), dimension(setup%optimize%nhyper, 1, ns) :: hyper_states_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix
+            real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: hyper_states_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
             integer :: i, j
             real(sp) :: a, b
@@ -241,7 +241,7 @@ module mwd_states_manipulation
             
             !% Add mask later here
             !% 1 in dim2 will be replace with k and apply where on Omega
-            do i=1, ns
+            do i=1, GNS
             
                 states_matrix(:,:,i) = hyper_states_matrix(1, 1, i)
                 

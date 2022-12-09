@@ -16,7 +16,7 @@
 
 module mwd_cost
     
-    use md_constant !% only: sp, dp, lchar, np, ns
+    use md_constant !% only: sp, dp, lchar, GNP, GNS
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -166,8 +166,8 @@ module mwd_cost
             real(sp), intent(inout) :: jreg
             
             real(sp) :: parameters_jreg, states_jreg
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_bgd_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix, states_bgd_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix, parameters_bgd_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix, states_bgd_matrix
             
             call get_parameters(mesh, parameters, parameters_matrix)
             call get_parameters(mesh, parameters_bgd, parameters_bgd_matrix)
@@ -184,8 +184,8 @@ module mwd_cost
             !% Normalize prior between parameters and states
             case("prior")
             
-                parameters_jreg = reg_prior(mesh, np, parameters_matrix, parameters_bgd_matrix)
-                states_jreg = reg_prior(mesh, ns, states_matrix, states_bgd_matrix)
+                parameters_jreg = reg_prior(mesh, GNP, parameters_matrix, parameters_bgd_matrix)
+                states_jreg = reg_prior(mesh, GNS, states_matrix, states_bgd_matrix)
                 
             end select
             

@@ -61,7 +61,7 @@ module mwd_parameters_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(in) :: parameters
-            real(sp), dimension(mesh%nrow,mesh%ncol,np), intent(inout) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,GNP), intent(inout) :: a
             
             a(:,:,1)  = parameters%ci(:,:)
             a(:,:,2)  = parameters%cp(:,:)
@@ -91,7 +91,7 @@ module mwd_parameters_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
-            real(sp), dimension(mesh%nrow,mesh%ncol,np), intent(in) :: a
+            real(sp), dimension(mesh%nrow,mesh%ncol,GNP), intent(in) :: a
             
             parameters%ci(:,:)    = a(:,:,1)
             parameters%cp(:,:)    = a(:,:,2)
@@ -121,12 +121,12 @@ module mwd_parameters_manipulation
             
             type(MeshDT), intent(in) :: mesh
             type(ParametersDT), intent(inout) :: parameters
-            real(sp), dimension(np), intent(in) :: a
+            real(sp), dimension(GNP), intent(in) :: a
             
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: a3d
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: a3d
             integer :: i
             
-            do i=1, np
+            do i=1, GNP
             
                 a3d(:,:,i) = a(i)
             
@@ -145,7 +145,7 @@ module mwd_parameters_manipulation
             type(ParametersDT), intent(inout) :: parameters
             real(sp), intent(in) :: a
             
-            real(sp), dimension(np) :: a1d
+            real(sp), dimension(GNP) :: a1d
             
             a1d(:) = a
             
@@ -160,7 +160,7 @@ module mwd_parameters_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters
-            real(sp), dimension(setup%optimize%nhyper,1,np), intent(inout) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,GNP), intent(inout) :: a
 
             a(:,:,1)  = hyper_parameters%ci(:,:)
             a(:,:,2)  = hyper_parameters%cp(:,:)
@@ -190,7 +190,7 @@ module mwd_parameters_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
-            real(sp), dimension(setup%optimize%nhyper,1,np), intent(in) :: a
+            real(sp), dimension(setup%optimize%nhyper,1,GNP), intent(in) :: a
             
             hyper_parameters%ci(:,:)    = a(:,:,1)
             hyper_parameters%cp(:,:)    = a(:,:,2)
@@ -220,12 +220,12 @@ module mwd_parameters_manipulation
             
             type(SetupDT), intent(in) :: setup
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
-            real(sp), dimension(np), intent(in) :: a
+            real(sp), dimension(GNP), intent(in) :: a
             
-            real(sp), dimension(setup%optimize%nhyper, 1, np) :: a3d
+            real(sp), dimension(setup%optimize%nhyper, 1, GNP) :: a3d
             integer :: i
             
-            do i=1, np
+            do i=1, GNP
             
                 a3d(:,:,i) = a(i)
             
@@ -244,7 +244,7 @@ module mwd_parameters_manipulation
             type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
             real(sp), intent(in) :: a
             
-            real(sp), dimension(np) :: a1d
+            real(sp), dimension(GNP) :: a1d
             
             a1d(:) = a
             
@@ -264,8 +264,8 @@ module mwd_parameters_manipulation
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
             
-            real(sp), dimension(setup%optimize%nhyper, 1, np) :: hyper_parameters_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+            real(sp), dimension(setup%optimize%nhyper, 1, GNP) :: hyper_parameters_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix
             real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
             integer :: i, j
             real(sp) :: a, b
@@ -275,7 +275,7 @@ module mwd_parameters_manipulation
             
             !% Add mask later here
             !% 1 in dim2 will be replace with k and apply where on Omega
-            do i=1, np
+            do i=1, GNP
             
                 parameters_matrix(:,:,i) = hyper_parameters_matrix(1, 1, i)
                 
