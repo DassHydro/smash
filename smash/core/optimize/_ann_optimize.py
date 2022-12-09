@@ -131,11 +131,8 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
 
-    elif len(net.layers) == 0:
-        raise ValueError(f"Cannot train the network. The graph has not been set yet")
-
-    else:
-        pass
+    elif not net.layers:
+        raise ValueError(f"The graph has not been set yet")
 
     return net
 

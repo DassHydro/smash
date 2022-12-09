@@ -614,7 +614,7 @@ class Model(object):
             A dictionary of algorithm options.
 
         verbose : bool, default True
-            Display cost information while optimizing.
+            Display information while optimizing.
 
         inplace : bool, default False
             if True, perform operation in-place.
@@ -746,7 +746,7 @@ class Model(object):
 
         Parameters
         ----------
-        k : int, float or array-like or sequence, default 4
+        k : int, float or sequence, default 4
             A regularisation parameter that controls the decay rate of the likelihood function.
 
             .. note::
@@ -756,7 +756,7 @@ class Model(object):
             Multiple arguments to generate spatially uniform Model parameters/states.
             See `smash.generate_samples` for more.
 
-            .. note::
+            .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
         control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
@@ -904,7 +904,7 @@ class Model(object):
 
         Parameters
         ----------
-        k : int, float or array-like or sequence, default 4
+        k : int, float or sequence, default 4
             A regularisation parameter that controls the decay rate of the likelihood function.
 
             .. note::
@@ -935,7 +935,7 @@ class Model(object):
             Multiple arguments to generate spatially uniform Model parameters/states.
             See `smash.generate_samples` for more.
 
-            .. note::
+            .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
         mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost, options : multiple types
@@ -946,7 +946,7 @@ class Model(object):
                 If ncpu > 1, perform a parallel computation for all parameter sets.
 
         verbose : bool, default True
-            Display cost information while optimizing.
+            Display information while optimizing.
 
         inplace : bool, default False
             if True, perform operation in-place.
@@ -1101,7 +1101,7 @@ class Model(object):
             See user guide (TODO)
 
             .. note::
-                If not given, training on the whole time series.
+                If not given, the function will be computed on the whole time series (simulated discharge).
 
         epochs : int, default 500
             The number of epochs to train the network.
@@ -1110,7 +1110,7 @@ class Model(object):
             Stop updating weights and biases when the loss function stops decreasing.
 
         verbose : bool, default True
-            Display cost information while training.
+            Display information while training.
 
         inplace : bool, default False
             if True, perform operation in-place.

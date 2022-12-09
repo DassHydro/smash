@@ -50,7 +50,7 @@ class Net(object):
 
         ret.append(AsciiTable([["Net summary"]]).table)
 
-        if self._compiled and len(self.layers) > 0:
+        if self._compiled and self.layers:
 
             ret.append(f"Input Shape: {self.layers[0].input_shape}")
 
@@ -215,9 +215,22 @@ class Net(object):
 
         layer = LAYERS[layer](**options)
 
-        # If this is not the first layer added then set the input shape
-        # to the output shape of the last added layer
-        if self.layers:
+        if not self.layers:  # Check options if first layer
+
+            if "input_shape" in options:
+
+                if not isinstance(options["input_shape"], tuple):
+
+                    raise ValueError(
+                        f"input_shape option should be a tuple, not {type(options['input_shape'])}"
+                    )
+
+            else:
+                raise TypeError(
+                    f"First layer missing required option argument: 'input_shape'"
+                )
+
+        else:  # If be not the first layer then set the input shape to the output shape of the next added layer
 
             layer._set_input_shape(shape=self.layers[-1].output_shape())
 
@@ -284,12 +297,13 @@ class Net(object):
         Non-trainable params: 0
         """
 
-        options = _standardize_options(options)
+        if options is None:
+            options = {}
 
         if random_state is not None:
             np.random.seed(random_state)
 
-        if len(self.layers) > 0:
+        if self.layers:
 
             opt = OPTIMIZERS[optimizer.lower()](learning_rate, **options)
 
@@ -900,12 +914,3 @@ def _check_unknown_options(type_check: str, unknown_options: dict):
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
         warnings.warn("Unknown %s options: '%s'" % (type_check, msg))
-
-
-def _standardize_options(options: dict | None) -> dict:
-
-    if options is None:
-
-        options = {}
-
-    return options
