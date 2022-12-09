@@ -697,11 +697,6 @@ class Model(object):
 
         options = _standardize_optimize_options(options)
 
-        #% Reset default values
-        instance.setup._optimize = Optimize_SetupDT(
-            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
-        )
-
         OPTIM_FUNC[algorithm](
             instance,
             control_vector,
@@ -827,11 +822,6 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
-        )
-
-        #% Reset default values
-        instance.setup._optimize = Optimize_SetupDT(
-            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
         )
 
         res = _Bayes_computation(
@@ -1016,11 +1006,6 @@ class Model(object):
 
         options = _standardize_optimize_options(options)
 
-        #% Reset default values
-        instance.setup._optimize = Optimize_SetupDT(
-            instance.setup, instance.mesh.ng, mapping, len(jobs_fun)
-        )
-
         res = _Bayes_computation(
             instance,
             generator,
@@ -1204,11 +1189,6 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
-        )
-
-        #% Reset default values
-        instance.setup._optimize = Optimize_SetupDT(
-            instance.setup, instance.mesh.ng, njf=len(jobs_fun)
         )
 
         net = _ann_optimize(

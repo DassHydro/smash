@@ -1120,7 +1120,7 @@ END MODULE MD_VIC_OPERATOR_DIFF
 !%      [12] set1_hyper_parameters
 !%      [13] hyper_parameters_to_parameters
 MODULE MWD_PARAMETERS_DIFF
-!% only: sp, np
+!% only: sp, GNP
   USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
@@ -1606,7 +1606,7 @@ END MODULE MWD_STATES_DIFF
 !%
 !%      [1] OutputDT_initialise
 MODULE MWD_OUTPUT_DIFF
-!% only: sp, dp, lchar, np, ns
+!% only: sp
   USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
@@ -2709,8 +2709,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a_d
     a_d = 0.0_4
     a_d(:, :, 1) = parameters_d%ci(:, :)
     a(:, :, 1) = parameters%ci(:, :)
@@ -2766,8 +2766,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(PARAMETERSDT) :: parameters_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a_b
     parameters_b%lr = 0.0_4
     parameters_b%lr = parameters_b%lr + a_b(:, :, 16)
     a_b(:, :, 16) = 0.0_4
@@ -2822,7 +2822,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a
     a(:, :, 1) = parameters%ci(:, :)
     a(:, :, 2) = parameters%cp(:, :)
     a(:, :, 3) = parameters%beta(:, :)
@@ -2854,8 +2854,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a_d
     parameters_d%ci = 0.0_4
     parameters_d%ci(:, :) = a_d(:, :, 1)
     parameters%ci(:, :) = a(:, :, 1)
@@ -2889,8 +2889,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_b
     a_b = 0.0_4
     a_b(:, :, 16) = a_b(:, :, 16) + parameters_b%lr
     a_b(:, :, 7) = a_b(:, :, 7) + parameters_b%exc
@@ -2904,7 +2904,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a
     parameters%ci(:, :) = a(:, :, 1)
     parameters%cp(:, :) = a(:, :, 2)
     parameters%beta(:, :) = a(:, :, 3)
@@ -2927,10 +2927,10 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    REAL(sp), DIMENSION(np), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: a3d
+    REAL(sp), DIMENSION(gnp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a3d
     INTEGER :: i
-    DO i=1,np
+    DO i=1,gnp
       a3d(:, :, i) = a(i)
     END DO
     CALL SET3D_PARAMETERS(mesh, parameters, a3d)
@@ -2941,7 +2941,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     REAL(sp), INTENT(IN) :: a
-    REAL(sp), DIMENSION(np) :: a1d
+    REAL(sp), DIMENSION(gnp) :: a1d
     a1d(:) = a
     CALL SET1D_PARAMETERS(mesh, parameters, a1d)
   END SUBROUTINE SET0D_PARAMETERS
@@ -2970,9 +2970,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(INOUT) ::&
 &   a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(INOUT) ::&
 &   a_d
     a_d = 0.0_4
     a_d(:, :, 1) = hyper_parameters_d%ci(:, :)
@@ -3033,9 +3033,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
     TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(INOUT) ::&
 &   a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(INOUT) ::&
 &   a_b
     hyper_parameters_b%lr = 0.0_4
     hyper_parameters_b%lr = hyper_parameters_b%lr + a_b(:, :, 16)
@@ -3090,7 +3090,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(INOUT) ::&
 &   a
     a(:, :, 1) = hyper_parameters%ci(:, :)
     a(:, :, 2) = hyper_parameters%cp(:, :)
@@ -3114,7 +3114,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp), INTENT(IN) :: a
     hyper_parameters%ci(:, :) = a(:, :, 1)
     hyper_parameters%cp(:, :) = a(:, :, 2)
     hyper_parameters%beta(:, :) = a(:, :, 3)
@@ -3137,10 +3137,10 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
-    REAL(sp), DIMENSION(np), INTENT(IN) :: a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: a3d
+    REAL(sp), DIMENSION(gnp), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: a3d
     INTEGER :: i
-    DO i=1,np
+    DO i=1,gnp
       a3d(:, :, i) = a(i)
     END DO
     CALL SET3D_HYPER_PARAMETERS(setup, hyper_parameters, a3d)
@@ -3151,7 +3151,7 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_PARAMETERSDT), INTENT(INOUT) :: hyper_parameters
     REAL(sp), INTENT(IN) :: a
-    REAL(sp), DIMENSION(np) :: a1d
+    REAL(sp), DIMENSION(gnp) :: a1d
     a1d(:) = a
     CALL SET1D_HYPER_PARAMETERS(setup, hyper_parameters, a1d)
   END SUBROUTINE SET0D_HYPER_PARAMETERS
@@ -3188,12 +3188,13 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: &
 &   hyper_parameters_matrix
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: &
 &   hyper_parameters_matrix_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: &
+&   parameters_matrix_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_d
     INTEGER :: i, j
@@ -3211,7 +3212,7 @@ CONTAINS
     b_d = 0.0_4
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
+    DO i=1,gnp
       parameters_matrix_d(:, :, i) = hyper_parameters_matrix_d(1, 1, i)
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
@@ -3284,12 +3285,13 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: &
 &   hyper_parameters_matrix
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: &
 &   hyper_parameters_matrix_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: &
+&   parameters_matrix_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_b
     INTEGER :: i, j
@@ -3303,7 +3305,7 @@ CONTAINS
 &                       hyper_parameters_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
+    DO i=1,gnp
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
@@ -3333,7 +3335,7 @@ CONTAINS
     hyper_parameters_matrix_b = 0.0_4
     a_b = 0.0_4
     b_b = 0.0_4
-    DO i=np,1,-1
+    DO i=gnp,1,-1
       temp = EXP(-parameters_matrix(:, :, i)) + 1._sp
       parameters_matrix_b(:, :, i) = EXP(-parameters_matrix(:, :, i))*(&
 &       setup%optimize%ub_parameters(i)-setup%optimize%lb_parameters(i))&
@@ -3384,9 +3386,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, np) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gnp) :: &
 &   hyper_parameters_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
@@ -3397,7 +3399,7 @@ CONTAINS
     CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,np
+    DO i=1,gnp
       parameters_matrix(:, :, i) = hyper_parameters_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
@@ -3490,8 +3492,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
     TYPE(STATESDT), INTENT(IN) :: states_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a_d
     a_d = 0.0_4
     a_d(:, :, 1) = states_d%hi(:, :)
     a(:, :, 1) = states%hi(:, :)
@@ -3525,8 +3527,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
     TYPE(STATESDT) :: states_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a_b
     states_b%hlr = 0.0_4
     states_b%hlr = states_b%hlr + a_b(:, :, 8)
     a_b(:, :, 8) = 0.0_4
@@ -3557,7 +3559,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(IN) :: states
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(INOUT) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a
     a(:, :, 1) = states%hi(:, :)
     a(:, :, 2) = states%hp(:, :)
     a(:, :, 3) = states%hft(:, :)
@@ -3579,8 +3581,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a_d
     states_d%hi = 0.0_4
     states_d%hi(:, :) = a_d(:, :, 1)
     states%hi(:, :) = a(:, :, 1)
@@ -3609,8 +3611,8 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     TYPE(STATESDT), INTENT(INOUT) :: states_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: a_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_b
     a_b = 0.0_4
     a_b(:, :, 8) = a_b(:, :, 8) + states_b%hlr
     a_b(:, :, 4) = a_b(:, :, 4) + states_b%hst
@@ -3623,7 +3625,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a
     states%hi(:, :) = a(:, :, 1)
     states%hp(:, :) = a(:, :, 2)
     states%hft(:, :) = a(:, :, 3)
@@ -3638,10 +3640,10 @@ CONTAINS
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
-    REAL(sp), DIMENSION(ns), INTENT(IN) :: a
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: a3d
+    REAL(sp), DIMENSION(gns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a3d
     INTEGER :: i
-    DO i=1,ns
+    DO i=1,gns
       a3d(:, :, i) = a(i)
     END DO
     CALL SET3D_STATES(mesh, states, a3d)
@@ -3652,7 +3654,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(STATESDT), INTENT(INOUT) :: states
     REAL(sp), INTENT(IN) :: a
-    REAL(sp), DIMENSION(ns) :: a1d
+    REAL(sp), DIMENSION(gns) :: a1d
     a1d(:) = a
     CALL SET1D_STATES(mesh, states, a1d)
   END SUBROUTINE SET0D_STATES
@@ -3671,9 +3673,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(INOUT) ::&
 &   a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(INOUT) ::&
 &   a_d
     a_d = 0.0_4
     a_d(:, :, 1) = hyper_states_d%hi(:, :)
@@ -3708,9 +3710,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
     TYPE(HYPER_STATESDT) :: hyper_states_b
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(INOUT) ::&
 &   a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(INOUT) ::&
 &   a_b
     hyper_states_b%hlr = 0.0_4
     hyper_states_b%hlr = hyper_states_b%hlr + a_b(:, :, 8)
@@ -3741,7 +3743,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(INOUT) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(INOUT) ::&
 &   a
     a(:, :, 1) = hyper_states%hi(:, :)
     a(:, :, 2) = hyper_states%hp(:, :)
@@ -3757,7 +3759,7 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns), INTENT(IN) :: a
     hyper_states%hi(:, :) = a(:, :, 1)
     hyper_states%hp(:, :) = a(:, :, 2)
     hyper_states%hft(:, :) = a(:, :, 3)
@@ -3772,10 +3774,10 @@ CONTAINS
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
-    REAL(sp), DIMENSION(ns), INTENT(IN) :: a
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: a3d
+    REAL(sp), DIMENSION(gns), INTENT(IN) :: a
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: a3d
     INTEGER :: i
-    DO i=1,ns
+    DO i=1,gns
       a3d(:, :, i) = a(i)
     END DO
     CALL SET3D_HYPER_STATES(setup, hyper_states, a3d)
@@ -3786,7 +3788,7 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states
     REAL(sp), INTENT(IN) :: a
-    REAL(sp), DIMENSION(ns) :: a1d
+    REAL(sp), DIMENSION(gns) :: a1d
     a1d(:) = a
     CALL SET1D_HYPER_STATES(setup, hyper_states, a1d)
   END SUBROUTINE SET0D_HYPER_STATES
@@ -3811,12 +3813,12 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: &
 &   hyper_states_matrix
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: &
 &   hyper_states_matrix_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_d
     INTEGER :: i, j
@@ -3833,7 +3835,7 @@ CONTAINS
     b_d = 0.0_4
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
+    DO i=1,gns
       states_matrix_d(:, :, i) = hyper_states_matrix_d(1, 1, i)
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
@@ -3892,12 +3894,12 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: &
 &   hyper_states_matrix
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: &
 &   hyper_states_matrix_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: dpb_b
     INTEGER :: i, j
@@ -3910,7 +3912,7 @@ CONTAINS
     CALL GET_HYPER_STATES(setup, hyper_states, hyper_states_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
+    DO i=1,gns
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
@@ -3940,7 +3942,7 @@ CONTAINS
     hyper_states_matrix_b = 0.0_4
     a_b = 0.0_4
     b_b = 0.0_4
-    DO i=ns,1,-1
+    DO i=gns,1,-1
       temp = EXP(-states_matrix(:, :, i)) + 1._sp
       states_matrix_b(:, :, i) = EXP(-states_matrix(:, :, i))*(setup%&
 &       optimize%ub_states(i)-setup%optimize%lb_states(i))*&
@@ -3990,9 +3992,9 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, ns) :: &
+    REAL(sp), DIMENSION(setup%optimize%nhyper, 1, gns) :: &
 &   hyper_states_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: d, dpb
     INTEGER :: i, j
     REAL(sp) :: a, b
@@ -4002,7 +4004,7 @@ CONTAINS
     CALL GET_STATES(mesh, states, states_matrix)
 !% Add mask later here
 !% 1 in dim2 will be replace with k and apply where on Omega
-    DO i=1,ns
+    DO i=1,gns
       states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
       DO j=1,setup%nd
         d = input_data%descriptor(:, :, j)
@@ -4043,7 +4045,7 @@ END MODULE MWD_STATES_MANIPULATION_DIFF
 !%      [9]  logarithmic
 !%      [10] reg_prior
 MODULE MWD_COST_DIFF
-!% only: sp, dp, lchar, np, ns
+!% only: sp, dp, lchar, GNP, GNS
   USE MD_CONSTANT
 !% only: SetupDT
   USE MWD_SETUP
@@ -4398,12 +4400,13 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: jreg_d
     REAL(sp) :: parameters_jreg, states_jreg
     REAL(sp) :: parameters_jreg_d, states_jreg_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix, &
-&   parameters_bgd_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix&
+&   , parameters_bgd_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: &
+&   parameters_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_d
     CALL GET_PARAMETERS_D(mesh, parameters, parameters_d, &
 &                   parameters_matrix, parameters_matrix_d)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
@@ -4413,9 +4416,9 @@ CONTAINS
     SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
-      parameters_jreg_d = REG_PRIOR_D(mesh, np, parameters_matrix, &
+      parameters_jreg_d = REG_PRIOR_D(mesh, gnp, parameters_matrix, &
 &       parameters_matrix_d, parameters_bgd_matrix, parameters_jreg)
-      states_jreg_d = REG_PRIOR_D(mesh, ns, states_matrix, &
+      states_jreg_d = REG_PRIOR_D(mesh, gns, states_matrix, &
 &       states_matrix_d, states_bgd_matrix, states_jreg)
     CASE DEFAULT
       parameters_jreg_d = 0.0_4
@@ -4456,12 +4459,13 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: jreg_b
     REAL(sp) :: parameters_jreg, states_jreg
     REAL(sp) :: parameters_jreg_b, states_jreg_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix, &
-&   parameters_bgd_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix&
+&   , parameters_bgd_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: &
+&   parameters_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_b
     REAL(sp) :: res
     REAL(sp) :: res_b
     REAL(sp) :: res0
@@ -4474,9 +4478,9 @@ CONTAINS
     SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
-      res = REG_PRIOR(mesh, np, parameters_matrix, parameters_bgd_matrix&
-&       )
-      res0 = REG_PRIOR(mesh, ns, states_matrix, states_bgd_matrix)
+      res = REG_PRIOR(mesh, gnp, parameters_matrix, &
+&       parameters_bgd_matrix)
+      res0 = REG_PRIOR(mesh, gns, states_matrix, states_bgd_matrix)
       CALL PUSHCONTROL1B(1)
     CASE DEFAULT
       CALL PUSHCONTROL1B(0)
@@ -4490,11 +4494,11 @@ CONTAINS
     ELSE
       states_matrix_b = 0.0_4
       res_b0 = states_jreg_b
-      CALL REG_PRIOR_B(mesh, ns, states_matrix, states_matrix_b, &
+      CALL REG_PRIOR_B(mesh, gns, states_matrix, states_matrix_b, &
 &                states_bgd_matrix, res_b0)
       parameters_matrix_b = 0.0_4
       res_b = parameters_jreg_b
-      CALL REG_PRIOR_B(mesh, np, parameters_matrix, parameters_matrix_b&
+      CALL REG_PRIOR_B(mesh, gnp, parameters_matrix, parameters_matrix_b&
 &                , parameters_bgd_matrix, res_b)
     END IF
     CALL GET_STATES_B(mesh, states, states_b, states_matrix, &
@@ -4513,9 +4517,9 @@ CONTAINS
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp) :: parameters_jreg, states_jreg
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, np) :: parameters_matrix, &
-&   parameters_bgd_matrix
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, ns) :: states_matrix, &
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: parameters_matrix&
+&   , parameters_bgd_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
     CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
@@ -4527,10 +4531,10 @@ CONTAINS
     SELECT CASE  (setup%optimize%jreg_fun) 
     CASE ('prior') 
 !% Normalize prior between parameters and states
-      parameters_jreg = REG_PRIOR(mesh, np, parameters_matrix, &
+      parameters_jreg = REG_PRIOR(mesh, gnp, parameters_matrix, &
 &       parameters_bgd_matrix)
-      states_jreg = REG_PRIOR(mesh, ns, states_matrix, states_bgd_matrix&
-&       )
+      states_jreg = REG_PRIOR(mesh, gns, states_matrix, &
+&       states_bgd_matrix)
     END SELECT
     jreg = parameters_jreg + states_jreg
   END SUBROUTINE COMPUTE_JREG

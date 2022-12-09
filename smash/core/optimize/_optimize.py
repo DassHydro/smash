@@ -379,7 +379,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
     ret = []
 
-    ret.append(f"Mapping: '{mapping}' {mapping_eq}")
+    ret.append(f"{sp4}Mapping: '{mapping}' {mapping_eq}")
     ret.append(f"Algorithm: '{algorithm}'")
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
