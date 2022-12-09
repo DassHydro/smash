@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.core._constant import OPTIM_FUNC
 
-from smash.solver._mwd_setup import SetupDT, Optimize_SetupDT
+from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT

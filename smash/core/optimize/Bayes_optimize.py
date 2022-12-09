@@ -227,7 +227,7 @@ def _bayes_message(
 
     ret = []
 
-    ret.append(f"Parameters/States set size: {n_set}")
+    ret.append(f"{sp4}Parameters/States set size: {n_set}")
     ret.append(f"Sample generator: {generator}")
     ret.append(f"Spatially uniform prior parameters/states: {backg_sol}")
 
