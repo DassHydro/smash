@@ -138,7 +138,7 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
 
 
 def _training_message(
-    instance: Model, control_vector: np.ndarray, n_train: int, opt: str, lr: float
+    instance: Model, control_vector: np.ndarray, nx: int, opt: str, lr: float
 ):
 
     sp4 = " " * 4
@@ -160,15 +160,15 @@ def _training_message(
 
     ret = []
 
-    ret.append(f"Mapping: 'ANN' {mapping_eq}")
+    ret.append(f"{sp4}Mapping: 'ANN' {mapping_eq}")
 
-    ret.append(f"Training set size: {n_train}")
     ret.append(f"Optimizer: {opt}")
     ret.append(f"Learning rate: {lr}")
 
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
 
+    ret.append(f"Nx: {nx}")
     ret.append(f"Np: {len_parameters} [ {' '.join(parameters)} ]")
     ret.append(f"Ns: {len_states} [ {' '.join(states)} ]")
     ret.append(f"Ng: {len(code)} [ {' '.join(code)} ]")
