@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.core._constant import KERNEL_INITIALIZER
+
 from smash.solver._mw_forward import forward_b
 
 from typing import TYPE_CHECKING
@@ -106,11 +108,12 @@ class Net(object):
 
         >>> layer_1 = net.layers[0]
         >>> layer_1.<TAB>
-        layer_1.bias           layer_1.output_shape(
-        layer_1.input_shape    layer_1.n_params(
-        layer_1.layer_input    layer_1.trainable
-        layer_1.layer_name(    layer_1.weight
-        layer_1.neurons
+        layer_1.bias                layer_1.neurons
+        layer_1.bias_initializer    layer_1.n_params(
+        layer_1.input_shape         layer_1.output_shape(
+        layer_1.kernel_initializer  layer_1.trainable
+        layer_1.layer_input         layer_1.weight
+        layer_1.layer_name(
 
         >>> layer_2 = net.layers[1]
         >>> layer_2.<TAB>
@@ -311,7 +314,7 @@ class Net(object):
 
                 if hasattr(layer, "_initialize"):
 
-                    layer._initialize(optimizer=opt)
+                    layer._initialize(opt)
 
             self._compiled = True
             self._optimizer = optimizer
@@ -400,10 +403,9 @@ class Net(object):
 
                     for layer in self.layers:
 
-                        if hasattr(layer, "weight"):
-                            layer._weight = np.copy(layer.weight)
+                        if hasattr(layer, "_initialize"):
 
-                        if hasattr(layer, "bias"):
+                            layer._weight = np.copy(layer.weight)
                             layer._bias = np.copy(layer.bias)
 
             # Backpropagation
@@ -425,10 +427,9 @@ class Net(object):
 
             for layer in self.layers:
 
-                if hasattr(layer, "weight"):
-                    layer.weight = np.copy(layer._weight)
+                if hasattr(layer, "_initialize"):
 
-                if hasattr(layer, "bias"):
+                    layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
@@ -543,43 +544,135 @@ class Scale(Layer):
         return self.input_shape
 
 
+def _kernel_initialization(layer: Layer, attr: str):
+
+    fin = layer.input_shape[0]
+    fout = layer.neurons
+
+    if attr == "bias":
+        initializer = layer.bias_initializer
+        shape = (1, fout)
+
+    else:
+        initializer = layer.kernel_initializer
+        shape = (fin, fout)
+
+    split_inizer = initializer.split("_")
+
+    if split_inizer[-1] == "uniform":
+
+        if split_inizer[0] == "glorot":
+
+            limit = np.sqrt(6 / (fin + fout))
+
+        elif split_inizer[0] == "he":
+
+            limit = np.sqrt(6 / fin)
+
+        else:
+            limit = 1 / np.sqrt(fin)
+
+        setattr(layer, attr, np.random.uniform(-limit, limit, shape))
+
+    elif split_inizer[-1] == "normal":
+
+        if split_inizer[0] == "glorot":
+
+            std = np.sqrt(2 / (fin + fout))
+
+        elif split_inizer[0] == "he":
+
+            std = np.sqrt(2 / fin)
+
+        else:
+            std = 0.01
+
+        setattr(layer, attr, np.random.normal(0, std, shape))
+
+    else:
+        setattr(layer, attr, np.zeros(shape))
+
+
 class Dense(Layer):
     """A fully-connected NN layer.
     Parameters:
     -----------
     neurons: int
         The number of neurons in the layer.
-    input_shape: tuple
+
+    input_shape: tuple, default None
         The expected input shape of the layer. For dense layers a single digit specifying
         the number of features of the input. Must be specified if it is the first layer in
         the network.
+
+    kernel_initializer : str, default glorot_uniform
+        Weight initialization method. Should be one of
+
+        - 'uniform'
+        - 'glorot_uniform'
+        - 'he_uniform'
+        - 'normal'
+        - 'glorot_normal'
+        - 'he_normal'
+        - 'zeros'
+
+    bias_initializer : str, default zeros
+        Bias initialization method. Should be one of
+
+        - 'uniform'
+        - 'glorot_uniform'
+        - 'he_uniform'
+        - 'normal'
+        - 'glorot_normal'
+        - 'he_normal'
+        - 'zeros'
     """
 
     def __init__(
-        self, neurons: int, input_shape: tuple | None = None, **unknown_options
+        self,
+        neurons: int,
+        input_shape: tuple | None = None,
+        kernel_initializer: str = "glorot_uniform",
+        bias_initializer: str = "zeros",
+        **unknown_options,
     ):
 
         _check_unknown_options("Dense Layer", unknown_options)
 
         self.layer_input = None
+
         self.input_shape = input_shape
+
         self.neurons = neurons
+
         self.trainable = True
+
         self.weight = None
+
         self.bias = None
 
-    def _initialize(self, optimizer: function):
-        # Initialize weights and biases
-        limit = 1 / np.sqrt(self.input_shape[0])
+        self.kernel_initializer = kernel_initializer.lower()
 
-        self.weight = np.random.uniform(
-            -limit, limit, (self.input_shape[0], self.neurons)
-        )
-        self.bias = np.zeros((1, self.neurons))
+        if self.kernel_initializer not in KERNEL_INITIALIZER:
+            raise ValueError(
+                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {KERNEL_INITIALIZER}"
+            )
+
+        self.bias_initializer = bias_initializer.lower()
+
+        if self.bias_initializer not in KERNEL_INITIALIZER:
+            raise ValueError(
+                f"Unknown bias initializer: {self.bias_initializer}. Choices {KERNEL_INITIALIZER}"
+            )
+
+    def _initialize(self, optimizer: function):
+
+        # Initialize weights and biases
+        _kernel_initialization(self, "weight")
+        _kernel_initialization(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
-
         self._bias_opt = copy.copy(optimizer)
 
     def n_params(self):

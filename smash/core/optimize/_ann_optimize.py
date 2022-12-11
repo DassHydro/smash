@@ -82,12 +82,12 @@ def _ann_optimize(
             np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
         )
 
-    net = _set_graph(net, nd, len(control_vector), bounds)
+    # set graph if not defined
+    nx = len(x_train)
+    net = _set_graph(net, nx, nd, len(control_vector), bounds)
 
     if verbose:
-        _training_message(
-            instance, control_vector, len(x_train), net._optimizer, net._learning_rate
-        )
+        _training_message(instance, control_vector, nx, net)
 
     # train the network
     net._fit(
@@ -106,19 +106,48 @@ def _ann_optimize(
     return net
 
 
-def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
+def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarray):
 
-    if net is None:  # set a default graph
+    if net is None:  # auto-graph
 
         net = Net()
 
-        net.add(layer="dense", options={"input_shape": (nd,), "neurons": 16})
-        net.add(layer="activation", options={"name": "relu"})
+        n_hidden_layers = max(round(ntrain / (6 * (nd + ncv))), 1)
 
-        net.add(layer="dense", options={"neurons": 8})
-        net.add(layer="activation", options={"name": "relu"})
+        n_neurons = round(2 / 3 * nd + ncv)
 
-        net.add(layer="dense", options={"neurons": ncv})
+        for i in range(n_hidden_layers):
+
+            if i == 0:
+
+                net.add(
+                    layer="dense",
+                    options={
+                        "input_shape": (nd,),
+                        "neurons": n_neurons,
+                        "kernel_initializer": "he_uniform",
+                    },
+                )
+
+            else:
+
+                n_neurons_i = max(
+                    round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
+                )
+                net.add(
+                    layer="dense",
+                    options={
+                        "neurons": n_neurons_i,
+                        "kernel_initializer": "he_uniform",
+                    },
+                )
+
+            net.add(layer="activation", options={"name": "relu"})
+
+        net.add(
+            layer="dense",
+            options={"neurons": ncv, "kernel_initializer": "glorot_uniform"},
+        )
         net.add(layer="activation", options={"name": "sigmoid"})
 
         net.add(
@@ -126,7 +155,7 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
             options={"bounds": bounds},
         )
 
-        net.compile()
+        net.compile(optimizer="adam", learning_rate=0.001)
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
@@ -138,7 +167,10 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
 
 
 def _training_message(
-    instance: Model, control_vector: np.ndarray, nx: int, opt: str, lr: float
+    instance: Model,
+    control_vector: np.ndarray,
+    nx: int,
+    net: Net,
 ):
 
     sp4 = " " * 4
@@ -162,8 +194,8 @@ def _training_message(
 
     ret.append(f"{sp4}Mapping: 'ANN' {mapping_eq}")
 
-    ret.append(f"Optimizer: {opt}")
-    ret.append(f"Learning rate: {lr}")
+    ret.append(f"Optimizer: {net._optimizer}")
+    ret.append(f"Learning rate: {net._learning_rate}")
 
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")

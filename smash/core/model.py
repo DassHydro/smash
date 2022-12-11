@@ -1056,7 +1056,7 @@ class Model(object):
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
         validation: float | None = None,
-        epochs: int = 500,
+        epochs: int = 800,
         early_stopping: bool = False,
         verbose: bool = True,
         inplace: bool = False,
@@ -1088,7 +1088,7 @@ class Model(object):
             .. note::
                 If not given, the function will be computed on the whole time series (simulated discharge).
 
-        epochs : int, default 500
+        epochs : int, default 800
             The number of epochs to train the network.
 
         early_stopping : bool, default False
@@ -1135,16 +1135,19 @@ class Model(object):
         +----------------------+--------------+---------+
         | Layer (type)         | Output Shape | Param # |
         +----------------------+--------------+---------+
-        | Dense                | (16,)        | 48      |
-        | Activation (ReLU)    | (16,)        | 0       |
-        | Dense                | (8,)         | 136     |
-        | Activation (ReLU)    | (8,)         | 0       |
-        | Dense                | (4,)         | 36      |
+        | Dense                | (5,)         | 15      |
+        | Activation (ReLU)    | (5,)         | 0       |
+        | Dense                | (5,)         | 30      |
+        | Activation (ReLU)    | (5,)         | 0       |
+        | Dense                | (4,)         | 24      |
+        | Activation (ReLU)    | (4,)         | 0       |
+        ...
+        | Dense                | (4,)         | 20      |
         | Activation (Sigmoid) | (4,)         | 0       |
         | Scale (MinMaxScale)  | (4,)         | 0       |
         +----------------------+--------------+---------+
-        Total params: 220
-        Trainable params: 220
+        Total params: 249
+        Trainable params: 249
         Non-trainable params: 0
 
         Access to some training information
