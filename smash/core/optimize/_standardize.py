@@ -637,3 +637,93 @@ def _standardize_bayes_k(
         raise TypeError("k argument must be numerical or list-like object")
 
     return k
+
+
+def _standardize_bounds_ann(
+    bounds: list | tuple | set | np.ndarray, control_vector: np.ndarray, setup: SetupDT
+) -> np.ndarray:
+
+    #% Default values
+    if bounds is None:
+
+        bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
+
+        for i, name in enumerate(control_vector):
+
+            if name in setup._parameters_name:
+
+                ind = np.argwhere(setup._parameters_name == name)
+
+                bounds[i, :] = (
+                    setup._optimize.lb_parameters[ind].item(),
+                    setup._optimize.ub_parameters[ind].item(),
+                )
+
+            elif name in setup._states_name:
+
+                ind = np.argwhere(setup._states_name == name)
+
+                bounds[i, :] = (
+                    setup._optimize.lb_states[ind].item(),
+                    setup._optimize.ub_states[ind].item(),
+                )
+
+    else:
+
+        if isinstance(bounds, set):
+
+            bounds = np.array(list(bounds))
+
+        elif isinstance(bounds, (list, tuple)):
+
+            bounds = np.array(bounds)
+
+        else:
+
+            raise TypeError(f"bounds argument must be list-like object")
+
+        if bounds.shape[0] != control_vector.size:
+
+            raise ValueError(
+                f"Inconsistent size between control_vector ({control_vector.size}) and bounds ({bounds.shape[0]})"
+            )
+
+        for i, b in enumerate(bounds):
+
+            if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
+
+                raise ValueError(
+                    f"bounds values for '{control_vector[i]}' must be list-like object of length 2"
+                )
+
+            if b[0] is None:
+
+                if control_vector[i] in setup._parameters_name:
+
+                    ind = np.argwhere(setup._parameters_name == control_vector[i])
+                    b[0] = setup._optimize.lb_parameters[ind].item()
+
+                else:
+
+                    ind = np.argwhere(setup._states_name == control_vector[i])
+                    b[0] = setup._optimize.lb_states[ind].item()
+
+            if b[1] is None:
+
+                if control_vector[i] in setup._parameters_name:
+
+                    ind = np.argwhere(setup._parameters_name == control_vector[i])
+                    b[1] = setup._optimize.ub_parameters[ind].item()
+
+                else:
+
+                    ind = np.argwhere(setup._states_name == control_vector[i])
+                    b[1] = setup._optimize.ub_states[ind].item()
+
+            if b[0] >= b[1]:
+
+                raise ValueError(
+                    f"bounds values for '{control_vector[i]}' is invalid lower bound ({b[0]}) is greater than or equal to upper bound ({b[1]})"
+                )
+
+    return bounds

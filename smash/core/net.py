@@ -532,14 +532,16 @@ class Activation(Layer):
 class Scale(Layer):
     """Scale function for outputs from the last layer w.r.t. parameters bounds."""
 
-    def __init__(self, bounds: list | tuple, **unknown_options):
+    def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
 
         _check_unknown_options("Scale Layer", unknown_options)
 
         self.input_shape = None
 
         self.scale_name = "minmaxscale"
-        self._scale_func = MinMaxScale(bounds)
+
+        self._scale_func = MinMaxScale(np.array(bounds))
+
         self.trainable = True
 
     def layer_name(self):
@@ -860,15 +862,17 @@ ACTIVATION_FUNC = {
 
 
 class MinMaxScale:
-    def __init__(self, bounds):
+    def __init__(self, bounds: np.ndarray):
+
         self._bounds = bounds
+
         self.lower = np.array([b[0] for b in bounds])
         self.upper = np.array([b[1] for b in bounds])
 
-    def __call__(self, x):
+    def __call__(self, x: np.ndarray):
         return self.lower + x * (self.upper - self.lower)
 
-    def gradient(self, x):
+    def gradient(self, x: np.ndarray):
         return self.upper - self.lower
 
 

@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
+import warnings
 
 
 def _ann_optimize(
@@ -84,7 +85,7 @@ def _ann_optimize(
 
     # set graph if not defined
     nx = len(x_train)
-    net = _set_graph(net, nx, nd, len(control_vector), bounds)
+    net = _set_graph(net, nx, nd, control_vector, bounds)
 
     if verbose:
         _training_message(instance, control_vector, nx, net)
@@ -106,7 +107,15 @@ def _ann_optimize(
     return net
 
 
-def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarray):
+def _set_graph(
+    net: Net | None,
+    ntrain: int,
+    nd: int,
+    control_vector: np.ndarray,
+    bounds: np.ndarray,
+):
+
+    ncv = control_vector.size
 
     if net is None:  # auto-graph
 
@@ -191,6 +200,40 @@ def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarr
 
     elif not net.layers:
         raise ValueError(f"The graph has not been set yet")
+
+    else:
+        #% check input shape
+        ips = net.layers[0].input_shape
+
+        if ips[0] != nd:
+
+            raise ValueError(
+                f"Inconsistent size between input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+            )
+
+        #% check output shape
+        ios = net.layers[-1].output_shape()
+
+        if ios[0] != ncv:
+
+            raise ValueError(
+                f"Inconsistent size between output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
+            )
+
+        #% check bounds constraints
+        if hasattr(net.layers[-1], "_scale_func"):
+
+            net_bounds = net.layers[-1]._scale_func._bounds
+
+            diff = np.not_equal(net_bounds, bounds)
+
+            for i, name in enumerate(control_vector):
+
+                if diff[i].any():
+
+                    warnings.warn(
+                        f"Inconsistent value(s) between scaling parameters ({net_bounds[i]}) and the bound constraints of control vector {name} ({bounds[i]}). Use get_bound_constraints method of Model instance to properly create scaling layer"
+                    )
 
     return net
 
