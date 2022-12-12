@@ -112,37 +112,66 @@ def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarr
 
         net = Net()
 
-        n_hidden_layers = max(round(ntrain / (6 * (nd + ncv))), 1)
+        #% Net 1 =======================
 
-        n_neurons = round(2 / 3 * nd + ncv)
+        # n_hidden_layers = max(round(ntrain / (9 * (nd + ncv))), 1)
 
-        for i in range(n_hidden_layers):
+        # n_neurons = round(2 / 3 * nd + ncv)
 
-            if i == 0:
+        # for i in range(n_hidden_layers):
 
-                net.add(
-                    layer="dense",
-                    options={
-                        "input_shape": (nd,),
-                        "neurons": n_neurons,
-                        "kernel_initializer": "he_uniform",
-                    },
-                )
+        #     if i == 0:
 
-            else:
+        #         net.add(
+        #             layer="dense",
+        #             options={
+        #                 "input_shape": (nd,),
+        #                 "neurons": n_neurons,
+        #                 "kernel_initializer": "he_uniform",
+        #             },
+        #         )
 
-                n_neurons_i = max(
-                    round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
-                )
-                net.add(
-                    layer="dense",
-                    options={
-                        "neurons": n_neurons_i,
-                        "kernel_initializer": "he_uniform",
-                    },
-                )
+        #     else:
 
-            net.add(layer="activation", options={"name": "relu"})
+        #         n_neurons_i = max(
+        #             round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
+        #         )
+        #         net.add(
+        #             layer="dense",
+        #             options={
+        #                 "neurons": n_neurons_i,
+        #                 "kernel_initializer": "he_uniform",
+        #             },
+        #         )
+
+        #     net.add(layer="activation", options={"name": "relu"})
+
+        #% Net 2 =======================
+
+        n_neurons = round(np.sqrt(ntrain * nd) * 2/3)
+
+        net.add(
+            layer="dense",
+            options={
+                "input_shape": (nd,),
+                "neurons": n_neurons,
+                "kernel_initializer": "he_uniform",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+        # net.add(layer="dropout", options={"drop_rate": .1})
+
+        net.add(
+            layer="dense",
+            options={
+                "neurons": round(n_neurons / 2),
+                "kernel_initializer": "he_normal",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+        # net.add(layer="dropout", options={"drop_rate": .2})
+
+        #% =============================
 
         net.add(
             layer="dense",

@@ -102,6 +102,7 @@ class Net(object):
         >>> net = smash.Net()
         >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 32})
         >>> net.add(layer="activation", options={"name": "sigmoid"})
+        >>> net.add(layer="dropout", options={"drop_rate": .2})
         >>> net.compile()
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods of each Layer object:
@@ -120,6 +121,12 @@ class Net(object):
         layer_2.activation_name  layer_2.output_shape(
         layer_2.input_shape      layer_2.n_params(
         layer_2.layer_name(      layer_2.trainable
+
+        >>> layer_3 = net.layers[-1]
+        >>> layer_3.<TAB>
+        layer_3.drop_rate      layer_3.n_params(
+        layer_3.input_shape    layer_3.output_shape(
+        layer_3.layer_name(    layer_3.trainable
         """
 
         return self._layers
@@ -159,6 +166,7 @@ class Net(object):
             - 'dense'
             - 'activation'
             - 'scale'
+            - 'dropout'
 
         options : dict
             A dictionary to configure layers added to the network.
@@ -216,7 +224,7 @@ class Net(object):
         Non-trainable params: 0
         """
 
-        layer = LAYERS[layer](**options)
+        layer = LAYERS[layer.lower()](**options)
 
         if not self.layers:  # Check options if first layer
 
@@ -345,7 +353,7 @@ class Net(object):
             List of booleans with a length of the total number of the network's layers.
 
             .. note::
-                Activation and scaling functions do not have any weights and biases,
+                Dropout, Activation and Scaling functions do not have any weights and biases,
                 so it is not important to set trainable weights at these layers.
         """
 
@@ -501,6 +509,8 @@ class Activation(Layer):
 
         _check_unknown_options("Activation Layer", unknown_options)
 
+        self.input_shape = None
+
         self.activation_name = name
         self._activation_func = ACTIVATION_FUNC[name.lower()]()
         self.trainable = True
@@ -525,6 +535,8 @@ class Scale(Layer):
     def __init__(self, bounds: list | tuple, **unknown_options):
 
         _check_unknown_options("Scale Layer", unknown_options)
+
+        self.input_shape = None
 
         self.scale_name = "minmaxscale"
         self._scale_func = MinMaxScale(bounds)
@@ -705,10 +717,50 @@ class Dense(Layer):
         return (self.neurons,)
 
 
+class Dropout(Layer):
+    """Randomly sets the output of the previous layer
+    to be zero with a drop rate.
+
+    Parameters:
+    -----------
+    drop_rate: float
+        Drop rate.
+    """
+    def __init__(self, drop_rate: float, **unknown_options):
+
+        _check_unknown_options("Dropout Layer", unknown_options)
+
+        self.drop_rate = drop_rate
+
+        self._mask = None
+
+        self.input_shape = None
+
+        self.trainable = True
+
+    def _forward_pass(self, x: np.ndarray, training: bool = True):
+
+        c = (1 - self.drop_rate)
+
+        if training:
+
+            self._mask = np.random.uniform(size = x.shape) > self.drop_rate
+            c = self._mask
+
+        return x * c
+
+    def _backward_pass(self, accum_grad: np.ndarray):
+        return accum_grad * self._mask
+
+    def output_shape(self):
+        return self.input_shape
+
+
 LAYERS = {
     "dense": Dense,
     "activation": Activation,
     "scale": Scale,
+    "dropout": Dropout,
 }
 
 
