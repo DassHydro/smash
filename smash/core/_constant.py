@@ -103,7 +103,7 @@ OPTIM_FUNC = {
 ### ANN OPTIMIZE ###
 ####################
 
-KERNEL_INITIALIZER = {
+WB_INITIALIZER = {
     "uniform",
     "glorot_uniform",
     "he_uniform",

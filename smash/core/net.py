@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core._constant import KERNEL_INITIALIZER
+from smash.core._constant import WB_INITIALIZER
 
 from smash.solver._mw_forward import forward_b
 
@@ -558,7 +558,7 @@ class Scale(Layer):
         return self.input_shape
 
 
-def _kernel_initialization(layer: Layer, attr: str):
+def _wb_initialization(layer: Layer, attr: str):
 
     fin = layer.input_shape[0]
     fout = layer.neurons
@@ -667,23 +667,23 @@ class Dense(Layer):
 
         self.kernel_initializer = kernel_initializer.lower()
 
-        if self.kernel_initializer not in KERNEL_INITIALIZER:
+        if self.kernel_initializer not in WB_INITIALIZER:
             raise ValueError(
-                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {KERNEL_INITIALIZER}"
+                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {WB_INITIALIZER}"
             )
 
         self.bias_initializer = bias_initializer.lower()
 
-        if self.bias_initializer not in KERNEL_INITIALIZER:
+        if self.bias_initializer not in WB_INITIALIZER:
             raise ValueError(
-                f"Unknown bias initializer: {self.bias_initializer}. Choices {KERNEL_INITIALIZER}"
+                f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}"
             )
 
     def _initialize(self, optimizer: function):
 
         # Initialize weights and biases
-        _kernel_initialization(self, "weight")
-        _kernel_initialization(self, "bias")
+        _wb_initialization(self, "weight")
+        _wb_initialization(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
