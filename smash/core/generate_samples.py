@@ -75,6 +75,8 @@ def generate_samples(
         .. math::
                 std = \\frac{u - l}{coef\_std}
 
+        where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
+
         .. note::
             If not given, a default value for this coefficient will be assigned to define the standard deviation:
 

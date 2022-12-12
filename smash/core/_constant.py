@@ -98,3 +98,17 @@ OPTIM_FUNC = {
     "l-bfgs-b": _optimize_lbfgsb,
     "nelder-mead": _optimize_nelder_mead,
 }  #% TODO add nsga
+
+
+### ANN OPTIMIZE ###
+####################
+
+WB_INITIALIZER = {
+    "uniform",
+    "glorot_uniform",
+    "he_uniform",
+    "normal",
+    "glorot_normal",
+    "he_normal",
+    "zeros",
+}

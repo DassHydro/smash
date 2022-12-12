@@ -11,6 +11,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
+import warnings
 
 
 def _ann_optimize(
@@ -82,12 +83,12 @@ def _ann_optimize(
             np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
         )
 
-    net = _set_graph(net, nd, len(control_vector), bounds)
+    # set graph if not defined
+    nx = len(x_train)
+    net = _set_graph(net, nx, nd, control_vector, bounds)
 
     if verbose:
-        _training_message(
-            instance, control_vector, len(x_train), net._optimizer, net._learning_rate
-        )
+        _training_message(instance, control_vector, nx, net)
 
     # train the network
     net._fit(
@@ -106,19 +107,85 @@ def _ann_optimize(
     return net
 
 
-def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
+def _set_graph(
+    net: Net | None,
+    ntrain: int,
+    nd: int,
+    control_vector: np.ndarray,
+    bounds: np.ndarray,
+):
 
-    if net is None:  # set a default graph
+    ncv = control_vector.size
+
+    if net is None:  # auto-graph
 
         net = Net()
 
-        net.add(layer="dense", options={"input_shape": (nd,), "neurons": 16})
-        net.add(layer="activation", options={"name": "relu"})
+        #% Net 1 =======================
 
-        net.add(layer="dense", options={"neurons": 8})
-        net.add(layer="activation", options={"name": "relu"})
+        # n_hidden_layers = max(round(ntrain / (9 * (nd + ncv))), 1)
 
-        net.add(layer="dense", options={"neurons": ncv})
+        # n_neurons = round(2 / 3 * nd + ncv)
+
+        # for i in range(n_hidden_layers):
+
+        #     if i == 0:
+
+        #         net.add(
+        #             layer="dense",
+        #             options={
+        #                 "input_shape": (nd,),
+        #                 "neurons": n_neurons,
+        #                 "kernel_initializer": "he_uniform",
+        #             },
+        #         )
+
+        #     else:
+
+        #         n_neurons_i = max(
+        #             round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
+        #         )
+        #         net.add(
+        #             layer="dense",
+        #             options={
+        #                 "neurons": n_neurons_i,
+        #                 "kernel_initializer": "he_uniform",
+        #             },
+        #         )
+
+        #     net.add(layer="activation", options={"name": "relu"})
+
+        #% Net 2 =======================
+
+        n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
+
+        net.add(
+            layer="dense",
+            options={
+                "input_shape": (nd,),
+                "neurons": n_neurons,
+                "kernel_initializer": "glorot_uniform",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+        # net.add(layer="dropout", options={"drop_rate": .1})
+
+        net.add(
+            layer="dense",
+            options={
+                "neurons": round(n_neurons / 2),
+                "kernel_initializer": "glorot_uniform",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+        # net.add(layer="dropout", options={"drop_rate": .2})
+
+        #% =============================
+
+        net.add(
+            layer="dense",
+            options={"neurons": ncv, "kernel_initializer": "glorot_uniform"},
+        )
         net.add(layer="activation", options={"name": "sigmoid"})
 
         net.add(
@@ -126,7 +193,7 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
             options={"bounds": bounds},
         )
 
-        net.compile()
+        net.compile(optimizer="adam", learning_rate=0.001)
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
@@ -134,11 +201,48 @@ def _set_graph(net: Net | None, nd: int, ncv: int, bounds: np.ndarray):
     elif not net.layers:
         raise ValueError(f"The graph has not been set yet")
 
+    else:
+        #% check input shape
+        ips = net.layers[0].input_shape
+
+        if ips[0] != nd:
+
+            raise ValueError(
+                f"Inconsistent size between input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+            )
+
+        #% check output shape
+        ios = net.layers[-1].output_shape()
+
+        if ios[0] != ncv:
+
+            raise ValueError(
+                f"Inconsistent size between output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
+            )
+
+        #% check bounds constraints
+        if hasattr(net.layers[-1], "_scale_func"):
+
+            net_bounds = net.layers[-1]._scale_func._bounds
+
+            diff = np.not_equal(net_bounds, bounds)
+
+            for i, name in enumerate(control_vector):
+
+                if diff[i].any():
+
+                    warnings.warn(
+                        f"Inconsistent value(s) between scaling parameters ({net_bounds[i]}) and the bound constraints of control vector {name} ({bounds[i]}). Use get_bound_constraints method of Model instance to properly create scaling layer"
+                    )
+
     return net
 
 
 def _training_message(
-    instance: Model, control_vector: np.ndarray, nx: int, opt: str, lr: float
+    instance: Model,
+    control_vector: np.ndarray,
+    nx: int,
+    net: Net,
 ):
 
     sp4 = " " * 4
@@ -162,8 +266,8 @@ def _training_message(
 
     ret.append(f"{sp4}Mapping: 'ANN' {mapping_eq}")
 
-    ret.append(f"Optimizer: {opt}")
-    ret.append(f"Learning rate: {lr}")
+    ret.append(f"Optimizer: {net._optimizer}")
+    ret.append(f"Learning rate: {net._learning_rate}")
 
     ret.append(f"Jobs function: [ {' '.join(jobs_fun)} ]")
     ret.append(f"wJobs: [ {' '.join(wjobs_fun.astype('U'))} ]")
