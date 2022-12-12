@@ -726,6 +726,7 @@ class Dropout(Layer):
     drop_rate: float
         Drop rate.
     """
+
     def __init__(self, drop_rate: float, **unknown_options):
 
         _check_unknown_options("Dropout Layer", unknown_options)
@@ -740,11 +741,11 @@ class Dropout(Layer):
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
 
-        c = (1 - self.drop_rate)
+        c = 1 - self.drop_rate
 
         if training:
 
-            self._mask = np.random.uniform(size = x.shape) > self.drop_rate
+            self._mask = np.random.uniform(size=x.shape) > self.drop_rate
             c = self._mask
 
         return x * c

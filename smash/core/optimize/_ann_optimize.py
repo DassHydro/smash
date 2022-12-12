@@ -148,7 +148,7 @@ def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarr
 
         #% Net 2 =======================
 
-        n_neurons = round(np.sqrt(ntrain * nd) * 2/3)
+        n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
 
         net.add(
             layer="dense",
