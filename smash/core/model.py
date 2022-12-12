@@ -1132,18 +1132,17 @@ class Model(object):
         | Net summary |
         +-------------+
         Input Shape: (2,)
-        +------------------------+--------------+---------+
-        | Layer (type)           | Output Shape | Param # |
-        +------------------------+--------------+---------+
-        | Dense                  | (18,)        | 54      |
-        | Activation (ReLU)      | (18,)        | 0       |
-        | Dense                  | (9,)         | 171     |
-        | Activation (LeakyReLU) | (9,)         | 0       |
-        | Dropout                | (9,)         | 0       |
-        | Dense                  | (4,)         | 40      |
-        | Activation (Sigmoid)   | (4,)         | 0       |
-        | Scale (MinMaxScale)    | (4,)         | 0       |
-        +------------------------+--------------+---------+
+        +----------------------+--------------+---------+
+        | Layer (type)         | Output Shape | Param # |
+        +----------------------+--------------+---------+
+        | Dense                | (18,)        | 54      |
+        | Activation (ReLU)    | (18,)        | 0       |
+        | Dense                | (9,)         | 171     |
+        | Activation (ReLU)    | (9,)         | 0       |
+        | Dense                | (4,)         | 40      |
+        | Activation (Sigmoid) | (4,)         | 0       |
+        | Scale (MinMaxScale)  | (4,)         | 0       |
+        +----------------------+--------------+---------+
         Total params: 265
         Trainable params: 265
         Non-trainable params: 0

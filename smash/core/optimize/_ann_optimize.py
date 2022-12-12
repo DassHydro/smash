@@ -155,7 +155,7 @@ def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarr
             options={
                 "input_shape": (nd,),
                 "neurons": n_neurons,
-                "kernel_initializer": "he_uniform",
+                "kernel_initializer": "glorot_uniform",
             },
         )
         net.add(layer="activation", options={"name": "relu"})
@@ -165,7 +165,7 @@ def _set_graph(net: Net | None, ntrain: int, nd: int, ncv: int, bounds: np.ndarr
             layer="dense",
             options={
                 "neurons": round(n_neurons / 2),
-                "kernel_initializer": "he_normal",
+                "kernel_initializer": "glorot_uniform",
             },
         )
         net.add(layer="activation", options={"name": "relu"})
