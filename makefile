@@ -77,6 +77,7 @@ f90: \
  obj/md_gr_operator.o \
  obj/md_vic_operator.o \
  obj/md_routing_operator.o \
+ obj/md_forward_structure.o \
  obj/mwd_parameters_manipulation.o \
  obj/mwd_states_manipulation.o \
  obj/mwd_cost.o \

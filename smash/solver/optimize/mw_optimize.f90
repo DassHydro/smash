@@ -534,7 +534,7 @@ module mw_optimize
             n = mesh%nac * (count(setup%optimize%optim_parameters .gt. 0) + &
             & count(setup%optimize%optim_states .gt. 0))
             m = 10
-            factr = 1.e7_dp
+            factr = 1.e6_dp
             pgtol = 1.e-12_dp
             
             allocate(nbd(n), x(n), l(n), u(n), g(n))
@@ -803,6 +803,8 @@ module mw_optimize
             & hyper_parameters_b, hyper_parameters_bgd
             type(Hyper_StatesDT) :: hyper_states, &
             & hyper_states_b, hyper_states_bgd
+            type(ParametersDT) :: parameters_b
+            type(StatesDT) :: states_b
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             real(sp), dimension(setup%nd) :: min_descriptor, &
@@ -813,7 +815,7 @@ module mw_optimize
             n = (count(setup%optimize%optim_parameters .gt. 0) &
             & + count(setup%optimize%optim_states .gt. 0)) * setup%optimize%nhyper
             m = 10
-            factr = 1.e7_dp
+            factr = 1.e6_dp
             pgtol = 1.e-12_dp
             
             allocate(nbd(n), x(n), l(n), u(n), g(n))
@@ -822,9 +824,11 @@ module mw_optimize
             
             call normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
             
+            call ParametersDT_initialise(parameters_b, mesh)
             call Hyper_ParametersDT_initialise(hyper_parameters, setup)
             call Hyper_ParametersDT_initialise(hyper_parameters_b, setup)
             
+            call StatesDT_initialise(states_b, mesh)
             call Hyper_StatesDT_initialise(hyper_states, setup)
             call Hyper_StatesDT_initialise(hyper_states_b, setup)
             
@@ -868,9 +872,9 @@ module mw_optimize
                     cost_b = 1._sp
                     cost = 0._sp
                     
-                    call hyper_forward_b(setup, mesh, input_data, hyper_parameters, &
-                    & hyper_parameters_b, hyper_parameters_bgd, hyper_states, hyper_states_b, hyper_states_bgd, &
-                    & output, output_b, cost, cost_b)
+                    call hyper_forward_b(setup, mesh, input_data, parameters, parameters_b, hyper_parameters, &
+                    & hyper_parameters_b, hyper_parameters_bgd, states, states_b, hyper_states, &
+                    & hyper_states_b, hyper_states_bgd, output, output_b, cost, cost_b)
         
                     f = real(cost, kind(f))
                     
@@ -914,8 +918,8 @@ module mw_optimize
             write(*, '(4x,a)') task
         end if
 
-        call hyper_forward(setup, mesh, input_data, hyper_parameters, &
-        & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)
+        call hyper_forward(setup, mesh, input_data, parameters, hyper_parameters, &
+        & hyper_parameters_bgd, states, hyper_states, hyper_states_bgd, output, cost)
         
         call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, mesh, input_data)
         call hyper_states_to_states(hyper_states, states, setup, mesh, input_data)

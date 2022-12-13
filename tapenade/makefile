@@ -1,5 +1,5 @@
 SRC=../smash/solver
-NAME=md_constant.f90 mwd_setup.f90 mwd_mesh.f90 mwd_input_data.f90 mwd_parameters.f90 mwd_states.f90 mwd_output.f90 md_gr_operator.f90 md_vic_operator.f90 md_routing_operator.f90 mwd_parameters_manipulation.f90 mwd_states_manipulation.f90 mwd_cost.f90 forward.f90 
+NAME=md_constant.f90 mwd_setup.f90 mwd_mesh.f90 mwd_input_data.f90 mwd_parameters.f90 mwd_states.f90 mwd_output.f90 md_gr_operator.f90 md_vic_operator.f90 md_routing_operator.f90 md_forward_structure.f90 mwd_parameters_manipulation.f90 mwd_states_manipulation.f90 mwd_cost.f90 forward.f90 
 FILES=$(addprefix $(SRC)/*/,$(NAME))
 TAPENADE=./tapenade_3.16/
 
@@ -10,14 +10,13 @@ bd:
 	-b \
 	-d \
 	-fixinterface \
+	-noisize \
 	-msglevel 100 \
 	-adjvarname %_b \
 	-tgtvarname %_d \
 	-o forward \
-	-head "gr_base_forward(parameters, states)\(cost)" \
-	-head "gr_base_hyper_forward(hyper_parameters, hyper_states)\(cost)" \
-	-head "vic_base_forward(parameters, states)\(cost)" \
-	-head "vic_base_hyper_forward(hyper_parameters, hyper_states)\(cost)" \
+	-head "base_forward(parameters, states)\(cost)" \
+	-head "base_hyper_forward(hyper_parameters, hyper_states)\(cost)" \
 	-O $(PWD) $(FILES)
 
 
