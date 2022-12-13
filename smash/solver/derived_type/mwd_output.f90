@@ -22,7 +22,7 @@
 
 module mwd_output
     
-    use md_constant !% only: sp, dp, lchar, np, ns
+    use md_constant !% only: sp
     use mwd_setup  !% only: SetupDT
     use mwd_mesh   !%only: MeshDT
     use mwd_states !%only: StatesDT, StatesDT_initialise

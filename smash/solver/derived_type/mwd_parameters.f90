@@ -48,7 +48,7 @@
 
 module mwd_parameters
 
-    use md_constant !% only: sp, np
+    use md_constant !% only: sp, GNP
     use mwd_setup !% only: SetupDT
     use mwd_mesh  !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT

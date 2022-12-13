@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core._constant import STRUCTURE_PARAMETERS
+from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES
 
 from typing import TYPE_CHECKING
 
@@ -14,11 +14,6 @@ from scipy.stats import truncnorm
 
 
 __all__ = ["generate_samples"]
-
-
-def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):
-
-    return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
 def generate_samples(
@@ -38,8 +33,11 @@ def generate_samples(
         Problem definition. The keys are
 
         - 'num_vars': The number of Model parameters/states.
-        - 'names': The name of Model parameters/states
-        - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max))
+        - 'names': The name of Model parameters/states.
+        - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+
+        .. hint::
+            This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
 
     generator : str, default uniform
         Samples generator. Should be one of
@@ -64,18 +62,20 @@ def generate_samples(
             If not given, generates parameters sets with a random seed with Gaussian or uniform generators.
 
     backg_sol : numpy.ndarray or None, default None
-        Prior solutions could be included in parameters sets, except Saltelli generator, and are
+        Spatially uniform prior parameters/states could be included in generated sets, except Saltelli generator, and are
         used as the mean when generating with Gaussian distribution.
 
         .. note::
-            If not given, the mean is the center of the parameter bound if in case of Gaussian generator, otherwise,
-            there is no background solution included in the generated parameter sets.
+            If not given, the mean is the center of the parameter/state bound if in case of Gaussian generator, otherwise,
+            there is no background solution included in generated sets.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
 
         .. math::
                 std = \\frac{u - l}{coef\_std}
+
+        where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
         .. note::
             If not given, a default value for this coefficient will be assigned to define the standard deviation:
@@ -87,6 +87,10 @@ def generate_samples(
     -------
     res : pandas.DataFrame
         res with all generated samples
+
+    See Also
+    --------
+    Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
     --------
@@ -163,24 +167,42 @@ def generate_samples(
     return df
 
 
-def _get_generate_samples_problem(setup: SetupDT):
+def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):
+
+    return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
+
+
+def _get_bound_constraints(setup: SetupDT, states: bool):
+
+    if states:
+        control_vector = STRUCTURE_STATES[setup.structure]
+
+    else:
+        control_vector = STRUCTURE_PARAMETERS[setup.structure]
 
     bounds = []
 
-    for name in STRUCTURE_PARAMETERS[setup.structure]:
+    for name in control_vector:
 
-        if name in setup._parameters_name:
+        if name in setup._states_name:
+
+            ind = np.argwhere(setup._states_name == name)
+
+            l = setup._optimize.lb_states[ind].item()
+            u = setup._optimize.ub_states[ind].item()
+
+        else:
 
             ind = np.argwhere(setup._parameters_name == name)
 
             l = setup._optimize.lb_parameters[ind].item()
             u = setup._optimize.ub_parameters[ind].item()
 
-            bounds += [[l, u]]
+        bounds += [[l, u]]
 
     problem = {
-        "num_vars": len(STRUCTURE_PARAMETERS[setup.structure]),
-        "names": STRUCTURE_PARAMETERS[setup.structure],
+        "num_vars": len(control_vector),
+        "names": control_vector,
         "bounds": bounds,
     }
 

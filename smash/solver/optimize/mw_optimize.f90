@@ -15,7 +15,7 @@
 
 module mw_optimize
     
-    use md_constant, only: sp, dp, lchar, np, ns
+    use md_constant, only: sp, dp, lchar, GNP, GNS
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
@@ -62,12 +62,12 @@ module mw_optimize
             
             type(ParametersDT) :: parameters_bgd
             type(StatesDT) :: states_bgd
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix
-            real(sp), dimension(mesh%nrow, mesh%ncol, ns) :: states_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix
             integer, dimension(2) :: ind_ac
             integer :: nps, nops, iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, ps, p, s
-            real(sp), dimension(np+ns) :: x, y, x_tf, y_tf, z_tf, lb, lb_tf, ub, ub_tf, sdx
-            integer, dimension(np+ns) :: optim_ps
+            real(sp), dimension(GNP+GNS) :: x, y, x_tf, y_tf, z_tf, lb, lb_tf, ub, ub_tf, sdx
+            integer, dimension(GNP+GNS) :: optim_ps
             real(sp) :: gx, ga, clg, ddx, dxn, f, cost
             
             ! =========================================================================================================== !
@@ -85,19 +85,19 @@ module mw_optimize
             call get_parameters(mesh, parameters, parameters_matrix)
             call get_states(mesh, states, states_matrix)
             
-            nps = np + ns
+            nps = GNP + GNS
             
-            x(1:np) = parameters_matrix(ind_ac(1), ind_ac(2), :)
-            x(np+1:nps) = states_matrix(ind_ac(1), ind_ac(2), :)
+            x(1:GNP) = parameters_matrix(ind_ac(1), ind_ac(2), :)
+            x(GNP+1:nps) = states_matrix(ind_ac(1), ind_ac(2), :)
             
-            lb(1:np) = setup%optimize%lb_parameters
-            lb(np+1:nps) = setup%optimize%lb_states
+            lb(1:GNP) = setup%optimize%lb_parameters
+            lb(GNP+1:nps) = setup%optimize%lb_states
 
-            ub(1:np) = setup%optimize%ub_parameters
-            ub(np+1:nps) = setup%optimize%ub_states
+            ub(1:GNP) = setup%optimize%ub_parameters
+            ub(GNP+1:nps) = setup%optimize%ub_states
             
-            optim_ps(1:np) = setup%optimize%optim_parameters
-            optim_ps(np+1:nps) = setup%optimize%optim_states
+            optim_ps(1:GNP) = setup%optimize%optim_parameters
+            optim_ps(GNP+1:nps) = setup%optimize%optim_states
             
             call transformation(x, lb, ub, x_tf)
             call transformation(lb, lb, ub, lb_tf)
@@ -117,8 +117,10 @@ module mw_optimize
             jfaa = 0
             nfg = 1
             
-            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            if (setup%optimize%verbose) then
+                write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+            end if
             
             do iter=1, setup%optimize%maxiter * nops
                 
@@ -148,7 +150,7 @@ module mw_optimize
                             
                             call inv_transformation(y_tf, lb, ub, y)
                             
-                            do p=1, np
+                            do p=1, GNP
                             
                                 where (mesh%active_cell .eq. 1)
                                 
@@ -158,11 +160,11 @@ module mw_optimize
                                 
                             end do
                             
-                            do s=1, ns
+                            do s=1, GNS
                             
                                  where (mesh%active_cell .eq. 1)
                                 
-                                    states_matrix(:,:,s) = y(np+s)
+                                    states_matrix(:,:,s) = y(GNP+s)
                                 
                                 end where
                             
@@ -201,7 +203,7 @@ module mw_optimize
                     x_tf = z_tf
                     call inv_transformation(x_tf, lb, ub, x)
                     
-                    do p=1, np
+                    do p=1, GNP
                             
                         where (mesh%active_cell .eq. 1)
                         
@@ -211,11 +213,11 @@ module mw_optimize
                         
                     end do
                     
-                    do s=1, ns
+                    do s=1, GNS
                             
                         where (mesh%active_cell .eq. 1)
                         
-                            states_matrix(:,:,s) = x(np+s)
+                            states_matrix(:,:,s) = x(GNP+s)
                         
                         end where
                         
@@ -265,7 +267,7 @@ module mw_optimize
                     
                     call inv_transformation(y_tf, lb, ub, y)
                     
-                    do p=1, np
+                    do p=1, GNP
                     
                         where (mesh%active_cell .eq. 1)
                         
@@ -275,11 +277,11 @@ module mw_optimize
                     
                     end do
                     
-                    do s=1, ns
+                    do s=1, GNS
                     
                         where (mesh%active_cell .eq. 1)
                         
-                            states_matrix(:,:,s) = y(np+s)
+                            states_matrix(:,:,s) = y(GNP+s)
                         
                         end where
                     
@@ -303,7 +305,7 @@ module mw_optimize
                         
                         call inv_transformation(x_tf, lb, ub, x)
                         
-                        do p=1, np
+                        do p=1, GNP
                         
                             where (mesh%active_cell .eq. 1) 
                             
@@ -313,11 +315,11 @@ module mw_optimize
                         
                         end do
                         
-                        do s=1, ns
+                        do s=1, GNS
                         
                             where (mesh%active_cell .eq. 1) 
                             
-                                states_matrix(:,:,s) = x(np+s)
+                                states_matrix(:,:,s) = x(GNP+s)
                             
                             end where
                         
@@ -344,8 +346,10 @@ module mw_optimize
             
                 if (mod(iter, nops) .eq. 0) then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-                    & "At iterate", (iter / nops), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                        & "At iterate", (iter / nops), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    end if
                 
                 end if
                 
@@ -355,9 +359,11 @@ module mw_optimize
             
                 if (ddx .lt. 0.01_sp) then
                 
-                    write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    end if
 
-                    do p=1, np
+                    do p=1, GNP
                         
                         where (mesh%active_cell .eq. 1)
                         
@@ -367,11 +373,11 @@ module mw_optimize
                         
                     end do
                     
-                    do s=1, ns
+                    do s=1, GNS
                         
                         where (mesh%active_cell .eq. 1)
                         
-                            states_matrix(:,:,s) = x(np+s)
+                            states_matrix(:,:,s) = x(GNP+s)
                         
                         end where
                         
@@ -393,9 +399,11 @@ module mw_optimize
                 
                 if (iter .eq. setup%optimize%maxiter * nops) then
                 
-                    write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    end if
             
-                    do p=1, np
+                    do p=1, GNP
                         
                         where (mesh%active_cell .eq. 1)
                         
@@ -405,11 +413,11 @@ module mw_optimize
                         
                     end do
                     
-                    do s=1, ns
+                    do s=1, GNS
                         
                         where (mesh%active_cell .eq. 1)
                         
-                            states_matrix(:,:,s) = x(np+s)
+                            states_matrix(:,:,s) = x(GNP+s)
                         
                         end where
                         
@@ -435,12 +443,12 @@ module mw_optimize
         
             implicit none
             
-            real(sp), dimension(np+ns), intent(in) :: x, lb, ub
-            real(sp), dimension(np+ns), intent(inout) :: x_tf
+            real(sp), dimension(GNP+GNS), intent(in) :: x, lb, ub
+            real(sp), dimension(GNP+GNS), intent(inout) :: x_tf
             
             integer :: i
             
-            do i=1, np+ns
+            do i=1, GNP+GNS
             
                 if (lb(i) .lt. 0._sp) then
                     
@@ -466,12 +474,12 @@ module mw_optimize
         
             implicit none
             
-            real(sp), dimension(np+ns), intent(in) :: x_tf, lb, ub
-            real(sp), dimension(np+ns), intent(inout) :: x
+            real(sp), dimension(GNP+GNS), intent(in) :: x_tf, lb, ub
+            real(sp), dimension(GNP+GNS), intent(inout) :: x
             
             integer :: i
             
-            do i=1, np+ns
+            do i=1, GNP+GNS
             
                 if (lb(i) .lt. 0._sp) then
                     
@@ -526,7 +534,7 @@ module mw_optimize
             n = mesh%nac * (count(setup%optimize%optim_parameters .gt. 0) + &
             & count(setup%optimize%optim_states .gt. 0))
             m = 10
-            factr = 1.e7_dp
+            factr = 1.e6_dp
             pgtol = 1.e-12_dp
             
             allocate(nbd(n), x(n), l(n), u(n), g(n))
@@ -588,8 +596,10 @@ module mw_optimize
                     
                     if (task(4:8) .eq. 'START') then
                     
-                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        if (setup%optimize%verbose) then
+                            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        end if
                     
                     end if
  
@@ -597,8 +607,10 @@ module mw_optimize
                 
                 if (task(1:5) .eq. 'NEW_X') then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    end if
                 
                     if (isave(30) .ge. setup%optimize%maxiter) then
                         
@@ -615,8 +627,10 @@ module mw_optimize
                 end if
                     
             end do
-            
-        write(*, '(4x,a)') task
+        
+        if (setup%optimize%verbose) then
+            write(*, '(4x,a)') task
+        end if
         
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
@@ -635,26 +649,26 @@ module mw_optimize
             type(MeshDT), intent(in) :: mesh
             logical, intent(in) :: normalize
             
-            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
-            integer, dimension(np+ns) :: optim
-            real(sp), dimension(np+ns) :: lb, ub
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP+GNS) :: matrix
+            integer, dimension(GNP+GNS) :: optim
+            real(sp), dimension(GNP+GNS) :: lb, ub
             integer :: i, j, col, row
             
-            call get_parameters(mesh, parameters, matrix(:,:,1:np))
-            call get_states(mesh, states, matrix(:,:,np+1:np+ns))
+            call get_parameters(mesh, parameters, matrix(:,:,1:GNP))
+            call get_states(mesh, states, matrix(:,:,GNP+1:GNP+GNS))
             
-            optim(1:np) = setup%optimize%optim_parameters 
-            optim(np+1:np+ns) = setup%optimize%optim_states
+            optim(1:GNP) = setup%optimize%optim_parameters 
+            optim(GNP+1:GNP+GNS) = setup%optimize%optim_states
             
-            lb(1:np) = setup%optimize%lb_parameters
-            lb(np+1:np+ns) = setup%optimize%lb_states
+            lb(1:GNP) = setup%optimize%lb_parameters
+            lb(GNP+1:GNP+GNS) = setup%optimize%lb_states
             
-            ub(1:np) = setup%optimize%ub_parameters
-            ub(np+1:np+ns) = setup%optimize%ub_states
+            ub(1:GNP) = setup%optimize%ub_parameters
+            ub(GNP+1:GNP+GNS) = setup%optimize%ub_states
 
             j = 0
             
-            do i=1, (np + ns)
+            do i=1, (GNP + GNS)
             
                 if (optim(i) .gt. 0) then
                 
@@ -702,26 +716,26 @@ module mw_optimize
             type(MeshDT), intent(in) :: mesh
             logical, intent(in) :: denormalize
             
-            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
-            integer, dimension(np+ns) :: optim
-            real(sp), dimension(np+ns) :: lb, ub
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP+GNS) :: matrix
+            integer, dimension(GNP+GNS) :: optim
+            real(sp), dimension(GNP+GNS) :: lb, ub
             integer :: i, j, col, row
             
-            call get_parameters(mesh, parameters, matrix(:,:,1:np))
-            call get_states(mesh, states, matrix(:,:,np+1:np+ns))
+            call get_parameters(mesh, parameters, matrix(:,:,1:GNP))
+            call get_states(mesh, states, matrix(:,:,GNP+1:GNP+GNS))
             
-            optim(1:np) = setup%optimize%optim_parameters 
-            optim(np+1:np+ns) = setup%optimize%optim_states
+            optim(1:GNP) = setup%optimize%optim_parameters 
+            optim(GNP+1:GNP+GNS) = setup%optimize%optim_states
             
-            lb(1:np) = setup%optimize%lb_parameters
-            lb(np+1:np+ns) = setup%optimize%lb_states
+            lb(1:GNP) = setup%optimize%lb_parameters
+            lb(GNP+1:GNP+GNS) = setup%optimize%lb_states
             
-            ub(1:np) = setup%optimize%ub_parameters
-            ub(np+1:np+ns) = setup%optimize%ub_states
+            ub(1:GNP) = setup%optimize%ub_parameters
+            ub(GNP+1:GNP+GNS) = setup%optimize%ub_states
             
             j = 0
             
-            do i=1, (np + ns)
+            do i=1, (GNP + GNS)
             
                 if (optim(i) .gt. 0) then
                 
@@ -755,8 +769,8 @@ module mw_optimize
 
             end do
             
-            call set_parameters(mesh, parameters, matrix(:,:,1:np))
-            call set_states(mesh, states, matrix(:,:,np+1:np+ns))
+            call set_parameters(mesh, parameters, matrix(:,:,1:GNP))
+            call set_states(mesh, states, matrix(:,:,GNP+1:GNP+GNS))
 
         end subroutine x_to_parameters_states
 
@@ -789,6 +803,8 @@ module mw_optimize
             & hyper_parameters_b, hyper_parameters_bgd
             type(Hyper_StatesDT) :: hyper_states, &
             & hyper_states_b, hyper_states_bgd
+            type(ParametersDT) :: parameters_b
+            type(StatesDT) :: states_b
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
             real(sp), dimension(setup%nd) :: min_descriptor, &
@@ -799,7 +815,7 @@ module mw_optimize
             n = (count(setup%optimize%optim_parameters .gt. 0) &
             & + count(setup%optimize%optim_states .gt. 0)) * setup%optimize%nhyper
             m = 10
-            factr = 1.e7_dp
+            factr = 1.e6_dp
             pgtol = 1.e-12_dp
             
             allocate(nbd(n), x(n), l(n), u(n), g(n))
@@ -808,9 +824,11 @@ module mw_optimize
             
             call normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
             
+            call ParametersDT_initialise(parameters_b, mesh)
             call Hyper_ParametersDT_initialise(hyper_parameters, setup)
             call Hyper_ParametersDT_initialise(hyper_parameters_b, setup)
             
+            call StatesDT_initialise(states_b, mesh)
             call Hyper_StatesDT_initialise(hyper_states, setup)
             call Hyper_StatesDT_initialise(hyper_states_b, setup)
             
@@ -854,9 +872,9 @@ module mw_optimize
                     cost_b = 1._sp
                     cost = 0._sp
                     
-                    call hyper_forward_b(setup, mesh, input_data, hyper_parameters, &
-                    & hyper_parameters_b, hyper_parameters_bgd, hyper_states, hyper_states_b, hyper_states_bgd, &
-                    & output, output_b, cost, cost_b)
+                    call hyper_forward_b(setup, mesh, input_data, parameters, parameters_b, hyper_parameters, &
+                    & hyper_parameters_b, hyper_parameters_bgd, states, states_b, hyper_states, &
+                    & hyper_states_b, hyper_states_bgd, output, output_b, cost, cost_b)
         
                     f = real(cost, kind(f))
                     
@@ -864,8 +882,10 @@ module mw_optimize
                     
                     if (task(4:8) .eq. 'START') then
                         
-                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        if (setup%optimize%verbose) then
+                            write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        end if
                     
                     end if
  
@@ -873,8 +893,10 @@ module mw_optimize
                 
                 if (task(1:5) .eq. 'NEW_X') then
                     
-                    write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    if (setup%optimize%verbose) then
+                        write(*,'(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
+                            & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    end if
                 
                     if (isave(30) .ge. setup%optimize%maxiter) then
                         
@@ -891,11 +913,13 @@ module mw_optimize
                 end if
                     
             end do
-            
-        write(*, '(4x,a)') task
+        
+        if (setup%optimize%verbose) then
+            write(*, '(4x,a)') task
+        end if
 
-        call hyper_forward(setup, mesh, input_data, hyper_parameters, &
-        & hyper_parameters_bgd, hyper_states, hyper_states_bgd, output, cost)
+        call hyper_forward(setup, mesh, input_data, parameters, hyper_parameters, &
+        & hyper_parameters_bgd, states, hyper_states, hyper_states_bgd, output, cost)
         
         call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, mesh, input_data)
         call hyper_states_to_states(hyper_states, states, setup, mesh, input_data)
@@ -961,32 +985,32 @@ module mw_optimize
             type(ParametersDT), intent(in) :: parameters
             type(StatesDT), intent(in) :: states
             
-            real(sp), dimension(mesh%nrow, mesh%ncol, np+ns) :: matrix
-            real(sp), dimension(setup%optimize%nhyper, 1, np+ns) :: hyper_matrix
-            integer, dimension(np+ns) :: optim
-            real(sp), dimension(np+ns) :: lb, ub
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP+GNS) :: matrix
+            real(sp), dimension(setup%optimize%nhyper, 1, GNP+GNS) :: hyper_matrix
+            integer, dimension(GNP+GNS) :: optim
+            real(sp), dimension(GNP+GNS) :: lb, ub
             integer, dimension(2) :: ind_ac
             integer :: i, j, k
             
             ind_ac = maxloc(mesh%active_cell)
             
-            call get_parameters(mesh, parameters, matrix(:,:,1:np))
-            call get_states(mesh, states, matrix(:,:,np+1:np+ns))
+            call get_parameters(mesh, parameters, matrix(:,:,1:GNP))
+            call get_states(mesh, states, matrix(:,:,GNP+1:GNP+GNS))
             
             call set_hyper_parameters(setup, hyper_parameters, 0._sp)
             call set_hyper_states(setup, hyper_states, 0._sp)
             
-            call get_hyper_parameters(setup, hyper_parameters, hyper_matrix(:,:,1:np))
-            call get_hyper_states(setup, hyper_states, hyper_matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(setup, hyper_parameters, hyper_matrix(:,:,1:GNP))
+            call get_hyper_states(setup, hyper_states, hyper_matrix(:,:,GNP+1:GNP+GNS))
             
-            optim(1:np) = setup%optimize%optim_parameters 
-            optim(np+1:np+ns) = setup%optimize%optim_states
+            optim(1:GNP) = setup%optimize%optim_parameters 
+            optim(GNP+1:GNP+GNS) = setup%optimize%optim_states
             
-            lb(1:np) = setup%optimize%lb_parameters
-            lb(np+1:np+ns) = setup%optimize%lb_states
+            lb(1:GNP) = setup%optimize%lb_parameters
+            lb(GNP+1:GNP+GNS) = setup%optimize%lb_states
             
-            ub(1:np) = setup%optimize%ub_parameters
-            ub(np+1:np+ns) = setup%optimize%ub_states
+            ub(1:GNP) = setup%optimize%ub_parameters
+            ub(GNP+1:GNP+GNS) = setup%optimize%ub_states
             
             !% inverse sigmoid lambda = 1
             hyper_matrix(1, 1, :) = &
@@ -999,7 +1023,7 @@ module mw_optimize
             u = 0._dp
             k = 0
             
-            do i=1, (np + ns)
+            do i=1, (GNP + GNS)
             
                 if (optim(i) .gt. 0) then
                 
@@ -1039,8 +1063,8 @@ module mw_optimize
 
             end do
             
-            call set_hyper_parameters(setup, hyper_parameters, hyper_matrix(:,:,1:np))
-            call set_hyper_states(setup, hyper_states, hyper_matrix(:,:,np+1:np+ns))
+            call set_hyper_parameters(setup, hyper_parameters, hyper_matrix(:,:,1:GNP))
+            call set_hyper_states(setup, hyper_states, hyper_matrix(:,:,GNP+1:GNP+GNS))
         
         end subroutine hyper_problem_initialise
 
@@ -1054,19 +1078,19 @@ module mw_optimize
             real(dp), dimension(:), intent(inout) :: x
             type(SetupDT), intent(in) :: setup
             
-            real(sp), dimension(setup%optimize%nhyper, 1, np+ns) :: matrix
-            integer, dimension(np+ns) :: optim
+            real(sp), dimension(setup%optimize%nhyper, 1, GNP+GNS) :: matrix
+            integer, dimension(GNP+GNS) :: optim
             integer :: i, j, k
             
-            call get_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:np))
-            call get_hyper_states(setup, hyper_states, matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:GNP))
+            call get_hyper_states(setup, hyper_states, matrix(:,:,GNP+1:GNP+GNS))
             
-            optim(1:np) = setup%optimize%optim_parameters 
-            optim(np+1:np+ns) = setup%optimize%optim_states
+            optim(1:GNP) = setup%optimize%optim_parameters 
+            optim(GNP+1:GNP+GNS) = setup%optimize%optim_states
             
             k = 0
             
-            do i=1, (np + ns)
+            do i=1, (GNP + GNS)
             
                 if (optim(i) .gt. 0) then
                 
@@ -1093,19 +1117,19 @@ module mw_optimize
             type(Hyper_StatesDT), intent(inout) :: hyper_states
             type(SetupDT), intent(in) :: setup
             
-            real(sp), dimension(setup%optimize%nhyper, 1, np+ns) :: matrix
-            integer, dimension(np+ns) :: optim
+            real(sp), dimension(setup%optimize%nhyper, 1, GNP+GNS) :: matrix
+            integer, dimension(GNP+GNS) :: optim
             integer :: i, j, k
             
-            call get_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:np))
-            call get_hyper_states(setup, hyper_states, matrix(:,:,np+1:np+ns))
+            call get_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:GNP))
+            call get_hyper_states(setup, hyper_states, matrix(:,:,GNP+1:GNP+GNS))
             
-            optim(1:np) = setup%optimize%optim_parameters 
-            optim(np+1:np+ns) = setup%optimize%optim_states
+            optim(1:GNP) = setup%optimize%optim_parameters 
+            optim(GNP+1:GNP+GNS) = setup%optimize%optim_states
             
             k = 0
             
-            do i=1, (np + ns)
+            do i=1, (GNP + GNS)
             
                 if (optim(i) .gt. 0) then
                 
@@ -1120,8 +1144,8 @@ module mw_optimize
         
             end do
             
-            call set_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:np))
-            call set_hyper_states(setup, hyper_states, matrix(:,:,np+1:np+ns))
+            call set_hyper_parameters(setup, hyper_parameters, matrix(:,:,1:GNP))
+            call set_hyper_states(setup, hyper_states, matrix(:,:,GNP+1:GNP+GNS))
         
         end subroutine x_to_hyper_parameters_states
         

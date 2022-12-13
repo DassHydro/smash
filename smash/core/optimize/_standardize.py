@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.solver._mwd_setup import Optimize_SetupDT
+
 from smash.core._constant import (
     ALGORITHM,
     MAPPING,
@@ -491,6 +493,14 @@ def _standardize_optimize_args(
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 
+    setup._optimize = Optimize_SetupDT(
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        mapping,
+        jobs_fun.size,
+    )
+
     wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
@@ -513,7 +523,9 @@ def _standardize_optimize_options(options: dict | None) -> dict:
     return options
 
 
-def _standardize_jobs_fun_ann(jobs_fun: str | list | tuple | set) -> np.ndarray:
+def _standardize_jobs_fun_wo_optimize(
+    jobs_fun: str | list | tuple | set,
+) -> np.ndarray:
 
     if isinstance(jobs_fun, str):
 
@@ -542,7 +554,9 @@ def _standardize_jobs_fun_ann(jobs_fun: str | list | tuple | set) -> np.ndarray:
     return jobs_fun
 
 
-def _standardize_wjobs_ann(wjobs_fun: list | None, jobs_fun: np.ndarray) -> np.ndarray:
+def _standardize_wjobs_wo_optimize(
+    wjobs_fun: list | None, jobs_fun: np.ndarray
+) -> np.ndarray:
 
     if wjobs_fun is None:
 
@@ -571,7 +585,7 @@ def _standardize_wjobs_ann(wjobs_fun: list | None, jobs_fun: np.ndarray) -> np.n
     return wjobs_fun
 
 
-def _standardize_ann_optimize_args(
+def _standardize_wo_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
@@ -586,9 +600,17 @@ def _standardize_ann_optimize_args(
 
     control_vector = _standardize_control_vector(control_vector, setup)
 
-    jobs_fun = _standardize_jobs_fun_ann(jobs_fun)
+    jobs_fun = _standardize_jobs_fun_wo_optimize(jobs_fun)
 
-    wjobs_fun = _standardize_wjobs_ann(wjobs_fun, jobs_fun)
+    setup._optimize = Optimize_SetupDT(
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        "...",
+        jobs_fun.size,
+    )
+
+    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
@@ -599,3 +621,19 @@ def _standardize_ann_optimize_args(
     ost = _standardize_ost(ost, setup)
 
     return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
+
+
+def _standardize_bayes_k(
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
+
+    if isinstance(k, (int, float, list)):
+        pass
+
+    elif isinstance(k, (range, np.ndarray, tuple, set)):
+        k = list(k)
+
+    else:
+        raise TypeError("k argument must be numerical or list-like object")
+
+    return k

@@ -47,7 +47,9 @@
 
 module mwd_setup
     
-    use md_constant !% only: sp, lchar, np, ns
+    use md_constant !% only: sp, lchar, &
+    !% & G_NP, G_NS, GPARAMETERS_NAME, GSTATES_NAME, &
+    !% & GLB_PARAMETERS, GUB_PARAMETERS, GLB_STATES, GUB_STATES
     
     implicit none
     
@@ -63,6 +65,8 @@ module mwd_setup
         real(sp), dimension(:), allocatable :: wjobs_fun
         integer :: njf = 0
 
+        logical :: verbose = .true.
+
         character(lchar) :: mapping = "..." !>f90w-char
         
         integer :: nhyper = 0
@@ -74,76 +78,16 @@ module mwd_setup
         
         integer :: maxiter = 100
         
-        integer, dimension(np) :: optim_parameters = 0
-        integer, dimension(ns) :: optim_states = 0
+        integer, dimension(GNP) :: optim_parameters = 0
+        integer, dimension(GNS) :: optim_states = 0
         
-        real(sp), dimension(np) :: lb_parameters = &
+        real(sp), dimension(GNP) :: lb_parameters = GLB_PARAMETERS
         
-        & (/1e-6_sp ,& !% ci
-        &   1e-6_sp ,& !% cp
-        &   1e-6_sp ,& !% beta
-        &   1e-6_sp ,& !% cft
-        &   1e-6_sp ,& !% cst
-        &   1e-6_sp ,& !% alpha
-        &   -50._sp ,& !% exc
+        real(sp), dimension(GNP) :: ub_parameters = GUB_PARAMETERS
         
-        &   1e-6_sp ,& !% b
-        &   1e-6_sp ,& !% cusl1
-        &   1e-6_sp ,& !% cusl2
-        &   1e-6_sp ,& !% clsl
-        &   1e-6_sp ,& !% ks
-        &   1e-6_sp ,& !% ds
-        &   1e-6_sp ,& !% dsm
-        &   1e-6_sp ,& !% ws
+        real(sp), dimension(GNS) :: lb_states = GLB_STATES
         
-        &   1e-6_sp/)  !% lr
-        
-        real(sp), dimension(np) :: ub_parameters = &
-        
-        & (/1e2_sp      ,&  !% ci
-        &   1e3_sp      ,&  !% cp
-        &   1e3_sp      ,&  !% beta
-        &   1e3_sp      ,&  !% cft
-        &   1e4_sp      ,&  !% cst
-        &   0.999999_sp ,&  !% alpha
-        &   50._sp      ,&  !% exc
-        
-        &   1e1_sp      ,&  !% b
-        &   2e3_sp      ,&  !% cusl1
-        &   2e3_sp      ,&  !% cusl2
-        &   2e3_sp      ,&  !% clsl
-        &   1e4_sp      ,&  !% ks
-        &   0.999999_sp ,&  !% ds
-        &   30._sp      ,&  !% dsm
-        &   0.999999_sp ,&  !% ws
-        
-        &   1e3_sp/)        !% lr
-        
-        real(sp), dimension(ns) :: lb_states = &
-        
-        & (/1e-6_sp ,& !% hi
-        &   1e-6_sp ,& !% hp
-        &   1e-6_sp ,& !% hft
-        &   1e-6_sp ,& !% hst
-        
-        &   1e-6_sp ,& !% husl1
-        &   1e-6_sp ,& !% husl2
-        &   1e-6_sp ,& !% hlsl
-        
-        &   1e-6_sp/)  !% hlr
-        
-        real(sp), dimension(ns) :: ub_states = &
-        
-        & (/0.999999_sp ,& !% hi
-        &   0.999999_sp ,& !% hp
-        &   0.999999_sp ,& !% hft
-        &   0.999999_sp ,& !% hst
-        
-        &   0.999999_sp ,& !% husl1
-        &   0.999999_sp ,& !% husl2
-        &   0.999999_sp ,& !% hlsl
-        
-        &   10000._sp/)    !% hlr
+        real(sp), dimension(GNS) :: ub_states = GUB_STATES
         
         real(sp), dimension(:), allocatable :: wgauge
 
@@ -195,45 +139,15 @@ module mwd_setup
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
         
-        character(10), dimension(np) :: parameters_name = & !>f90w-private f90w-char_array
-        
-        & (/"ci        ",&
-        &   "cp        ",&
-        &   "beta      ",&
-        &   "cft       ",&
-        &   "cst       ",&
-        &   "alpha     ",&
-        &   "exc       ",&
-        
-        &   "b         ",&
-        &   "cusl1     ",&
-        &   "cusl2     ",&
-        &   "clsl      ",&
-        &   "ks        ",&
-        &   "ds        ",&
-        &   "dsm       ",&
-        &   "ws        ",&
-        
-        &   "lr        "/)
-        
-        character(10), dimension(ns) :: states_name = & !>f90w-private f90w-char_array
-    
-        & (/"hi        ",&
-        &   "hp        ",&
-        &   "hft       ",&
-        &   "hst       ",&
-        
-        &   "husl1     ",&
-        &   "husl2     ",&
-        &   "hlsl      ",&
-        
-        &   "hlr       "/)
+        character(10), dimension(GNP) :: parameters_name = GPARAMETERS_NAME !>f90w-private f90w-char_array
+
+        character(10), dimension(GNS) :: states_name = GSTATES_NAME !>f90w-private f90w-char_array
         
     end type SetupDT
     
     contains
     
-        subroutine Optimize_SetupDT_initialise(this, setup, ng, mapping, njf)
+        subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf)
         
             !% Notes
             !% -----
@@ -242,29 +156,27 @@ module mwd_setup
             implicit none
             
             type(Optimize_SetupDT), intent(inout) :: this
-            type(SetupDT), intent(in) :: setup
-            integer, intent(in) :: ng
-            character(len=*), optional, intent(in) :: mapping
-            integer, optional, intent(in) :: njf
+            integer, intent(in) :: ntime_step, nd, ng, njf
+            character(len=*), intent(in) :: mapping
 
             allocate(this%wgauge(ng))
             this%wgauge = 1._sp / ng
             
-            if (present(mapping)) this%mapping = mapping
+            this%mapping = mapping
 
             select case(trim(this%mapping))
             
             case("hyper-linear")
                 
-                this%nhyper = (1 + setup%nd)
+                this%nhyper = (1 + nd)
                 
             case("hyper-polynomial")
             
-                this%nhyper = (1 + 2 * setup%nd)
+                this%nhyper = (1 + 2 * nd)
                 
             end select
 
-            if (present(njf)) this%njf = njf
+            this%njf = njf
             
             allocate(this%jobs_fun(this%njf))
             this%jobs_fun = "..."
@@ -272,11 +184,11 @@ module mwd_setup
             allocate(this%wjobs_fun(this%njf))
             this%wjobs_fun = 0._sp
 
-            allocate(this%mask_event(ng, setup%ntime_step))
+            allocate(this%mask_event(ng, ntime_step))
             this%mask_event = 0
-        
+            
         end subroutine Optimize_SetupDT_initialise
-    
+
 
         subroutine SetupDT_initialise(this, nd, ng)
         
@@ -298,7 +210,7 @@ module mwd_setup
             
             end if
             
-            call Optimize_SetupDT_initialise(this%optimize, this, ng)
+            call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0)
         
         end subroutine SetupDT_initialise
 

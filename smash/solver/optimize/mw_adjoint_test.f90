@@ -8,7 +8,7 @@
 
 module mw_adjoint_test
     
-    use md_constant, only: sp, np, ns
+    use md_constant, only: sp, GNP, GNS
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
@@ -48,7 +48,7 @@ module mw_adjoint_test
             type(StatesDT) ::  states_bgd, states_d, states_b
             type(OutputDT) ::  output_d, output_b
             real(sp) :: cost, cost_d, cost_b
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_d_matrix, parameters_b_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_d_matrix, parameters_b_matrix
             real(sp) :: sp1, sp2
 
             write(*,'(a)') "</> Scalar Product Test"
@@ -122,7 +122,7 @@ module mw_adjoint_test
             type(StatesDT) :: states_bgd, states_b
             type(OutputDT) :: output_b
             real(sp) :: cost, cost_b
-            real(sp), dimension(mesh%nrow, mesh%ncol, np) :: parameters_matrix, parameters_b_matrix
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix, parameters_b_matrix
             real(sp) :: yk, yadk, dk, an, ian
             integer :: n
             

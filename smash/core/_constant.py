@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from smash.core.optimize._optimize import (
+    _optimize_sbs,
+    _optimize_nelder_mead,
+    _optimize_lbfgsb,
+)
+
 import numpy as np
 
 
@@ -60,6 +66,7 @@ CSIGN = ["Crc", "Crchf", "Crclf", "Crch2r", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 
 ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
+
 ### PRCP INDICES ###
 ####################
 
@@ -85,3 +92,23 @@ CSIGN_OPTIM = ["Crc"]
 ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
+
+OPTIM_FUNC = {
+    "sbs": _optimize_sbs,
+    "l-bfgs-b": _optimize_lbfgsb,
+    "nelder-mead": _optimize_nelder_mead,
+}  #% TODO add nsga
+
+
+### ANN OPTIMIZE ###
+####################
+
+WB_INITIALIZER = {
+    "uniform",
+    "glorot_uniform",
+    "he_uniform",
+    "normal",
+    "glorot_normal",
+    "he_normal",
+    "zeros",
+}
