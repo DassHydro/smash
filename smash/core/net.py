@@ -1041,12 +1041,12 @@ def _hcost_prime(
 
     grad = np.transpose(
         [
-            getattr(parameters_b, name)
+            getattr(parameters_b, name)[mask]
             if name in instance.setup._parameters_name
-            else getattr(states_b, name)
+            else getattr(states_b, name)[mask]
             for name in control_vector
         ]
-    )[mask]
+    )
 
     return grad
 
