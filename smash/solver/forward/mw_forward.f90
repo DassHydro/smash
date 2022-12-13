@@ -21,7 +21,7 @@ module mw_forward
             !% Notes
             !% -----
             !%
-            !% forward interface wrapping *_base_forward
+            !% Wrapping base_forward
         
             implicit none
             
@@ -33,17 +33,8 @@ module mw_forward
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
 
-            if (index(setup%structure, "gr") .ne. 0) then
-            
-                call gr_base_forward(setup, mesh, input_data, parameters, &
-                & parameters_bgd, states, states_bgd, output, cost)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_forward(setup, mesh, input_data, parameters, &
-                & parameters_bgd, states, states_bgd, output, cost)
-                
-            end if
+            call base_forward(setup, mesh, input_data, parameters, &
+            & parameters_bgd, states, states_bgd, output, cost)
         
         end subroutine forward
 
@@ -54,7 +45,7 @@ module mw_forward
             !% Notes
             !% -----
             !%
-            !% forward_b interface wrapping *_base_forward_b
+            !% Wrapping base_forward_b
         
             implicit none
             
@@ -66,19 +57,9 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_b
             real(sp), intent(inout) :: cost, cost_b
             
-            if (index(trim(setup%structure), "gr") .ne. 0) then
-            
-                call gr_base_forward_b(setup, mesh, input_data, parameters, &
-                & parameters_b, parameters_bgd, states, states_b, &
-                & states_bgd, output, output_b, cost, cost_b)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_forward_b(setup, mesh, input_data, parameters, &
-                & parameters_b, parameters_bgd, states, states_b, &
-                & states_bgd, output, output_b, cost, cost_b)
-                
-            end if
+            call base_forward_b(setup, mesh, input_data, parameters, &
+            & parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
+            & output_b, cost, cost_b)
         
         end subroutine forward_b
 
@@ -89,7 +70,7 @@ module mw_forward
             !% Notes
             !% -----
             !%
-            !% forward_d interface wrapping *_base_forward_d
+            !% Wrapping base_forward_d
         
             implicit none
             
@@ -101,130 +82,94 @@ module mw_forward
             type(OutputDT), intent(inout) :: output, output_d
             real(sp), intent(inout) :: cost, cost_d
             
-            if (index(trim(setup%structure), "gr") .ne. 0) then
-            
-                call gr_base_forward_d(setup, mesh, input_data, parameters, &
-                & parameters_d, parameters_bgd, states, states_d, &
-                & states_bgd, output, output_d, cost, cost_d)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_forward_d(setup, mesh, input_data, parameters, &
-                & parameters_d, parameters_bgd, states, states_d, &
-                & states_bgd, output, output_d, cost, cost_d)
-            
-            end if
+            call base_forward_d(setup, mesh, input_data, parameters, &
+            & parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
+            & output_d, cost, cost_d)
         
         end subroutine forward_d
 
-        subroutine hyper_forward(setup, mesh, input_data, &
-        & hyper_parameters, hyper_parameters_bgd, hyper_states, &
+        subroutine hyper_forward(setup, mesh, input_data, parameters, &
+        & hyper_parameters, hyper_parameters_bgd, states, hyper_states, &
         & hyper_states_bgd, output, cost)
         
             !% Notes
             !% -----
             !%
-            !% hyper_forward interface wrapping *_base_hyper_forward
+            !% Wrapping base_hyper_forward
         
             implicit none
             
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
+            type(ParametersDT), intent(inout) :: parameters
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters, hyper_parameters_bgd
+            type(StatesDT), intent(inout) :: states
             type(Hyper_StatesDT), intent(inout) :: hyper_states, hyper_states_bgd
             type(OutputDT), intent(inout) :: output
             real(sp), intent(inout) :: cost
             
-            if (index(trim(setup%structure), "gr") .ne. 0) then
             
-                call gr_base_hyper_forward(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_bgd, hyper_states, &
-                & hyper_states_bgd, output, cost)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_hyper_forward(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_bgd, hyper_states, &
-                & hyper_states_bgd, output, cost)
-            
-            end if
+            call base_hyper_forward(setup, mesh, input_data, parameters, hyper_parameters, &
+            & hyper_parameters_bgd, states, hyper_states, hyper_states_bgd, output, cost)
         
         end subroutine hyper_forward
 
         subroutine hyper_forward_b(setup, mesh, input_data, &
-        & hyper_parameters, hyper_parameters_b, hyper_parameters_bgd, &
-        & hyper_states, hyper_states_b, hyper_states_bgd, output, &
-        & output_b, cost, cost_b)
+        & parameters, parameters_b, hyper_parameters, hyper_parameters_b, &
+        & hyper_parameters_bgd, states, states_b, hyper_states, hyper_states_b, &
+        & hyper_states_bgd, output, output_b, cost, cost_b)
         
             !% Notes
             !% -----
             !%
-            !% hyper_forward_b interface wrapping *_base_hyper_forward_b
+            !% Wrapping base_hyper_forward_b
         
             implicit none
             
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
+            type(ParametersDT), intent(inout) :: parameters, parameters_b
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters, hyper_parameters_b, hyper_parameters_bgd
+            type(StatesDT), intent(inout) :: states, states_b
             type(Hyper_StatesDT), intent(inout) :: hyper_states, hyper_states_b, hyper_states_bgd
             type(OutputDT), intent(inout) :: output, output_b
             real(sp), intent(inout) :: cost, cost_b
             
-            if (index(trim(setup%structure), "gr") .ne. 0) then
-            
-                call gr_base_hyper_forward_b(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_b, &
-                & hyper_parameters_bgd, hyper_states, hyper_states_b, &
-                & hyper_states_bgd, output, output_b, cost, cost_b)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_hyper_forward_b(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_b, &
-                & hyper_parameters_bgd, hyper_states, hyper_states_b, &
-                & hyper_states_bgd, output, output_b, cost, cost_b)
-            
-            end if
+            call base_hyper_forward_b(setup, mesh, input_data, parameters, &
+            & parameters_b, hyper_parameters, hyper_parameters_b, &
+            & hyper_parameters_bgd, states, states_b, hyper_states, hyper_states_b, &
+            & hyper_states_bgd, output, output_b, cost, cost_b)
         
         end subroutine hyper_forward_b
 
         subroutine hyper_forward_d(setup, mesh, input_data, &
-        & hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
-        & hyper_states, hyper_states_d, hyper_states_bgd, &
+        & parameters, parameters_d, hyper_parameters, hyper_parameters_d, hyper_parameters_bgd, &
+        & states, states_d, hyper_states, hyper_states_d, hyper_states_bgd, &
         & output, output_d, cost, cost_d)
         
             !% Notes
             !% -----
             !%
-            !% hyper_forward_d interface wrapping *_base_hyper_forward_d
+            !% Wrapping base_hyper_forward_d
         
             implicit none
             
             type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(Input_DataDT), intent(in) :: input_data
+            type(ParametersDT), intent(inout) :: parameters, parameters_d
             type(Hyper_ParametersDT), intent(in) :: hyper_parameters, hyper_parameters_d, hyper_parameters_bgd
+            type(StatesDT), intent(inout) :: states, states_d
             type(Hyper_StatesDT), intent(inout) :: hyper_states, hyper_states_d, hyper_states_bgd
             type(OutputDT), intent(inout) :: output, output_d
             real(sp), intent(inout) :: cost, cost_d
             
-            if (index(trim(setup%structure), "gr") .ne. 0) then
-            
-                call gr_base_hyper_forward_d(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_d, &
-                & hyper_parameters_bgd, hyper_states, hyper_states_d, &
-                & hyper_states_bgd, output, output_d, cost, cost_d)
-                
-            else if (index(setup%structure, "vic") .ne. 0) then
-            
-                call vic_base_hyper_forward_d(setup, mesh, input_data, &
-                & hyper_parameters, hyper_parameters_d, &
-                & hyper_parameters_bgd, hyper_states, hyper_states_d, &
-                & hyper_states_bgd, output, output_d, cost, cost_d)
-        
-            end if
+            call base_hyper_forward_d(setup, mesh, input_data, parameters, &
+            & parameters_d, hyper_parameters, hyper_parameters_d, &
+            & hyper_parameters_bgd, states, states_d, hyper_states, hyper_states_d, &
+            & hyper_states_bgd, output, output_d, cost, cost_d)
             
         end subroutine hyper_forward_d
 
