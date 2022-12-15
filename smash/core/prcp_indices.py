@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash.core._constant import PRCP_INDICES
-
 from smash.solver._mw_forcing_statistic import compute_prcp_indices
+
+from smash.core._constant import PRCP_INDICES
 
 from typing import TYPE_CHECKING
 
