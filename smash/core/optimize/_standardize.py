@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import Optimize_SetupDT
-
 from smash.core._constant import (
     ALGORITHM,
     MAPPING,
@@ -11,6 +9,8 @@ from smash.core._constant import (
     CSIGN_OPTIM,
     ESIGN_OPTIM,
 )
+
+from smash.solver._mw_derived_type_update import update_optimize_setup
 
 from typing import TYPE_CHECKING
 
@@ -493,15 +493,20 @@ def _standardize_optimize_args(
 
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 
-    setup._optimize = Optimize_SetupDT(
+    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
         setup._ntime_step,
         setup._nd,
         mesh.ng,
         mapping,
         jobs_fun.size,
     )
-
-    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
@@ -602,15 +607,20 @@ def _standardize_wo_optimize_args(
 
     jobs_fun = _standardize_jobs_fun_wo_optimize(jobs_fun)
 
-    setup._optimize = Optimize_SetupDT(
+    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
         setup._ntime_step,
         setup._nd,
         mesh.ng,
         "...",
         jobs_fun.size,
     )
-
-    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
