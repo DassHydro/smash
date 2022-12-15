@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash.core._constant import OPTIM_FUNC
-
 from smash.solver._mw_forward import forward
+
+from smash.core._constant import OPTIM_FUNC
 from smash.core._event_segmentation import _mask_event
 from smash.core.generate_samples import generate_samples
 
@@ -71,7 +71,7 @@ class BayesResult(dict):
         return list(self.keys())
 
 
-def _Bayes_computation(
+def _bayes_computation(
     instance: Model,
     generator: str,
     n: int,

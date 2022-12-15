@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from smash.core._constant import OPTIM_FUNC
-
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
+
 from smash.solver._mw_forward import forward
+
+from smash.core._constant import OPTIM_FUNC
 
 from smash.core._build_model import (
     _parse_derived_type,
@@ -19,7 +20,7 @@ from smash.core._build_model import (
 
 from smash.core.optimize._ann_optimize import _ann_optimize
 
-from smash.core.optimize.Bayes_optimize import _Bayes_computation
+from smash.core.optimize.bayes_optimize import _bayes_computation
 
 from smash.core.optimize._standardize import (
     _standardize_optimize_args,
@@ -824,7 +825,7 @@ class Model(object):
             instance.input_data,
         )
 
-        res = _Bayes_computation(
+        res = _bayes_computation(
             instance,
             generator,
             n,
@@ -1006,7 +1007,7 @@ class Model(object):
 
         options = _standardize_optimize_options(options)
 
-        res = _Bayes_computation(
+        res = _bayes_computation(
             instance,
             generator,
             n,
