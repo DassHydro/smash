@@ -115,7 +115,7 @@ def sed_char_array_handler_decorator(pyf, char_array):
         os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
 
 
-#% Rework
+#% TODO: Rework
 def sed_copy_derived_type(pyf):
     
     name = -1
@@ -149,7 +149,7 @@ def sed_copy_derived_type(pyf):
                                 f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
                             )
                         os.system(
-                            f'sed -i "/from __future__/a \\from smash.solver._mw_copy import copy_{name}" {pyf}'
+                            f'sed -i "/from __future__/a \\from smash.solver._mw_derived_type_copy import copy_{name}" {pyf}'
                         )
                     
                         break
