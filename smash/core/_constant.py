@@ -103,7 +103,7 @@ OPTIM_FUNC = {
 ### ANN OPTIMIZE ###
 ####################
 
-WB_INITIALIZER = {
+WB_INITIALIZER = [
     "uniform",
     "glorot_uniform",
     "he_uniform",
@@ -111,4 +111,4 @@ WB_INITIALIZER = {
     "glorot_normal",
     "he_normal",
     "zeros",
-}
+]

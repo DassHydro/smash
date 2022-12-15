@@ -1,7 +1,7 @@
 from smash.core.model import Model
 from smash.core.net import Net
 from smash.core.prcp_indices import PrcpIndicesResult
-from smash.core.optimize.Bayes_optimize import BayesResult
+from smash.core.optimize.bayes_optimize import BayesResult
 from smash.core.generate_samples import generate_samples
 from smash.core.utils import sparse_matrix_to_vector, sparse_vector_to_matrix
 
