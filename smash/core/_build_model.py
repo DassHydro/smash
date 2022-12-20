@@ -6,6 +6,8 @@ from smash.solver._mw_forcing_statistic import (
     compute_mean_forcing,
 )
 
+from smash.core._constant import STRUCTURE_NAME, INPUT_DATA_FORMAT
+
 from smash.core._read_input_data import (
     _read_qobs,
     _read_prcp,
@@ -101,9 +103,9 @@ def _standardize_setup(setup: SetupDT):
             setup.prcp_directory,
         )
 
-    if not setup.prcp_format in ["tif", "nc"]:
+    if setup.prcp_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {['tif', 'nc']}"
+            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
     if setup.prcp_conversion_factor < 0:
@@ -119,9 +121,9 @@ def _standardize_setup(setup: SetupDT):
             setup.pet_directory,
         )
 
-    if setup.pet_format not in ["tif", "nc"]:
+    if setup.pet_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown pet_format '{setup.pet_format}'. Choices: {['tif', 'nc']}"
+            f"Unknown pet_format '{setup.pet_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
     if setup.pet_conversion_factor < 0:
@@ -144,15 +146,15 @@ def _standardize_setup(setup: SetupDT):
             "argument read_descriptor is True and descriptor_name is not defined"
         )
 
-    if setup.descriptor_format not in ["tif", "nc"]:
+    if setup.descriptor_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {['tif', 'nc']}"
+            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
     setup.structure = setup.structure.lower()
-    if setup.structure not in ["gr-a", "gr-b", "vic-a"]:
+    if setup.structure not in STRUCTURE_NAME:
         raise ValueError(
-            f"Unknown structure '{setup.structure}'. Choices: {['gr-a', 'gr-b', 'vic-a']}"
+            f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
         )
 
 

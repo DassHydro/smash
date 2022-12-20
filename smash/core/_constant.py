@@ -24,9 +24,13 @@ STRUCTURE_STATES = {
     "vic-a": ["husl1", "husl2", "hlsl"],
 }
 
+STRUCTURE_NAME = list(STRUCTURE_PARAMETERS.keys())
+
 
 ### READ INPUT DATA ###
 #######################
+
+INPUT_DATA_FORMAT = ["tif", "nc"]
 
 RATIO_PET_HOURLY = np.array(
     [
