@@ -16,6 +16,7 @@ from smash.core._build_model import (
     _build_setup,
     _build_mesh,
     _build_input_data,
+    _build_parameters,
 )
 
 from smash.core.optimize._ann_optimize import _ann_optimize
@@ -124,6 +125,8 @@ class Model(object):
             _build_input_data(self.setup, self.mesh, self.input_data)
 
             self.parameters = ParametersDT(self.mesh)
+
+            _build_parameters(self.setup, self.mesh, self.input_data, self.parameters)
 
             self.states = StatesDT(self.mesh)
 
@@ -717,7 +720,7 @@ class Model(object):
 
             return instance
 
-    def Bayes_estimate(
+    def bayes_estimate(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
         generator: str = "uniform",
@@ -788,7 +791,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.Bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
+        >>> br = model.bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
 
         Add more info (TODO)
 
@@ -864,7 +867,7 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def Bayes_optimize(
+    def bayes_optimize(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
         density_estimate: bool = True,
@@ -961,7 +964,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.Bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
+        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
 
         Add more info (TODO)
 

@@ -14,6 +14,7 @@
     "mw_mask": "_mw_mask",
     "mw_sparse_storage": "_mw_sparse_storage",
     "mw_forcing_statistic": "_mw_forcing_statistic",
+    "mw_interception_store": "_mw_interception_store",
     "mw_adjoint_test": "_mw_adjoint_test",
     "mw_optimize": "_mw_optimize",
 }
