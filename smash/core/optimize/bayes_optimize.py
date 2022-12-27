@@ -44,8 +44,8 @@ class BayesResult(dict):
 
     See Also
     --------
-    Model.Bayes_estimate: Estimate prior Model parameters/states using Bayesian approach.
-    Model.Bayes_optimize: Optimize the Model using Bayesian approach.
+    Model.bayes_estimate: Estimate prior Model parameters/states using Bayesian approach.
+    Model.bayes_optimize: Optimize the Model using Bayesian approach.
 
     """
 
