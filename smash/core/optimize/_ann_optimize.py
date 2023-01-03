@@ -70,14 +70,20 @@ def _ann_optimize(
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
 
-    nd = instance.setup._nd
-
     # preprocessing data
     mask = np.where(instance.mesh.active_cell == 1)
 
-    x_train = instance.input_data.descriptor.copy()
+    try:
+        x_train = instance.input_data.descriptor.copy()
+
+    except:
+        raise AttributeError("Model descriptor map not found")
+
     x_train = x_train[mask]
 
+    nd = instance.setup._nd
+
+    # TODO: Check for uniform descriptor map (optimize algo check) 
     for i in range(nd):
         x_train[..., i] = (x_train[..., i] - np.nanmin(x_train[..., i])) / (
             np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
@@ -279,3 +285,4 @@ def _training_message(
     ret.append(f"wg: {len(wgauge)} [ {' '.join(wgauge.astype('U'))} ]")
 
     print(f"\n{sp4}".join(ret) + "\n")
+
