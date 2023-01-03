@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.core._event_segmentation import _mask_event
 
+from smash.core.optimize._optimize import _normalize_descriptor, _denormalize_descriptor
+
 from smash.core.net import Net
 
 from typing import TYPE_CHECKING
@@ -71,26 +73,23 @@ def _ann_optimize(
     states_bgd = instance.states.copy()
 
     # preprocessing data
-    mask = np.where(instance.mesh.active_cell == 1)
+    min_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
+    max_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
 
-    try:
-        x_train = instance.input_data.descriptor.copy()
+    active_mask = np.where(instance.mesh.active_cell == 1)
+    inactive_mask = np.where(instance.mesh.active_cell == 0)
 
-    except:
-        raise AttributeError("Model descriptor map not found")
+    _normalize_descriptor(instance, min_descriptor, max_descriptor)
 
-    x_train = x_train[mask]
+    x_train_active = instance.input_data.descriptor[active_mask]
+    x_train_inactive = instance.input_data.descriptor[inactive_mask]
 
-    nd = instance.setup._nd
-
-    # TODO: Check for uniform descriptor map (optimize algo check) 
-    for i in range(nd):
-        x_train[..., i] = (x_train[..., i] - np.nanmin(x_train[..., i])) / (
-            np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
-        )
+    _denormalize_descriptor(instance, min_descriptor, max_descriptor)
 
     # set graph if not defined
-    nx = len(x_train)
+    nd = instance.setup._nd
+    nx = len(x_train_active)
+
     net = _set_graph(net, nx, nd, control_vector, bounds)
 
     if verbose:
@@ -98,10 +97,10 @@ def _ann_optimize(
 
     # train the network
     net._fit(
-        x_train,
+        x_train_active,
         instance,
         control_vector,
-        mask,
+        active_mask,
         parameters_bgd,
         states_bgd,
         validation,
@@ -109,6 +108,17 @@ def _ann_optimize(
         early_stopping,
         verbose,
     )
+
+    # predicted map at inactive cells
+    y = net._predict(x_train_inactive)
+
+    for i, name in enumerate(control_vector):
+
+        if name in instance.setup._parameters_name:
+            getattr(instance.parameters, name)[inactive_mask] = y[:, i]
+
+        else:
+            getattr(instance.states, name)[inactive_mask] = y[:, i]
 
     return net
 
@@ -285,4 +295,3 @@ def _training_message(
     ret.append(f"wg: {len(wgauge)} [ {' '.join(wgauge.astype('U'))} ]")
 
     print(f"\n{sp4}".join(ret) + "\n")
-

@@ -24,7 +24,7 @@ import pandas as pd
 import warnings
 
 
-def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
+def _standardize_mapping(mapping: str) -> str:
 
     if isinstance(mapping, str):
 
@@ -38,13 +38,30 @@ def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
 
         raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
 
-    if mapping.startswith("hyper") and setup._nd == 0:
+    return mapping
+
+
+def _standardize_descriptors(input_data: Input_DataDT, setup: SetupDT) -> None:
+    # For the moment, return None
+    # TODO: add warnings for rejecting uniform descriptors
+
+    if setup._nd == 0:
 
         raise ValueError(
-            f"'{mapping}' mapping can not be use if no catchment descriptors are available"
+            f"The optimization method chosen can not be used if no catchment descriptors are available"
         )
 
-    return mapping
+    else:
+
+        for i in range(setup._nd):
+
+            d = input_data.descriptor[..., i].reshape(-1)
+
+            if np.all(d == d[0]):
+
+                raise ValueError(
+                    f"Cannot optimize the Model with spatially uniform descriptor {setup.descriptor_name[i]}"
+                )
 
 
 def _standardize_algorithm(algorithm: str | None, mapping: str) -> str:
@@ -470,6 +487,93 @@ def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Times
     return ost
 
 
+def _standardize_optimize_options(options: dict | None) -> dict:
+
+    if options is None:
+
+        options = {}
+
+    return options
+
+
+def _standardize_jobs_fun_wo_mapping(
+    jobs_fun: str | list | tuple | set,
+) -> np.ndarray:
+
+    if isinstance(jobs_fun, str):
+
+        jobs_fun = np.array(jobs_fun, ndmin=1)
+
+    elif isinstance(jobs_fun, set):
+
+        jobs_fun = np.array(list(jobs_fun))
+
+    elif isinstance(jobs_fun, (list, tuple)):
+
+        jobs_fun = np.array(jobs_fun)
+
+    else:
+        raise TypeError("jobs_fun argument must be str or list-like object")
+
+    list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
+
+    check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
+
+    if sum(check_obj) < len(check_obj):
+        raise ValueError(
+            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
+        )
+
+    return jobs_fun
+
+
+def _standardize_wjobs_wo_mapping(
+    wjobs_fun: list | None, jobs_fun: np.ndarray
+) -> np.ndarray:
+
+    if wjobs_fun is None:
+
+        wjobs_fun = np.ones(jobs_fun.size) / jobs_fun.size
+
+    else:
+
+        if isinstance(wjobs_fun, set):
+
+            wjobs_fun = np.array(list(wjobs_fun))
+
+        elif isinstance(wjobs_fun, (list, tuple)):
+
+            wjobs_fun = np.array(wjobs_fun)
+
+        else:
+
+            raise TypeError("wjobs_fun argument must list-like object")
+
+        if wjobs_fun.size != jobs_fun.size:
+
+            raise ValueError(
+                f"Inconsistent size between jobs_fun ({jobs_fun.size}) and wjobs_fun ({wjobs_fun.size})"
+            )
+
+    return wjobs_fun
+
+
+def _standardize_bayes_k(
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
+
+    if isinstance(k, (int, float, list)):
+        pass
+
+    elif isinstance(k, (range, np.ndarray, tuple, set)):
+        k = list(k)
+
+    else:
+        raise TypeError("k argument must be numerical or list-like object")
+
+    return k
+
+
 def _standardize_optimize_args(
     mapping: str,
     algorithm: str | None,
@@ -485,7 +589,10 @@ def _standardize_optimize_args(
     input_data: Input_DataDT,
 ):
 
-    mapping = _standardize_mapping(mapping, setup)
+    mapping = _standardize_mapping(mapping)
+
+    if mapping.startswith("hyper"):
+        _standardize_descriptors(input_data, setup)
 
     algorithm = _standardize_algorithm(algorithm, mapping)
 
@@ -519,78 +626,118 @@ def _standardize_optimize_args(
     return mapping, algorithm, control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
 
 
-def _standardize_optimize_options(options: dict | None) -> dict:
-
-    if options is None:
-
-        options = {}
-
-    return options
-
-
-def _standardize_jobs_fun_wo_optimize(
+def _standardize_bayes_estimate_args(
+    control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
-) -> np.ndarray:
+    wjobs_fun: list | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
 
-    if isinstance(jobs_fun, str):
+    control_vector = _standardize_control_vector(control_vector, setup)
 
-        jobs_fun = np.array(jobs_fun, ndmin=1)
+    jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
-    elif isinstance(jobs_fun, set):
+    wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
 
-        jobs_fun = np.array(list(jobs_fun))
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        "...",
+        jobs_fun.size,
+    )
 
-    elif isinstance(jobs_fun, (list, tuple)):
+    bounds = _standardize_bounds(bounds, control_vector, setup)
 
-        jobs_fun = np.array(jobs_fun)
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
 
-    else:
-        raise TypeError("jobs_fun argument must be str or list-like object")
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
 
-    list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
+    ost = _standardize_ost(ost, setup)
 
-    check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
+    k = _standardize_bayes_k(k)
 
-    if sum(check_obj) < len(check_obj):
-        raise ValueError(
-            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
-        )
-
-    return jobs_fun
-
-
-def _standardize_wjobs_wo_optimize(
-    wjobs_fun: list | None, jobs_fun: np.ndarray
-) -> np.ndarray:
-
-    if wjobs_fun is None:
-
-        wjobs_fun = np.ones(jobs_fun.size) / jobs_fun.size
-
-    else:
-
-        if isinstance(wjobs_fun, set):
-
-            wjobs_fun = np.array(list(wjobs_fun))
-
-        elif isinstance(wjobs_fun, (list, tuple)):
-
-            wjobs_fun = np.array(wjobs_fun)
-
-        else:
-
-            raise TypeError("wjobs_fun argument must list-like object")
-
-        if wjobs_fun.size != jobs_fun.size:
-
-            raise ValueError(
-                f"Inconsistent size between jobs_fun ({jobs_fun.size}) and wjobs_fun ({wjobs_fun.size})"
-            )
-
-    return wjobs_fun
+    return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost, k
 
 
-def _standardize_wo_optimize_args(
+def _standardize_bayes_optimize_args(
+    mapping: str,
+    algorithm: str | None,
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
+
+    mapping = _standardize_mapping(mapping)
+
+    if mapping.startswith("hyper"):
+        _standardize_descriptors(input_data, setup)
+
+    algorithm = _standardize_algorithm(algorithm, mapping)
+
+    control_vector = _standardize_control_vector(control_vector, setup)
+
+    jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
+
+    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        mapping,
+        jobs_fun.size,
+    )
+
+    bounds = _standardize_bounds(bounds, control_vector, setup)
+
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
+
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
+
+    ost = _standardize_ost(ost, setup)
+
+    k = _standardize_bayes_k(k)
+
+    return (
+        mapping,
+        algorithm,
+        control_vector,
+        jobs_fun,
+        wjobs_fun,
+        bounds,
+        wgauge,
+        ost,
+        k,
+    )
+
+
+def _standardize_ann_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
@@ -603,11 +750,13 @@ def _standardize_wo_optimize_args(
     input_data: Input_DataDT,
 ):
 
+    _standardize_descriptors(input_data, setup)
+
     control_vector = _standardize_control_vector(control_vector, setup)
 
-    jobs_fun = _standardize_jobs_fun_wo_optimize(jobs_fun)
+    jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
-    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
+    wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
 
     #% Update optimize setup derived type according to new optimize args.
     #% This Fortran subroutine reset optimize_setup values and realloc arrays.
@@ -631,19 +780,3 @@ def _standardize_wo_optimize_args(
     ost = _standardize_ost(ost, setup)
 
     return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
-
-
-def _standardize_bayes_k(
-    k: int | float | range | list | tuple | set | np.ndarray,
-):
-
-    if isinstance(k, (int, float, list)):
-        pass
-
-    elif isinstance(k, (range, np.ndarray, tuple, set)):
-        k = list(k)
-
-    else:
-        raise TypeError("k argument must be numerical or list-like object")
-
-    return k

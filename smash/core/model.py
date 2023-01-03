@@ -26,8 +26,9 @@ from smash.core.optimize.bayes_optimize import _bayes_computation
 from smash.core.optimize._standardize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
-    _standardize_wo_optimize_args,
-    _standardize_bayes_k,
+    _standardize_bayes_estimate_args,
+    _standardize_bayes_optimize_args,
+    _standardize_ann_optimize_args,
 )
 
 from smash.core._event_segmentation import _event_segmentation
@@ -815,7 +816,8 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-        ) = _standardize_wo_optimize_args(
+            k,
+        ) = _standardize_bayes_estimate_args(
             control_vector,
             jobs_fun,
             wjobs_fun,
@@ -826,6 +828,7 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+            k,
         )
 
         res = _bayes_computation(
@@ -835,7 +838,7 @@ class Model(object):
             random_state,
             backg_sol,
             coef_std,
-            _standardize_bayes_k(k),
+            k,
             None,
             None,
             None,
@@ -993,7 +996,8 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-        ) = _standardize_optimize_args(
+            k,
+        ) = _standardize_bayes_optimize_args(
             mapping,
             algorithm,
             control_vector,
@@ -1006,6 +1010,7 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+            k,
         )
 
         options = _standardize_optimize_options(options)
@@ -1017,7 +1022,7 @@ class Model(object):
             random_state,
             backg_sol,
             coef_std,
-            _standardize_bayes_k(k),
+            k,
             density_estimate,
             de_bw_method,
             de_weights,
@@ -1182,7 +1187,7 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-        ) = _standardize_wo_optimize_args(
+        ) = _standardize_ann_optimize_args(
             control_vector,
             jobs_fun,
             wjobs_fun,
