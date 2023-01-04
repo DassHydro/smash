@@ -25,7 +25,7 @@ from tqdm import tqdm
 import warnings
 
 
-class SignaturesResult(dict):
+class SignResult(dict):
     """
     Represents signatures computation results.
 
@@ -79,7 +79,7 @@ class SignaturesResult(dict):
         return list(self.keys())
 
 
-class SignaturesSensitivityResult(dict):
+class SignSensResult(dict):
     """
     Represents signatures sensitivity computation results.
 
@@ -450,7 +450,7 @@ def _signatures(
                                     [dfobs_es, rowobs_es], ignore_index=True
                                 )
 
-    return SignaturesResult(
+    return SignResult(
         dict(
             zip(
                 ["cont", "event"],
@@ -556,7 +556,7 @@ def _signatures_sensitivity(
             }
         )  # concat dfinfo and dfsa
 
-    return SignaturesSensitivityResult(
+    return SignSensResult(
         dict(
             zip(
                 ["cont", "event", "sample"],

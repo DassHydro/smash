@@ -1274,12 +1274,12 @@ class Model(object):
 
         Returns
         -------
-        res : SignaturesResult
-            The signatures computation results represented as a ``SignaturesResult`` object.
+        res : SignResult
+            The signatures computation results represented as a ``SignResult`` object.
 
         See Also
         --------
-        SignaturesResult: Represents signatures computation results.
+        SignResult: Represents signatures computation results.
 
         Examples
         --------
@@ -1349,12 +1349,12 @@ class Model(object):
 
         Returns
         -------
-        res : SignaturesSensitivityResult
-            The signatures sensitivity computation results represented as a ``SignaturesSensitivityResult`` object.
+        res : SignSensResult
+            The signatures sensitivity computation results represented as a ``SignSensResult`` object.
 
         See Also
         --------
-        SignaturesSensitivityResult: Represents signatures sensitivity computation results.
+        SignSensResult: Represents signatures sensitivity computation results.
 
         Examples
         --------

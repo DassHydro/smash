@@ -11,14 +11,14 @@ Signatures computation result
 .. autosummary::
     :toctree: smash/
 
-    SignaturesResult
+    SignResult
 
 Signatures sensitivity computation result
 *****************************************
 .. autosummary::
     :toctree: smash/
 
-    SignaturesSensitivityResult
+    SignSensResult
 
 Precipitation indices result
 ****************************
