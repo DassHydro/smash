@@ -33,7 +33,7 @@ from smash.core.optimize._standardize import (
 
 from smash.core._event_segmentation import _event_segmentation
 
-from smash.core._signatures import (
+from smash.core.signatures import (
     _standardize_signatures,
     _signatures,
     _signatures_sensitivity,
@@ -41,7 +41,7 @@ from smash.core._signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import generate_samples, _get_bound_constraints
+from smash.core.generate_samples import _get_bound_constraints
 
 from typing import TYPE_CHECKING
 
@@ -583,7 +583,7 @@ class Model(object):
                 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
             - ``Continuous Signature``
                 'Crc'
-            - ``Event Signature``
+            - ``Flood Event Signature``
                 'Epf', 'Elt', 'Erc'
 
         wjobs_fun : sequence or None, default None
@@ -1258,7 +1258,6 @@ class Model(object):
         return _event_segmentation(self)
 
     def signatures(self, sign: str | list | None = None):
-
         """
         Compute continuous or/and flood event signatures of the Model.
 
@@ -1275,8 +1274,12 @@ class Model(object):
 
         Returns
         -------
-        res : dict
-            Two pandas.DataFrames of i. observed and simulated continuous signatures and ii. observed and simulated flood event signatures.
+        res : SignaturesResult
+            The signatures computation results represented as a ``SignaturesResult`` object.
+
+        See Also
+        --------
+        SignaturesResult: Represents signatures computation results.
 
         Examples
         --------
@@ -1287,18 +1290,24 @@ class Model(object):
         Compute all continuous and flood event signatures:
 
         >>> res = model.signatures()
-        >>> res["C"]
-               code   Crc_obs  Crchf_obs    Cfp50_sim  Cfp90_sim
-        0  V3524010  0.516207   0.191349 ... 3.616916  39.241742
-        1  V3515010  0.509180   0.147217 ... 0.984099   9.691529
-        2  V3517010  0.514302   0.148364 ... 0.319221   2.687196
+        >>> res.cont["obs"]  # observed continuous signatures
+               code       Crc     Crchf  ...   Cfp10   Cfp50      Cfp90
+        0  V3524010  0.516207  0.191349  ...  1.1709  3.3225  42.631802
+        1  V3515010  0.509180  0.147217  ...  0.3270  1.5755  10.628400
+        2  V3517010  0.514302  0.148364  ...  0.0700  0.3235   2.776700
 
-        >>> res["E"]
-               code  season               start     Elt_sim     Epf_sim
-        0  V3524010  autumn 2014-11-03 03:00:00 ...       8  280.677338
-        1  V3515010  autumn 2014-11-03 10:00:00 ...       6   61.226574
-        2  V3517010  autumn 2014-11-03 08:00:00 ...       6   18.758123
+        [3 rows x 9 columns]
+
+        >>> res.event["sim"]  # simulated flood event signatures
+               code  season               start  ...    Erch2r  Elt         Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.490484    8  280.677338
+        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.496448    6   61.226574
+        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.468764    6   18.758123
+
+        [3 rows x 12 columns]
+
         """
+
         print("</> Model Signatures")
 
         cs, es = _standardize_signatures(sign)
@@ -1309,19 +1318,19 @@ class Model(object):
         self,
         n: int = 64,
         sign: str | list[str] | None = None,
-        return_sample: bool = False,
+        random_state: int | None = None,
     ):
         """
-        Compute variance-based sensitivity (Sobol indices) of the Model parameters on the output signatures.
+        Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
 
         Parameters
         ----------
         n : int, default 64
             Number of trajectories to generate for each model parameter (ideally a power of 2).
-            Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
+            Then the number of sample to generate for all hydrological model parameters is equal to :math:`N(D+2)`
             where :math:`D` is the number of model parameters.
 
-            See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
+            See `here <https://salib.readthedocs.io/en/latest/api/SALib.sample.html#SALib.sample.sobol.sample>`__ for more details.
 
         sign : str, list or None, default None
             Define signature(s) to compute. Should be one of
@@ -1332,38 +1341,47 @@ class Model(object):
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
 
-        return_sample : bool, default False
-            If True, also return the generated sample used to compute sensitivity computation.
+        random_state : int or None, default None
+            Random seed used to generate samples for sensitivity computation.
+
+            .. note::
+                If not given, generates parameters sets with a random seed.
 
         Returns
         -------
-        res : dict
-            Two pandas.DataFrames of i. continuous signatures sensitivity and ii. flood event signatures sensitivity.
+        res : SignaturesSensitivityResult
+            The signatures sensitivity computation results represented as a ``SignaturesSensitivityResult`` object.
 
-        sample : pandas.DataFrame
-            Generated sample for sensititvity computation. Returned if ``return_sample`` is True.
+        See Also
+        --------
+        SignaturesSensitivityResult: Represents signatures sensitivity computation results.
 
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> res = model.signatures_sensitivity()
+        >>> res = model.signatures_sensitivity(random_state=99)
 
-        Continuous signatures sensitivity computation:
+        Total-order sensitivity indices of production parameter `cp` on continuous signatures:
 
-        >>> res["C"]
-               code  Crc_sim.ST_cp  Crc_sim.ST_cft ... Cfp90_sim.S2_cft-lr  Cfp90_sim.S2_exc-lr
-        0  V3524010       0.025848        0.322964 ...            0.084209             0.081659
-        1  V3515010       0.009877        0.288598 ...            0.111150             0.109329
-        2  V3517010       0.009662        0.300603 ...            0.105303             0.120858
+        >>> res.cont["total_si"]["cp"]
+               code       Crc     Crchf  ...          Cfp10     Cfp50     Cfp90
+        0  V3524010  0.089630  0.023528  ...   17117.358696  1.092226  0.009049
+        1  V3515010  0.064792  0.023358  ...     183.179078  0.353862  0.011404
+        2  V3517010  0.030655  0.028925  ...  227506.036589  0.113354  0.010977
 
-        Flood event signatures sensitivity computation:
+        [3 rows x 9 columns]
 
-        >>> res["E"]
-               code  season               start ... Epf_sim.S2_cft-lr  Epf_sim.S2_exc-lr
-        0  V3524010  autumn 2014-11-03 03:00:00 ...          0.056097           0.072928
-        1  V3515010  autumn 2014-11-03 10:00:00 ...          0.073368           0.098639
-        2  V3517010  autumn 2014-11-03 08:00:00 ...          0.041326           0.086835
+        First-order sensitivity indices of linear routing parameter `lr` on flood event signatures:
+
+        >>> res.event["first_si"]["lr"]
+               code  season               start  ...    Erch2r       Elt       Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.236047  0.358599  0.015600
+        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.369606  0.344644  0.010241
+        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.348455  0.063007  0.010851
+
+        [3 rows x 12 columns]
+
         """
 
         print("</> Model Signatures Sensitivity")
@@ -1374,17 +1392,9 @@ class Model(object):
 
         problem = _get_bound_constraints(instance.setup, states=False)
 
-        sample = generate_samples(problem=problem, generator="saltelli", n=n)
+        res = _signatures_sensitivity(instance, problem, n, cs, es, seed=random_state)
 
-        res = _signatures_sensitivity(instance, problem, sample, cs, es)
-
-        if return_sample:
-
-            return res, sample
-
-        else:
-
-            return res
+        return res
 
     def prcp_indices(self):
 

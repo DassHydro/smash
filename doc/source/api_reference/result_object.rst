@@ -6,6 +6,20 @@ Result Object
 
 .. currentmodule:: smash
 
+Signatures computation result
+*****************************
+.. autosummary::
+    :toctree: smash/
+
+    SignaturesResult
+
+Signatures sensitivity computation result
+*****************************************
+.. autosummary::
+    :toctree: smash/
+
+    SignaturesSensitivityResult
+
 Precipitation indices result
 ****************************
 .. autosummary::

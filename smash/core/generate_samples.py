@@ -9,7 +9,6 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
-from SALib.sample import saltelli
 from scipy.stats import truncnorm
 
 
@@ -44,25 +43,18 @@ def generate_samples(
 
         - 'uniform'
         - 'normal' or 'gaussian'
-        - 'saltelli'
 
     n : int, default 1000
         Number of generated samples.
-        In case of Saltelli generator, this is the number of trajectories to generate for each model parameter (ideally a power of 2).
-        Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
-        where :math:`D` is the number of model parameters.
-
-        See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
 
     random_state : int or None, default None
-        Random seed used to generate sample, except Saltelli, which is determinist generator
-        and do not require a random seed.
+        Random seed used to generate samples.
 
         .. note::
-            If not given, generates parameters sets with a random seed with Gaussian or uniform generators.
+            If not given, generates parameters sets with a random seed.
 
     backg_sol : numpy.ndarray or None, default None
-        Spatially uniform prior parameters/states could be included in generated sets, except Saltelli generator, and are
+        Spatially uniform prior parameters/states could be included in generated sets, and are
         used as the mean when generating with Gaussian distribution.
 
         .. note::
@@ -112,57 +104,52 @@ def generate_samples(
         3    63.861329  990.636772  -7.646314   94.519480
         4  1616.291877    7.818907   3.223710  813.495104
 
+        [5 rows x 4 columns]
+
     """
 
     df = pd.DataFrame(columns=problem["names"])
 
     generator = generator.lower()
 
-    if generator == "saltelli":  # determinist generator
+    if random_state is not None:
+        np.random.seed(random_state)
 
-        sample = saltelli.sample(problem, n)
+    for i, p in enumerate(problem["names"]):
 
-        df[df.keys()] = sample
+        low = problem["bounds"][i][0]
+        upp = problem["bounds"][i][1]
 
-    else:  # non-determinist generator
-        if random_state is not None:
-            np.random.seed(random_state)
+        if backg_sol is None:
+            ubi = []
 
-        for i, p in enumerate(problem["names"]):
+        else:
+            ubi = [backg_sol[i]]
 
-            low = problem["bounds"][i][0]
-            upp = problem["bounds"][i][1]
+        if generator == "uniform":
+
+            df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
+
+        elif generator in ["normal", "gaussian"]:
+
+            if coef_std is None:
+                sd = (upp - low) / 3
+
+            else:
+                sd = (upp - low) / coef_std
 
             if backg_sol is None:
-                ubi = []
+                trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
 
             else:
-                ubi = [backg_sol[i]]
+                trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
 
-            if generator == "uniform":
+            df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
 
-                df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
-
-            elif generator in ["normal", "gaussian"]:
-
-                if coef_std is None:
-                    sd = (upp - low) / 3
-
-                else:
-                    sd = (upp - low) / coef_std
-
-                if backg_sol is None:
-                    trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
-
-                else:
-                    trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
-
-                df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
-
-            else:
-                raise ValueError(
-                    f"Unknown generator '{generator}': Choices: ['uniform', 'normal', 'gaussian', 'saltelli']"
-                )
+        else:
+            raise ValueError(
+                f"Unknown generator '{generator}': Choices: ['uniform', 'normal', 'gaussian']"
+            )
 
     return df
 
