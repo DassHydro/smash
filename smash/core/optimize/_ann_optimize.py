@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.core._event_segmentation import _mask_event
 
+from smash.core.optimize._optimize import _normalize_descriptor, _denormalize_descriptor
+
 from smash.core.net import Net
 
 from typing import TYPE_CHECKING
@@ -70,21 +72,24 @@ def _ann_optimize(
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
 
-    nd = instance.setup._nd
-
     # preprocessing data
-    mask = np.where(instance.mesh.active_cell == 1)
+    min_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
+    max_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
 
-    x_train = instance.input_data.descriptor.copy()
-    x_train = x_train[mask]
+    active_mask = np.where(instance.mesh.active_cell == 1)
+    inactive_mask = np.where(instance.mesh.active_cell == 0)
 
-    for i in range(nd):
-        x_train[..., i] = (x_train[..., i] - np.nanmin(x_train[..., i])) / (
-            np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
-        )
+    _normalize_descriptor(instance, min_descriptor, max_descriptor)
+
+    x_train = instance.input_data.descriptor[active_mask]
+    x_inactive = instance.input_data.descriptor[inactive_mask]
+
+    _denormalize_descriptor(instance, min_descriptor, max_descriptor)
 
     # set graph if not defined
+    nd = instance.setup._nd
     nx = len(x_train)
+
     net = _set_graph(net, nx, nd, control_vector, bounds)
 
     if verbose:
@@ -95,7 +100,7 @@ def _ann_optimize(
         x_train,
         instance,
         control_vector,
-        mask,
+        active_mask,
         parameters_bgd,
         states_bgd,
         validation,
@@ -103,6 +108,17 @@ def _ann_optimize(
         early_stopping,
         verbose,
     )
+
+    # predicted map at inactive cells
+    y = net._predict(x_inactive)
+
+    for i, name in enumerate(control_vector):
+
+        if name in instance.setup._parameters_name:
+            getattr(instance.parameters, name)[inactive_mask] = y[:, i]
+
+        else:
+            getattr(instance.states, name)[inactive_mask] = y[:, i]
 
     return net
 

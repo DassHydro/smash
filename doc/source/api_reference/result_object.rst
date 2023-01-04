@@ -12,9 +12,9 @@ Precipitation indices result
     :toctree: smash/
 
     PrcpIndicesResult
-
-Bayesian result
-***************
+    
+Bayesian optimization result
+****************************
 .. autosummary::
     :toctree: smash/
 
