@@ -57,7 +57,7 @@ def _standardize_descriptors(input_data: Input_DataDT, setup: SetupDT) -> None:
 
             d = input_data.descriptor[..., i]
 
-            if np.all(d == d[0]):
+            if np.all(d == d[0, 0]):
 
                 raise ValueError(
                     f"Cannot optimize the Model with spatially uniform descriptor {setup.descriptor_name[i]}"
