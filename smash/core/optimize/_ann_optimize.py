@@ -81,14 +81,14 @@ def _ann_optimize(
 
     _normalize_descriptor(instance, min_descriptor, max_descriptor)
 
-    x_train_active = instance.input_data.descriptor[active_mask]
-    x_train_inactive = instance.input_data.descriptor[inactive_mask]
+    x_train = instance.input_data.descriptor[active_mask]
+    x_inactive = instance.input_data.descriptor[inactive_mask]
 
     _denormalize_descriptor(instance, min_descriptor, max_descriptor)
 
     # set graph if not defined
     nd = instance.setup._nd
-    nx = len(x_train_active)
+    nx = len(x_train)
 
     net = _set_graph(net, nx, nd, control_vector, bounds)
 
@@ -97,7 +97,7 @@ def _ann_optimize(
 
     # train the network
     net._fit(
-        x_train_active,
+        x_train,
         instance,
         control_vector,
         active_mask,
@@ -110,7 +110,7 @@ def _ann_optimize(
     )
 
     # predicted map at inactive cells
-    y = net._predict(x_train_inactive)
+    y = net._predict(x_inactive)
 
     for i, name in enumerate(control_vector):
 
