@@ -55,7 +55,7 @@ def _standardize_descriptors(input_data: Input_DataDT, setup: SetupDT) -> None:
 
         for i in range(setup._nd):
 
-            d = input_data.descriptor[..., i].reshape(-1)
+            d = input_data.descriptor[..., i]
 
             if np.all(d == d[0]):
 
