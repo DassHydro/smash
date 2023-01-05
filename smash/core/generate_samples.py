@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
+
+from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES, SAMPLE_GENERATORS, REQUIRED_KEYS
 
 import warnings
 
@@ -148,7 +148,7 @@ def generate_samples(
 
         else:
             raise ValueError(
-                f"Unknown generator '{generator}': Choices: ['uniform', 'normal', 'gaussian']"
+                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
             )
 
     return df
@@ -198,8 +198,6 @@ def _get_bound_constraints(setup: SetupDT, states: bool):
 
 def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
 
-    required_keys = ("num_vars", "names", "bounds")
-
     if problem is None:
 
         problem = _get_bound_constraints(setup, states)
@@ -208,19 +206,19 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
 
         prl_keys = problem.keys()
 
-        if not all(k in prl_keys for k in required_keys):
+        if not all(k in prl_keys for k in REQUIRED_KEYS):
 
             raise KeyError(
-                f"Problem dictionary should be defined with required keys {required_keys}"
+                f"Problem dictionary should be defined with required keys {REQUIRED_KEYS}"
             )
 
-        unk_keys = tuple(k for k in prl_keys if k not in required_keys)
+        unk_keys = tuple(k for k in prl_keys if k not in REQUIRED_KEYS)
 
         if unk_keys:
 
             warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}")
 
     else:
-        raise ValueError("The problem definition must be a dictionary or None")
+        raise TypeError("The problem definition must be a dictionary or None")
 
     return problem

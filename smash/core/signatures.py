@@ -481,7 +481,7 @@ def _signatures_sensitivity(
     dfs_cs = []  # list of dataframes concerned to CS
     dfs_es = []  # list of dataframes concerned to ES
 
-    for i in tqdm(range(len(sample)), desc="Computing signatures sensitivity"):
+    for i in tqdm(range(len(sample)), desc="</> Computing signatures sensitivity"):
 
         for j, name in enumerate(problem["names"]):
             setattr(instance.parameters, name, sample[i, j])
