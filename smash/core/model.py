@@ -41,7 +41,7 @@ from smash.core.signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import _get_bound_constraints
+from smash.core.generate_samples import _get_bound_constraints, _standardize_problem
 
 from typing import TYPE_CHECKING
 
@@ -786,7 +786,7 @@ class Model(object):
 
         See Also
         --------
-        BayesResult: Represents the Bayesian estimation or optimization results.
+        BayesResult: Represents the Bayesian estimation or optimization result.
 
         Examples
         --------
@@ -961,7 +961,7 @@ class Model(object):
 
         See Also
         --------
-        BayesResult: Represents the Bayesian estimation or optimization results.
+        BayesResult: Represents the Bayesian estimation or optimization result.
 
         Examples
         --------
@@ -1238,6 +1238,14 @@ class Model(object):
         -------
         res : pandas.DataFrame
             Flood events information obtained from segmentation algorithm.
+            The dataframe has 6 columns which are
+
+            - 'code' : the catchment code.
+            - 'start' : the beginning of event.
+            - 'end' : the end of event.
+            - 'maxrainfall' : the moment that the maximum precipation is observed.
+            - 'flood' : the moment that the maximum discharge is observed.
+            - 'season' : the season that event occurrs.
 
         Examples
         --------
@@ -1252,6 +1260,9 @@ class Model(object):
         0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
         1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
         2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
+
+        [3 rows x 6 columns]
+
         """
         print("</> Model Event Segmentation")
 
@@ -1279,7 +1290,7 @@ class Model(object):
 
         See Also
         --------
-        SignResult: Represents signatures computation results.
+        SignResult: Represents signatures computation result.
 
         Examples
         --------
@@ -1291,18 +1302,18 @@ class Model(object):
 
         >>> res = model.signatures()
         >>> res.cont["obs"]  # observed continuous signatures
-               code       Crc     Crchf  ...   Cfp10   Cfp50      Cfp90
-        0  V3524010  0.516207  0.191349  ...  1.1709  3.3225  42.631802
-        1  V3515010  0.509180  0.147217  ...  0.3270  1.5755  10.628400
-        2  V3517010  0.514302  0.148364  ...  0.0700  0.3235   2.776700
+               code       Crc     Crchf  ...   Cfp50      Cfp90
+        0  V3524010  0.516207  0.191349  ...  3.3225  42.631802
+        1  V3515010  0.509180  0.147217  ...  1.5755  10.628400
+        2  V3517010  0.514302  0.148364  ...  0.3235   2.776700
 
         [3 rows x 9 columns]
 
         >>> res.event["sim"]  # simulated flood event signatures
-               code  season               start  ...    Erch2r  Elt         Epf
-        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.490484    8  280.677338
-        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.496448    6   61.226574
-        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.468764    6   18.758123
+               code  season               start  ...  Elt         Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...    8  280.677338
+        1  V3515010  autumn 2014-11-03 10:00:00  ...    6   61.226574
+        2  V3517010  autumn 2014-11-03 08:00:00  ...    6   18.758123
 
         [3 rows x 12 columns]
 
@@ -1316,6 +1327,7 @@ class Model(object):
 
     def signatures_sensitivity(
         self,
+        problem: dict | None = None,
         n: int = 64,
         sign: str | list[str] | None = None,
         random_state: int | None = None,
@@ -1325,9 +1337,19 @@ class Model(object):
 
         Parameters
         ----------
+        problem : dict or None, default None
+            Problem definition to generate a multiple set of spatially uniform Model parameters. The keys are
+
+            - 'num_vars' : the number of Model parameters.
+            - 'names' : the name of Model parameters.
+            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of (min, max)).
+
+            .. note::
+                If not given, the problem will be set automatically using `smash.Model.get_bound_constraints` method.
+
         n : int, default 64
             Number of trajectories to generate for each model parameter (ideally a power of 2).
-            Then the number of sample to generate for all hydrological model parameters is equal to :math:`N(D+2)`
+            Then the number of sample to generate is equal to :math:`N(D+2)`
             where :math:`D` is the number of model parameters.
 
             See `here <https://salib.readthedocs.io/en/latest/api/SALib.sample.html#SALib.sample.sobol.sample>`__ for more details.
@@ -1354,7 +1376,7 @@ class Model(object):
 
         See Also
         --------
-        SignSensResult: Represents signatures sensitivity computation results.
+        SignSensResult: Represents signatures sensitivity computation result.
 
         Examples
         --------
@@ -1365,20 +1387,20 @@ class Model(object):
         Total-order sensitivity indices of production parameter `cp` on continuous signatures:
 
         >>> res.cont["total_si"]["cp"]
-               code       Crc     Crchf  ...          Cfp10     Cfp50     Cfp90
-        0  V3524010  0.089630  0.023528  ...   17117.358696  1.092226  0.009049
-        1  V3515010  0.064792  0.023358  ...     183.179078  0.353862  0.011404
-        2  V3517010  0.030655  0.028925  ...  227506.036589  0.113354  0.010977
+               code       Crc     Crchf  ...     Cfp50     Cfp90
+        0  V3524010  0.089630  0.023528  ...  1.092226  0.009049
+        1  V3515010  0.064792  0.023358  ...  0.353862  0.011404
+        2  V3517010  0.030655  0.028925  ...  0.113354  0.010977
 
         [3 rows x 9 columns]
 
         First-order sensitivity indices of linear routing parameter `lr` on flood event signatures:
 
         >>> res.event["first_si"]["lr"]
-               code  season               start  ...    Erch2r       Elt       Epf
-        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.236047  0.358599  0.015600
-        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.369606  0.344644  0.010241
-        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.348455  0.063007  0.010851
+               code  season               start  ...       Elt       Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.358599  0.015600
+        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.344644  0.010241
+        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.063007  0.010851
 
         [3 rows x 12 columns]
 
@@ -1388,11 +1410,13 @@ class Model(object):
 
         instance = self.copy()
 
-        cs, es = _standardize_signatures(sign)
+        cs, es = _standardize_signatures(sign=sign)
 
-        problem = _get_bound_constraints(instance.setup, states=False)
+        problem = _standardize_problem(
+            problem=problem, setup=instance.setup, states=False
+        )
 
-        res = _signatures_sensitivity(instance, problem, n, cs, es, seed=random_state)
+        res = _signatures_sensitivity(instance, problem, n, cs, es, random_state)
 
         return res
 

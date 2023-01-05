@@ -27,7 +27,7 @@ import warnings
 
 class SignResult(dict):
     """
-    Represents signatures computation results.
+    Represents signatures computation result.
 
     Notes
     -----
@@ -41,7 +41,7 @@ class SignResult(dict):
         - 'obs': a dataframe representing observation results.
         - 'sim': a dataframe representing simulation results.
 
-        The columns of both dataframes are the catchment code and the names of computed signatures.
+        The column names of both dataframes consist of the catchment code and studied signature names.
 
     event : dict
         Flood event signatures. The keys are
@@ -49,7 +49,7 @@ class SignResult(dict):
         - 'obs': a dataframe representing observation results.
         - 'sim': a dataframe representing simulation results.
 
-        The columns of both dataframes are the catchment code, the season when each event occurred, the beginning/end of each event and the names of computed signatures.
+        The column names of both dataframes consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
 
     See Also
     --------
@@ -81,7 +81,7 @@ class SignResult(dict):
 
 class SignSensResult(dict):
     """
-    Represents signatures sensitivity computation results.
+    Represents signatures sensitivity computation result.
 
     Notes
     -----
@@ -97,6 +97,7 @@ class SignSensResult(dict):
 
         Each value of the dictionary is a sub-dictionary with the keys are the hydrological model parameters.
         Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivity computation results of the associated model paramter on all studied signatures.
+        The column names of each dataframe consist of the catchment code and studied signature names.
 
     event : dict
         A dictionary with two keys
@@ -106,8 +107,9 @@ class SignSensResult(dict):
 
         Each value of the dictionary is a sub-dictionary with the keys are the hydrological model parameters.
         Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivity computation results of the associated model paramter on all studied signatures.
+        The column names of each dataframe consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
 
-    sample: DataFrame
+    sample: pandas.DataFrame
         A dataframe containing the generated samples used to compute sensitivity indices.
 
     See Also
@@ -472,7 +474,7 @@ def _signatures_sensitivity(
     seed: None | int,
 ):
 
-    # generate samples using saltelli generator
+    # generate samples
     sample = sb_generate_sample(problem, n, calc_second_order=False, seed=seed)
 
     # signatures computation
@@ -554,7 +556,7 @@ def _signatures_sensitivity(
                     for param in problem["names"]
                 },
             }
-        )  # concat dfinfo and dfsa
+        )  # concat dfinfo and dict_sa
 
     return SignSensResult(
         dict(

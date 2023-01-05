@@ -19,7 +19,7 @@ import multiprocessing as mp
 
 class BayesResult(dict):
     """
-    Represents the Bayesian estimation or optimization results.
+    Represents the Bayesian estimation or optimization result.
 
     Notes
     -----

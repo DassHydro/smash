@@ -7,6 +7,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
 
+import warnings
+
 import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm
@@ -31,9 +33,9 @@ def generate_samples(
     problem : dict
         Problem definition. The keys are
 
-        - 'num_vars': The number of Model parameters/states.
-        - 'names': The name of Model parameters/states.
-        - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+        - 'num_vars' : the number of Model parameters/states.
+        - 'names' : the name of Model parameters/states.
+        - 'bounds' : the upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
 
         .. hint::
             This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
@@ -78,7 +80,7 @@ def generate_samples(
     Returns
     -------
     res : pandas.DataFrame
-        res with all generated samples
+        A dataframe with generated samples.
 
     See Also
     --------
@@ -103,8 +105,6 @@ def generate_samples(
         2  1651.164853   47.649025 -10.564027  524.890301
         3    63.861329  990.636772  -7.646314   94.519480
         4  1616.291877    7.818907   3.223710  813.495104
-
-        [5 rows x 4 columns]
 
     """
 
@@ -192,5 +192,35 @@ def _get_bound_constraints(setup: SetupDT, states: bool):
         "names": control_vector,
         "bounds": bounds,
     }
+
+    return problem
+
+
+def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
+
+    required_keys = ("num_vars", "names", "bounds")
+
+    if problem is None:
+
+        problem = _get_bound_constraints(setup, states)
+
+    elif isinstance(problem, dict):
+
+        prl_keys = problem.keys()
+
+        if not all(k in prl_keys for k in required_keys):
+
+            raise KeyError(
+                f"Problem dictionary should be defined with required keys {required_keys}"
+            )
+
+        unk_keys = tuple(k for k in prl_keys if k not in required_keys)
+
+        if unk_keys:
+
+            warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}")
+
+    else:
+        raise ValueError("The problem definition must be a dictionary or None")
 
     return problem
