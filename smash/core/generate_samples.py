@@ -9,7 +9,7 @@ from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,
     SAMPLE_GENERATORS,
-    REQUIRED_KEYS,
+    PROBLEM_KEYS,
 )
 
 import warnings
@@ -72,7 +72,7 @@ def generate_samples(
         A coefficient related to the standard deviation in case of Gaussian generator:
 
         .. math::
-                std = \\frac{u - l}{coef\_std}
+                std = \\frac{u - l}{coef\\_std}
 
         where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
@@ -211,13 +211,13 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
 
         prl_keys = problem.keys()
 
-        if not all(k in prl_keys for k in REQUIRED_KEYS):
+        if not all(k in prl_keys for k in PROBLEM_KEYS):
 
             raise KeyError(
-                f"Problem dictionary should be defined with required keys {REQUIRED_KEYS}"
+                f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
             )
 
-        unk_keys = tuple(k for k in prl_keys if k not in REQUIRED_KEYS)
+        unk_keys = tuple(k for k in prl_keys if k not in PROBLEM_KEYS)
 
         if unk_keys:
 

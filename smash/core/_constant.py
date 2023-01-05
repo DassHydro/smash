@@ -9,8 +9,8 @@ from smash.core.optimize._optimize import (
 import numpy as np
 
 
-### GLOBAL ###
-##############
+### STRUCTURE ###
+#################
 
 STRUCTURE_PARAMETERS = {
     "gr-a": ["cp", "cft", "exc", "lr"],
@@ -130,6 +130,6 @@ WB_INITIALIZER = [
 ### GENERATE SAMPLES ###
 ########################
 
-SAMPLE_GENERATORS = {"uniform", "normal", "gaussian"}
+SAMPLE_GENERATORS = ["uniform", "normal", "gaussian"]
 
-REQUIRED_KEYS = ("num_vars", "names", "bounds")
+PROBLEM_KEYS = ["num_vars", "names", "bounds"]
