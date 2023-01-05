@@ -12,7 +12,7 @@ dependencies:
     
     # required dependencies
     - f90wrap
-    - numpy
+    - numpy<=1.23
     - pandas
     - matplotlib
     - h5py
