@@ -1,15 +1,21 @@
 from __future__ import annotations
 
-from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
 
+from smash.core._constant import (
+    STRUCTURE_PARAMETERS,
+    STRUCTURE_STATES,
+    SAMPLE_GENERATORS,
+    REQUIRED_KEYS,
+)
+
+import warnings
+
 import numpy as np
 import pandas as pd
-from SALib.sample import saltelli
 from scipy.stats import truncnorm
 
 
@@ -32,9 +38,9 @@ def generate_samples(
     problem : dict
         Problem definition. The keys are
 
-        - 'num_vars': The number of Model parameters/states.
-        - 'names': The name of Model parameters/states.
-        - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+        - 'num_vars' : the number of Model parameters/states.
+        - 'names' : the name of Model parameters/states.
+        - 'bounds' : the upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
 
         .. hint::
             This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
@@ -44,25 +50,18 @@ def generate_samples(
 
         - 'uniform'
         - 'normal' or 'gaussian'
-        - 'saltelli'
 
     n : int, default 1000
         Number of generated samples.
-        In case of Saltelli generator, this is the number of trajectories to generate for each model parameter (ideally a power of 2).
-        Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
-        where :math:`D` is the number of model parameters.
-
-        See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
 
     random_state : int or None, default None
-        Random seed used to generate sample, except Saltelli, which is determinist generator
-        and do not require a random seed.
+        Random seed used to generate samples.
 
         .. note::
-            If not given, generates parameters sets with a random seed with Gaussian or uniform generators.
+            If not given, generates parameters sets with a random seed.
 
     backg_sol : numpy.ndarray or None, default None
-        Spatially uniform prior parameters/states could be included in generated sets, except Saltelli generator, and are
+        Spatially uniform prior parameters/states could be included in generated sets, and are
         used as the mean when generating with Gaussian distribution.
 
         .. note::
@@ -86,7 +85,7 @@ def generate_samples(
     Returns
     -------
     res : pandas.DataFrame
-        res with all generated samples
+        A dataframe with generated samples.
 
     See Also
     --------
@@ -118,51 +117,44 @@ def generate_samples(
 
     generator = generator.lower()
 
-    if generator == "saltelli":  # determinist generator
+    if random_state is not None:
+        np.random.seed(random_state)
 
-        sample = saltelli.sample(problem, n)
+    for i, p in enumerate(problem["names"]):
 
-        df[df.keys()] = sample
+        low = problem["bounds"][i][0]
+        upp = problem["bounds"][i][1]
 
-    else:  # non-determinist generator
-        if random_state is not None:
-            np.random.seed(random_state)
+        if backg_sol is None:
+            ubi = []
 
-        for i, p in enumerate(problem["names"]):
+        else:
+            ubi = [backg_sol[i]]
 
-            low = problem["bounds"][i][0]
-            upp = problem["bounds"][i][1]
+        if generator == "uniform":
+
+            df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
+
+        elif generator in ["normal", "gaussian"]:
+
+            if coef_std is None:
+                sd = (upp - low) / 3
+
+            else:
+                sd = (upp - low) / coef_std
 
             if backg_sol is None:
-                ubi = []
+                trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
 
             else:
-                ubi = [backg_sol[i]]
+                trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
 
-            if generator == "uniform":
+            df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
 
-                df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
-
-            elif generator in ["normal", "gaussian"]:
-
-                if coef_std is None:
-                    sd = (upp - low) / 3
-
-                else:
-                    sd = (upp - low) / coef_std
-
-                if backg_sol is None:
-                    trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
-
-                else:
-                    trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
-
-                df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
-
-            else:
-                raise ValueError(
-                    f"Unknown generator '{generator}': Choices: ['uniform', 'normal', 'gaussian', 'saltelli']"
-                )
+        else:
+            raise ValueError(
+                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
+            )
 
     return df
 
@@ -205,5 +197,33 @@ def _get_bound_constraints(setup: SetupDT, states: bool):
         "names": control_vector,
         "bounds": bounds,
     }
+
+    return problem
+
+
+def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
+
+    if problem is None:
+
+        problem = _get_bound_constraints(setup, states)
+
+    elif isinstance(problem, dict):
+
+        prl_keys = problem.keys()
+
+        if not all(k in prl_keys for k in REQUIRED_KEYS):
+
+            raise KeyError(
+                f"Problem dictionary should be defined with required keys {REQUIRED_KEYS}"
+            )
+
+        unk_keys = tuple(k for k in prl_keys if k not in REQUIRED_KEYS)
+
+        if unk_keys:
+
+            warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}")
+
+    else:
+        raise TypeError("The problem definition must be a dictionary or None")
 
     return problem

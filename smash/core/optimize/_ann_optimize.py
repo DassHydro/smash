@@ -137,42 +137,6 @@ def _set_graph(
 
         net = Net()
 
-        #% Net 1 =======================
-
-        # n_hidden_layers = max(round(ntrain / (9 * (nd + ncv))), 1)
-
-        # n_neurons = round(2 / 3 * nd + ncv)
-
-        # for i in range(n_hidden_layers):
-
-        #     if i == 0:
-
-        #         net.add(
-        #             layer="dense",
-        #             options={
-        #                 "input_shape": (nd,),
-        #                 "neurons": n_neurons,
-        #                 "kernel_initializer": "he_uniform",
-        #             },
-        #         )
-
-        #     else:
-
-        #         n_neurons_i = max(
-        #             round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
-        #         )
-        #         net.add(
-        #             layer="dense",
-        #             options={
-        #                 "neurons": n_neurons_i,
-        #                 "kernel_initializer": "he_uniform",
-        #             },
-        #         )
-
-        #     net.add(layer="activation", options={"name": "relu"})
-
-        #% Net 2 =======================
-
         n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
 
         net.add(
@@ -184,7 +148,6 @@ def _set_graph(
             },
         )
         net.add(layer="activation", options={"name": "relu"})
-        # net.add(layer="dropout", options={"drop_rate": .1})
 
         net.add(
             layer="dense",
@@ -194,9 +157,6 @@ def _set_graph(
             },
         )
         net.add(layer="activation", options={"name": "relu"})
-        # net.add(layer="dropout", options={"drop_rate": .2})
-
-        #% =============================
 
         net.add(
             layer="dense",
@@ -224,7 +184,7 @@ def _set_graph(
         if ips[0] != nd:
 
             raise ValueError(
-                f"Inconsistent size between input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+                f"Inconsistent value between the number of input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
             )
 
         #% check output shape
@@ -233,7 +193,7 @@ def _set_graph(
         if ios[0] != ncv:
 
             raise ValueError(
-                f"Inconsistent size between output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
+                f"Inconsistent value between the number of output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
             )
 
         #% check bounds constraints

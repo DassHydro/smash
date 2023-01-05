@@ -125,3 +125,11 @@ WB_INITIALIZER = [
     "he_normal",
     "zeros",
 ]
+
+
+### GENERATE SAMPLES ###
+########################
+
+SAMPLE_GENERATORS = {"uniform", "normal", "gaussian"}
+
+REQUIRED_KEYS = ("num_vars", "names", "bounds")
