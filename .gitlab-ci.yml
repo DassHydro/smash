@@ -8,6 +8,7 @@ stages:
   - build-tap
   - build-code
   - build-doc
+  - test
   
 build-tap:
   stage: build-tap
@@ -25,3 +26,9 @@ build-doc:
     - make library
     - cd doc
     - make html
+
+test:
+  stage: test
+  script:
+    - make library
+    - make test

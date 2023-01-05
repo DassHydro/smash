@@ -169,6 +169,9 @@ finalize:
 tap:
 	cd $(TAPENADEDIR) ; make
 	
+test:
+	pytest
+
 #% Clean
 clean:
 	@$(RM) -rf $(EXTDIR)

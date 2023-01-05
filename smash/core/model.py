@@ -632,7 +632,7 @@ class Model(object):
         Notes
         -----
         This method is directly calling the forward model :math:`Y = M(k)` and the adjoint model
-        :math:`\delta k^* = \\left( \\frac{\delta M}{\delta k} \\right)^* . \delta Y^*`
+        :math:`\\delta k^* = \\left( \\frac{\\delta M}{\\delta k} \\right)^* . \\delta Y^*`
         if the algorithm ``l-bfgs-b`` is choosen to retrieve the gradient of the cost function wrt the control vector.
 
         Examples
