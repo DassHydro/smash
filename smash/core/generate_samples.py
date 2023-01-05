@@ -5,7 +5,12 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
 
-from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES, SAMPLE_GENERATORS, REQUIRED_KEYS
+from smash.core._constant import (
+    STRUCTURE_PARAMETERS,
+    STRUCTURE_STATES,
+    SAMPLE_GENERATORS,
+    REQUIRED_KEYS,
+)
 
 import warnings
 
