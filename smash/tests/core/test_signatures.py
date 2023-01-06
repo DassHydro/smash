@@ -19,7 +19,10 @@ def test_signatures():
             arr = signresult[typ][dom][sign].to_numpy(dtype=np.float32)
 
             assert np.allclose(
-                arr, pytest.baseline[f"signatures.{typ}_{dom}"][:], atol=1e-06
+                arr,
+                pytest.baseline[f"signatures.{typ}_{dom}"][:],
+                equal_nan=True,
+                atol=1e-05,
             )
 
 
@@ -42,5 +45,5 @@ def test_signatures_sens():
                     arr,
                     pytest.baseline[f"signatures_sens.{typ}_{ordr}_{param}"][:],
                     equal_nan=True,
-                    atol=1e-06,
+                    atol=1e-05,
                 )

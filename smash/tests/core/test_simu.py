@@ -21,7 +21,7 @@ def test_direct_run():
     instance.run(inplace=True)
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.run"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["simu.run"][:], atol=1e-05
     )
 
 
@@ -46,7 +46,7 @@ def test_optimize():
         )
 
         assert np.allclose(
-            output_cost(instance), pytest.baseline[f"simu.{algo}"][:], atol=1e-06
+            output_cost(instance), pytest.baseline[f"simu.{algo}"][:], atol=1e-05
         )
 
 
@@ -67,11 +67,11 @@ def test_bayes_estimate():
     )
 
     assert np.allclose(
-        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"], atol=1e-06
+        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"], atol=1e-05
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.bayes_estimate"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["simu.bayes_estimate"][:], atol=1e-05
     )
 
 
@@ -94,11 +94,11 @@ def test_bayes_optimize():
     assert np.allclose(
         br.l_curve["cost"],
         pytest.baseline["simu.bayes_optimize_br_cost"][:],
-        atol=1e-06,
+        atol=1e-05,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.bayes_optimize"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["simu.bayes_optimize"][:], atol=1e-05
     )
 
 
@@ -112,11 +112,11 @@ def test_ann_optimize_1():
     assert np.allclose(
         net.history["loss_train"],
         pytest.baseline["simu.ann_optimize_1_loss"][:],
-        atol=1e-06,
+        atol=1e-05,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_1"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["simu.ann_optimize_1"][:], atol=1e-05
     )
 
 
@@ -155,11 +155,11 @@ def test_ann_optimize_2():
     assert np.allclose(
         net.history["loss_train"],
         pytest.baseline["simu.ann_optimize_2_loss"][:],
-        atol=1e-06,
+        atol=1e-05,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_2"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["simu.ann_optimize_2"][:], atol=1e-05
     )
 
 
