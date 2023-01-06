@@ -1,3 +1,4 @@
 include smash/solver/_solver*.so
 include smash/mesh/_meshing*.so
+include smash/tests/baseline.hdf5
 recursive-include smash/dataset *
