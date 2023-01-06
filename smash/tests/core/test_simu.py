@@ -62,15 +62,11 @@ def test_bayes_estimate():
         verbose=False,
     )
 
-    crit1 = np.array_equal(
+    assert np.array_equal(
         br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"]
     )
 
-    crit2 = np.array_equal(
-        output_cost(instance), pytest.baseline["simu.bayes_estimate"]
-    )
-
-    assert all([crit1, crit2])
+    assert np.array_equal(output_cost(instance), pytest.baseline["simu.bayes_estimate"])
 
 
 def test_bayes_optimize():
@@ -89,15 +85,11 @@ def test_bayes_optimize():
         verbose=False,
     )
 
-    crit1 = np.array_equal(
+    assert np.array_equal(
         br.l_curve["cost"], pytest.baseline["simu.bayes_optimize_br_cost"]
     )
 
-    crit2 = np.array_equal(
-        output_cost(instance), pytest.baseline["simu.bayes_optimize"]
-    )
-
-    assert all([crit1, crit2])
+    assert np.array_equal(output_cost(instance), pytest.baseline["simu.bayes_optimize"])
 
 
 def test_ann_optimize_1():
@@ -107,15 +99,11 @@ def test_ann_optimize_1():
     np.random.seed(11)
     net = instance.ann_optimize(epochs=10, inplace=True, return_net=True, verbose=False)
 
-    crit1 = np.array_equal(
+    assert np.array_equal(
         net.history["loss_train"], pytest.baseline["simu.ann_optimize_1_loss"]
     )
 
-    crit2 = np.array_equal(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_1"]
-    )
-
-    assert all([crit1, crit2])
+    assert np.array_equal(output_cost(instance), pytest.baseline["simu.ann_optimize_1"])
 
 
 def test_ann_optimize_2():
@@ -150,15 +138,11 @@ def test_ann_optimize_2():
 
     instance.ann_optimize(net=net, epochs=10, inplace=True, verbose=False)
 
-    crit1 = np.array_equal(
+    assert np.array_equal(
         net.history["loss_train"], pytest.baseline["simu.ann_optimize_2_loss"]
     )
 
-    crit2 = np.array_equal(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_2"]
-    )
-
-    assert all([crit1, crit2])
+    assert np.array_equal(output_cost(instance), pytest.baseline["simu.ann_optimize_2"])
 
 
 def output_cost(instance: Model):
