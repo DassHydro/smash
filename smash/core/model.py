@@ -792,7 +792,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
+        >>> br = model.bayes_estimate(n=200, inplace=True, return_br=True, random_state=99)
 
         Add more info (TODO)
 
@@ -967,7 +967,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
+        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br=True, random_state=99)
 
         Add more info (TODO)
 
@@ -1268,7 +1268,7 @@ class Model(object):
 
         return _event_segmentation(self)
 
-    def signatures(self, sign: str | list | None = None):
+    def signatures(self, sign: str | list | None = None, obs_comp: bool = True):
         """
         Compute continuous or/and flood event signatures of the Model.
 
@@ -1282,6 +1282,9 @@ class Model(object):
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
+
+        obs_comp : bool, default True
+            If True, compute also the signatures from observed discharge in addition to simulated discharge.
 
         Returns
         -------
@@ -1323,7 +1326,7 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        return _signatures(self, cs, es)
+        return _signatures(self, cs, es, obs_comp)
 
     def signatures_sensitivity(
         self,
@@ -1410,11 +1413,9 @@ class Model(object):
 
         instance = self.copy()
 
-        cs, es = _standardize_signatures(sign=sign)
+        cs, es = _standardize_signatures(sign)
 
-        problem = _standardize_problem(
-            problem=problem, setup=instance.setup, states=False
-        )
+        problem = _standardize_problem(problem, instance.setup, False)
 
         res = _signatures_sensitivity(instance, problem, n, cs, es, random_state)
 
