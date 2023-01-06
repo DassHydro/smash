@@ -510,7 +510,7 @@ def _signatures_sensitivity(
             cost,
         )
 
-        res_sign = _signatures(instance, cs, es, False, warn = (i == 0))
+        res_sign = _signatures(instance, cs, es, False, warn=(i == 0))
 
         dfs_cs.append(res_sign.cont["sim"])
         dfs_es.append(res_sign.event["sim"])

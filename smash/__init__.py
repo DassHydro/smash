@@ -28,6 +28,8 @@ __all__ = [
     "Model",
     "Net",
     "BayesResult",
+    "SignResult",
+    "SignSensResult",
     "PrcpIndicesResult",
     "generate_samples",
     "sparse_matrix_to_vector",

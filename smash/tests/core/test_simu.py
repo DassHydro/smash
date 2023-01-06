@@ -1,18 +1,17 @@
-import smash
-import numpy as np
-from h5py import File
-import pytest
-import os
+from __future__ import annotations
 
+import smash
+
+from smash.solver._mwd_cost import nse, kge
 from smash.core._constant import ALGORITHM
 
-from baseline_simu import output_cost
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from smash.core.model import Model
 
-setup, mesh = smash.load_dataset("cance")
-pytest.model = smash.Model(setup, mesh)
-
-pytest.baseline = File(os.path.join(os.path.dirname(__file__), "baseline_simu.hdf5"))
+import numpy as np
+import pytest
 
 
 def test_direct_run():
@@ -21,7 +20,7 @@ def test_direct_run():
 
     instance.run(inplace=True)
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["direct_run"])
+    assert np.array_equal(output_cost(instance), pytest.baseline["simu.run"])
 
 
 def test_optimize():
@@ -30,15 +29,21 @@ def test_optimize():
 
         instance = pytest.model.copy()
 
-        if algo=="l-bfgs-b":
-            mapping = "distributed" 
+        if algo == "l-bfgs-b":
+            mapping = "distributed"
 
         else:
             mapping = "uniform"
 
-        instance.optimize(mapping=mapping, algorithm=algo, options={"maxiter": 2}, inplace=True, verbose=False)
+        instance.optimize(
+            mapping=mapping,
+            algorithm=algo,
+            options={"maxiter": 2},
+            inplace=True,
+            verbose=False,
+        )
 
-        assert np.array_equal(output_cost(instance), pytest.baseline[algo])
+        assert np.array_equal(output_cost(instance), pytest.baseline["simu." + algo])
 
 
 # TODO: add more tests for model.optimize
@@ -48,11 +53,22 @@ def test_bayes_estimate():
 
     instance = pytest.model.copy()
 
-    br = instance.bayes_estimate(k=np.linspace(-1, 5, 20), n=10, inplace=True, return_br=True, random_state=11, verbose=False)
+    br = instance.bayes_estimate(
+        k=np.linspace(-1, 5, 20),
+        n=10,
+        inplace=True,
+        return_br=True,
+        random_state=11,
+        verbose=False,
+    )
 
-    crit1 = np.array_equal(br.l_curve["cost"], pytest.baseline["bayes_estimate_br_cost"])
+    crit1 = np.array_equal(
+        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"]
+    )
 
-    crit2 = np.array_equal(output_cost(instance), pytest.baseline["bayes_estimate"])
+    crit2 = np.array_equal(
+        output_cost(instance), pytest.baseline["simu.bayes_estimate"]
+    )
 
     assert all([crit1, crit2])
 
@@ -61,11 +77,25 @@ def test_bayes_optimize():
 
     instance = pytest.model.copy()
 
-    br = instance.bayes_optimize(k=np.linspace(-1, 5, 20), n=5, mapping="distributed", algorithm="l-bfgs-b", options={"maxiter": 1}, inplace=True, return_br=True, random_state=11, verbose=False)
+    br = instance.bayes_optimize(
+        k=np.linspace(-1, 5, 20),
+        n=5,
+        mapping="distributed",
+        algorithm="l-bfgs-b",
+        options={"maxiter": 1},
+        inplace=True,
+        return_br=True,
+        random_state=11,
+        verbose=False,
+    )
 
-    crit1 = np.array_equal(br.l_curve["cost"], pytest.baseline["bayes_optimize_br_cost"])
+    crit1 = np.array_equal(
+        br.l_curve["cost"], pytest.baseline["simu.bayes_optimize_br_cost"]
+    )
 
-    crit2 = np.array_equal(output_cost(instance), pytest.baseline["bayes_optimize"])
+    crit2 = np.array_equal(
+        output_cost(instance), pytest.baseline["simu.bayes_optimize"]
+    )
 
     assert all([crit1, crit2])
 
@@ -77,9 +107,13 @@ def test_ann_optimize_1():
     np.random.seed(11)
     net = instance.ann_optimize(epochs=10, inplace=True, return_net=True, verbose=False)
 
-    crit1 = np.array_equal(net.history["loss_train"], pytest.baseline["ann_optimize_1_loss"])
+    crit1 = np.array_equal(
+        net.history["loss_train"], pytest.baseline["simu.ann_optimize_1_loss"]
+    )
 
-    crit2 = np.array_equal(output_cost(instance), pytest.baseline["ann_optimize_1"])
+    crit2 = np.array_equal(
+        output_cost(instance), pytest.baseline["simu.ann_optimize_1"]
+    )
 
     assert all([crit1, crit2])
 
@@ -107,12 +141,36 @@ def test_ann_optimize_2():
 
     net.add(layer="scale", options={"bounds": bounds})
 
-    net.compile(optimizer="sgd", learning_rate=0.01, options={'momentum': 0.001}, random_state=11)
+    net.compile(
+        optimizer="sgd",
+        learning_rate=0.01,
+        options={"momentum": 0.001},
+        random_state=11,
+    )
 
     instance.ann_optimize(net=net, epochs=10, inplace=True, verbose=False)
 
-    crit1 = np.array_equal(net.history["loss_train"], pytest.baseline["ann_optimize_2_loss"])
+    crit1 = np.array_equal(
+        net.history["loss_train"], pytest.baseline["simu.ann_optimize_2_loss"]
+    )
 
-    crit2 = np.array_equal(output_cost(instance), pytest.baseline["ann_optimize_2"])
+    crit2 = np.array_equal(
+        output_cost(instance), pytest.baseline["simu.ann_optimize_2"]
+    )
 
     assert all([crit1, crit2])
+
+
+def output_cost(instance: Model):
+
+    qo = instance.input_data.qobs
+    qs = instance.output.qsim
+
+    ret = []
+
+    for i in range(instance.mesh.code.size):
+
+        ret.append(nse(qo[i], qs[i]))
+        ret.append(kge(qo[i], qs[i]))
+
+    return np.array(ret)

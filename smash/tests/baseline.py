@@ -2,24 +2,20 @@ from __future__ import annotations
 
 import smash
 
-from smash.solver._mwd_cost import nse, kge
 from smash.core._constant import ALGORITHM
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.core.model import Model
+from core.test_simu import output_cost
 
 import numpy as np
 from h5py import File
 
 
-def generate_baseline_simu():
+def baseline_simu():
 
     setup, mesh = smash.load_dataset("cance")
     model = smash.Model(setup, mesh)
 
-    with File("baseline_simu.hdf5", "w") as f:
+    with File("baseline.hdf5", "w") as f:
 
         ### direct run
         instance = model.copy()
@@ -28,7 +24,7 @@ def generate_baseline_simu():
 
         res = output_cost(instance)
 
-        f.create_dataset("direct_run", data=res)
+        f.create_dataset("simu.run", data=res)
 
         del instance
 
@@ -37,43 +33,60 @@ def generate_baseline_simu():
 
             instance = model.copy()
 
-            if algo=="l-bfgs-b":
-                mapping = "distributed" 
+            if algo == "l-bfgs-b":
+                mapping = "distributed"
 
             else:
                 mapping = "uniform"
 
-            instance.optimize(mapping=mapping, algorithm=algo, options={"maxiter": 2}, inplace=True)
+            instance.optimize(
+                mapping=mapping, algorithm=algo, options={"maxiter": 2}, inplace=True
+            )
 
             res = output_cost(instance)
 
-            f.create_dataset(algo, data=res)
+            f.create_dataset("simu." + algo, data=res)
 
             del instance
 
         ### bayes_estimate
         instance = model.copy()
 
-        br = instance.bayes_estimate(k=np.linspace(-1, 5, 20), n=10, inplace=True, return_br=True, random_state=11)
+        br = instance.bayes_estimate(
+            k=np.linspace(-1, 5, 20),
+            n=10,
+            inplace=True,
+            return_br=True,
+            random_state=11,
+        )
 
-        f.create_dataset("bayes_estimate_br_cost", data=br.l_curve["cost"])
+        f.create_dataset("simu.bayes_estimate_br_cost", data=br.l_curve["cost"])
 
         res = output_cost(instance)
 
-        f.create_dataset("bayes_estimate", data=res)
+        f.create_dataset("simu.bayes_estimate", data=res)
 
         del instance
 
         ### bayes_optimize
         instance = model.copy()
 
-        br = instance.bayes_optimize(k=np.linspace(-1, 5, 20), n=5, mapping="distributed", algorithm="l-bfgs-b", options={"maxiter": 1}, inplace=True, return_br=True, random_state=11)
+        br = instance.bayes_optimize(
+            k=np.linspace(-1, 5, 20),
+            n=5,
+            mapping="distributed",
+            algorithm="l-bfgs-b",
+            options={"maxiter": 1},
+            inplace=True,
+            return_br=True,
+            random_state=11,
+        )
 
-        f.create_dataset("bayes_optimize_br_cost", data=br.l_curve["cost"])
+        f.create_dataset("simu.bayes_optimize_br_cost", data=br.l_curve["cost"])
 
         res = output_cost(instance)
 
-        f.create_dataset("bayes_optimize", data=res)
+        f.create_dataset("simu.bayes_optimize", data=res)
 
         del instance
 
@@ -83,11 +96,11 @@ def generate_baseline_simu():
         np.random.seed(11)
         net = instance.ann_optimize(epochs=10, inplace=True, return_net=True)
 
-        f.create_dataset("ann_optimize_1_loss", data=net.history["loss_train"])
+        f.create_dataset("simu.ann_optimize_1_loss", data=net.history["loss_train"])
 
         res = output_cost(instance)
 
-        f.create_dataset("ann_optimize_1", data=res)
+        f.create_dataset("simu.ann_optimize_1", data=res)
 
         del instance
 
@@ -113,37 +126,26 @@ def generate_baseline_simu():
 
         net.add(layer="scale", options={"bounds": bounds})
 
-        net.compile(optimizer="sgd", learning_rate=0.01, options={'momentum': 0.001}, random_state=11)
+        net.compile(
+            optimizer="sgd",
+            learning_rate=0.01,
+            options={"momentum": 0.001},
+            random_state=11,
+        )
 
         instance.ann_optimize(net=net, epochs=10, inplace=True)
 
-        f.create_dataset("ann_optimize_2_loss", data=net.history["loss_train"])
+        f.create_dataset("simu.ann_optimize_2_loss", data=net.history["loss_train"])
 
         res = output_cost(instance)
 
-        f.create_dataset("ann_optimize_2", data=res)
+        f.create_dataset("simu.ann_optimize_2", data=res)
 
         del instance
 
 
-def output_cost(instance: Model):
+if __name__ == "__main__":
 
-    qo = instance.input_data.qobs
-    qs = instance.output.qsim
+    baseline_simu()
 
-    ret = []
-
-    for i in range(instance.mesh.code.size):
-
-        ret.append(nse(qo[i], qs[i]))
-        ret.append(kge(qo[i], qs[i]))
-
-    return np.array(ret)
-
-
-if __name__ == '__main__':
-    
-    generate_baseline_simu()
-
-
-
+    # add more baseline here
