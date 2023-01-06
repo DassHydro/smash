@@ -9,4 +9,4 @@ def test_event_seg():
 
     arr = arr.astype("S")
 
-    assert np.array_equal(arr, pytest.baseline["event_seg"])
+    assert np.array_equal(arr, pytest.baseline["event_seg"][:])

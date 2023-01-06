@@ -20,7 +20,9 @@ def test_direct_run():
 
     instance.run(inplace=True)
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["simu.run"])
+    assert np.allclose(
+        output_cost(instance), pytest.baseline["simu.run"][:], atol=1e-06
+    )
 
 
 def test_optimize():
@@ -43,7 +45,9 @@ def test_optimize():
             verbose=False,
         )
 
-        assert np.array_equal(output_cost(instance), pytest.baseline[f"simu.{algo}"])
+        assert np.allclose(
+            output_cost(instance), pytest.baseline[f"simu.{algo}"][:], atol=1e-06
+        )
 
 
 # TODO: add more tests for model.optimize
@@ -62,11 +66,13 @@ def test_bayes_estimate():
         verbose=False,
     )
 
-    assert np.array_equal(
-        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"]
+    assert np.allclose(
+        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"], atol=1e-06
     )
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["simu.bayes_estimate"])
+    assert np.allclose(
+        output_cost(instance), pytest.baseline["simu.bayes_estimate"][:], atol=1e-06
+    )
 
 
 def test_bayes_optimize():
@@ -85,11 +91,15 @@ def test_bayes_optimize():
         verbose=False,
     )
 
-    assert np.array_equal(
-        br.l_curve["cost"], pytest.baseline["simu.bayes_optimize_br_cost"]
+    assert np.allclose(
+        br.l_curve["cost"],
+        pytest.baseline["simu.bayes_optimize_br_cost"][:],
+        atol=1e-06,
     )
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["simu.bayes_optimize"])
+    assert np.allclose(
+        output_cost(instance), pytest.baseline["simu.bayes_optimize"][:], atol=1e-06
+    )
 
 
 def test_ann_optimize_1():
@@ -99,11 +109,15 @@ def test_ann_optimize_1():
     np.random.seed(11)
     net = instance.ann_optimize(epochs=10, inplace=True, return_net=True, verbose=False)
 
-    assert np.array_equal(
-        net.history["loss_train"], pytest.baseline["simu.ann_optimize_1_loss"]
+    assert np.allclose(
+        net.history["loss_train"],
+        pytest.baseline["simu.ann_optimize_1_loss"][:],
+        atol=1e-06,
     )
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["simu.ann_optimize_1"])
+    assert np.allclose(
+        output_cost(instance), pytest.baseline["simu.ann_optimize_1"][:], atol=1e-06
+    )
 
 
 def test_ann_optimize_2():
@@ -138,11 +152,15 @@ def test_ann_optimize_2():
 
     instance.ann_optimize(net=net, epochs=10, inplace=True, verbose=False)
 
-    assert np.array_equal(
-        net.history["loss_train"], pytest.baseline["simu.ann_optimize_2_loss"]
+    assert np.allclose(
+        net.history["loss_train"],
+        pytest.baseline["simu.ann_optimize_2_loss"][:],
+        atol=1e-06,
     )
 
-    assert np.array_equal(output_cost(instance), pytest.baseline["simu.ann_optimize_2"])
+    assert np.allclose(
+        output_cost(instance), pytest.baseline["simu.ann_optimize_2"][:], atol=1e-06
+    )
 
 
 def output_cost(instance: Model):

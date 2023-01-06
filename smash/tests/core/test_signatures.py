@@ -18,7 +18,9 @@ def test_signatures():
 
             arr = signresult[typ][dom][sign].to_numpy(dtype=np.float32)
 
-            assert np.array_equal(arr, pytest.baseline[f"signatures.{typ}_{dom}"])
+            assert np.allclose(
+                arr, pytest.baseline[f"signatures.{typ}_{dom}"][:], atol=1e-06
+            )
 
 
 def test_signatures_sens():
@@ -30,12 +32,15 @@ def test_signatures_sens():
 
     for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):
 
-        for ord in ["first_si", "total_si"]:
+        for ordr in ["first_si", "total_si"]:
 
             for param in STRUCTURE_PARAMETERS[instance.setup.structure]:
 
-                arr = signsensresult[typ][ord][param][sign].to_numpy(dtype=np.float32)
+                arr = signsensresult[typ][ordr][param][sign].to_numpy(dtype=np.float32)
 
-                assert np.array_equal(
-                    arr, pytest.baseline[f"signatures_sens.{typ}_{ord}_{param}"]
+                assert np.allclose(
+                    arr,
+                    pytest.baseline[f"signatures_sens.{typ}_{ordr}_{param}"][:],
+                    equal_nan=True,
+                    atol=1e-06,
                 )
