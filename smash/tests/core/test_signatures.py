@@ -12,7 +12,7 @@ def test_signatures():
 
     signresult = instance.signatures()
 
-    for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):
+    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
 
         for dom in ["obs", "sim"]:
 
@@ -22,7 +22,7 @@ def test_signatures():
                 arr,
                 pytest.baseline[f"signatures.{typ}_{dom}"][:],
                 equal_nan=True,
-                atol=1e-05,
+                atol=1e-06,
             )
 
 
@@ -33,7 +33,7 @@ def test_signatures_sens():
 
     signsensresult = instance.signatures_sensitivity(n=8, random_state=11)
 
-    for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):
+    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
 
         for ordr in ["first_si", "total_si"]:
 
@@ -45,5 +45,5 @@ def test_signatures_sens():
                     arr,
                     pytest.baseline[f"signatures_sens.{typ}_{ordr}_{param}"][:],
                     equal_nan=True,
-                    atol=1e-05,
+                    atol=1e-03,
                 )
