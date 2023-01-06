@@ -2,20 +2,22 @@ from __future__ import annotations
 
 import smash
 
-from smash.core._constant import ALGORITHM
+from smash.core._constant import ALGORITHM, STRUCTURE_PARAMETERS, CSIGN, ESIGN
 
 from core.test_simu import output_cost
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.core.model import Model
 
 import numpy as np
 from h5py import File
 
 
-def baseline_simu():
+def baseline_simu(model: Model):
 
-    setup, mesh = smash.load_dataset("cance")
-    model = smash.Model(setup, mesh)
-
-    with File("baseline.hdf5", "w") as f:
+    with File("baseline.hdf5", "a") as f:
 
         ### direct run
         instance = model.copy()
@@ -45,7 +47,7 @@ def baseline_simu():
 
             res = output_cost(instance)
 
-            f.create_dataset("simu." + algo, data=res)
+            f.create_dataset(f"simu.{algo}", data=res)
 
             del instance
 
@@ -144,8 +146,74 @@ def baseline_simu():
         del instance
 
 
+def baseline_signatures(model: Model):
+
+    instance = model.copy()
+    instance.run(inplace=True)
+
+    signresult = instance.signatures()
+    signsensresult = instance.signatures_sensitivity(n=8, random_state=11)
+
+    with File("baseline.hdf5", "a") as f:
+
+        for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):
+
+            for dom in ["obs", "sim"]:
+
+                arr = signresult[typ][dom][sign].to_numpy(dtype=np.float32)
+
+                f.create_dataset(
+                    f"signatures.{typ}_{dom}",
+                    shape=arr.shape,
+                    dtype=arr.dtype,
+                    data=arr,
+                    compression="gzip",
+                    chunks=True,
+                )
+
+        for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):
+
+            for ord in ["first_si", "total_si"]:
+
+                for param in STRUCTURE_PARAMETERS[instance.setup.structure]:
+
+                    arr = signsensresult[typ][ord][param][sign].to_numpy(
+                        dtype=np.float32
+                    )
+
+                    f.create_dataset(
+                        f"signatures_sens.{typ}_{ord}_{param}",
+                        shape=arr.shape,
+                        dtype=arr.dtype,
+                        data=arr,
+                        compression="gzip",
+                        chunks=True,
+                    )
+
+
+def baseline_event_seg(model: Model):
+
+    arr = model.event_segmentation().to_numpy()
+
+    arr = arr.astype("S")
+
+    with File("baseline.hdf5", "a") as f:
+
+        f.create_dataset(
+            "event_seg",
+            shape=arr.shape,
+            dtype=arr.dtype,
+            data=arr,
+            compression="gzip",
+            chunks=True,
+        )
+
+
 if __name__ == "__main__":
 
-    baseline_simu()
+    setup, mesh = smash.load_dataset("cance")
+    model = smash.Model(setup, mesh)
 
-    # add more baseline here
+    baseline_simu(model)
+    baseline_signatures(model)
+    baseline_event_seg(model)

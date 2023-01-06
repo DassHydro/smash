@@ -43,7 +43,7 @@ def test_optimize():
             verbose=False,
         )
 
-        assert np.array_equal(output_cost(instance), pytest.baseline["simu." + algo])
+        assert np.array_equal(output_cost(instance), pytest.baseline[f"simu.{algo}"])
 
 
 # TODO: add more tests for model.optimize
