@@ -12,7 +12,9 @@ def test_signatures():
 
     signresult = instance.signatures()
 
-    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
+    for typ, sign in zip(
+        ["cont", "event"], [CSIGN[:4], ESIGN]
+    ):  # remove percentile signatures calculation
 
         for dom in ["obs", "sim"]:
 
@@ -28,16 +30,15 @@ def test_signatures():
 
 def test_signatures_sens():
 
-    instance = pytest.model.copy()
-    instance.run(inplace=True)
+    signsensresult = pytest.model.signatures_sensitivity(n=8, random_state=11)
 
-    signsensresult = instance.signatures_sensitivity(n=8, random_state=11)
-
-    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
+    for typ, sign in zip(
+        ["cont", "event"], [CSIGN[:4], ESIGN]
+    ):  # remove percentile signatures calculation
 
         for ordr in ["first_si", "total_si"]:
 
-            for param in STRUCTURE_PARAMETERS[instance.setup.structure]:
+            for param in STRUCTURE_PARAMETERS[pytest.model.setup.structure]:
 
                 arr = signsensresult[typ][ordr][param][sign].to_numpy(dtype=np.float32)
 

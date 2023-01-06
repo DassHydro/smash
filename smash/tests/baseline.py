@@ -151,10 +151,12 @@ def baseline_signatures(f: File, model: Model):
     instance = model.copy()
     instance.run(inplace=True)
 
+    ### signatures computation
     signresult = instance.signatures()
-    signsensresult = instance.signatures_sensitivity(n=8, random_state=11)
 
-    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
+    for typ, sign in zip(
+        ["cont", "event"], [CSIGN[:4], ESIGN]
+    ):  # remove percentile signatures calculation
 
         for dom in ["obs", "sim"]:
 
@@ -169,11 +171,15 @@ def baseline_signatures(f: File, model: Model):
                 chunks=True,
             )
 
-    for typ, sign in zip(["cont", "event"], [CSIGN[:4], ESIGN]):
+    ### signatures sensitivity
+    signsensresult = model.signatures_sensitivity(n=8, random_state=11)
+    for typ, sign in zip(
+        ["cont", "event"], [CSIGN[:4], ESIGN]
+    ):  # remove percentile signatures calculation
 
         for ordr in ["first_si", "total_si"]:
 
-            for param in STRUCTURE_PARAMETERS[instance.setup.structure]:
+            for param in STRUCTURE_PARAMETERS[model.setup.structure]:
 
                 arr = signsensresult[typ][ordr][param][sign].to_numpy(dtype=np.float32)
 

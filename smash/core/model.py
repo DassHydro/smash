@@ -1277,8 +1277,8 @@ class Model(object):
         sign : str, list of str or None, default None
             Define signature(s) to compute. Should be one of
 
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures)
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures)
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
@@ -1299,9 +1299,9 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> model.optimize(inplace=True)
+        >>> model.run(inplace=True)
 
-        Compute all continuous and flood event signatures:
+        Compute all observed and simulated signatures:
 
         >>> res = model.signatures()
         >>> res.cont["obs"]  # observed continuous signatures
@@ -1314,9 +1314,9 @@ class Model(object):
 
         >>> res.event["sim"]  # simulated flood event signatures
                code  season               start  ...  Elt         Epf
-        0  V3524010  autumn 2014-11-03 03:00:00  ...    8  280.677338
-        1  V3515010  autumn 2014-11-03 10:00:00  ...    6   61.226574
-        2  V3517010  autumn 2014-11-03 08:00:00  ...    6   18.758123
+        0  V3524010  autumn 2014-11-03 03:00:00  ...    3  106.190651
+        1  V3515010  autumn 2014-11-03 10:00:00  ...    0   21.160324
+        2  V3517010  autumn 2014-11-03 08:00:00  ...    1   5.613392
 
         [3 rows x 12 columns]
 
@@ -1360,8 +1360,8 @@ class Model(object):
         sign : str, list or None, default None
             Define signature(s) to compute. Should be one of
 
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures)
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures)
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
