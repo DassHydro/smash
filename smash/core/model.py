@@ -1429,8 +1429,11 @@ class Model(object):
 
         - ``std`` : The precipitation spatial standard deviation,
         - ``d1`` : The first scaled moment, [1]_
-        - ``d1`` : The second scaled moment, [1]_
+        - ``d2`` : The second scaled moment, [1]_
         - ``vg`` : The vertical gap. [2]_
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.prcp_indices>` for more.
 
         Returns
         -------
@@ -1479,13 +1482,13 @@ class Model(object):
         (3, 1440)
 
         NaN value means that there is no precipitation at this specific gauge and time step.
-        Using numpy.where to find the index where precipitation indices were calculated.
+        Using numpy.where to find the index where precipitation indices were calculated on the most downstream gauge for the first scaled moment.
 
-        >>> ind = np.where(~np.isnan(res.d1))
+        >>> ind = np.argwhere(~np.isnan(res.d1[0,:])).squeeze()
 
-        Viewing any index
+        Viewing the first scaled moment on the first time step where rainfall occured on the most downstream gauge.
 
-        >>> res.d1[ind][0]
+        >>> res.d1[0, ind[0]]
         1.209175
         """
 
