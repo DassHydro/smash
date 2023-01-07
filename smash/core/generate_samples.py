@@ -62,7 +62,7 @@ def generate_samples(
 
     backg_sol : numpy.ndarray or None, default None
         Spatially uniform prior parameters/states could be included in generated sets, and are
-        used as the mean when generating with Gaussian distribution. 
+        used as the mean when generating with Gaussian distribution.
         In this case, truncated normal distribution could be used with respect to the boundary conditions defined by the above problem.
 
         .. note::

@@ -25,8 +25,8 @@ def test_net_init():
 
         else:
 
-            n_neurons_i = round(n_neurons * (n_hidden_layers - i)/n_hidden_layers)
-            
+            n_neurons_i = round(n_neurons * (n_hidden_layers - i) / n_hidden_layers)
+
             net.add(
                 layer="dense",
                 options={
@@ -36,7 +36,7 @@ def test_net_init():
             )
 
         net.add(layer="activation", options={"name": "relu"})
-        net.add(layer="dropout", options={"drop_rate": .1})
+        net.add(layer="dropout", options={"drop_rate": 0.1})
 
     net.add(
         layer="dense",
@@ -44,7 +44,9 @@ def test_net_init():
     )
     net.add(layer="activation", options={"name": "sigmoid"})
 
-    net.compile("adam", learning_rate=0.002, options={"b1": 0.8, "b2": 0.99}, random_state=11)
+    net.compile(
+        "adam", learning_rate=0.002, options={"b1": 0.8, "b2": 0.99}, random_state=11
+    )
 
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
 
@@ -52,13 +54,15 @@ def test_net_init():
 
     for i in range(n_hidden_layers):
 
-        layer = net.layers[3*i]
+        layer = net.layers[3 * i]
 
-        assert np.allclose(layer.weight, pytest.baseline[f"net.init_weight_layer_{i+1}"][:], atol=1e-06)
+        assert np.allclose(
+            layer.weight, pytest.baseline[f"net.init_weight_layer_{i+1}"][:], atol=1e-06
+        )
 
-        assert np.allclose(layer.bias, pytest.baseline[f"net.init_bias_layer_{i+1}"][:], atol=1e-06)
+        assert np.allclose(
+            layer.bias, pytest.baseline[f"net.init_bias_layer_{i+1}"][:], atol=1e-06
+        )
 
 
 # TODO add more tests (in addition to net init) if need
-
-

@@ -213,30 +213,35 @@ def baseline_gen_samples(f: File, model: Model):
 
     problem = model.get_bound_constraints()
 
-    sample_uni = smash.generate_samples(problem, generator="uniform", n=20, random_state=11).to_numpy()
+    sample_uni = smash.generate_samples(
+        problem, generator="uniform", n=20, random_state=11
+    ).to_numpy()
 
-    sample_nor = smash.generate_samples(problem, generator="normal", n=20, random_state=11).to_numpy()
-
-    f.create_dataset(
-                    "gen_samples.uni",
-                    shape=sample_uni.shape,
-                    dtype=sample_uni.dtype,
-                    data=sample_uni,
-                    compression="gzip",
-                    chunks=True,
-                )
+    sample_nor = smash.generate_samples(
+        problem, generator="normal", n=20, random_state=11
+    ).to_numpy()
 
     f.create_dataset(
-                    "gen_samples.nor",
-                    shape=sample_nor.shape,
-                    dtype=sample_nor.dtype,
-                    data=sample_nor,
-                    compression="gzip",
-                    chunks=True,
-                )
+        "gen_samples.uni",
+        shape=sample_uni.shape,
+        dtype=sample_uni.dtype,
+        data=sample_uni,
+        compression="gzip",
+        chunks=True,
+    )
+
+    f.create_dataset(
+        "gen_samples.nor",
+        shape=sample_nor.shape,
+        dtype=sample_nor.dtype,
+        data=sample_nor,
+        compression="gzip",
+        chunks=True,
+    )
+
 
 def baseline_net(f: File, model: Model):
-    
+
     net = smash.Net()
 
     n_hidden_layers = 4
@@ -257,8 +262,8 @@ def baseline_net(f: File, model: Model):
 
         else:
 
-            n_neurons_i = round(n_neurons * (n_hidden_layers - i)/n_hidden_layers)
-            
+            n_neurons_i = round(n_neurons * (n_hidden_layers - i) / n_hidden_layers)
+
             net.add(
                 layer="dense",
                 options={
@@ -268,7 +273,7 @@ def baseline_net(f: File, model: Model):
             )
 
         net.add(layer="activation", options={"name": "relu"})
-        net.add(layer="dropout", options={"drop_rate": .1})
+        net.add(layer="dropout", options={"drop_rate": 0.1})
 
     net.add(
         layer="dense",
@@ -276,7 +281,9 @@ def baseline_net(f: File, model: Model):
     )
     net.add(layer="activation", options={"name": "sigmoid"})
 
-    net.compile("adam", learning_rate=0.002, options={"b1": 0.8, "b2": 0.99}, random_state=11)
+    net.compile(
+        "adam", learning_rate=0.002, options={"b1": 0.8, "b2": 0.99}, random_state=11
+    )
 
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
 
@@ -291,25 +298,25 @@ def baseline_net(f: File, model: Model):
 
     for i in range(n_hidden_layers):
 
-        layer = net.layers[3*i]
+        layer = net.layers[3 * i]
 
         f.create_dataset(
-                    f"net.init_weight_layer_{i+1}",
-                    shape=layer.weight.shape,
-                    dtype=layer.weight.dtype,
-                    data=layer.weight,
-                    compression="gzip",
-                    chunks=True,
-                )
+            f"net.init_weight_layer_{i+1}",
+            shape=layer.weight.shape,
+            dtype=layer.weight.dtype,
+            data=layer.weight,
+            compression="gzip",
+            chunks=True,
+        )
 
         f.create_dataset(
-                    f"net.init_bias_layer_{i+1}",
-                    shape=layer.bias.shape,
-                    dtype=layer.bias.dtype,
-                    data=layer.bias,
-                    compression="gzip",
-                    chunks=True,
-                )
+            f"net.init_bias_layer_{i+1}",
+            shape=layer.bias.shape,
+            dtype=layer.bias.dtype,
+            data=layer.bias,
+            compression="gzip",
+            chunks=True,
+        )
 
 
 if __name__ == "__main__":
@@ -327,4 +334,3 @@ if __name__ == "__main__":
         baseline_event_seg(f, model)
         baseline_gen_samples(f, model)
         baseline_net(f, model)
-
