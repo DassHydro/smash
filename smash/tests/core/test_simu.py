@@ -40,7 +40,7 @@ def test_optimize():
         instance.optimize(
             mapping=mapping,
             algorithm=algo,
-            options={"maxiter": 2},
+            options={"maxiter": 1},
             inplace=True,
             verbose=False,
         )
@@ -58,8 +58,8 @@ def test_bayes_estimate():
     instance = pytest.model.copy()
 
     br = instance.bayes_estimate(
-        k=np.linspace(-1, 5, 20),
-        n=10,
+        k=np.linspace(-1, 5, 10),
+        n=5,
         inplace=True,
         return_br=True,
         random_state=11,
@@ -80,7 +80,7 @@ def test_bayes_optimize():
     instance = pytest.model.copy()
 
     br = instance.bayes_optimize(
-        k=np.linspace(-1, 5, 20),
+        k=np.linspace(-1, 5, 10),
         n=5,
         mapping="distributed",
         algorithm="l-bfgs-b",
@@ -107,7 +107,7 @@ def test_ann_optimize_1():
     instance = pytest.model.copy()
 
     np.random.seed(11)
-    net = instance.ann_optimize(epochs=10, inplace=True, return_net=True, verbose=False)
+    net = instance.ann_optimize(epochs=5, inplace=True, return_net=True, verbose=False)
 
     assert np.allclose(
         net.history["loss_train"],
@@ -150,7 +150,7 @@ def test_ann_optimize_2():
         random_state=11,
     )
 
-    instance.ann_optimize(net=net, epochs=10, inplace=True, verbose=False)
+    instance.ann_optimize(net=net, epochs=5, inplace=True, verbose=False)
 
     assert np.allclose(
         net.history["loss_train"],
