@@ -46,5 +46,5 @@ def test_signatures_sens():
                     arr,
                     pytest.baseline[f"signatures_sens.{typ}_{ordr}_{param}"][:],
                     equal_nan=True,
-                    atol=1e-03,
+                    atol=1e-03,  # less accurate with a small value of n=8
                 )

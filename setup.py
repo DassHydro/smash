@@ -16,6 +16,7 @@ setup(
         "smash.mesh",
         "smash.io",
         "smash.dataset",
+        "smash.tests.core",
     ],
     package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_meshing*.so"]},
     include_package_data=True,

@@ -3,7 +3,7 @@ from __future__ import annotations
 import smash
 
 from smash.solver._mwd_cost import nse, kge
-from smash.core._constant import ALGORITHM
+from smash.core._constant import MAPPING
 
 from typing import TYPE_CHECKING
 
@@ -21,21 +21,21 @@ def test_direct_run():
     instance.run(inplace=True)
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.run"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["direct_run.cost"][:], atol=1e-06
     )
 
 
 def test_optimize():
 
-    for algo in ALGORITHM:
+    for mapping in MAPPING:
 
         instance = pytest.model.copy()
 
-        if algo == "l-bfgs-b":
-            mapping = "distributed"
+        if mapping == "uniform":
+            algo = "sbs"
 
         else:
-            mapping = "uniform"
+            algo = "l-bfgs-b"
 
         instance.optimize(
             mapping=mapping,
@@ -46,11 +46,12 @@ def test_optimize():
         )
 
         assert np.allclose(
-            output_cost(instance), pytest.baseline[f"simu.{algo}"][:], atol=1e-06
+            output_cost(instance),
+            pytest.baseline[f"optimize.{mapping}_{algo}.cost"][:],
+            atol=1e-06,
         )
 
-
-# TODO: add more tests for model.optimize
+    # TODO: add more tests for model.optimize
 
 
 def test_bayes_estimate():
@@ -67,11 +68,11 @@ def test_bayes_estimate():
     )
 
     assert np.allclose(
-        br.l_curve["cost"], pytest.baseline["simu.bayes_estimate_br_cost"], atol=1e-06
+        br.l_curve["cost"], pytest.baseline["bayes_estimate.br_cost"], atol=1e-06
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.bayes_estimate"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["bayes_estimate.cost"][:], atol=1e-06
     )
 
 
@@ -93,12 +94,12 @@ def test_bayes_optimize():
 
     assert np.allclose(
         br.l_curve["cost"],
-        pytest.baseline["simu.bayes_optimize_br_cost"][:],
+        pytest.baseline["bayes_optimize.br_cost"][:],
         atol=1e-06,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.bayes_optimize"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["bayes_optimize.cost"][:], atol=1e-06
     )
 
 
@@ -111,12 +112,12 @@ def test_ann_optimize_1():
 
     assert np.allclose(
         net.history["loss_train"],
-        pytest.baseline["simu.ann_optimize_1_loss"][:],
+        pytest.baseline["ann_optimize_1.loss"][:],
         atol=1e-06,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_1"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["ann_optimize_1.cost"][:], atol=1e-06
     )
 
 
@@ -154,12 +155,12 @@ def test_ann_optimize_2():
 
     assert np.allclose(
         net.history["loss_train"],
-        pytest.baseline["simu.ann_optimize_2_loss"][:],
+        pytest.baseline["ann_optimize_2.loss"][:],
         atol=1e-06,
     )
 
     assert np.allclose(
-        output_cost(instance), pytest.baseline["simu.ann_optimize_2"][:], atol=1e-06
+        output_cost(instance), pytest.baseline["ann_optimize_2.cost"][:], atol=1e-06
     )
 
 
@@ -168,11 +169,12 @@ def output_cost(instance: Model):
     qo = instance.input_data.qobs
     qs = instance.output.qsim
 
-    ret = []
+    n_jtest = 2
 
-    for i in range(instance.mesh.code.size):
+    ret = np.zeros(shape=n_jtest * instance.mesh.ng, dtype=np.float32)
 
-        ret.append(nse(qo[i], qs[i]))
-        ret.append(kge(qo[i], qs[i]))
+    for i in range(instance.mesh.ng):
+
+        ret[n_jtest * i : n_jtest * (i + 1)] = (nse(qo[i], qs[i]), kge(qo[i], qs[i]))
 
     return np.array(ret)

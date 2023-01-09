@@ -50,18 +50,18 @@ def test_net_init():
 
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
 
-    assert np.array_equal(graph, pytest.baseline["net.graph"])
+    assert np.array_equal(graph, pytest.baseline["net_init.graph"])
 
     for i in range(n_hidden_layers):
 
         layer = net.layers[3 * i]
 
         assert np.allclose(
-            layer.weight, pytest.baseline[f"net.init_weight_layer_{i+1}"][:], atol=1e-06
+            layer.weight, pytest.baseline[f"net_init.weight_layer_{i+1}"][:], atol=1e-06
         )
 
         assert np.allclose(
-            layer.bias, pytest.baseline[f"net.init_bias_layer_{i+1}"][:], atol=1e-06
+            layer.bias, pytest.baseline[f"net_init.bias_layer_{i+1}"][:], atol=1e-06
         )
 
 

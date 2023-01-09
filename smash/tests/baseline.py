@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import smash
 
-from smash.core._constant import ALGORITHM, STRUCTURE_PARAMETERS, CSIGN, ESIGN
+from smash.core._constant import MAPPING, STRUCTURE_PARAMETERS, CSIGN, ESIGN
 
-from core.test_simu import output_cost
+from smash.tests.core.test_simu import output_cost
 
 from typing import TYPE_CHECKING
 
@@ -26,20 +26,20 @@ def baseline_simu(f: File, model: Model):
 
     res = output_cost(instance)
 
-    f.create_dataset("simu.run", data=res)
+    f.create_dataset("direct_run.cost", data=res)
 
     del instance
 
     ### optimize
-    for algo in ALGORITHM:
+    for mapping in MAPPING:
 
         instance = model.copy()
 
-        if algo == "l-bfgs-b":
-            mapping = "distributed"
+        if mapping == "uniform":
+            algo = "sbs"
 
         else:
-            mapping = "uniform"
+            algo = "l-bfgs-b"
 
         instance.optimize(
             mapping=mapping, algorithm=algo, options={"maxiter": 1}, inplace=True
@@ -47,7 +47,7 @@ def baseline_simu(f: File, model: Model):
 
         res = output_cost(instance)
 
-        f.create_dataset(f"simu.{algo}", data=res)
+        f.create_dataset(f"optimize.{mapping}_{algo}.cost", data=res)
 
         del instance
 
@@ -62,11 +62,11 @@ def baseline_simu(f: File, model: Model):
         random_state=11,
     )
 
-    f.create_dataset("simu.bayes_estimate_br_cost", data=br.l_curve["cost"])
+    f.create_dataset("bayes_estimate.br_cost", data=br.l_curve["cost"])
 
     res = output_cost(instance)
 
-    f.create_dataset("simu.bayes_estimate", data=res)
+    f.create_dataset("bayes_estimate.cost", data=res)
 
     del instance
 
@@ -84,11 +84,11 @@ def baseline_simu(f: File, model: Model):
         random_state=11,
     )
 
-    f.create_dataset("simu.bayes_optimize_br_cost", data=br.l_curve["cost"])
+    f.create_dataset("bayes_optimize.br_cost", data=br.l_curve["cost"])
 
     res = output_cost(instance)
 
-    f.create_dataset("simu.bayes_optimize", data=res)
+    f.create_dataset("bayes_optimize.cost", data=res)
 
     del instance
 
@@ -98,11 +98,11 @@ def baseline_simu(f: File, model: Model):
     np.random.seed(11)
     net = instance.ann_optimize(epochs=5, inplace=True, return_net=True)
 
-    f.create_dataset("simu.ann_optimize_1_loss", data=net.history["loss_train"])
+    f.create_dataset("ann_optimize_1.loss", data=net.history["loss_train"])
 
     res = output_cost(instance)
 
-    f.create_dataset("simu.ann_optimize_1", data=res)
+    f.create_dataset("ann_optimize_1.cost", data=res)
 
     del instance
 
@@ -137,11 +137,11 @@ def baseline_simu(f: File, model: Model):
 
     instance.ann_optimize(net=net, epochs=5, inplace=True)
 
-    f.create_dataset("simu.ann_optimize_2_loss", data=net.history["loss_train"])
+    f.create_dataset("ann_optimize_2.loss", data=net.history["loss_train"])
 
     res = output_cost(instance)
 
-    f.create_dataset("simu.ann_optimize_2", data=res)
+    f.create_dataset("ann_optimize_2.cost", data=res)
 
     del instance
 
@@ -247,6 +247,7 @@ def baseline_net(f: File, model: Model):
     n_hidden_layers = 4
     n_neurons = 16
 
+    ### net init
     for i in range(n_hidden_layers):
 
         if i == 0:
@@ -288,7 +289,7 @@ def baseline_net(f: File, model: Model):
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
 
     f.create_dataset(
-        "net.graph",
+        "net_init.graph",
         shape=graph.shape,
         dtype=graph.dtype,
         data=graph,
@@ -301,7 +302,7 @@ def baseline_net(f: File, model: Model):
         layer = net.layers[3 * i]
 
         f.create_dataset(
-            f"net.init_weight_layer_{i+1}",
+            f"net_init.weight_layer_{i+1}",
             shape=layer.weight.shape,
             dtype=layer.weight.dtype,
             data=layer.weight,
@@ -310,7 +311,7 @@ def baseline_net(f: File, model: Model):
         )
 
         f.create_dataset(
-            f"net.init_bias_layer_{i+1}",
+            f"net_init.bias_layer_{i+1}",
             shape=layer.bias.shape,
             dtype=layer.bias.dtype,
             data=layer.bias,
