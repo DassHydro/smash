@@ -22,8 +22,8 @@ sys.path.insert(0, os.path.abspath("./_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022, Francois Colleoni"
-author = "Francois Colleoni"
+copyright = "2022-2023, INRAE"
+author = "INRAE"
 
 # The full version, including alpha/beta/rc tags
 release = smash.__version__

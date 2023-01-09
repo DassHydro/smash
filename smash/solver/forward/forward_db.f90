@@ -128,7 +128,7 @@ CONTAINS
     ALLOCATE(this%dsm(mesh%nrow, mesh%ncol))
     ALLOCATE(this%ws(mesh%nrow, mesh%ncol))
     ALLOCATE(this%lr(mesh%nrow, mesh%ncol))
-    this%ci = 1._sp
+    this%ci = 1e-6_sp
     this%cp = 200._sp
     this%beta = 1000._sp
     this%cft = 500._sp
