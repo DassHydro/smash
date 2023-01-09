@@ -4,17 +4,17 @@
 User guide
 ==========
 
-The practical use of `smash` is first done on a :ref:`user_guide.practice_case`, allowing new users to have a global view of the available tools, from the creation of input data, to the output of results. In a second step, a :ref:`user_guide.real_case_cance` is set up on which all the methods/applications made on the :ref:`user_guide.practice_case` are reapplied with more detailed explanations.
-Finally, the in depth section allows to go into the details of the different uses of the `smash` package.  
+Getting started with the `smash` package can be done by following all the ``Cases`` below. The different cases will call upon the major part of the available tools. In order not to overload the cases, additional and more precise information can be found in the ``In Depth`` section.  
+Most of the time, references to the in depth section are made in the cases allowing to go further on specific methods by following the implementation of a distributed hydrological simulation with `smash`. 
 
 Cases
 *****
 .. toctree::
     :maxdepth: 1
 
-    practice_case
-    real_case_cance
-    real_case_france
+    cases/practice_case
+    cases/real_case_cance
+    cases/real_case_france
 
 Model initialization
 ********************
@@ -28,4 +28,7 @@ In Depth
 .. toctree::
     :maxdepth: 1
 
-    automatic_meshing
+    in_depth/automatic_meshing
+    in_depth/prcp_indices
+    
+    

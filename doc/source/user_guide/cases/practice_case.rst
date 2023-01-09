@@ -8,7 +8,7 @@ The Practice case is an introduction to `smash` for new users. The objective of 
 
 For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following drained area and flow directions:
 
-.. image:: ../_static/flwdir_da_Practice_case.png
+.. image:: ../../_static/flwdir_da_Practice_case.png
     :width: 750
     :align: center
 
@@ -30,7 +30,7 @@ Imports
     
 .. warning::
 
-    - The wrapping of Fortran code in Python requires the use of the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package, which itself uses `f2py <https://numpy.org/doc/stable/f2py/>`__. Thus, the `NumPy <https://numpy.org/>`__ package is essential in the management of arguments/tables. A knowledge of this package is advised in the use of `smash`.
+    - The wrapping of Fortran code in Python requires the use of the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package, which itself uses `f2py <https://numpy.org/doc/stable/f2py/>`__. Thus, the `NumPy <https://numpy.org/>`__ package is essential in the management of arguments. A knowledge of this package is advised in the use of `smash`.
     
     - The `Matplotlib <https://matplotlib.org/>`__ package is the visualization package used in the `smash` documentation but any tool can be used.
     
@@ -237,8 +237,8 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.setup.pet_conversion_factor   model.setup.sparse_storage
     model.setup.pet_directory           model.setup.start_time
     model.setup.pet_format              model.setup.structure
-    model.setup.prcp_conversion_factor  
-    
+    model.setup.prcp_conversion_factor 
+
 Mesh
 ****
 
@@ -278,7 +278,6 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.mesh.flwdir        model.mesh.xmin
     model.mesh.flwdst        model.mesh.ymax
     model.mesh.from_handle(
-
 
 Input Data
 **********
@@ -377,11 +376,11 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     
     @verbatim
     model.output.<TAB>
-    mo.output.copy(                   mo.output.qsim
-    mo.output.cost                    mo.output.qsim_domain
-    mo.output.from_handle(            mo.output.sparse_net_prcp_domain
-    mo.output.fstates                 mo.output.sparse_qsim_domain
-    mo.output.net_prcp_domain
+    model.output.copy(                   model.output.qsim
+    model.output.cost                    model.output.qsim_domain
+    model.output.from_handle(            model.output.sparse_net_prcp_domain
+    model.output.fstates                 model.output.sparse_qsim_domain
+    model.output.net_prcp_domain
 
 ------------------
 Input Data filling
@@ -444,8 +443,6 @@ Once the run is done, it is possible to access the simulated discharge on the ga
     plt.ylabel("Simulated discharge $(m^3/s)$");
     @savefig qsim_fwd_pc_user_guide.png
     plt.title(model.mesh.code[0]);
-    
-    
 
 This hydrograph is the result of a forward run of the code with the default structure (``gr-a``), parameters and initial states.
     
@@ -458,13 +455,13 @@ To perform an optimization, observed discharge must be provided to :class:`.Mode
 
     model.input_data.qobs = model.output.qsim.copy()
     
-Next, we will perturb the production parameter :math:`\mathrm{cp}` to generate a hydrograph different from the previous one.
+Next, we will perturb the production parameter :math:`\mathrm{cp}` to generate a different hydrograph from the previous one.
 
 .. ipython:: python
 
     model.parameters.cp = 1
     
-Run again to see the difference between the hydrographs.
+Run again to see the differences between the hydrographs.
 
 .. ipython:: python
 
@@ -502,7 +499,7 @@ Finally, perform a spatially uniform calibration (which is default optimization)
     
 .. note::
     
-    In the Practice case, we will not go into the details of the optimization which is an essential part of the `smash` calculation code. To go further, details can be found for the use of the :meth:`.Model.optimize` method in the User Guide section: :ref:`user_guide.real_case_cance` and for the algorithms in the Model description section: (TODO link).
+    In the Practice case, we will not go into the details of the optimization which is an essential part of the `smash` calculation code. To go further, details can be found for the use of the :meth:`.Model.optimize` method in the User Guide section: **TODO** ref to in_depth.optimize.
     
     
 ------------
