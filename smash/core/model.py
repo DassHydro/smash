@@ -1234,6 +1234,9 @@ class Model(object):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
+        .. hint::
+            See the :ref:`User Guide <user_guide.event_segmentation>` for more.
+
         Returns
         -------
         res : pandas.DataFrame
@@ -1271,6 +1274,9 @@ class Model(object):
     def signatures(self, sign: str | list | None = None, obs_comp: bool = True):
         """
         Compute continuous or/and flood event signatures of the Model.
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.signatures.computation>` for more.
 
         Parameters
         ----------
@@ -1337,6 +1343,9 @@ class Model(object):
     ):
         """
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.signatures.sensitivity>` for more.
 
         Parameters
         ----------

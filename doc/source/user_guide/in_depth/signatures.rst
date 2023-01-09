@@ -14,7 +14,8 @@ flow distribution (based for instance on flow percentiles),
 flow dynamics (based for instance on base-flow separation [NT+15]_, [LM+79]_), 
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole studied period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
-that are observed in the flood events.
+that are observed in the flood events. 
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in section ??? (TODO).
 
 .. list-table:: List of all studied signatures
    :widths: 10 25 55 10
@@ -142,7 +143,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Signatures computation
 **********************
 
-Firstly, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method.
+To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method.
 
 .. ipython:: python
 
@@ -184,19 +185,65 @@ For example, we visualize the simulated and observed continuous runoff coefficie
     @savefig sign_comp.png
     boxplot = df.boxplot(column=["Crc", "Crchf", "Crclf", "Crch2r"], by="domain")
 
+.. _user_guide.signatures.sensitivity:
+
 Signatures sensitivity
 ----------------------
 
-We are interested in investigating the sensitivities of the input model parameters to the output signatures. 
-Several Sobol indices which are the first-order total-order sensitivities, are estimated using ``SALib`` Python library.
+We are interested in investigating the variance-based sensitivities of the input model parameters to the output signatures. 
+Several Sobol indices which are the first- and total-order sensitivities, are estimated using ``SALib`` Python library.
 
 Sobol indices
 *************
 
+The estimated sensitivities are available using the :meth:`Model.signatures_sensitivity() <smash.Model.signatures_sensitivity>` method.
+
 .. ipython:: python
 
-    res_sens = model.signatures_sensitivity(n=32);
+    res_sens = model.signatures_sensitivity(n=32, random_state=99);
 
+.. note::
 
+    In real-world applications, the value of ``n`` can be much larger to attain more accurate results. 
 
+The signatures sensitivity result is represented as a :class:`smash.SignSensResult` object containning 3 attributes which are 2 different dictionaries and 1 pandas.DataFrame:
 
+- ``cont`` : Continuous signatures sensitivity result,
+
+- ``event``: Flood event signatures sensitivity result,
+
+- ``sample``: Generated samples used to estimate Sobol indices represented in a pandas.dataframe.
+
+Each dictionary has 2 keys which are 2 different sub-dictionaries:
+
+- ``total_si``: Result of total-order sensitivities,
+
+- ``first_si``: Result of first-order sensitivities.
+
+Each sub-dictionary has ``n_param`` keys (where ``n_param`` is the number of the model parameters), 
+which are the dataframes containing the sensitivities of the associated model parameter to all studied signatures.
+
+For example, to display the first-order sensitivities of the production parameter ``cp`` to all continuous signatures:
+
+.. ipython:: python
+
+    res_sens.cont["first_si"]["cp"]
+
+Sensitivities visualization
+***************************
+
+For example, we visualize the total-order sensitivities of the model parameters to the lag time ``Elt`` and the peak flow ``Epf``:
+
+.. ipython:: python
+
+    df_cp = res_sens.event["total_si"]["cp"]
+    df_cft = res_sens.event["total_si"]["cft"]
+    df_exc = res_sens.event["total_si"]["exc"]
+    df_lr = res_sens.event["total_si"]["lr"]
+
+    df_sens = pd.concat([df_cp, df_cft, df_exc, df_lr], ignore_index=True)
+    df_sens["parameter"] = ["cp"]*len(df_cp) + ["cft"]*len(df_cft) + ["exc"]*len(df_exc) + ["lr"]*len(df_lr)
+
+    boxplot_sens = df_sens.boxplot(column=["Elt", "Epf"], by="parameter")
+    @savefig sign_sens.png
+    boxplot_sens[0].set_ylabel("Total-order sensitivity");
