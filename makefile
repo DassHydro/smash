@@ -1,12 +1,3 @@
-# % ====================================================================
-# % .
-# % .  SMASH: Spatially distributed Modelling and ASsimilation for Hydrology
-# % .
-# % .   Portions of this code were written by
-# % .     François Colleoni ...
-# % .
-# % ====================================================================
-
 #% Compiler
 FC := gfortran
 CC := gcc
