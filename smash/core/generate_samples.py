@@ -63,10 +63,10 @@ def generate_samples(
     backg_sol : numpy.ndarray or None, default None
         Spatially uniform prior parameters/states could be included in generated sets, and are
         used as the mean when generating with Gaussian distribution.
+        In this case, truncated normal distribution could be used with respect to the boundary conditions defined by the above problem.
 
         .. note::
-            If not given, the mean is the center of the parameter/state bound if in case of Gaussian generator, otherwise,
-            there is no background solution included in generated sets.
+            If not given, the mean is the center of the parameter/state bound if in case of Gaussian generator.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:

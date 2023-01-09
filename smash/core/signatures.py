@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward
 
-from smash.core._constant import CSIGN, ESIGN
+from smash.core._constant import SIGNS
 
 from smash.core._event_segmentation import (
     _detect_peaks,
@@ -142,22 +142,32 @@ class SignSensResult(dict):
 
 def _standardize_signatures(sign: str | list[str] | None):
 
-    if isinstance(sign, str):
+    if sign is None:
 
-        sign = [sign]
+        sign = SIGNS
 
-    elif sign is None:
+    elif isinstance(sign, str):
 
-        sign = CSIGN + ESIGN
+        if sign not in SIGNS:
 
-    elif not isinstance(sign, list):
-        raise ValueError(f"sign argument must be None, str or a list of str")
+            raise ValueError(f"Unknown signature {sign}. Choices: {SIGNS}")
 
-    for s in sign:
-        if s not in CSIGN + ESIGN:
-            raise ValueError(f"Unknown signature '{sign}'. Choices: {CSIGN + ESIGN}")
+        else:
+            sign = [sign]
+
+    elif isinstance(sign, list):
+
+        unk_sign = tuple(s for s in sign if s not in SIGNS)
+
+        if unk_sign:
+
+            raise ValueError(f"Unknown signature(s) {unk_sign}. Choices: {SIGNS}")
+
+    else:
+        raise TypeError(f"Signature(s) must be a str, a list of str or None")
 
     cs = [s for s in sign if s[0] == "C"]
+
     es = [s for s in sign if s[0] == "E"]
 
     return cs, es
@@ -295,7 +305,7 @@ def _signatures(
     instance: Model,
     cs: list[str],
     es: list[str],
-    obs_comp: bool = True,  # decide if process observation computation or not.
+    obs_comp: bool,  # decide if process observation computation or not.
     warn: bool = True,
 ):
 
@@ -500,7 +510,7 @@ def _signatures_sensitivity(
             cost,
         )
 
-        res_sign = _signatures(instance, cs, es, obs_comp=False, warn=(i == 0))
+        res_sign = _signatures(instance, cs, es, False, warn=(i == 0))
 
         dfs_cs.append(res_sign.cont["sim"])
         dfs_es.append(res_sign.event["sim"])
