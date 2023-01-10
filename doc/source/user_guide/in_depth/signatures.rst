@@ -103,7 +103,7 @@ These flood event signatures are calculated via a proposed segmentation algorith
   Lyne, V., and M. Hollick. "Stochastic time-variable rainfall-runoff modelling." Institute of Engineers Australia National Conference. Vol. 79. No. 10. Barton, Australia: Institute of Engineers Australia, 1979.
 
 This section aims to go into detail on how to compute and vizualize some hydrological signatures as well as 
-the sensitivity of the model paramters to these signatures.
+the sensitivity of the model parameters to these signatures.
 
 First, open a Python interface:
 
