@@ -538,6 +538,16 @@ module mwd_cost
     
         function signature(po, qo, qs, mask_event, stype) result(res)
 
+            !% Notes
+            !% -----
+            !%
+            !% Signatures-based cost computation (SBC)
+            !%
+            !% Given two single precision array (x, y) of dim(1) and size(n),
+            !% it returns the result of SBC computation
+            !% SBC_i = (s_i(y)/s_i(x) - 1) ** 2
+            !% where i is a signature i and s_i is its associated signature computation function 
+
             implicit none
 
             real(sp), dimension(:), intent(in) :: po, qo, qs
@@ -657,7 +667,7 @@ module mwd_cost
                     
                     if (den .gt. 0._sp) then
                     
-                        res = res + abs(num / den - 1._sp)
+                        res = res + (num / den - 1._sp) * (num / den - 1._sp)
                     
                     end if
                     
@@ -702,7 +712,7 @@ module mwd_cost
                 
                 if (den .gt. 0._sp) then
                 
-                    res = abs(num / den - 1._sp) 
+                    res = (num / den - 1._sp) * (num / den - 1._sp)
                 
                 end if
             

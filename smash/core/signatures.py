@@ -92,21 +92,21 @@ class SignSensResult(dict):
     cont : dict
         A dictionary with two keys
 
-        - 'total_si' : representing the total-order Sobol indices of the hydrological model parameters on continuous signatures.
-        - 'first_si' : representing the first-order Sobol indices of the hydrological model parameters on continuous signatures.
+        - 'total_si' : representing the total-order Sobol indices of the hydrological model parameters to continuous signatures.
+        - 'first_si' : representing the first-order Sobol indices of the hydrological model parameters to continuous signatures.
 
         Each value of the dictionary is a sub-dictionary with the keys are the hydrological model parameters.
-        Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivity computation results of the associated model paramter on all studied signatures.
+        Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivities of the associated model parameter to all studied signatures.
         The column names of each dataframe consist of the catchment code and studied signature names.
 
     event : dict
         A dictionary with two keys
 
-        - 'total_si' : representing the total-order Sobol indices of the hydrological model parameters on flood event signatures.
-        - 'first_si' : representing the first-order Sobol indices of the hydrological model parameters on flood event signatures.
+        - 'total_si' : representing the total-order Sobol indices of the hydrological model parameters to flood event signatures.
+        - 'first_si' : representing the first-order Sobol indices of the hydrological model parameters to flood event signatures.
 
         Each value of the dictionary is a sub-dictionary with the keys are the hydrological model parameters.
-        Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivity computation results of the associated model paramter on all studied signatures.
+        Then each value of each sub-dictionary (associating to a model parameter) is a dataframe containing the sensitivities of the associated model parameter to all studied signatures.
         The column names of each dataframe consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
 
     sample: pandas.DataFrame
@@ -114,7 +114,7 @@ class SignSensResult(dict):
 
     See Also
     --------
-    Model.signatures_sensitivity: Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
+    Model.signatures_sensitivity: Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters to the output signatures.
 
     """
 
