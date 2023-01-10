@@ -15,7 +15,7 @@ flow dynamics (based for instance on base-flow separation [NT+15]_, [LM+79]_),
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole studied period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
-These flood event signatures are calculated via a proposed segmentation algorithm as depicted in section ??? (TODO).
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in ??? (TODO).
 
 .. list-table:: List of all studied signatures
    :widths: 10 25 55 10
@@ -103,29 +103,26 @@ These flood event signatures are calculated via a proposed segmentation algorith
   Lyne, V., and M. Hollick. "Stochastic time-variable rainfall-runoff modelling." Institute of Engineers Australia National Conference. Vol. 79. No. 10. Barton, Australia: Institute of Engineers Australia, 1979.
 
 This section aims to go into detail on how to compute and vizualize some hydrological signatures as well as 
-the sensitivity of the model paramters to these signatures. 
-
-.. _user_guide.signatures.computation:
-
-Signatures computation
-----------------------
+the sensitivity of the model paramters to these signatures.
 
 First, open a Python interface:
 
 .. code-block:: none
 
     python3
-    
+
+-------
 Imports
-*******
+-------
 
 .. ipython:: python
     
     import smash
     import pandas as pd
-    
+
+---------------------
 Model object creation
-*********************
+---------------------
 
 To compute the signatures, you must create a :class:`smash.Model` object. 
 For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
@@ -138,10 +135,11 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
     
     model = smash.Model(setup, mesh)
 
-    model.run(inplace=True);
+.. _user_guide.signatures.computation:
 
+----------------------
 Signatures computation
-**********************
+----------------------
 
 To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method.
 
@@ -163,16 +161,13 @@ Each dictionary has 2 keys which are 2 different pandas.DataFrame:
 
 - ``sim``: Simulation result.
 
-For example, to display the simulated flood event signatures computation result:
+For example, to display the simulated flood event signatures computation result.
 
 .. ipython:: python
 
     res.event["sim"]
 
-Signatures visualization
-************************
-
-For example, we visualize the simulated and observed continuous runoff coefficients in the boxplot below:
+Now, we visualize, for instance, the simulated and observed continuous runoff coefficients in the boxplots below.
 
 .. ipython:: python
 
@@ -187,14 +182,12 @@ For example, we visualize the simulated and observed continuous runoff coefficie
 
 .. _user_guide.signatures.sensitivity:
 
+----------------------
 Signatures sensitivity
 ----------------------
 
 We are interested in investigating the variance-based sensitivities of the input model parameters to the output signatures. 
 Several Sobol indices which are the first- and total-order sensitivities, are estimated using ``SALib`` Python library.
-
-Sobol indices
-*************
 
 The estimated sensitivities are available using the :meth:`Model.signatures_sensitivity() <smash.Model.signatures_sensitivity>` method.
 
@@ -223,16 +216,13 @@ Each dictionary has 2 keys which are 2 different sub-dictionaries:
 Each sub-dictionary has ``n_param`` keys (where ``n_param`` is the number of the model parameters), 
 which are the dataframes containing the sensitivities of the associated model parameter to all studied signatures.
 
-For example, to display the first-order sensitivities of the production parameter ``cp`` to all continuous signatures:
+For example, to display the first-order sensitivities of the production parameter ``cp`` to all continuous signatures.
 
 .. ipython:: python
 
     res_sens.cont["first_si"]["cp"]
 
-Sensitivities visualization
-***************************
-
-For example, we visualize the total-order sensitivities of the model parameters to the lag time ``Elt`` and the peak flow ``Epf``:
+Finally, we visualize, for instance, the total-order sensitivities of the model parameters to the lag time ``Elt`` and the peak flow ``Epf``.
 
 .. ipython:: python
 
