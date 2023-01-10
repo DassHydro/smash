@@ -75,6 +75,7 @@ Finally, the segmented event, for instance of catchement ``V3524010``, can be vi
         prcp = model.input_data.mean_prcp[0, :]
 
         fig, (ax1, ax2) = plt.subplots(2, 1)
+        fig.subplots_adjust(hspace=0)
 
         ax1.bar(dti, prcp, color="lightslategrey", label="Rainfall");
         ax1.grid(alpha=.7, ls="--")
