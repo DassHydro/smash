@@ -202,25 +202,25 @@ def _detect_peaks(
 def _events_grad(
     p: np.ndarray,
     q: np.ndarray,
-    thresgrad: float = 0.8,
-    rpower: float = 0.2,
-    dh_search: int = 72,
-    max_duration: int = 10 * 24,
-    thres_quant: float = 0.999,
+    peak_quant: float,
+    max_duration: int,
+    rg_quant: float = 0.8,
+    coef_re: float = 0.2,
+    start_seg: int = 72,
     search_start: int = 12,
     search_end: int = 24,
 ):
 
-    ind = _detect_peaks(q, mph=np.quantile(q[q > 0], thres_quant))
+    ind = _detect_peaks(q, mph=np.quantile(q[q > 0], peak_quant))
     list_events = []
 
     for i in ind:
-        p_search = p[range(max(i - dh_search, 0), i)]
+        p_search = p[range(max(i - start_seg, 0), i)]
         p_search_grad = np.gradient(p_search)
 
         try:
             ind_start = _detect_peaks(
-                p_search_grad, mph=np.quantile(p_search_grad, thresgrad)
+                p_search_grad, mph=np.quantile(p_search_grad, rg_quant)
             )
         except:
             continue
@@ -233,7 +233,7 @@ def _events_grad(
         )
 
         try:
-            ind_start = ind_start[np.where(power > rpower * max(power))[0]]
+            ind_start = ind_start[np.where(power > coef_re * max(power))[0]]
         except:
             continue
 
@@ -242,7 +242,7 @@ def _events_grad(
         except:
             continue
 
-        start = ind_start_minq + max(i - dh_search, 0)
+        start = ind_start_minq + max(i - start_seg, 0)
 
         try:
             peakp = _detect_peaks(p[start:i], mpd=len(p))[0]
@@ -280,7 +280,14 @@ def _events_grad(
     return list_events
 
 
-def _mask_event(instance: Model):
+def _mask_event(
+    instance: Model,
+    peak_quant: float = 0.999,
+    max_duration: int = 240,
+    **unknown_options,
+):
+
+    _check_unknown_options_event_seg(unknown_options)
 
     mask = np.zeros(instance.input_data.qobs.shape)
 
@@ -298,7 +305,7 @@ def _mask_event(instance: Model):
 
         else:
 
-            list_events = _events_grad(prcp_tmp, qobs_tmp)
+            list_events = _events_grad(prcp_tmp, qobs_tmp, peak_quant, max_duration)
 
             for event_number, t in enumerate(list_events):
 
@@ -310,7 +317,7 @@ def _mask_event(instance: Model):
     return mask
 
 
-def _event_segmentation(instance: Model):
+def _event_segmentation(instance: Model, peak_quant: float, max_duration: int):
 
     date_range = pd.date_range(
         start=instance.setup.start_time,
@@ -341,7 +348,7 @@ def _event_segmentation(instance: Model):
 
         else:
 
-            list_events = _events_grad(prcp_tmp, qobs_tmp)
+            list_events = _events_grad(prcp_tmp, qobs_tmp, peak_quant, max_duration)
 
             for t in list_events:
                 ts = date_range[t["start"]]
@@ -356,3 +363,19 @@ def _event_segmentation(instance: Model):
                 df = pd.concat([df, pdrow], ignore_index=True)
 
     return df
+
+
+def _check_unknown_options_event_seg(unknown_options: dict):
+
+    if unknown_options:
+        msg = ", ".join(map(str, unknown_options.keys()))
+        warnings.warn("Unknown event segmentation options: '%s'" % msg)
+
+
+def _standardize_event_seg_options(options: dict | None) -> dict:
+
+    if options is None:
+
+        options = {}
+
+    return options

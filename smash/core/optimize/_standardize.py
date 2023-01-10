@@ -10,6 +10,8 @@ from smash.core._constant import (
     ESIGN_OPTIM,
 )
 
+from smash.core._event_segmentation import _standardize_event_seg_options
+
 from smash.solver._mw_derived_type_update import update_optimize_setup
 
 from typing import TYPE_CHECKING
@@ -580,6 +582,7 @@ def _standardize_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
+    event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,
@@ -602,6 +605,8 @@ def _standardize_optimize_args(
 
     wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
 
+    event_seg = _standardize_event_seg_options(event_seg)
+
     #% Update optimize setup derived type according to new optimize args.
     #% This Fortran subroutine reset optimize_setup values and realloc arrays.
     #% After wjobs_fun to realloc considering new size.
@@ -623,13 +628,24 @@ def _standardize_optimize_args(
 
     ost = _standardize_ost(ost, setup)
 
-    return mapping, algorithm, control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
+    return (
+        mapping,
+        algorithm,
+        control_vector,
+        jobs_fun,
+        wjobs_fun,
+        event_seg,
+        bounds,
+        wgauge,
+        ost,
+    )
 
 
 def _standardize_bayes_estimate_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
+    event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,
@@ -645,6 +661,8 @@ def _standardize_bayes_estimate_args(
     jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
     wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
+
+    event_seg = _standardize_event_seg_options(event_seg)
 
     #% Update optimize setup derived type according to new optimize args.
     #% This Fortran subroutine reset optimize_setup values and realloc arrays.
@@ -669,7 +687,7 @@ def _standardize_bayes_estimate_args(
 
     k = _standardize_bayes_k(k)
 
-    return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost, k
+    return control_vector, jobs_fun, wjobs_fun, event_seg, bounds, wgauge, ost, k
 
 
 def _standardize_bayes_optimize_args(
@@ -678,6 +696,7 @@ def _standardize_bayes_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
+    event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,
@@ -700,6 +719,8 @@ def _standardize_bayes_optimize_args(
     jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
 
     wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
+    event_seg = _standardize_event_seg_options(event_seg)
 
     #% Update optimize setup derived type according to new optimize args.
     #% This Fortran subroutine reset optimize_setup values and realloc arrays.
@@ -730,6 +751,7 @@ def _standardize_bayes_optimize_args(
         control_vector,
         jobs_fun,
         wjobs_fun,
+        event_seg,
         bounds,
         wgauge,
         ost,
@@ -741,6 +763,7 @@ def _standardize_ann_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
+    event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
     wgauge: str | list | tuple | set,
@@ -757,6 +780,8 @@ def _standardize_ann_optimize_args(
     jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
     wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
+
+    event_seg = _standardize_event_seg_options(event_seg)
 
     #% Update optimize setup derived type according to new optimize args.
     #% This Fortran subroutine reset optimize_setup values and realloc arrays.
@@ -779,4 +804,4 @@ def _standardize_ann_optimize_args(
 
     ost = _standardize_ost(ost, setup)
 
-    return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
+    return control_vector, jobs_fun, wjobs_fun, event_seg, bounds, wgauge, ost

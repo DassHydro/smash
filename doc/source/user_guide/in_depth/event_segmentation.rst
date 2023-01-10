@@ -46,7 +46,7 @@ Once the :class:`smash.Model` object is created, the flood events information ar
 
 .. ipython:: python
 
-    event_seg = model.event_segmentation();
+    event_seg = model.event_segmentation(peak_quant=0.99);
     event_seg
 
 The result is represented by a pandas.DataFrame with 6 columns.
@@ -62,33 +62,37 @@ The result is represented by a pandas.DataFrame with 6 columns.
 Hydrograph segmentation
 -----------------------
 
-Finally, the segmented event, for instance of catchement ``V3524010``, can be visualized in the hydrograph below.
+Finally, the segmented events, for instance of catchment ``V3524010``, can be visualized in the hydrograph below.
 
 .. ipython:: python
 
         dti = pd.date_range(start=model.setup.start_time, end=model.setup.end_time, freq="H")[1:]
 
-        dte = pd.date_range(start=event_seg["start"][0], end=event_seg["end"][0], freq="H")
-
         qo = model.input_data.qobs[0, :]
 
         prcp = model.input_data.mean_prcp[0, :]
+
+        starts = pd.to_datetime(event_seg["start"])
+        ends = pd.to_datetime(event_seg["end"])
 
         fig, (ax1, ax2) = plt.subplots(2, 1)
         fig.subplots_adjust(hspace=0)
 
         ax1.bar(dti, prcp, color="lightslategrey", label="Rainfall");
+        ax1.axvspan(starts[0], ends[0], alpha=.1, color="red", label="Event segmentation");
+        ax1.axvspan(starts[1], ends[1], alpha=.1, color="red");
         ax1.grid(alpha=.7, ls="--")
         ax1.get_xaxis().set_visible(False)
         ax1.set_ylabel("$mm$");
         ax1.invert_yaxis()
 
         ax2.plot(dti, qo, label="Observed discharge");
+        ax2.axvspan(starts[0], ends[0], alpha=.1, color="red");
+        ax2.axvspan(starts[1], ends[1], alpha=.1, color="red");
         ax2.grid(alpha=.7, ls="--")
-        ax2.tick_params(axis='x', labelrotation=20)
+        ax2.tick_params(axis="x", labelrotation=20)
         ax2.set_ylabel("$mm$");
-
-        plt.fill_between(dte, np.min(qo), np.max(qo), alpha=0.1, color="red", label="Event segmentation");
+        ax2.set_xlim(ax1.get_xlim());
 
         fig.legend();
         @savefig event_seg.png

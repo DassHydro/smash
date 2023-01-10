@@ -21,6 +21,7 @@ def _ann_optimize(
     control_vector: np.ndarray,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -33,7 +34,7 @@ def _ann_optimize(
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     for i, name in enumerate(control_vector):
 

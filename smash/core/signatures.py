@@ -10,6 +10,7 @@ from smash.core._event_segmentation import (
     _events_grad,
     _baseflow_separation,
     _get_season,
+    _check_unknown_options_event_seg,
 )
 
 from typing import TYPE_CHECKING
@@ -301,12 +302,14 @@ def _event_signatures(
     return res
 
 
-def _signatures(
+def _signatures_comp(
     instance: Model,
     cs: list[str],
     es: list[str],
+    peak_quant: float,
+    max_duration: int,
     obs_comp: bool,  # decide if process observation computation or not.
-    warn: bool = True,
+    warn: bool,
 ):
 
     prcp_cvt = (
@@ -389,7 +392,9 @@ def _signatures(
 
                 if len(es) > 0:
 
-                    list_events = _events_grad(prcp_tmp, qobs_tmp)
+                    list_events = _events_grad(
+                        prcp_tmp, qobs_tmp, peak_quant, max_duration
+                    )
 
                     if len(list_events) == 0:
 
@@ -475,6 +480,23 @@ def _signatures(
     )
 
 
+def _signatures(
+    instance: Model,
+    cs: list[str],
+    es: list[str],
+    obs_comp: bool,
+    peak_quant: float = 0.999,
+    max_duration: int = 240,
+    **unknown_options,
+):
+    if es:
+        _check_unknown_options_event_seg(unknown_options)
+
+    return _signatures_comp(
+        instance, cs, es, peak_quant, max_duration, obs_comp=obs_comp, warn=True
+    )
+
+
 def _signatures_sensitivity(
     instance: Model,
     problem: dict,
@@ -482,7 +504,13 @@ def _signatures_sensitivity(
     cs: list[str],
     es: list[str],
     seed: None | int,
+    peak_quant: float = 0.999,
+    max_duration: int = 240,
+    **unknown_options,
 ):
+
+    if es:
+        _check_unknown_options_event_seg(unknown_options)
 
     # generate samples
     sample = sb_generate_sample(problem, n, calc_second_order=False, seed=seed)
@@ -510,7 +538,9 @@ def _signatures_sensitivity(
             cost,
         )
 
-        res_sign = _signatures(instance, cs, es, False, warn=(i == 0))
+        res_sign = _signatures_comp(
+            instance, cs, es, peak_quant, max_duration, obs_comp=False, warn=(i == 0)
+        )
 
         dfs_cs.append(res_sign.cont["sim"])
         dfs_es.append(res_sign.event["sim"])

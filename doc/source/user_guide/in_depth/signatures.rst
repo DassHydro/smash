@@ -141,13 +141,14 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Signatures computation
 ----------------------
 
-To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method.
+To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method. 
+The argument ``event_seg`` (only related to flood event signatures) could be defined for tuning the paramters of segmentation algorithm.
 
 .. ipython:: python
 
     model.run(inplace=True);
 
-    res = model.signatures();
+    res = model.signatures(event_seg={"peak_quant": 0.99});
 
 The signatures computation result is represented as a :class:`smash.SignResult` object containning 2 attributes which are 2 different dictionaries:
 

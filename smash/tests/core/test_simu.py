@@ -51,7 +51,25 @@ def test_optimize():
             atol=1e-06,
         )
 
-    # TODO: add more tests for model.optimize
+    # multi-criteria
+    instance = pytest.model.copy()
+
+    instance.optimize(
+        mapping="uniform",
+        algorithm="nelder-mead",
+        jobs_fun=["nse", "Crc", "Epf"],
+        wjobs_fun=[1, 2, 2],
+        event_seg={"peak_quant": 0.99},
+        options={"maxiter": 10},
+        inplace=True,
+        verbose=False,
+    )
+
+    assert np.allclose(
+        output_cost(instance),
+        pytest.baseline["optimize.uniform_nelder-mead.cost"][:],
+        atol=1e-06,
+    )
 
 
 def test_bayes_estimate():
@@ -169,12 +187,16 @@ def output_cost(instance: Model):
     qo = instance.input_data.qobs
     qs = instance.output.qsim
 
-    n_jtest = 2
+    n_jtest = 3
 
     ret = np.zeros(shape=n_jtest * instance.mesh.ng, dtype=np.float32)
 
     for i in range(instance.mesh.ng):
 
-        ret[n_jtest * i : n_jtest * (i + 1)] = (nse(qo[i], qs[i]), kge(qo[i], qs[i]))
+        ret[n_jtest * i : n_jtest * (i + 1)] = (
+            instance.output.cost,
+            nse(qo[i], qs[i]),
+            kge(qo[i], qs[i]),
+        )
 
     return np.array(ret)
