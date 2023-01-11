@@ -1,7 +1,7 @@
 .. _user_guide:
 
 ==========
-User guide
+User Guide
 ==========
 
 Getting started with the `smash` package can be done by following all the ``Quickstart`` sections below. The different cases will call upon the major part of the available tools. In order not to overload the cases, additional and more precise information can be found in the ``In Depth`` section.  
@@ -16,13 +16,6 @@ Quickstart
     quickstart/real_case_cance
     quickstart/real_case_france
 
-Model initialization
-********************
-.. toctree::
-    :maxdepth: 2
-
-    model_initialization
-
 In Depth
 ********
 .. toctree::
@@ -33,4 +26,11 @@ In Depth
     in_depth/signatures
     in_depth/prcp_indices
     
-    
+Others
+******
+.. toctree::
+    :maxdepth: 1
+
+    others/model_initialization
+    others/model_structure
+    others/model_input_data_convention

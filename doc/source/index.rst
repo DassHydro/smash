@@ -2,9 +2,9 @@
 
 .. module:: smash
 
-********************
+*******************
 smash documentation
-********************
+*******************
 
 **Date**: |today| **Version**: |version|
 
@@ -65,22 +65,22 @@ smash documentation
             To the api reference
             
     .. grid-item-card::
-        :img-top: _static/model_description.svg
+        :img-top: _static/math_num.svg
 
-        Model Description
-        ^^^^^^^^^^^^^^^^^
+        Math / Num Description
+        ^^^^^^^^^^^^^^^^^^^^^^
 
-        The model description contains a detailed description of
+        The mathematical and numerical description contains a detailed description of
         the *smash* model operators.
 
         +++
 
-        .. button-ref:: model_description
+        .. button-ref:: math_num_description
             :expand:
             :color: muted 
             :click-parent:
 
-            To the model description
+            To the math / num description
 
 .. toctree::
    :maxdepth: 3
@@ -90,4 +90,4 @@ smash documentation
    getting_started/index
    user_guide/index
    api_reference/index
-   model_description/index
+   math_num_description/index
