@@ -1397,8 +1397,8 @@ class Model(object):
         problem: dict | None = None,
         n: int = 64,
         sign: str | list[str] | None = None,
-        random_state: int | None = None,
         event_seg: dict | None = None,
+        random_state: int | None = None,
     ):
         """
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
@@ -1434,12 +1434,6 @@ class Model(object):
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
 
-        random_state : int or None, default None
-            Random seed used to generate samples for sensitivity computation.
-
-            .. note::
-                If not given, generates parameters sets with a random seed.
-
         event_seg : dict or None, default None
             A dictionary of event segmentation options when calculating flood event signatures. The keys are
 
@@ -1451,6 +1445,12 @@ class Model(object):
 
             .. hint::
                 See the :func:`event segmentation <event_segmentation>` method for more.
+
+        random_state : int or None, default None
+            Random seed used to generate samples for sensitivity computation.
+
+            .. note::
+                If not given, generates parameters sets with a random seed.
 
         Returns
         -------
