@@ -444,7 +444,7 @@ Once the run is done, it is possible to access the simulated discharge on the ga
     @savefig qsim_fwd_pc_user_guide.png
     plt.title(model.mesh.code[0]);
 
-This hydrograph is the result of a forward run of the code with the default structure (``gr-a``), parameters and initial states.
+This hydrograph is the result of a forward run of the code with the default structure, parameters and initial states.
     
 Optimization
 ************
