@@ -29,6 +29,7 @@ def _optimize_sbs(
     mapping: str,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -44,7 +45,7 @@ def _optimize_sbs(
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     instance.setup._optimize.algorithm = "sbs"
 
@@ -102,6 +103,7 @@ def _optimize_lbfgsb(
     mapping: str,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -120,7 +122,7 @@ def _optimize_lbfgsb(
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     instance.setup._optimize.algorithm = "l-bfgs-b"
 
@@ -209,6 +211,7 @@ def _optimize_nelder_mead(
     mapping: str,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -229,7 +232,7 @@ def _optimize_nelder_mead(
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     instance.setup._optimize.algorithm = "nelder-mead"
 

@@ -88,14 +88,12 @@ html_theme_options = {
     "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
     "collapse_navigation": True,
     "logo": {
-      "image_light": "logo_smash.svg",
-      "image_dark": "logo_smash_dark.svg",
+        "image_light": "logo_smash.svg",
+        "image_dark": "logo_smash_dark.svg",
     },
 }
 
-html_context = {
-    "default_mode": "light"
-}
+html_context = {"default_mode": "light"}
 
 html_css_files = [
     "css/smash.css",

@@ -31,7 +31,10 @@ from smash.core.optimize._standardize import (
     _standardize_ann_optimize_args,
 )
 
-from smash.core._event_segmentation import _event_segmentation
+from smash.core._event_segmentation import (
+    _event_segmentation,
+    _standardize_event_seg_options,
+)
 
 from smash.core.signatures import (
     _standardize_signatures,
@@ -527,6 +530,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -591,6 +595,18 @@ class Model(object):
 
             .. note::
                 If not given, the weights will correspond to the mean of the objective functions.
+
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
+
+            .. hint::
+                See the :func:`event segmentation <event_segmentation>` method for more.
 
         gauge : str, sequence, default 'downstream'
             Type of gauge to be optimized. There are two ways to specify it:
@@ -682,6 +698,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -691,6 +708,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -708,6 +726,7 @@ class Model(object):
             mapping,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -733,6 +752,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -759,7 +779,7 @@ class Model(object):
             .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
@@ -813,6 +833,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -821,6 +842,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -847,6 +869,7 @@ class Model(object):
             None,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -887,6 +910,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -935,7 +959,7 @@ class Model(object):
             .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
-        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost, options : multiple types
+        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost, options : multiple types
                 Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
                 See `smash.Model.optimize` for more.
 
@@ -993,6 +1017,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1003,6 +1028,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -1031,6 +1057,7 @@ class Model(object):
             mapping,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1061,6 +1088,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -1086,7 +1114,7 @@ class Model(object):
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
@@ -1184,6 +1212,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1191,6 +1220,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -1205,6 +1235,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1230,12 +1261,20 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def event_segmentation(self):
+    def event_segmentation(self, peak_quant: float = 0.999, max_duration: int = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
         .. hint::
             See the :ref:`User Guide <user_guide.event_segmentation>` for more.
+
+        Parameters
+        ----------
+        peak_quant: float, default 0.999
+            An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
+
+        max_duration: int, default 240
+            The maximum duration of an event (in hour).
 
         Returns
         -------
@@ -1269,9 +1308,14 @@ class Model(object):
         """
         print("</> Model Event Segmentation")
 
-        return _event_segmentation(self)
+        return _event_segmentation(self, peak_quant, max_duration)
 
-    def signatures(self, sign: str | list | None = None, obs_comp: bool = True):
+    def signatures(
+        self,
+        sign: str | list | None = None,
+        obs_comp: bool = True,
+        event_seg: dict | None = None,
+    ):
         """
         Compute continuous or/and flood event signatures of the Model.
 
@@ -1291,6 +1335,18 @@ class Model(object):
 
         obs_comp : bool, default True
             If True, compute also the signatures from observed discharge in addition to simulated discharge.
+
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
+
+            .. hint::
+                See the :func:`event segmentation <event_segmentation>` method for more.
 
         Returns
         -------
@@ -1332,13 +1388,16 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        return _signatures(self, cs, es, obs_comp)
+        event_seg = _standardize_event_seg_options(event_seg)
+
+        return _signatures(self, cs, es, obs_comp, **event_seg)
 
     def signatures_sensitivity(
         self,
         problem: dict | None = None,
         n: int = 64,
         sign: str | list[str] | None = None,
+        event_seg: dict | None = None,
         random_state: int | None = None,
     ):
         """
@@ -1374,6 +1433,18 @@ class Model(object):
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
+
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
+
+            .. hint::
+                See the :func:`event segmentation <event_segmentation>` method for more.
 
         random_state : int or None, default None
             Random seed used to generate samples for sensitivity computation.
@@ -1426,7 +1497,11 @@ class Model(object):
 
         problem = _standardize_problem(problem, instance.setup, False)
 
-        res = _signatures_sensitivity(instance, problem, n, cs, es, random_state)
+        event_seg = _standardize_event_seg_options(event_seg)
+
+        res = _signatures_sensitivity(
+            instance, problem, n, cs, es, random_state, **event_seg
+        )
 
         return res
 

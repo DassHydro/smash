@@ -31,6 +31,7 @@ def baseline_simu(f: File, model: Model):
     del instance
 
     ### optimize
+    # single obj function
     for mapping in MAPPING:
 
         instance = model.copy()
@@ -50,6 +51,25 @@ def baseline_simu(f: File, model: Model):
         f.create_dataset(f"optimize.{mapping}_{algo}.cost", data=res)
 
         del instance
+
+    # multi-criteria
+    instance = model.copy()
+
+    instance.optimize(
+        mapping="uniform",
+        algorithm="nelder-mead",
+        jobs_fun=["nse", "Crc", "Epf"],
+        wjobs_fun=[1, 2, 2],
+        event_seg={"peak_quant": 0.99},
+        options={"maxiter": 10},
+        inplace=True,
+    )
+
+    res = output_cost(instance)
+
+    f.create_dataset("optimize.uniform_nelder-mead.cost", data=res)
+
+    del instance
 
     ### bayes_estimate
     instance = model.copy()
