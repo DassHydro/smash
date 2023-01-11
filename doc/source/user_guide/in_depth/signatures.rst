@@ -142,7 +142,7 @@ Signatures computation
 ----------------------
 
 To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method. 
-The argument ``event_seg`` (only related to flood event signatures) could be defined for tuning the paramters of segmentation algorithm.
+The argument ``event_seg`` (only related to flood event signatures) could be defined for tuning the parameters of segmentation algorithm.
 
 .. ipython:: python
 
