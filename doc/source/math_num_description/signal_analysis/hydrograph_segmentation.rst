@@ -1,7 +1,7 @@
-.. _hydrograph_segmentation:
+.. _math_num_description.hydrograph_segmentation:
 
-============================
-Hydrograph_segmentation
-============================
+=======================
+Hydrograph Segmentation
+=======================
 
 xxx

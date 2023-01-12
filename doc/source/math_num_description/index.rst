@@ -27,7 +27,7 @@ The forward spaially distributed hydrological modeling problem, several operator
     forward/hydrological_operators
     forward/regionalization_operators
 
-Signal analysis
+Signal Analysis
 ***************
 
 .. toctree::
