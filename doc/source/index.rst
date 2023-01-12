@@ -91,3 +91,4 @@ smash documentation
    user_guide/index
    api_reference/index
    math_num_description/index
+   biblio/references
