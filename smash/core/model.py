@@ -590,6 +590,9 @@ class Model(object):
             - ``Flood Event Signature``
                 'Epf', 'Elt', 'Erc'
 
+            .. hint::
+                See a detailed explanation on the cost function in :ref:`Math / Num Description <math_num_description.cost_functions>` section.
+
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
 
@@ -606,7 +609,7 @@ class Model(object):
                 If not given in case flood signatures are computed, the default values will be set for these parameters.
 
             .. hint::
-                See the :func:`event segmentation <event_segmentation>` method for more.
+                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
 
         gauge : str, sequence, default 'downstream'
             Type of gauge to be optimized. There are two ways to specify it:
@@ -1320,7 +1323,7 @@ class Model(object):
         Compute continuous or/and flood event signatures of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.computation>` for more.
+            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Description <math_num_description.hydrological_signature>` for more.
 
         Parameters
         ----------
@@ -1346,7 +1349,7 @@ class Model(object):
                 If not given in case flood signatures are computed, the default values will be set for these parameters.
 
             .. hint::
-                See the :func:`event segmentation <event_segmentation>` method for more.
+                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
 
         Returns
         -------
@@ -1404,7 +1407,7 @@ class Model(object):
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.sensitivity>` for more.
+            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Description <math_num_description.hydrological_signature>` for more.
 
         Parameters
         ----------
@@ -1444,7 +1447,7 @@ class Model(object):
                 If not given in case flood signatures are computed, the default values will be set for these parameters.
 
             .. hint::
-                See the :func:`event segmentation <event_segmentation>` method for more.
+                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
 
         random_state : int or None, default None
             Random seed used to generate samples for sensitivity computation.

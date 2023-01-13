@@ -4,4 +4,6 @@
 Optimization algorithms
 =======================
 
-xx
+.. warning::
+
+    Section in development 
