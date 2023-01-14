@@ -1269,7 +1269,7 @@ class Model(object):
         Compute segmentation information of flood events over all catchments of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.event_segmentation>` for more.
+            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Description <math_num_description.hydrograph_segmentation>` for more.
 
         Parameters
         ----------
