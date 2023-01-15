@@ -118,7 +118,7 @@ The estimated sensitivities of the Model parameters to the signatures are availa
 
 .. ipython:: python
 
-    res_sens = model.signatures_sensitivity(problem, n=32, event_seg={"peak_quant": 0.99}, random_state=99);
+    res_sens = model.signatures_sensitivity(problem, n=16, event_seg={"peak_quant": 0.99}, random_state=99);
 
 .. note::
 
