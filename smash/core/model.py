@@ -542,7 +542,7 @@ class Model(object):
         Optimize the Model.
 
         .. hint::
-            See the :ref:`user_guide` for more.
+            See the :ref:`user_guide` and :ref:`math_num_description` for more.
 
         Parameters
         ----------
@@ -605,11 +605,10 @@ class Model(object):
             - 'peak_quant'
             - 'max_duration'
 
+            See `smash.Model.event_segmentation` for more.
+
             .. note::
                 If not given in case flood signatures are computed, the default values will be set for these parameters.
-
-            .. hint::
-                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
 
         gauge : str, sequence, default 'downstream'
             Type of gauge to be optimized. There are two ways to specify it:
@@ -767,6 +766,9 @@ class Model(object):
         """
         Estimate prior Model parameters/states using Bayesian approach.
 
+        .. hint::
+            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+
         Parameters
         ----------
         k : int, float or sequence, default 4
@@ -817,7 +819,19 @@ class Model(object):
         >>> model = smash.Model(setup, mesh)
         >>> br = model.bayes_estimate(n=200, inplace=True, return_br=True, random_state=99)
 
-        Add more info (TODO)
+        Access to cost values of the direct simulations
+
+        >>> cost = br.data["cost"]
+        >>> cost.sort()  # sort the values by ascending order
+        >>> cost
+        array([4.88620669e-01, 5.70850313e-01, 7.37333179e-01, 7.59980202e-01,
+            ...
+            9.26341797e+03, 1.12409111e+04, 1.13607480e+04, 1.18410371e+04])
+
+        Compare to the cost value of the Model with the estimated parameters using Bayesian apporach
+
+        >>> model.output.cost
+        0.41908782720565796
 
         """
 
@@ -926,6 +940,9 @@ class Model(object):
         """
         Optimize the Model using Bayesian approach.
 
+        .. hint::
+            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+
         Parameters
         ----------
         k : int, float or sequence, default 4
@@ -935,8 +952,7 @@ class Model(object):
                 If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
 
         density_estimate : bool, default True
-            Take into account the density function in Equation ? (TODO).
-            The density function is estimated using Gaussian kernel.
+            Take into account the density function estimated using Gaussian kernel.
 
         de_bw_method : str, scalar, callable or None, default None
             The method used to calculate the estimator bandwidth if density_estimate.
@@ -994,12 +1010,21 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br=True, random_state=99)
+        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, options={"maxiter": 2}, return_br=True, random_state=99)
 
-        Add more info (TODO)
+        Access to cost values of the optimizations with different set of Model parameters
 
-        .. note::
-            Multi-processing ... (TODO)
+        >>> cost = br.data["cost"]
+        >>> cost.sort()  # sort the values by ascending order
+        >>> cost
+        array([0.06491096, 0.07514387, 0.07857202, 0.07885404, 0.0957346 ,
+            ...
+            1.16908765, 1.17005932, 1.17838395, 1.17910016, 1.19542003])
+
+        Compare to the cost value of the Model with the optimized parameters using Bayesian apporach
+
+        >>> model.output.cost
+        0.048890236765146255
 
         """
 
@@ -1106,13 +1131,12 @@ class Model(object):
         Optimize the Model using Artificial Neural Network.
 
         .. hint::
-            See the :ref:`user_guide` for more.
+            See the :ref:`user_guide` and :ref:`math_num_description` for more.
 
         Parameters
         ----------
         net : Net or None, default None
             The neural network Net will be trained to learn the descriptors to parameters mapping.
-            Net initialization (see user guide TODO).
 
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
@@ -1123,7 +1147,6 @@ class Model(object):
 
         validation : float or None, default None
             Temporal validation percentage to split simulated discharge into training-validation sets.
-            See user guide (TODO)
 
             .. note::
                 If not given, the function will be computed on the whole time series (simulated discharge).
@@ -1345,11 +1368,10 @@ class Model(object):
             - 'peak_quant'
             - 'max_duration'
 
-            .. note::
-                If not given in case flood signatures are computed, the default values will be set for these parameters.
+            See `smash.Model.event_segmentation` for more.
 
-            .. hint::
-                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters. 
 
         Returns
         -------
@@ -1443,11 +1465,10 @@ class Model(object):
             - 'peak_quant'
             - 'max_duration'
 
+            See `smash.Model.event_segmentation` for more.
+
             .. note::
                 If not given in case flood signatures are computed, the default values will be set for these parameters.
-
-            .. hint::
-                See the :meth:`Model.event_segmentation() <event_segmentation>` method for more.
 
         random_state : int or None, default None
             Random seed used to generate samples for sensitivity computation.

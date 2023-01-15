@@ -99,12 +99,26 @@ Signatures sensitivity
 
 We are interested in investigating the variance-based sensitivities of the input model parameters to the output signatures. 
 Several Sobol indices which are the first- and total-order sensitivities, are estimated using `SALib <https://salib.readthedocs.io>`__ Python library.
-
-The estimated sensitivities are available using the :meth:`Model.signatures_sensitivity() <smash.Model.signatures_sensitivity>` method.
+ 
+The ``problem`` argument can be defined if you prefer to change the default boundary constraints of the Model parameters. 
+You can use the :meth:`Model.get_bound_constraints() <smash.Model.get_bound_constraints>` method to get the names of the Model parameters (depending on the defined Model structure) 
+and its boundary constraints.
 
 .. ipython:: python
 
-    res_sens = model.signatures_sensitivity(n=32, event_seg={"peak_quant": 0.99}, random_state=99);
+    model.get_bound_constraints()
+
+Then you can redefine the problem to estimate the sensitivities of 3 parameters ``cp``, ``cft``, ``lr`` with the modified bounds (by fixing ``exc`` with its default value):
+
+.. ipython:: python
+
+    problem = {"num_vars": 3, "names": ["cp", "cft", "lr"], "bounds": [[1,1000], [1,800], [1,500]]}
+
+The estimated sensitivities of the Model parameters to the signatures are available using the :meth:`Model.signatures_sensitivity() <smash.Model.signatures_sensitivity>` method.
+
+.. ipython:: python
+
+    res_sens = model.signatures_sensitivity(problem, n=32, event_seg={"peak_quant": 0.99}, random_state=99);
 
 .. note::
 
@@ -143,11 +157,10 @@ Finally, we visualize, for instance, the total-order sensitivities of the model 
 
     df_cp = res_sens.event["total_si"]["cp"]
     df_cft = res_sens.event["total_si"]["cft"]
-    df_exc = res_sens.event["total_si"]["exc"]
     df_lr = res_sens.event["total_si"]["lr"]
 
-    df_sens = pd.concat([df_cp, df_cft, df_exc, df_lr], ignore_index=True)
-    df_sens["parameter"] = ["cp"]*len(df_cp) + ["cft"]*len(df_cft) + ["exc"]*len(df_exc) + ["lr"]*len(df_lr)
+    df_sens = pd.concat([df_cp, df_cft, df_lr], ignore_index=True)
+    df_sens["parameter"] = ["cp"]*len(df_cp) + ["cft"]*len(df_cft) + ["lr"]*len(df_lr)
 
     boxplot_sens = df_sens.boxplot(column=["Elt", "Epf"], by="parameter")
     @savefig sign_sens.png
