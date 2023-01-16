@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash.core._constant import PRCP_INDICES
-
 from smash.solver._mw_forcing_statistic import compute_prcp_indices
+
+from smash.core._constant import PRCP_INDICES
 
 from typing import TYPE_CHECKING
 
@@ -25,33 +25,15 @@ class PrcpIndicesResult(dict):
     std : numpy.ndarray
         The precipitation spatial standard deviation.
     d1 : numpy.ndarray
-        The first scaled moment, [1]_
+        The first scaled moment, :cite:p:`zocatelli_2011`
     d2 : numpy.ndarray
-        The second scaled moment, [1]_
+        The second scaled moment, :cite:p:`zocatelli_2011`
     vg : numpy.ndarray
-        The vertical gap. [2]_
+        The vertical gap. :cite:p:`emmanuel_2015`
 
     See Also
     --------
     Model.prcp_indices: Compute precipitations indices of the Model.
-
-    References
-    ----------
-    .. [1]
-
-        Zoccatelli, D., Borga, M., Viglione, A., Chirico, G. B., and Blöschl, G.:
-        Spatial moments of catchment rainfall: rainfall spatial organisation,
-        basin morphology, and flood response,
-        Hydrol. Earth Syst. Sci., 15, 3767–3783,
-        https://doi.org/10.5194/hess-15-3767-2011, 2011.
-
-    .. [2]
-
-        I. Emmanuel, H. Andrieu, E. Leblois, N. Janey, O. Payrastre,
-        Influence of rainfall spatial variability on rainfall–runoff modelling:
-        Benefit of a simulation approach?,
-        Journal of Hydrology,
-        https://doi.org/10.1016/j.jhydrol.2015.04.058, 2015
 
     """
 

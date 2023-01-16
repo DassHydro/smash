@@ -6,7 +6,7 @@ Real case - Cance
 
 A real case is considered: ``the Cance river catchment at Sarras``, a right bank tributary of the Rhône river. 
 
-.. image:: ../_static/real_case_cance_catchment.png
+.. image:: ../../_static/real_case_cance_catchment.png
     :width: 400
     :align: center
 
@@ -42,7 +42,7 @@ Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 Setup argument
 **************
     
-``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary setup Fortran arrays). 
+``setup`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -56,7 +56,7 @@ Compared to the :ref:`user_guide.practice_case`, more options have been filled i
     
 To get into the details:
 
-- ``structure``: the model structure (TODO ref),
+- ``structure``: the model structure,
 
 - ``dt``: the calculation time step in s,
 
@@ -74,7 +74,7 @@ To get into the details:
 
 - ``prcp_conversion_factor``: the precipitation conversion factor (the precipitation value will be **multiplied** by the conversion factor),
 
-- ``prcp_directory``: the path to the precipitaion files (this path is automatically generated when you load the data),
+- ``prcp_directory``: the path to the precipitation files (this path is automatically generated when you load the data),
 
 - ``read_pet``: whether or not to read potential evapotranspiration files,
 
@@ -82,61 +82,20 @@ To get into the details:
 
 - ``pet_conversion_factor``: the potential evapotranspiration conversion factor (the potential evapotranspiration value will be **multiplied** by the conversion factor),
 
-- ``daily_interannual_pet``: whether or not to read potential evapotranspiration file as daily interannual value desaggregated to the corresponding time step ``dt``,
+- ``daily_interannual_pet``: whether or not to read potential evapotranspiration files as daily interannual value desaggregated to the corresponding time step ``dt``,
 
 - ``pet_directory``: the path to the potential evapotranspiration files (this path is automatically generated when you load the data),
 
-Before going into the explanation of the ``mesh``, the following section details the structure of the observed discharges, precipitation and potential evapotranspiration files read.
+- ``read_descriptor``: whether or not to read catchment descriptors files,
 
-Input data files structure
-**************************
+- ``descriptor_name``: the names of the descriptors (the name must correspond to the name of the file without the extension such as ``slope.tif``),
 
-Observed dicharge
-'''''''''''''''''
+- ``descriptor_directory``: the path to the catchment descriptors files (this path is automatically generated when you load the data),
 
-The observed discharge for one catchment is read from a ``.csv`` file with the following structure: 
-
-.. csv-table:: V3524010.csv
-    :align: center
-    :header: "200601010000"
-    :width: 50
-    
-    -99.000
-    -99.000
-    ...
-    1.180
-    1.185
-
-It is a single-column ``.csv`` file containing the observed discharge values in m\ :sup:`3` \/s (negative values correspond to a gap in the chronicle) and whose header is the first time step of the chronicle.
-The name of the file, for any catchment, must contains the code of the gauge which is filled in the ``mesh`` dictionary.
-    
 .. note::
     
-    The time step of the header does not have to match the first simulation time step. `smash` manages to read the corresponding lines from ``start_time``, ``end_time`` and ``dt``.
-
-
-Precipitation
-'''''''''''''
-
-The precipitation files must be store for each time step of the simulation. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<prcp_format>``.
-An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
-
-.. warning::
-    
-    ``%Y%m%d%H%M`` is a unique key, the ``prcp_directory`` (and all subdirectories) can not contains files with similar dates.
-    
-Potential evapotranspiration
-''''''''''''''''''''''''''''
-
-The potential evapotranspiration files must be store for each each time step of the simulation. For one time step, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.<pet_format>``.
-An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
-
-.. warning::
-    
-    ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
-    
-In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%m%d>*.<pet_format>``.
-An example of file name in tif format for the date 09-15: ``dia_pet_0915.tif``. This file will be desaggregated to the corresponding time step ``dt``.
+    - See the User Guide section: :ref:`user_guide.model_structure` for more information about model structure
+    - See the User Guide section: :ref:`user_guide.model_input_data_convention` for more information about model input data convention
 
 .. _user_guide.real_case_cance.mesh_argument:
 
@@ -146,7 +105,7 @@ Mesh argument
 Mesh composition
 ''''''''''''''''
 
-``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary mesh Fortran arrays). 
+``mesh`` is a dictionary that allows to initialize :class:`.Model` (i.e. allocate the necessary Fortran arrays). 
 
 .. note::
     
@@ -260,7 +219,7 @@ To get into the details:
 
     mesh["path"]
 
-Obviously, the data set included in the ``mesh`` dictionary is not generated by hand. The method :meth:`smash.generate_mesh` allows from a flow directions file, the gauge coordinates and the area to generate this same data set.
+Obviously, the data set included in the ``mesh`` dictionary is not generated by hand. The method :meth:`smash.generate_mesh` allows from a flow directions file, the gauge coordinates and the area to generate this same data set. More details can be found in the User Guide section: :ref:`user_guide.automatic_meshing`.
 
 Generate a mesh automatically
 '''''''''''''''''''''''''''''
@@ -273,7 +232,7 @@ The method required the path to the flow directions ``tif`` file. Once can load 
     
     flwdir
     
-This path leads to a flow directions ``tif`` file of the whole France at 1km² spatial resolution and Lambert93 projection (*EPSG:2154*)
+This path leads to a flow directions ``tif`` file of the whole France at 1km spatial resolution and Lambert93 projection (*EPSG:2154*)
 
 Get the gauge coordinates, area and code (this data is considered to be known by the user at the time the mesh is generated):
 
@@ -287,7 +246,7 @@ Get the gauge coordinates, area and code (this data is considered to be known by
     
     code = ["V3524010", "V3515010", "V3517010"]
     
-The ``x`` and ``y`` coordinates of the gauge must be in the same projection of the flow directions used for the meshing, here Lambert93 (*EPSG:2154*).
+The ``x`` and ``y`` coordinates of the gauge must be in the same projection of the flow directions used for the meshing, here Lambert93 (*EPSG:2154*). The ``area`` must be in **m²**.
 
 Call the :meth:`smash.generate_mesh` method:
 
@@ -376,11 +335,7 @@ It is possible to mask the precipitation grid to only visualize the precipitatio
 
 ---
 Run 
----
-
-.. note::
-    
-    We consider in the whole section, a model structure composed of 3 reservoirs for production, transfer and routing and a non-conservative exchange. 
+--- 
 
 Forward run
 ***********
@@ -436,7 +391,7 @@ observed quantities, such as discharge. Note that :math:`J` depends on the sough
     \hat{\theta} = \underset{\theta}{\mathrm{argmin}} \; J\left( \theta \right)
     
 Several calibration strategies are available in `smash`. They are based on different optimization algorithms and are for example adapted to inverse problems of various complexity, including high dimensional ones.
-For the purposes of the User Guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge (TODO ref).
+For the purposes of the User Guide, we will only perform a spatially uniform and distributed optimization on the most downstream gauge.
 
 Spatially uniform optimization
 ''''''''''''''''''''''''''''''
@@ -458,15 +413,16 @@ While the optimization routine is in progress, some information are provided.
 .. code-block:: text
 
     </> Optimize Model J
-        Algorithm: 'sbs'
-        Jobs function: 'nse'
         Mapping: 'uniform' k(X)
+        Algorithm: 'sbs'
+        Jobs function: [ nse ]
+        wJobs: [ 1.0 ]
         Nx: 1
-        Np: 4 [ cp cft exc lr ] 
-        Ns: 0 [  ] 
-        Ng: 1 [ V3524010 ] 
-        wg: 1 [ 1.000000 ]
-     
+        Np: 4 [ cp cft exc lr ]
+        Ns: 0 [  ]
+        Ng: 1 [ V3524010 ]
+        wg: 1 [ 1.0 ]
+
         At iterate      0    nfg =     1    J =  0.677404    ddx = 0.64
         At iterate      1    nfg =    30    J =  0.130163    ddx = 0.64
         At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
@@ -474,9 +430,10 @@ While the optimization routine is in progress, some information are provided.
         
 This information remainds the ptimization options:
 
+- ``Mapping``: the optimization mapping of parameters,
 - ``Algorithm``: the minimization algorithm,
-- ``Jobs_fun``: the objective function,
-- ``Mapping``: the mapping of parameters,
+- ``Jobs_fun``: the objective function(s),
+- ``wJobs``: the weight assigned to each objective function,
 - ``Nx``: the dimension of the problem (1 means that we perform a spatially uniform optimization),
 - ``Np``: the number of parameters to optimize and their name,
 - ``Ns``: the number of initial states to optimize and their name,
@@ -564,29 +521,30 @@ While the optimization routine is in progress, some information are provided.
 .. code-block:: text
     
     </> Optimize Model J
+        Mapping: 'distributed' k(x)
         Algorithm: 'l-bfgs-b'
-        Jobs function: 'nse'
+        Jobs function: [ nse ]
+        wJobs: [ 1.0 ]
         Jreg function: 'prior'
         wJreg: 0.000000
-        Mapping: 'distributed' k(x)
         Nx: 383
-        Np: 4 [ cp cft exc lr ] 
-        Ns: 0 [  ] 
-        Ng: 1 [ V3524010 ] 
-        wg: 1 [ 1.000000 ] 
-         
+        Np: 4 [ cp cft exc lr ]
+        Ns: 0 [  ]
+        Ng: 1 [ V3524010 ]
+        wg: 1 [ 1.0 ]
+
         At iterate      0    nfg =     1    J =  0.044362    |proj g| =  0.000000
         At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
         At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
         At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035661    |proj g| =  0.000019
+        At iterate      4    nfg =     5    J =  0.035662    |proj g| =  0.000019
         At iterate      5    nfg =     7    J =  0.034909    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033656    |proj g| =  0.000010
+        At iterate      6    nfg =     8    J =  0.033658    |proj g| =  0.000010
         At iterate      7    nfg =     9    J =  0.032117    |proj g| =  0.000013
         At iterate      8    nfg =    10    J =  0.031270    |proj g| =  0.000010
-        At iterate      9    nfg =    11    J =  0.028340    |proj g| =  0.000076
-        At iterate     10    nfg =    12    J =  0.026773    |proj g| =  0.000024
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT 
+        At iterate      9    nfg =    11    J =  0.028342    |proj g| =  0.000076
+        At iterate     10    nfg =    12    J =  0.026772    |proj g| =  0.000025
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
         
 The information are broadly similar to the spatially uniform optimization, except for

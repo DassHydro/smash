@@ -142,7 +142,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
-    for i, date in enumerate(tqdm(date_range, desc="Reading precipitation")):
+    for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
 
         date_strf = date.strftime("%Y%m%d%H%M")
 
@@ -214,7 +214,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
         for i, day in enumerate(
-            tqdm(leap_year_days, desc="Reading daily interannual pet")
+            tqdm(leap_year_days, desc="</> Reading daily interannual pet")
         ):
 
             if day.day_of_year in date_range.day_of_year:
@@ -278,7 +278,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     else:
 
-        for i, date in enumerate(tqdm(date_range, desc="Reading pet")):
+        for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
 
             date_strf = date.strftime("%Y%m%d%H%M")
 

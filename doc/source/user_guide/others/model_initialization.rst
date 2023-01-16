@@ -22,13 +22,16 @@ Structure options
     Model structure. Possible model structures are:
 
     - "gr-a"
-        4 parameters and 3 states structure. Structure most similar to ``GR4`` (TODO ref).
-
+        4 parameters and 3 states structure.
+        
     - "gr-b"
-        6 parameters and 5 states structure. Structure most similar to ``GR6`` (TODO ref)
-    
-    - "vic-a"
-        8 parameters and 3 states structure. Structure most similar to ``VIC3L`` (TODO ref)
+        4 parameters and 4 states structure.
+        
+    - "gr-c"
+        5 parameters and 5 states structure.
+        
+    .. note::
+        See the User Guide section: :ref:`user_guide.model_structure` for more.
 
 
 Time options
@@ -111,9 +114,8 @@ Input data options
 ``descriptor_name``:bolditalic:`: list[str]`
     List of physiographic descriptor names (the size of the list will be used to allocate the descriptor array and used to read the corresponding files).
 
-Conventions for input data files
-````````````````````````````````
-TODO
+    .. note::
+        See the User Guide section: :ref:`user_guide.model_input_data_convention` for more.
 
 Output options
 **************
@@ -174,7 +176,7 @@ Grid options
 ``flow``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
     Grid flow directions. `smash` is using a D8 flow directions with the following convention.
     
-    .. image:: ../_static/flwdir_convention.png
+    .. image:: ../../_static/flwdir_convention.png
         :width: 100
         :align: center
     

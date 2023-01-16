@@ -9,24 +9,37 @@ from smash.core.optimize._optimize import (
 import numpy as np
 
 
-### GLOBAL ###
-##############
+### STRUCTURE ###
+#################
 
 STRUCTURE_PARAMETERS = {
     "gr-a": ["cp", "cft", "exc", "lr"],
-    "gr-b": ["ci", "cp", "cft", "cst", "exc", "lr"],
+    "gr-b": ["cp", "cft", "exc", "lr"],
+    "gr-c": ["cp", "cft", "cst", "exc", "lr"],
     "vic-a": ["b", "cusl1", "cusl2", "clsl", "ks", "ds", "dsm", "ws", "lr"],
 }
 
 STRUCTURE_STATES = {
     "gr-a": ["hp", "hft", "hlr"],
-    "gr-b": ["hi", "hp", "hft", "hst", "hlr"],
+    "gr-b": ["hi", "hp", "hft", "hlr"],
+    "gr-c": ["hi", "hp", "hft", "hst", "hlr"],
     "vic-a": ["husl1", "husl2", "hlsl"],
 }
+
+STRUCTURE_ADJUST_CI = {
+    "gr-a": False,
+    "gr-b": True,
+    "gr-c": True,
+    "vic-a": False,
+}
+
+STRUCTURE_NAME = list(STRUCTURE_PARAMETERS.keys())
 
 
 ### READ INPUT DATA ###
 #######################
+
+INPUT_DATA_FORMAT = ["tif", "nc"]
 
 RATIO_PET_HOURLY = np.array(
     [
@@ -66,6 +79,8 @@ CSIGN = ["Crc", "Crchf", "Crclf", "Crch2r", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 
 ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
+SIGNS = CSIGN + ESIGN
+
 
 ### PRCP INDICES ###
 ####################
@@ -103,7 +118,7 @@ OPTIM_FUNC = {
 ### ANN OPTIMIZE ###
 ####################
 
-WB_INITIALIZER = {
+WB_INITIALIZER = [
     "uniform",
     "glorot_uniform",
     "he_uniform",
@@ -111,4 +126,12 @@ WB_INITIALIZER = {
     "glorot_normal",
     "he_normal",
     "zeros",
-}
+]
+
+
+### GENERATE SAMPLES ###
+########################
+
+SAMPLE_GENERATORS = ["uniform", "normal", "gaussian"]
+
+PROBLEM_KEYS = ["num_vars", "names", "bounds"]

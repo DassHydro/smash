@@ -1,14 +1,14 @@
 .. _getting_started:
 
 ===============
-Getting started
+Getting Started
 ===============
 
 ------------
 Installation
 ------------
 
-`smash` can be used under Linux and should work with most distributions. It has been tested for use on Ubuntu and CentOS. The installation instructions are detailed for Ubuntu. Depending on your distribution, you will need to use the correct package manager and insert the appropriate packages.
+`smash` can be used under Linux and should work with most distributions. It has been tested for use on Ubuntu 20.04 and 22.04 LTS. The installation instructions are detailed for Ubuntu. Depending on your distribution, you will need to use the correct package manager and insert the appropriate packages.
 
 *******
 Sources
@@ -26,8 +26,8 @@ A ``smash`` directory should've been cloned into your current working directory.
 Compile
 *******
         
-Anaconda
-''''''''
+Anaconda (recommended)
+''''''''''''''''''''''
 
 .. image:: ../_static/logo_anaconda.png
     :width: 175

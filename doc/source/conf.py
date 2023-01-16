@@ -22,8 +22,8 @@ sys.path.insert(0, os.path.abspath("./_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022, Francois Colleoni"
-author = "Francois Colleoni"
+copyright = "2022-2023, INRAE"
+author = "INRAE"
 
 # The full version, including alpha/beta/rc tags
 release = smash.__version__
@@ -88,14 +88,12 @@ html_theme_options = {
     "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
     "collapse_navigation": True,
     "logo": {
-      "image_light": "logo_smash.svg",
-      "image_dark": "logo_smash_dark.svg",
+        "image_light": "logo_smash.svg",
+        "image_dark": "logo_smash_dark.svg",
     },
 }
 
-html_context = {
-    "default_mode": "light"
-}
+html_context = {"default_mode": "light"}
 
 html_css_files = [
     "css/smash.css",

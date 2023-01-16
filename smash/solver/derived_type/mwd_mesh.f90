@@ -28,7 +28,7 @@
 !%      `Variables`              Description
 !%      ======================== =======================================
 !%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
-!%      ``local_active_cell``    Mask of local active cell (\in active_cell)
+!%      ``local_active_cell``    Mask of local active cell (\\in active_cell)
 !%      ======================== =======================================
 !%
 !%      contains

@@ -1,12 +1,3 @@
-# % ====================================================================
-# % .
-# % .  SMASH: Spatially distributed Modelling and ASsimilation for Hydrology
-# % .
-# % .   Portions of this code were written by
-# % .     François Colleoni ...
-# % .
-# % ====================================================================
-
 #% Compiler
 FC := gfortran
 CC := gcc
@@ -88,11 +79,14 @@ f90: \
  obj/mw_optimize.o \
  obj/m_sort.o \
  obj/m_array_manipulation.o \
+ obj/m_array_creation.o \
  obj/m_statistic.o \
- obj/mw_copy.o \
+ obj/mw_derived_type_copy.o \
+ obj/mw_derived_type_update.o \
  obj/mw_mask.o \
  obj/mw_sparse_storage.o \
  obj/mw_forcing_statistic.o \
+ obj/mw_interception_store.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
@@ -166,6 +160,9 @@ finalize:
 tap:
 	cd $(TAPENADEDIR) ; make
 	
+test:
+	pytest
+
 #% Clean
 clean:
 	@$(RM) -rf $(EXTDIR)

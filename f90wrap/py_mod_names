@@ -9,10 +9,12 @@
     "mwd_states_manipulation": "_mwd_states_manipulation",
     "mwd_cost": "_mwd_cost",
     "mw_forward": "_mw_forward",
-    "mw_copy": "_mw_copy",
+    "mw_derived_type_copy": "_mw_derived_type_copy",
+    "mw_derived_type_update": "_mw_derived_type_update",
     "mw_mask": "_mw_mask",
     "mw_sparse_storage": "_mw_sparse_storage",
     "mw_forcing_statistic": "_mw_forcing_statistic",
+    "mw_interception_store": "_mw_interception_store",
     "mw_adjoint_test": "_mw_adjoint_test",
     "mw_optimize": "_mw_optimize",
 }

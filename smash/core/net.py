@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash.core._constant import WB_INITIALIZER
-
 from smash.solver._mw_forward import forward_b
+
+from smash.core._constant import WB_INITIALIZER
 
 from typing import TYPE_CHECKING
 

@@ -1,36 +1,42 @@
 from __future__ import annotations
 
-from smash.core._constant import OPTIM_FUNC
-
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
+
 from smash.solver._mw_forward import forward
+
+from smash.core._constant import OPTIM_FUNC
 
 from smash.core._build_model import (
     _parse_derived_type,
     _build_setup,
     _build_mesh,
     _build_input_data,
+    _build_parameters,
 )
 
 from smash.core.optimize._ann_optimize import _ann_optimize
 
-from smash.core.optimize.Bayes_optimize import _Bayes_computation
+from smash.core.optimize.bayes_optimize import _bayes_computation
 
 from smash.core.optimize._standardize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
-    _standardize_wo_optimize_args,
-    _standardize_bayes_k,
+    _standardize_bayes_estimate_args,
+    _standardize_bayes_optimize_args,
+    _standardize_ann_optimize_args,
 )
 
-from smash.core._event_segmentation import _event_segmentation
+from smash.core._event_segmentation import (
+    _event_segmentation,
+    _standardize_event_seg_options,
+)
 
-from smash.core._signatures import (
+from smash.core.signatures import (
     _standardize_signatures,
     _signatures,
     _signatures_sensitivity,
@@ -38,7 +44,7 @@ from smash.core._signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import generate_samples, _get_bound_constraints
+from smash.core.generate_samples import _get_bound_constraints, _standardize_problem
 
 from typing import TYPE_CHECKING
 
@@ -123,6 +129,8 @@ class Model(object):
             _build_input_data(self.setup, self.mesh, self.input_data)
 
             self.parameters = ParametersDT(self.mesh)
+
+            _build_parameters(self.setup, self.mesh, self.input_data, self.parameters)
 
             self.states = StatesDT(self.mesh)
 
@@ -522,6 +530,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -533,7 +542,7 @@ class Model(object):
         Optimize the Model.
 
         .. hint::
-            See the :ref:`user_guide` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -578,14 +587,28 @@ class Model(object):
                 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
             - ``Continuous Signature``
                 'Crc'
-            - ``Event Signature``
+            - ``Flood Event Signature``
                 'Epf', 'Elt', 'Erc'
+
+            .. hint::
+                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
 
             .. note::
                 If not given, the weights will correspond to the mean of the objective functions.
+
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            See `smash.Model.event_segmentation` for more.
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
 
         gauge : str, sequence, default 'downstream'
             Type of gauge to be optimized. There are two ways to specify it:
@@ -627,7 +650,7 @@ class Model(object):
         Notes
         -----
         This method is directly calling the forward model :math:`Y = M(k)` and the adjoint model
-        :math:`\delta k^* = \\left( \\frac{\delta M}{\delta k} \\right)^* . \delta Y^*`
+        :math:`\\delta k^* = \\left( \\frac{\\delta M}{\\delta k} \\right)^* . \\delta Y^*`
         if the algorithm ``l-bfgs-b`` is choosen to retrieve the gradient of the cost function wrt the control vector.
 
         Examples
@@ -677,6 +700,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -686,6 +710,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -703,6 +728,7 @@ class Model(object):
             mapping,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -716,7 +742,7 @@ class Model(object):
 
             return instance
 
-    def Bayes_estimate(
+    def bayes_estimate(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
         generator: str = "uniform",
@@ -728,6 +754,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -738,6 +765,9 @@ class Model(object):
     ):
         """
         Estimate prior Model parameters/states using Bayesian approach.
+
+        .. hint::
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -754,7 +784,7 @@ class Model(object):
             .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
@@ -781,15 +811,27 @@ class Model(object):
 
         See Also
         --------
-        BayesResult: Represents the Bayesian estimation or optimization results.
+        BayesResult: Represents the Bayesian estimation or optimization result.
 
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.Bayes_estimate(n=200, inplace=True, return_br = True, random_state=99)
+        >>> br = model.bayes_estimate(n=200, inplace=True, return_br=True, random_state=99)
 
-        Add more info (TODO)
+        Access to cost values of the direct simulations
+
+        >>> cost = br.data["cost"]
+        >>> cost.sort()  # sort the values by ascending order
+        >>> cost
+        array([4.88620669e-01, 5.70850313e-01, 7.37333179e-01, 7.59980202e-01,
+            ...
+            9.26341797e+03, 1.12409111e+04, 1.13607480e+04, 1.18410371e+04])
+
+        Compare to the cost value of the Model with the estimated parameters using Bayesian apporach
+
+        >>> model.output.cost
+        0.41908782720565796
 
         """
 
@@ -808,13 +850,16 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
-        ) = _standardize_wo_optimize_args(
+            k,
+        ) = _standardize_bayes_estimate_args(
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -822,16 +867,17 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+            k,
         )
 
-        res = _Bayes_computation(
+        res = _bayes_computation(
             instance,
             generator,
             n,
             random_state,
             backg_sol,
             coef_std,
-            _standardize_bayes_k(k),
+            k,
             None,
             None,
             None,
@@ -840,6 +886,7 @@ class Model(object):
             None,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -863,7 +910,7 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def Bayes_optimize(
+    def bayes_optimize(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
         density_estimate: bool = True,
@@ -880,6 +927,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -892,6 +940,9 @@ class Model(object):
         """
         Optimize the Model using Bayesian approach.
 
+        .. hint::
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
+
         Parameters
         ----------
         k : int, float or sequence, default 4
@@ -901,8 +952,7 @@ class Model(object):
                 If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
 
         density_estimate : bool, default True
-            Take into account the density function in Equation ? (TODO).
-            The density function is estimated using Gaussian kernel.
+            Take into account the density function estimated using Gaussian kernel.
 
         de_bw_method : str, scalar, callable or None, default None
             The method used to calculate the estimator bandwidth if density_estimate.
@@ -928,7 +978,7 @@ class Model(object):
             .. hint::
                 The generating samples problem can be redefined by using control_vector and bounds arguments.
 
-        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost, options : multiple types
+        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost, options : multiple types
                 Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
                 See `smash.Model.optimize` for more.
 
@@ -954,18 +1004,27 @@ class Model(object):
 
         See Also
         --------
-        BayesResult: Represents the Bayesian estimation or optimization results.
+        BayesResult: Represents the Bayesian estimation or optimization result.
 
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.Bayes_optimize(k=1.75, n=100, inplace=True, ncpu=50, options={"maxiter": 2}, return_br = True, random_state=99)
+        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, options={"maxiter": 2}, return_br=True, random_state=99)
 
-        Add more info (TODO)
+        Access to cost values of the optimizations with different set of Model parameters
 
-        .. note::
-            Multi-processing ... (TODO)
+        >>> cost = br.data["cost"]
+        >>> cost.sort()  # sort the values by ascending order
+        >>> cost
+        array([0.06491096, 0.07514387, 0.07857202, 0.07885404, 0.0957346 ,
+            ...
+            1.16908765, 1.17005932, 1.17838395, 1.17910016, 1.19542003])
+
+        Compare to the cost value of the Model with the optimized parameters using Bayesian apporach
+
+        >>> model.output.cost
+        0.048890236765146255
 
         """
 
@@ -986,15 +1045,18 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
-        ) = _standardize_optimize_args(
+            k,
+        ) = _standardize_bayes_optimize_args(
             mapping,
             algorithm,
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -1002,18 +1064,19 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
+            k,
         )
 
         options = _standardize_optimize_options(options)
 
-        res = _Bayes_computation(
+        res = _bayes_computation(
             instance,
             generator,
             n,
             random_state,
             backg_sol,
             coef_std,
-            _standardize_bayes_k(k),
+            k,
             density_estimate,
             de_bw_method,
             de_weights,
@@ -1022,6 +1085,7 @@ class Model(object):
             mapping,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1052,6 +1116,7 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
@@ -1066,24 +1131,22 @@ class Model(object):
         Optimize the Model using Artificial Neural Network.
 
         .. hint::
-            See the :ref:`user_guide` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
         net : Net or None, default None
             The neural network Net will be trained to learn the descriptors to parameters mapping.
-            Net initialization (see user guide TODO).
 
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, gauge, wgauge, ost : multiple types
+        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
         validation : float or None, default None
             Temporal validation percentage to split simulated discharge into training-validation sets.
-            See user guide (TODO)
 
             .. note::
                 If not given, the function will be computed on the whole time series (simulated discharge).
@@ -1175,13 +1238,15 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
-        ) = _standardize_wo_optimize_args(
+        ) = _standardize_ann_optimize_args(
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             gauge,
             wgauge,
@@ -1196,6 +1261,7 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -1221,14 +1287,33 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def event_segmentation(self):
+    def event_segmentation(self, peak_quant: float = 0.999, max_duration: int = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>` for more.
+
+        Parameters
+        ----------
+        peak_quant: float, default 0.999
+            An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
+
+        max_duration: int, default 240
+            The maximum duration of an event (in hour).
 
         Returns
         -------
         res : pandas.DataFrame
             Flood events information obtained from segmentation algorithm.
+            The dataframe has 6 columns which are
+
+            - 'code' : the catchment code.
+            - 'start' : the beginning of event.
+            - 'end' : the end of event.
+            - 'maxrainfall' : the moment that the maximum precipation is observed.
+            - 'flood' : the moment that the maximum discharge is observed.
+            - 'season' : the season that event occurrs.
 
         Examples
         --------
@@ -1243,118 +1328,189 @@ class Model(object):
         0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
         1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
         2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
+
+        [3 rows x 6 columns]
+
         """
         print("</> Model Event Segmentation")
 
-        return _event_segmentation(self)
+        return _event_segmentation(self, peak_quant, max_duration)
 
-    def signatures(self, sign: str | list | None = None):
-
+    def signatures(
+        self,
+        sign: str | list | None = None,
+        obs_comp: bool = True,
+        event_seg: dict | None = None,
+    ):
         """
         Compute continuous or/and flood event signatures of the Model.
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
 
         Parameters
         ----------
         sign : str, list of str or None, default None
             Define signature(s) to compute. Should be one of
 
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures)
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures)
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
 
+        obs_comp : bool, default True
+            If True, compute also the signatures from observed discharge in addition to simulated discharge.
+
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            See `smash.Model.event_segmentation` for more.
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters. 
+
         Returns
         -------
-        res : dict
-            Two pandas.DataFrames of i. observed and simulated continuous signatures and ii. observed and simulated flood event signatures.
+        res : SignResult
+            The signatures computation results represented as a ``SignResult`` object.
+
+        See Also
+        --------
+        SignResult: Represents signatures computation result.
 
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> model.optimize(inplace=True)
+        >>> model.run(inplace=True)
 
-        Compute all continuous and flood event signatures:
+        Compute all observed and simulated signatures:
 
         >>> res = model.signatures()
-        >>> res["C"]
-               code   Crc_obs  Crchf_obs    Cfp50_sim  Cfp90_sim
-        0  V3524010  0.516207   0.191349 ... 3.616916  39.241742
-        1  V3515010  0.509180   0.147217 ... 0.984099   9.691529
-        2  V3517010  0.514302   0.148364 ... 0.319221   2.687196
+        >>> res.cont["obs"]  # observed continuous signatures
+               code       Crc     Crchf  ...   Cfp50      Cfp90
+        0  V3524010  0.516207  0.191349  ...  3.3225  42.631802
+        1  V3515010  0.509180  0.147217  ...  1.5755  10.628400
+        2  V3517010  0.514302  0.148364  ...  0.3235   2.776700
 
-        >>> res["E"]
-               code  season               start     Elt_sim     Epf_sim
-        0  V3524010  autumn 2014-11-03 03:00:00 ...       8  280.677338
-        1  V3515010  autumn 2014-11-03 10:00:00 ...       6   61.226574
-        2  V3517010  autumn 2014-11-03 08:00:00 ...       6   18.758123
+        [3 rows x 9 columns]
+
+        >>> res.event["sim"]  # simulated flood event signatures
+               code  season               start  ...  Elt         Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...    3  106.190651
+        1  V3515010  autumn 2014-11-03 10:00:00  ...    0   21.160324
+        2  V3517010  autumn 2014-11-03 08:00:00  ...    1   5.613392
+
+        [3 rows x 12 columns]
+
         """
+
         print("</> Model Signatures")
 
         cs, es = _standardize_signatures(sign)
 
-        return _signatures(self, cs, es)
+        event_seg = _standardize_event_seg_options(event_seg)
+
+        return _signatures(self, cs, es, obs_comp, **event_seg)
 
     def signatures_sensitivity(
         self,
+        problem: dict | None = None,
         n: int = 64,
         sign: str | list[str] | None = None,
-        return_sample: bool = False,
+        event_seg: dict | None = None,
+        random_state: int | None = None,
     ):
         """
-        Compute variance-based sensitivity (Sobol indices) of the Model parameters on the output signatures.
+        Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
 
         Parameters
         ----------
+        problem : dict or None, default None
+            Problem definition to generate a multiple set of spatially uniform Model parameters. The keys are
+
+            - 'num_vars' : the number of Model parameters.
+            - 'names' : the name of Model parameters.
+            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of (min, max)).
+
+            .. note::
+                If not given, the problem will be set automatically using `smash.Model.get_bound_constraints` method.
+
         n : int, default 64
             Number of trajectories to generate for each model parameter (ideally a power of 2).
-            Then the number of sample to generate for all model parameters is equal to :math:`N(2D+2)`
+            Then the number of sample to generate is equal to :math:`N(D+2)`
             where :math:`D` is the number of model parameters.
 
-            See `here <https://salib.readthedocs.io/en/latest/api.html>`__ for more details.
+            See `here <https://salib.readthedocs.io/en/latest/api/SALib.sample.html#SALib.sample.sobol.sample>`__ for more details.
 
         sign : str, list or None, default None
             Define signature(s) to compute. Should be one of
 
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90',
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf'
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures)
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures)
 
             .. note::
                 If not given, all of continuous and flood event signatures will be computed.
 
-        return_sample : bool, default False
-            If True, also return the generated sample used to compute sensitivity computation.
+        event_seg : dict or None, default None
+            A dictionary of event segmentation options when calculating flood event signatures. The keys are
+
+            - 'peak_quant'
+            - 'max_duration'
+
+            See `smash.Model.event_segmentation` for more.
+
+            .. note::
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
+
+        random_state : int or None, default None
+            Random seed used to generate samples for sensitivity computation.
+
+            .. note::
+                If not given, generates parameters sets with a random seed.
 
         Returns
         -------
-        res : dict
-            Two pandas.DataFrames of i. continuous signatures sensitivity and ii. flood event signatures sensitivity.
+        res : SignSensResult
+            The signatures sensitivity computation results represented as a ``SignSensResult`` object.
 
-        sample : pandas.DataFrame
-            Generated sample for sensititvity computation. Returned if ``return_sample`` is True.
+        See Also
+        --------
+        SignSensResult: Represents signatures sensitivity computation result.
 
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> res = model.signatures_sensitivity()
+        >>> res = model.signatures_sensitivity(random_state=99)
 
-        Continuous signatures sensitivity computation:
+        Total-order sensitivity indices of production parameter `cp` on continuous signatures:
 
-        >>> res["C"]
-               code  Crc_sim.ST_cp  Crc_sim.ST_cft ... Cfp90_sim.S2_cft-lr  Cfp90_sim.S2_exc-lr
-        0  V3524010       0.025848        0.322964 ...            0.084209             0.081659
-        1  V3515010       0.009877        0.288598 ...            0.111150             0.109329
-        2  V3517010       0.009662        0.300603 ...            0.105303             0.120858
+        >>> res.cont["total_si"]["cp"]
+               code       Crc     Crchf  ...     Cfp50     Cfp90
+        0  V3524010  0.089630  0.023528  ...  1.092226  0.009049
+        1  V3515010  0.064792  0.023358  ...  0.353862  0.011404
+        2  V3517010  0.030655  0.028925  ...  0.113354  0.010977
 
-        Flood event signatures sensitivity computation:
+        [3 rows x 9 columns]
 
-        >>> res["E"]
-               code  season               start ... Epf_sim.S2_cft-lr  Epf_sim.S2_exc-lr
-        0  V3524010  autumn 2014-11-03 03:00:00 ...          0.056097           0.072928
-        1  V3515010  autumn 2014-11-03 10:00:00 ...          0.073368           0.098639
-        2  V3517010  autumn 2014-11-03 08:00:00 ...          0.041326           0.086835
+        First-order sensitivity indices of linear routing parameter `lr` on flood event signatures:
+
+        >>> res.event["first_si"]["lr"]
+               code  season               start  ...       Elt       Epf
+        0  V3524010  autumn 2014-11-03 03:00:00  ...  0.358599  0.015600
+        1  V3515010  autumn 2014-11-03 10:00:00  ...  0.344644  0.010241
+        2  V3517010  autumn 2014-11-03 08:00:00  ...  0.063007  0.010851
+
+        [3 rows x 12 columns]
+
         """
 
         print("</> Model Signatures Sensitivity")
@@ -1363,19 +1519,15 @@ class Model(object):
 
         cs, es = _standardize_signatures(sign)
 
-        problem = _get_bound_constraints(instance.setup, states=False)
+        problem = _standardize_problem(problem, instance.setup, False)
 
-        sample = generate_samples(problem=problem, generator="saltelli", n=n)
+        event_seg = _standardize_event_seg_options(event_seg)
 
-        res = _signatures_sensitivity(instance, problem, sample, cs, es)
+        res = _signatures_sensitivity(
+            instance, problem, n, cs, es, random_state, **event_seg
+        )
 
-        if return_sample:
-
-            return res, sample
-
-        else:
-
-            return res
+        return res
 
     def prcp_indices(self):
 
@@ -1385,9 +1537,12 @@ class Model(object):
         4 precipitation indices are calculated for each gauge and each time step:
 
         - ``std`` : The precipitation spatial standard deviation,
-        - ``d1`` : The first scaled moment, [1]_
-        - ``d1`` : The second scaled moment, [1]_
-        - ``vg`` : The vertical gap. [2]_
+        - ``d1`` : The first scaled moment, :cite:p:`zocatelli_2011`
+        - ``d2`` : The second scaled moment, :cite:p:`zocatelli_2011`
+        - ``vg`` : The vertical gap. :cite:p:`emmanuel_2015`
+
+        .. hint::
+            See the :ref:`User Guide <user_guide.prcp_indices>` for more.
 
         Returns
         -------
@@ -1397,24 +1552,6 @@ class Model(object):
         See Also
         --------
         PrcpIndicesResult: Represents the precipitation indices result.
-
-        References
-        ----------
-        .. [1]
-
-            Zoccatelli, D., Borga, M., Viglione, A., Chirico, G. B., and Blöschl, G.:
-            Spatial moments of catchment rainfall: rainfall spatial organisation,
-            basin morphology, and flood response,
-            Hydrol. Earth Syst. Sci., 15, 3767–3783,
-            https://doi.org/10.5194/hess-15-3767-2011, 2011.
-
-        .. [2]
-
-            I. Emmanuel, H. Andrieu, E. Leblois, N. Janey, O. Payrastre,
-            Influence of rainfall spatial variability on rainfall–runoff modelling:
-            Benefit of a simulation approach?
-            Journal of Hydrology
-            https://doi.org/10.1016/j.jhydrol.2015.04.058, 2015
 
         Examples
         --------
@@ -1436,13 +1573,13 @@ class Model(object):
         (3, 1440)
 
         NaN value means that there is no precipitation at this specific gauge and time step.
-        Using numpy.where to find the index where precipitation indices were calculated.
+        Using numpy.where to find the index where precipitation indices were calculated on the most downstream gauge for the first scaled moment.
 
-        >>> ind = np.where(~np.isnan(res.d1))
+        >>> ind = np.argwhere(~np.isnan(res.d1[0,:])).squeeze()
 
-        Viewing any index
+        Viewing the first scaled moment on the first time step where rainfall occured on the most downstream gauge.
 
-        >>> res.d1[ind][0]
+        >>> res.d1[0, ind[0]]
         1.209175
         """
 

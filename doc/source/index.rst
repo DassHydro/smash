@@ -2,13 +2,13 @@
 
 .. module:: smash
 
-********************
+*******************
 smash documentation
-********************
+*******************
 
 **Date**: |today| **Version**: |version|
 
-:mod:`smash` is an open source, python library interfacing the Fortran **S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology model.
+:mod:`smash` is an open source, Python library interfacing the Fortran **S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology model.
 
 .. grid:: 2
 
@@ -65,22 +65,22 @@ smash documentation
             To the api reference
             
     .. grid-item-card::
-        :img-top: _static/model_description.svg
+        :img-top: _static/math_num.svg
 
-        Model Description
-        ^^^^^^^^^^^^^^^^^
+        Math / Num Documentation
+        ^^^^^^^^^^^^^^^^^^^^^^^^
 
-        The model description contains a detailed description of
+        The mathematical and numerical documentation contains a detailed description of
         the *smash* model operators.
 
         +++
 
-        .. button-ref:: model_description
+        .. button-ref:: math_num_documentation
             :expand:
             :color: muted 
             :click-parent:
 
-            To the model description
+            To the math / num documentation
 
 .. toctree::
    :maxdepth: 3
@@ -90,4 +90,6 @@ smash documentation
    getting_started/index
    user_guide/index
    api_reference/index
-   model_description/index
+   math_num_documentation/index
+
+   more/biblio

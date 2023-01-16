@@ -6,6 +6,10 @@ from smash.solver._mw_forcing_statistic import (
     compute_mean_forcing,
 )
 
+from smash.solver._mw_interception_store import adjust_interception_store
+
+from smash.core._constant import STRUCTURE_NAME, STRUCTURE_ADJUST_CI, INPUT_DATA_FORMAT
+
 from smash.core._read_input_data import (
     _read_qobs,
     _read_prcp,
@@ -19,6 +23,7 @@ if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
+    from smash.solver._mwd_parameters import ParametersDT
 
 import warnings
 import os
@@ -50,6 +55,12 @@ def _standardize_setup(setup: SetupDT):
     """
     Check every SetupDT error/warning exception
     """
+
+    setup.structure = setup.structure.lower()
+    if setup.structure not in STRUCTURE_NAME:
+        raise ValueError(
+            f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
+        )
 
     if setup.dt < 0:
         raise ValueError("argument dt is lower than 0")
@@ -101,9 +112,9 @@ def _standardize_setup(setup: SetupDT):
             setup.prcp_directory,
         )
 
-    if not setup.prcp_format in ["tif", "nc"]:
+    if setup.prcp_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {['tif', 'nc']}"
+            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
     if setup.prcp_conversion_factor < 0:
@@ -119,9 +130,9 @@ def _standardize_setup(setup: SetupDT):
             setup.pet_directory,
         )
 
-    if setup.pet_format not in ["tif", "nc"]:
+    if setup.pet_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown pet_format '{setup.pet_format}'. Choices: {['tif', 'nc']}"
+            f"Unknown pet_format '{setup.pet_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
     if setup.pet_conversion_factor < 0:
@@ -144,15 +155,9 @@ def _standardize_setup(setup: SetupDT):
             "argument read_descriptor is True and descriptor_name is not defined"
         )
 
-    if setup.descriptor_format not in ["tif", "nc"]:
+    if setup.descriptor_format not in INPUT_DATA_FORMAT:
         raise ValueError(
-            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {['tif', 'nc']}"
-        )
-
-    setup.structure = setup.structure.lower()
-    if setup.structure not in ["gr-a", "gr-b", "vic-a"]:
-        raise ValueError(
-            f"Unknown structure '{setup.structure}'. Choices: {['gr-a', 'gr-b', 'vic-a']}"
+            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
 
 
@@ -237,3 +242,28 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_descriptor:
 
         _read_descriptor(setup, mesh, input_data)
+
+
+def _build_parameters(
+    setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, parameters: ParametersDT
+):
+
+    if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400:
+
+        #% Handle dates with Python before calling Fortran subroutine
+        date_range = pd.date_range(
+            start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s"
+        )[1:].strftime("%Y%m%d")
+
+        n = 1
+        day_index = np.ones(shape=len(date_range), dtype=np.int64)
+        for i in range(1, len(date_range)):
+
+            if date_range[i] != date_range[i - 1]:
+                n += 1
+
+            day_index[i] = n
+
+        adjust_interception_store(
+            setup, mesh, input_data, parameters, n, day_index
+        )  #% Fortran subroutine _mw_interception_store

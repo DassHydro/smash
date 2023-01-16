@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash.solver._mwd_setup import Optimize_SetupDT
-
 from smash.core._constant import (
     ALGORITHM,
     MAPPING,
@@ -11,6 +9,10 @@ from smash.core._constant import (
     CSIGN_OPTIM,
     ESIGN_OPTIM,
 )
+
+from smash.core._event_segmentation import _standardize_event_seg_options
+
+from smash.solver._mw_derived_type_update import update_optimize_setup
 
 from typing import TYPE_CHECKING
 
@@ -24,7 +26,7 @@ import pandas as pd
 import warnings
 
 
-def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
+def _standardize_mapping(mapping: str) -> str:
 
     if isinstance(mapping, str):
 
@@ -38,13 +40,30 @@ def _standardize_mapping(mapping: str, setup: SetupDT) -> str:
 
         raise ValueError(f"Unknown mapping '{mapping}'. Choices: {MAPPING}")
 
-    if mapping.startswith("hyper") and setup._nd == 0:
+    return mapping
+
+
+def _standardize_descriptors(input_data: Input_DataDT, setup: SetupDT) -> None:
+    # For the moment, return None
+    # TODO: add warnings for rejecting uniform descriptors
+
+    if setup._nd == 0:
 
         raise ValueError(
-            f"'{mapping}' mapping can not be use if no catchment descriptors are available"
+            f"The optimization method chosen can not be used if no catchment descriptors are available"
         )
 
-    return mapping
+    else:
+
+        for i in range(setup._nd):
+
+            d = input_data.descriptor[..., i]
+
+            if np.all(d == d[0, 0]):
+
+                raise ValueError(
+                    f"Cannot optimize the Model with spatially uniform descriptor {setup.descriptor_name[i]}"
+                )
 
 
 def _standardize_algorithm(algorithm: str | None, mapping: str) -> str:
@@ -470,50 +489,6 @@ def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Times
     return ost
 
 
-def _standardize_optimize_args(
-    mapping: str,
-    algorithm: str | None,
-    control_vector: str | list | tuple | set | None,
-    jobs_fun: str | list | tuple | set,
-    wjobs_fun: list | None,
-    bounds: list | tuple | set | None,
-    gauge: str | list | tuple | set,
-    wgauge: str | list | tuple | set,
-    ost: str | pd.Timestamp | None,
-    setup: SetupDT,
-    mesh: MeshDT,
-    input_data: Input_DataDT,
-):
-
-    mapping = _standardize_mapping(mapping, setup)
-
-    algorithm = _standardize_algorithm(algorithm, mapping)
-
-    control_vector = _standardize_control_vector(control_vector, setup)
-
-    jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
-
-    setup._optimize = Optimize_SetupDT(
-        setup._ntime_step,
-        setup._nd,
-        mesh.ng,
-        mapping,
-        jobs_fun.size,
-    )
-
-    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
-
-    bounds = _standardize_bounds(bounds, control_vector, setup)
-
-    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
-
-    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
-
-    ost = _standardize_ost(ost, setup)
-
-    return mapping, algorithm, control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
-
-
 def _standardize_optimize_options(options: dict | None) -> dict:
 
     if options is None:
@@ -523,7 +498,7 @@ def _standardize_optimize_options(options: dict | None) -> dict:
     return options
 
 
-def _standardize_jobs_fun_wo_optimize(
+def _standardize_jobs_fun_wo_mapping(
     jobs_fun: str | list | tuple | set,
 ) -> np.ndarray:
 
@@ -554,7 +529,7 @@ def _standardize_jobs_fun_wo_optimize(
     return jobs_fun
 
 
-def _standardize_wjobs_wo_optimize(
+def _standardize_wjobs_wo_mapping(
     wjobs_fun: list | None, jobs_fun: np.ndarray
 ) -> np.ndarray:
 
@@ -585,44 +560,6 @@ def _standardize_wjobs_wo_optimize(
     return wjobs_fun
 
 
-def _standardize_wo_optimize_args(
-    control_vector: str | list | tuple | set | None,
-    jobs_fun: str | list | tuple | set,
-    wjobs_fun: list | None,
-    bounds: list | tuple | set | None,
-    gauge: str | list | tuple | set,
-    wgauge: str | list | tuple | set,
-    ost: str | pd.Timestamp | None,
-    setup: SetupDT,
-    mesh: MeshDT,
-    input_data: Input_DataDT,
-):
-
-    control_vector = _standardize_control_vector(control_vector, setup)
-
-    jobs_fun = _standardize_jobs_fun_wo_optimize(jobs_fun)
-
-    setup._optimize = Optimize_SetupDT(
-        setup._ntime_step,
-        setup._nd,
-        mesh.ng,
-        "...",
-        jobs_fun.size,
-    )
-
-    wjobs_fun = _standardize_wjobs_wo_optimize(wjobs_fun, jobs_fun)
-
-    bounds = _standardize_bounds(bounds, control_vector, setup)
-
-    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
-
-    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
-
-    ost = _standardize_ost(ost, setup)
-
-    return control_vector, jobs_fun, wjobs_fun, bounds, wgauge, ost
-
-
 def _standardize_bayes_k(
     k: int | float | range | list | tuple | set | np.ndarray,
 ):
@@ -637,3 +574,234 @@ def _standardize_bayes_k(
         raise TypeError("k argument must be numerical or list-like object")
 
     return k
+
+
+def _standardize_optimize_args(
+    mapping: str,
+    algorithm: str | None,
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
+    event_seg: dict | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+):
+
+    mapping = _standardize_mapping(mapping)
+
+    if mapping.startswith("hyper"):
+        _standardize_descriptors(input_data, setup)
+
+    algorithm = _standardize_algorithm(algorithm, mapping)
+
+    control_vector = _standardize_control_vector(control_vector, setup)
+
+    jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
+
+    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
+    event_seg = _standardize_event_seg_options(event_seg)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        mapping,
+        jobs_fun.size,
+    )
+
+    bounds = _standardize_bounds(bounds, control_vector, setup)
+
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
+
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
+
+    ost = _standardize_ost(ost, setup)
+
+    return (
+        mapping,
+        algorithm,
+        control_vector,
+        jobs_fun,
+        wjobs_fun,
+        event_seg,
+        bounds,
+        wgauge,
+        ost,
+    )
+
+
+def _standardize_bayes_estimate_args(
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
+    event_seg: dict | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
+
+    control_vector = _standardize_control_vector(control_vector, setup)
+
+    jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
+
+    wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
+
+    event_seg = _standardize_event_seg_options(event_seg)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        "...",
+        jobs_fun.size,
+    )
+
+    bounds = _standardize_bounds(bounds, control_vector, setup)
+
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
+
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
+
+    ost = _standardize_ost(ost, setup)
+
+    k = _standardize_bayes_k(k)
+
+    return control_vector, jobs_fun, wjobs_fun, event_seg, bounds, wgauge, ost, k
+
+
+def _standardize_bayes_optimize_args(
+    mapping: str,
+    algorithm: str | None,
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
+    event_seg: dict | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    k: int | float | range | list | tuple | set | np.ndarray,
+):
+
+    mapping = _standardize_mapping(mapping)
+
+    if mapping.startswith("hyper"):
+        _standardize_descriptors(input_data, setup)
+
+    algorithm = _standardize_algorithm(algorithm, mapping)
+
+    control_vector = _standardize_control_vector(control_vector, setup)
+
+    jobs_fun = _standardize_jobs_fun(jobs_fun, algorithm)
+
+    wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
+
+    event_seg = _standardize_event_seg_options(event_seg)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        mapping,
+        jobs_fun.size,
+    )
+
+    bounds = _standardize_bounds(bounds, control_vector, setup)
+
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
+
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
+
+    ost = _standardize_ost(ost, setup)
+
+    k = _standardize_bayes_k(k)
+
+    return (
+        mapping,
+        algorithm,
+        control_vector,
+        jobs_fun,
+        wjobs_fun,
+        event_seg,
+        bounds,
+        wgauge,
+        ost,
+        k,
+    )
+
+
+def _standardize_ann_optimize_args(
+    control_vector: str | list | tuple | set | None,
+    jobs_fun: str | list | tuple | set,
+    wjobs_fun: list | None,
+    event_seg: dict | None,
+    bounds: list | tuple | set | None,
+    gauge: str | list | tuple | set,
+    wgauge: str | list | tuple | set,
+    ost: str | pd.Timestamp | None,
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+):
+
+    _standardize_descriptors(input_data, setup)
+
+    control_vector = _standardize_control_vector(control_vector, setup)
+
+    jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
+
+    wjobs_fun = _standardize_wjobs_wo_mapping(wjobs_fun, jobs_fun)
+
+    event_seg = _standardize_event_seg_options(event_seg)
+
+    #% Update optimize setup derived type according to new optimize args.
+    #% This Fortran subroutine reset optimize_setup values and realloc arrays.
+    #% After wjobs_fun to realloc considering new size.
+    #% Before bounds to be consistent with default Fortran bounds.
+    update_optimize_setup(
+        setup._optimize,
+        setup._ntime_step,
+        setup._nd,
+        mesh.ng,
+        "...",
+        jobs_fun.size,
+    )
+
+    bounds = _standardize_bounds(bounds, control_vector, setup)
+
+    gauge = _standardize_gauge(gauge, setup, mesh, input_data)
+
+    wgauge = _standardize_wgauge(wgauge, gauge, mesh)
+
+    ost = _standardize_ost(ost, setup)
+
+    return control_vector, jobs_fun, wjobs_fun, event_seg, bounds, wgauge, ost

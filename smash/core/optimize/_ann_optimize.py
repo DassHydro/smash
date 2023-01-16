@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.core._event_segmentation import _mask_event
 
+from smash.core.optimize._optimize import _normalize_descriptor, _denormalize_descriptor
+
 from smash.core.net import Net
 
 from typing import TYPE_CHECKING
@@ -19,6 +21,7 @@ def _ann_optimize(
     control_vector: np.ndarray,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -31,7 +34,7 @@ def _ann_optimize(
 
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     for i, name in enumerate(control_vector):
 
@@ -70,21 +73,24 @@ def _ann_optimize(
     parameters_bgd = instance.parameters.copy()
     states_bgd = instance.states.copy()
 
-    nd = instance.setup._nd
-
     # preprocessing data
-    mask = np.where(instance.mesh.active_cell == 1)
+    min_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
+    max_descriptor = np.empty(shape=instance.setup._nd, dtype=np.float32)
 
-    x_train = instance.input_data.descriptor.copy()
-    x_train = x_train[mask]
+    active_mask = np.where(instance.mesh.active_cell == 1)
+    inactive_mask = np.where(instance.mesh.active_cell == 0)
 
-    for i in range(nd):
-        x_train[..., i] = (x_train[..., i] - np.nanmin(x_train[..., i])) / (
-            np.nanmax(x_train[..., i]) - np.nanmin(x_train[..., i])
-        )
+    _normalize_descriptor(instance, min_descriptor, max_descriptor)
+
+    x_train = instance.input_data.descriptor[active_mask]
+    x_inactive = instance.input_data.descriptor[inactive_mask]
+
+    _denormalize_descriptor(instance, min_descriptor, max_descriptor)
 
     # set graph if not defined
+    nd = instance.setup._nd
     nx = len(x_train)
+
     net = _set_graph(net, nx, nd, control_vector, bounds)
 
     if verbose:
@@ -95,7 +101,7 @@ def _ann_optimize(
         x_train,
         instance,
         control_vector,
-        mask,
+        active_mask,
         parameters_bgd,
         states_bgd,
         validation,
@@ -103,6 +109,17 @@ def _ann_optimize(
         early_stopping,
         verbose,
     )
+
+    # predicted map at inactive cells
+    y = net._predict(x_inactive)
+
+    for i, name in enumerate(control_vector):
+
+        if name in instance.setup._parameters_name:
+            getattr(instance.parameters, name)[inactive_mask] = y[:, i]
+
+        else:
+            getattr(instance.states, name)[inactive_mask] = y[:, i]
 
     return net
 
@@ -121,42 +138,6 @@ def _set_graph(
 
         net = Net()
 
-        #% Net 1 =======================
-
-        # n_hidden_layers = max(round(ntrain / (9 * (nd + ncv))), 1)
-
-        # n_neurons = round(2 / 3 * nd + ncv)
-
-        # for i in range(n_hidden_layers):
-
-        #     if i == 0:
-
-        #         net.add(
-        #             layer="dense",
-        #             options={
-        #                 "input_shape": (nd,),
-        #                 "neurons": n_neurons,
-        #                 "kernel_initializer": "he_uniform",
-        #             },
-        #         )
-
-        #     else:
-
-        #         n_neurons_i = max(
-        #             round((n_hidden_layers - i) / n_hidden_layers * n_neurons), ncv
-        #         )
-        #         net.add(
-        #             layer="dense",
-        #             options={
-        #                 "neurons": n_neurons_i,
-        #                 "kernel_initializer": "he_uniform",
-        #             },
-        #         )
-
-        #     net.add(layer="activation", options={"name": "relu"})
-
-        #% Net 2 =======================
-
         n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
 
         net.add(
@@ -168,7 +149,6 @@ def _set_graph(
             },
         )
         net.add(layer="activation", options={"name": "relu"})
-        # net.add(layer="dropout", options={"drop_rate": .1})
 
         net.add(
             layer="dense",
@@ -178,9 +158,6 @@ def _set_graph(
             },
         )
         net.add(layer="activation", options={"name": "relu"})
-        # net.add(layer="dropout", options={"drop_rate": .2})
-
-        #% =============================
 
         net.add(
             layer="dense",
@@ -208,7 +185,7 @@ def _set_graph(
         if ips[0] != nd:
 
             raise ValueError(
-                f"Inconsistent size between input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+                f"Inconsistent value between the number of input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
             )
 
         #% check output shape
@@ -217,7 +194,7 @@ def _set_graph(
         if ios[0] != ncv:
 
             raise ValueError(
-                f"Inconsistent size between output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
+                f"Inconsistent value between the number of output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
             )
 
         #% check bounds constraints

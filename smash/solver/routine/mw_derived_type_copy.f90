@@ -1,7 +1,7 @@
-!%      This module `mw_copy` encapsulates all SMASH copy.
+!%      This module `mw_derived_type_copy` encapsulates all SMASH derived_type_copy.
 !%      This module is wrapped
 
-module mw_copy
+module mw_derived_type_copy
 
     use md_constant, only: sp, dp
     use mwd_setup, only: SetupDT
@@ -11,9 +11,11 @@ module mw_copy
     use mwd_states, only: StatesDT
     use mwd_output, only: OutputDT
     
+    implicit none
+    
     contains
 
-        subroutine copy_setup(a, b)
+        subroutine copy_setup(this, copy)
         
             !% Notes
             !% -----
@@ -22,15 +24,15 @@ module mw_copy
         
             implicit none
             
-            type(SetupDT), intent(in) :: a
-            type(SetupDT), intent(out) :: b
+            type(SetupDT), intent(in) :: this
+            type(SetupDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_setup
 
 
-        subroutine copy_mesh(a, b)
+        subroutine copy_mesh(this, copy)
         
             !% Notes
             !% -----
@@ -39,15 +41,15 @@ module mw_copy
         
             implicit none
             
-            type(MeshDT), intent(in) :: a
-            type(MeshDT), intent(out) :: b
+            type(MeshDT), intent(in) :: this
+            type(MeshDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_mesh
 
 
-        subroutine copy_input_data(a, b)
+        subroutine copy_input_data(this, copy)
         
             !% Notes
             !% -----
@@ -56,15 +58,15 @@ module mw_copy
         
             implicit none
             
-            type(Input_DataDT), intent(in) :: a
-            type(Input_DataDT), intent(out) :: b
+            type(Input_DataDT), intent(in) :: this
+            type(Input_DataDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_input_data
 
 
-        subroutine copy_parameters(a, b)
+        subroutine copy_parameters(this, copy)
         
             !% Notes
             !% -----
@@ -73,15 +75,15 @@ module mw_copy
         
             implicit none
             
-            type(ParametersDT), intent(in) :: a
-            type(ParametersDT), intent(out) :: b
+            type(ParametersDT), intent(in) :: this
+            type(ParametersDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_parameters
 
 
-        subroutine copy_states(a, b)
+        subroutine copy_states(this, copy)
         
             !% Notes
             !% -----
@@ -90,15 +92,15 @@ module mw_copy
         
             implicit none
             
-            type(StatesDT), intent(in) :: a
-            type(StatesDT), intent(out) :: b
+            type(StatesDT), intent(in) :: this
+            type(StatesDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_states
         
         
-        subroutine copy_output(a, b)
+        subroutine copy_output(this, copy)
         
             !% Notes
             !% -----
@@ -107,12 +109,12 @@ module mw_copy
         
             implicit none
             
-            type(OutputDT), intent(in) :: a
-            type(OutputDT), intent(out) :: b
+            type(OutputDT), intent(in) :: this
+            type(OutputDT), intent(out) :: copy
             
-            b = a
+            copy = this
         
         end subroutine copy_output
 
 
-end module mw_copy
+end module mw_derived_type_copy

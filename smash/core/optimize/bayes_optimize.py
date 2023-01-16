@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash.core._constant import OPTIM_FUNC
-
 from smash.solver._mw_forward import forward
+
+from smash.core._constant import OPTIM_FUNC
 from smash.core._event_segmentation import _mask_event
 from smash.core.generate_samples import generate_samples
 
@@ -19,7 +19,7 @@ import multiprocessing as mp
 
 class BayesResult(dict):
     """
-    Represents the Bayesian estimation or optimization results.
+    Represents the Bayesian estimation or optimization result.
 
     Notes
     -----
@@ -44,8 +44,8 @@ class BayesResult(dict):
 
     See Also
     --------
-    Model.Bayes_estimate: Estimate prior Model parameters/states using Bayesian approach.
-    Model.Bayes_optimize: Optimize the Model using Bayesian approach.
+    Model.bayes_estimate: Estimate prior Model parameters/states using Bayesian approach.
+    Model.bayes_optimize: Optimize the Model using Bayesian approach.
 
     """
 
@@ -71,7 +71,7 @@ class BayesResult(dict):
         return list(self.keys())
 
 
-def _Bayes_computation(
+def _bayes_computation(
     instance: Model,
     generator: str,
     n: int,
@@ -87,6 +87,7 @@ def _Bayes_computation(
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -138,6 +139,7 @@ def _Bayes_computation(
         mapping,
         jobs_fun,
         wjobs_fun,
+        event_seg,
         bounds,
         wgauge,
         ost,
@@ -179,6 +181,7 @@ def _Bayes_computation(
             instance,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             wgauge,
             ost,
             active_mask,
@@ -195,6 +198,7 @@ def _Bayes_computation(
             instance,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             wgauge,
             ost,
             active_mask,
@@ -246,6 +250,7 @@ def _run(
     instance: Model,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
 ):
@@ -254,7 +259,7 @@ def _run(
 
     #% send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
-        instance.setup._optimize.mask_event = _mask_event(instance)
+        instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     #% Set values for Fortran derived type variables
     instance.setup._optimize.jobs_fun = jobs_fun
@@ -294,6 +299,7 @@ def _unit_simu(
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict | None,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -316,7 +322,7 @@ def _unit_simu(
 
     #% SIMU (RUN OR OPTIMIZE)
     if algorithm is None:
-        _run(instance, jobs_fun, wjobs_fun, wgauge, ost)
+        _run(instance, jobs_fun, wjobs_fun, event_seg, wgauge, ost)
 
     else:
         OPTIM_FUNC[algorithm](
@@ -325,6 +331,7 @@ def _unit_simu(
             mapping,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             bounds,
             wgauge,
             ost,
@@ -355,6 +362,7 @@ def _multi_simu(
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
@@ -380,6 +388,7 @@ def _multi_simu(
                     mapping,
                     jobs_fun,
                     wjobs_fun,
+                    event_seg,
                     bounds,
                     wgauge,
                     ost,
@@ -407,6 +416,7 @@ def _multi_simu(
                     mapping,
                     jobs_fun,
                     wjobs_fun,
+                    event_seg,
                     bounds,
                     wgauge,
                     ost,
@@ -500,6 +510,7 @@ def _compute_param(
     instance: Model,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     active_mask: np.ndarray,
@@ -536,6 +547,7 @@ def _compute_param(
         instance,
         jobs_fun,
         wjobs_fun,
+        event_seg,
         wgauge,
         ost,
     )
@@ -547,6 +559,7 @@ def _lcurve_compute_param(
     instance: Model,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    event_seg: dict,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     active_mask: np.ndarray,
@@ -567,6 +580,7 @@ def _lcurve_compute_param(
             instance,
             jobs_fun,
             wjobs_fun,
+            event_seg,
             wgauge,
             ost,
             active_mask,
@@ -591,6 +605,7 @@ def _lcurve_compute_param(
         instance,
         jobs_fun,
         wjobs_fun,
+        event_seg,
         wgauge,
         ost,
         active_mask,
