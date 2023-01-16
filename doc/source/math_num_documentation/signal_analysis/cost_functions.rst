@@ -1,4 +1,4 @@
-.. _math_num_description.cost_functions:
+.. _math_num_documentation.cost_functions:
 
 ==============
 Cost functions
@@ -61,12 +61,34 @@ COF can be one of:
         &\alpha& &=& &\frac{\overline{Q(k)}}{\overline{Q_o(k)}}& \\
         &\beta& &=& &\frac{\sqrt{\text{Var}\left[Q(k) \right]}}{\sqrt{\text{Var}\left[Q_o(k) \right]}}
     \end{eqnarray}
+    
+- ``kge2``
 
-(**TODO**: rajouter ici les fonctions objectifs classiques)
+.. math::
+    
+    j_{k,d} = j_{k, \text{kge2}} = \left( j_{k, \text{kge}} \right) ^ 2
+    
+- ``se``
+
+.. math::
+
+    j_{k,d} = j_{k, \text{se}} = \sum_{t=t^*} ^ {T} \left[ Q(k,t) - Q_o(k,t) \right] ^ 2
+    
+- ``rmse``
+
+.. math::
+
+    j_{k,d} = j_{k, \text{rmse}} = \sqrt{\frac{j_{k, \text{se}}}{T - t^* + 1}}
+    
+- ``logarithmic``
+
+.. math::
+
+    j_{k,d} = j_{k, \text{logarithmic}} = \sum_{t=t^*} ^ {T} \left[ Q_o(k,t) \left( \ln \frac{Q(k,t)}{Q_o(k,t)} \right) ^ 2 \right]
 
 Now, denote :math:`S_{i}^{o}` and :math:`S_{i}^{s}`
 are observed and simulated signature type :math:`i` respectively. 
-These signatures are defined and calculated as depicted in :ref:`hydrological signatures <math_num_description.hydrological_signature>` section. 
+These signatures are defined and calculated as depicted in :ref:`hydrological signatures <math_num_documentation.hydrological_signature>` section. 
 Then, for each signature type :math:`i`, the corresponding SOF is computed depending on if the signature is:
 
 - continuous signature:

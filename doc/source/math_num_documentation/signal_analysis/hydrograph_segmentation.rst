@@ -1,4 +1,4 @@
-.. _math_num_description.hydrograph_segmentation:
+.. _math_num_documentation.hydrograph_segmentation:
 
 =======================
 Hydrograph segmentation
@@ -40,27 +40,27 @@ Algorithm
 
 For each catchment, considering 2 time series :math:`(T,Q)` and :math:`(T,P)` where:
 
-    - :math:`T=(t_{1},...,t_{n})` is time (by hour),
-    - :math:`Q=(q_{1},...,q_{n})` is the discharge,
-    - :math:`P=(p_{1},...,p_{n})` is the rainfall.
+- :math:`T=(t_{1},...,t_{n})` is time (by hour),
+- :math:`Q=(q_{1},...,q_{n})` is the discharge,
+- :math:`P=(p_{1},...,p_{n})` is the rainfall.
 
 Detecting peaks that exceed the ``peak_quant``-quantile of the discharge considered as important events:
 
-    :math:`E=(t_{i})_{1\leq i\leq n}` s.t. :math:`q_{i}>quant(Q,` ``peak_quant``:math:`)`.
+:math:`E=(t_{i})_{1\leq i\leq n}` s.t. :math:`q_{i}>\text{quant}(Q,` ``peak_quant``:math:`)`.
 
 For :math:`t_{j}\in E`:
 
-    - Determining a starting date based on the "rainfall gradient criterion" and the "rainfall energy criterion":
+- Determining a starting date based on the "rainfall gradient criterion" and the "rainfall energy criterion":
 
-        :math:`RE=(t_{k})_{t_{k}\in(t_{j}-72,t_{j})}` s.t. :math:`\nabla P(t_{k})>quant(\nabla P([t_{j}-72,t_{j}]), 0.8)`,
+:math:`RE=(t_{k})_{t_{k}\in(t_{j}-72,t_{j})}` s.t. :math:`\nabla P(t_{k})>\text{quant}(\nabla P([t_{j}-72,t_{j}]), 0.8)`,
 
-        :math:`f(t_{x})=||(p_{x}-1,...,p_{x}+11)||_{2}`,
+:math:`f(t_{x})=||(p_{x}-1,...,p_{x}+11)||_{2}`,
 
-        :math:`sd=\min(t_{s})_{t_{s}\in RE}` s.t. :math:`f(s)>0.2||(f(t_{j}-72),...,f(t_{j}))||_{\infty}`.
+:math:`sd=\min(t_{s})_{t_{s}\in RE}` s.t. :math:`f(s)>0.2||(f(t_{j}-72),...,f(t_{j}))||_{\infty}`.
 
-    - Determining an ending date based on discharge baseflow :math:`Qb=Baseflow(Q)`:
+- Determining an ending date based on discharge baseflow :math:`Qb=\text{Baseflow}(Q)`:
 
-        :math:`ed=\arg\min_{t_{e}}\sum_{t=t_{e}-1}^{t_{e}+23}|(Q-Qb)(t)|` s.t. :math:`t_{j} \leq t_e \leq sd+` ``max_duration``.
+:math:`ed=\arg\min_{t_{e}}\sum_{t=t_{e}-1}^{t_{e}+23}|(Q-Qb)(t)|` s.t. :math:`t_{j} \leq t_e \leq sd+` ``max_duration``.
 
 .. note::
  

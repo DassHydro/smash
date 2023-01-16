@@ -1,4 +1,4 @@
-.. _math_num_description.optimization_algorithms:
+.. _math_num_documentation.algorithms:
 
 =======================
 Optimization algorithms

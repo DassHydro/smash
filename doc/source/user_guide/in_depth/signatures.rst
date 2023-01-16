@@ -8,7 +8,7 @@ Signatures
 ==========
 
 This section aims to go into detail on how to compute and vizualize some hydrological signatures 
-(list of studied signatures and their formula are given in :ref:`Math / Num Description <math_num_description.hydrological_signature>`) as well as 
+(list of studied signatures and their formula are given in :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>`) as well as 
 the sensitivity of the model parameters to these signatures.
 
 First, open a Python interface:

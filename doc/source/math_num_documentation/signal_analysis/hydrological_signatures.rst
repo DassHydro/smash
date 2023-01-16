@@ -1,4 +1,4 @@
-.. _math_num_description.hydrological_signature:
+.. _math_num_documentation.hydrological_signature:
 
 =======================
 Hydrological signatures
@@ -12,7 +12,7 @@ flow dynamics (based for instance on base-flow separation :cite:p:`nathan1990eva
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole studied period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
-These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_description.hydrograph_segmentation>`.
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.hydrograph_segmentation>`.
 
 Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the studied period. 
 Then :math:`Qb(t)` and :math:`Qq(t)` are the baseflow and quickflow computed using a classical technique for streamflow separation 
@@ -53,22 +53,22 @@ are given in the table below.
    * - Cfp2
      - Flow percentiles
      - 0.02-quantile from flow duration curve
-     - :math:`quant(Q(t), 0.02)`
+     - :math:`\text{quant}(Q(t), 0.02)`
      - mm
    * - Cfp10
      -
      - 0.1-quantile from flow duration curve
-     - :math:`quant(Q(t), 0.1)`
+     - :math:`\text{quant}(Q(t), 0.1)`
      - mm
    * - Cfp50
      -
      - 0.5-quantile from flow duration curve
-     - :math:`quant(Q(t), 0.5)`
+     - :math:`\text{quant}(Q(t), 0.5)`
      - mm
    * - Cfp90
      -
      - 0.9-quantile from flow duration curve
-     - :math:`quant(Q(t), 0.9)`
+     - :math:`\text{quant}(Q(t), 0.9)`
      - mm
    * - Eff
      - Flood flow

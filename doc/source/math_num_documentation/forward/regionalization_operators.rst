@@ -1,4 +1,4 @@
-.. _math_num_description.regionalization_operators:
+.. _math_num_documentation.regionalization_operators:
 
 =========================
 Regionalization operators
