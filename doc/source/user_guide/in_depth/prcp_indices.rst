@@ -57,11 +57,11 @@ The precipitation indices results are represented as a :class:`smash.PrcpIndices
 
 - ``std`` : The precipitation spatial standard deviation,
 
-- ``d1`` : The first scaled moment [ZBV+11]_ ,
+- ``d1`` : The first scaled moment :cite:p:`zocatelli_2011`,
 
-- ``d2`` : The second scaled moment [ZBV+11]_ ,
+- ``d2`` : The second scaled moment :cite:p:`zocatelli_2011`,
 
-- ``vg`` : The vertical gap [EAL+15]_ .
+- ``vg`` : The vertical gap :cite:p:`emmanuel_2015` .
 
 Each attributes (i.e. precipitation indices) of the :class:`smash.PrcpIndicesResult` object is a numpy.ndarray of shape (number of gauge, number of time step)
 
@@ -83,7 +83,7 @@ Simply the standard deviation.
 Scaled moments (d1 and d2)
 ''''''''''''''''''''''''''
 
-The spatial scaled moments are described in [ZBV+11]_ in the section *2 Spatial moments of catchment rainfall: definitions*.
+The spatial scaled moments are described in :cite:p:`zocatelli_2011` in the section *2 Spatial moments of catchment rainfall: definitions*.
 
 *The first scaled moment* :math:`\delta 1` *describes the distance of the centroid of catchment rainfall with respect to the average value of the flow distance (i.e. the catchment centroid). 
 Values of* :math:`\delta 1` *close to 1 reflect a rainfall distribution either concentrated close to the position of the catchment centroid or spatially homogeneous, with values less than one indicating
@@ -93,29 +93,14 @@ that rainfall is distributed near the basin outlet, and values greater than one 
 Values of* :math:`\delta 2` *close to 1 reflect a uniform-like rainfall distribution, with values less than 1 indicating that rainfall is characterised by a unimodal distribution along the flow distance.
 Values greater than 1 are generally rare, and indicate cases of multimodal rainfall distributions.*
 
-.. [ZBV+11]
-
-    Zoccatelli, D., Borga, M., Viglione, A., Chirico, G. B., and Blöschl, G.:
-    Spatial moments of catchment rainfall: rainfall spatial organisation,
-    basin morphology, and flood response,
-    Hydrol. Earth Syst. Sci., 15, 3767–3783,
-    https://doi.org/10.5194/hess-15-3767-2011, 2011.
 
 Vertical gap (vg)
 '''''''''''''''''
 
-The vertical gap is described in [EAL+15]_ in the section *5.2 The proposed indexes*. 
+The vertical gap is described in :cite:p:`emmanuel_2015` in the section *5.2 The proposed indexes*. 
 
 *VG values close to zero indicate a rainfall distribution over the catchment revealing weak spatial variability. The higher the VG value,
 the more concentrated the rainfall over a small part of the catchment.*
-
-.. [EAL+15]
-
-    I. Emmanuel, H. Andrieu, E. Leblois, N. Janey, O. Payrastre,
-    Influence of rainfall spatial variability on rainfall–runoff modelling:
-    Benefit of a simulation approach?,
-    Journal of Hydrology,
-    https://doi.org/10.1016/j.jhydrol.2015.04.058, 2015
 
 -----------------------------------
 Precipitation indices visualization

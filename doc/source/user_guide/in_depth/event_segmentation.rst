@@ -5,7 +5,7 @@ Event segmentation
 ==================
 
 This section aims to go into detail on how to use and visualize the hydrograph segmentation from 
-a proposed algorithm as depicted in section :ref:`Math / Num Description <math_num_description.hydrograph_segmentation>`.
+a proposed algorithm as depicted in section :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>`.
 
 First, open a Python interface:
 

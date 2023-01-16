@@ -67,20 +67,20 @@ smash documentation
     .. grid-item-card::
         :img-top: _static/math_num.svg
 
-        Math / Num Description
-        ^^^^^^^^^^^^^^^^^^^^^^
+        Math / Num Documentation
+        ^^^^^^^^^^^^^^^^^^^^^^^^
 
-        The mathematical and numerical description contains a detailed description of
+        The mathematical and numerical documentation contains a detailed description of
         the *smash* model operators.
 
         +++
 
-        .. button-ref:: math_num_description
+        .. button-ref:: math_num_documentation
             :expand:
             :color: muted 
             :click-parent:
 
-            To the math / num description
+            To the math / num documentation
 
 .. toctree::
    :maxdepth: 3
@@ -90,6 +90,6 @@ smash documentation
    getting_started/index
    user_guide/index
    api_reference/index
-   math_num_description/index
+   math_num_documentation/index
 
    more/biblio

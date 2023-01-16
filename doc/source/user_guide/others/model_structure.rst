@@ -19,7 +19,7 @@ There are 3 different structures available:
     
 
 .. note::
-    see the Math / Num description section: (**TODO** :ref:`math_num_description`) for more information about GR model.
+    see the :ref:`Math / Num Documentation <math_num_documentation.hydrological_operators.gr>` for more information about GR model.
     
 
 Model structure description
@@ -56,7 +56,7 @@ Operating
 - filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
 - splitting :math:`P_r` into two branches, 90% filling the transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in both branches,
-- summing :math:`Q_r`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
+- summing :math:`Q_{ft}`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
 - filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
 - calculation of the final routed flow :math:`Q` at the output of the routing storage.
 
@@ -95,7 +95,7 @@ Operating
 - filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
 - splitting :math:`P_r` into two branches, 90% filling the transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in both branches,
-- summing :math:`Q_r`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
+- summing :math:`Q_{ft}`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
 - filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
 - calculation of the final routed flow :math:`Q` at the output of the routing storage.
 
@@ -136,6 +136,6 @@ Operating
 - filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
 - splitting :math:`P_r` into three branches, 54% filling the first transfer storage, 36% filling the second transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in the first transfer and direct branches,
-- summing :math:`Q_r`, the outgoing flux of the first transfer storage, :math:`Q_l`, the outgoing flux of the second transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
+- summing :math:`Q_{ft}`, the outgoing flux of the first transfer storage, :math:`Q_{st}`, the outgoing flux of the second transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
 - filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
 - calculation of the final routed flow :math:`Q` at the output of the routing storage.

@@ -542,7 +542,7 @@ class Model(object):
         Optimize the Model.
 
         .. hint::
-            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -591,7 +591,7 @@ class Model(object):
                 'Epf', 'Elt', 'Erc'
 
             .. hint::
-                See a detailed explanation on the cost function in :ref:`Math / Num Description <math_num_description.cost_functions>` section.
+                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
@@ -767,7 +767,7 @@ class Model(object):
         Estimate prior Model parameters/states using Bayesian approach.
 
         .. hint::
-            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -941,7 +941,7 @@ class Model(object):
         Optimize the Model using Bayesian approach.
 
         .. hint::
-            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -1131,7 +1131,7 @@ class Model(object):
         Optimize the Model using Artificial Neural Network.
 
         .. hint::
-            See the :ref:`user_guide` and :ref:`math_num_description` for more.
+            See the :ref:`user_guide` and :ref:`math_num_documentation` for more.
 
         Parameters
         ----------
@@ -1292,7 +1292,7 @@ class Model(object):
         Compute segmentation information of flood events over all catchments of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Description <math_num_description.hydrograph_segmentation>` for more.
+            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>` for more.
 
         Parameters
         ----------
@@ -1346,7 +1346,7 @@ class Model(object):
         Compute continuous or/and flood event signatures of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Description <math_num_description.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
 
         Parameters
         ----------
@@ -1429,7 +1429,7 @@ class Model(object):
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Description <math_num_description.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
 
         Parameters
         ----------
@@ -1537,9 +1537,9 @@ class Model(object):
         4 precipitation indices are calculated for each gauge and each time step:
 
         - ``std`` : The precipitation spatial standard deviation,
-        - ``d1`` : The first scaled moment, [1]_
-        - ``d2`` : The second scaled moment, [1]_
-        - ``vg`` : The vertical gap. [2]_
+        - ``d1`` : The first scaled moment, :cite:p:`zocatelli_2011`
+        - ``d2`` : The second scaled moment, :cite:p:`zocatelli_2011`
+        - ``vg`` : The vertical gap. :cite:p:`emmanuel_2015`
 
         .. hint::
             See the :ref:`User Guide <user_guide.prcp_indices>` for more.
@@ -1552,24 +1552,6 @@ class Model(object):
         See Also
         --------
         PrcpIndicesResult: Represents the precipitation indices result.
-
-        References
-        ----------
-        .. [1]
-
-            Zoccatelli, D., Borga, M., Viglione, A., Chirico, G. B., and Blöschl, G.:
-            Spatial moments of catchment rainfall: rainfall spatial organisation,
-            basin morphology, and flood response,
-            Hydrol. Earth Syst. Sci., 15, 3767–3783,
-            https://doi.org/10.5194/hess-15-3767-2011, 2011.
-
-        .. [2]
-
-            I. Emmanuel, H. Andrieu, E. Leblois, N. Janey, O. Payrastre,
-            Influence of rainfall spatial variability on rainfall–runoff modelling:
-            Benefit of a simulation approach?
-            Journal of Hydrology
-            https://doi.org/10.1016/j.jhydrol.2015.04.058, 2015
 
         Examples
         --------
