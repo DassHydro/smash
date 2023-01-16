@@ -8,7 +8,7 @@ smash documentation
 
 **Date**: |today| **Version**: |version|
 
-:mod:`smash` is an open source, python library interfacing the Fortran **S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology model.
+:mod:`smash` is an open source, Python library interfacing the Fortran **S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology model.
 
 .. grid:: 2
 
@@ -91,4 +91,5 @@ smash documentation
    user_guide/index
    api_reference/index
    math_num_description/index
-   biblio/references
+
+   more/biblio

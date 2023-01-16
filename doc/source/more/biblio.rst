@@ -1,7 +1,8 @@
 .. _refs:
 
-References
-**********
+============
+Bibliography
+============
 
 .. bibliography::
    :style: alpha

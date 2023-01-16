@@ -4,8 +4,8 @@
 Event segmentation
 ==================
 
-Segmentation algorithm aims to capture important events occuring over the studied period on each catchment. 
-We propose an algorithm for capturing flood events with the aid of the rainfall gradient and rainfall energy as depicted in ??? (TODO).
+This section aims to go into detail on how to use and visualize the hydrograph segmentation from 
+a proposed algorithm as depicted in section :ref:`Math / Num Description <math_num_description.hydrograph_segmentation>`.
 
 First, open a Python interface:
 
@@ -30,7 +30,7 @@ Model object creation
 To obtain flood events segmentation, you must create a :class:`smash.Model` object. 
 For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
 
-Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset` method and create the :class:`smash.Model` object.
+Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset()` method and create the :class:`smash.Model` object.
 
 .. ipython:: python
 
