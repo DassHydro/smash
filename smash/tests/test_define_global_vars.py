@@ -1,12 +1,14 @@
 import smash
-from h5py import File
+
+import h5py
 import pytest
 import os
 
+### GLOBAL VARIABLES ###
 
-### GLOBAL VARIABLES will be used during pytest session
-
-setup, mesh = smash.load_dataset("cance")
+setup, mesh = smash.load_dataset("Cance")
 pytest.model = smash.Model(setup, mesh)
 
-pytest.baseline = File(os.path.join(os.path.dirname(__file__), "baseline.hdf5"))
+pytest.baseline = h5py.File(
+    os.path.join(os.path.dirname(__file__), "baseline.hdf5"), "r"
+)

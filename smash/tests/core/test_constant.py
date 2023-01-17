@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,

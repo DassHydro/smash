@@ -5,31 +5,34 @@ import smash
 from smash.solver._mwd_cost import nse, kge
 from smash.core._constant import MAPPING
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.core.model import Model
-
 import numpy as np
 import pytest
 
 
-def test_direct_run():
+def generic_run(model: smash.Model, **kwargs) -> dict:
 
-    instance = pytest.model.copy()
+    instance = model.run()
 
-    instance.run(inplace=True)
+    res = {"run.cost": output_cost(instance)}
 
-    assert np.allclose(
-        output_cost(instance), pytest.baseline["direct_run.cost"][:], atol=1e-06
-    )
+    return res
 
 
-def test_optimize():
+def test_run():
+
+    res = generic_run(pytest.model)
+
+    for key, value in res.items():
+
+        #% Check cost in run
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def generic_optimize(model: smash.Model, **kwargs) -> dict:
+
+    res = {}
 
     for mapping in MAPPING:
-
-        instance = pytest.model.copy()
 
         if mapping == "uniform":
             algo = "sbs"
@@ -37,115 +40,129 @@ def test_optimize():
         else:
             algo = "l-bfgs-b"
 
-        instance.optimize(
+        instance = model.optimize(
             mapping=mapping,
             algorithm=algo,
             options={"maxiter": 1},
-            inplace=True,
             verbose=False,
         )
 
-        assert np.allclose(
-            output_cost(instance),
-            pytest.baseline[f"optimize.{mapping}_{algo}.cost"][:],
-            atol=1e-06,
-        )
+        res[f"optimize.{mapping}_{algo}.cost"] = output_cost(instance)
 
-    # multi-criteria
-    instance = pytest.model.copy()
-
-    instance.optimize(
+    #% multi-criteria
+    instance = model.optimize(
         mapping="uniform",
         algorithm="nelder-mead",
         jobs_fun=["nse", "Crc", "Epf"],
         wjobs_fun=[1, 2, 2],
         event_seg={"peak_quant": 0.99},
         options={"maxiter": 10},
-        inplace=True,
         verbose=False,
     )
 
-    assert np.allclose(
-        output_cost(instance),
-        pytest.baseline["optimize.uniform_nelder-mead.cost"][:],
-        atol=1e-06,
-    )
+    res["optimize.uniform_nelder-mead.cost"] = output_cost(instance)
+
+    return res
 
 
-def test_bayes_estimate():
+def test_optimize():
 
-    instance = pytest.model.copy()
+    res = generic_optimize(pytest.model)
 
-    br = instance.bayes_estimate(
+    for key, value in res.items():
+
+        #% Check cost in optimize
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
+
+    instance, br = model.bayes_estimate(
         k=np.linspace(-1, 5, 10),
         n=5,
-        inplace=True,
         return_br=True,
         random_state=11,
         verbose=False,
     )
 
-    assert np.allclose(
-        br.l_curve["cost"], pytest.baseline["bayes_estimate.br_cost"], atol=1e-06
-    )
+    res = {
+        "bayes_estimate.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_estimate.cost": output_cost(instance),
+    }
 
-    assert np.allclose(
-        output_cost(instance), pytest.baseline["bayes_estimate.cost"][:], atol=1e-06
-    )
+    return res
 
 
-def test_bayes_optimize():
+def test_bayes_estimate():
 
-    instance = pytest.model.copy()
+    res = generic_bayes_estimate(pytest.model)
 
-    br = instance.bayes_optimize(
+    for key, value in res.items():
+
+        #% Check br.l_curve and cost in bayes_estimate
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
+
+    instance, br = model.bayes_optimize(
         k=np.linspace(-1, 5, 10),
         n=5,
         mapping="distributed",
         algorithm="l-bfgs-b",
         options={"maxiter": 1},
-        inplace=True,
         return_br=True,
         random_state=11,
         verbose=False,
     )
 
-    assert np.allclose(
-        br.l_curve["cost"],
-        pytest.baseline["bayes_optimize.br_cost"][:],
-        atol=1e-06,
-    )
+    res = {
+        "bayes_optimize.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_optimize.cost": output_cost(instance),
+    }
 
-    assert np.allclose(
-        output_cost(instance), pytest.baseline["bayes_optimize.cost"][:], atol=1e-06
-    )
+    return res
+
+
+def test_bayes_optimize():
+
+    res = generic_bayes_optimize(pytest.model)
+
+    for key, value in res.items():
+
+        #% Check br.l_curve and cost in bayes_optimize
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def generic_ann_optimize_1(model: smash.Model, **kwargs) -> dict:
+
+    np.random.seed(11)
+
+    instance, net = model.ann_optimize(epochs=5, return_net=True, verbose=False)
+
+    res = {
+        "ann_optimize_1.loss": np.array(net.history["loss_train"]),
+        "ann_optimize_1.cost": output_cost(instance),
+    }
+
+    return res
 
 
 def test_ann_optimize_1():
 
-    instance = pytest.model.copy()
+    res = generic_ann_optimize_1(pytest.model)
 
-    np.random.seed(11)
-    net = instance.ann_optimize(epochs=5, inplace=True, return_net=True, verbose=False)
+    for key, value in res.items():
 
-    assert np.allclose(
-        net.history["loss_train"],
-        pytest.baseline["ann_optimize_1.loss"][:],
-        atol=1e-06,
-    )
-
-    assert np.allclose(
-        output_cost(instance), pytest.baseline["ann_optimize_1.cost"][:], atol=1e-06
-    )
+        #% Check net.history loss and cost in ann_optimize_1
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
-def test_ann_optimize_2():
+def generic_ann_optimize_2(model: smash.Model, **kwargs) -> dict:
 
-    instance = pytest.model.copy()
+    problem = model.get_bound_constraints(states=False)
 
-    problem = instance.get_bound_constraints(states=False)
-
-    nd = instance.input_data.descriptor.shape[-1]
+    nd = model.input_data.descriptor.shape[-1]
     ncv = problem["num_vars"]
     bounds = problem["bounds"]
 
@@ -169,20 +186,27 @@ def test_ann_optimize_2():
         random_state=11,
     )
 
-    instance.ann_optimize(net=net, epochs=5, inplace=True, verbose=False)
+    instance = model.ann_optimize(net=net, epochs=5, verbose=False)
 
-    assert np.allclose(
-        net.history["loss_train"],
-        pytest.baseline["ann_optimize_2.loss"][:],
-        atol=1e-06,
-    )
+    res = {
+        "ann_optimize_2.loss": np.array(net.history["loss_train"]),
+        "ann_optimize_2.cost": output_cost(instance),
+    }
 
-    assert np.allclose(
-        output_cost(instance), pytest.baseline["ann_optimize_2.cost"][:], atol=1e-06
-    )
+    return res
 
 
-def output_cost(instance: Model):
+def test_ann_optimize_2():
+
+    res = generic_ann_optimize_2(pytest.model)
+
+    for key, value in res.items():
+
+        #% Check net.history loss and cost in ann_optimize_2
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+
+def output_cost(instance: smash.Model):
 
     qo = instance.input_data.qobs
     qs = instance.output.qsim

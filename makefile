@@ -21,6 +21,7 @@ TAPENADEDIR := tapenade
 F90WRAPDIR := f90wrap
 SOLVERDIR := smash/solver
 MESHDIR := smash/mesh
+TESTSDIR := smash/tests
 
 #% INC and MOD for obj
 INC := -I$(BUILDDIR)
@@ -161,7 +162,11 @@ tap:
 	cd $(TAPENADEDIR) ; make
 	
 test:
-	pytest
+	cd $(TESTSDIR) ; pytest
+
+baseline_test:
+
+	cd $(TESTSDIR) ; python3 gen_baseline.py
 
 #% Clean
 clean:

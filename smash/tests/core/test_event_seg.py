@@ -1,12 +1,25 @@
-import numpy as np
+from __future__ import annotations
 
+import smash
+
+import numpy as np
 import pytest
+
+
+def generic_event_seg(model: smash.Model, **kwargs) -> dict:
+
+    arr = model.event_segmentation().to_numpy()
+
+    res = {"event_seg.arr": arr.astype("S")}
+
+    return res
 
 
 def test_event_seg():
 
-    arr = pytest.model.event_segmentation().to_numpy()
+    res = generic_event_seg(pytest.model)
 
-    arr = arr.astype("S")
+    for key, value in res.items():
 
-    assert np.array_equal(arr, pytest.baseline["event_seg"][:])
+        #% Check event segmentation res
+        assert np.array_equal(value, pytest.baseline[key][:]), key
