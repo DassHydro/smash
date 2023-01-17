@@ -19,7 +19,7 @@ This documentation details the available forward model operators, signal and sen
 Forward Model
 *************
 
-The forward spaially distributed hydrological modeling problem, several operators and predefined structures available in `smash` are described below.
+The forward spatially distributed hydrological modeling problem, several operators and predefined structures available in `smash` are described below.
 
 .. toctree::
     :maxdepth: 1
