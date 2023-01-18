@@ -9,6 +9,11 @@ import os
 import inspect
 import h5py
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    import numpy as np
+
 
 def adjust_module_names(module_names: list[str]) -> list[str]:
 
@@ -64,17 +69,15 @@ if __name__ == "__main__":
             ]
 
             for name, func in generic_functions:
-                
+
                 if mn.startswith("core"):
 
                     for key, value in func(model=model).items():
 
                         dump_to_baseline(f, key, value)
-                    
+
                 elif mn.startswith("mesh"):
-                    
+
                     for key, value in func().items():
 
                         dump_to_baseline(f, key, value)
-
-                
