@@ -186,14 +186,14 @@ To get into the details:
     @savefig flwdir_rc_Cance_user_guide.png
     plt.title("Real case - Cance - Flow direction");
     
-- ``dirained_area``: the drained area in number of cells,
+- ``flwacc``: the flow accumulation in number of cells,
 
 .. ipython:: python
     
-    plt.imshow(mesh["drained_area"]);
-    plt.colorbar(label="Drained area (nb cells)");
-    @savefig da_rc_Cance_user_guide.png
-    plt.title("Real case - Cance - Drained area");
+    plt.imshow(mesh["flwacc"]);
+    plt.colorbar(label="Flow accumulation (nb cells)");
+    @savefig flwacc_rc_Cance_user_guide.png
+    plt.title("Real case - Cance - Flow accumulation");
     
 - ``flwdst``: the flow distances from the main outlet in m,
 

@@ -173,19 +173,22 @@ Gauge options
 Grid options
 ************
 
-``flow``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
+``flwdir``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
     Grid flow directions. `smash` is using a D8 flow directions with the following convention.
-    
+
     .. image:: ../../_static/flwdir_convention.png
         :width: 100
         :align: center
-    
-``drained_area``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
-    Grid drained area in number of cells.
-    
+
+``flwacc``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.int32`
+    Grid flow accumulation in number of cells.
+
+``flwdst``:bolditalic:`: numpy.ndarray, shape=(nrow, ncol), dtype=np.float32`
+    Grid flow distances from the most downstream outlet for each group of nested catchments.
+
 ``path``:bolditalic:`: numpy.ndarray, shape=(2, nrow * ncol), dtype=np.int32`
-    Grid calculation path. Sorting grid cells in ascending order of drained area.
-    
+    Grid calculation path. Sorting grid cells in ascending order of flow accumulation.
+
     
 Active cell options
 *******************

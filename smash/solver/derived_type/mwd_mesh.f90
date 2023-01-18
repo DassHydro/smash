@@ -15,7 +15,7 @@
 !%      ``xmin``                 CRS x mininimum value               [m]
 !%      ``ymax``                 CRS y maximum value                 [m]
 !%      ``flwdir``               Flow directions
-!%      ``drained_area``         Drained area                        [nb of cell]
+!%      ``flwacc``               Flow accumulation                   [nb of cell]
 !%      ``path``                 Solver path 
 !%      ``active_cell``          Mask of active cell
 !%      ``flwdst``               Flow distances from main outlet(s)  [m]
@@ -57,7 +57,7 @@ module mwd_mesh
         integer :: ymax
         
         integer, dimension(:,:), allocatable :: flwdir
-        integer, dimension(:,:), allocatable :: drained_area
+        integer, dimension(:,:), allocatable :: flwacc
         integer, dimension(:,:), allocatable :: path !>f90w-index
         integer, dimension(:,:), allocatable :: active_cell
         
@@ -95,8 +95,8 @@ module mwd_mesh
             allocate(this%flwdir(this%nrow, this%ncol)) 
             this%flwdir = -99
             
-            allocate(this%drained_area(this%nrow, this%ncol)) 
-            this%drained_area = -99
+            allocate(this%flwacc(this%nrow, this%ncol)) 
+            this%flwacc = -99
             
             allocate(this%path(2, this%nrow * this%ncol)) 
             this%path = -99

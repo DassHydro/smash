@@ -2099,12 +2099,12 @@ CONTAINS
 !  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flwdir, &
-&   drained_area, row, col, q, q_d, qup, qup_d)
+  SUBROUTINE UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, flwdir, flwacc, &
+&   row, col, q, q_d, qup, qup_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q_d
     REAL(sp), INTENT(OUT) :: qup
@@ -2116,7 +2116,7 @@ CONTAINS
     INTRINSIC REAL
     REAL*4 :: temp
     qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       qup_d = 0.0_4
       DO i=1,8
         col_imd = col + dcol(i)
@@ -2129,7 +2129,7 @@ CONTAINS
           END IF
         END IF
       END DO
-      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
+      temp = 0.001_sp*(dx*dx)*REAL(flwacc(row, col)-1)
       qup_d = dt*qup_d/temp
       qup = dt*(qup/temp)
     ELSE
@@ -2140,12 +2140,12 @@ CONTAINS
 !  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface noISIZE):
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
-  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flwdir, &
-&   drained_area, row, col, q, q_b, qup, qup_b)
+  SUBROUTINE UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, flwdir, flwacc, &
+&   row, col, q, q_b, qup, qup_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), DIMENSION(nrow, ncol) :: q_b
     REAL(sp) :: qup
@@ -2156,7 +2156,7 @@ CONTAINS
     INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
     INTRINSIC REAL
     INTEGER :: branch
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       DO i=1,8
         CALL PUSHINTEGER4(col_imd)
         col_imd = col + dcol(i)
@@ -2173,7 +2173,7 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
+      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(flwacc(row, col)-1))
       DO i=8,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
@@ -2186,12 +2186,12 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE_B
 
-  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flwdir, drained_area&
-&   , row, col, q, qup)
+  SUBROUTINE UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, flwdir, flwacc, row&
+&   , col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc
     REAL(sp), DIMENSION(nrow, ncol), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
     INTEGER :: i, row_imd, col_imd
@@ -2200,7 +2200,7 @@ CONTAINS
     INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
     INTRINSIC REAL
     qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       DO i=1,8
         col_imd = col + dcol(i)
         row_imd = row + drow(i)
@@ -2210,7 +2210,7 @@ CONTAINS
 &             row_imd, col_imd)
         END IF
       END DO
-      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
+      qup = qup*dt/(0.001_sp*dx*dx*REAL(flwacc(row, col)-1))
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE
 
@@ -2218,11 +2218,11 @@ CONTAINS
 !   variations   of useful results: qup
 !   with respect to varying inputs: q
   SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flwdir&
-&   , drained_area, ind_sparse, row, col, q, q_d, qup, qup_d)
+&   , flwacc, ind_sparse, row, col, q, q_d, qup, qup_d)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
 &   ind_sparse
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q_d
@@ -2235,7 +2235,7 @@ CONTAINS
     INTRINSIC REAL
     REAL*4 :: temp
     qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       qup_d = 0.0_4
       DO i=1,8
         col_imd = col + dcol(i)
@@ -2249,7 +2249,7 @@ CONTAINS
           END IF
         END IF
       END DO
-      temp = 0.001_sp*(dx*dx)*REAL(drained_area(row, col)-1)
+      temp = 0.001_sp*(dx*dx)*REAL(flwacc(row, col)-1)
       qup_d = dt*qup_d/temp
       qup = dt*(qup/temp)
     ELSE
@@ -2261,11 +2261,11 @@ CONTAINS
 !   gradient     of useful results: q qup
 !   with respect to varying inputs: q
   SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flwdir&
-&   , drained_area, ind_sparse, row, col, q, q_b, qup, qup_b)
+&   , flwacc, ind_sparse, row, col, q, q_b, qup, qup_b)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
 &   ind_sparse
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), DIMENSION(nac) :: q_b
@@ -2277,7 +2277,7 @@ CONTAINS
     INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
     INTRINSIC REAL
     INTEGER :: branch
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       DO i=1,8
         col_imd = col + dcol(i)
         row_imd = row + drow(i)
@@ -2294,7 +2294,7 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(drained_area(row, col)-1))
+      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(flwacc(row, col)-1))
       DO i=8,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
@@ -2308,11 +2308,11 @@ CONTAINS
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B
 
   SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flwdir, &
-&   drained_area, ind_sparse, row, col, q, qup)
+&   flwacc, ind_sparse, row, col, q, qup)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: dt, dx
     INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, drained_area, &
+    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
 &   ind_sparse
     REAL(sp), DIMENSION(nac), INTENT(IN) :: q
     REAL(sp), INTENT(OUT) :: qup
@@ -2322,7 +2322,7 @@ CONTAINS
     INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
     INTRINSIC REAL
     qup = 0._sp
-    IF (drained_area(row, col) .GT. 1) THEN
+    IF (flwacc(row, col) .GT. 1) THEN
       DO i=1,8
         col_imd = col + dcol(i)
         row_imd = row + drow(i)
@@ -2334,7 +2334,7 @@ CONTAINS
           END IF
         END IF
       END DO
-      qup = qup*dt/(0.001_sp*dx*dx*REAL(drained_area(row, col)-1))
+      qup = qup*dt/(0.001_sp*dx*dx*REAL(flwacc(row, col)-1))
     END IF
   END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
 
@@ -2514,7 +2514,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -2595,29 +2595,28 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
+&                                        %flwdir, mesh%flwacc, mesh%&
+&                                        rowcol_to_ind_sparse, row, col&
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
               sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
             ELSE
               CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
+&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
+&                                 row, col, q, q_d, qup, qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
               q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
             END IF
@@ -2712,7 +2711,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -2800,25 +2799,25 @@ CONTAINS
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(3)
             END IF
           ELSE
@@ -2869,7 +2868,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
             sparse_q_b(k) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -2878,7 +2877,7 @@ CONTAINS
             CALL POPREAL4(qup)
             CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, sparse_q_b, qup, qup_b)
           ELSE
@@ -2887,7 +2886,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
             q_b(row, col) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -2895,8 +2894,8 @@ CONTAINS
 &                           qrout, qrout_b)
             CALL POPREAL4(qup)
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, q_b, qup, qup_b)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_b, qup, qup_b)
           END IF
           qr_b = qt_b
           qd_b = qt_b
@@ -3008,7 +3007,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3073,21 +3072,21 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
 !% =============================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
@@ -3197,7 +3196,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3275,29 +3274,28 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
+&                                        %flwdir, mesh%flwacc, mesh%&
+&                                        rowcol_to_ind_sparse, row, col&
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
               sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
             ELSE
               CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
+&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
+&                                 row, col, q, q_d, qup, qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
               q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
             END IF
@@ -3393,7 +3391,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3477,25 +3475,25 @@ CONTAINS
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(3)
             END IF
           ELSE
@@ -3546,7 +3544,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
             sparse_q_b(k) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -3555,7 +3553,7 @@ CONTAINS
             CALL POPREAL4(qup)
             CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, sparse_q_b, qup, qup_b)
           ELSE
@@ -3564,7 +3562,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
             q_b(row, col) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -3572,8 +3570,8 @@ CONTAINS
 &                           qrout, qrout_b)
             CALL POPREAL4(qup)
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, q_b, qup, qup_b)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_b, qup, qup_b)
           END IF
           qr_b = qt_b
           qd_b = qt_b
@@ -3687,7 +3685,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3748,21 +3746,21 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
 !% =============================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
@@ -3873,7 +3871,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3957,29 +3955,28 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
+&                                        %flwdir, mesh%flwacc, mesh%&
+&                                        rowcol_to_ind_sparse, row, col&
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
               sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
             ELSE
               CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
+&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
+&                                 row, col, q, q_d, qup, qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
               q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
             END IF
@@ -4077,7 +4074,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4166,25 +4163,25 @@ CONTAINS
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(3)
             END IF
           ELSE
@@ -4235,7 +4232,7 @@ CONTAINS
             temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
             sparse_q_b(k) = 0.0_4
             qt_b = temp_b0
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b0
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -4244,7 +4241,7 @@ CONTAINS
             CALL POPREAL4(qup)
             CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, sparse_q_b, qup, qup_b)
           ELSE
@@ -4253,7 +4250,7 @@ CONTAINS
             temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
             q_b(row, col) = 0.0_4
             qt_b = temp_b0
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b0
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b0
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -4261,8 +4258,8 @@ CONTAINS
 &                           qrout, qrout_b)
             CALL POPREAL4(qup)
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, q_b, qup, qup_b)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_b, qup, qup_b)
           END IF
           qr_b = qt_b
           ql_b = qt_b
@@ -4388,7 +4385,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4452,21 +4449,21 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
 !% =============================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
@@ -4574,7 +4571,7 @@ CONTAINS
         runoff = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4651,29 +4648,28 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
 &                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%drained_area, &
-&                                        mesh%rowcol_to_ind_sparse, row&
-&                                        , col, sparse_q, sparse_q_d, &
-&                                        qup, qup_d)
+&                                        %flwdir, mesh%flwacc, mesh%&
+&                                        rowcol_to_ind_sparse, row, col&
+&                                        , sparse_q, sparse_q_d, qup, &
+&                                        qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
               sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
             ELSE
               CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%&
-&                                 drained_area, row, col, q, q_d, qup, &
-&                                 qup_d)
+&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
+&                                 row, col, q, q_d, qup, qup_d)
               CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
 &                             row, col), parameters_d%lr(row, col), &
 &                             states%hlr(row, col), states_d%hlr(row, &
 &                             col), qrout, qrout_d)
               temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%drained_area(row, col) - 1)
+              temp0 = REAL(mesh%flwacc(row, col) - 1)
               q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
               q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
             END IF
@@ -4768,7 +4764,7 @@ CONTAINS
         runoff = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4847,25 +4843,25 @@ CONTAINS
               CALL PUSHREAL4(qup)
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(2)
             ELSE
               CALL PUSHREAL4(qup)
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL PUSHREAL4(states%hlr(row, col))
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
               CALL PUSHCONTROL2B(3)
             END IF
           ELSE
@@ -4916,7 +4912,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
             sparse_q_b(k) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -4925,7 +4921,7 @@ CONTAINS
             CALL POPREAL4(qup)
             CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, sparse_q_b, qup, qup_b)
           ELSE
@@ -4934,7 +4930,7 @@ CONTAINS
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
             q_b(row, col) = 0.0_4
             qt_b = temp_b
-            qrout_b = REAL(mesh%drained_area(row, col)-1)*temp_b
+            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
             CALL POPREAL4(states%hlr(row, col))
             CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
 &                           row, col), parameters_b%lr(row, col), states&
@@ -4942,8 +4938,8 @@ CONTAINS
 &                           qrout, qrout_b)
             CALL POPREAL4(qup)
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, q_b, qup, qup_b)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_b, qup, qup_b)
           END IF
           runoff_b = qt_b
           qi_b = qt_b
@@ -5055,7 +5051,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -5112,21 +5108,21 @@ CONTAINS
             IF (setup%sparse_storage) THEN
               CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
 &                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%drained_area, mesh%&
+&                                      flwdir, mesh%flwacc, mesh%&
 &                                      rowcol_to_ind_sparse, row, col, &
 &                                      sparse_q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             ELSE
               CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%drained_area, &
-&                               row, col, q, qup)
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, qup)
               CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
 &                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%drained_area(row, col)-1&
-&               ))*mesh%dx*mesh%dx*0.001_sp/setup%dt
+              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
+&               mesh%dx*mesh%dx*0.001_sp/setup%dt
             END IF
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
@@ -6709,8 +6705,8 @@ CONTAINS
         row = mesh%gauge_pos(g, 1)
         col = mesh%gauge_pos(g, 2)
         qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
-&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
-&         dx*mesh%dx)*1e3_sp
+&         %ntime_step)*setup%dt/(REAL(mesh%flwacc(row, col))*mesh%dx*&
+&         mesh%dx)*1e3_sp
         gauge_jobs_d = 0.0_4
         DO j=1,setup%optimize%njf
           IF (ANY(qo .GE. 0._sp)) THEN
@@ -6800,8 +6796,8 @@ CONTAINS
         CALL PUSHREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
 &                     optimize_start_step + 1)
         qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
-&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
-&         dx*mesh%dx)*1e3_sp
+&         %ntime_step)*setup%dt/(REAL(mesh%flwacc(row, col))*mesh%dx*&
+&         mesh%dx)*1e3_sp
         DO j=1,setup%optimize%njf
           IF (ANY(qo .GE. 0._sp)) THEN
             SELECT CASE  (setup%optimize%jobs_fun(j)) 
@@ -6935,8 +6931,8 @@ CONTAINS
         row = mesh%gauge_pos(g, 1)
         col = mesh%gauge_pos(g, 2)
         qo = input_data%qobs(g, setup%optimize%optimize_start_step:setup&
-&         %ntime_step)*setup%dt/(REAL(mesh%drained_area(row, col))*mesh%&
-&         dx*mesh%dx)*1e3_sp
+&         %ntime_step)*setup%dt/(REAL(mesh%flwacc(row, col))*mesh%dx*&
+&         mesh%dx)*1e3_sp
         DO j=1,setup%optimize%njf
           IF (ANY(qo .GE. 0._sp)) THEN
             SELECT CASE  (setup%optimize%jobs_fun(j)) 

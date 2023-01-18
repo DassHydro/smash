@@ -213,11 +213,12 @@ class Model(object):
         model.mesh.area          model.mesh.nac
         model.mesh.code          model.mesh.ncol
         model.mesh.copy(         model.mesh.ng
-        model.mesh.drained_area  model.mesh.nrow
-        model.mesh.dx            model.mesh.path
+        model.mesh.dx            model.mesh.nrow
+        model.mesh.flwacc        model.mesh.path
         model.mesh.flwdir        model.mesh.xmin
         model.mesh.flwdst        model.mesh.ymax
         model.mesh.from_handle(
+
 
         Notes
         -----

@@ -22,7 +22,7 @@ def generic_xy_mesh(**kwargs) -> dict:
     res = {
         "xy_mesh.flwdir": mesh["flwdir"],
         "xy_mesh.flwdst": mesh["flwdst"],
-        "xy_mesh.drained_area": mesh["drained_area"],
+        "xy_mesh.flwacc": mesh["flwacc"],
     }
 
     return res
@@ -50,7 +50,7 @@ def generic_bbox_mesh(**kwargs) -> dict:
 
     res = {
         "bbox_mesh.flwdir": mesh["flwdir"],
-        "bbox_mesh.drained_area": mesh["drained_area"],
+        "bbox_mesh.flwacc": mesh["flwacc"],
     }
 
     return res
