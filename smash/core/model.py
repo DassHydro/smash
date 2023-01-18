@@ -1371,7 +1371,7 @@ class Model(object):
             See `smash.Model.event_segmentation` for more.
 
             .. note::
-                If not given in case flood signatures are computed, the default values will be set for these parameters. 
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
 
         Returns
         -------

@@ -5,7 +5,7 @@ Hydrograph segmentation
 =======================
 
 Segmentation algorithm aims to capture important events occuring over the studied period on each catchment. 
-We propose an algorithm for capturing flood events with the aid of the rainfall gradient and rainfall energy.
+We propose an algorithm for capturing flood events with the aid of the rainfall gradient and rainfall energy (applied for hourly time step).
 
 -----------
 Description
@@ -56,7 +56,7 @@ For :math:`t_{j}\in E`:
 
 :math:`f(t_{x})=||(p_{x}-1,...,p_{x}+11)||_{2}`,
 
-:math:`sd=\min(t_{s})_{t_{s}\in RE}` s.t. :math:`f(s)>0.2||(f(t_{j}-72),...,f(t_{j}))||_{\infty}`.
+:math:`sd=\min(t_{s})_{t_{s}\in RE}` s.t. :math:`f(t_{s})>0.2||(f(t_{j}-72),...,f(t_{j}))||_{\infty}`.
 
 - Determining an ending date based on discharge baseflow :math:`Qb=\text{Baseflow}(Q)`:
 
