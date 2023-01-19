@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import gaussian_kde
 import multiprocessing as mp
+from tqdm import tqdm
 
 
 class BayesResult(dict):
@@ -143,7 +144,6 @@ def _bayes_computation(
         bounds,
         wgauge,
         ost,
-        verbose,
         options,
         ncpu,
     )
@@ -303,7 +303,6 @@ def _unit_simu(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    verbose: bool,
     options: dict | None,
 ) -> dict:
 
@@ -315,10 +314,6 @@ def _unit_simu(
 
         else:
             setattr(instance.states, name, sample.iloc[i][name])
-
-    #% verbose
-    if verbose:
-        print(f"....SET {i+1} computing....")
 
     #% SIMU (RUN OR OPTIMIZE)
     if algorithm is None:
@@ -335,7 +330,7 @@ def _unit_simu(
             bounds,
             wgauge,
             ost,
-            verbose,
+            False,
             **options,
         )
 
@@ -366,10 +361,16 @@ def _multi_simu(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    verbose: bool,
     options: dict | None,
     ncpu: int,
 ) -> dict:
+
+    if algorithm is None:
+
+        pgbar_mess = "</> Running forward Model on multiset"
+
+    else:
+        pgbar_mess = "</> Optimizing Model parameters on multiset"
 
     if ncpu > 1:
 
@@ -392,10 +393,9 @@ def _multi_simu(
                     bounds,
                     wgauge,
                     ost,
-                    verbose,
                     options,
                 )
-                for i, instance in enumerate(list_instance)
+                for i, instance in tqdm(enumerate(list_instance), desc=pgbar_mess)
             ],
         )
         pool.close()
@@ -404,7 +404,7 @@ def _multi_simu(
 
         list_result = []
 
-        for i in range(len(sample)):
+        for i in tqdm(range(len(sample)), desc=pgbar_mess):
 
             list_result.append(
                 _unit_simu(
@@ -420,7 +420,6 @@ def _multi_simu(
                     bounds,
                     wgauge,
                     ost,
-                    verbose,
                     options,
                 )
             )
