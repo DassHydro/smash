@@ -23,7 +23,7 @@ setup(
     include_package_data=True,
     install_requires=[
         "f90wrap",
-        "numpy<=1.23",  # pinned due to f90wrap 0.2.9 not handling numpy 1.24
+        "numpy>=1.13,<1.24",  # pinned due to f90wrap 0.2.9 not handling numpy 1.24
         "pandas",
         "matplotlib",
         "h5py",
