@@ -104,12 +104,14 @@ are given in the table below.
      - Lag time
      - Difference time between the peak runoff and the peak rainfall
      - :math:`\arg\max_{t\in\mathbf{E}} Q(t)` :math:`-\arg\max_{t\in\mathbf{E}} P(t)`
-     - h
+     - dt
    * - Epf
      - Peak flow
      - Peak runoff in flood event
      - :math:`\max_{t\in\mathbf{E}} Q(t)`
      - mm
+
+where :math:`dt` is the timestep.
 
 Next we are interested in investigating the simulation uncertainty, in term
 of signatures, depending on the input parameters of the model. Let us consider
