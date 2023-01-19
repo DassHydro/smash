@@ -200,8 +200,8 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if np.all(mesh.flwdir == -99):
         raise ValueError("argument flwdir of MeshDT contains only NaN value")
 
-    if np.all(mesh.drained_area == -99):
-        raise ValueError("argument drained_area of MeshDT contains only NaN value")
+    if np.all(mesh.flwacc == -99):
+        raise ValueError("argument flwacc of MeshDT contains only NaN value")
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):

@@ -11,7 +11,6 @@ module mw_meshing
         
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
-        integer, dimension(8) :: dkind = (/1, 2, 3, 4, 5, 6, 7, 8/)
         integer :: i, col_imd, row_imd
         
         mask(row, col) = .true.
@@ -24,7 +23,7 @@ module mw_meshing
             if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
             &   row_imd .gt. 0 .and. row_imd .le. nrow) then
             
-                if (flwdir(row_imd, col_imd) .eq. dkind(i)) then
+                if (flwdir(row_imd, col_imd) .eq. i) then
                     
                     call mask_upstream_cells(flwdir, col_imd, row_imd, &
                     & ncol, nrow, mask)
@@ -105,73 +104,130 @@ module mw_meshing
     end subroutine catchment_dln
 
 
-    recursive subroutine downstream_cell_drained_area(flwdir, col, &
-    & row, ncol, nrow, da)
+    subroutine fill_nipd(flwdir, ncol, nrow, nipd)
+    
+        integer, intent(in) :: ncol, nrow
+        integer, dimension(nrow, ncol), intent(in) :: flwdir
+        integer, dimension(nrow, ncol), intent(inout) :: nipd
+        
+        integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
+        integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
+        
+        integer :: col, row, col_imd, row_imd, i
+        
+        nipd(:,:) = 0
+        
+        do row=1, nrow
+        
+            do col=1, ncol
+                
+                do i=1, 8
+                
+                    col_imd = col + dcol(i)
+                    row_imd = row + drow(i)
+                
+                    if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
+                    &   row_imd .gt. 0 .and. row_imd .le. nrow) then
+                    
+                        if (flwdir(row_imd, col_imd) .eq. i) then
+                        
+                            nipd(row, col) = nipd(row, col) + 1
+                        
+                        end if
+                        
+                    end if
+                    
+                end do
+            
+            end do
+        
+        end do
+    
+    end subroutine fill_nipd
+    
+    
+    recursive subroutine downstream_cell_flwacc(flwdir, col, row, ncol, nrow, nipd, flwacc)
+    
+        implicit none
         
         integer, intent(in) :: col, row, ncol, nrow
         integer, dimension(nrow, ncol), intent(in) :: flwdir
-        integer, dimension(nrow, ncol), intent(inout) :: da
+        integer, dimension(nrow, ncol), intent(inout) :: nipd, flwacc
         
         integer, dimension(8) :: dcol = (/0, 1, 1, 1, 0, -1, -1, -1/)
         integer, dimension(8) :: drow = (/-1, -1, 0, 1, 1, 1, 0, -1/)
         
-        integer :: fd
+        integer :: fd, col_imd, row_imd
         
         fd = flwdir(row, col)
         
         !% Check no data
         if (fd .gt. 0) then
         
+            col_imd = col + dcol(fd)
+            row_imd = row + drow(fd)
+        
             !% Check bounds
-            if (col + dcol(fd) .gt. 0 .and. col + dcol(fd) .le. ncol &
-            & .and. row + drow(fd) .gt. 0 .and. &
-            & row + drow(fd) .le. nrow) then
+            if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
+            &   row_imd .gt. 0 .and. row_imd .le. nrow) then
                 
                 !% Check pit
-                if (abs(flwdir(row, col) - flwdir(row + drow(fd), &
-                & col + dcol(fd))) .ne. 4) then
+                if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .ne. 4) then
                 
-                    da(row + drow(fd), col + dcol(fd)) = &
-                    & da(row + drow(fd), col + dcol(fd)) + 1
+                    flwacc(row_imd, col_imd) = flwacc(row_imd, col_imd) + flwacc(row, col)
                     
-                    call downstream_cell_drained_area(flwdir, &
-                    & col + dcol(fd), row + drow(fd), ncol, nrow, da)
+                    if (nipd(row_imd, col_imd) .gt. 1) then
+                    
+                        nipd(row_imd, col_imd) = nipd(row_imd, col_imd) - 1
+                        
+                    else
+                    
+                        call downstream_cell_flwacc(flwdir, &
+                        & col_imd, row_imd, ncol, nrow, nipd, flwacc)
+                        
+                    end if
                     
                 end if
             
             end if
         
         end if
-            
-    end subroutine downstream_cell_drained_area
-
-
-    subroutine drained_area(flwdir, da)
-
-        integer, dimension(:,:), intent(in) :: flwdir
-        integer, dimension(size(flwdir, 1), size(flwdir, 2)), &
-        & intent(out) :: da
         
+    end subroutine downstream_cell_flwacc
+    
+    
+    subroutine flow_accumulation(flwdir, flwacc)
+    
+        integer, dimension(:,:), intent(in) :: flwdir
+        integer, dimension(size(flwdir, 1), size(flwdir, 2)), intent(out) :: flwacc
+        
+        integer, dimension(size(flwdir, 1), size(flwdir, 2)) :: nipd
         integer :: col, row, ncol, nrow
         
-        da = 1
+        flwacc(:,:) = 1
         ncol = size(flwdir, 2)
         nrow = size(flwdir, 1)
         
-        do row=1, nrow
+        call fill_nipd(flwdir, ncol, nrow, nipd)
         
+        do row=1, nrow
+            
             do col=1, ncol
+            
+                if (nipd(row, col) .eq. 0) then
                 
-                call downstream_cell_drained_area(flwdir, col, row, &
-                & ncol, nrow, da)
+                    call downstream_cell_flwacc(flwdir, col, row, ncol, nrow, nipd, flwacc)
+                
+                end if
             
             end do
-
+        
         end do
-
-    end subroutine drained_area
-
-    !% Workq for small array
+    
+    end subroutine flow_accumulation
+    
+    
+    !% Works for small array
     function argsort_i(a, asc) result(b)
 
         implicit none

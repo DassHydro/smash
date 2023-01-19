@@ -16,13 +16,13 @@ module md_routing_operator
     contains
         
         subroutine upstream_discharge(dt, dx, nrow, ncol, &
-        & flwdir, drained_area, row, col, q, qup)
+        & flwdir, flwacc, row, col, q, qup)
         
             implicit none
 
             real(sp), intent(in) :: dt, dx
             integer, intent(in) :: nrow, ncol, row, col
-            integer, dimension(nrow, ncol), intent(in) :: flwdir, drained_area
+            integer, dimension(nrow, ncol), intent(in) :: flwdir, flwacc
             real(sp), dimension(nrow, ncol), intent(in) :: q
             real(sp), intent(out) :: qup
             
@@ -33,7 +33,7 @@ module md_routing_operator
             
             qup = 0._sp
             
-            if (drained_area(row, col) .gt. 1) then
+            if (flwacc(row, col) .gt. 1) then
             
                 do i=1, 8
                     
@@ -54,7 +54,7 @@ module md_routing_operator
                 end do
                 
                 qup = (qup * dt) / &
-                & (0.001_sp * dx * dx * real(drained_area(row, col) - 1))
+                & (0.001_sp * dx * dx * real(flwacc(row, col) - 1))
             
             end if
         
@@ -62,13 +62,13 @@ module md_routing_operator
         
         
         subroutine sparse_upstream_discharge(dt, dx, nrow, ncol, nac, &
-        & flwdir, drained_area, ind_sparse, row, col, q, qup)
+        & flwdir, flwacc, ind_sparse, row, col, q, qup)
             
             implicit none
 
             real(sp), intent(in) :: dt, dx
             integer, intent(in) :: nrow, ncol, nac, row, col
-            integer, dimension(nrow, ncol), intent(in) :: flwdir, drained_area, ind_sparse
+            integer, dimension(nrow, ncol), intent(in) :: flwdir, flwacc, ind_sparse
             real(sp), dimension(nac), intent(in) :: q
             real(sp), intent(out) :: qup
             
@@ -79,7 +79,7 @@ module md_routing_operator
             
             qup = 0._sp
             
-            if (drained_area(row, col) .gt. 1) then
+            if (flwacc(row, col) .gt. 1) then
             
                 do i=1, 8
                     
@@ -101,7 +101,7 @@ module md_routing_operator
                 end do
                 
                 qup = (qup * dt) / &
-                & (0.001_sp * dx * dx * real(drained_area(row, col) - 1))
+                & (0.001_sp * dx * dx * real(flwacc(row, col) - 1))
             
             end if
         

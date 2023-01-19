@@ -6,9 +6,9 @@ Practice case
 
 The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the User Guide section: :ref:`user_guide.real_case_cance`.
 
-For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following drained area and flow directions:
+For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following flow accumulation and flow directions:
 
-.. image:: ../../_static/flwdir_da_Practice_case.png
+.. image:: ../../_static/flwdir_flwacc_Practice_case.png
     :width: 750
     :align: center
 
@@ -119,7 +119,7 @@ Second part of ``mesh`` configuration is:
 
 - ``flwdir``: the flow directions,
 
-- ``drained_area``: the drained area in number of cells.
+- ``flwacc``: the flow accumulation in number of cells.
 
 .. ipython:: python
 
@@ -139,7 +139,7 @@ Second part of ``mesh`` configuration is:
         dtype=np.int32,
     )
     
-    mesh["drained_area"] = np.array(
+    mesh["flwacc"] = np.array(
         [
                [1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
                [1, 4, 2, 2, 2, 2, 2, 2, 2, 2],
@@ -156,14 +156,14 @@ Second part of ``mesh`` configuration is:
         )
 
 
-Finally, the calculation path (``path``) must be provided (ascending order of drained area). This can be directly computed from ``drained_area`` and numpy methods.
+Finally, the calculation path (``path``) must be provided (ascending order of flow accumulation). This can be directly computed from ``flwacc`` and numpy methods.
 
 .. ipython:: python
 
-    ind_path = np.unravel_index(np.argsort(mesh["drained_area"], axis=None),
-         mesh["drained_area"].shape)
+    ind_path = np.unravel_index(np.argsort(mesh["flwacc"], axis=None),
+         mesh["flwacc"].shape)
 
-    mesh["path"] = np.zeros(shape=(2, mesh["drained_area"].size), 
+    mesh["path"] = np.zeros(shape=(2, mesh["flwacc"].size), 
         dtype=np.int32)
 
     mesh["path"][0, :] = ind_path[0]
@@ -252,16 +252,16 @@ numpy array can also be viewed:
 
 .. ipython:: python
 
-    model.mesh.drained_area
+    model.mesh.flwacc
     
 Or plotted using Matplotlib.
 
 .. ipython:: python
     
-    plt.imshow(model.mesh.drained_area, cmap="Spectral");
+    plt.imshow(model.mesh.flwacc, cmap="Spectral");
     plt.colorbar(label="Number of cells");
-    @savefig da_pc_user_guide.png
-    plt.title("Practice case - Drained Area");
+    @savefig flwacc_pc_user_guide.png
+    plt.title("Practice case - Flow accumulation");
 
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
@@ -273,8 +273,8 @@ If you are using IPython, tab completion allows you to visualize all the attribu
     model.mesh.area          model.mesh.nac
     model.mesh.code          model.mesh.ncol
     model.mesh.copy(         model.mesh.ng
-    model.mesh.drained_area  model.mesh.nrow
-    model.mesh.dx            model.mesh.path
+    model.mesh.dx            model.mesh.nrow
+    model.mesh.flwacc        model.mesh.path
     model.mesh.flwdir        model.mesh.xmin
     model.mesh.flwdst        model.mesh.ymax
     model.mesh.from_handle(

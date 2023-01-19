@@ -85,7 +85,7 @@ module md_forward_structure
                 qrout = 0._sp
                 
                 !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
                 !% =========================================================================================================== %!
                 
                 if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
@@ -159,22 +159,22 @@ module md_forward_structure
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                            sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
-                            q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                     
                         end if
@@ -311,7 +311,7 @@ module md_forward_structure
                 qrout = 0._sp
                 
                 !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
                 !% =========================================================================================================== %!
                 
                 if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
@@ -383,22 +383,22 @@ module md_forward_structure
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                            sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
-                            q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                     
                         end if
@@ -537,7 +537,7 @@ module md_forward_structure
                 qrout = 0._sp
                 
                 !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
                 !% =========================================================================================================== %!
                 
                 if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
@@ -613,22 +613,22 @@ module md_forward_structure
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                            sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
-                            q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                     
                         end if
@@ -759,7 +759,7 @@ module md_forward_structure
                 qrout = 0._sp
                 
                 !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of drained area 
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
                 !% =========================================================================================================== %!
                 
                 if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
@@ -825,22 +825,22 @@ module md_forward_structure
                         if (setup%sparse_storage) then
                     
                             call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%drained_area, &
+                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
                             & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                            sparse_q(k) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
 
                         else
 
                             call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%drained_area, row, col, q, qup)
+                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                             
                             call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                         
-                            q(row, col) = (qt + qrout * real(mesh%drained_area(row, col) - 1))&
+                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
                             & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                     
                         end if

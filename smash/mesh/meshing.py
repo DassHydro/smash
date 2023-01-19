@@ -251,11 +251,11 @@ def _standardize_bbox(ds_flwdir, bbox):
     return bbox
 
 
-def _get_path(drained_area):
+def _get_path(flwacc):
 
-    ind_path = np.unravel_index(np.argsort(drained_area, axis=None), drained_area.shape)
+    ind_path = np.unravel_index(np.argsort(flwacc, axis=None), flwacc.shape)
 
-    path = np.zeros(shape=(2, drained_area.size), dtype=np.int32, order="F")
+    path = np.zeros(shape=(2, flwacc.size), dtype=np.int32, order="F")
 
     path[0, :] = ind_path[0]
     path[1, :] = ind_path[1]
@@ -323,13 +323,13 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     flwdst = mw_meshing.flow_distance(flwdir, col_ol, row_ol, area_ol, dx)
 
-    drained_area = mw_meshing.drained_area(flwdir)
+    flwacc = mw_meshing.flow_accumulation(flwdir)
 
-    path = _get_path(drained_area)
+    path = _get_path(flwacc)
 
     flwdst = np.ma.masked_array(flwdst, mask=(1 - mask_dln))
 
-    drained_area = np.ma.masked_array(drained_area, mask=(1 - mask_dln))
+    flwacc = np.ma.masked_array(flwacc, mask=(1 - mask_dln))
 
     active_cell = mask_dln.astype(np.int32)
 
@@ -345,7 +345,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
         "ymax": ymax_shifted,
         "flwdir": flwdir,
         "flwdst": flwdst,
-        "drained_area": drained_area,
+        "flwacc": flwacc,
         "path": path,
         "gauge_pos": gauge_pos,
         "code": code,
@@ -376,11 +376,11 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
         dx = xres
 
-    drained_area = mw_meshing.drained_area(flwdir)
+    flwacc = mw_meshing.flow_accumulation(flwdir)
 
-    path = _get_path(drained_area)
+    path = _get_path(flwacc)
 
-    drained_area = np.ma.masked_array(drained_area, mask=(flwdir < 1))
+    flwacc = np.ma.masked_array(flwacc, mask=(flwdir < 1))
 
     active_cell = np.zeros(shape=flwdir.shape, dtype=np.int32)
 
@@ -395,7 +395,7 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
         "xmin": bbox[0],
         "ymax": bbox[3],
         "flwdir": flwdir,
-        "drained_area": drained_area,
+        "flwacc": flwacc,
         "path": path,
         "active_cell": active_cell,
     }
@@ -496,7 +496,7 @@ def generate_mesh(
     ... )
     >>> mesh.keys()
     dict_keys(['dx', 'nrow', 'ncol', 'ng', 'nac', 'xmin', 'ymax',
-               'flwdir', 'flwdst', 'drained_area', 'path', 'gauge_pos',
+               'flwdir', 'flwdst', 'flwacc', 'path', 'gauge_pos',
                'code', 'area', 'active_cell'])
     """
 

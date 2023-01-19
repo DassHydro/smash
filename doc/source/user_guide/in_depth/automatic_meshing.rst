@@ -28,7 +28,7 @@ Single gauge mesh
 
 The mesh on a single gauge is applied on the catchment of ``L'Ardèche`` (TODO add fig).
 
-The minimum data to fill in are the coordinates of the outlet and the drained area in m².
+The minimum data to fill in are the coordinates of the outlet and the area in m².
 
 .. ipython:: python
 
