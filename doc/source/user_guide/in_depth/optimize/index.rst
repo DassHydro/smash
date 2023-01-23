@@ -7,7 +7,7 @@
 Model optimization
 ==================
 
-This section represents advanced approaches for optimizing Model parameters in addition to classical methods in the :ref:`Quickstart <quickstart.cance.optimization>` section.
+This section represents advanced approaches for optimizing Model parameters and initial states in addition to classical methods in the :ref:`Quickstart <quickstart.cance.optimization>` section.
 
 .. warning::
 
