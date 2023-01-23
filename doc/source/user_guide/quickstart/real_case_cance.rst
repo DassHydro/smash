@@ -378,6 +378,7 @@ We can visualize the simulated discharges after a forward run for the most downs
     @savefig qsim_fw_rc_user_guide.png
     plt.legend();
 
+.. _quickstart.cance.optimization:
 
 Optimization
 ************

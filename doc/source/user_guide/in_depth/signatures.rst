@@ -1,8 +1,5 @@
 .. _user_guide.signatures:
 
-.. role:: bolditalic
-    :class: bolditalic
-
 ==========
 Signatures
 ==========

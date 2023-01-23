@@ -367,7 +367,7 @@ class Net(object):
                 f"Inconsistent length between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
             )
 
-    def _fit(
+    def _fit_p2d(
         self,
         x_train: np.ndarray,
         instance: Model,
@@ -375,11 +375,10 @@ class Net(object):
         mask: np.ndarray,
         parameters_bgd: ParametersDT,
         states_bgd: StatesDT,
-        validation: float | None,  # TODO: add validation criteria
         epochs: int,
         early_stopping: bool,
         verbose: bool,
-    ):
+    ):  # fit model parameters to descriptors mapping
 
         if not self._compiled:
             raise ValueError(f"The network has not been compiled yet")
