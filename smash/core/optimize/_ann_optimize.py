@@ -26,7 +26,6 @@ def _ann_optimize(
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     net: Net | None,
-    validation: float | None,
     epochs: int,
     early_stopping: bool,
     verbose: bool,
@@ -97,14 +96,13 @@ def _ann_optimize(
         _training_message(instance, control_vector, nx, net)
 
     # train the network
-    net._fit(
+    net._fit_p2d(
         x_train,
         instance,
         control_vector,
         active_mask,
         parameters_bgd,
         states_bgd,
-        validation,
         epochs,
         early_stopping,
         verbose,

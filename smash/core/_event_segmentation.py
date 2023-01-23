@@ -203,13 +203,20 @@ def _events_grad(
     p: np.ndarray,
     q: np.ndarray,
     peak_quant: float,
-    max_duration: int,
+    max_duration: float,  # in hour
+    dt: int,
     rg_quant: float = 0.8,
     coef_re: float = 0.2,
-    start_seg: int = 72,
-    search_start: int = 12,
-    search_end: int = 24,
+    start_seg: int = 72,  # in hour
+    st_power: int = 24,  # in hour
+    end_search: int = 48,  # in hour
 ):
+
+    #% time step conversion
+    max_duration = round(max_duration * 3600 / dt)
+    start_seg = round(start_seg * 3600 / dt)
+    st_power = round(st_power * 3600 / dt)
+    end_search = round(end_search * 3600 / dt)
 
     ind = _detect_peaks(q, mph=np.quantile(q[q > 0], peak_quant))
     list_events = []
@@ -218,43 +225,42 @@ def _events_grad(
         p_search = p[range(max(i - start_seg, 0), i)]
         p_search_grad = np.gradient(p_search)
 
-        try:
-            ind_start = _detect_peaks(
-                p_search_grad, mph=np.quantile(p_search_grad, rg_quant)
-            )
-        except:
-            continue
-
-        power = np.array(
-            [
-                np.linalg.norm(p_search[j - 1 : j + search_start - 1], ord=2)
-                for j in ind_start
-            ]
+        ind_start = _detect_peaks(
+            p_search_grad, mph=np.quantile(p_search_grad, rg_quant)
         )
 
-        try:
-            ind_start = ind_start[np.where(power > coef_re * max(power))[0]]
-        except:
-            continue
+        if ind_start.size > 1:
 
-        try:
-            ind_start_minq = ind_start[0]
-        except:
-            continue
+            power = np.array(
+                [
+                    np.linalg.norm(p_search[j - 1 : j + st_power - 1], ord=2)
+                    for j in ind_start
+                ]
+            )
+
+            ind_start = ind_start[np.where(power > coef_re * max(power))[0]]
+
+        elif ind_start.size == 0:
+
+            ind_start = np.append(ind_start, np.argmax(p_search_grad))
+
+        ind_start_minq = ind_start[0]
 
         start = ind_start_minq + max(i - start_seg, 0)
 
-        try:
-            peakp = _detect_peaks(p[start:i], mpd=len(p))[0]
-        except:
-            continue
+        peakp = _detect_peaks(p[start:i], mpd=len(p))
 
-        peakp += start
+        if peakp.size == 0:
 
-        qbf = _baseflow_separation(q[i - 1 : start + max_duration + search_end - 1])[0]
+            peakp = np.argmax(p[start:i]) + start
 
-        dflow = q[i - 1 : start + max_duration + search_end - 1] - qbf
-        dflow = np.array([sum(i) for i in zip(*(dflow[i:] for i in range(search_end)))])
+        else:
+            peakp = peakp[0] + start
+
+        qbf = _baseflow_separation(q[i - 1 : start + max_duration + end_search - 1])[0]
+
+        dflow = q[i - 1 : start + max_duration + end_search - 1] - qbf
+        dflow = np.array([sum(i) for i in zip(*(dflow[i:] for i in range(end_search)))])
 
         end = i + np.argmin(dflow)
 
@@ -275,7 +281,7 @@ def _events_grad(
                         list_events[-1]["peakP"] = peakp
                 continue
 
-        list_events += [{"start": start, "end": end, "peakP": peakp, "peakQ": i}]
+        list_events.append({"start": start, "end": end, "peakP": peakp, "peakQ": i})
 
     return list_events
 
@@ -283,7 +289,7 @@ def _events_grad(
 def _mask_event(
     instance: Model,
     peak_quant: float = 0.999,
-    max_duration: int = 240,
+    max_duration: float = 240,  # in hour
     **unknown_options,
 ):
 
@@ -305,7 +311,9 @@ def _mask_event(
 
         else:
 
-            list_events = _events_grad(prcp_tmp, qobs_tmp, peak_quant, max_duration)
+            list_events = _events_grad(
+                prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
+            )
 
             for event_number, t in enumerate(list_events):
 
@@ -317,7 +325,7 @@ def _mask_event(
     return mask
 
 
-def _event_segmentation(instance: Model, peak_quant: float, max_duration: int):
+def _event_segmentation(instance: Model, peak_quant: float, max_duration: float):
 
     date_range = pd.date_range(
         start=instance.setup.start_time,
@@ -348,7 +356,9 @@ def _event_segmentation(instance: Model, peak_quant: float, max_duration: int):
 
         else:
 
-            list_events = _events_grad(prcp_tmp, qobs_tmp, peak_quant, max_duration)
+            list_events = _events_grad(
+                prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
+            )
 
             for t in list_events:
                 ts = date_range[t["start"]]

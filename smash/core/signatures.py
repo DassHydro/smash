@@ -307,7 +307,7 @@ def _signatures_comp(
     cs: list[str],
     es: list[str],
     peak_quant: float,
-    max_duration: int,
+    max_duration: float,
     obs_comp: bool,  # decide if process observation computation or not.
     warn: bool,
 ):
@@ -393,7 +393,7 @@ def _signatures_comp(
                 if len(es) > 0:
 
                     list_events = _events_grad(
-                        prcp_tmp, qobs_tmp, peak_quant, max_duration
+                        prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
                     )
 
                     if len(list_events) == 0:
@@ -486,7 +486,7 @@ def _signatures(
     es: list[str],
     obs_comp: bool,
     peak_quant: float = 0.999,
-    max_duration: int = 240,
+    max_duration: float = 240,
     **unknown_options,
 ):
     if es:
@@ -505,7 +505,7 @@ def _signatures_sensitivity(
     es: list[str],
     seed: None | int,
     peak_quant: float = 0.999,
-    max_duration: int = 240,
+    max_duration: float = 240,
     **unknown_options,
 ):
 

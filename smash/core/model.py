@@ -1121,7 +1121,6 @@ class Model(object):
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
-        validation: float | None = None,
         epochs: int = 500,
         early_stopping: bool = False,
         verbose: bool = True,
@@ -1145,12 +1144,6 @@ class Model(object):
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
-
-        validation : float or None, default None
-            Temporal validation percentage to split simulated discharge into training-validation sets.
-
-            .. note::
-                If not given, the function will be computed on the whole time series (simulated discharge).
 
         epochs : int, default 500
             The number of epochs to train the network.
@@ -1267,7 +1260,6 @@ class Model(object):
             wgauge,
             ost,
             net,
-            validation,
             epochs,
             early_stopping,
             verbose,
@@ -1288,7 +1280,7 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def event_segmentation(self, peak_quant: float = 0.999, max_duration: int = 240):
+    def event_segmentation(self, peak_quant: float = 0.999, max_duration: float = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
@@ -1300,7 +1292,7 @@ class Model(object):
         peak_quant: float, default 0.999
             An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
 
-        max_duration: int, default 240
+        max_duration: float, default 240
             The maximum duration of an event (in hour).
 
         Returns

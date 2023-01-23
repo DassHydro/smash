@@ -19,9 +19,13 @@ Quickstart
 In Depth
 ********
 .. toctree::
+    :maxdepth: 2
+
+    in_depth/optimize/index
+
+.. toctree::
     :maxdepth: 1
 
-    in_depth/optimize
     in_depth/automatic_meshing
     in_depth/event_segmentation
     in_depth/signatures
