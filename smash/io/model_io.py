@@ -12,15 +12,13 @@ from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_states import StatesDT
 from smash.solver._mwd_output import OutputDT
 
-from smash.core._build_model import (
-    _build_setup,
-    _build_mesh,
-)
+from smash.core._build_model import _build_mesh
 
 import os
 import errno
 import h5py
 import numpy as np
+import pandas as pd
 
 import smash
 
@@ -222,7 +220,11 @@ def read_model(path: str) -> Model:
 
             _parse_hdf5_to_derived_type(f["setup"], instance.setup)
 
-            _build_setup(instance.setup)
+            st = pd.Timestamp(instance.setup.start_time)
+
+            et = pd.Timestamp(instance.setup.end_time)
+
+            instance.setup._ntime_step = (et - st).total_seconds() / instance.setup.dt
 
             instance.mesh = MeshDT(
                 instance.setup,
