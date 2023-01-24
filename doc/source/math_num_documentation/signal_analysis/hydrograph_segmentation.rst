@@ -11,18 +11,15 @@ We propose an algorithm for capturing flood events with the aid of the rainfall 
 Description
 -----------
 
-First of all, the peak discharge is detected using a simple peak
-detection algorithm, where several parameters can be used to impose
-a minimum peak height (mph) or a minimum distance between two successive
-peak (mpd), etc. :cite:p:`marcos_duarte_2021_4599319`. 
-We thus consider those exceed the ``peak_quant``-quantile (by default ``peak_quant`` = 0.999) of the discharge as important events (mph criterion) w.r.t.
-two successive events are distinguished by at least 12h (mpd criterion).
-A starting date of an event is considered as the moment
-it starts raining dramatically sometime since 72h before the peak
-of discharge. For calculating this, we need to compute the gradient
+First of all, the peaks of discharge are detected using a simple peak
+detection algorithm :cite:p:`marcos_duarte_2021_4599319`. 
+We thus consider those exceed the ``peak_quant``-quantile (by default ``peak_quant`` = 0.999) of the observed discharge 
+as important events (or flood events). Then the starting date of each event can be determined as the moment
+it starts raining dramatically sometime since 72h before the flood event. 
+For calculating this, we need to compute the gradient
 of the rainfall and then we choose the peaks of rainfall gradient
 which exceed its 0.8-quantile. These peaks correspond to the moments
-when we have a sharp increase in rainfall. Then, the
+when we have a sharp increase in rainfall. Next, the
 rainfall energy is computed as the sum of squares of the rainfall
 observed in 24h counted from 1h before the peak of rainfall gradient.
 So the starting date is the first moment when the rainfall energy
@@ -32,7 +29,7 @@ to find an ending date based on the baseflow separation. Effectively, we
 compute the difference between the discharge and its baseflow from
 the peak of discharge until the end of researched period (lasts ``max_duration`` hours (by default ``max_duration`` = 240) from starting date of event). Then, the ending date is the moment
 that the difference between the discharge and its baseflow is minimal
-in 48h counted from 1 hour before this moment. Note that the above values are adapted to the basins and flood scales studied.
+in 48h counted from 1 hour before this moment.
 
 ---------
 Algorithm
