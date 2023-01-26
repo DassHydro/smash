@@ -452,7 +452,7 @@ module mw_optimize
             
                 if (lb(i) .lt. 0._sp) then
                     
-                    x_tf(i) = sinh(x(i))
+                    x_tf(i) = asinh(x(i))
                     
                 else if (lb(i) .ge. 0._sp .and. ub(i) .le. 1._sp) then
                     
@@ -483,7 +483,7 @@ module mw_optimize
             
                 if (lb(i) .lt. 0._sp) then
                     
-                    x(i) = asinh(x_tf(i))
+                    x(i) = sinh(x_tf(i))
                     
                 else if (lb(i) .ge. 0._sp .and. ub(i) .le. 1._sp) then
                     

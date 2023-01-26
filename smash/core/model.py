@@ -501,7 +501,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Model Run Y = M (k)")
+        print("</> Run Model")
 
         cost = np.float32(0)
 
@@ -662,13 +662,13 @@ class Model(object):
         >>> model
         Structure: 'gr-a'
         Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
-        Last update: Step By Step Optimization
+        Last update: SBS Optimization
 
         Access to simulated discharge
 
         >>> model.output.qsim[0,:]
-        array([5.7140866e-04, 4.7018618e-04, 3.5345653e-04, ..., 1.9009293e+01,
-               1.8772749e+01, 1.8541389e+01], dtype=float32)
+        array([5.7140866e-04, 4.7018618e-04, 3.5345653e-04, ..., 1.9017689e+01,
+               1.8781073e+01, 1.8549627e+01], dtype=float32)
 
         Access to optimized parameters
 
@@ -681,7 +681,7 @@ class Model(object):
         ... "exc", model.parameters.exc[ind],
         ... "lr", model.parameters.lr[ind],
         ... )
-        ('cp', 76.57858, 'cft', 263.64627, 'exc', -1.4613823, 'lr', 30.859276)
+        ('cp', 76.57858, 'cft', 263.64627, 'exc', -1.455813, 'lr', 30.859276)
         """
 
         if inplace:
@@ -692,7 +692,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Optimize Model J")
+        print("</> Optimize Model")
 
         #% standardize args
         (
@@ -844,7 +844,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Bayes Estimate Model J")
+        print("</> Bayes Estimate Model")
 
         #% standardize args
         (
@@ -1018,15 +1018,14 @@ class Model(object):
         >>> cost = br.data["cost"]
         >>> cost.sort()  # sort the values by ascending order
         >>> cost
-        array([0.06491096, 0.07514387, 0.07857202, 0.07885404, 0.0957346 ,
+        array([0.04417887, 0.04713613, 0.05019313, 0.0512022 , 0.0563822 ,
             ...
-            1.16908765, 1.17005932, 1.17838395, 1.17910016, 1.19542003])
+            1.14625084, 1.15444124, 1.17005932, 1.19171917, 1.19486201])
 
         Compare to the cost value of the Model with the optimized parameters using Bayesian apporach
 
         >>> model.output.cost
-        0.048890236765146255
-
+        0.04369253292679787
         """
 
         if inplace:
@@ -1037,7 +1036,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> Bayes Optimize Model J")
+        print("</> Bayes Optimize Model")
 
         #% standardize args
         (
@@ -1207,8 +1206,16 @@ class Model(object):
         Access to some training information
 
         >>> net.history['loss_train']  # training loss
-        >>> net.layers  # defined graph
+        [1.2267546653747559, ..., 0.03432881459593773]
         >>> net.layers[0].weight  # trained weights of the first layer
+        array([[ 0.07801535,  0.10680847, -0.33354243, -0.17218271,  0.09706582,
+                 0.63727553,  0.00399343,  0.00982828,  0.13701385, -0.00708624,
+                -0.25468548, -0.29651733, -0.02438137, -0.10962573,  0.19415941,
+                -0.2962292 ,  0.54098361,  0.70156156],
+               [ 0.55410658,  0.12130747,  0.12366326,  0.53987803,  0.16916006,
+                 0.30923786, -0.20702523,  0.48505195,  0.24157872,  0.38465208,
+                -0.45171199, -0.29186438,  0.73921878, -0.00474557, -0.16782353,
+                 0.27061135,  0.55383291,  0.71541684]])
         """
 
         if inplace:
@@ -1219,7 +1226,7 @@ class Model(object):
 
             instance = self.copy()
 
-        print("</> ANN Optimize Model J")
+        print("</> ANN Optimize Model")
 
         if net is None:
             use_default_graph = True

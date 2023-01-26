@@ -425,8 +425,8 @@ While the optimization routine is in progress, some information are provided.
         wg: 1 [ 1.0 ]
 
         At iterate      0    nfg =     1    J =  0.677404    ddx = 0.64
-        At iterate      1    nfg =    30    J =  0.130163    ddx = 0.64
-        At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
+        At iterate      1    nfg =    30    J =  0.130012    ddx = 0.64
+        At iterate      2    nfg =    59    J =  0.043658    ddx = 0.32
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
 This information remainds the ptimization options:
@@ -497,7 +497,7 @@ We consider here for optimization:
 - a spatially distributed parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 - a prior set of parameters :math:`\bar{\theta}^*` generated from the previous spatially uniform global optimization.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
+Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 15.
 
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model_su`` instance which had stored the previous optimized parameters.
 
@@ -506,7 +506,7 @@ As we run this optimization from the previously generated uniform parameter set,
 
     model_sd = model_su.optimize(
             mapping="distributed",
-            options={"maxiter": 10}
+            options={"maxiter": 15}
         )
 
 .. ipython:: python
@@ -514,7 +514,7 @@ As we run this optimization from the previously generated uniform parameter set,
 
     model_sd = model_su.optimize(
             mapping="distributed",
-            options={"maxiter": 10}
+            options={"maxiter": 15}
         )
     
 While the optimization routine is in progress, some information are provided.
@@ -534,17 +534,22 @@ While the optimization routine is in progress, some information are provided.
         Ng: 1 [ V3524010 ]
         wg: 1 [ 1.0 ]
 
-        At iterate      0    nfg =     1    J =  0.044362    |proj g| =  0.000000
-        At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
-        At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
-        At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035662    |proj g| =  0.000019
-        At iterate      5    nfg =     7    J =  0.034909    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033658    |proj g| =  0.000010
-        At iterate      7    nfg =     9    J =  0.032117    |proj g| =  0.000013
-        At iterate      8    nfg =    10    J =  0.031270    |proj g| =  0.000010
-        At iterate      9    nfg =    11    J =  0.028342    |proj g| =  0.000076
-        At iterate     10    nfg =    12    J =  0.026772    |proj g| =  0.000025
+        At iterate      0    nfg =     1    J =  0.043658    |proj g| =  0.000000
+        At iterate      1    nfg =     2    J =  0.043423    |proj g| =  0.000144
+        At iterate      2    nfg =     3    J =  0.038706    |proj g| =  0.000065
+        At iterate      3    nfg =     4    J =  0.038559    |proj g| =  0.000086
+        At iterate      4    nfg =     5    J =  0.035615    |proj g| =  0.000013
+        At iterate      5    nfg =     7    J =  0.035374    |proj g| =  0.000046
+        At iterate      6    nfg =     8    J =  0.035033    |proj g| =  0.000067
+        At iterate      7    nfg =     9    J =  0.032759    |proj g| =  0.000012
+        At iterate      8    nfg =    10    J =  0.032125    |proj g| =  0.000037
+        At iterate      9    nfg =    11    J =  0.031414    |proj g| =  0.000060
+        At iterate     10    nfg =    12    J =  0.029540    |proj g| =  0.000037
+        At iterate     11    nfg =    15    J =  0.028891    |proj g| =  0.000050
+        At iterate     12    nfg =    22    J =  0.028888    |proj g| =  0.000050
+        At iterate     13    nfg =    23    J =  0.028255    |proj g| =  0.000032
+        At iterate     14    nfg =    24    J =  0.027386    |proj g| =  0.000026
+        At iterate     15    nfg =    25    J =  0.026932    |proj g| =  0.000016
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
         
