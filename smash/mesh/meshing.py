@@ -455,7 +455,7 @@ def generate_mesh(
         .. note::
             If not given, the default code is:
 
-            ``['_c0', '_c1', ..., '_cn']`` with ``n``, the number of gauges.
+            ``['_c0', '_c1', ..., '_cn-1']`` with ``n``, the number of gauges.
 
     max_depth : int, default 1
         The maximum depth accepted by the algorithm to find the catchment outlet.
