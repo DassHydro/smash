@@ -23,13 +23,16 @@ Structure options
 
     - "gr-a"
         4 parameters and 3 states structure.
-        
+
     - "gr-b"
         4 parameters and 4 states structure.
-        
+
     - "gr-c"
         5 parameters and 5 states structure.
-        
+
+    - "gr-d"
+        3 parameters and 3 states structure.
+
     .. note::
         See the User Guide section: :ref:`user_guide.model_structure` for more.
 

@@ -726,8 +726,7 @@ module md_forward_structure
         !% =================================================================================================================== %!
         real(sp), dimension(:,:), allocatable :: q
         real(sp), dimension(:), allocatable :: sparse_q
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-        & qr, qd, qt, qup, qrout
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
         integer :: t, i, row, col, k, g
         
         if (setup%sparse_storage) then
@@ -758,9 +757,7 @@ module md_forward_structure
                 pr = 0._sp
                 perc = 0._sp
                 prr = 0._sp
-                prd = 0._sp
                 qr = 0._sp
-                qd = 0._sp
                 qup = 0._sp
                 qrout = 0._sp
                 

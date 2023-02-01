@@ -16,7 +16,7 @@ STRUCTURE_PARAMETERS = {
     "gr-a": ["cp", "cft", "exc", "lr"],
     "gr-b": ["cp", "cft", "exc", "lr"],
     "gr-c": ["cp", "cft", "cst", "exc", "lr"],
-    "gr-d": ["cp", "cft","lr"],
+    "gr-d": ["cp", "cft", "lr"],
     "vic-a": ["b", "cusl1", "cusl2", "clsl", "ks", "ds", "dsm", "ws", "lr"],
 }
 
@@ -24,7 +24,7 @@ STRUCTURE_STATES = {
     "gr-a": ["hp", "hft", "hlr"],
     "gr-b": ["hi", "hp", "hft", "hlr"],
     "gr-c": ["hi", "hp", "hft", "hst", "hlr"],
-    "gr-d": ["hp","hft","hlr"],
+    "gr-d": ["hp", "hft", "hlr"],
     "vic-a": ["husl1", "husl2", "hlsl"],
 }
 

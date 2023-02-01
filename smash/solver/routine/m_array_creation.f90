@@ -26,7 +26,7 @@ module m_array_creation
         
             integer, intent(in) :: stt, stp
             real(sp), intent(in) :: step
-            integer, dimension(ceiling(real(stp - stt, kind=sp) / step)), intent(inout) :: res
+            real(sp), dimension(ceiling(real(stp - stt, kind=sp) / step)), intent(inout) :: res
             
             integer :: i
             

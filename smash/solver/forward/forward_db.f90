@@ -4538,8 +4538,7 @@ CONTAINS
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
     REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
     REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
-&   , qup, qrout
+    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, prr_d, qr_d, qt_d, qup_d, &
 &   qrout_d
     INTEGER :: t, i, row, col, k, g
@@ -4715,8 +4714,7 @@ CONTAINS
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
     REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
     REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
-&   , qup, qrout
+    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, prr_b, qr_b, qt_b, qup_b, &
 &   qrout_b
     INTEGER :: t, i, row, col, k, g
@@ -4985,8 +4983,7 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
     REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
-&   , qup, qrout
+    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MIN
     INTRINSIC MAX
@@ -5012,9 +5009,7 @@ CONTAINS
         pr = 0._sp
         perc = 0._sp
         prr = 0._sp
-        prd = 0._sp
         qr = 0._sp
-        qd = 0._sp
         qup = 0._sp
         qrout = 0._sp
 !% [ END IF PATH ]

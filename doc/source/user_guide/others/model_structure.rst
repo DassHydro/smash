@@ -146,7 +146,7 @@ gr-d
 ''''
 
 .. image:: ../../_static/diagram_gr-d.png
-    :width: 400
+    :width: 300
     :align: center
     
 Parameters

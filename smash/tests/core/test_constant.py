@@ -26,7 +26,7 @@ def test_structure_parameters():
 
     #% Check parameters gr-c
     assert STRUCTURE_PARAMETERS["gr-c"] == ["cp", "cft", "cst", "exc", "lr"]
-    
+
     #% Check parameters gr-d
     assert STRUCTURE_PARAMETERS["gr-d"] == ["cp", "cft", "lr"]
 
@@ -54,7 +54,7 @@ def test_structure_states():
 
     #% Check states gr-c
     assert STRUCTURE_STATES["gr-c"] == ["hi", "hp", "hft", "hst", "hlr"]
-    
+
     #% Check states gr-a
     assert STRUCTURE_STATES["gr-d"] == ["hp", "hft", "hlr"]
 
@@ -72,7 +72,7 @@ def test_structure_adjust_ci():
 
     #% Check adjust ci gr-c
     assert STRUCTURE_ADJUST_CI["gr-c"]
-    
+
     #% Check adjust ci gr-d
     assert ~STRUCTURE_ADJUST_CI["gr-d"]
 
