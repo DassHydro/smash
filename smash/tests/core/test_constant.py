@@ -55,7 +55,7 @@ def test_structure_states():
     #% Check states gr-c
     assert STRUCTURE_STATES["gr-c"] == ["hi", "hp", "hft", "hst", "hlr"]
 
-    #% Check states gr-a
+    #% Check states gr-d
     assert STRUCTURE_STATES["gr-d"] == ["hp", "hft", "hlr"]
 
     #% Check states vic-a
