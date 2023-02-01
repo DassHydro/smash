@@ -30,7 +30,7 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
     states_imd = states
     
     select case(trim(setup%structure))
-    
+
     case("gr-a")
     
         call gr_a_forward(setup, mesh, input_data, parameters, states, output)
@@ -42,6 +42,10 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
     case("gr-c")
     
         call gr_c_forward(setup, mesh, input_data, parameters, states, output)
+    
+    case("gr-d")
+    
+        call gr_d_forward(setup, mesh, input_data, parameters, states, output)
             
     case("vic-a")
     
@@ -108,7 +112,7 @@ subroutine base_hyper_forward(setup, mesh, input_data, parameters, hyper_paramet
     states_bgd = states
     
     select case(trim(setup%structure))
-    
+        
     case("gr-a")
         
         call gr_a_forward(setup, mesh, input_data, parameters, states, output)
@@ -120,6 +124,10 @@ subroutine base_hyper_forward(setup, mesh, input_data, parameters, hyper_paramet
     case("gr-c")
         
         call gr_c_forward(setup, mesh, input_data, parameters, states, output)
+        
+    case("gr-d")
+    
+        call gr_d_forward(setup, mesh, input_data, parameters, states, output)
     
     case("vic-a")
         
