@@ -5,6 +5,8 @@
 !%
 !%      [1] gr_a_forward
 !%      [2] gr_b_forward
+!%      [2] gr_c_forward
+!%      [2] gr_d_forward
 !%      [3] vic_a_forward
 
 module md_forward_structure
@@ -19,7 +21,7 @@ module md_forward_structure
     use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
     !% & gr_transfer
     use md_vic_operator !% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
-    use md_routing_operator !% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+    use md_routing_operator !% only: upstream_discharge, linear_routing
     
     implicit none
     
@@ -44,21 +46,10 @@ module md_forward_structure
         !% =================================================================================================================== %!
         !%   Local Variables (private)
         !% =================================================================================================================== %!
-        real(sp), dimension(:,:), allocatable :: q
-        real(sp), dimension(:), allocatable :: sparse_q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
         & qr, qd, qt, qup, qrout
         integer :: t, i, row, col, k, g
-        
-        if (setup%sparse_storage) then
-            
-            allocate(sparse_q(mesh%nac))
-            
-        else
-            
-            allocate(q(mesh%nrow, mesh%ncol))
-        
-        end if
         
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -157,34 +148,19 @@ module md_forward_structure
                         !%   Routing module
                         !% =================================================================================================== %!
                         
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                         
-                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                     
-                        end if
+                        q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
+                        & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                         
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         !%   Store simulated net rainfall on domain (optional)
                         !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
                         !%   the part of the rainfall water depth that actually causes runoff. 
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         
                         if (setup%save_net_prcp_domain) then
                         
@@ -199,6 +175,24 @@ module md_forward_structure
                             end if
                         
                         end if
+                        
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+                            
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+                                
+                            else
+                            
+                                output%qsim_domain(row, col, t) = q(row, col)
+                            
+                            end if
+
+                        end if
                     
                     end if !% [ END IF ACTIVE CELL ]
                     
@@ -211,41 +205,10 @@ module md_forward_structure
             !% =============================================================================================================== %!
             
             do g=1, mesh%ng
-            
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                if (setup%sparse_storage) then
-                    
-                    k = mesh%rowcol_to_ind_sparse(row, col)
-                    
-                    output%qsim(g, t) = sparse_q(k)
 
-                else
-                
-                    output%qsim(g, t) = q(row, col)
-                
-                end if
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
             
             end do
-            
-            !% =============================================================================================================== %!
-            !%   Store simulated discharge on domain (optional)
-            !% =============================================================================================================== %!
-            
-            if (setup%save_qsim_domain) then
-            
-                if (setup%sparse_storage) then
-                
-                    output%sparse_qsim_domain(:, t) = sparse_q
-                    
-                else
-                
-                    output%qsim_domain(:, :, t) = q
-                
-                end if
-            
-            end if
             
         end do !% [ END DO TIME ]
 
@@ -270,21 +233,10 @@ module md_forward_structure
         !% =================================================================================================================== %!
         !%   Local Variables (private)
         !% =================================================================================================================== %!
-        real(sp), dimension(:,:), allocatable :: q
-        real(sp), dimension(:), allocatable :: sparse_q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
         & qr, qd, qt, qup, qrout
         integer :: t, i, row, col, k, g
-        
-        if (setup%sparse_storage) then
-            
-            allocate(sparse_q(mesh%nac))
-            
-        else
-            
-            allocate(q(mesh%nrow, mesh%ncol))
-        
-        end if
         
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -381,34 +333,19 @@ module md_forward_structure
                         !%   Routing module
                         !% =================================================================================================== %!
                         
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                         
-                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                     
-                        end if
+                        q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
+                        & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                         
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         !%   Store simulated net rainfall on domain (optional)
                         !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
                         !%   the part of the rainfall water depth that actually causes runoff. 
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         
                         if (setup%save_net_prcp_domain) then
                         
@@ -423,6 +360,24 @@ module md_forward_structure
                             end if
                         
                         end if
+                        
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+                            
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+                                
+                            else
+                            
+                                output%qsim_domain(row, col, t) = q(row, col)
+                            
+                            end if
+
+                        end if
                     
                     end if !% [ END IF ACTIVE CELL ]
                     
@@ -435,41 +390,10 @@ module md_forward_structure
             !% =============================================================================================================== %!
             
             do g=1, mesh%ng
-            
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                if (setup%sparse_storage) then
-                    
-                    k = mesh%rowcol_to_ind_sparse(row, col)
-                    
-                    output%qsim(g, t) = sparse_q(k)
 
-                else
-                
-                    output%qsim(g, t) = q(row, col)
-                
-                end if
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
             
             end do
-            
-            !% =============================================================================================================== %!
-            !%   Store simulated discharge on domain (optional)
-            !% =============================================================================================================== %!
-            
-            if (setup%save_qsim_domain) then
-            
-                if (setup%sparse_storage) then
-                
-                    output%sparse_qsim_domain(:, t) = sparse_q
-                    
-                else
-                
-                    output%qsim_domain(:, :, t) = q
-                
-                end if
-            
-            end if
             
         end do !% [ END DO TIME ]
 
@@ -494,21 +418,10 @@ module md_forward_structure
         !% =================================================================================================================== %!
         !%   Local Variables (private)
         !% =================================================================================================================== %!
-        real(sp), dimension(:,:), allocatable :: q
-        real(sp), dimension(:), allocatable :: sparse_q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
         & qr, ql, qd, qt, qup, qrout
         integer :: t, i, row, col, k, g
-        
-        if (setup%sparse_storage) then
-            
-            allocate(sparse_q(mesh%nac))
-            
-        else
-            
-            allocate(q(mesh%nrow, mesh%ncol))
-        
-        end if
         
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -611,34 +524,19 @@ module md_forward_structure
                         !%   Routing module
                         !% =================================================================================================== %!
                         
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                         
-                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                     
-                        end if
+                        q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
+                        & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                         
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         !%   Store simulated net rainfall on domain (optional)
                         !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
                         !%   the part of the rainfall water depth that actually causes runoff. 
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         
                         if (setup%save_net_prcp_domain) then
                         
@@ -653,6 +551,24 @@ module md_forward_structure
                             end if
                         
                         end if
+                        
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+                            
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+                                
+                            else
+                            
+                                output%qsim_domain(row, col, t) = q(row, col)
+                            
+                            end if
+
+                        end if
                     
                     end if !% [ END IF ACTIVE CELL ]
                     
@@ -665,41 +581,10 @@ module md_forward_structure
             !% =============================================================================================================== %!
             
             do g=1, mesh%ng
-            
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                if (setup%sparse_storage) then
-                    
-                    k = mesh%rowcol_to_ind_sparse(row, col)
-                    
-                    output%qsim(g, t) = sparse_q(k)
 
-                else
-                
-                    output%qsim(g, t) = q(row, col)
-                
-                end if
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
             
             end do
-            
-            !% =============================================================================================================== %!
-            !%   Store simulated discharge on domain (optional)
-            !% =============================================================================================================== %!
-            
-            if (setup%save_qsim_domain) then
-            
-                if (setup%sparse_storage) then
-                
-                    output%sparse_qsim_domain(:, t) = sparse_q
-                    
-                else
-                
-                    output%qsim_domain(:, :, t) = q
-                
-                end if
-            
-            end if
             
         end do !% [ END DO TIME ]
 
@@ -724,20 +609,9 @@ module md_forward_structure
         !% =================================================================================================================== %!
         !%   Local Variables (private)
         !% =================================================================================================================== %!
-        real(sp), dimension(:,:), allocatable :: q
-        real(sp), dimension(:), allocatable :: sparse_q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
         integer :: t, i, row, col, k, g
-        
-        if (setup%sparse_storage) then
-            
-            allocate(sparse_q(mesh%nac))
-            
-        else
-            
-            allocate(q(mesh%nrow, mesh%ncol))
-        
-        end if
         
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -825,34 +699,19 @@ module md_forward_structure
                         !%   Routing module
                         !% =================================================================================================== %!
                         
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                         
-                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                     
-                        end if
+                        q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
+                        & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                         
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         !%   Store simulated net rainfall on domain (optional)
                         !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
                         !%   the part of the rainfall water depth that actually causes runoff. 
-                        !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
                         
                         if (setup%save_net_prcp_domain) then
                         
@@ -867,6 +726,24 @@ module md_forward_structure
                             end if
                         
                         end if
+                        
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+                            
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+                                
+                            else
+                            
+                                output%qsim_domain(row, col, t) = q(row, col)
+                            
+                            end if
+
+                        end if
                     
                     end if !% [ END IF ACTIVE CELL ]
                     
@@ -879,41 +756,10 @@ module md_forward_structure
             !% =============================================================================================================== %!
             
             do g=1, mesh%ng
-            
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                if (setup%sparse_storage) then
-                    
-                    k = mesh%rowcol_to_ind_sparse(row, col)
-                    
-                    output%qsim(g, t) = sparse_q(k)
 
-                else
-                
-                    output%qsim(g, t) = q(row, col)
-                
-                end if
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
             
             end do
-            
-            !% =============================================================================================================== %!
-            !%   Store simulated discharge on domain (optional)
-            !% =============================================================================================================== %!
-            
-            if (setup%save_qsim_domain) then
-            
-                if (setup%sparse_storage) then
-                
-                    output%sparse_qsim_domain(:, t) = sparse_q
-                    
-                else
-                
-                    output%qsim_domain(:, :, t) = q
-                
-                end if
-            
-            end if
             
         end do !% [ END DO TIME ]
 
@@ -939,20 +785,9 @@ module md_forward_structure
         !%   Local Variables (private)
         !% =================================================================================================================== %!
         
-        real(sp), dimension(:,:), allocatable :: q
-        real(sp), dimension(:), allocatable :: sparse_q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
         integer :: t, i, row, col, k, g
-        
-        if (setup%sparse_storage) then
-            
-            allocate(sparse_q(mesh%nac))
-            
-        else
-            
-            allocate(q(mesh%nrow, mesh%ncol))
-        
-        end if
         
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -1037,28 +872,13 @@ module md_forward_structure
                         !%   Routing module
                         !% =================================================================================================== %!
                         
-                        if (setup%sparse_storage) then
-                    
-                            call sparse_upstream_discharge(setup%dt, mesh%dx, &
-                            & mesh%nrow, mesh%ncol, mesh%nac, mesh%flwdir, mesh%flwacc, &
-                            & mesh%rowcol_to_ind_sparse, row, col, sparse_q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                            sparse_q(k) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
-
-                        else
-
-                            call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                            &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-                            
-                            call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
                         
-                            q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
-                            & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
                     
-                        end if
+                        q(row, col) = (qt + qrout * real(mesh%flwacc(row, col) - 1))&
+                        & * mesh%dx * mesh%dx * 0.001_sp / setup%dt
                         
                         !% =================================================================================================== %!
                         !%   Store simulated net rainfall on domain (optional)
@@ -1079,6 +899,24 @@ module md_forward_structure
                             end if
                         
                         end if
+                        
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+                            
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+                                
+                            else
+                            
+                                output%qsim_domain(row, col, t) = q(row, col)
+                            
+                            end if
+
+                        end if
                     
                     end if !% [ END IF ACTIVE CELL ]
                     
@@ -1091,41 +929,10 @@ module md_forward_structure
             !% =============================================================================================================== %!
             
             do g=1, mesh%ng
-            
-                row = mesh%gauge_pos(g, 1)
-                col = mesh%gauge_pos(g, 2)
-                
-                if (setup%sparse_storage) then
-                    
-                    k = mesh%rowcol_to_ind_sparse(row, col)
-                    
-                    output%qsim(g, t) = sparse_q(k)
 
-                else
-                
-                    output%qsim(g, t) = q(row, col)
-                
-                end if
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
             
             end do
-            
-            !% =============================================================================================================== %!
-            !%   Store simulated discharge on domain (optional)
-            !% =============================================================================================================== %!
-            
-            if (setup%save_qsim_domain) then
-            
-                if (setup%sparse_storage) then
-                
-                    output%sparse_qsim_domain(:, t) = sparse_q
-                    
-                else
-                
-                    output%qsim_domain(:, :, t) = q
-                
-                end if
-            
-            end if
             
         end do !% [ END DO TIME ]
 

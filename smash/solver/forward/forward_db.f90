@@ -2088,8 +2088,7 @@ END MODULE MD_VIC_OPERATOR_DIFF
 !%      contains
 !%
 !%      [1] upstream_discharge
-!%      [2] sparse_upstream_discharge
-!%      [3] linear_routing
+!%      [2] linear_routing
 MODULE MD_ROUTING_OPERATOR_DIFF
 !% only : sp
   USE MD_CONSTANT
@@ -2214,130 +2213,6 @@ CONTAINS
     END IF
   END SUBROUTINE UPSTREAM_DISCHARGE
 
-!  Differentiation of sparse_upstream_discharge in forward (tangent) mode (with options fixinterface noISIZE):
-!   variations   of useful results: qup
-!   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D(dt, dx, nrow, ncol, nac, flwdir&
-&   , flwacc, ind_sparse, row, col, q, q_d, qup, qup_d)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q_d
-    REAL(sp), INTENT(OUT) :: qup
-    REAL(sp), INTENT(OUT) :: qup_d
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    REAL*4 :: temp
-    qup = 0._sp
-    IF (flwacc(row, col) .GT. 1) THEN
-      qup_d = 0.0_4
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            k = ind_sparse(row_imd, col_imd)
-            qup_d = qup_d + q_d(k)
-            qup = qup + q(k)
-          END IF
-        END IF
-      END DO
-      temp = 0.001_sp*(dx*dx)*REAL(flwacc(row, col)-1)
-      qup_d = dt*qup_d/temp
-      qup = dt*(qup/temp)
-    ELSE
-      qup_d = 0.0_4
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_D
-
-!  Differentiation of sparse_upstream_discharge in reverse (adjoint) mode (with options fixinterface noISIZE):
-!   gradient     of useful results: q qup
-!   with respect to varying inputs: q
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B(dt, dx, nrow, ncol, nac, flwdir&
-&   , flwacc, ind_sparse, row, col, q, q_b, qup, qup_b)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), DIMENSION(nac) :: q_b
-    REAL(sp) :: qup
-    REAL(sp) :: qup_b
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    INTEGER :: branch
-    IF (flwacc(row, col) .GT. 1) THEN
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            CALL PUSHINTEGER4(k)
-            k = ind_sparse(row_imd, col_imd)
-            CALL PUSHCONTROL2B(2)
-          ELSE
-            CALL PUSHCONTROL2B(1)
-          END IF
-        ELSE
-          CALL PUSHCONTROL2B(0)
-        END IF
-      END DO
-      qup_b = dt*qup_b/(0.001_sp*dx**2*REAL(flwacc(row, col)-1))
-      DO i=8,1,-1
-        CALL POPCONTROL2B(branch)
-        IF (branch .NE. 0) THEN
-          IF (branch .NE. 1) THEN
-            q_b(k) = q_b(k) + qup_b
-            CALL POPINTEGER4(k)
-          END IF
-        END IF
-      END DO
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE_B
-
-  SUBROUTINE SPARSE_UPSTREAM_DISCHARGE(dt, dx, nrow, ncol, nac, flwdir, &
-&   flwacc, ind_sparse, row, col, q, qup)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: dt, dx
-    INTEGER, INTENT(IN) :: nrow, ncol, nac, row, col
-    INTEGER, DIMENSION(nrow, ncol), INTENT(IN) :: flwdir, flwacc, &
-&   ind_sparse
-    REAL(sp), DIMENSION(nac), INTENT(IN) :: q
-    REAL(sp), INTENT(OUT) :: qup
-    INTEGER :: i, row_imd, col_imd, k
-    INTEGER, DIMENSION(8), SAVE :: dcol=(/0, -1, -1, -1, 0, 1, 1, 1/)
-    INTEGER, DIMENSION(8), SAVE :: drow=(/1, 1, 0, -1, -1, -1, 0, 1/)
-    INTEGER, DIMENSION(8), SAVE :: dkind=(/1, 2, 3, 4, 5, 6, 7, 8/)
-    INTRINSIC REAL
-    qup = 0._sp
-    IF (flwacc(row, col) .GT. 1) THEN
-      DO i=1,8
-        col_imd = col + dcol(i)
-        row_imd = row + drow(i)
-        IF (col_imd .GT. 0 .AND. col_imd .LE. ncol .AND. row_imd .GT. 0 &
-&           .AND. row_imd .LE. nrow) THEN
-          IF (flwdir(row_imd, col_imd) .EQ. dkind(i)) THEN
-            k = ind_sparse(row_imd, col_imd)
-            qup = qup + q(k)
-          END IF
-        END IF
-      END DO
-      qup = qup*dt/(0.001_sp*dx*dx*REAL(flwacc(row, col)-1))
-    END IF
-  END SUBROUTINE SPARSE_UPSTREAM_DISCHARGE
-
 !  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: hr qrout
 !   with respect to varying inputs: qup hr lr
@@ -2422,6 +2297,8 @@ END MODULE MD_ROUTING_OPERATOR_DIFF
 !%
 !%      [1] gr_a_forward
 !%      [2] gr_b_forward
+!%      [2] gr_c_forward
+!%      [2] gr_d_forward
 !%      [3] vic_a_forward
 MODULE MD_FORWARD_STRUCTURE_DIFF
 !% only: sp
@@ -2443,7 +2320,7 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 !% & gr_transfer
 !% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
   USE MD_VIC_OPERATOR_DIFF
-!% only: upstream_discharge, sparse_upstream_discharge, linear_routing
+!% only: upstream_discharge, linear_routing
   USE MD_ROUTING_OPERATOR_DIFF
   IMPLICIT NONE
 
@@ -2476,10 +2353,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
@@ -2490,15 +2365,8 @@ CONTAINS
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL :: temp0
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_d(mesh%nac))
-      ALLOCATE(sparse_q(mesh%nac))
-      output_d%qsim = 0.0_4
-    ELSE
-      ALLOCATE(q_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      output_d%qsim = 0.0_4
-    END IF
+    output_d%qsim = 0.0_4
+    q_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -2592,34 +2460,22 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%flwacc, mesh%&
-&                                        rowcol_to_ind_sparse, row, col&
-&                                        , sparse_q, sparse_q_d, qup, &
-&                                        qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
-&                                 row, col, q, q_d, qup, qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
-            END IF
+            CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_d, qup, qup_d)
+            CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hlr(row, col), states_d%hlr(row, col), &
+&                           qrout, qrout_d)
+            temp = 0.001_sp*(mesh%dx*mesh%dx)
+            temp0 = REAL(mesh%flwacc(row, col) - 1)
+            q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+            q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
           END IF
         END IF
       END DO
@@ -2628,16 +2484,10 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output_d%qsim(g, t) = sparse_q_d(k)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output_d%qsim(g, t) = q_d(row, col)
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output_d%qsim(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%gauge_pos(g&
+&         , 2))
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
     END DO
   END SUBROUTINE GR_A_FORWARD_D
@@ -2671,10 +2521,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
@@ -2685,17 +2533,6 @@ CONTAINS
     INTRINSIC REAL
     REAL*4 :: temp_b
     INTEGER :: branch
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_b(mesh%nac))
-      sparse_q_b = 0.0_4
-      ALLOCATE(sparse_q(mesh%nac))
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      ALLOCATE(q_b(mesh%nrow, mesh%ncol))
-      q_b = 0.0_4
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      CALL PUSHCONTROL1B(0)
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -2717,13 +2554,8 @@ CONTAINS
 !% [ IF PATH ]
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          IF (setup%sparse_storage) THEN
-            CALL PUSHINTEGER4(k)
-            k = mesh%rowcol_to_ind_sparse(row, col)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
+          IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, &
+&             col)
 !% [ END IF ACTIVE CELL ]
 !% ======================================================================================================= %!
 !%   Global/Local active cell
@@ -2795,31 +2627,21 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(3)
-            END IF
+            CALL PUSHREAL4(qup)
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL PUSHREAL4(states%hlr(row, col))
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
+            CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
           END IF
@@ -2827,60 +2649,18 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-      DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          CALL PUSHINTEGER4(k)
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
     END DO
+    q_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          row = mesh%gauge_pos(g, 1)
-          col = mesh%gauge_pos(g, 2)
-          q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-        ELSE
-          sparse_q_b(k) = sparse_q_b(k) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-          CALL POPINTEGER4(k)
-        END IF
+        q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%qsim(g, t)
+        output_b%qsim(g, t) = 0.0_4
       END DO
-      DO 100 i=mesh%nrow*mesh%ncol,1,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) GOTO 100
-        ELSE
-          IF (branch .EQ. 2) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-            sparse_q_b(k) = 0.0_4
-            qt_b = temp_b
-            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
-            CALL POPREAL4(states%hlr(row, col))
-            CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
-&                           row, col), parameters_b%lr(row, col), states&
-&                           %hlr(row, col), states_b%hlr(row, col), &
-&                           qrout, qrout_b)
-            CALL POPREAL4(qup)
-            CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, sparse_q_b, qup, qup_b)
-          ELSE
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
             row = mesh%path(1, i)
             col = mesh%path(2, i)
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -2896,62 +2676,53 @@ CONTAINS
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%flwacc, row, &
 &                               col, q, q_b, qup, qup_b)
-          END IF
-          qr_b = qt_b
-          qd_b = qt_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            prd_b = qd_b
-            l_b = qd_b
-          ELSE
-            l_b = 0.0_4
-            prd_b = 0.0_4
-          END IF
-          CALL POPREAL4(states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                      , col), parameters_b%cft(row, col), states%hft(&
-&                      row, col), states_b%hft(row, col), qr, qr_b)
-          pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-          perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-          CALL POPREAL4(prr)
-          l_b = l_b + prr_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
-&                        exc(row, col), states%hft(row, col), states_b%&
-&                        hft(row, col), l, l_b)
-            CALL POPREAL4(states%hp(row, col))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
-&                          col), parameters_b%cp(row, col), 1000._sp, &
-&                          states%hp(row, col), states_b%hp(row, col), &
-&                          pr, pr_b, perc, perc_b)
-            CALL POPREAL4(en)
+            qr_b = qt_b
+            qd_b = qt_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pn)
+              prd_b = qd_b
+              l_b = qd_b
             ELSE
-              CALL POPREAL4(pn)
+              l_b = 0.0_4
+              prd_b = 0.0_4
+            END IF
+            CALL POPREAL4(states%hft(row, col))
+            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(&
+&                        row, col), parameters_b%cft(row, col), states%&
+&                        hft(row, col), states_b%hft(row, col), qr, qr_b&
+&                       )
+            pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+            perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+            CALL POPREAL4(prr)
+            l_b = l_b + prr_b
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
+&                          exc(row, col), states%hft(row, col), states_b&
+&                          %hft(row, col), l, l_b)
+              CALL POPREAL4(states%hp(row, col))
+              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row&
+&                            , col), parameters_b%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_b%hp(row, col&
+&                            ), pr, pr_b, perc, perc_b)
+              CALL POPREAL4(en)
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL4(pn)
+              ELSE
+                CALL POPREAL4(pn)
+              END IF
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(prcp)
+            ELSE
+              CALL POPREAL4(prcp)
             END IF
           END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(prcp)
-          END IF
         END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) CALL POPINTEGER4(k)
- 100  CONTINUE
+      END DO
     END DO
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DEALLOCATE(q)
-      DEALLOCATE(q_b)
-    ELSE
-      DEALLOCATE(sparse_q)
-      DEALLOCATE(sparse_q_b)
-    END IF
   END SUBROUTINE GR_A_FORWARD_B
 
   SUBROUTINE GR_A_FORWARD(setup, mesh, input_data, parameters, states, &
@@ -2970,19 +2741,13 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC REAL
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q(mesh%nac))
-    ELSE
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3069,35 +2834,33 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-!% =============================================================================================================== %!
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
 !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
 !%   the part of the rainfall water depth that actually causes runoff. 
-!% =============================================================================================================== %!
+!% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
                 output%sparse_net_prcp_domain(k, t) = qt
               ELSE
                 output%net_prcp_domain(row, col, t) = qt
+              END IF
+            END IF
+!% =================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =================================================================================================== %!
+            IF (setup%save_qsim_domain) THEN
+              IF (setup%sparse_storage) THEN
+                output%sparse_qsim_domain(k, t) = q(row, col)
+              ELSE
+                output%qsim_domain(row, col, t) = q(row, col)
               END IF
             END IF
           END IF
@@ -3108,25 +2871,9 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-      IF (setup%save_qsim_domain) THEN
-        IF (setup%sparse_storage) THEN
-          output%sparse_qsim_domain(:, t) = sparse_q
-        ELSE
-          output%qsim_domain(:, :, t) = q
-        END IF
-      END IF
     END DO
   END SUBROUTINE GR_A_FORWARD
 
@@ -3159,10 +2906,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
@@ -3172,15 +2917,8 @@ CONTAINS
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL :: temp0
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_d(mesh%nac))
-      ALLOCATE(sparse_q(mesh%nac))
-      output_d%qsim = 0.0_4
-    ELSE
-      ALLOCATE(q_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      output_d%qsim = 0.0_4
-    END IF
+    output_d%qsim = 0.0_4
+    q_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3271,34 +3009,22 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%flwacc, mesh%&
-&                                        rowcol_to_ind_sparse, row, col&
-&                                        , sparse_q, sparse_q_d, qup, &
-&                                        qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
-&                                 row, col, q, q_d, qup, qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
-            END IF
+            CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_d, qup, qup_d)
+            CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hlr(row, col), states_d%hlr(row, col), &
+&                           qrout, qrout_d)
+            temp = 0.001_sp*(mesh%dx*mesh%dx)
+            temp0 = REAL(mesh%flwacc(row, col) - 1)
+            q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+            q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
           END IF
         END IF
       END DO
@@ -3307,16 +3033,10 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output_d%qsim(g, t) = sparse_q_d(k)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output_d%qsim(g, t) = q_d(row, col)
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output_d%qsim(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%gauge_pos(g&
+&         , 2))
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
     END DO
   END SUBROUTINE GR_B_FORWARD_D
@@ -3352,10 +3072,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
@@ -3365,17 +3083,6 @@ CONTAINS
     INTRINSIC REAL
     REAL*4 :: temp_b
     INTEGER :: branch
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_b(mesh%nac))
-      sparse_q_b = 0.0_4
-      ALLOCATE(sparse_q(mesh%nac))
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      ALLOCATE(q_b(mesh%nrow, mesh%ncol))
-      q_b = 0.0_4
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      CALL PUSHCONTROL1B(0)
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3397,13 +3104,8 @@ CONTAINS
 !% [ IF PATH ]
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          IF (setup%sparse_storage) THEN
-            CALL PUSHINTEGER4(k)
-            k = mesh%rowcol_to_ind_sparse(row, col)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
+          IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, &
+&             col)
 !% [ END IF ACTIVE CELL ]
 !% ======================================================================================================= %!
 !%   Global/Local active cell
@@ -3471,31 +3173,21 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(3)
-            END IF
+            CALL PUSHREAL4(qup)
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL PUSHREAL4(states%hlr(row, col))
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
+            CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
           END IF
@@ -3503,60 +3195,18 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-      DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          CALL PUSHINTEGER4(k)
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
     END DO
+    q_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          row = mesh%gauge_pos(g, 1)
-          col = mesh%gauge_pos(g, 2)
-          q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-        ELSE
-          sparse_q_b(k) = sparse_q_b(k) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-          CALL POPINTEGER4(k)
-        END IF
+        q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%qsim(g, t)
+        output_b%qsim(g, t) = 0.0_4
       END DO
-      DO 100 i=mesh%nrow*mesh%ncol,1,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) GOTO 100
-        ELSE
-          IF (branch .EQ. 2) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-            sparse_q_b(k) = 0.0_4
-            qt_b = temp_b
-            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
-            CALL POPREAL4(states%hlr(row, col))
-            CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
-&                           row, col), parameters_b%lr(row, col), states&
-&                           %hlr(row, col), states_b%hlr(row, col), &
-&                           qrout, qrout_b)
-            CALL POPREAL4(qup)
-            CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, sparse_q_b, qup, qup_b)
-          ELSE
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
             row = mesh%path(1, i)
             col = mesh%path(2, i)
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -3572,65 +3222,56 @@ CONTAINS
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%flwacc, row, &
 &                               col, q, q_b, qup, qup_b)
-          END IF
-          qr_b = qt_b
-          qd_b = qt_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            prd_b = qd_b
-            l_b = qd_b
-          ELSE
-            l_b = 0.0_4
-            prd_b = 0.0_4
-          END IF
-          CALL POPREAL4(states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                      , col), parameters_b%cft(row, col), states%hft(&
-&                      row, col), states_b%hft(row, col), qr, qr_b)
-          pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-          perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-          CALL POPREAL4(prr)
-          l_b = l_b + prr_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
-&                        exc(row, col), states%hft(row, col), states_b%&
-&                        hft(row, col), l, l_b)
-            CALL POPREAL4(states%hp(row, col))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
-&                          col), parameters_b%cp(row, col), 1000._sp, &
-&                          states%hp(row, col), states_b%hp(row, col), &
-&                          pr, pr_b, perc, perc_b)
-            CALL POPREAL4(en)
-            ei_b = -en_b
-            CALL POPREAL4(states%hi(row, col))
-            CALL POPREAL4(pn)
-            CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
-&                            parameters_b%ci(row, col), states%hi(row, &
-&                            col), states_b%hi(row, col), pn, pn_b, ei, &
-&                            ei_b)
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
+            qr_b = qt_b
+            qd_b = qt_b
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              prd_b = qd_b
+              l_b = qd_b
+            ELSE
+              l_b = 0.0_4
+              prd_b = 0.0_4
+            END IF
+            CALL POPREAL4(states%hft(row, col))
+            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(&
+&                        row, col), parameters_b%cft(row, col), states%&
+&                        hft(row, col), states_b%hft(row, col), qr, qr_b&
+&                       )
+            pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+            perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+            CALL POPREAL4(prr)
+            l_b = l_b + prr_b
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
+&                          exc(row, col), states%hft(row, col), states_b&
+&                          %hft(row, col), l, l_b)
+              CALL POPREAL4(states%hp(row, col))
+              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row&
+&                            , col), parameters_b%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_b%hp(row, col&
+&                            ), pr, pr_b, perc, perc_b)
+              CALL POPREAL4(en)
+              ei_b = -en_b
+              CALL POPREAL4(states%hi(row, col))
+              CALL POPREAL4(pn)
+              CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col)&
+&                              , parameters_b%ci(row, col), states%hi(&
+&                              row, col), states_b%hi(row, col), pn, &
+&                              pn_b, ei, ei_b)
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            ELSE
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            END IF
           END IF
         END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) CALL POPINTEGER4(k)
- 100  CONTINUE
+      END DO
     END DO
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DEALLOCATE(q)
-      DEALLOCATE(q_b)
-    ELSE
-      DEALLOCATE(sparse_q)
-      DEALLOCATE(sparse_q_b)
-    END IF
   END SUBROUTINE GR_B_FORWARD_B
 
   SUBROUTINE GR_B_FORWARD(setup, mesh, input_data, parameters, states, &
@@ -3649,18 +3290,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, qt&
 &   , qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     INTRINSIC REAL
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q(mesh%nac))
-    ELSE
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3743,35 +3378,33 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-!% =============================================================================================================== %!
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
 !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
 !%   the part of the rainfall water depth that actually causes runoff. 
-!% =============================================================================================================== %!
+!% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
                 output%sparse_net_prcp_domain(k, t) = qt
               ELSE
                 output%net_prcp_domain(row, col, t) = qt
+              END IF
+            END IF
+!% =================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =================================================================================================== %!
+            IF (setup%save_qsim_domain) THEN
+              IF (setup%sparse_storage) THEN
+                output%sparse_qsim_domain(k, t) = q(row, col)
+              ELSE
+                output%qsim_domain(row, col, t) = q(row, col)
               END IF
             END IF
           END IF
@@ -3782,25 +3415,9 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-      IF (setup%save_qsim_domain) THEN
-        IF (setup%sparse_storage) THEN
-          output%sparse_qsim_domain(:, t) = sparse_q
-        ELSE
-          output%qsim_domain(:, :, t) = q
-        END IF
-      END IF
     END DO
   END SUBROUTINE GR_B_FORWARD
 
@@ -3834,10 +3451,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
 &   ql, qd, qt, qup, qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d&
@@ -3847,15 +3462,8 @@ CONTAINS
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL :: temp0
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_d(mesh%nac))
-      ALLOCATE(sparse_q(mesh%nac))
-      output_d%qsim = 0.0_4
-    ELSE
-      ALLOCATE(q_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      output_d%qsim = 0.0_4
-    END IF
+    output_d%qsim = 0.0_4
+    q_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3952,34 +3560,22 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%flwacc, mesh%&
-&                                        rowcol_to_ind_sparse, row, col&
-&                                        , sparse_q, sparse_q_d, qup, &
-&                                        qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
-&                                 row, col, q, q_d, qup, qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
-            END IF
+            CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_d, qup, qup_d)
+            CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hlr(row, col), states_d%hlr(row, col), &
+&                           qrout, qrout_d)
+            temp = 0.001_sp*(mesh%dx*mesh%dx)
+            temp0 = REAL(mesh%flwacc(row, col) - 1)
+            q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+            q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
           END IF
         END IF
       END DO
@@ -3988,16 +3584,10 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output_d%qsim(g, t) = sparse_q_d(k)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output_d%qsim(g, t) = q_d(row, col)
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output_d%qsim(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%gauge_pos(g&
+&         , 2))
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
     END DO
   END SUBROUTINE GR_C_FORWARD_D
@@ -4034,10 +3624,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
 &   ql, qd, qt, qup, qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b&
@@ -4048,17 +3636,6 @@ CONTAINS
     REAL(sp) :: temp_b
     REAL*4 :: temp_b0
     INTEGER :: branch
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_b(mesh%nac))
-      sparse_q_b = 0.0_4
-      ALLOCATE(sparse_q(mesh%nac))
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      ALLOCATE(q_b(mesh%nrow, mesh%ncol))
-      q_b = 0.0_4
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      CALL PUSHCONTROL1B(0)
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4080,13 +3657,8 @@ CONTAINS
 !% [ IF PATH ]
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          IF (setup%sparse_storage) THEN
-            CALL PUSHINTEGER4(k)
-            k = mesh%rowcol_to_ind_sparse(row, col)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
+          IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, &
+&             col)
 !% [ END IF ACTIVE CELL ]
 !% ======================================================================================================= %!
 !%   Global/Local active cell
@@ -4159,31 +3731,21 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(3)
-            END IF
+            CALL PUSHREAL4(qup)
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL PUSHREAL4(states%hlr(row, col))
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
+            CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
           END IF
@@ -4191,60 +3753,18 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-      DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          CALL PUSHINTEGER4(k)
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
     END DO
+    q_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          row = mesh%gauge_pos(g, 1)
-          col = mesh%gauge_pos(g, 2)
-          q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-        ELSE
-          sparse_q_b(k) = sparse_q_b(k) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-          CALL POPINTEGER4(k)
-        END IF
+        q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%qsim(g, t)
+        output_b%qsim(g, t) = 0.0_4
       END DO
-      DO 100 i=mesh%nrow*mesh%ncol,1,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) GOTO 100
-        ELSE
-          IF (branch .EQ. 2) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            temp_b0 = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-            sparse_q_b(k) = 0.0_4
-            qt_b = temp_b0
-            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b0
-            CALL POPREAL4(states%hlr(row, col))
-            CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
-&                           row, col), parameters_b%lr(row, col), states&
-&                           %hlr(row, col), states_b%hlr(row, col), &
-&                           qrout, qrout_b)
-            CALL POPREAL4(qup)
-            CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, sparse_q_b, qup, qup_b)
-          ELSE
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
             row = mesh%path(1, i)
             col = mesh%path(2, i)
             temp_b0 = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -4260,75 +3780,67 @@ CONTAINS
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%flwacc, row, &
 &                               col, q, q_b, qup, qup_b)
-          END IF
-          qr_b = qt_b
-          ql_b = qt_b
-          qd_b = qt_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            prd_b = qd_b
-            l_b = qd_b
-          ELSE
-            l_b = 0.0_4
-            prd_b = 0.0_4
-          END IF
-          CALL POPREAL4(states%hst(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(row&
-&                      , col), parameters_b%cst(row, col), states%hst(&
-&                      row, col), states_b%hst(row, col), ql, ql_b)
-          CALL POPREAL4(states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                      , col), parameters_b%cft(row, col), states%hft(&
-&                      row, col), states_b%hft(row, col), qr, qr_b)
-          CALL POPREAL4(prl)
-          temp_b = 0.4_sp*0.9_sp*prl_b
-          pr_b = 0.1_sp*prd_b + temp_b
-          perc_b = 0.1_sp*prd_b + temp_b
-          CALL POPREAL4(prr)
-          temp_b = 0.6_sp*0.9_sp*prr_b
-          l_b = l_b + prr_b
-          pr_b = pr_b + temp_b
-          perc_b = perc_b + temp_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
-&                        exc(row, col), states%hft(row, col), states_b%&
-&                        hft(row, col), l, l_b)
-            CALL POPREAL4(states%hp(row, col))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
-&                          col), parameters_b%cp(row, col), 1000._sp, &
-&                          states%hp(row, col), states_b%hp(row, col), &
-&                          pr, pr_b, perc, perc_b)
-            CALL POPREAL4(en)
-            ei_b = -en_b
-            CALL POPREAL4(states%hi(row, col))
-            CALL POPREAL4(pn)
-            CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col), &
-&                            parameters_b%ci(row, col), states%hi(row, &
-&                            col), states_b%hi(row, col), pn, pn_b, ei, &
-&                            ei_b)
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
+            qr_b = qt_b
+            ql_b = qt_b
+            qd_b = qt_b
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              prd_b = qd_b
+              l_b = qd_b
+            ELSE
+              l_b = 0.0_4
+              prd_b = 0.0_4
+            END IF
+            CALL POPREAL4(states%hst(row, col))
+            CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%cst(&
+&                        row, col), parameters_b%cst(row, col), states%&
+&                        hst(row, col), states_b%hst(row, col), ql, ql_b&
+&                       )
+            CALL POPREAL4(states%hft(row, col))
+            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(&
+&                        row, col), parameters_b%cft(row, col), states%&
+&                        hft(row, col), states_b%hft(row, col), qr, qr_b&
+&                       )
+            CALL POPREAL4(prl)
+            temp_b = 0.4_sp*0.9_sp*prl_b
+            pr_b = 0.1_sp*prd_b + temp_b
+            perc_b = 0.1_sp*prd_b + temp_b
+            CALL POPREAL4(prr)
+            temp_b = 0.6_sp*0.9_sp*prr_b
+            l_b = l_b + prr_b
+            pr_b = pr_b + temp_b
+            perc_b = perc_b + temp_b
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL GR_EXCHANGE_B(parameters%exc(row, col), parameters_b%&
+&                          exc(row, col), states%hft(row, col), states_b&
+&                          %hft(row, col), l, l_b)
+              CALL POPREAL4(states%hp(row, col))
+              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row&
+&                            , col), parameters_b%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_b%hp(row, col&
+&                            ), pr, pr_b, perc, perc_b)
+              CALL POPREAL4(en)
+              ei_b = -en_b
+              CALL POPREAL4(states%hi(row, col))
+              CALL POPREAL4(pn)
+              CALL GR_INTERCEPTION_B(prcp, pet, parameters%ci(row, col)&
+&                              , parameters_b%ci(row, col), states%hi(&
+&                              row, col), states_b%hi(row, col), pn, &
+&                              pn_b, ei, ei_b)
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            ELSE
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            END IF
           END IF
         END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) CALL POPINTEGER4(k)
- 100  CONTINUE
+      END DO
     END DO
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DEALLOCATE(q)
-      DEALLOCATE(q_b)
-    ELSE
-      DEALLOCATE(sparse_q)
-      DEALLOCATE(sparse_q_b)
-    END IF
   END SUBROUTINE GR_C_FORWARD_B
 
   SUBROUTINE GR_C_FORWARD(setup, mesh, input_data, parameters, states, &
@@ -4347,18 +3859,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
 &   ql, qd, qt, qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     INTRINSIC REAL
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q(mesh%nac))
-    ELSE
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4446,35 +3952,33 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-!% =============================================================================================================== %!
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
 !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
 !%   the part of the rainfall water depth that actually causes runoff. 
-!% =============================================================================================================== %!
+!% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
                 output%sparse_net_prcp_domain(k, t) = qt
               ELSE
                 output%net_prcp_domain(row, col, t) = qt
+              END IF
+            END IF
+!% =================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =================================================================================================== %!
+            IF (setup%save_qsim_domain) THEN
+              IF (setup%sparse_storage) THEN
+                output%sparse_qsim_domain(k, t) = q(row, col)
+              ELSE
+                output%qsim_domain(row, col, t) = q(row, col)
               END IF
             END IF
           END IF
@@ -4485,25 +3989,9 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-      IF (setup%save_qsim_domain) THEN
-        IF (setup%sparse_storage) THEN
-          output%sparse_qsim_domain(:, t) = sparse_q
-        ELSE
-          output%qsim_domain(:, :, t) = q
-        END IF
-      END IF
     END DO
   END SUBROUTINE GR_C_FORWARD
 
@@ -4534,10 +4022,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, prr_d, qr_d, qt_d, qup_d, &
 &   qrout_d
@@ -4547,15 +4033,8 @@ CONTAINS
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL :: temp0
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_d(mesh%nac))
-      ALLOCATE(sparse_q(mesh%nac))
-      output_d%qsim = 0.0_4
-    ELSE
-      ALLOCATE(q_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      output_d%qsim = 0.0_4
-    END IF
+    output_d%qsim = 0.0_4
+    q_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4632,34 +4111,22 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%flwacc, mesh%&
-&                                        rowcol_to_ind_sparse, row, col&
-&                                        , sparse_q, sparse_q_d, qup, &
-&                                        qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
-&                                 row, col, q, q_d, qup, qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
-            END IF
+            CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_d, qup, qup_d)
+            CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hlr(row, col), states_d%hlr(row, col), &
+&                           qrout, qrout_d)
+            temp = 0.001_sp*(mesh%dx*mesh%dx)
+            temp0 = REAL(mesh%flwacc(row, col) - 1)
+            q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+            q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
           END IF
         END IF
       END DO
@@ -4668,16 +4135,10 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output_d%qsim(g, t) = sparse_q_d(k)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output_d%qsim(g, t) = q_d(row, col)
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output_d%qsim(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%gauge_pos(g&
+&         , 2))
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
     END DO
   END SUBROUTINE GR_D_FORWARD_D
@@ -4710,10 +4171,8 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, prr_b, qr_b, qt_b, qup_b, &
 &   qrout_b
@@ -4723,17 +4182,6 @@ CONTAINS
     INTRINSIC REAL
     REAL*4 :: temp_b
     INTEGER :: branch
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_b(mesh%nac))
-      sparse_q_b = 0.0_4
-      ALLOCATE(sparse_q(mesh%nac))
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      ALLOCATE(q_b(mesh%nrow, mesh%ncol))
-      q_b = 0.0_4
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      CALL PUSHCONTROL1B(0)
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4754,13 +4202,8 @@ CONTAINS
 !% [ IF PATH ]
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          IF (setup%sparse_storage) THEN
-            CALL PUSHINTEGER4(k)
-            k = mesh%rowcol_to_ind_sparse(row, col)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
+          IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, &
+&             col)
 !% [ END IF ACTIVE CELL ]
 !% ======================================================================================================= %!
 !%   Global/Local active cell
@@ -4819,31 +4262,21 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(3)
-            END IF
+            CALL PUSHREAL4(qup)
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL PUSHREAL4(states%hlr(row, col))
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
+            CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
           END IF
@@ -4851,60 +4284,18 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-      DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          CALL PUSHINTEGER4(k)
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
     END DO
+    q_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          row = mesh%gauge_pos(g, 1)
-          col = mesh%gauge_pos(g, 2)
-          q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-        ELSE
-          sparse_q_b(k) = sparse_q_b(k) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-          CALL POPINTEGER4(k)
-        END IF
+        q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%qsim(g, t)
+        output_b%qsim(g, t) = 0.0_4
       END DO
-      DO 100 i=mesh%nrow*mesh%ncol,1,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) GOTO 100
-        ELSE
-          IF (branch .EQ. 2) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-            sparse_q_b(k) = 0.0_4
-            qt_b = temp_b
-            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
-            CALL POPREAL4(states%hlr(row, col))
-            CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
-&                           row, col), parameters_b%lr(row, col), states&
-&                           %hlr(row, col), states_b%hlr(row, col), &
-&                           qrout, qrout_b)
-            CALL POPREAL4(qup)
-            CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, sparse_q_b, qup, qup_b)
-          ELSE
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
             row = mesh%path(1, i)
             col = mesh%path(2, i)
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -4920,49 +4311,40 @@ CONTAINS
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%flwacc, row, &
 &                               col, q, q_b, qup, qup_b)
-          END IF
-          qr_b = qt_b
-          CALL POPREAL4(states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(row&
-&                      , col), parameters_b%cft(row, col), states%hft(&
-&                      row, col), states_b%hft(row, col), qr, qr_b)
-          CALL POPREAL4(prr)
-          pr_b = prr_b
-          perc_b = prr_b
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(states%hp(row, col))
-            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row, &
-&                          col), parameters_b%cp(row, col), 1000._sp, &
-&                          states%hp(row, col), states_b%hp(row, col), &
-&                          pr, pr_b, perc, perc_b)
-            CALL POPREAL4(en)
+            qr_b = qt_b
+            CALL POPREAL4(states%hft(row, col))
+            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%cft(&
+&                        row, col), parameters_b%cft(row, col), states%&
+&                        hft(row, col), states_b%hft(row, col), qr, qr_b&
+&                       )
+            CALL POPREAL4(prr)
+            pr_b = prr_b
+            perc_b = prr_b
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pn)
+              CALL POPREAL4(states%hp(row, col))
+              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%cp(row&
+&                            , col), parameters_b%cp(row, col), 1000._sp&
+&                            , states%hp(row, col), states_b%hp(row, col&
+&                            ), pr, pr_b, perc, perc_b)
+              CALL POPREAL4(en)
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPREAL4(pn)
+              ELSE
+                CALL POPREAL4(pn)
+              END IF
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(prcp)
             ELSE
-              CALL POPREAL4(pn)
+              CALL POPREAL4(prcp)
             END IF
           END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(prcp)
-          END IF
         END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) CALL POPINTEGER4(k)
- 100  CONTINUE
+      END DO
     END DO
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DEALLOCATE(q)
-      DEALLOCATE(q_b)
-    ELSE
-      DEALLOCATE(sparse_q)
-      DEALLOCATE(sparse_q_b)
-    END IF
   END SUBROUTINE GR_D_FORWARD_B
 
   SUBROUTINE GR_D_FORWARD(setup, mesh, input_data, parameters, states, &
@@ -4981,18 +4363,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
     REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MIN
     INTRINSIC MAX
     INTRINSIC REAL
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q(mesh%nac))
-    ELSE
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5065,35 +4441,33 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
-!% =============================================================================================================== %!
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
 !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
 !%   the part of the rainfall water depth that actually causes runoff. 
-!% =============================================================================================================== %!
+!% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
                 output%sparse_net_prcp_domain(k, t) = qt
               ELSE
                 output%net_prcp_domain(row, col, t) = qt
+              END IF
+            END IF
+!% =================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =================================================================================================== %!
+            IF (setup%save_qsim_domain) THEN
+              IF (setup%sparse_storage) THEN
+                output%sparse_qsim_domain(k, t) = q(row, col)
+              ELSE
+                output%qsim_domain(row, col, t) = q(row, col)
               END IF
             END IF
           END IF
@@ -5104,25 +4478,9 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-      IF (setup%save_qsim_domain) THEN
-        IF (setup%sparse_storage) THEN
-          output%sparse_qsim_domain(:, t) = sparse_q
-        ELSE
-          output%qsim_domain(:, :, t) = q
-        END IF
-      END IF
     END DO
   END SUBROUTINE GR_D_FORWARD
 
@@ -5158,25 +4516,16 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_d
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d
     REAL(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
     REAL(sp) :: runoff_d, qi_d, qb_d, qt_d, qup_d, qrout_d
     INTEGER :: t, i, row, col, k, g
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL :: temp0
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_d(mesh%nac))
-      ALLOCATE(sparse_q(mesh%nac))
-      output_d%qsim = 0.0_4
-    ELSE
-      ALLOCATE(q_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      output_d%qsim = 0.0_4
-    END IF
+    output_d%qsim = 0.0_4
+    q_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5264,34 +4613,22 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%&
-&                                        nrow, mesh%ncol, mesh%nac, mesh&
-&                                        %flwdir, mesh%flwacc, mesh%&
-&                                        rowcol_to_ind_sparse, row, col&
-&                                        , sparse_q, sparse_q_d, qup, &
-&                                        qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              sparse_q_d(k) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              sparse_q(k) = temp*((qt+temp0*qrout)/setup%dt)
-            ELSE
-              CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, &
-&                                 mesh%ncol, mesh%flwdir, mesh%flwacc, &
-&                                 row, col, q, q_d, qup, qup_d)
-              CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
-&                             row, col), parameters_d%lr(row, col), &
-&                             states%hlr(row, col), states_d%hlr(row, &
-&                             col), qrout, qrout_d)
-              temp = 0.001_sp*(mesh%dx*mesh%dx)
-              temp0 = REAL(mesh%flwacc(row, col) - 1)
-              q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
-              q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
-            END IF
+            CALL UPSTREAM_DISCHARGE_D(setup%dt, mesh%dx, mesh%nrow, mesh&
+&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
+&                               col, q, q_d, qup, qup_d)
+            CALL LINEAR_ROUTING_D(setup%dt, qup, qup_d, parameters%lr(&
+&                           row, col), parameters_d%lr(row, col), states&
+&                           %hlr(row, col), states_d%hlr(row, col), &
+&                           qrout, qrout_d)
+            temp = 0.001_sp*(mesh%dx*mesh%dx)
+            temp0 = REAL(mesh%flwacc(row, col) - 1)
+            q_d(row, col) = temp*(qt_d+temp0*qrout_d)/setup%dt
+            q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
           END IF
         END IF
       END DO
@@ -5300,16 +4637,10 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output_d%qsim(g, t) = sparse_q_d(k)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output_d%qsim(g, t) = q_d(row, col)
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output_d%qsim(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%gauge_pos(g&
+&         , 2))
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
     END DO
   END SUBROUTINE VIC_A_FORWARD_D
@@ -5349,27 +4680,14 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q_b
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     REAL(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
     REAL(sp) :: runoff_b, qi_b, qb_b, qt_b, qup_b, qrout_b
     INTEGER :: t, i, row, col, k, g
     INTRINSIC REAL
     REAL*4 :: temp_b
     INTEGER :: branch
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q_b(mesh%nac))
-      sparse_q_b = 0.0_4
-      ALLOCATE(sparse_q(mesh%nac))
-      CALL PUSHCONTROL1B(1)
-    ELSE
-      ALLOCATE(q_b(mesh%nrow, mesh%ncol))
-      q_b = 0.0_4
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-      CALL PUSHCONTROL1B(0)
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5389,13 +4707,8 @@ CONTAINS
 !% [ IF PATH ]
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          IF (setup%sparse_storage) THEN
-            CALL PUSHINTEGER4(k)
-            k = mesh%rowcol_to_ind_sparse(row, col)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHCONTROL1B(1)
-          END IF
+          IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, &
+&             col)
 !% [ END IF ACTIVE CELL ]
 !% ======================================================================================================= %!
 !%   Global/Local active cell
@@ -5458,31 +4771,21 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL PUSHREAL4(qup)
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(2)
-            ELSE
-              CALL PUSHREAL4(qup)
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL PUSHREAL4(states%hlr(row, col))
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-              CALL PUSHCONTROL2B(3)
-            END IF
+            CALL PUSHREAL4(qup)
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL PUSHREAL4(states%hlr(row, col))
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
+!% =================================================================================================== %!
+!%   Store simulated net rainfall on domain (optional)
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
+!%   the part of the rainfall water depth that actually causes runoff. 
+!% =================================================================================================== %!
+            CALL PUSHCONTROL2B(2)
           ELSE
             CALL PUSHCONTROL2B(1)
           END IF
@@ -5490,60 +4793,18 @@ CONTAINS
           CALL PUSHCONTROL2B(0)
         END IF
       END DO
-!% [ END DO SPACE ]
-!% =============================================================================================================== %!
-!%   Store simulated discharge at gauge
-!% =============================================================================================================== %!
-      DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          CALL PUSHINTEGER4(k)
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
     END DO
+    q_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          row = mesh%gauge_pos(g, 1)
-          col = mesh%gauge_pos(g, 2)
-          q_b(row, col) = q_b(row, col) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-        ELSE
-          sparse_q_b(k) = sparse_q_b(k) + output_b%qsim(g, t)
-          output_b%qsim(g, t) = 0.0_4
-          CALL POPINTEGER4(k)
-        END IF
+        q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%qsim(g, t)
+        output_b%qsim(g, t) = 0.0_4
       END DO
-      DO 100 i=mesh%nrow*mesh%ncol,1,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
-        IF (branch .LT. 2) THEN
-          IF (branch .EQ. 0) GOTO 100
-        ELSE
-          IF (branch .EQ. 2) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            temp_b = mesh%dx**2*0.001_sp*sparse_q_b(k)/setup%dt
-            sparse_q_b(k) = 0.0_4
-            qt_b = temp_b
-            qrout_b = REAL(mesh%flwacc(row, col)-1)*temp_b
-            CALL POPREAL4(states%hlr(row, col))
-            CALL LINEAR_ROUTING_B(setup%dt, qup, qup_b, parameters%lr(&
-&                           row, col), parameters_b%lr(row, col), states&
-&                           %hlr(row, col), states_b%hlr(row, col), &
-&                           qrout, qrout_b)
-            CALL POPREAL4(qup)
-            CALL SPARSE_UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, sparse_q_b, qup, qup_b)
-          ELSE
+        IF (branch .NE. 0) THEN
+          IF (branch .NE. 1) THEN
             row = mesh%path(1, i)
             col = mesh%path(2, i)
             temp_b = mesh%dx**2*0.001_sp*q_b(row, col)/setup%dt
@@ -5559,71 +4820,63 @@ CONTAINS
             CALL UPSTREAM_DISCHARGE_B(setup%dt, mesh%dx, mesh%nrow, mesh&
 &                               %ncol, mesh%flwdir, mesh%flwacc, row, &
 &                               col, q, q_b, qup, qup_b)
-          END IF
-          runoff_b = qt_b
-          qi_b = qt_b
-          qb_b = qt_b
-          CALL POPREAL4(states%hlsl(row, col))
-          CALL VIC_BASEFLOW_B(parameters%clsl(row, col), parameters_b%&
-&                       clsl(row, col), parameters%ds(row, col), &
-&                       parameters_b%ds(row, col), parameters%dsm(row, &
-&                       col), parameters_b%dsm(row, col), parameters%ws(&
-&                       row, col), parameters_b%ws(row, col), states%&
-&                       hlsl(row, col), states_b%hlsl(row, col), qb, &
-&                       qb_b)
-          CALL POPREAL4(states%husl2(row, col))
-          CALL VIC_INTERFLOW_B(5._sp, parameters%cusl2(row, col), &
-&                        parameters_b%cusl2(row, col), states%husl2(row&
-&                        , col), states_b%husl2(row, col), qi, qi_b)
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(states%husl1(row, col))
-            CALL POPREAL4(states%husl2(row, col))
+            runoff_b = qt_b
+            qi_b = qt_b
+            qb_b = qt_b
             CALL POPREAL4(states%hlsl(row, col))
-            CALL VIC_VERTICAL_TRANSFER_B(pet, parameters%cusl1(row, col)&
-&                                  , parameters_b%cusl1(row, col), &
-&                                  parameters%cusl2(row, col), &
-&                                  parameters_b%cusl2(row, col), &
-&                                  parameters%clsl(row, col), &
-&                                  parameters_b%clsl(row, col), &
-&                                  parameters%ks(row, col), parameters_b&
-&                                  %ks(row, col), states%husl1(row, col)&
-&                                  , states_b%husl1(row, col), states%&
-&                                  husl2(row, col), states_b%husl2(row, &
-&                                  col), states%hlsl(row, col), states_b&
-&                                  %hlsl(row, col))
-            CALL POPREAL4(states%husl1(row, col))
+            CALL VIC_BASEFLOW_B(parameters%clsl(row, col), parameters_b%&
+&                         clsl(row, col), parameters%ds(row, col), &
+&                         parameters_b%ds(row, col), parameters%dsm(row&
+&                         , col), parameters_b%dsm(row, col), parameters&
+&                         %ws(row, col), parameters_b%ws(row, col), &
+&                         states%hlsl(row, col), states_b%hlsl(row, col)&
+&                         , qb, qb_b)
             CALL POPREAL4(states%husl2(row, col))
-            CALL VIC_INFILTRATION_B(prcp, parameters%cusl1(row, col), &
-&                             parameters_b%cusl1(row, col), parameters%&
-&                             cusl2(row, col), parameters_b%cusl2(row, &
-&                             col), parameters%b(row, col), parameters_b&
-&                             %b(row, col), states%husl1(row, col), &
-&                             states_b%husl1(row, col), states%husl2(row&
-&                             , col), states_b%husl2(row, col), runoff, &
-&                             runoff_b)
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
+            CALL VIC_INTERFLOW_B(5._sp, parameters%cusl2(row, col), &
+&                          parameters_b%cusl2(row, col), states%husl2(&
+&                          row, col), states_b%husl2(row, col), qi, qi_b&
+&                         )
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(states%husl1(row, col))
+              CALL POPREAL4(states%husl2(row, col))
+              CALL POPREAL4(states%hlsl(row, col))
+              CALL VIC_VERTICAL_TRANSFER_B(pet, parameters%cusl1(row, &
+&                                    col), parameters_b%cusl1(row, col)&
+&                                    , parameters%cusl2(row, col), &
+&                                    parameters_b%cusl2(row, col), &
+&                                    parameters%clsl(row, col), &
+&                                    parameters_b%clsl(row, col), &
+&                                    parameters%ks(row, col), &
+&                                    parameters_b%ks(row, col), states%&
+&                                    husl1(row, col), states_b%husl1(row&
+&                                    , col), states%husl2(row, col), &
+&                                    states_b%husl2(row, col), states%&
+&                                    hlsl(row, col), states_b%hlsl(row, &
+&                                    col))
+              CALL POPREAL4(states%husl1(row, col))
+              CALL POPREAL4(states%husl2(row, col))
+              CALL VIC_INFILTRATION_B(prcp, parameters%cusl1(row, col), &
+&                               parameters_b%cusl1(row, col), parameters&
+&                               %cusl2(row, col), parameters_b%cusl2(row&
+&                               , col), parameters%b(row, col), &
+&                               parameters_b%b(row, col), states%husl1(&
+&                               row, col), states_b%husl1(row, col), &
+&                               states%husl2(row, col), states_b%husl2(&
+&                               row, col), runoff, runoff_b)
+            END IF
+            CALL POPCONTROL1B(branch)
+            IF (branch .EQ. 0) THEN
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            ELSE
+              CALL POPREAL4(pet)
+              CALL POPREAL4(prcp)
+            END IF
           END IF
         END IF
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) CALL POPINTEGER4(k)
- 100  CONTINUE
+      END DO
     END DO
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      DEALLOCATE(q)
-      DEALLOCATE(q_b)
-    ELSE
-      DEALLOCATE(sparse_q)
-      DEALLOCATE(sparse_q_b)
-    END IF
   END SUBROUTINE VIC_A_FORWARD_B
 
   SUBROUTINE VIC_A_FORWARD(setup, mesh, input_data, parameters, states, &
@@ -5642,16 +4895,10 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: q
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: sparse_q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q
     REAL(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
     INTEGER :: t, i, row, col, k, g
     INTRINSIC REAL
-    IF (setup%sparse_storage) THEN
-      ALLOCATE(sparse_q(mesh%nac))
-    ELSE
-      ALLOCATE(q(mesh%nrow, mesh%ncol))
-    END IF
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5724,25 +4971,13 @@ CONTAINS
 !% =================================================================================================== %!
 !%   Routing module
 !% =================================================================================================== %!
-            IF (setup%sparse_storage) THEN
-              CALL SPARSE_UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%&
-&                                      nrow, mesh%ncol, mesh%nac, mesh%&
-&                                      flwdir, mesh%flwacc, mesh%&
-&                                      rowcol_to_ind_sparse, row, col, &
-&                                      sparse_q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              sparse_q(k) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            ELSE
-              CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh&
-&                               %ncol, mesh%flwdir, mesh%flwacc, row, &
-&                               col, q, qup)
-              CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col)&
-&                           , states%hlr(row, col), qrout)
-              q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*&
-&               mesh%dx*mesh%dx*0.001_sp/setup%dt
-            END IF
+            CALL UPSTREAM_DISCHARGE(setup%dt, mesh%dx, mesh%nrow, mesh%&
+&                             ncol, mesh%flwdir, mesh%flwacc, row, col, &
+&                             q, qup)
+            CALL LINEAR_ROUTING(setup%dt, qup, parameters%lr(row, col), &
+&                         states%hlr(row, col), qrout)
+            q(row, col) = (qt+qrout*REAL(mesh%flwacc(row, col)-1))*mesh%&
+&             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
 !%   The net rainfall over a surface is a fictitious quantity that corresponds to 
@@ -5755,6 +4990,16 @@ CONTAINS
                 output%net_prcp_domain(row, col, t) = qt
               END IF
             END IF
+!% =================================================================================================== %!
+!%   Store simulated discharge on domain (optional)
+!% =================================================================================================== %!
+            IF (setup%save_qsim_domain) THEN
+              IF (setup%sparse_storage) THEN
+                output%sparse_qsim_domain(k, t) = q(row, col)
+              ELSE
+                output%qsim_domain(row, col, t) = q(row, col)
+              END IF
+            END IF
           END IF
         END IF
       END DO
@@ -5763,25 +5008,9 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        row = mesh%gauge_pos(g, 1)
-        col = mesh%gauge_pos(g, 2)
-        IF (setup%sparse_storage) THEN
-          k = mesh%rowcol_to_ind_sparse(row, col)
-          output%qsim(g, t) = sparse_q(k)
-        ELSE
-          output%qsim(g, t) = q(row, col)
-        END IF
+        output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)&
+&         )
       END DO
-!% =============================================================================================================== %!
-!%   Store simulated discharge on domain (optional)
-!% =============================================================================================================== %!
-      IF (setup%save_qsim_domain) THEN
-        IF (setup%sparse_storage) THEN
-          output%sparse_qsim_domain(:, t) = sparse_q
-        ELSE
-          output%qsim_domain(:, :, t) = q
-        END IF
-      END IF
     END DO
   END SUBROUTINE VIC_A_FORWARD
 
