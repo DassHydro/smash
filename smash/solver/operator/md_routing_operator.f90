@@ -4,8 +4,7 @@
 !%      contains
 !%
 !%      [1] upstream_discharge
-!%      [2] sparse_upstream_discharge
-!%      [3] linear_routing
+!%      [2] linear_routing
 
 module md_routing_operator
     
@@ -59,54 +58,6 @@ module md_routing_operator
             end if
         
         end subroutine upstream_discharge
-        
-        
-        subroutine sparse_upstream_discharge(dt, dx, nrow, ncol, nac, &
-        & flwdir, flwacc, ind_sparse, row, col, q, qup)
-            
-            implicit none
-
-            real(sp), intent(in) :: dt, dx
-            integer, intent(in) :: nrow, ncol, nac, row, col
-            integer, dimension(nrow, ncol), intent(in) :: flwdir, flwacc, ind_sparse
-            real(sp), dimension(nac), intent(in) :: q
-            real(sp), intent(out) :: qup
-            
-            integer :: i, row_imd, col_imd, k
-            integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
-            integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-            integer, dimension(8) :: dkind = [1, 2, 3, 4, 5, 6, 7, 8]
-            
-            qup = 0._sp
-            
-            if (flwacc(row, col) .gt. 1) then
-            
-                do i=1, 8
-                    
-                    col_imd = col + dcol(i)
-                    row_imd = row + drow(i)
-                    
-                    if (col_imd .gt. 0 .and. col_imd .le. ncol .and. &
-                    &   row_imd .gt. 0 .and. row_imd .le. nrow) then
-                    
-                        if (flwdir(row_imd, col_imd) .eq. dkind(i)) then
-                            
-                            k = ind_sparse(row_imd, col_imd)
-                            qup = qup + q(k)
-                            
-                        end if
-                        
-                    end if
-                
-                end do
-                
-                qup = (qup * dt) / &
-                & (0.001_sp * dx * dx * real(flwacc(row, col) - 1))
-            
-            end if
-        
-        end subroutine sparse_upstream_discharge
-
 
         subroutine linear_routing(dt, qup, lr, hr, qrout)
             
