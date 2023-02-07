@@ -152,7 +152,7 @@ class Model(object):
         """
         The setup of the Model.
 
-        The model setup is represented as a SetupDT object. See `SetupDT <smash.solver._mwd_setup.SetupDT>`.
+        The model setup is represented as a SetupDT object. See``SetupDT <smash.solver._mwd_setup.SetupDT>`.
 
         Examples
         --------

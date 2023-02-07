@@ -96,7 +96,7 @@ def _ann_optimize(
         _training_message(instance, control_vector, nx, net)
 
     # train the network
-    net._fit_p2d(
+    net._fit_d2p(
         x_train,
         instance,
         control_vector,
