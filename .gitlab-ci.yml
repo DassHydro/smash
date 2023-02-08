@@ -16,7 +16,7 @@ build-code:
   script: 
     - make
   artifacts:
-    path:
+    paths:
       - smash/
     expire_in: 1 hour
 
