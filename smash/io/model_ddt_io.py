@@ -23,10 +23,12 @@ def _default_save_data(structure: str):
         "parameters": STRUCTURE_PARAMETERS[
             structure
         ],  # only calibrated Model param will be stored
-        "states": STRUCTURE_STATES[
-            structure
-        ],  # only last time step of calibrated Model states will be stored
-        "output": ["qsim"],
+        "output": [
+            {
+                "fstates": STRUCTURE_STATES[structure]
+            },  # only final calibrated Model states will be stored
+            "qsim",
+        ],
     }
 
 
@@ -34,32 +36,50 @@ def _parse_selected_derived_type_to_hdf5(derived_type, list_attr, hdf5_ins):
 
     for attr in list_attr:
 
-        try:
+        if isinstance(attr, str):
 
-            value = getattr(derived_type, attr)
+            try:
 
-            if isinstance(value, np.ndarray):
+                value = getattr(derived_type, attr)
 
-                if value.dtype == "object" or value.dtype.char == "U":
+                if isinstance(value, np.ndarray):
 
-                    value = value.astype("S")
+                    if value.dtype == "object" or value.dtype.char == "U":
 
-                hdf5_ins.create_dataset(
-                    attr,
-                    shape=value.shape,
-                    dtype=value.dtype,
-                    data=value,
-                    compression="gzip",
-                    chunks=True,
-                )
+                        value = value.astype("S")
 
-            else:
+                    hdf5_ins.create_dataset(
+                        attr,
+                        shape=value.shape,
+                        dtype=value.dtype,
+                        data=value,
+                        compression="gzip",
+                        chunks=True,
+                    )
 
-                hdf5_ins.attrs[attr] = value
+                else:
 
-        except:
+                    hdf5_ins.attrs[attr] = value
 
-            pass
+            except:
+
+                pass
+
+        elif isinstance(attr, dict):
+
+            for derived_type_key, list_attr_imd in attr.items():
+
+                try:
+
+                    derived_type_imd = getattr(derived_type, derived_type_key)
+
+                    _parse_selected_derived_type_to_hdf5(
+                        derived_type_imd, list_attr_imd, hdf5_ins
+                    )
+
+                except:
+
+                    pass
 
 
 def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
@@ -76,8 +96,8 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
     - ``active_cell``, ``area``, ``code``, ``dx``, ``flwdir`` from `Model.mesh`
     - ``mean_prcp``, ``mean_pet``, ``qobs`` from `Model.input_data`
     - ``qsim`` from `Model.output`
+    - The final Model states (depending upon the Model structure) from `Model.output.fstates`
     - The calibrated Model parameters (depending upon the Model structure) from `Model.parameters`
-    - The final Model states (depending upon the Model structure) from `Model.states`
 
     Subsidiary data can be added by filling in ``sub_data``.
 
@@ -123,9 +143,25 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
     with h5py.File(path, "w") as f:
 
+        if not sub_only:
+
+            save_data = _default_save_data(model.setup.structure)
+
+            for derived_type_key, list_attr in save_data.items():
+
+                derived_type = getattr(model, derived_type_key)
+
+                _parse_selected_derived_type_to_hdf5(derived_type, list_attr, f)
+
         if sub_data is not None:
 
             for attr, value in sub_data.items():
+
+                if (attr in f) or (attr in f.attrs):
+
+                    warnings.warn(f"Ignore updating existing key ({attr})")
+
+                    continue
 
                 if isinstance(value, np.ndarray):
 
@@ -151,16 +187,6 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
                     except:
                         warnings.warn(f"Can not store to HDF5: {attr}")
-
-        if not sub_only:
-
-            save_data = _default_save_data(model.setup.structure)
-
-            for derived_type_key, list_attr in save_data.items():
-
-                derived_type = getattr(model, derived_type_key)
-
-                _parse_selected_derived_type_to_hdf5(derived_type, list_attr, f)
 
         f.close()
 
