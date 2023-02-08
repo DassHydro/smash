@@ -239,7 +239,7 @@ def read_ddt(path: str) -> dict:
 
         keys = list(f.keys())
 
-        values = [f[key][:] for key in keys]
+        values = [f[key][:].astype("U") if f[key][:].dtype.char=="S" else f[key][:] for key in keys]
 
         attr_keys = list(f.attrs.keys())
 
