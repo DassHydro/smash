@@ -37,6 +37,6 @@ Model derived data
 .. autosummary::
    :toctree: smash/
 
-   save_ddt
-   read_ddt
+   save_model_ddt
+   read_model_ddt
 

@@ -11,7 +11,7 @@ import warnings
 import h5py
 import numpy as np
 
-__all__ = ["save_ddt", "read_ddt"]
+__all__ = ["save_model_ddt", "read_model_ddt"]
 
 
 def _default_save_data(structure: str):
@@ -23,16 +23,22 @@ def _default_save_data(structure: str):
         "parameters": STRUCTURE_PARAMETERS[
             structure
         ],  # only calibrated Model param will be stored
+        "states": STRUCTURE_STATES[
+            structure
+        ],  # only initial Model states will be stored
         "output": [
             {
                 "fstates": STRUCTURE_STATES[structure]
-            },  # only final calibrated Model states will be stored
+            },  # only final Model states will be stored
             "qsim",
         ],
     }
 
 
-def _parse_selected_derived_type_to_hdf5(derived_type, list_attr, hdf5_ins):
+def _parse_selected_derived_type_to_hdf5(
+    derived_type, list_attr, hdf5_ins, attr_suffix=""
+):
+    # TODO: clean function for attr_suffix
 
     for attr in list_attr:
 
@@ -41,6 +47,8 @@ def _parse_selected_derived_type_to_hdf5(derived_type, list_attr, hdf5_ins):
             try:
 
                 value = getattr(derived_type, attr)
+
+                attr += attr_suffix
 
                 if isinstance(value, np.ndarray):
 
@@ -82,7 +90,7 @@ def _parse_selected_derived_type_to_hdf5(derived_type, list_attr, hdf5_ins):
                     pass
 
 
-def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
+def save_model_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
     """
     Save some derived data types of the Model object.
@@ -96,8 +104,9 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
     - ``active_cell``, ``area``, ``code``, ``dx``, ``flwdir`` from `Model.mesh`
     - ``mean_prcp``, ``mean_pet``, ``qobs`` from `Model.input_data`
     - ``qsim`` from `Model.output`
-    - The final Model states (depending upon the Model structure) from `Model.output.fstates`
-    - The calibrated Model parameters (depending upon the Model structure) from `Model.parameters`
+    - The final Model states (depending upon the Model structure) from state derived type of `Model.output`
+    - The initial Model states (depending upon the Model structure) from `Model.states`
+    - The Model parameters (depending upon the Model structure) from `Model.parameters`
 
     Subsidiary data can be added by filling in ``sub_data``.
 
@@ -120,7 +129,7 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
     See Also
     --------
-    read_ddt: Read derived data types of the Model object from HDF5 file.
+    read_model_ddt: Read derived data types of the Model object from HDF5 file.
     Model: Primary data structure of the hydrological model `smash`.
 
     Examples
@@ -134,7 +143,8 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
     Save spatially distributed precipitation in addition to default derived data types of Model
 
-    >>> smash.save_ddt(model, "model_ddt.hdf5", sub_data={"prcp": model.input_data.prcp})
+    >>> smash.save_model_ddt(model, "model_ddt.hdf5", sub_data={"prcp": model.input_data.prcp})
+
     """
 
     if not path.endswith(".hdf5"):
@@ -151,7 +161,14 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
 
                 derived_type = getattr(model, derived_type_key)
 
-                _parse_selected_derived_type_to_hdf5(derived_type, list_attr, f)
+                if derived_type_key == "states":
+
+                    _parse_selected_derived_type_to_hdf5(
+                        derived_type, list_attr, f, attr_suffix="_0"
+                    )
+
+                else:
+                    _parse_selected_derived_type_to_hdf5(derived_type, list_attr, f)
 
         if sub_data is not None:
 
@@ -188,10 +205,8 @@ def save_ddt(model: Model, path: str, sub_data=None, sub_only=False):
                     except:
                         warnings.warn(f"Can not store to HDF5: {attr}")
 
-        f.close()
 
-
-def read_ddt(path: str) -> dict:
+def read_model_ddt(path: str) -> dict:
     """
     Read derived data types of the Model object from HDF5 file.
 
@@ -207,24 +222,24 @@ def read_ddt(path: str) -> dict:
 
     See Also
     --------
-    save_ddt: Save some derived data types of the Model object.
+    save_model_ddt: Save some derived data types of the Model object.
 
     Examples
     --------
     >>> setup, mesh = smash.load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
-    >>> smash.save_ddt(model, "model_ddt.hdf5")
+    >>> smash.save_model_ddt(model, "model_ddt.hdf5")
 
     Read the derived data types from HDF5 file
 
-    >>> data = smash.read_ddt("model_ddt.hdf5")
+    >>> data = smash.read_model_ddt("model_ddt.hdf5")
 
     Then, to see the dataset keys
 
     >>> data.keys()
     dict_keys(['active_cell', 'area', 'cft', 'code', 'cp', 'exc', 'flwdir',
-    'hft', 'hlr', 'hp', 'lr', 'mean_pet', 'mean_prcp', 'qobs', 'qsim', 'dt',
-    'dx', 'end_time', 'start_time', 'structure'])
+    'hft', 'hft_0', 'hlr', 'hlr_0', 'hp', 'hp_0', 'lr', 'mean_pet', 'mean_prcp',
+    'qobs', 'qsim', 'dt', 'dx', 'end_time', 'start_time', 'structure'])
 
     And finally, to access to derived data
 
@@ -239,7 +254,10 @@ def read_ddt(path: str) -> dict:
 
         keys = list(f.keys())
 
-        values = [f[key][:].astype("U") if f[key][:].dtype.char=="S" else f[key][:] for key in keys]
+        values = [
+            f[key][:].astype("U") if f[key][:].dtype.char == "S" else f[key][:]
+            for key in keys
+        ]
 
         attr_keys = list(f.attrs.keys())
 
