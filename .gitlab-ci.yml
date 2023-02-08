@@ -1,8 +1,4 @@
 image: gitlab-registry.irstea.fr/francois.colleoni/smash:latest
-
-cache:
-  paths:
-    - smash
   
 stages:
   - build-tap
@@ -19,6 +15,10 @@ build-code:
   stage: build-code
   script: 
     - make
+  artifacts:
+    path:
+      - smash/
+    expire_in: 1 hour
 
 build-doc:
   stage: build-doc
