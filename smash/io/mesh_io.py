@@ -102,8 +102,6 @@ def save_mesh(mesh: dict, path: str):
 
         _parse_mesh_dict_to_hdf5(mesh, f)
 
-        f.close()
-
 
 def read_mesh(path: str) -> dict:
 
@@ -145,8 +143,6 @@ def read_mesh(path: str) -> dict:
         with h5py.File(path, "r") as f:
 
             mesh = _parse_hdf5_to_mesh_dict(f)
-
-            f.close()
 
         return mesh
 

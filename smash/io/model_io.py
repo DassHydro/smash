@@ -157,8 +157,6 @@ def save_model(model: Model, path: str):
 
             f.attrs["_last_update"] = model._last_update
 
-        f.close()
-
 
 def read_model(path: str) -> Model:
 
@@ -252,8 +250,6 @@ def read_model(path: str) -> Model:
                 )
 
             instance._last_update = f.attrs["_last_update"]
-
-            f.close()
 
         return instance
 

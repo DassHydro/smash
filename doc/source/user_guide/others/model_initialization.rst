@@ -46,7 +46,7 @@ Time options
 ``start_time``:bolditalic:`: str`
     Simulation start time. Required format is either ``%Y%m%d%H%M`` or ``%Y-%m-%d %H%M``.
 
-``start_time``:bolditalic:`: str`
+``end_time``:bolditalic:`: str`
     Simulation end time. Required format is either ``%Y%m%d%H%M`` or ``%Y-%m-%d %H%M``.
     
 
