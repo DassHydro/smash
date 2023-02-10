@@ -147,7 +147,6 @@ module mwd_cost
             !% -----
             !%
             !% Jreg computation subroutine
-            !%signature
             !% Given SetupDT, MeshDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd,
             !% it returns the result of Jreg computation
             !%
@@ -725,13 +724,13 @@ module mwd_cost
                 
                     ntime_step_event = count(lgc_mask_event)
                     
-                    sum_qo = 0._sp
-                    sum_qs = 0._sp
-                    sum_po = 0._sp
+                    sum_qo = 0.
+                    sum_qs = 0.
+                    sum_po = 0.
                     
-                    max_qo = 0._sp
-                    max_qs = 0._sp
-                    max_po = 0._sp
+                    max_qo = 0.
+                    max_qs = 0.
+                    max_po = 0.
                     
                     imax_qo = 0
                     imax_qs = 0
@@ -739,7 +738,7 @@ module mwd_cost
                     
                     do j=start_event, start_event + ntime_step_event - 1
                     
-                        if (qo(j) .ge. 0._sp .and. po(j) .ge. 0._sp) then
+                        if (qo(j) .ge. 0. .and. po(j) .ge. 0.) then
                     
                             sum_qo = sum_qo + qo(j)
                             sum_qs = sum_qs + qs(j)
@@ -784,7 +783,7 @@ module mwd_cost
                         
                     case("Erc")
                     
-                        if (sum_po .gt. 0._sp) then
+                        if (sum_po .gt. 0.) then
                         
                             num = sum_qs / sum_po
                             den = sum_qo / sum_po
@@ -793,9 +792,9 @@ module mwd_cost
                     
                     end select
                     
-                    if (den .gt. 0._sp) then
+                    if (den .gt. 0.) then
                     
-                        res = res + (num / den - 1._sp) * (num / den - 1._sp)
+                        res = res + (num / den - 1.) * (num / den - 1.)
                     
                     end if
                     
@@ -813,13 +812,13 @@ module mwd_cost
                 
                 case("Crc")
 
-                    sum_qo = 0._sp
-                    sum_qs = 0._sp
-                    sum_po = 0._sp
+                    sum_qo = 0.
+                    sum_qs = 0.
+                    sum_po = 0.
                     
                     do i=1, size(qo)
                         
-                        if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
+                        if (qo(i) .ge. 0. .and. po(i) .ge. 0.) then
                             
                             sum_qo = sum_qo + qo(i)
                             sum_qs = sum_qs + qs(i)
@@ -829,7 +828,7 @@ module mwd_cost
                         
                     end do
                     
-                    if (sum_po .gt. 0._sp) then
+                    if (sum_po .gt. 0.) then
                         
                         num = sum_qs / sum_po
                         den = sum_qo / sum_po
@@ -854,9 +853,9 @@ module mwd_cost
                 
                 end select
                 
-                if (den .gt. 0._sp) then
+                if (den .gt. 0.) then
                 
-                    res = (num / den - 1._sp) * (num / den - 1._sp)
+                    res = (num / den - 1.) * (num / den - 1.)
                 
                 end if
             

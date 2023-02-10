@@ -8154,19 +8154,19 @@ CONTAINS
         GOTO 120
  110    start_event = j
  120    ntime_step_event = COUNT(lgc_mask_event)
-        sum_qo = 0._sp
-        sum_qs = 0._sp
-        sum_po = 0._sp
-        max_qo = 0._sp
-        max_qs = 0._sp
-        max_po = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
+        sum_po = 0.
+        max_qo = 0.
+        max_qs = 0.
+        max_po = 0.
         imax_qo = 0
         imax_qs = 0
         imax_po = 0
         max_qs_d = 0.0
         sum_qs_d = 0.0
         DO j=start_event,start_event+ntime_step_event-1
-          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+          IF (qo(j) .GE. 0. .AND. po(j) .GE. 0.) THEN
             sum_qo = sum_qo + qo(j)
             sum_qs_d = sum_qs_d + qs_d(j)
             sum_qs = sum_qs + qs(j)
@@ -8196,31 +8196,31 @@ CONTAINS
           den = imax_qo - imax_po
           num_d = 0.0
         CASE ('Erc') 
-          IF (sum_po .GT. 0._sp) THEN
+          IF (sum_po .GT. 0.) THEN
             num_d = sum_qs_d/sum_po
             num = sum_qs/sum_po
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res_d = res_d + 2*(num/den-1._sp)*num_d/den
+        IF (den .GT. 0.) res_d = res_d + 2*(num/den-1.)*num_d/den
       END DO
       IF (n_event .GT. 0) res_d = res_d/n_event
     ELSE
       SELECT CASE  (stype) 
       CASE ('Crc') 
-        sum_qo = 0._sp
-        sum_qs = 0._sp
-        sum_po = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
+        sum_po = 0.
         sum_qs_d = 0.0
         DO i=1,SIZE(qo)
-          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          IF (qo(i) .GE. 0. .AND. po(i) .GE. 0.) THEN
             sum_qo = sum_qo + qo(i)
             sum_qs_d = sum_qs_d + qs_d(i)
             sum_qs = sum_qs + qs(i)
             sum_po = sum_po + po(i)
           END IF
         END DO
-        IF (sum_po .GT. 0._sp) THEN
+        IF (sum_po .GT. 0.) THEN
           num_d = sum_qs_d/sum_po
           num = sum_qs/sum_po
           den = sum_qo/sum_po
@@ -8238,8 +8238,8 @@ CONTAINS
       CASE DEFAULT
         num_d = 0.0
       END SELECT
-      IF (den .GT. 0._sp) THEN
-        res_d = 2*(num/den-1._sp)*num_d/den
+      IF (den .GT. 0.) THEN
+        res_d = 2*(num/den-1.)*num_d/den
       ELSE
         res_d = 0.0
       END IF
@@ -8306,19 +8306,19 @@ CONTAINS
         CALL PUSHINTEGER4(ad_count0)
         start_event = j
  120    ntime_step_event = COUNT(lgc_mask_event)
-        sum_qo = 0._sp
-        sum_qs = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
         CALL PUSHREAL4(sum_po)
-        sum_po = 0._sp
-        max_qo = 0._sp
-        max_qs = 0._sp
-        max_po = 0._sp
+        sum_po = 0.
+        max_qo = 0.
+        max_qs = 0.
+        max_po = 0.
         imax_qo = 0
         imax_qs = 0
         imax_po = 0
         ad_from = start_event
         DO j=ad_from,start_event+ntime_step_event-1
-          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+          IF (qo(j) .GE. 0. .AND. po(j) .GE. 0.) THEN
             sum_qo = sum_qo + qo(j)
             sum_qs = sum_qs + qs(j)
             sum_po = sum_po + po(j)
@@ -8360,7 +8360,7 @@ CONTAINS
           den = imax_qo - imax_po
           CALL PUSHCONTROL3B(2)
         CASE ('Erc') 
-          IF (sum_po .GT. 0._sp) THEN
+          IF (sum_po .GT. 0.) THEN
             CALL PUSHREAL4(num)
             num = sum_qs/sum_po
             CALL PUSHREAL4(den)
@@ -8372,7 +8372,7 @@ CONTAINS
         CASE DEFAULT
           CALL PUSHCONTROL3B(0)
         END SELECT
-        IF (den .GT. 0._sp) THEN
+        IF (den .GT. 0.) THEN
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
@@ -8382,7 +8382,7 @@ CONTAINS
       num_b = 0.0
       DO i=n_event,1,-1
         CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1._sp)*res_b/den
+        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1.)*res_b/den
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
@@ -8439,11 +8439,11 @@ CONTAINS
     ELSE
       SELECT CASE  (stype) 
       CASE ('Crc') 
-        sum_qo = 0._sp
-        sum_qs = 0._sp
-        sum_po = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
+        sum_po = 0.
         DO i=1,SIZE(qo)
-          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          IF (qo(i) .GE. 0. .AND. po(i) .GE. 0.) THEN
             sum_qo = sum_qo + qo(i)
             sum_qs = sum_qs + qs(i)
             sum_po = sum_po + po(i)
@@ -8453,7 +8453,7 @@ CONTAINS
           END IF
         END DO
         CALL PUSHINTEGER4(i - 1)
-        IF (sum_po .GT. 0._sp) THEN
+        IF (sum_po .GT. 0.) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
           CALL PUSHCONTROL3B(1)
@@ -8475,8 +8475,8 @@ CONTAINS
       CASE DEFAULT
         CALL PUSHCONTROL3B(0)
       END SELECT
-      IF (den .GT. 0._sp) THEN
-        num_b = 2*(num/den-1._sp)*res_b/den
+      IF (den .GT. 0.) THEN
+        num_b = 2*(num/den-1.)*res_b/den
       ELSE
         num_b = 0.0
       END IF
@@ -8539,17 +8539,17 @@ CONTAINS
           END IF
         END DO
  100    ntime_step_event = COUNT(lgc_mask_event)
-        sum_qo = 0._sp
-        sum_qs = 0._sp
-        sum_po = 0._sp
-        max_qo = 0._sp
-        max_qs = 0._sp
-        max_po = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
+        sum_po = 0.
+        max_qo = 0.
+        max_qs = 0.
+        max_po = 0.
         imax_qo = 0
         imax_qs = 0
         imax_po = 0
         DO j=start_event,start_event+ntime_step_event-1
-          IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
+          IF (qo(j) .GE. 0. .AND. po(j) .GE. 0.) THEN
             sum_qo = sum_qo + qo(j)
             sum_qs = sum_qs + qs(j)
             sum_po = sum_po + po(j)
@@ -8575,28 +8575,28 @@ CONTAINS
           num = imax_qs - imax_po
           den = imax_qo - imax_po
         CASE ('Erc') 
-          IF (sum_po .GT. 0._sp) THEN
+          IF (sum_po .GT. 0.) THEN
             num = sum_qs/sum_po
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res = res + (num/den-1._sp)*(num/den-1._sp)
+        IF (den .GT. 0.) res = res + (num/den-1.)*(num/den-1.)
       END DO
       IF (n_event .GT. 0) res = res/n_event
     ELSE
       SELECT CASE  (stype) 
       CASE ('Crc') 
-        sum_qo = 0._sp
-        sum_qs = 0._sp
-        sum_po = 0._sp
+        sum_qo = 0.
+        sum_qs = 0.
+        sum_po = 0.
         DO i=1,SIZE(qo)
-          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+          IF (qo(i) .GE. 0. .AND. po(i) .GE. 0.) THEN
             sum_qo = sum_qo + qo(i)
             sum_qs = sum_qs + qs(i)
             sum_po = sum_po + po(i)
           END IF
         END DO
-        IF (sum_po .GT. 0._sp) THEN
+        IF (sum_po .GT. 0.) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
         END IF
@@ -8609,7 +8609,7 @@ CONTAINS
       CASE ('Cfp90') 
         CALL QUANTILE_SIGNATURE(qo, qs, 0.9, num, den)
       END SELECT
-      IF (den .GT. 0._sp) res = (num/den-1._sp)*(num/den-1._sp)
+      IF (den .GT. 0.) res = (num/den-1.)*(num/den-1.)
     END IF
   END FUNCTION SIGNATURE
 
