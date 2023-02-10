@@ -105,7 +105,7 @@ JOBS_FUN = [
     "logarithmic",
 ]
 
-CSIGN_OPTIM = ["Crc"]
+CSIGN_OPTIM = ["Crc", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 
 ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 

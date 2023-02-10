@@ -6572,7 +6572,8 @@ CONTAINS
               j_imd_d = RMSE_D(qo, qs, qs_d, j_imd)
             CASE ('logarithmic') 
               j_imd_d = LOGARITHMIC_D(qo, qs, qs_d, j_imd)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               j_imd_d = SIGNATURE_D(po, qo, qs, qs_d, setup%optimize%&
 &               mask_event(g, setup%optimize%optimize_start_step:setup%&
@@ -6618,14 +6619,14 @@ CONTAINS
     INTRINSIC ANY
     REAL(sp) :: res
     REAL(sp) :: res_b
-    REAL :: res0
-    REAL :: res_b0
-    REAL :: res1
-    REAL :: res_b1
-    REAL :: res2
-    REAL :: res_b2
-    REAL :: res3
-    REAL :: res_b3
+    REAL(sp) :: res0
+    REAL(sp) :: res_b0
+    REAL(sp) :: res1
+    REAL(sp) :: res_b1
+    REAL(sp) :: res2
+    REAL(sp) :: res_b2
+    REAL(sp) :: res3
+    REAL(sp) :: res_b3
     REAL(sp) :: res4
     REAL(sp) :: res_b4
     INTEGER :: branch
@@ -6668,7 +6669,8 @@ CONTAINS
             CASE ('logarithmic') 
               res3 = LOGARITHMIC(qo, qs)
               CALL PUSHCONTROL4B(6)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               res4 = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g, &
 &               setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -6797,7 +6799,8 @@ CONTAINS
               j_imd = RMSE(qo, qs)
             CASE ('logarithmic') 
               j_imd = LOGARITHMIC(qo, qs)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               j_imd = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g&
 &               , setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -7329,21 +7332,21 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE KGE_COMPONENTS_D(x, y, y_d, r, r_d, a, a_d, b, b_d)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:), INTENT(IN) :: y_d
-    REAL, INTENT(INOUT) :: r, a, b
-    REAL, INTENT(INOUT) :: r_d, a_d, b_d
-    REAL :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, var_x&
-&   , var_y, cov
-    REAL :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_y_d, cov_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp), INTENT(INOUT) :: r_d, a_d, b_d
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
+    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_y_d, cov_d
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
-    REAL :: result1_d
-    REAL :: result2
-    REAL :: result2_d
-    REAL :: temp
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: result2
+    REAL(sp) :: result2_d
+    REAL(sp) :: temp
 ! Metric computation
     n = 0
     sum_x = 0.
@@ -7351,9 +7354,9 @@ CONTAINS
     sum_xx = 0.
     sum_yy = 0.
     sum_xy = 0.
-    sum_yy_d = 0.0
-    sum_y_d = 0.0
-    sum_xy_d = 0.0
+    sum_yy_d = 0.0_4
+    sum_y_d = 0.0_4
+    sum_xy_d = 0.0_4
     DO i=1,SIZE(x)
       IF (x(i) .GE. 0.) THEN
         n = n + 1
@@ -7379,7 +7382,7 @@ CONTAINS
     result1 = SQRT(var_x)
     temp = SQRT(var_y)
     IF (var_y .EQ. 0.0) THEN
-      result2_d = 0.0
+      result2_d = 0.0_4
     ELSE
       result2_d = var_y_d/(2.0*temp)
     END IF
@@ -7389,7 +7392,7 @@ CONTAINS
     r = temp
     temp = SQRT(var_y)
     IF (var_y .EQ. 0.0) THEN
-      result1_d = 0.0
+      result1_d = 0.0_4
     ELSE
       result1_d = var_y_d/(2.0*temp)
     END IF
@@ -7406,21 +7409,21 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:) :: y_b
-    REAL, INTENT(INOUT) :: r, a, b
-    REAL, INTENT(INOUT) :: r_b, a_b, b_b
-    REAL :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, var_x&
-&   , var_y, cov
-    REAL :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_y_b, cov_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp), INTENT(INOUT) :: r_b, a_b, b_b
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
+    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_y_b, cov_b
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
-    REAL :: result1_b
-    REAL :: result2
-    REAL :: result2_b
-    REAL :: temp_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: result2
+    REAL(sp) :: result2_b
+    REAL(sp) :: temp_b
     INTEGER :: ad_to
     INTEGER :: branch
 ! Metric computation
@@ -7457,7 +7460,7 @@ CONTAINS
     result1_b = a_b/result2
     CALL POPREAL4(result2)
     IF (var_y .EQ. 0.0) THEN
-      var_y_b = 0.0
+      var_y_b = 0.0_4
     ELSE
       var_y_b = result1_b/(2.0*SQRT(var_y))
     END IF
@@ -7480,15 +7483,15 @@ CONTAINS
 
   SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, INTENT(INOUT) :: r, a, b
-    REAL :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, var_x&
-&   , var_y, cov
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
     INTEGER :: n, i
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
-    REAL :: result2
+    REAL(sp) :: result1
+    REAL(sp) :: result2
 ! Metric computation
     n = 0
     sum_x = 0.
@@ -7526,23 +7529,23 @@ CONTAINS
 !   with respect to varying inputs: y
   FUNCTION KGE_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:), INTENT(IN) :: y_d
-    REAL :: res
-    REAL :: res_d
-    REAL :: r, a, b
-    REAL :: r_d, a_d, b_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    REAL(sp) :: r, a, b
+    REAL(sp) :: r_d, a_d, b_d
     INTRINSIC SQRT
-    REAL :: arg1
-    REAL :: arg1_d
-    REAL :: temp
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: temp
     CALL KGE_COMPONENTS_D(x, y, y_d, r, r_d, a, a_d, b, b_d)
 ! KGE criterion
     arg1_d = 2*(r-1)*r_d + 2*(b-1)*b_d + 2*(a-1)*a_d
     arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
     temp = SQRT(arg1)
     IF (arg1 .EQ. 0.0) THEN
-      res_d = 0.0
+      res_d = 0.0_4
     ELSE
       res_d = arg1_d/(2.0*temp)
     END IF
@@ -7554,21 +7557,21 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE KGE_B(x, y, y_b, res_b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:) :: y_b
-    REAL :: res
-    REAL :: res_b
-    REAL :: r, a, b
-    REAL :: r_b, a_b, b_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    REAL(sp) :: r, a, b
+    REAL(sp) :: r_b, a_b, b_b
     INTRINSIC SQRT
-    REAL :: arg1
-    REAL :: arg1_b
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
     CALL KGE_COMPONENTS(x, y, r, a, b)
 ! KGE criterion
     arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
     arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
     IF (arg1 .EQ. 0.0) THEN
-      arg1_b = 0.0
+      arg1_b = 0.0_4
     ELSE
       arg1_b = res_b/(2.0*SQRT(arg1))
     END IF
@@ -7580,11 +7583,11 @@ CONTAINS
 
   FUNCTION KGE(x, y) RESULT (RES)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL :: res
-    REAL :: r, a, b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    REAL(sp) :: r, a, b
     INTRINSIC SQRT
-    REAL :: arg1
+    REAL(sp) :: arg1
     CALL KGE_COMPONENTS(x, y, r, a, b)
 ! KGE criterion
     arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
@@ -7596,14 +7599,14 @@ CONTAINS
 !   with respect to varying inputs: y
   FUNCTION SE_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:), INTENT(IN) :: y_d
-    REAL :: res
-    REAL :: res_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
     INTEGER :: i
     INTRINSIC SIZE
     res = 0.
-    res_d = 0.0
+    res_d = 0.0_4
     DO i=1,SIZE(x)
       IF (x(i) .GE. 0.) THEN
         res_d = res_d - 2*(x(i)-y(i))*y_d(i)
@@ -7617,10 +7620,10 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE SE_B(x, y, y_b, res_b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:) :: y_b
-    REAL :: res
-    REAL :: res_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
     INTEGER :: i
     INTRINSIC SIZE
     INTEGER :: ad_to
@@ -7641,8 +7644,8 @@ CONTAINS
 
   FUNCTION SE(x, y) RESULT (RES)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL :: res
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
     INTEGER :: i
     INTRINSIC SIZE
     res = 0.
@@ -7656,16 +7659,16 @@ CONTAINS
 !   with respect to varying inputs: y
   FUNCTION RMSE_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:), INTENT(IN) :: y_d
-    REAL :: res
-    REAL :: res_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
     INTEGER :: i, n
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
-    REAL :: result1_d
-    REAL :: temp
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
     n = 0
     DO i=1,SIZE(x)
       IF (x(i) .GE. 0.) n = n + 1
@@ -7673,7 +7676,7 @@ CONTAINS
     result1_d = SE_D(x, y, y_d, result1)
     temp = SQRT(result1/n)
     IF (result1/n .EQ. 0.0) THEN
-      res_d = 0.0
+      res_d = 0.0_4
     ELSE
       res_d = result1_d/(2.0*temp*n)
     END IF
@@ -7685,15 +7688,15 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE RMSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:) :: y_b
-    REAL :: res
-    REAL :: res_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
     INTEGER :: i, n
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
-    REAL :: result1_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
     INTEGER :: ad_to
     INTEGER :: branch
     n = 0
@@ -7708,7 +7711,7 @@ CONTAINS
     CALL PUSHINTEGER4(i - 1)
     result1 = SE(x, y)
     IF (result1/n .EQ. 0.0) THEN
-      result1_b = 0.0
+      result1_b = 0.0_4
     ELSE
       result1_b = res_b/(n*2.0*SQRT(result1/n))
     END IF
@@ -7721,12 +7724,12 @@ CONTAINS
 
   FUNCTION RMSE(x, y) RESULT (RES)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL :: res
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
     INTEGER :: i, n
     INTRINSIC SIZE
     INTRINSIC SQRT
-    REAL :: result1
+    REAL(sp) :: result1
     n = 0
     DO i=1,SIZE(x)
       IF (x(i) .GE. 0.) n = n + 1
@@ -7740,20 +7743,20 @@ CONTAINS
 !   with respect to varying inputs: y
   FUNCTION LOGARITHMIC_D(x, y, y_d, res) RESULT (RES_D)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:), INTENT(IN) :: y_d
-    REAL :: res
-    REAL :: res_d
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
     INTEGER :: i
     INTRINSIC SIZE
     INTRINSIC LOG
-    REAL :: arg1
-    REAL :: arg1_d
-    REAL :: arg2
-    REAL :: arg2_d
-    REAL :: temp
-    REAL :: temp0
-    res_d = 0.0
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_d
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    res_d = 0.0_4
     DO i=1,SIZE(x)
       IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
         arg1_d = y_d(i)/x(i)
@@ -7772,17 +7775,17 @@ CONTAINS
 !   with respect to varying inputs: y
   SUBROUTINE LOGARITHMIC_B(x, y, y_b, res_b)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL, DIMENSION(:) :: y_b
-    REAL :: res
-    REAL :: res_b
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
     INTEGER :: i
     INTRINSIC SIZE
     INTRINSIC LOG
-    REAL :: arg1
-    REAL :: arg1_b
-    REAL :: arg2
-    REAL :: arg2_b
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_b
     INTEGER :: ad_to
     INTEGER :: branch
     DO i=1,SIZE(x)
@@ -7807,13 +7810,13 @@ CONTAINS
 
   FUNCTION LOGARITHMIC(x, y) RESULT (RES)
     IMPLICIT NONE
-    REAL, DIMENSION(:), INTENT(IN) :: x, y
-    REAL :: res
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
     INTEGER :: i
     INTRINSIC SIZE
     INTRINSIC LOG
-    REAL :: arg1
-    REAL :: arg2
+    REAL(sp) :: arg1
+    REAL(sp) :: arg2
     res = 0.
     DO i=1,SIZE(x)
       IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
@@ -7823,6 +7826,411 @@ CONTAINS
       END IF
     END DO
   END FUNCTION LOGARITHMIC
+
+!  Differentiation of heap_sort in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE HEAP_SORT_D(n, arr, arr_d)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr_d
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    REAL(sp) :: arr_l_d
+    l = n/2 + 1
+    ir = n
+ 10 IF (l .GT. 1) THEN
+      l = l - 1
+      arr_l_d = arr_d(l)
+      arr_l = arr(l)
+    ELSE
+      arr_l_d = arr_d(ir)
+      arr_l = arr(ir)
+      arr_d(ir) = arr_d(1)
+      arr(ir) = arr(1)
+      ir = ir - 1
+      IF (ir .EQ. 1) GOTO 100
+    END IF
+    i = l
+    j = l + l
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) j = j + 1
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        arr_d(i) = arr_d(j)
+        arr(i) = arr(j)
+        i = j
+        j = j + j
+      ELSE
+        j = ir + 1
+      END IF
+      GOTO 20
+    END IF
+    arr_d(i) = arr_l_d
+    arr(i) = arr_l
+    GOTO 10
+ 100 arr_d(1) = arr_l_d
+    arr(1) = arr_l
+  END SUBROUTINE HEAP_SORT_D
+
+!  Differentiation of heap_sort in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE HEAP_SORT_B(n, arr, arr_b)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr_b
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    REAL(sp) :: arr_l_b
+    REAL(sp) :: tmp
+    REAL(sp) :: tmp_b
+    REAL(sp) :: tmp0
+    REAL(sp) :: tmp_b0
+    INTEGER :: branch
+    INTEGER :: ad_count
+    INTEGER :: i0
+    INTEGER :: ad_count0
+    INTEGER :: i1
+    l = n/2 + 1
+    ir = n
+    ad_count0 = 1
+ 10 IF (l .GT. 1) THEN
+      CALL PUSHINTEGER4(l)
+      l = l - 1
+      arr_l = arr(l)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      arr_l = arr(ir)
+      tmp = arr(1)
+      arr(ir) = tmp
+      CALL PUSHINTEGER4(ir)
+      ir = ir - 1
+      IF (ir .EQ. 1) THEN
+        GOTO 100
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END IF
+    CALL PUSHINTEGER4(i)
+    i = l
+    j = l + l
+    ad_count = 1
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) THEN
+          CALL PUSHCONTROL1B(0)
+          j = j + 1
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        tmp0 = arr(j)
+        arr(i) = tmp0
+        CALL PUSHINTEGER4(i)
+        i = j
+        CALL PUSHINTEGER4(j)
+        j = j + j
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+        j = ir + 1
+      END IF
+      ad_count = ad_count + 1
+      GOTO 20
+    END IF
+    CALL PUSHINTEGER4(ad_count)
+    arr(i) = arr_l
+    ad_count0 = ad_count0 + 1
+    GOTO 10
+ 100 CALL PUSHINTEGER4(ad_count0)
+    arr_l_b = arr_b(1)
+    arr_b(1) = 0.0_4
+    CALL POPINTEGER4(ad_count0)
+    DO 110 i1=1,ad_count0
+      IF (i1 .NE. 1) THEN
+        arr_l_b = arr_b(i)
+        arr_b(i) = 0.0_4
+        CALL POPINTEGER4(ad_count)
+        DO i0=1,ad_count
+          IF (i0 .NE. 1) THEN
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL POPINTEGER4(j)
+              CALL POPINTEGER4(i)
+              tmp_b0 = arr_b(i)
+              arr_b(i) = 0.0_4
+              arr_b(j) = arr_b(j) + tmp_b0
+            END IF
+            CALL POPCONTROL1B(branch)
+          END IF
+        END DO
+        CALL POPINTEGER4(i)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          arr_b(l) = arr_b(l) + arr_l_b
+          CALL POPINTEGER4(l)
+          GOTO 110
+        END IF
+      END IF
+      CALL POPINTEGER4(ir)
+      tmp_b = arr_b(ir)
+      arr_b(ir) = 0.0_4
+      arr_b(1) = arr_b(1) + tmp_b
+      arr_b(ir) = arr_b(ir) + arr_l_b
+ 110 CONTINUE
+  END SUBROUTINE HEAP_SORT_B
+
+  SUBROUTINE HEAP_SORT(n, arr)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    l = n/2 + 1
+    ir = n
+ 10 IF (l .GT. 1) THEN
+      l = l - 1
+      arr_l = arr(l)
+    ELSE
+      arr_l = arr(ir)
+      arr(ir) = arr(1)
+      ir = ir - 1
+      IF (ir .EQ. 1) THEN
+        arr(1) = arr_l
+        RETURN
+      END IF
+    END IF
+    i = l
+    j = l + l
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) j = j + 1
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        arr(i) = arr(j)
+        i = j
+        j = j + j
+      ELSE
+        j = ir + 1
+      END IF
+      GOTO 20
+    ELSE
+      arr(i) = arr_l
+      GOTO 10
+    END IF
+  END SUBROUTINE HEAP_SORT
+
+!  Differentiation of quantile in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: res
+!   with respect to varying inputs: dat
+  FUNCTION QUANTILE_D(dat, dat_d, p, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat_d
+    INTEGER :: n
+    REAL(sp) :: res, q1, q2, frac
+    REAL(sp) :: res_d, q1_d, q2_d
+    INTRINSIC INT
+    REAL(sp) :: temp
+    n = SIZE(dat)
+    sorted_dat_d = dat_d
+    sorted_dat = dat
+    CALL HEAP_SORT_D(n, sorted_dat, sorted_dat_d)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      res_d = sorted_dat_d(1)
+      res = sorted_dat(1)
+    ELSE IF (frac .GE. n) THEN
+      res_d = sorted_dat_d(n)
+      res = sorted_dat(n)
+    ELSE
+      q1_d = sorted_dat_d(INT(frac))
+      q1 = sorted_dat(INT(frac))
+      q2_d = sorted_dat_d(INT(frac)+1)
+      q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+      temp = frac - INT(frac)
+      res_d = q1_d + temp*(q2_d-q1_d)
+      res = q1 + temp*(q2-q1)
+    END IF
+  END FUNCTION QUANTILE_D
+
+!  Differentiation of quantile in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: res
+!   with respect to varying inputs: dat
+  SUBROUTINE QUANTILE_B(dat, dat_b, p, res_b)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), DIMENSION(:) :: dat_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat_b
+    INTEGER :: n
+    REAL(sp) :: res, q1, q2, frac
+    REAL(sp) :: res_b, q1_b, q2_b
+    INTRINSIC INT
+    REAL(sp) :: temp_b
+    n = SIZE(dat)
+    sorted_dat = dat
+    CALL PUSHREAL4ARRAY(sorted_dat, SIZE(dat))
+    CALL HEAP_SORT(n, sorted_dat)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      sorted_dat_b = 0.0_4
+      sorted_dat_b(1) = sorted_dat_b(1) + res_b
+    ELSE IF (frac .GE. n) THEN
+      sorted_dat_b = 0.0_4
+      sorted_dat_b(n) = sorted_dat_b(n) + res_b
+    ELSE
+      frac = (n-1)*p + 1
+      temp_b = (frac-INT(frac))*res_b
+      q1_b = res_b - temp_b
+      q2_b = temp_b
+      sorted_dat_b = 0.0_4
+      sorted_dat_b(INT(frac)+1) = sorted_dat_b(INT(frac)+1) + q2_b
+      sorted_dat_b(INT(frac)) = sorted_dat_b(INT(frac)) + q1_b
+    END IF
+    CALL POPREAL4ARRAY(sorted_dat, SIZE(dat))
+    CALL HEAP_SORT_B(n, sorted_dat, sorted_dat_b)
+    dat_b = 0.0_4
+    dat_b = sorted_dat_b
+  END SUBROUTINE QUANTILE_B
+
+  FUNCTION QUANTILE(dat, p) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    INTEGER :: n
+    REAL(sp) :: res, q1, q2, frac
+    INTRINSIC INT
+    res = 0.
+    n = SIZE(dat)
+    sorted_dat = dat
+    CALL HEAP_SORT(n, sorted_dat)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      res = sorted_dat(1)
+    ELSE IF (frac .GE. n) THEN
+      res = sorted_dat(n)
+    ELSE
+      q1 = sorted_dat(INT(frac))
+      q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+      res = q1 + (q2-q1)*(frac-INT(frac))
+    END IF
+  END FUNCTION QUANTILE
+
+!  Differentiation of flow_percentile in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: num
+!   with respect to varying inputs: qs
+  SUBROUTINE FLOW_PERCENTILE_D(qo, qs, qs_d, p, num, num_d, den)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL(sp), DIMENSION(:), INTENT(IN) :: qs_d
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), INTENT(INOUT) :: num, den
+    REAL(sp), INTENT(INOUT) :: num_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    REAL(sp), DIMENSION(SIZE(qo)) :: pos_qs_d
+    INTEGER :: i, j, n
+    n = SIZE(qo)
+    pos_qo = 0.
+    pos_qs = 0.
+    j = 0
+    pos_qs_d = 0.0_4
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        j = j + 1
+        pos_qo(j) = qo(i)
+        pos_qs_d(j) = qs_d(i)
+        pos_qs(j) = qs(i)
+      END IF
+    END DO
+    num_d = QUANTILE_D(pos_qs(1:j), pos_qs_d(1:j), p, num)
+    den = QUANTILE(pos_qo(1:j), p)
+  END SUBROUTINE FLOW_PERCENTILE_D
+
+!  Differentiation of flow_percentile in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: qs num
+!   with respect to varying inputs: qs
+  SUBROUTINE FLOW_PERCENTILE_B(qo, qs, qs_b, p, num, num_b, den)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL(sp), DIMENSION(:) :: qs_b
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), INTENT(INOUT) :: num, den
+    REAL(sp), INTENT(INOUT) :: num_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    REAL(sp), DIMENSION(SIZE(qo)) :: pos_qs_b
+    INTEGER :: i, j, n
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: branch
+    n = SIZE(qo)
+    pos_qs = 0.
+    j = 0
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        pos_qs(j) = qs(i)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    res = QUANTILE(pos_qs(1:j), p)
+    pos_qs_b = 0.0_4
+    res_b = num_b
+    CALL QUANTILE_B(pos_qs(1:j), pos_qs_b(1:j), p, res_b)
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        qs_b(i) = qs_b(i) + pos_qs_b(j)
+        pos_qs_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE FLOW_PERCENTILE_B
+
+  SUBROUTINE FLOW_PERCENTILE(qo, qs, p, num, den)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp), INTENT(INOUT) :: num, den
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    INTEGER :: i, j, n
+    n = SIZE(qo)
+    pos_qo = 0.
+    pos_qs = 0.
+    j = 0
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        j = j + 1
+        pos_qo(j) = qo(i)
+        pos_qs(j) = qs(i)
+      END IF
+    END DO
+    num = QUANTILE(pos_qs(1:j), p)
+    den = QUANTILE(pos_qo(1:j), p)
+  END SUBROUTINE FLOW_PERCENTILE
 
 !  Differentiation of signature in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: res
@@ -7911,24 +8319,24 @@ CONTAINS
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res_d = res_d + 2*(num/den-1._sp)*num_d/den
+        IF (den .GT. 0._sp) res_d = res_d + 2*(num/den-1.)*num_d/den
       END DO
       IF (n_event .GT. 0) res_d = res_d/n_event
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      sum_qs_d = 0.0_4
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs_d = sum_qs_d + qs_d(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-        END IF
-      END DO
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        sum_qs_d = 0.0_4
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs_d = sum_qs_d + qs_d(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+          END IF
+        END DO
         IF (sum_po .GT. 0._sp) THEN
           num_d = sum_qs_d/sum_po
           num = sum_qs/sum_po
@@ -7936,11 +8344,19 @@ CONTAINS
         ELSE
           num_d = 0.0_4
         END IF
+      CASE ('Cfp2') 
+        CALL FLOW_PERCENTILE_D(qo, qs, qs_d, 0.02_sp, num, num_d, den)
+      CASE ('Cfp10') 
+        CALL FLOW_PERCENTILE_D(qo, qs, qs_d, 0.1_sp, num, num_d, den)
+      CASE ('Cfp50') 
+        CALL FLOW_PERCENTILE_D(qo, qs, qs_d, 0.5_sp, num, num_d, den)
+      CASE ('Cfp90') 
+        CALL FLOW_PERCENTILE_D(qo, qs, qs_d, 0.9_sp, num, num_d, den)
       CASE DEFAULT
         num_d = 0.0_4
       END SELECT
       IF (den .GT. 0._sp) THEN
-        res_d = 2*(num/den-1._sp)*num_d/den
+        res_d = 2*(num/den-1.)*num_d/den
       ELSE
         res_d = 0.0_4
       END IF
@@ -8083,7 +8499,7 @@ CONTAINS
       num_b = 0.0_4
       DO i=n_event,1,-1
         CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1._sp)*res_b/den
+        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1.)*res_b/den
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
@@ -8138,50 +8554,74 @@ CONTAINS
         IF (i0 .EQ. 1) CALL POPCONTROL1B(branch)
       END DO
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
-      CALL PUSHINTEGER4(i - 1)
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(i - 1)
         IF (sum_po .GT. 0._sp) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
-          CALL PUSHCONTROL2B(1)
+          CALL PUSHCONTROL3B(1)
         ELSE
-          CALL PUSHCONTROL2B(2)
+          CALL PUSHCONTROL3B(2)
         END IF
+      CASE ('Cfp2') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.02_sp, num, den)
+        CALL PUSHCONTROL3B(3)
+      CASE ('Cfp10') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.1_sp, num, den)
+        CALL PUSHCONTROL3B(4)
+      CASE ('Cfp50') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.5_sp, num, den)
+        CALL PUSHCONTROL3B(5)
+      CASE ('Cfp90') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.9_sp, num, den)
+        CALL PUSHCONTROL3B(6)
       CASE DEFAULT
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL3B(0)
       END SELECT
       IF (den .GT. 0._sp) THEN
-        num_b = 2*(num/den-1._sp)*res_b/den
+        num_b = 2*(num/den-1.)*res_b/den
       ELSE
         num_b = 0.0_4
       END IF
-      CALL POPCONTROL2B(branch)
-      IF (branch .EQ. 0) THEN
-        sum_qs_b = 0.0_4
-      ELSE IF (branch .EQ. 1) THEN
-        sum_qs_b = num_b/sum_po
+      CALL POPCONTROL3B(branch)
+      IF (branch .LT. 3) THEN
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            sum_qs_b = num_b/sum_po
+          ELSE
+            sum_qs_b = 0.0_4
+          END IF
+          CALL POPINTEGER4(ad_to0)
+          DO i=ad_to0,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) qs_b(i) = qs_b(i) + sum_qs_b
+          END DO
+        END IF
+      ELSE IF (branch .LT. 5) THEN
+        IF (branch .EQ. 3) THEN
+          CALL FLOW_PERCENTILE_B(qo, qs, qs_b, 0.02_sp, num, num_b, den)
+        ELSE
+          CALL FLOW_PERCENTILE_B(qo, qs, qs_b, 0.1_sp, num, num_b, den)
+        END IF
+      ELSE IF (branch .EQ. 5) THEN
+        CALL FLOW_PERCENTILE_B(qo, qs, qs_b, 0.5_sp, num, num_b, den)
       ELSE
-        sum_qs_b = 0.0_4
+        CALL FLOW_PERCENTILE_B(qo, qs, qs_b, 0.9_sp, num, num_b, den)
       END IF
-      CALL POPINTEGER4(ad_to0)
-      DO i=ad_to0,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) qs_b(i) = qs_b(i) + sum_qs_b
-      END DO
     END IF
   END SUBROUTINE SIGNATURE_B
 
@@ -8257,28 +8697,36 @@ CONTAINS
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res = res + (num/den-1._sp)*(num/den-1._sp)
+        IF (den .GT. 0._sp) res = res + (num/den-1.)*(num/den-1.)
       END DO
       IF (n_event .GT. 0) res = res/n_event
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-        END IF
-      END DO
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+          END IF
+        END DO
         IF (sum_po .GT. 0._sp) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
         END IF
+      CASE ('Cfp2') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.02_sp, num, den)
+      CASE ('Cfp10') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.1_sp, num, den)
+      CASE ('Cfp50') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.5_sp, num, den)
+      CASE ('Cfp90') 
+        CALL FLOW_PERCENTILE(qo, qs, 0.9_sp, num, den)
       END SELECT
-      IF (den .GT. 0._sp) res = (num/den-1._sp)*(num/den-1._sp)
+      IF (den .GT. 0._sp) res = (num/den-1.)*(num/den-1.)
     END IF
   END FUNCTION SIGNATURE
 

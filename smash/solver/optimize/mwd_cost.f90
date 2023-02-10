@@ -118,7 +118,7 @@ module mwd_cost
                             
                                 j_imd = logarithmic(qo, qs)
 
-                            case("Crc", "Erc", "Elt", "Epf") ! CASE OF SIGNATURES
+                            case("Crc", "Cfp2", "Cfp10", "Cfp50", "Cfp90", "Erc", "Elt", "Epf") ! CASE OF SIGNATURES
 
                                 j_imd = signature(po, qo, qs, & 
                                 & setup%optimize%mask_event(g, setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -147,7 +147,6 @@ module mwd_cost
             !% -----
             !%
             !% Jreg computation subroutine
-            !%
             !% Given SetupDT, MeshDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd,
             !% it returns the result of Jreg computation
             !%
@@ -353,10 +352,10 @@ module mwd_cost
         
             implicit none
             
-            real, dimension(:), intent(in) :: x, y
-            real, intent(inout) :: r, a, b
+            real(sp), dimension(:), intent(in) :: x, y
+            real(sp), intent(inout) :: r, a, b
             
-            real :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+            real(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
             & var_x, var_y, cov
             integer :: n, i
             
@@ -414,10 +413,10 @@ module mwd_cost
         
             implicit none
             
-            real, dimension(:), intent(in) :: x, y
-            real :: res
+            real(sp), dimension(:), intent(in) :: x, y
+            real(sp) :: res
             
-            real :: r, a, b
+            real(sp) :: r, a, b
             
             call kge_components(x, y, r, a, b)
             
@@ -442,8 +441,8 @@ module mwd_cost
             
             implicit none
             
-            real, dimension(:), intent(in) :: x, y
-            real :: res
+            real(sp), dimension(:), intent(in) :: x, y
+            real(sp) :: res
             
             integer :: i
             
@@ -479,8 +478,8 @@ module mwd_cost
         
             implicit none
             
-            real, dimension(:), intent(in) :: x, y
-            real :: res
+            real(sp), dimension(:), intent(in) :: x, y
+            real(sp) :: res
             
             integer :: i, n
             
@@ -515,8 +514,8 @@ module mwd_cost
             
             implicit none
             
-            real, dimension(:), intent(in) :: x, y
-            real :: res
+            real(sp), dimension(:), intent(in) :: x, y
+            real(sp) :: res
             
             integer :: i
             
@@ -534,8 +533,182 @@ module mwd_cost
             end do
 
         end function logarithmic
-    
-    
+
+
+        subroutine heap_sort(n, arr)
+
+            !% Notes
+            !% -----
+            !%
+            !% Implement heap sort algorithm
+            !%
+            !% Computational complexity is O(n log n)
+
+            implicit none
+
+            integer, intent(in) :: n
+            real(sp), dimension(n), intent(inout) :: arr
+            
+            integer :: l, ir, i, j
+            real(sp) :: arr_l
+
+            l = n/2 + 1
+
+            ir = n
+
+        10  continue
+
+            if(l .gt. 1)then
+
+                l = l - 1
+
+                arr_l = arr(l)
+            
+            else
+            
+                arr_l = arr(ir)
+                
+                arr(ir) = arr(1)
+                
+                ir = ir - 1
+            
+                if (ir .eq. 1) then
+
+                    arr(1) = arr_l
+
+                    return
+
+                end if
+
+            end if
+
+            i = l
+
+            j = l + l
+
+        20  if (j .le. ir) then
+
+                if (j .lt. ir) then
+
+                    if (arr(j) .lt. arr(j+1))  j = j + 1
+                
+                end if
+
+                if (arr_l .lt. arr(j)) then
+
+                    arr(i) = arr(j)
+
+                    i = j; j = j + j
+                    
+                else
+
+                    j = ir + 1
+
+                end if
+
+                goto 20
+
+            end if
+
+            arr(i) = arr_l
+
+            goto 10
+
+        end subroutine heap_sort
+
+
+        function quantile(dat, p) result(res)
+
+            !% Notes
+            !% -----
+            !%
+            !% Quantile function using linear interpolation
+            !% Similar to numpy.quantile
+
+            implicit none
+
+            real(sp), intent(in) :: p
+            real(sp), dimension(:), intent(in) :: dat
+            real(sp), dimension(size(dat)) :: sorted_dat
+            integer :: n
+            real(sp) :: res, q1, q2, frac
+
+            res = 0.
+            
+            n = size(dat)
+
+            sorted_dat = dat
+
+            call heap_sort(n, sorted_dat)
+
+            frac = (n - 1) * p + 1
+
+            if (frac .le. 1) then
+
+                res = sorted_dat(1)
+
+            else if (frac .ge. n) then
+
+                res = sorted_dat(n)
+
+            else
+                q1 = sorted_dat(int(frac))
+
+                q2 = sorted_dat(int(frac) + 1)
+
+                res = q1 + (q2 - q1) * (frac - int(frac)) ! linear interpolation
+
+            end if
+            
+        end function quantile
+
+
+        subroutine flow_percentile(qo, qs, p, num, den)
+
+            !% Notes
+            !% -----
+            !%
+            !% Compute flow percentiles from observed (qo) and simulated signature (qs)
+            !% Apply quantile function by ignoring negative values
+
+            implicit none
+
+            real(sp), dimension(:), intent(in) :: qo, qs
+            real(sp), intent(in) :: p
+
+            real(sp), intent(inout) :: num, den
+
+            real(sp), dimension(size(qo)) :: pos_qo, pos_qs
+
+            integer :: i, j, n
+
+            n = size(qo)
+
+            pos_qo = 0.
+            pos_qs = 0.
+
+            j = 0
+
+            do i = 1, n
+
+                if (qo(i) .ge. 0. .and. qs(i) .ge. 0.) then
+
+                    j = j + 1
+
+                    pos_qo(j) = qo(i)
+                    pos_qs(j) = qs(i)
+
+                end if
+
+            end do
+
+            num = quantile(pos_qs(1:j), p)
+
+            den = quantile(pos_qo(1:j), p)
+
+        end subroutine flow_percentile
+
+
         function signature(po, qo, qs, mask_event, stype) result(res)
 
             !% Notes
@@ -667,7 +840,7 @@ module mwd_cost
                     
                     if (den .gt. 0._sp) then
                     
-                        res = res + (num / den - 1._sp) * (num / den - 1._sp)
+                        res = res + (num / den - 1.) * (num / den - 1.)
                     
                     end if
                     
@@ -681,25 +854,25 @@ module mwd_cost
                 
             else
                 
-                sum_qo = 0._sp
-                sum_qs = 0._sp
-                sum_po = 0._sp
-                
-                do i=1, size(qo)
-                    
-                    if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
-                        
-                        sum_qo = sum_qo + qo(i)
-                        sum_qs = sum_qs + qs(i)
-                        sum_po = sum_po + po(i)
-                    
-                    end if
-                    
-                end do
-                
                 select case(stype)
                 
                 case("Crc")
+
+                    sum_qo = 0._sp
+                    sum_qs = 0._sp
+                    sum_po = 0._sp
+                    
+                    do i=1, size(qo)
+                        
+                        if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
+                            
+                            sum_qo = sum_qo + qo(i)
+                            sum_qs = sum_qs + qs(i)
+                            sum_po = sum_po + po(i)
+                        
+                        end if
+                        
+                    end do
                     
                     if (sum_po .gt. 0._sp) then
                         
@@ -707,12 +880,28 @@ module mwd_cost
                         den = sum_qo / sum_po
                     
                     end if
+
+                case("Cfp2")
+
+                    call flow_percentile(qo, qs, 0.02_sp, num, den)
+
+                case("Cfp10")
+
+                    call flow_percentile(qo, qs, 0.1_sp, num, den)
+
+                case("Cfp50")
+
+                    call flow_percentile(qo, qs, 0.5_sp, num, den)
+
+                case("Cfp90")
+
+                    call flow_percentile(qo, qs, 0.9_sp, num, den)
                 
                 end select
                 
                 if (den .gt. 0._sp) then
                 
-                    res = (num / den - 1._sp) * (num / den - 1._sp)
+                    res = (num / den - 1.) * (num / den - 1.)
                 
                 end if
             
