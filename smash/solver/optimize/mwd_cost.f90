@@ -118,7 +118,7 @@ module mwd_cost
                             
                                 j_imd = logarithmic(qo, qs)
 
-                            case("Crc", "Erc", "Elt", "Epf") ! CASE OF SIGNATURES
+                            case("Crc", "Cfp2", "Cfp10", "Cfp50", "Cfp90", "Erc", "Elt", "Epf") ! CASE OF SIGNATURES
 
                                 j_imd = signature(po, qo, qs, & 
                                 & setup%optimize%mask_event(g, setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -147,7 +147,7 @@ module mwd_cost
             !% -----
             !%
             !% Jreg computation subroutine
-            !%
+            !%signature
             !% Given SetupDT, MeshDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd,
             !% it returns the result of Jreg computation
             !%
@@ -534,8 +534,136 @@ module mwd_cost
             end do
 
         end function logarithmic
-    
-    
+
+
+        subroutine insertion_sort(arr, n)
+
+            !% Notes
+            !% -----
+            !%
+            !% insertion sort more efficient than bubble sort
+            !% less efficient than quicksort but differentiable 
+
+            implicit none
+            
+            integer, intent(in) :: n
+            real, dimension(n), intent(inout) :: arr
+
+            integer :: i, j
+            real :: tmp_sort
+
+            do i = 1, n-1
+
+                tmp_sort = arr(i)
+
+                j = i - 1
+
+                do while (j >= 0 .and. arr(j) > tmp_sort)
+
+                    arr(j+1) = arr(j)
+
+                    j = j - 1
+
+                end do
+
+                arr(j+1) = tmp_sort
+
+            end do
+            
+        end subroutine insertion_sort
+
+
+        function quantile(dat, p) result(res)
+
+            !% Notes
+            !% -----
+            !%
+            !% quantile function using linear interpolation
+            !% similar to numpy.quantile
+
+            implicit none
+
+            real, intent(in) :: p
+            real, dimension(:), intent(in) :: dat
+            real, dimension(size(dat)) :: sorted_dat
+            integer :: n
+            real :: res, q1, q2, frac
+
+            res = 0.
+            
+            n = size(dat)
+
+            sorted_dat = dat
+
+            call insertion_sort(sorted_dat, n)
+
+            frac = (n - 1) * p + 1
+
+            if (frac <= 1) then
+
+                res = sorted_dat(1)
+
+            else if (frac >= n) then
+
+                res = sorted_dat(n)
+
+            else
+                q1 = sorted_dat(int(frac))
+
+                q2 = sorted_dat(int(frac) + 1)
+
+                res = q1 + (q2 - q1) * (frac - int(frac)) ! linear interpolation
+
+            end if
+            
+        end function quantile
+
+
+        subroutine quantile_signature(qo, qs, p, num, den)
+
+            !% Notes
+            !% -----
+            !%
+            !% compute quantiles of observed (qo) and simulated signature (qs)
+
+            implicit none
+
+            real, dimension(:), intent(in) :: qo, qs
+            real, intent(in) :: p
+
+            real, intent(inout) :: num, den
+
+            real, dimension(size(qo)) :: pos_qo, pos_qs
+
+            integer :: i, j, n
+
+            n = size(qo)
+
+            pos_qo = 0.
+            pos_qs = 0.
+
+            j = 0
+
+            do i = 1, n
+
+                if (qo(i) .ge. 0. .and. qs(i) .ge. 0.) then
+
+                    j = j + 1
+
+                    pos_qo(j) = qo(i)
+                    pos_qs(j) = qs(i)
+
+                end if
+
+            end do
+
+            num = quantile(pos_qs(1:j), p)
+
+            den = quantile(pos_qo(1:j), p)
+
+        end subroutine quantile_signature
+
+
         function signature(po, qo, qs, mask_event, stype) result(res)
 
             !% Notes
@@ -550,19 +678,19 @@ module mwd_cost
 
             implicit none
 
-            real(sp), dimension(:), intent(in) :: po, qo, qs
+            real, dimension(:), intent(in) :: po, qo, qs
             integer, dimension(:), intent(in) :: mask_event
             character(len=*), intent(in) :: stype
             
-            real(sp) :: res
+            real :: res
             
             logical, dimension(size(mask_event)) :: lgc_mask_event
             integer :: n_event, i, j, start_event, ntime_step_event
-            real(sp) :: sum_qo, sum_qs, sum_po, &
+            real :: sum_qo, sum_qs, sum_po, &
             & max_qo, max_qs, max_po, num, den
             integer :: imax_qo, imax_qs, imax_po
             
-            res = 0._sp
+            res = 0.
             
             n_event = 0
             
@@ -681,25 +809,25 @@ module mwd_cost
                 
             else
                 
-                sum_qo = 0._sp
-                sum_qs = 0._sp
-                sum_po = 0._sp
-                
-                do i=1, size(qo)
-                    
-                    if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
-                        
-                        sum_qo = sum_qo + qo(i)
-                        sum_qs = sum_qs + qs(i)
-                        sum_po = sum_po + po(i)
-                    
-                    end if
-                    
-                end do
-                
                 select case(stype)
                 
                 case("Crc")
+
+                    sum_qo = 0._sp
+                    sum_qs = 0._sp
+                    sum_po = 0._sp
+                    
+                    do i=1, size(qo)
+                        
+                        if (qo(i) .ge. 0._sp .and. po(i) .ge. 0._sp) then
+                            
+                            sum_qo = sum_qo + qo(i)
+                            sum_qs = sum_qs + qs(i)
+                            sum_po = sum_po + po(i)
+                        
+                        end if
+                        
+                    end do
                     
                     if (sum_po .gt. 0._sp) then
                         
@@ -707,6 +835,22 @@ module mwd_cost
                         den = sum_qo / sum_po
                     
                     end if
+
+                case("Cfp2")
+
+                    call quantile_signature(qo, qs, 0.02, num, den)
+
+                case("Cfp10")
+
+                    call quantile_signature(qo, qs, 0.1, num, den)
+
+                case("Cfp50")
+
+                    call quantile_signature(qo, qs, 0.5, num, den)
+
+                case("Cfp90")
+
+                    call quantile_signature(qo, qs, 0.9, num, den)
                 
                 end select
                 

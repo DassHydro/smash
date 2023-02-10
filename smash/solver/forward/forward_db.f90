@@ -6572,7 +6572,8 @@ CONTAINS
               j_imd_d = RMSE_D(qo, qs, qs_d, j_imd)
             CASE ('logarithmic') 
               j_imd_d = LOGARITHMIC_D(qo, qs, qs_d, j_imd)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               j_imd_d = SIGNATURE_D(po, qo, qs, qs_d, setup%optimize%&
 &               mask_event(g, setup%optimize%optimize_start_step:setup%&
@@ -6626,8 +6627,8 @@ CONTAINS
     REAL :: res_b2
     REAL :: res3
     REAL :: res_b3
-    REAL(sp) :: res4
-    REAL(sp) :: res_b4
+    REAL :: res4
+    REAL :: res_b4
     INTEGER :: branch
     DO g=1,mesh%ng
       IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
@@ -6668,7 +6669,8 @@ CONTAINS
             CASE ('logarithmic') 
               res3 = LOGARITHMIC(qo, qs)
               CALL PUSHCONTROL4B(6)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               res4 = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g, &
 &               setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -6797,7 +6799,8 @@ CONTAINS
               j_imd = RMSE(qo, qs)
             CASE ('logarithmic') 
               j_imd = LOGARITHMIC(qo, qs)
-            CASE ('Crc', 'Erc', 'Elt', 'Epf') 
+            CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
+&           , 'Epf') 
 ! CASE OF SIGNATURES
               j_imd = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g&
 &               , setup%optimize%optimize_start_step:setup%ntime_step), &
@@ -7824,23 +7827,311 @@ CONTAINS
     END DO
   END FUNCTION LOGARITHMIC
 
+!  Differentiation of insertion_sort in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE INSERTION_SORT_D(arr, arr_d, n)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL, DIMENSION(n), INTENT(INOUT) :: arr
+    REAL, DIMENSION(n), INTENT(INOUT) :: arr_d
+    INTEGER :: i, j
+    REAL :: tmp_sort
+    REAL :: tmp_sort_d
+    DO i=1,n-1
+      tmp_sort_d = arr_d(i)
+      tmp_sort = arr(i)
+      j = i - 1
+      DO WHILE (j .GE. 0 .AND. arr(j) .GT. tmp_sort)
+        arr_d(j+1) = arr_d(j)
+        arr(j+1) = arr(j)
+        j = j - 1
+      END DO
+      arr_d(j+1) = tmp_sort_d
+      arr(j+1) = tmp_sort
+    END DO
+  END SUBROUTINE INSERTION_SORT_D
+
+!  Differentiation of insertion_sort in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE INSERTION_SORT_B(arr, arr_b, n)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL, DIMENSION(n), INTENT(INOUT) :: arr
+    REAL, DIMENSION(n), INTENT(INOUT) :: arr_b
+    INTEGER :: i, j
+    REAL :: tmp_sort
+    REAL :: tmp_sort_b
+    INTEGER :: ad_count
+    INTEGER :: i0
+    DO i=1,n-1
+      tmp_sort = arr(i)
+      CALL PUSHINTEGER4(j)
+      j = i - 1
+      ad_count = 0
+      DO WHILE (j .GE. 0 .AND. arr(j) .GT. tmp_sort)
+        arr(j+1) = arr(j)
+        CALL PUSHINTEGER4(j)
+        j = j - 1
+        ad_count = ad_count + 1
+      END DO
+      CALL PUSHINTEGER4(ad_count)
+      arr(j+1) = tmp_sort
+    END DO
+    DO i=n-1,1,-1
+      tmp_sort_b = arr_b(j+1)
+      arr_b(j+1) = 0.0
+      CALL POPINTEGER4(ad_count)
+      DO i0=1,ad_count
+        CALL POPINTEGER4(j)
+        arr_b(j) = arr_b(j) + arr_b(j+1)
+        arr_b(j+1) = 0.0
+      END DO
+      CALL POPINTEGER4(j)
+      arr_b(i) = arr_b(i) + tmp_sort_b
+    END DO
+  END SUBROUTINE INSERTION_SORT_B
+
+  SUBROUTINE INSERTION_SORT(arr, n)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL, DIMENSION(n), INTENT(INOUT) :: arr
+    INTEGER :: i, j
+    REAL :: tmp_sort
+    DO i=1,n-1
+      tmp_sort = arr(i)
+      j = i - 1
+      DO WHILE (j .GE. 0 .AND. arr(j) .GT. tmp_sort)
+        arr(j+1) = arr(j)
+        j = j - 1
+      END DO
+      arr(j+1) = tmp_sort
+    END DO
+  END SUBROUTINE INSERTION_SORT
+
+!  Differentiation of quantile in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: res
+!   with respect to varying inputs: dat
+  FUNCTION QUANTILE_D(dat, dat_d, p, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: p
+    REAL, DIMENSION(:), INTENT(IN) :: dat
+    REAL, DIMENSION(:), INTENT(IN) :: dat_d
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL, DIMENSION(SIZE(dat)) :: sorted_dat_d
+    INTEGER :: n
+    REAL :: res, q1, q2, frac
+    REAL :: res_d, q1_d, q2_d
+    INTRINSIC INT
+    REAL :: temp
+    n = SIZE(dat)
+    sorted_dat_d = dat_d
+    sorted_dat = dat
+    CALL INSERTION_SORT_D(sorted_dat, sorted_dat_d, n)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      res_d = sorted_dat_d(1)
+      res = sorted_dat(1)
+    ELSE IF (frac .GE. n) THEN
+      res_d = sorted_dat_d(n)
+      res = sorted_dat(n)
+    ELSE
+      q1_d = sorted_dat_d(INT(frac))
+      q1 = sorted_dat(INT(frac))
+      q2_d = sorted_dat_d(INT(frac)+1)
+      q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+      temp = frac - INT(frac)
+      res_d = q1_d + temp*(q2_d-q1_d)
+      res = q1 + temp*(q2-q1)
+    END IF
+  END FUNCTION QUANTILE_D
+
+!  Differentiation of quantile in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: res
+!   with respect to varying inputs: dat
+  SUBROUTINE QUANTILE_B(dat, dat_b, p, res_b)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: p
+    REAL, DIMENSION(:), INTENT(IN) :: dat
+    REAL, DIMENSION(:) :: dat_b
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL, DIMENSION(SIZE(dat)) :: sorted_dat_b
+    INTEGER :: n
+    REAL :: res, q1, q2, frac
+    REAL :: res_b, q1_b, q2_b
+    INTRINSIC INT
+    REAL :: temp_b
+    n = SIZE(dat)
+    sorted_dat = dat
+    CALL PUSHREAL4ARRAY(sorted_dat, SIZE(dat))
+    CALL INSERTION_SORT(sorted_dat, n)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      sorted_dat_b = 0.0
+      sorted_dat_b(1) = sorted_dat_b(1) + res_b
+    ELSE IF (frac .GE. n) THEN
+      sorted_dat_b = 0.0
+      sorted_dat_b(n) = sorted_dat_b(n) + res_b
+    ELSE
+      frac = (n-1)*p + 1
+      temp_b = (frac-INT(frac))*res_b
+      q1_b = res_b - temp_b
+      q2_b = temp_b
+      sorted_dat_b = 0.0
+      sorted_dat_b(INT(frac)+1) = sorted_dat_b(INT(frac)+1) + q2_b
+      sorted_dat_b(INT(frac)) = sorted_dat_b(INT(frac)) + q1_b
+    END IF
+    CALL POPREAL4ARRAY(sorted_dat, SIZE(dat))
+    CALL INSERTION_SORT_B(sorted_dat, sorted_dat_b, n)
+    dat_b = 0.0
+    dat_b = sorted_dat_b
+  END SUBROUTINE QUANTILE_B
+
+  FUNCTION QUANTILE(dat, p) RESULT (RES)
+    IMPLICIT NONE
+    REAL, INTENT(IN) :: p
+    REAL, DIMENSION(:), INTENT(IN) :: dat
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(dat)) :: sorted_dat
+    INTEGER :: n
+    REAL :: res, q1, q2, frac
+    INTRINSIC INT
+    res = 0.
+    n = SIZE(dat)
+    sorted_dat = dat
+    CALL INSERTION_SORT(sorted_dat, n)
+    frac = (n-1)*p + 1
+    IF (frac .LE. 1) THEN
+      res = sorted_dat(1)
+    ELSE IF (frac .GE. n) THEN
+      res = sorted_dat(n)
+    ELSE
+      q1 = sorted_dat(INT(frac))
+      q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+      res = q1 + (q2-q1)*(frac-INT(frac))
+    END IF
+  END FUNCTION QUANTILE
+
+!  Differentiation of quantile_signature in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: num
+!   with respect to varying inputs: qs
+  SUBROUTINE QUANTILE_SIGNATURE_D(qo, qs, qs_d, p, num, num_d, den)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL, DIMENSION(:), INTENT(IN) :: qs_d
+    REAL, INTENT(IN) :: p
+    REAL, INTENT(INOUT) :: num, den
+    REAL, INTENT(INOUT) :: num_d
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    REAL, DIMENSION(SIZE(qo)) :: pos_qs_d
+    INTEGER :: i, j, n
+    n = SIZE(qo)
+    pos_qo = 0.
+    pos_qs = 0.
+    j = 0
+    pos_qs_d = 0.0
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        j = j + 1
+        pos_qo(j) = qo(i)
+        pos_qs_d(j) = qs_d(i)
+        pos_qs(j) = qs(i)
+      END IF
+    END DO
+    num_d = QUANTILE_D(pos_qs(1:j), pos_qs_d(1:j), p, num)
+    den = QUANTILE(pos_qo(1:j), p)
+  END SUBROUTINE QUANTILE_SIGNATURE_D
+
+!  Differentiation of quantile_signature in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: qs num
+!   with respect to varying inputs: qs
+  SUBROUTINE QUANTILE_SIGNATURE_B(qo, qs, qs_b, p, num, num_b, den)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL, DIMENSION(:) :: qs_b
+    REAL, INTENT(IN) :: p
+    REAL, INTENT(INOUT) :: num, den
+    REAL, INTENT(INOUT) :: num_b
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    REAL, DIMENSION(SIZE(qo)) :: pos_qs_b
+    INTEGER :: i, j, n
+    REAL :: res
+    REAL :: res_b
+    INTEGER :: branch
+    n = SIZE(qo)
+    pos_qs = 0.
+    j = 0
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        pos_qs(j) = qs(i)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    res = QUANTILE(pos_qs(1:j), p)
+    pos_qs_b = 0.0
+    res_b = num_b
+    CALL QUANTILE_B(pos_qs(1:j), pos_qs_b(1:j), p, res_b)
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        qs_b(i) = qs_b(i) + pos_qs_b(j)
+        pos_qs_b(j) = 0.0
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE QUANTILE_SIGNATURE_B
+
+  SUBROUTINE QUANTILE_SIGNATURE(qo, qs, p, num, den)
+    IMPLICIT NONE
+    REAL, DIMENSION(:), INTENT(IN) :: qo, qs
+    REAL, INTENT(IN) :: p
+    REAL, INTENT(INOUT) :: num, den
+    INTRINSIC SIZE
+    REAL, DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
+    INTEGER :: i, j, n
+    n = SIZE(qo)
+    pos_qo = 0.
+    pos_qs = 0.
+    j = 0
+    DO i=1,n
+      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+        j = j + 1
+        pos_qo(j) = qo(i)
+        pos_qs(j) = qs(i)
+      END IF
+    END DO
+    num = QUANTILE(pos_qs(1:j), p)
+    den = QUANTILE(pos_qo(1:j), p)
+  END SUBROUTINE QUANTILE_SIGNATURE
+
 !  Differentiation of signature in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: res
 !   with respect to varying inputs: qs
   FUNCTION SIGNATURE_D(po, qo, qs, qs_d, mask_event, stype, res) RESULT &
 & (RES_D)
     IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
-    REAL(sp), DIMENSION(:), INTENT(IN) :: qs_d
+    REAL, DIMENSION(:), INTENT(IN) :: po, qo, qs
+    REAL, DIMENSION(:), INTENT(IN) :: qs_d
     INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
     CHARACTER(len=*), INTENT(IN) :: stype
-    REAL(sp) :: res
-    REAL(sp) :: res_d
+    REAL :: res
+    REAL :: res_d
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
     INTEGER :: n_event, i, j, start_event, ntime_step_event
-    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
-    REAL(sp) :: sum_qs_d, max_qs_d, num_d
+    REAL :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    REAL :: sum_qs_d, max_qs_d, num_d
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
     n_event = 0
@@ -7849,12 +8140,12 @@ CONTAINS
       DO i=SIZE(mask_event),1,-1
         IF (mask_event(i) .GT. 0) GOTO 100
       END DO
-      res_d = 0.0_4
-      num_d = 0.0_4
+      res_d = 0.0
+      num_d = 0.0
       GOTO 130
  100  n_event = mask_event(i)
-      res_d = 0.0_4
-      num_d = 0.0_4
+      res_d = 0.0
+      num_d = 0.0
  130  DO i=1,n_event
         lgc_mask_event = mask_event .EQ. i
         DO j=1,SIZE(mask_event)
@@ -7872,8 +8163,8 @@ CONTAINS
         imax_qo = 0
         imax_qs = 0
         imax_po = 0
-        max_qs_d = 0.0_4
-        sum_qs_d = 0.0_4
+        max_qs_d = 0.0
+        sum_qs_d = 0.0
         DO j=start_event,start_event+ntime_step_event-1
           IF (qo(j) .GE. 0._sp .AND. po(j) .GE. 0._sp) THEN
             sum_qo = sum_qo + qo(j)
@@ -7903,7 +8194,7 @@ CONTAINS
         CASE ('Elt') 
           num = imax_qs - imax_po
           den = imax_qo - imax_po
-          num_d = 0.0_4
+          num_d = 0.0
         CASE ('Erc') 
           IF (sum_po .GT. 0._sp) THEN
             num_d = sum_qs_d/sum_po
@@ -7915,34 +8206,42 @@ CONTAINS
       END DO
       IF (n_event .GT. 0) res_d = res_d/n_event
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      sum_qs_d = 0.0_4
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs_d = sum_qs_d + qs_d(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-        END IF
-      END DO
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        sum_qs_d = 0.0
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs_d = sum_qs_d + qs_d(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+          END IF
+        END DO
         IF (sum_po .GT. 0._sp) THEN
           num_d = sum_qs_d/sum_po
           num = sum_qs/sum_po
           den = sum_qo/sum_po
         ELSE
-          num_d = 0.0_4
+          num_d = 0.0
         END IF
+      CASE ('Cfp2') 
+        CALL QUANTILE_SIGNATURE_D(qo, qs, qs_d, 0.02, num, num_d, den)
+      CASE ('Cfp10') 
+        CALL QUANTILE_SIGNATURE_D(qo, qs, qs_d, 0.1, num, num_d, den)
+      CASE ('Cfp50') 
+        CALL QUANTILE_SIGNATURE_D(qo, qs, qs_d, 0.5, num, num_d, den)
+      CASE ('Cfp90') 
+        CALL QUANTILE_SIGNATURE_D(qo, qs, qs_d, 0.9, num, num_d, den)
       CASE DEFAULT
-        num_d = 0.0_4
+        num_d = 0.0
       END SELECT
       IF (den .GT. 0._sp) THEN
         res_d = 2*(num/den-1._sp)*num_d/den
       ELSE
-        res_d = 0.0_4
+        res_d = 0.0
       END IF
     END IF
   END FUNCTION SIGNATURE_D
@@ -7952,17 +8251,17 @@ CONTAINS
 !   with respect to varying inputs: qs
   SUBROUTINE SIGNATURE_B(po, qo, qs, qs_b, mask_event, stype, res_b)
     IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
-    REAL(sp), DIMENSION(:) :: qs_b
+    REAL, DIMENSION(:), INTENT(IN) :: po, qo, qs
+    REAL, DIMENSION(:) :: qs_b
     INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
     CHARACTER(len=*), INTENT(IN) :: stype
-    REAL(sp) :: res
-    REAL(sp) :: res_b
+    REAL :: res
+    REAL :: res_b
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
     INTEGER :: n_event, i, j, start_event, ntime_step_event
-    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
-    REAL(sp) :: sum_qs_b, max_qs_b, num_b
+    REAL :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    REAL :: sum_qs_b, max_qs_b, num_b
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
     INTEGER :: ad_count
@@ -8080,38 +8379,38 @@ CONTAINS
         END IF
       END DO
       IF (n_event .GT. 0) res_b = res_b/n_event
-      num_b = 0.0_4
+      num_b = 0.0
       DO i=n_event,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) num_b = num_b + 2*(num/den-1._sp)*res_b/den
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
-            max_qs_b = 0.0_4
-            sum_qs_b = 0.0_4
+            max_qs_b = 0.0
+            sum_qs_b = 0.0
           ELSE
             CALL POPREAL4(den)
             CALL POPREAL4(num)
             max_qs_b = num_b
-            num_b = 0.0_4
-            sum_qs_b = 0.0_4
+            num_b = 0.0
+            sum_qs_b = 0.0
           END IF
         ELSE IF (branch .EQ. 2) THEN
           CALL POPREAL4(den)
           CALL POPREAL4(num)
-          max_qs_b = 0.0_4
-          num_b = 0.0_4
-          sum_qs_b = 0.0_4
+          max_qs_b = 0.0
+          num_b = 0.0
+          sum_qs_b = 0.0
         ELSE
           IF (branch .EQ. 3) THEN
             CALL POPREAL4(den)
             CALL POPREAL4(num)
             sum_qs_b = num_b/sum_po
-            num_b = 0.0_4
+            num_b = 0.0
           ELSE
-            sum_qs_b = 0.0_4
+            sum_qs_b = 0.0
           END IF
-          max_qs_b = 0.0_4
+          max_qs_b = 0.0
         END IF
         CALL POPINTEGER4(ad_from)
         CALL POPINTEGER4(ad_to)
@@ -8123,7 +8422,7 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             qs_b(j) = qs_b(j) + max_qs_b
-            max_qs_b = 0.0_4
+            max_qs_b = 0.0
           END IF
           qs_b(j) = qs_b(j) + sum_qs_b
  140    CONTINUE
@@ -8138,66 +8437,90 @@ CONTAINS
         IF (i0 .EQ. 1) CALL POPCONTROL1B(branch)
       END DO
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-      END DO
-      CALL PUSHINTEGER4(i - 1)
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(i - 1)
         IF (sum_po .GT. 0._sp) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
-          CALL PUSHCONTROL2B(1)
+          CALL PUSHCONTROL3B(1)
         ELSE
-          CALL PUSHCONTROL2B(2)
+          CALL PUSHCONTROL3B(2)
         END IF
+      CASE ('Cfp2') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.02, num, den)
+        CALL PUSHCONTROL3B(3)
+      CASE ('Cfp10') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.1, num, den)
+        CALL PUSHCONTROL3B(4)
+      CASE ('Cfp50') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.5, num, den)
+        CALL PUSHCONTROL3B(5)
+      CASE ('Cfp90') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.9, num, den)
+        CALL PUSHCONTROL3B(6)
       CASE DEFAULT
-        CALL PUSHCONTROL2B(0)
+        CALL PUSHCONTROL3B(0)
       END SELECT
       IF (den .GT. 0._sp) THEN
         num_b = 2*(num/den-1._sp)*res_b/den
       ELSE
-        num_b = 0.0_4
+        num_b = 0.0
       END IF
-      CALL POPCONTROL2B(branch)
-      IF (branch .EQ. 0) THEN
-        sum_qs_b = 0.0_4
-      ELSE IF (branch .EQ. 1) THEN
-        sum_qs_b = num_b/sum_po
+      CALL POPCONTROL3B(branch)
+      IF (branch .LT. 3) THEN
+        IF (branch .NE. 0) THEN
+          IF (branch .EQ. 1) THEN
+            sum_qs_b = num_b/sum_po
+          ELSE
+            sum_qs_b = 0.0
+          END IF
+          CALL POPINTEGER4(ad_to0)
+          DO i=ad_to0,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) qs_b(i) = qs_b(i) + sum_qs_b
+          END DO
+        END IF
+      ELSE IF (branch .LT. 5) THEN
+        IF (branch .EQ. 3) THEN
+          CALL QUANTILE_SIGNATURE_B(qo, qs, qs_b, 0.02, num, num_b, den)
+        ELSE
+          CALL QUANTILE_SIGNATURE_B(qo, qs, qs_b, 0.1, num, num_b, den)
+        END IF
+      ELSE IF (branch .EQ. 5) THEN
+        CALL QUANTILE_SIGNATURE_B(qo, qs, qs_b, 0.5, num, num_b, den)
       ELSE
-        sum_qs_b = 0.0_4
+        CALL QUANTILE_SIGNATURE_B(qo, qs, qs_b, 0.9, num, num_b, den)
       END IF
-      CALL POPINTEGER4(ad_to0)
-      DO i=ad_to0,1,-1
-        CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) qs_b(i) = qs_b(i) + sum_qs_b
-      END DO
     END IF
   END SUBROUTINE SIGNATURE_B
 
   FUNCTION SIGNATURE(po, qo, qs, mask_event, stype) RESULT (RES)
     IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: po, qo, qs
+    REAL, DIMENSION(:), INTENT(IN) :: po, qo, qs
     INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
     CHARACTER(len=*), INTENT(IN) :: stype
-    REAL(sp) :: res
+    REAL :: res
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(mask_event)) :: lgc_mask_event
     INTEGER :: n_event, i, j, start_event, ntime_step_event
-    REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
+    REAL :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
-    res = 0._sp
+    res = 0.
     n_event = 0
     IF (stype(:1) .EQ. 'E') THEN
 ! Reverse loop on mask_event to find number of event (array sorted filled with 0)
@@ -8261,22 +8584,30 @@ CONTAINS
       END DO
       IF (n_event .GT. 0) res = res/n_event
     ELSE
-      sum_qo = 0._sp
-      sum_qs = 0._sp
-      sum_po = 0._sp
-      DO i=1,SIZE(qo)
-        IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
-          sum_qo = sum_qo + qo(i)
-          sum_qs = sum_qs + qs(i)
-          sum_po = sum_po + po(i)
-        END IF
-      END DO
       SELECT CASE  (stype) 
       CASE ('Crc') 
+        sum_qo = 0._sp
+        sum_qs = 0._sp
+        sum_po = 0._sp
+        DO i=1,SIZE(qo)
+          IF (qo(i) .GE. 0._sp .AND. po(i) .GE. 0._sp) THEN
+            sum_qo = sum_qo + qo(i)
+            sum_qs = sum_qs + qs(i)
+            sum_po = sum_po + po(i)
+          END IF
+        END DO
         IF (sum_po .GT. 0._sp) THEN
           num = sum_qs/sum_po
           den = sum_qo/sum_po
         END IF
+      CASE ('Cfp2') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.02, num, den)
+      CASE ('Cfp10') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.1, num, den)
+      CASE ('Cfp50') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.5, num, den)
+      CASE ('Cfp90') 
+        CALL QUANTILE_SIGNATURE(qo, qs, 0.9, num, den)
       END SELECT
       IF (den .GT. 0._sp) res = (num/den-1._sp)*(num/den-1._sp)
     END IF

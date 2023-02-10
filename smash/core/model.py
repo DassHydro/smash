@@ -587,7 +587,7 @@ class Model(object):
             - ``Classical Objective Function``
                 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
             - ``Continuous Signature``
-                'Crc'
+                'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90'
             - ``Flood Event Signature``
                 'Epf', 'Elt', 'Erc'
 
