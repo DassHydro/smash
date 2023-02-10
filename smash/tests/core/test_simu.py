@@ -62,6 +62,14 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
     res["optimize.uniform_nelder-mead.cost"] = output_cost(instance)
 
+    instance = model.optimize(
+        jobs_fun=["Cfp2", "Cfp10", "Cfp50", "Cfp90"],
+        options={"maxiter": 2},
+        verbose=False,
+    )
+
+    res["optimize.uniform_sbs_mtc.cost"] = output_cost(instance)
+
     return res
 
 
