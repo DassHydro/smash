@@ -178,7 +178,7 @@ def _continuous_signatures(p: np.ndarray, q: np.ndarray, list_signatures: list[s
 
     res = []
     qb, qq = _baseflow_separation(q)
-    qp = q[q > 0]
+    qp = q[q >= 0]
 
     for signature in list_signatures:
 

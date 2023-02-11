@@ -352,7 +352,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     code = [
         el
         for ind, el in enumerate(instance.mesh.code)
-        if instance.setup._optimize.wgauge[ind] > 0
+        if instance.setup._optimize.wgauge[ind] != 0
     ]
     wgauge = np.array([el for el in instance.setup._optimize.wgauge if el > 0])
 

@@ -53,8 +53,8 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
     instance = model.optimize(
         mapping="uniform",
         algorithm="nelder-mead",
-        jobs_fun=["nse", "Crc", "Epf"],
-        wjobs_fun=[1, 2, 2],
+        jobs_fun=["nse", "Crc", "Cfp10", "Cfp50", "Epf", "Elt"],
+        wjobs_fun=[1, 2, 2, 2, 2, 2],
         event_seg={"peak_quant": 0.99},
         options={"maxiter": 10},
         verbose=False,
@@ -62,13 +62,15 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
     res["optimize.uniform_nelder-mead.cost"] = output_cost(instance)
 
+    #% multi-gauges
     instance = model.optimize(
-        jobs_fun=["Cfp2", "Cfp10", "Cfp50", "Cfp90"],
-        options={"maxiter": 2},
+        gauge="all",
+        wgauge="median",
+        options={"maxiter": 1},
         verbose=False,
     )
 
-    res["optimize.uniform_sbs_mtc.cost"] = output_cost(instance)
+    res["optimize.uniform_sbs_mtg.cost"] = output_cost(instance)
 
     return res
 

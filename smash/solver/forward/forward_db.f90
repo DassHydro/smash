@@ -6533,17 +6533,22 @@ CONTAINS
 &   optimize_start_step+1) :: po, qo, qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
 &   optimize_start_step+1) :: qs_d
-    REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
-    REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_d
-    REAL(sp) :: imd, j_imd
-    REAL(sp) :: imd_d, j_imd_d
-    INTEGER :: g, row, col, j
+    REAL(sp), DIMENSION(mesh%ng) :: arr_gauge_jobs
+    REAL(sp), DIMENSION(mesh%ng) :: arr_gauge_jobs_d
+    REAL(sp) :: imd, j_imd, gauge_jobs
+    REAL(sp) :: imd_d, j_imd_d, gauge_jobs_d
+    INTEGER :: g, row, col, j, arr_size
     INTRINSIC REAL
     INTRINSIC ANY
+    arr_gauge_jobs = 0._sp
+    arr_size = 0
     jobs_d = 0.0_4
+    arr_gauge_jobs_d = 0.0_4
     j_imd_d = 0.0_4
     DO g=1,mesh%ng
-      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+      gauge_jobs = 0._sp
+      IF (setup%optimize%wgauge(g) .GT. 0._sp .OR. setup%optimize%wgauge&
+&         (g) .LT. 0._sp) THEN
         po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
 &         setup%ntime_step)
         qs_d = setup%dt*1e3_sp*output_d%qsim(g, setup%optimize%&
@@ -6566,6 +6571,7 @@ CONTAINS
             CASE ('kge2') 
               imd_d = KGE_D(qo, qs, qs_d, imd)
               j_imd_d = 2*imd*imd_d
+              j_imd = imd*imd
             CASE ('se') 
               j_imd_d = SE_D(qo, qs, qs_d, j_imd)
             CASE ('rmse') 
@@ -6580,14 +6586,21 @@ CONTAINS
 &               ntime_step), setup%optimize%jobs_fun(j), j_imd)
             END SELECT
           END IF
-          gauge_jobs_d(g) = gauge_jobs_d(g) + setup%optimize%wjobs_fun(j&
-&           )*j_imd_d
+          gauge_jobs_d = gauge_jobs_d + setup%optimize%wjobs_fun(j)*&
+&           j_imd_d
+          gauge_jobs = gauge_jobs + setup%optimize%wjobs_fun(j)*j_imd
         END DO
-      ELSE
-        gauge_jobs_d = 0.0_4
+        IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+          jobs_d = jobs_d + setup%optimize%wgauge(g)*gauge_jobs_d
+        ELSE
+          arr_size = arr_size + 1
+          arr_gauge_jobs_d(arr_size) = gauge_jobs_d
+          arr_gauge_jobs(arr_size) = gauge_jobs
+        END IF
       END IF
-      jobs_d = jobs_d + setup%optimize%wgauge(g)*gauge_jobs_d(g)
     END DO
+    IF (arr_size .GT. 0) jobs_d = QUANTILE_D(arr_gauge_jobs(1:arr_size)&
+&       , arr_gauge_jobs_d(1:arr_size), 0.5, jobs)
   END SUBROUTINE COMPUTE_JOBS_D
 
 !  Differentiation of compute_jobs in reverse (adjoint) mode (with options fixinterface noISIZE):
@@ -6610,34 +6623,24 @@ CONTAINS
 &   optimize_start_step+1) :: po, qo, qs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
 &   optimize_start_step+1) :: qs_b
-    REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
-    REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs_b
-    REAL(sp) :: imd, j_imd
-    REAL(sp) :: imd_b, j_imd_b
-    INTEGER :: g, row, col, j
+    REAL(sp), DIMENSION(mesh%ng) :: arr_gauge_jobs
+    REAL(sp), DIMENSION(mesh%ng) :: arr_gauge_jobs_b
+    REAL(sp) :: imd, j_imd, gauge_jobs
+    REAL(sp) :: imd_b, j_imd_b, gauge_jobs_b
+    INTEGER :: g, row, col, j, arr_size
     INTRINSIC REAL
     INTRINSIC ANY
     REAL(sp) :: res
     REAL(sp) :: res_b
-    REAL(sp) :: res0
-    REAL(sp) :: res_b0
-    REAL(sp) :: res1
-    REAL(sp) :: res_b1
-    REAL(sp) :: res2
-    REAL(sp) :: res_b2
-    REAL(sp) :: res3
-    REAL(sp) :: res_b3
-    REAL(sp) :: res4
-    REAL(sp) :: res_b4
     INTEGER :: branch
+    arr_gauge_jobs = 0._sp
+    arr_size = 0
     DO g=1,mesh%ng
-      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
-        CALL PUSHREAL4ARRAY(po, setup%ntime_step - setup%optimize%&
-&                     optimize_start_step + 1)
+      gauge_jobs = 0._sp
+      IF (setup%optimize%wgauge(g) .GT. 0._sp .OR. setup%optimize%wgauge&
+&         (g) .LT. 0._sp) THEN
         po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
 &         setup%ntime_step)
-        CALL PUSHREAL4ARRAY(qs, setup%ntime_step - setup%optimize%&
-&                     optimize_start_step + 1)
         qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
 &         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
         row = mesh%gauge_pos(g, 1)
@@ -6651,29 +6654,30 @@ CONTAINS
           IF (ANY(qo .GE. 0._sp)) THEN
             SELECT CASE  (setup%optimize%jobs_fun(j)) 
             CASE ('nse') 
-              res = NSE(qo, qs)
+              j_imd = NSE(qo, qs)
               CALL PUSHCONTROL4B(1)
             CASE ('kge') 
-              res0 = KGE(qo, qs)
+              j_imd = KGE(qo, qs)
               CALL PUSHCONTROL4B(2)
             CASE ('kge2') 
               CALL PUSHREAL4(imd)
               imd = KGE(qo, qs)
+              j_imd = imd*imd
               CALL PUSHCONTROL4B(3)
             CASE ('se') 
-              res1 = SE(qo, qs)
+              j_imd = SE(qo, qs)
               CALL PUSHCONTROL4B(4)
             CASE ('rmse') 
-              res2 = RMSE(qo, qs)
+              j_imd = RMSE(qo, qs)
               CALL PUSHCONTROL4B(5)
             CASE ('logarithmic') 
-              res3 = LOGARITHMIC(qo, qs)
+              j_imd = LOGARITHMIC(qo, qs)
               CALL PUSHCONTROL4B(6)
             CASE ('Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90', 'Erc', 'Elt'&
 &           , 'Epf') 
 ! CASE OF SIGNATURES
-              res4 = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g, &
-&               setup%optimize%optimize_start_step:setup%ntime_step), &
+              j_imd = SIGNATURE(po, qo, qs, setup%optimize%mask_event(g&
+&               , setup%optimize%optimize_start_step:setup%ntime_step), &
 &               setup%optimize%jobs_fun(j))
               CALL PUSHCONTROL4B(7)
             CASE DEFAULT
@@ -6682,35 +6686,58 @@ CONTAINS
           ELSE
             CALL PUSHCONTROL4B(8)
           END IF
+          gauge_jobs = gauge_jobs + setup%optimize%wjobs_fun(j)*j_imd
         END DO
-        CALL PUSHCONTROL1B(0)
+        IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+          CALL PUSHCONTROL2B(2)
+        ELSE
+          CALL PUSHINTEGER4(arr_size)
+          arr_size = arr_size + 1
+          arr_gauge_jobs(arr_size) = gauge_jobs
+          CALL PUSHCONTROL2B(1)
+        END IF
       ELSE
-        CALL PUSHCONTROL1B(1)
+        CALL PUSHCONTROL2B(0)
       END IF
     END DO
+    IF (arr_size .GT. 0) THEN
+      res = QUANTILE(arr_gauge_jobs(1:arr_size), 0.5)
+      arr_gauge_jobs_b = 0.0_4
+      res_b = jobs_b
+      CALL QUANTILE_B(arr_gauge_jobs(1:arr_size), arr_gauge_jobs_b(1:&
+&               arr_size), 0.5, res_b)
+      jobs_b = 0.0_4
+    ELSE
+      arr_gauge_jobs_b = 0.0_4
+    END IF
     output_b%qsim = 0.0_4
     j_imd_b = 0.0_4
     DO g=mesh%ng,1,-1
-      gauge_jobs_b = 0.0_4
-      gauge_jobs_b(g) = gauge_jobs_b(g) + setup%optimize%wgauge(g)*&
-&       jobs_b
-      CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 0) THEN
+      CALL POPCONTROL2B(branch)
+      IF (branch .NE. 0) THEN
+        IF (branch .EQ. 1) THEN
+          gauge_jobs_b = arr_gauge_jobs_b(arr_size)
+          arr_gauge_jobs_b(arr_size) = 0.0_4
+          CALL POPINTEGER4(arr_size)
+        ELSE
+          gauge_jobs_b = setup%optimize%wgauge(g)*jobs_b
+        END IF
+        qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
+&         ntime_step)*setup%dt/mesh%area(g)*1e3_sp
+        po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
+&         setup%ntime_step)
         qs_b = 0.0_4
         DO j=setup%optimize%njf,1,-1
-          j_imd_b = j_imd_b + setup%optimize%wjobs_fun(j)*gauge_jobs_b(g&
-&           )
+          j_imd_b = j_imd_b + setup%optimize%wjobs_fun(j)*gauge_jobs_b
           CALL POPCONTROL4B(branch)
           IF (branch .LT. 4) THEN
             IF (branch .LT. 2) THEN
               IF (branch .NE. 0) THEN
-                res_b = j_imd_b
-                CALL NSE_B(qo, qs, qs_b, res_b)
+                CALL NSE_B(qo, qs, qs_b, j_imd_b)
                 j_imd_b = 0.0_4
               END IF
             ELSE IF (branch .EQ. 2) THEN
-              res_b0 = j_imd_b
-              CALL KGE_B(qo, qs, qs_b, res_b0)
+              CALL KGE_B(qo, qs, qs_b, j_imd_b)
               j_imd_b = 0.0_4
             ELSE
               imd_b = 2*imd*j_imd_b
@@ -6720,36 +6747,28 @@ CONTAINS
             END IF
           ELSE IF (branch .LT. 6) THEN
             IF (branch .EQ. 4) THEN
-              res_b1 = j_imd_b
-              CALL SE_B(qo, qs, qs_b, res_b1)
+              CALL SE_B(qo, qs, qs_b, j_imd_b)
               j_imd_b = 0.0_4
             ELSE
-              res_b2 = j_imd_b
-              CALL RMSE_B(qo, qs, qs_b, res_b2)
+              CALL RMSE_B(qo, qs, qs_b, j_imd_b)
               j_imd_b = 0.0_4
             END IF
           ELSE IF (branch .EQ. 6) THEN
-            res_b3 = j_imd_b
-            CALL LOGARITHMIC_B(qo, qs, qs_b, res_b3)
+            CALL LOGARITHMIC_B(qo, qs, qs_b, j_imd_b)
             j_imd_b = 0.0_4
           ELSE IF (branch .EQ. 7) THEN
-            res_b4 = j_imd_b
             CALL SIGNATURE_B(po, qo, qs, qs_b, setup%optimize%mask_event&
 &                      (g, setup%optimize%optimize_start_step:setup%&
-&                      ntime_step), setup%optimize%jobs_fun(j), res_b4)
+&                      ntime_step), setup%optimize%jobs_fun(j), j_imd_b)
             j_imd_b = 0.0_4
           END IF
         END DO
         CALL POPREAL4ARRAY(qo, setup%ntime_step - setup%optimize%&
 &                    optimize_start_step + 1)
-        CALL POPREAL4ARRAY(qs, setup%ntime_step - setup%optimize%&
-&                    optimize_start_step + 1)
         output_b%qsim(g, setup%optimize%optimize_start_step:setup%&
 &       ntime_step) = output_b%qsim(g, setup%optimize%&
 &         optimize_start_step:setup%ntime_step) + setup%dt*1e3_sp*qs_b/&
 &         mesh%area(g)
-        CALL POPREAL4ARRAY(po, setup%ntime_step - setup%optimize%&
-&                    optimize_start_step + 1)
       END IF
     END DO
   END SUBROUTINE COMPUTE_JOBS_B
@@ -6765,15 +6784,18 @@ CONTAINS
     REAL(sp), INTENT(OUT) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step-setup%optimize%&
 &   optimize_start_step+1) :: po, qo, qs
-    REAL(sp), DIMENSION(mesh%ng) :: gauge_jobs
-    REAL(sp) :: imd, j_imd
-    INTEGER :: g, row, col, j
+    REAL(sp), DIMENSION(mesh%ng) :: arr_gauge_jobs
+    REAL(sp) :: imd, j_imd, gauge_jobs
+    INTEGER :: g, row, col, j, arr_size
     INTRINSIC REAL
     INTRINSIC ANY
     jobs = 0._sp
+    arr_gauge_jobs = 0._sp
+    arr_size = 0
     DO g=1,mesh%ng
       gauge_jobs = 0._sp
-      IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+      IF (setup%optimize%wgauge(g) .GT. 0._sp .OR. setup%optimize%wgauge&
+&         (g) .LT. 0._sp) THEN
         po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:&
 &         setup%ntime_step)
         qs = output%qsim(g, setup%optimize%optimize_start_step:setup%&
@@ -6807,12 +6829,18 @@ CONTAINS
 &               setup%optimize%jobs_fun(j))
             END SELECT
           END IF
-          gauge_jobs(g) = gauge_jobs(g) + setup%optimize%wjobs_fun(j)*&
-&           j_imd
+          gauge_jobs = gauge_jobs + setup%optimize%wjobs_fun(j)*j_imd
         END DO
+        IF (setup%optimize%wgauge(g) .GT. 0._sp) THEN
+          jobs = jobs + setup%optimize%wgauge(g)*gauge_jobs
+        ELSE
+          arr_size = arr_size + 1
+          arr_gauge_jobs(arr_size) = gauge_jobs
+        END IF
       END IF
-      jobs = jobs + setup%optimize%wgauge(g)*gauge_jobs(g)
     END DO
+    IF (arr_size .GT. 0) jobs = QUANTILE(arr_gauge_jobs(1:arr_size), 0.5&
+&       )
   END SUBROUTINE COMPUTE_JOBS
 
 !  Differentiation of compute_jreg in forward (tangent) mode (with options fixinterface noISIZE):
@@ -7231,25 +7259,31 @@ CONTAINS
     INTRINSIC SIZE
 !% Metric computation
     n = 0
-    sum_x = 0.
-    sum_xx = 0.
+    sum_x = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     sum_yy_d = 0.0_4
     sum_xy_d = 0.0_4
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_xx = sum_xx + x(i)*x(i)
         sum_yy_d = sum_yy_d + 2*y(i)*y_d(i)
+        sum_yy = sum_yy + y(i)*y(i)
         sum_xy_d = sum_xy_d + x(i)*y_d(i)
+        sum_xy = sum_xy + x(i)*y(i)
       END IF
     END DO
     mean_x = sum_x/n
 !% NSE numerator / denominator
     num_d = sum_yy_d - 2*sum_xy_d
+    num = sum_xx - 2*sum_xy + sum_yy
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
     res_d = num_d/den
+    res = num/den
   END FUNCTION NSE_D
 
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE):
@@ -7269,10 +7303,10 @@ CONTAINS
     INTEGER :: branch
 !% Metric computation
     n = 0
-    sum_x = 0.
-    sum_xx = 0.
+    sum_x = 0._sp
+    sum_xx = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_xx = sum_xx + x(i)*x(i)
@@ -7306,12 +7340,12 @@ CONTAINS
     INTRINSIC SIZE
 !% Metric computation
     n = 0
-    sum_x = 0.
-    sum_xx = 0.
-    sum_yy = 0.
-    sum_xy = 0.
+    sum_x = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_xx = sum_xx + x(i)*x(i)
@@ -7349,16 +7383,16 @@ CONTAINS
     REAL(sp) :: temp
 ! Metric computation
     n = 0
-    sum_x = 0.
-    sum_y = 0.
-    sum_xx = 0.
-    sum_yy = 0.
-    sum_xy = 0.
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     sum_yy_d = 0.0_4
     sum_y_d = 0.0_4
     sum_xy_d = 0.0_4
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_y_d = sum_y_d + y_d(i)
@@ -7428,13 +7462,13 @@ CONTAINS
     INTEGER :: branch
 ! Metric computation
     n = 0
-    sum_x = 0.
-    sum_y = 0.
-    sum_xx = 0.
-    sum_yy = 0.
-    sum_xy = 0.
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_y = sum_y + y(i)
@@ -7494,13 +7528,13 @@ CONTAINS
     REAL(sp) :: result2
 ! Metric computation
     n = 0
-    sum_x = 0.
-    sum_y = 0.
-    sum_xx = 0.
-    sum_yy = 0.
-    sum_xy = 0.
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         n = n + 1
         sum_x = sum_x + x(i)
         sum_y = sum_y + y(i)
@@ -7605,10 +7639,10 @@ CONTAINS
     REAL(sp) :: res_d
     INTEGER :: i
     INTRINSIC SIZE
-    res = 0.
+    res = 0._sp
     res_d = 0.0_4
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         res_d = res_d - 2*(x(i)-y(i))*y_d(i)
         res = res + (x(i)-y(i))*(x(i)-y(i))
       END IF
@@ -7629,7 +7663,7 @@ CONTAINS
     INTEGER :: ad_to
     INTEGER :: branch
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
@@ -7648,9 +7682,9 @@ CONTAINS
     REAL(sp) :: res
     INTEGER :: i
     INTRINSIC SIZE
-    res = 0.
+    res = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) res = res + (x(i)-y(i))*(x(i)-y(i))
+      IF (x(i) .GE. 0._sp) res = res + (x(i)-y(i))*(x(i)-y(i))
     END DO
   END FUNCTION SE
 
@@ -7671,7 +7705,7 @@ CONTAINS
     REAL(sp) :: temp
     n = 0
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) n = n + 1
+      IF (x(i) .GE. 0._sp) n = n + 1
     END DO
     result1_d = SE_D(x, y, y_d, result1)
     temp = SQRT(result1/n)
@@ -7701,7 +7735,7 @@ CONTAINS
     INTEGER :: branch
     n = 0
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) THEN
+      IF (x(i) .GE. 0._sp) THEN
         CALL PUSHCONTROL1B(1)
         n = n + 1
       ELSE
@@ -7732,7 +7766,7 @@ CONTAINS
     REAL(sp) :: result1
     n = 0
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0.) n = n + 1
+      IF (x(i) .GE. 0._sp) n = n + 1
     END DO
     result1 = SE(x, y)
     res = SQRT(result1/n)
@@ -7756,9 +7790,10 @@ CONTAINS
     REAL(sp) :: arg2_d
     REAL(sp) :: temp
     REAL(sp) :: temp0
+    res = 0._sp
     res_d = 0.0_4
     DO i=1,SIZE(x)
-      IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
+      IF (x(i) .GT. 0._sp .AND. y(i) .GT. 0._sp) THEN
         arg1_d = y_d(i)/x(i)
         arg1 = y(i)/x(i)
         arg2_d = y_d(i)/x(i)
@@ -7766,6 +7801,7 @@ CONTAINS
         temp = LOG(arg2)
         temp0 = LOG(arg1)
         res_d = res_d + x(i)*(temp*arg1_d/arg1+temp0*arg2_d/arg2)
+        res = res + x(i)*(temp0*temp)
       END IF
     END DO
   END FUNCTION LOGARITHMIC_D
@@ -7789,7 +7825,9 @@ CONTAINS
     INTEGER :: ad_to
     INTEGER :: branch
     DO i=1,SIZE(x)
-      IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
+      IF (x(i) .GT. 0._sp .AND. y(i) .GT. 0._sp) THEN
+        arg1 = y(i)/x(i)
+        arg2 = y(i)/x(i)
         CALL PUSHCONTROL1B(1)
       ELSE
         CALL PUSHCONTROL1B(0)
@@ -7817,9 +7855,9 @@ CONTAINS
     INTRINSIC LOG
     REAL(sp) :: arg1
     REAL(sp) :: arg2
-    res = 0.
+    res = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GT. 0. .AND. y(i) .GT. 0.) THEN
+      IF (x(i) .GT. 0._sp .AND. y(i) .GT. 0._sp) THEN
         arg1 = y(i)/x(i)
         arg2 = y(i)/x(i)
         res = res + x(i)*LOG(arg1)*LOG(arg2)
@@ -8043,26 +8081,30 @@ CONTAINS
     REAL(sp) :: res_d, q1_d, q2_d
     INTRINSIC INT
     REAL(sp) :: temp
+    res_d = dat_d(1)
+    res = dat(1)
     n = SIZE(dat)
-    sorted_dat_d = dat_d
-    sorted_dat = dat
-    CALL HEAP_SORT_D(n, sorted_dat, sorted_dat_d)
-    frac = (n-1)*p + 1
-    IF (frac .LE. 1) THEN
-      res_d = sorted_dat_d(1)
-      res = sorted_dat(1)
-    ELSE IF (frac .GE. n) THEN
-      res_d = sorted_dat_d(n)
-      res = sorted_dat(n)
-    ELSE
-      q1_d = sorted_dat_d(INT(frac))
-      q1 = sorted_dat(INT(frac))
-      q2_d = sorted_dat_d(INT(frac)+1)
-      q2 = sorted_dat(INT(frac)+1)
+    IF (n .GT. 1) THEN
+      sorted_dat_d = dat_d
+      sorted_dat = dat
+      CALL HEAP_SORT_D(n, sorted_dat, sorted_dat_d)
+      frac = (n-1)*p + 1
+      IF (frac .LE. 1) THEN
+        res_d = sorted_dat_d(1)
+        res = sorted_dat(1)
+      ELSE IF (frac .GE. n) THEN
+        res_d = sorted_dat_d(n)
+        res = sorted_dat(n)
+      ELSE
+        q1_d = sorted_dat_d(INT(frac))
+        q1 = sorted_dat(INT(frac))
+        q2_d = sorted_dat_d(INT(frac)+1)
+        q2 = sorted_dat(INT(frac)+1)
 ! linear interpolation
-      temp = frac - INT(frac)
-      res_d = q1_d + temp*(q2_d-q1_d)
-      res = q1 + temp*(q2-q1)
+        temp = frac - INT(frac)
+        res_d = q1_d + temp*(q2_d-q1_d)
+        res = q1 + temp*(q2-q1)
+      END IF
     END IF
   END FUNCTION QUANTILE_D
 
@@ -8083,29 +8125,35 @@ CONTAINS
     INTRINSIC INT
     REAL(sp) :: temp_b
     n = SIZE(dat)
-    sorted_dat = dat
-    CALL PUSHREAL4ARRAY(sorted_dat, SIZE(dat))
-    CALL HEAP_SORT(n, sorted_dat)
-    frac = (n-1)*p + 1
-    IF (frac .LE. 1) THEN
-      sorted_dat_b = 0.0_4
-      sorted_dat_b(1) = sorted_dat_b(1) + res_b
-    ELSE IF (frac .GE. n) THEN
-      sorted_dat_b = 0.0_4
-      sorted_dat_b(n) = sorted_dat_b(n) + res_b
-    ELSE
+    IF (n .GT. 1) THEN
+      sorted_dat = dat
+      CALL PUSHREAL4ARRAY(sorted_dat, SIZE(dat))
+      CALL HEAP_SORT(n, sorted_dat)
       frac = (n-1)*p + 1
-      temp_b = (frac-INT(frac))*res_b
-      q1_b = res_b - temp_b
-      q2_b = temp_b
-      sorted_dat_b = 0.0_4
-      sorted_dat_b(INT(frac)+1) = sorted_dat_b(INT(frac)+1) + q2_b
-      sorted_dat_b(INT(frac)) = sorted_dat_b(INT(frac)) + q1_b
+      IF (frac .LE. 1) THEN
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(1) = sorted_dat_b(1) + res_b
+      ELSE IF (frac .GE. n) THEN
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(n) = sorted_dat_b(n) + res_b
+      ELSE
+        frac = (n-1)*p + 1
+        temp_b = (frac-INT(frac))*res_b
+        q1_b = res_b - temp_b
+        q2_b = temp_b
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(INT(frac)+1) = sorted_dat_b(INT(frac)+1) + q2_b
+        sorted_dat_b(INT(frac)) = sorted_dat_b(INT(frac)) + q1_b
+      END IF
+      CALL POPREAL4ARRAY(sorted_dat, SIZE(dat))
+      CALL HEAP_SORT_B(n, sorted_dat, sorted_dat_b)
+      dat_b = 0.0_4
+      dat_b = sorted_dat_b
+      res_b = 0.0_4
+    ELSE
+      dat_b = 0.0_4
     END IF
-    CALL POPREAL4ARRAY(sorted_dat, SIZE(dat))
-    CALL HEAP_SORT_B(n, sorted_dat, sorted_dat_b)
-    dat_b = 0.0_4
-    dat_b = sorted_dat_b
+    dat_b(1) = dat_b(1) + res_b
   END SUBROUTINE QUANTILE_B
 
   FUNCTION QUANTILE(dat, p) RESULT (RES)
@@ -8117,20 +8165,22 @@ CONTAINS
     INTEGER :: n
     REAL(sp) :: res, q1, q2, frac
     INTRINSIC INT
-    res = 0.
+    res = dat(1)
     n = SIZE(dat)
-    sorted_dat = dat
-    CALL HEAP_SORT(n, sorted_dat)
-    frac = (n-1)*p + 1
-    IF (frac .LE. 1) THEN
-      res = sorted_dat(1)
-    ELSE IF (frac .GE. n) THEN
-      res = sorted_dat(n)
-    ELSE
-      q1 = sorted_dat(INT(frac))
-      q2 = sorted_dat(INT(frac)+1)
+    IF (n .GT. 1) THEN
+      sorted_dat = dat
+      CALL HEAP_SORT(n, sorted_dat)
+      frac = (n-1)*p + 1
+      IF (frac .LE. 1) THEN
+        res = sorted_dat(1)
+      ELSE IF (frac .GE. n) THEN
+        res = sorted_dat(n)
+      ELSE
+        q1 = sorted_dat(INT(frac))
+        q2 = sorted_dat(INT(frac)+1)
 ! linear interpolation
-      res = q1 + (q2-q1)*(frac-INT(frac))
+        res = q1 + (q2-q1)*(frac-INT(frac))
+      END IF
     END IF
   END FUNCTION QUANTILE
 
@@ -8149,12 +8199,12 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(qo)) :: pos_qs_d
     INTEGER :: i, j, n
     n = SIZE(qo)
-    pos_qo = 0.
-    pos_qs = 0.
+    pos_qo = 0._sp
+    pos_qs = 0._sp
     j = 0
     pos_qs_d = 0.0_4
     DO i=1,n
-      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+      IF (qo(i) .GE. 0._sp .AND. qs(i) .GE. 0._sp) THEN
         j = j + 1
         pos_qo(j) = qo(i)
         pos_qs_d(j) = qs_d(i)
@@ -8183,10 +8233,10 @@ CONTAINS
     REAL(sp) :: res_b
     INTEGER :: branch
     n = SIZE(qo)
-    pos_qs = 0.
+    pos_qs = 0._sp
     j = 0
     DO i=1,n
-      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+      IF (qo(i) .GE. 0._sp .AND. qs(i) .GE. 0._sp) THEN
         CALL PUSHINTEGER4(j)
         j = j + 1
         pos_qs(j) = qs(i)
@@ -8218,11 +8268,11 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(qo)) :: pos_qo, pos_qs
     INTEGER :: i, j, n
     n = SIZE(qo)
-    pos_qo = 0.
-    pos_qs = 0.
+    pos_qo = 0._sp
+    pos_qs = 0._sp
     j = 0
     DO i=1,n
-      IF (qo(i) .GE. 0. .AND. qs(i) .GE. 0.) THEN
+      IF (qo(i) .GE. 0._sp .AND. qs(i) .GE. 0._sp) THEN
         j = j + 1
         pos_qo(j) = qo(i)
         pos_qs(j) = qs(i)
@@ -8251,6 +8301,7 @@ CONTAINS
     REAL(sp) :: sum_qs_d, max_qs_d, num_d
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
+    res = 0._sp
     n_event = 0
     IF (stype(:1) .EQ. 'E') THEN
 ! Reverse loop on mask_event to find number of event (array sorted filled with 0)
@@ -8319,9 +8370,15 @@ CONTAINS
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res_d = res_d + 2*(num/den-1.)*num_d/den
+        IF (den .GT. 0._sp) THEN
+          res_d = res_d + 2*(num/den-1._sp)*num_d/den
+          res = res + (num/den-1._sp)*(num/den-1._sp)
+        END IF
       END DO
-      IF (n_event .GT. 0) res_d = res_d/n_event
+      IF (n_event .GT. 0) THEN
+        res_d = res_d/n_event
+        res = res/n_event
+      END IF
     ELSE
       SELECT CASE  (stype) 
       CASE ('Crc') 
@@ -8356,7 +8413,8 @@ CONTAINS
         num_d = 0.0_4
       END SELECT
       IF (den .GT. 0._sp) THEN
-        res_d = 2*(num/den-1.)*num_d/den
+        res_d = 2*(num/den-1._sp)*num_d/den
+        res = (num/den-1._sp)*(num/den-1._sp)
       ELSE
         res_d = 0.0_4
       END IF
@@ -8499,7 +8557,7 @@ CONTAINS
       num_b = 0.0_4
       DO i=n_event,1,-1
         CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1.)*res_b/den
+        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1._sp)*res_b/den
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
@@ -8593,7 +8651,7 @@ CONTAINS
         CALL PUSHCONTROL3B(0)
       END SELECT
       IF (den .GT. 0._sp) THEN
-        num_b = 2*(num/den-1.)*res_b/den
+        num_b = 2*(num/den-1._sp)*res_b/den
       ELSE
         num_b = 0.0_4
       END IF
@@ -8697,7 +8755,7 @@ CONTAINS
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res = res + (num/den-1.)*(num/den-1.)
+        IF (den .GT. 0._sp) res = res + (num/den-1._sp)*(num/den-1._sp)
       END DO
       IF (n_event .GT. 0) res = res/n_event
     ELSE
@@ -8726,7 +8784,7 @@ CONTAINS
       CASE ('Cfp90') 
         CALL FLOW_PERCENTILE(qo, qs, 0.9_sp, num, den)
       END SELECT
-      IF (den .GT. 0._sp) res = (num/den-1.)*(num/den-1.)
+      IF (den .GT. 0._sp) res = (num/den-1._sp)*(num/den-1._sp)
     END IF
   END FUNCTION SIGNATURE
 
