@@ -415,6 +415,10 @@ def _standardize_wgauge(
 
             weight_arr[ind] = 1 / gauge.size
 
+        elif wgauge == "median":
+
+            weight_arr[ind] = -50
+
         elif wgauge == "area":
 
             weight_arr[ind] = mesh.area[ind] / sum(mesh.area[ind])
@@ -426,7 +430,7 @@ def _standardize_wgauge(
         else:
 
             raise ValueError(
-                f"Unknown wgauge alias '{wgauge}'. Choices: ['mean', 'area', 'minv_area']"
+                f"Unknown wgauge alias '{wgauge}'. Choices: ['mean', 'median', 'area', 'minv_area']"
             )
 
     elif isinstance(wgauge, (list, tuple, set)):
@@ -438,6 +442,10 @@ def _standardize_wgauge(
             raise ValueError(
                 f"Inconsistent size between gauge ({gauge.size}) and wgauge ({wgauge.size})"
             )
+
+        elif np.any(wgauge < 0):
+
+            raise ValueError(f"Weight gauge can not receive negative values ({wgauge})")
 
         else:
 

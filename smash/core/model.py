@@ -623,7 +623,7 @@ class Model(object):
             Type of gauge weights. There are two ways to specify it:
 
             1. A sequence of value whose size must be equal to the number of gauges optimized.
-            2. An alias among ``mean``, ``area`` or ``minv_area``.
+            2. An alias among ``mean``, ``median``, ``area`` or ``minv_area``.
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the

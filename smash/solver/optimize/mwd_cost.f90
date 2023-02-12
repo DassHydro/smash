@@ -63,17 +63,21 @@ module mwd_cost
             real(sp), intent(out) :: jobs
             
             real(sp), dimension(setup%ntime_step - setup%optimize%optimize_start_step + 1) :: po, qo, qs
-            real(sp), dimension(mesh%ng) :: gauge_jobs
-            real(sp) :: imd, j_imd
-            integer :: g, row, col, j
+            real(sp), dimension(mesh%ng) :: arr_gauge_jobs
+            real(sp) :: imd, j_imd, gauge_jobs
+            integer :: g, row, col, j, arr_size
             
             jobs = 0._sp
+            
+            arr_gauge_jobs = 0._sp
+
+            arr_size = 0
             
             do g=1, mesh%ng
             
                 gauge_jobs = 0._sp
             
-                if (setup%optimize%wgauge(g) .gt. 0._sp) then
+                if ((setup%optimize%wgauge(g) .gt. 0._sp) .or. (setup%optimize%wgauge(g) .lt. 0._sp)) then
 
                     po = input_data%mean_prcp(g, setup%optimize%optimize_start_step:setup%ntime_step)
                 
@@ -128,15 +132,26 @@ module mwd_cost
             
                         end if
 
-                        gauge_jobs(g) = gauge_jobs(g) + setup%optimize%wjobs_fun(j) * j_imd 
+                        gauge_jobs = gauge_jobs + setup%optimize%wjobs_fun(j) * j_imd 
 
                     end do
+
+                    if (setup%optimize%wgauge(g) .gt. 0._sp) then
+                        
+                        jobs = jobs + setup%optimize%wgauge(g) * gauge_jobs
+
+                    else
+                        arr_size = arr_size + 1
+
+                        arr_gauge_jobs(arr_size) = gauge_jobs
+
+                    end if
                     
                 end if
                 
-                jobs = jobs + setup%optimize%wgauge(g) * gauge_jobs(g)
-                
             end do
+
+            if (arr_size .gt. 0) jobs = quantile(arr_gauge_jobs(1:arr_size), 0.5)
 
         end subroutine compute_jobs
         
@@ -147,6 +162,7 @@ module mwd_cost
             !% -----
             !%
             !% Jreg computation subroutine
+            !%
             !% Given SetupDT, MeshDT, ParametersDT, ParametersDT_bgd, StatesDT, STatesDT_bgd,
             !% it returns the result of Jreg computation
             !%
@@ -306,14 +322,14 @@ module mwd_cost
             
             !% Metric computation
             n = 0
-            sum_x = 0.
-            sum_xx = 0.
-            sum_yy = 0.
-            sum_xy = 0.
+            sum_x = 0._sp
+            sum_xx = 0._sp
+            sum_yy = 0._sp
+            sum_xy = 0._sp
             
             do i=1, size(x)
             
-                if (x(i) .ge. 0.) then
+                if (x(i) .ge. 0._sp) then
                     
                     n = n + 1
                     sum_x = sum_x + x(i)
@@ -361,15 +377,15 @@ module mwd_cost
             
             ! Metric computation
             n = 0
-            sum_x = 0.
-            sum_y = 0.
-            sum_xx = 0.
-            sum_yy = 0.
-            sum_xy = 0.
+            sum_x = 0._sp
+            sum_y = 0._sp
+            sum_xx = 0._sp
+            sum_yy = 0._sp
+            sum_xy = 0._sp
             
             do i=1, size(x)
             
-                if (x(i) .ge. 0.) then
+                if (x(i) .ge. 0._sp) then
                     
                     n = n + 1
                     sum_x = sum_x + x(i)
@@ -446,11 +462,11 @@ module mwd_cost
             
             integer :: i
             
-            res = 0.
+            res = 0._sp
             
             do i=1, size(x)
                 
-                if (x(i) .ge. 0.) then
+                if (x(i) .ge. 0._sp) then
                 
                     res = res + (x(i) - y(i)) * (x(i) - y(i))
                 
@@ -487,7 +503,7 @@ module mwd_cost
             
             do i=1, size(x)
                 
-                if (x(i) .ge. 0.) then
+                if (x(i) .ge. 0._sp) then
                 
                     n = n + 1
                     
@@ -519,11 +535,11 @@ module mwd_cost
             
             integer :: i
             
-            res = 0.
+            res = 0._sp
             
             do i=1, size(x)
             
-                if (x(i) .gt. 0. .and. y(i) .gt. 0.) then
+                if (x(i) .gt. 0._sp .and. y(i) .gt. 0._sp) then
                 
                     res = res + x(i) * log(y(i) / x(i)) * log(y(i) / x(i))
                 
@@ -623,6 +639,7 @@ module mwd_cost
             !% -----
             !%
             !% Quantile function using linear interpolation
+            !%
             !% Similar to numpy.quantile
 
             implicit none
@@ -633,30 +650,34 @@ module mwd_cost
             integer :: n
             real(sp) :: res, q1, q2, frac
 
-            res = 0.
+            res = dat(1)
             
             n = size(dat)
 
-            sorted_dat = dat
+            if (n .gt. 1) then
 
-            call heap_sort(n, sorted_dat)
+                sorted_dat = dat
 
-            frac = (n - 1) * p + 1
+                call heap_sort(n, sorted_dat)
 
-            if (frac .le. 1) then
+                frac = (n - 1) * p + 1
 
-                res = sorted_dat(1)
+                if (frac .le. 1) then
 
-            else if (frac .ge. n) then
+                    res = sorted_dat(1)
 
-                res = sorted_dat(n)
+                else if (frac .ge. n) then
 
-            else
-                q1 = sorted_dat(int(frac))
+                    res = sorted_dat(n)
 
-                q2 = sorted_dat(int(frac) + 1)
+                else
+                    q1 = sorted_dat(int(frac))
 
-                res = q1 + (q2 - q1) * (frac - int(frac)) ! linear interpolation
+                    q2 = sorted_dat(int(frac) + 1)
+
+                    res = q1 + (q2 - q1) * (frac - int(frac)) ! linear interpolation
+
+                end if
 
             end if
             
@@ -668,7 +689,9 @@ module mwd_cost
             !% Notes
             !% -----
             !%
-            !% Compute flow percentiles from observed (qo) and simulated signature (qs)
+            !% Compute flow percentiles 
+            !%
+            !% From observed (qo) and simulated signature (qs)
             !% Apply quantile function by ignoring negative values
 
             implicit none
@@ -684,14 +707,14 @@ module mwd_cost
 
             n = size(qo)
 
-            pos_qo = 0.
-            pos_qs = 0.
+            pos_qo = 0._sp
+            pos_qs = 0._sp
 
             j = 0
 
             do i = 1, n
 
-                if (qo(i) .ge. 0. .and. qs(i) .ge. 0.) then
+                if (qo(i) .ge. 0._sp .and. qs(i) .ge. 0._sp) then
 
                     j = j + 1
 
@@ -840,7 +863,7 @@ module mwd_cost
                     
                     if (den .gt. 0._sp) then
                     
-                        res = res + (num / den - 1.) * (num / den - 1.)
+                        res = res + (num / den - 1._sp) * (num / den - 1._sp)
                     
                     end if
                     
@@ -901,7 +924,7 @@ module mwd_cost
                 
                 if (den .gt. 0._sp) then
                 
-                    res = (num / den - 1.) * (num / den - 1.)
+                    res = (num / den - 1._sp) * (num / den - 1._sp)
                 
                 end if
             
