@@ -94,13 +94,6 @@ def save_model(model: Model, path: str):
     path : str
         The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
 
-    Raises
-    ------
-    FileNotFoundError:
-        If file not found.
-    ReadHDF5MethodError:
-        If file not created with `save_model`.
-
     See Also
     --------
     read_model: Read Model object.
@@ -168,9 +161,9 @@ def read_model(path: str) -> Model:
     Raises
     ------
     FileNotFoundError:
-        If file not found
+        If file not found.
     ReadHDF5MethodError:
-        If file not created with the `save_model`
+        If file not created with `save_model`.
 
     See Also
     --------
