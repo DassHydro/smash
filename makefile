@@ -181,4 +181,3 @@ clean:
 	@$(RM) -rf $(SOLVERDIR)/f90wrap
 	@$(RM) -rf $(MESHDIR)/*.so
 	@$(RM) -rf build
-	@$(RM) -rf $(TESTSDIR)/tmp_*.hdf5
