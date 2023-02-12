@@ -8,7 +8,6 @@ __all__ = ["save_setup", "read_setup"]
 
 
 def save_setup(setup: dict, path: str):
-
     """
     Save Model initialization setup dictionary.
 
@@ -42,7 +41,6 @@ def save_setup(setup: dict, path: str):
     """
 
     if not path.endswith(".yaml"):
-
         path = path + ".yaml"
 
     with open(path, "w") as f:
@@ -50,7 +48,6 @@ def save_setup(setup: dict, path: str):
 
 
 def read_setup(path: str) -> dict:
-
     """
     Read Model initialization setup dictionary.
 
@@ -86,9 +83,7 @@ def read_setup(path: str) -> dict:
     """
 
     if os.path.isfile(path):
-
         with open(path, "r") as f:
-
             setup = yaml.safe_load(f)
 
     else:
