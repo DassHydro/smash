@@ -1,0 +1,79 @@
+commit ee85003e4b00a1333368fecc14574780eb8c43b9
+Merge: 72af0c8 c3939bf
+Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Sun Feb 12 01:54:08 2023 +0100
+
+    Merge branch 'enhance-multigauges-optim' into 'maintenance/0.2.x'
+    
+    ENC: multisites optim with median wgauge
+    
+    See merge request francois.colleoni/smash!65
+
+TEST NAME                               |STATUS
+ann_optimize_1.cost                     |NON MODIFIED
+ann_optimize_1.loss                     |NON MODIFIED
+ann_optimize_2.cost                     |NON MODIFIED
+ann_optimize_2.loss                     |NON MODIFIED
+bayes_estimate.br_cost                  |NON MODIFIED
+bayes_estimate.cost                     |NON MODIFIED
+bayes_optimize.br_cost                  |NON MODIFIED
+bayes_optimize.cost                     |NON MODIFIED
+bbox_mesh.flwacc                        |NON MODIFIED
+bbox_mesh.flwdir                        |NON MODIFIED
+event_seg.arr                           |NON MODIFIED
+gen_samples.nor                         |NON MODIFIED
+gen_samples.uni                         |NON MODIFIED
+mesh_io.active_cell                     |ADDED
+mesh_io.area                            |ADDED
+mesh_io.code                            |ADDED
+mesh_io.dx                              |ADDED
+mesh_io.flwacc                          |ADDED
+mesh_io.flwdir                          |ADDED
+mesh_io.flwdst                          |ADDED
+mesh_io.gauge_pos                       |ADDED
+mesh_io.nac                             |ADDED
+mesh_io.ncol                            |ADDED
+mesh_io.ng                              |ADDED
+mesh_io.nrow                            |ADDED
+mesh_io.path                            |ADDED
+mesh_io.xmin                            |ADDED
+mesh_io.ymax                            |ADDED
+net_init.bias_layer_1                   |NON MODIFIED
+net_init.bias_layer_2                   |NON MODIFIED
+net_init.bias_layer_3                   |NON MODIFIED
+net_init.bias_layer_4                   |NON MODIFIED
+net_init.graph                          |NON MODIFIED
+net_init.weight_layer_1                 |NON MODIFIED
+net_init.weight_layer_2                 |NON MODIFIED
+net_init.weight_layer_3                 |NON MODIFIED
+net_init.weight_layer_4                 |NON MODIFIED
+optimize.distributed_l-bfgs-b.cost      |NON MODIFIED
+optimize.hyper-linear_l-bfgs-b.cost     |NON MODIFIED
+optimize.hyper-polynomial_l-bfgs-b.cost |NON MODIFIED
+optimize.uniform_nelder-mead.cost       |NON MODIFIED
+optimize.uniform_sbs.cost               |NON MODIFIED
+optimize.uniform_sbs_mtg.cost           |NON MODIFIED
+run.cost                                |NON MODIFIED
+signatures.cont_obs                     |NON MODIFIED
+signatures.cont_sim                     |NON MODIFIED
+signatures.event_obs                    |NON MODIFIED
+signatures.event_sim                    |NON MODIFIED
+signatures_sens.cont_first_si_cft       |NON MODIFIED
+signatures_sens.cont_first_si_cp        |NON MODIFIED
+signatures_sens.cont_first_si_exc       |NON MODIFIED
+signatures_sens.cont_first_si_lr        |NON MODIFIED
+signatures_sens.cont_total_si_cft       |NON MODIFIED
+signatures_sens.cont_total_si_cp        |NON MODIFIED
+signatures_sens.cont_total_si_exc       |NON MODIFIED
+signatures_sens.cont_total_si_lr        |NON MODIFIED
+signatures_sens.event_first_si_cft      |NON MODIFIED
+signatures_sens.event_first_si_cp       |NON MODIFIED
+signatures_sens.event_first_si_exc      |NON MODIFIED
+signatures_sens.event_first_si_lr       |NON MODIFIED
+signatures_sens.event_total_si_cft      |NON MODIFIED
+signatures_sens.event_total_si_cp       |NON MODIFIED
+signatures_sens.event_total_si_exc      |NON MODIFIED
+signatures_sens.event_total_si_lr       |NON MODIFIED
+xy_mesh.flwacc                          |NON MODIFIED
+xy_mesh.flwdir                          |NON MODIFIED
+xy_mesh.flwdst                          |NON MODIFIED

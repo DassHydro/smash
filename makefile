@@ -22,6 +22,7 @@ F90WRAPDIR := f90wrap
 SOLVERDIR := smash/solver
 MESHDIR := smash/mesh
 TESTSDIR := smash/tests
+DOCDIR := doc
 
 #% INC and MOD for obj
 INC := -I$(BUILDDIR)
@@ -160,13 +161,14 @@ finalize:
 #% Generating tapenade files (adjoint and tangent linear models)
 tap:
 	cd $(TAPENADEDIR) ; make
-	
+
+#% Testing code with pytest
 test:
 	cd $(TESTSDIR) ; pytest
 
+#% Generating baseline for test with args (see argparser in gen_baseline.py)
 baseline_test:
-
-	cd $(TESTSDIR) ; python3 gen_baseline.py
+	cd $(TESTSDIR) ; python3 gen_baseline.py $(args)
 
 #% Clean
 clean:
@@ -179,3 +181,4 @@ clean:
 	@$(RM) -rf $(SOLVERDIR)/f90wrap
 	@$(RM) -rf $(MESHDIR)/*.so
 	@$(RM) -rf build
+	@$(RM) -rf $(TESTSDIR)/tmp_*.hdf5
