@@ -115,7 +115,7 @@ OPTIM_FUNC = {
     "sbs": _optimize_sbs,
     "l-bfgs-b": _optimize_lbfgsb,
     "nelder-mead": _optimize_nelder_mead,
-}  #% TODO add nsga
+}  # % TODO add nsga
 
 
 ### ANN OPTIMIZE ###

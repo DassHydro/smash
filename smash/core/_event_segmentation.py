@@ -37,19 +37,17 @@ def _missing_values(
         return df.p.to_numpy(), df.q.to_numpy(), mvrat
 
     else:
-
         return None, None, mvrat
 
 
 def _baseflow_separation(
     streamflow: np.ndarray, filter_parameter: float = 0.925, passes: int = 3
 ):
-
     n = len(streamflow)
     ends = np.array([n - 1 if i % 2 == 1 else 0 for i in range(passes + 1)])
     addtostart = np.array([-1 if i % 2 == 1 else 1 for i in range(passes)])
 
-    btp = np.copy(streamflow)  #% Previous pass's baseflow approximation
+    btp = np.copy(streamflow)  # % Previous pass's baseflow approximation
     qft = np.zeros(n)
     bt = np.zeros(n)
 
@@ -59,7 +57,7 @@ def _baseflow_separation(
     else:
         bt[0] = np.mean(streamflow) / 1.5
 
-    #% Guess baseflow value in first time step.
+    # % Guess baseflow value in first time step.
     for j in range(passes):
         rang = np.linspace(
             ends[j] + addtostart[j],
@@ -67,7 +65,6 @@ def _baseflow_separation(
             np.abs(ends[j] + addtostart[j] - ends[j + 1]) + 1,
         )
         for ii in rang:
-
             i = int(ii)
 
             if (
@@ -84,7 +81,6 @@ def _baseflow_separation(
             qft[i] = streamflow[i] - bt[i]
 
         if j < passes - 1:
-
             btp = np.copy(bt)
 
             if streamflow[ends[j + 1]] < np.mean(btp):
@@ -97,8 +93,7 @@ def _baseflow_separation(
 
 
 def _get_season(now: datetime):
-
-    year = 2000  #% dummy leap year to allow input X-02-29 (leap day)
+    year = 2000  # % dummy leap year to allow input X-02-29 (leap day)
     seasons = [
         ("winter", (date(year, 1, 1), date(year, 3, 20))),
         ("spring", (date(year, 3, 21), date(year, 6, 20))),
@@ -124,7 +119,6 @@ def _detect_peaks(
     kpsh: bool = False,
     valley: bool = False,
 ):
-
     x = np.atleast_1d(x).astype("float64")
     if x.size < 3:
         return np.array([], dtype=int)
@@ -132,9 +126,9 @@ def _detect_peaks(
     if valley:
         x = -x
 
-    #% find indices of all peaks
+    # % find indices of all peaks
     dx = x[1:] - x[:-1]
-    #% handle NaN's
+    # % handle NaN's
     indnan = np.where(np.isnan(x))[0]
 
     if indnan.size:
@@ -154,7 +148,7 @@ def _detect_peaks(
 
     ind = np.unique(np.hstack((ine, ire, ife)))
 
-    #% handle NaN's
+    # % handle NaN's
     if ind.size and indnan.size:
         # NaN's and values close to NaN's cannot be peaks
         ind = ind[
@@ -163,37 +157,36 @@ def _detect_peaks(
             )
         ]
 
-    #% first and last values of x cannot be peaks
+    # % first and last values of x cannot be peaks
     if ind.size and ind[0] == 0:
         ind = ind[1:]
 
     if ind.size and ind[-1] == x.size - 1:
         ind = ind[:-1]
 
-    #% remove peaks < minimum peak height
+    # % remove peaks < minimum peak height
     if ind.size and mph is not None:
         ind = ind[x[ind] >= mph]
 
-    #% remove peaks - neighbors < threshold
+    # % remove peaks - neighbors < threshold
     if ind.size and threshold > 0:
         dx = np.min(np.vstack([x[ind] - x[ind - 1], x[ind] - x[ind + 1]]), axis=0)
         ind = np.delete(ind, np.where(dx < threshold)[0])
 
-    #% detect small peaks closer than minimum peak distance
+    # % detect small peaks closer than minimum peak distance
     if ind.size and mpd > 1:
         ind = ind[np.argsort(x[ind])][::-1]  # sort ind by peak height
         idel = np.zeros(ind.size, dtype=bool)
 
         for i in range(ind.size):
-
             if not idel[i]:
-                #% keep peaks with the same height if kpsh is True
+                # % keep peaks with the same height if kpsh is True
                 idel = idel | (ind >= ind[i] - mpd) & (ind <= ind[i] + mpd) & (
                     x[ind[i]] > x[ind] if kpsh else True
                 )
-                idel[i] = 0  #% Keep current peak
+                idel[i] = 0  # % Keep current peak
 
-        #% remove the small peaks and sort back the indices by their occurrence
+        # % remove the small peaks and sort back the indices by their occurrence
         ind = np.sort(ind[~idel])
 
     return ind
@@ -211,8 +204,7 @@ def _events_grad(
     st_power: int = 24,  # in hour
     end_search: int = 48,  # in hour
 ):
-
-    #% time step conversion
+    # % time step conversion
     max_duration = round(max_duration * 3600 / dt)
     start_seg = round(start_seg * 3600 / dt)
     st_power = round(st_power * 3600 / dt)
@@ -230,7 +222,6 @@ def _events_grad(
         )
 
         if ind_start.size > 1:
-
             power = np.array(
                 [
                     np.linalg.norm(p_search[j - 1 : j + st_power - 1], ord=2)
@@ -241,7 +232,6 @@ def _events_grad(
             ind_start = ind_start[np.where(power > coef_re * max(power))[0]]
 
         elif ind_start.size == 0:
-
             ind_start = np.append(ind_start, np.argmax(p_search_grad))
 
         ind_start_minq = ind_start[0]
@@ -251,7 +241,6 @@ def _events_grad(
         peakp = _detect_peaks(p[start:i], mpd=len(p))
 
         if peakp.size == 0:
-
             peakp = np.argmax(p[start:i]) + start
 
         else:
@@ -270,7 +259,7 @@ def _events_grad(
             prev_peakq = list_events[-1]["peakQ"]
             prev_peakp = list_events[-1]["peakP"]
 
-            #% merge two events respecting to max duration:
+            # % merge two events respecting to max duration:
             if max(end, prev_end) <= prev_start + max_duration:
                 list_events[-1]["end"] = max(end, prev_end)
 
@@ -292,31 +281,26 @@ def _mask_event(
     max_duration: float = 240,  # in hour
     **unknown_options,
 ):
-
     _check_unknown_options_event_seg(unknown_options)
 
     mask = np.zeros(instance.input_data.qobs.shape)
 
     for i, catchment in enumerate(instance.mesh.code):
-
         prcp_tmp, qobs_tmp, ratio = _missing_values(
             instance.input_data.mean_prcp[i, :], instance.input_data.qobs[i, :]
         )
 
         if prcp_tmp is None:
-
             warnings.warn(
                 f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
             )
 
         else:
-
             list_events = _events_grad(
                 prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
             )
 
             for event_number, t in enumerate(list_events):
-
                 ts = t["start"]
                 te = t["end"]
 
@@ -326,7 +310,6 @@ def _mask_event(
 
 
 def _event_segmentation(instance: Model, peak_quant: float, max_duration: float):
-
     date_range = pd.date_range(
         start=instance.setup.start_time,
         periods=instance.input_data.qobs.shape[1],
@@ -338,13 +321,11 @@ def _event_segmentation(instance: Model, peak_quant: float, max_duration: float)
     df = pd.DataFrame(columns=col_name)
 
     for i, catchment in enumerate(instance.mesh.code):
-
         prcp_tmp, qobs_tmp, ratio = _missing_values(
             instance.input_data.mean_prcp[i, :], instance.input_data.qobs[i, :]
         )
 
         if prcp_tmp is None:
-
             warnings.warn(
                 f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
             )
@@ -355,7 +336,6 @@ def _event_segmentation(instance: Model, peak_quant: float, max_duration: float)
             df = pd.concat([df, pdrow], ignore_index=True)
 
         else:
-
             list_events = _events_grad(
                 prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
             )
@@ -376,16 +356,13 @@ def _event_segmentation(instance: Model, peak_quant: float, max_duration: float)
 
 
 def _check_unknown_options_event_seg(unknown_options: dict):
-
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
         warnings.warn("Unknown event segmentation options: '%s'" % msg)
 
 
 def _standardize_event_seg_options(options: dict | None) -> dict:
-
     if options is None:
-
         options = {}
 
     return options

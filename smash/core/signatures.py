@@ -142,26 +142,20 @@ class SignSensResult(dict):
 
 
 def _standardize_signatures(sign: str | list[str] | None):
-
     if sign is None:
-
         sign = SIGNS
 
     elif isinstance(sign, str):
-
         if sign not in SIGNS:
-
             raise ValueError(f"Unknown signature {sign}. Choices: {SIGNS}")
 
         else:
             sign = [sign]
 
     elif isinstance(sign, list):
-
         unk_sign = tuple(s for s in sign if s not in SIGNS)
 
         if unk_sign:
-
             raise ValueError(f"Unknown signature(s) {unk_sign}. Choices: {SIGNS}")
 
     else:
@@ -175,13 +169,11 @@ def _standardize_signatures(sign: str | list[str] | None):
 
 
 def _continuous_signatures(p: np.ndarray, q: np.ndarray, list_signatures: list[str]):
-
     res = []
     qb, qq = _baseflow_separation(q)
     qp = q[q >= 0]
 
     for signature in list_signatures:
-
         if signature == "Crc":
             try:
                 res.append(np.sum(q) / np.sum(p))
@@ -241,13 +233,11 @@ def _event_signatures(
     peakq: float,
     list_signatures: list[str],
 ):
-
     res = []
     qb, qq = _baseflow_separation(q)
     deteq = True
 
     for signature in list_signatures:
-
         if signature == "Eff":
             res.append(np.mean(qq))
 
@@ -279,11 +269,9 @@ def _event_signatures(
                 res.append(np.nan)
 
         if (signature == "Elt" or signature == "Epf") and deteq:
-
             deteq = False
 
             if peakq is None:
-
                 try:
                     peakq = (
                         _detect_peaks(q, mpd=len(q))[0] + start
@@ -293,7 +281,6 @@ def _event_signatures(
                     peakq = start + len(q) - 1
 
         if signature == "Elt":
-
             res.append(peakq - peakp)
 
         if signature == "Epf":
@@ -311,7 +298,6 @@ def _signatures_comp(
     obs_comp: bool,  # decide if process observation computation or not.
     warn: bool,
 ):
-
     prcp_cvt = (
         instance.input_data.mean_prcp.copy()
         * 0.001
@@ -335,15 +321,12 @@ def _signatures_comp(
     dfobs_es = pd.DataFrame(columns=col_es)
 
     if len(cs) + len(es) > 0:
-
         for i, catchment in enumerate(instance.mesh.code):
-
             prcp_tmp, qobs_tmp, ratio = _missing_values(
                 prcp_cvt[i, :], instance.input_data.qobs[i, :]
             )
 
             if prcp_tmp is None:
-
                 if warn:
                     warnings.warn(
                         f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
@@ -363,11 +346,9 @@ def _signatures_comp(
                 dfobs_es = pd.concat([dfobs_es, row_es], ignore_index=True)
 
             else:
-
                 qsim_tmp = instance.output.qsim[i, :].copy()
 
                 if len(cs) > 0:
-
                     csignatures_sim = _continuous_signatures(
                         prcp_tmp, qsim_tmp, list_signatures=cs
                     )
@@ -379,7 +360,6 @@ def _signatures_comp(
                     dfsim_cs = pd.concat([dfsim_cs, rowsim_cs], ignore_index=True)
 
                     if obs_comp:
-
                         csignatures_obs = _continuous_signatures(
                             prcp_tmp, qobs_tmp, list_signatures=cs
                         )
@@ -391,13 +371,11 @@ def _signatures_comp(
                         dfobs_cs = pd.concat([dfobs_cs, rowobs_cs], ignore_index=True)
 
                 if len(es) > 0:
-
                     list_events = _events_grad(
                         prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
                     )
 
                     if len(list_events) == 0:
-
                         row_es = pd.DataFrame(
                             [[catchment] + [np.nan] * (len(col_es) - 1)],
                             columns=col_es,
@@ -407,9 +385,7 @@ def _signatures_comp(
                         dfobs_es = pd.concat([dfobs_es, row_es], ignore_index=True)
 
                     else:
-
                         for t in list_events:
-
                             ts = t["start"]
                             te = t["end"]
 
@@ -508,7 +484,6 @@ def _signatures_sensitivity(
     max_duration: float = 240,
     **unknown_options,
 ):
-
     if es:
         _check_unknown_options_event_seg(unknown_options)
 
@@ -520,7 +495,6 @@ def _signatures_sensitivity(
     dfs_es = []  # list of dataframes concerned to ES
 
     for i in tqdm(range(len(sample)), desc="</> Computing signatures sensitivity"):
-
         for j, name in enumerate(problem["names"]):
             setattr(instance.parameters, name, sample[i, j])
 
@@ -554,29 +528,24 @@ def _signatures_sensitivity(
     for dfinfo, dfs, signs in zip(
         [dfinfo_cs, dfinfo_es], [dfs_cs, dfs_es], [cs, es]
     ):  # loop for CS and ES
-
         dict_sa_tot = {key: [] for key in problem["names"]}
         dict_sa_first = {key: [] for key in problem["names"]}
 
         for name in signs:
-
             total_si = {key: [] for key in problem["names"]}
             first_si = {key: [] for key in problem["names"]}
 
             for j in range(len(dfinfo["code"])):
-
                 y = np.array([dfs[i][name].loc[j] for i in range(len(dfs))])
 
                 tsi, fsi = sb_analyze(problem, y, calc_second_order=False).to_df()
 
                 for ip, param in enumerate(problem["names"]):
-
                     total_si[param].append(tsi.iloc[:, 0].iloc[ip])
 
                     first_si[param].append(fsi.iloc[:, 0].iloc[ip])
 
             for param in problem["names"]:
-
                 dict_sa_tot[param].append(pd.Series(total_si[param], name=name))
 
                 dict_sa_first[param].append(pd.Series(first_si[param], name=name))

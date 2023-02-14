@@ -10,7 +10,6 @@ import pytest
 
 
 def generic_run(model: smash.Model, **kwargs) -> dict:
-
     instance = model.run()
 
     res = {"run.cost": output_cost(instance)}
@@ -19,21 +18,17 @@ def generic_run(model: smash.Model, **kwargs) -> dict:
 
 
 def test_run():
-
     res = generic_run(pytest.model)
 
     for key, value in res.items():
-
-        #% Check cost in run
+        # % Check cost in run
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_optimize(model: smash.Model, **kwargs) -> dict:
-
     res = {}
 
     for mapping in MAPPING:
-
         if mapping == "uniform":
             algo = "sbs"
 
@@ -49,7 +44,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
         res[f"optimize.{mapping}_{algo}.cost"] = output_cost(instance)
 
-    #% multi-criteria
+    # % multi-criteria
     instance = model.optimize(
         mapping="uniform",
         algorithm="nelder-mead",
@@ -62,7 +57,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
     res["optimize.uniform_nelder-mead.cost"] = output_cost(instance)
 
-    #% multi-gauges
+    # % multi-gauges
     instance = model.optimize(
         gauge="all",
         wgauge="median",
@@ -76,17 +71,14 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
 
 def test_optimize():
-
     res = generic_optimize(pytest.model)
 
     for key, value in res.items():
-
-        #% Check cost in optimize
+        # % Check cost in optimize
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
-
     instance, br = model.bayes_estimate(
         k=np.linspace(-1, 5, 10),
         n=5,
@@ -104,17 +96,14 @@ def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
 
 
 def test_bayes_estimate():
-
     res = generic_bayes_estimate(pytest.model)
 
     for key, value in res.items():
-
-        #% Check br.l_curve and cost in bayes_estimate
+        # % Check br.l_curve and cost in bayes_estimate
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
-
     instance, br = model.bayes_optimize(
         k=np.linspace(-1, 5, 10),
         n=5,
@@ -135,17 +124,14 @@ def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
 
 
 def test_bayes_optimize():
-
     res = generic_bayes_optimize(pytest.model)
 
     for key, value in res.items():
-
-        #% Check br.l_curve and cost in bayes_optimize
+        # % Check br.l_curve and cost in bayes_optimize
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_ann_optimize_1(model: smash.Model, **kwargs) -> dict:
-
     np.random.seed(11)
 
     instance, net = model.ann_optimize(epochs=5, return_net=True, verbose=False)
@@ -159,17 +145,14 @@ def generic_ann_optimize_1(model: smash.Model, **kwargs) -> dict:
 
 
 def test_ann_optimize_1():
-
     res = generic_ann_optimize_1(pytest.model)
 
     for key, value in res.items():
-
-        #% Check net.history loss and cost in ann_optimize_1
+        # % Check net.history loss and cost in ann_optimize_1
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_ann_optimize_2(model: smash.Model, **kwargs) -> dict:
-
     problem = model.get_bound_constraints(states=False)
 
     nd = model.input_data.descriptor.shape[-1]
@@ -207,17 +190,14 @@ def generic_ann_optimize_2(model: smash.Model, **kwargs) -> dict:
 
 
 def test_ann_optimize_2():
-
     res = generic_ann_optimize_2(pytest.model)
 
     for key, value in res.items():
-
-        #% Check net.history loss and cost in ann_optimize_2
+        # % Check net.history loss and cost in ann_optimize_2
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def output_cost(instance: smash.Model):
-
     qo = instance.input_data.qobs
     qs = instance.output.qsim
 
@@ -226,7 +206,6 @@ def output_cost(instance: smash.Model):
     ret = np.zeros(shape=n_jtest * instance.mesh.ng, dtype=np.float32)
 
     for i in range(instance.mesh.ng):
-
         ret[n_jtest * i : n_jtest * (i + 1)] = (
             instance.output.cost,
             nse(qo[i], qs[i]),

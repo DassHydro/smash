@@ -5,7 +5,7 @@
 !%      This module is wrapped and differentiated.
 !%
 !%      ParametersDT type:
-!%      
+!%
 !%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
@@ -29,9 +29,9 @@
 !%
 !%      ``lr``                   Linear routing parameter           [min]   (default: 5)     ]0, +Inf[
 !%      ======================== =======================================
-!%      
+!%
 !%      Hyper_ParametersDT type:
-!%      
+!%
 !%      It contains same Parameters variables (see above)
 !%
 !%      contains
@@ -174,7 +174,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      This module is wrapped and differentiated.
 !%
 !%      StatesDT type:
-!%      
+!%
 !%      </> Public
 !%      ======================== =======================================
 !%      `Variables`              Description
@@ -192,7 +192,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ======================== =======================================
 !%
 !%      Hyper_StatesDT type:
-!%      
+!%
 !%      It contains same States variables (see above)
 !%
 !%      contains
@@ -293,7 +293,7 @@ END MODULE MWD_STATES_DIFF
 !%      This module is wrapped and differentiated.
 !%
 !%      OutputDT type:
-!%      
+!%
 !%      </> Public
 !%      ========================== =====================================
 !%      `Variables`                Description
@@ -2382,7 +2382,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -2473,8 +2473,8 @@ CONTAINS
             q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
           END IF
         END IF
@@ -2548,7 +2548,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -2638,8 +2638,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             CALL PUSHCONTROL2B(2)
           ELSE
@@ -2772,7 +2772,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -2843,8 +2843,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
@@ -2934,7 +2934,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3022,8 +3022,8 @@ CONTAINS
             q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
           END IF
         END IF
@@ -3098,7 +3098,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3184,8 +3184,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             CALL PUSHCONTROL2B(2)
           ELSE
@@ -3320,7 +3320,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3387,8 +3387,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
@@ -3479,7 +3479,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3573,8 +3573,8 @@ CONTAINS
             q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
           END IF
         END IF
@@ -3651,7 +3651,7 @@ CONTAINS
         l = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3742,8 +3742,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             CALL PUSHCONTROL2B(2)
           ELSE
@@ -3891,7 +3891,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -3961,8 +3961,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
@@ -4049,7 +4049,7 @@ CONTAINS
         perc = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4124,8 +4124,8 @@ CONTAINS
             q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
           END IF
         END IF
@@ -4196,7 +4196,7 @@ CONTAINS
         perc = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4273,8 +4273,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             CALL PUSHCONTROL2B(2)
           ELSE
@@ -4390,7 +4390,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4450,8 +4450,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
@@ -4539,7 +4539,7 @@ CONTAINS
         runoff = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4626,8 +4626,8 @@ CONTAINS
             q(row, col) = temp*((qt+temp0*qrout)/setup%dt)
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
           END IF
         END IF
@@ -4701,7 +4701,7 @@ CONTAINS
         runoff = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4782,8 +4782,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             CALL PUSHCONTROL2B(2)
           ELSE
@@ -4917,7 +4917,7 @@ CONTAINS
         qrout = 0._sp
 !% [ END IF PATH ]
 !% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation 
+!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
         IF (mesh%path(1, i) .GT. 0 .AND. mesh%path(2, i) .GT. 0) THEN
 !% [ IF PATH ]
@@ -4980,8 +4980,8 @@ CONTAINS
 &             dx*mesh%dx*0.001_sp/setup%dt
 !% =================================================================================================== %!
 !%   Store simulated net rainfall on domain (optional)
-!%   The net rainfall over a surface is a fictitious quantity that corresponds to 
-!%   the part of the rainfall water depth that actually causes runoff. 
+!%   The net rainfall over a surface is a fictitious quantity that corresponds to
+!%   the part of the rainfall water depth that actually causes runoff.
 !% =================================================================================================== %!
             IF (setup%save_net_prcp_domain) THEN
               IF (setup%sparse_storage) THEN
@@ -5018,15 +5018,15 @@ END MODULE MD_FORWARD_STRUCTURE_DIFF
 
 !%      This module `mwd_parameters_manipulation` encapsulates all SMASH parameters manipulation.
 !%      This module is wrapped and differentiated.
-!%      
+!%
 !%      set_parameters interface:
-!%      
+!%
 !%      module procedure set0d_parameters
 !%      module procedure set1d_parameters
 !%      module procedure set3d_parameters
-!%      
+!%
 !%      set_hyper_parameters interface:
-!%      
+!%
 !%      module procedure set0d_hyper_parameters
 !%      module procedure set1d_hyper_parameters
 !%      module procedure set3d_hyper_parameters
@@ -5087,7 +5087,7 @@ CONTAINS
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
 !                parameters.ws:in parameters.lr:in
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -5149,7 +5149,7 @@ CONTAINS
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
 !                parameters.ws:in parameters.lr:in
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -5190,7 +5190,7 @@ CONTAINS
     parameters_b%ci = parameters_b%ci + a_b(:, :, 1)
   END SUBROUTINE GET_PARAMETERS_B
 
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_PARAMETERS(mesh, parameters, a)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6014,15 +6014,15 @@ END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 
 !%      This module `mwd_states_manipulation` encapsulates all SMASH states manipulation.
 !%      This module is wrapped and differentiated.
-!%      
+!%
 !%      set_states interface:
-!%      
+!%
 !%      module procedure set0d_states
 !%      module procedure set1d_states
 !%      module procedure set3d_states
-!%      
+!%
 !%      set_hyper_states interface:
-!%      
+!%
 !%      module procedure set0d_hyper_states
 !%      module procedure set1d_hyper_states
 !%      module procedure set3d_hyper_states
@@ -6076,7 +6076,7 @@ CONTAINS
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.husl1:in states.husl2:in
 !                states.hlsl:in states.hlr:in
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_STATES_D(mesh, states, states_d, a, a_d)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6113,7 +6113,7 @@ CONTAINS
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.husl1:in states.husl2:in
 !                states.hlsl:in states.hlr:in
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_STATES_B(mesh, states, states_b, a, a_b)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6138,7 +6138,7 @@ CONTAINS
     states_b%hi = states_b%hi + a_b(:, :, 1)
   END SUBROUTINE GET_STATES_B
 
-!%      TODO comment  
+!%      TODO comment
   SUBROUTINE GET_STATES(mesh, states, a)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh

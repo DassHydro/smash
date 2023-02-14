@@ -21,7 +21,6 @@ from osgeo import gdal
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
-
     ds = gdal.Open(path)
 
     transform = ds.GetGeoTransform()
@@ -46,11 +45,9 @@ def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
     st = pd.Timestamp(setup.start_time)
 
     for i, c in enumerate(mesh.code):
-
         path = glob.glob(f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True)
 
         if len(path) == 0:
@@ -64,21 +61,16 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-
             with open(path[0], "r") as f:
-
                 header = pd.Timestamp(f.readline())
 
                 time_diff = int((st - header).total_seconds() / setup.dt) + 1
 
                 if time_diff > 0:
-
                     k = 0
 
                     for j, line in enumerate(f):
-
                         if j >= time_diff:
-
                             try:
                                 input_data.qobs[i, k] = float(line)
 
@@ -87,11 +79,9 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             except:
                                 break
                 else:
-
                     k = -time_diff
 
                     for line in f:
-
                         try:
                             input_data.qobs[i, k] = float(line)
 
@@ -101,13 +91,11 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             break
 
 
-#% Adjust left files (sorted by date - only works if files have the same name)
+# % Adjust left files (sorted by date - only works if files have the same name)
 def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
-
     n = 0
     ind = -1
     while ind == -1:
-
         ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
 
         n += 1
@@ -116,7 +104,6 @@ def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
 
 
 def _index_containing_substring(the_list: list, substring: str):
-
     for i, s in enumerate(the_list):
         if substring in s:
             return i
@@ -124,7 +111,6 @@ def _index_containing_substring(the_list: list, substring: str):
 
 
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
     date_range = pd.date_range(
         start=setup.start_time,
         end=setup.end_time,
@@ -132,53 +118,43 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     )[1:]
 
     if setup.prcp_format == "tif":
-
         files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
         files = _adjust_left_files(files, date_range)
 
-    #% WIP
+    # % WIP
     elif setup.prcp_format == "nc":
-
         files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
     for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
-
         date_strf = date.strftime("%Y%m%d%H%M")
 
         ind = _index_containing_substring(files, date_strf)
 
         if ind == -1:
-
             if setup.sparse_storage:
-
                 input_data.sparse_prcp[:, i] = -99.0
 
             else:
-
                 input_data.prcp[..., i] = -99.0
 
             warnings.warn(f"Missing precipitation file for date {date}")
 
         else:
-
             matrix = (
                 _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
-
                 input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
 
             else:
-
                 input_data.prcp[..., i] = matrix
 
             files.pop(ind)
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
     date_range = pd.date_range(
         start=setup.start_time,
         end=setup.end_time,
@@ -186,19 +162,15 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     )[1:]
 
     if setup.pet_format == "tif":
-
         files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
 
         if not setup.daily_interannual_pet:
-
             files = _adjust_left_files(files, date_range)
 
     elif setup.pet_format == "nc":
-
         files = sorted(glob.glob(f"{setup.pet_directory}/**/*nc", recursive=True))
 
     if setup.daily_interannual_pet:
-
         leap_year_days = pd.date_range(
             start="202001010000", end="202012310000", freq="1D"
         )
@@ -206,19 +178,15 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         hourly_ratio = 3_600 / setup.dt
 
         if hourly_ratio >= 1:
-
             ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
 
         else:
-
             ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
         for i, day in enumerate(
             tqdm(leap_year_days, desc="</> Reading daily interannual pet")
         ):
-
             if day.day_of_year in date_range.day_of_year:
-
                 day_strf = day.strftime("%m%d")
 
                 ind = _index_containing_substring(files, day_strf)
@@ -226,13 +194,10 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 ind_day = np.where(day.day_of_year == date_range.day_of_year)
 
                 if ind == -1:
-
                     if setup.sparse_storage:
-
                         input_data.sparse_pet[:, ind_day] = -99.0
 
                     else:
-
                         input_data.pet[..., ind_day] = -99.0
 
                     warnings.warn(
@@ -240,7 +205,6 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     )
 
                 else:
-
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
@@ -249,24 +213,20 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     )
 
                     if setup.sparse_storage:
-
                         vector = sparse_matrix_to_vector(mesh, matrix)
 
                     for j in range(nstep_per_day):
-
                         step = day + j * datetime.timedelta(seconds=setup.dt)
 
                         ind_step = subset_date_range.indexer_at_time(step)
 
                         if setup.sparse_storage:
-
                             input_data.sparse_pet[:, ind_day[0][ind_step]] = (
                                 np.repeat(vector[:, np.newaxis], len(ind_step), axis=1)
                                 * ratio[j]
                             )
 
                         else:
-
                             input_data.pet[..., ind_day[0][ind_step]] = (
                                 np.repeat(
                                     matrix[..., np.newaxis], len(ind_step), axis=2
@@ -277,47 +237,37 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     files.pop(ind)
 
     else:
-
         for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
-
             date_strf = date.strftime("%Y%m%d%H%M")
 
             ind = _index_containing_substring(files, date_strf)
 
             if ind == -1:
-
                 if setup.sparse_storage:
-
                     input_data.sparse_pet[:, i] = -99.0
 
                 else:
-
                     input_data.pet[..., i] = -99.0
 
                 warnings.warn(f"Missing pet file for date {date}")
 
             else:
-
                 matrix = (
                     _read_windowed_raster(files[ind], mesh)
                     * setup.pet_conversion_factor
                 )
 
                 if setup.sparse_storage:
-
                     input_data.sparse_pet[:, i] = sparse_matrix_to_vector(mesh, matrix)
 
                 else:
-
                     input_data.pet[..., i] = matrix
 
                 files.pop(ind)
 
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
     for i, name in enumerate(setup.descriptor_name):
-
         path = glob.glob(
             f"{setup.descriptor_directory}/**/{name}.tif*",
             recursive=True,
@@ -334,5 +284,4 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-
             input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)

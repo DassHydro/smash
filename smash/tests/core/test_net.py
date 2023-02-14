@@ -7,7 +7,6 @@ import pytest
 
 
 def generic_net_init(**kwargs):
-
     res = {}
 
     net = smash.Net()
@@ -16,9 +15,7 @@ def generic_net_init(**kwargs):
     n_neurons = 16
 
     for i in range(n_hidden_layers):
-
         if i == 0:
-
             net.add(
                 layer="dense",
                 options={
@@ -29,7 +26,6 @@ def generic_net_init(**kwargs):
             )
 
         else:
-
             n_neurons_i = round(n_neurons * (n_hidden_layers - i) / n_hidden_layers)
 
             net.add(
@@ -58,7 +54,6 @@ def generic_net_init(**kwargs):
     res["net_init.graph"] = graph
 
     for i in range(n_hidden_layers):
-
         layer = net.layers[3 * i]
 
         res[f"net_init.weight_layer_{i+1}"] = layer.weight
@@ -69,17 +64,13 @@ def generic_net_init(**kwargs):
 
 
 def test_net_init():
-
     res = generic_net_init()
 
     for key, value in res.items():
-
         if key in ["net_init.graph"]:
-
-            #% Check net init graph
+            # % Check net init graph
             assert np.array_equal(value, pytest.baseline[key]), key
 
         else:
-
-            #% Check net init layer weight and bias
+            # % Check net init layer weight and bias
             assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key

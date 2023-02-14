@@ -19,7 +19,6 @@ from . import _version
 
 
 def __getattr__(name):
-
     raise AttributeError(f"module 'smash' has no attribute '{name}'")
 
 
