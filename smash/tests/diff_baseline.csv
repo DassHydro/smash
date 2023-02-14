@@ -1,13 +1,13 @@
-commit ee85003e4b00a1333368fecc14574780eb8c43b9
-Merge: 72af0c8 c3939bf
-Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Sun Feb 12 01:54:08 2023 +0100
+commit c610000d9a3366dce6e0e5308a0881d0afbdb213
+Merge: c7852a2 9bcce04
+Author: Colleoni François <francois.colleoni@inrae.fr>
+Date:   Mon Feb 13 15:18:55 2023 +0100
 
-    Merge branch 'enhance-multigauges-optim' into 'maintenance/0.2.x'
+    Merge branch 'enc-py311-conda-env' into 'maintenance/0.2.x'
     
-    ENC: multisites optim with median wgauge
+    ENC: Update python version in conda env 3.10 -> 3.11
     
-    See merge request francois.colleoni/smash!65
+    See merge request francois.colleoni/smash!67
 
 TEST NAME                               |STATUS
 ann_optimize_1.cost                     |NON MODIFIED
@@ -16,28 +16,28 @@ ann_optimize_2.cost                     |NON MODIFIED
 ann_optimize_2.loss                     |NON MODIFIED
 bayes_estimate.br_cost                  |NON MODIFIED
 bayes_estimate.cost                     |NON MODIFIED
-bayes_optimize.br_cost                  |NON MODIFIED
-bayes_optimize.cost                     |NON MODIFIED
+bayes_optimize.br_cost                  |MODIFIED
+bayes_optimize.cost                     |MODIFIED
 bbox_mesh.flwacc                        |NON MODIFIED
 bbox_mesh.flwdir                        |NON MODIFIED
 event_seg.arr                           |NON MODIFIED
 gen_samples.nor                         |NON MODIFIED
 gen_samples.uni                         |NON MODIFIED
-mesh_io.active_cell                     |ADDED
-mesh_io.area                            |ADDED
-mesh_io.code                            |ADDED
-mesh_io.dx                              |ADDED
-mesh_io.flwacc                          |ADDED
-mesh_io.flwdir                          |ADDED
-mesh_io.flwdst                          |ADDED
-mesh_io.gauge_pos                       |ADDED
-mesh_io.nac                             |ADDED
-mesh_io.ncol                            |ADDED
-mesh_io.ng                              |ADDED
-mesh_io.nrow                            |ADDED
-mesh_io.path                            |ADDED
-mesh_io.xmin                            |ADDED
-mesh_io.ymax                            |ADDED
+mesh_io.active_cell                     |NON MODIFIED
+mesh_io.area                            |NON MODIFIED
+mesh_io.code                            |NON MODIFIED
+mesh_io.dx                              |NON MODIFIED
+mesh_io.flwacc                          |NON MODIFIED
+mesh_io.flwdir                          |NON MODIFIED
+mesh_io.flwdst                          |NON MODIFIED
+mesh_io.gauge_pos                       |NON MODIFIED
+mesh_io.nac                             |NON MODIFIED
+mesh_io.ncol                            |NON MODIFIED
+mesh_io.ng                              |NON MODIFIED
+mesh_io.nrow                            |NON MODIFIED
+mesh_io.path                            |NON MODIFIED
+mesh_io.xmin                            |NON MODIFIED
+mesh_io.ymax                            |NON MODIFIED
 net_init.bias_layer_1                   |NON MODIFIED
 net_init.bias_layer_2                   |NON MODIFIED
 net_init.bias_layer_3                   |NON MODIFIED
@@ -47,7 +47,7 @@ net_init.weight_layer_1                 |NON MODIFIED
 net_init.weight_layer_2                 |NON MODIFIED
 net_init.weight_layer_3                 |NON MODIFIED
 net_init.weight_layer_4                 |NON MODIFIED
-optimize.distributed_l-bfgs-b.cost      |NON MODIFIED
+optimize.distributed_l-bfgs-b.cost      |MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost     |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost |NON MODIFIED
 optimize.uniform_nelder-mead.cost       |NON MODIFIED

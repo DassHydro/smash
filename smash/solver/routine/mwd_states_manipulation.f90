@@ -15,15 +15,17 @@
 !%
 !%      contains
 !%
-!%      [1]  get_states
-!%      [2]  set0d_states
-!%      [3]  set1d_states
-!%      [4]  set3d_states
-!%      [5]  get_hyper_states
-!%      [6]  set0d_hyper_states
-!%      [7]  set1d_hyper_states
-!%      [8]  set3d_hyper_states
-!%      [9]  hyper_states_to_states
+!%      [1]   get_states
+!%      [2]   set0d_states
+!%      [3]   set1d_states
+!%      [4]   set3d_states
+!%      [5]   normalize_states
+!%      [6]   denormalize_states
+!%      [7]   get_hyper_states
+!%      [8]   set0d_hyper_states
+!%      [9]   set1d_hyper_states
+!%      [10]  set3d_hyper_states
+!%      [11]  hyper_states_to_states
 
 module mwd_states_manipulation
     
@@ -134,6 +136,62 @@ module mwd_states_manipulation
             call set1d_states(mesh, states, a1d)
         
         end subroutine set0d_states
+        
+        
+        subroutine normalize_states(setup, mesh, states)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(StatesDT), intent(inout) :: states
+            
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
+            real(sp) :: lb, ub
+            integer :: i
+            
+            call get_states(mesh, states, a)
+            
+            do i=1, GNS
+            
+                lb = setup%optimize%lb_states(i)
+                ub = setup%optimize%ub_states(i)
+                
+                a(:,:,i) = (a(:,:,i) - lb) / (ub - lb)
+            
+            end do
+            
+            call set_states(mesh, states, a)
+        
+        end subroutine normalize_states
+        
+        
+        subroutine denormalize_states(setup, mesh, states)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(StatesDT), intent(inout) :: states
+            
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
+            real(sp) :: lb, ub
+            integer :: i
+            
+            call get_states(mesh, states, a)
+            
+            do i=1, GNS
+            
+                lb = setup%optimize%lb_states(i)
+                ub = setup%optimize%ub_states(i)
+                
+                a(:,:,i) = a(:,:,i) * (ub - lb) + lb
+            
+            end do
+            
+            call set_states(mesh, states, a)
+        
+        end subroutine denormalize_states
         
         
         subroutine get_hyper_states(setup, hyper_states, a)

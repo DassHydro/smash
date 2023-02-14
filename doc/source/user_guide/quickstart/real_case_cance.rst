@@ -535,21 +535,21 @@ While the optimization routine is in progress, some information are provided.
         wg: 1 [ 1.0 ]
 
         At iterate      0    nfg =     1    J =  0.043658    |proj g| =  0.000000
-        At iterate      1    nfg =     2    J =  0.043423    |proj g| =  0.000144
-        At iterate      2    nfg =     3    J =  0.038706    |proj g| =  0.000065
-        At iterate      3    nfg =     4    J =  0.038559    |proj g| =  0.000086
-        At iterate      4    nfg =     5    J =  0.035615    |proj g| =  0.000013
-        At iterate      5    nfg =     7    J =  0.035374    |proj g| =  0.000046
-        At iterate      6    nfg =     8    J =  0.035033    |proj g| =  0.000067
-        At iterate      7    nfg =     9    J =  0.032759    |proj g| =  0.000012
-        At iterate      8    nfg =    10    J =  0.032125    |proj g| =  0.000037
-        At iterate      9    nfg =    11    J =  0.031414    |proj g| =  0.000060
-        At iterate     10    nfg =    12    J =  0.029540    |proj g| =  0.000037
-        At iterate     11    nfg =    15    J =  0.028891    |proj g| =  0.000050
-        At iterate     12    nfg =    22    J =  0.028888    |proj g| =  0.000050
-        At iterate     13    nfg =    23    J =  0.028255    |proj g| =  0.000032
-        At iterate     14    nfg =    24    J =  0.027386    |proj g| =  0.000026
-        At iterate     15    nfg =    25    J =  0.026932    |proj g| =  0.000016
+        At iterate      1    nfg =     3    J =  0.039536    |proj g| =  0.025741
+        At iterate      2    nfg =     4    J =  0.039269    |proj g| =  0.010773
+        At iterate      3    nfg =     5    J =  0.039050    |proj g| =  0.012686
+        At iterate      4    nfg =     6    J =  0.038270    |proj g| =  0.031537
+        At iterate      5    nfg =     7    J =  0.037304    |proj g| =  0.035111
+        At iterate      6    nfg =     8    J =  0.036115    |proj g| =  0.029365
+        At iterate      7    nfg =     9    J =  0.035208    |proj g| =  0.007301
+        At iterate      8    nfg =    10    J =  0.034932    |proj g| =  0.015130
+        At iterate      9    nfg =    11    J =  0.034774    |proj g| =  0.018046
+        At iterate     10    nfg =    12    J =  0.034298    |proj g| =  0.013504
+        At iterate     11    nfg =    13    J =  0.033304    |proj g| =  0.012190
+        At iterate     12    nfg =    14    J =  0.031491    |proj g| =  0.014053
+        At iterate     13    nfg =    15    J =  0.029747    |proj g| =  0.012535
+        At iterate     14    nfg =    16    J =  0.028294    |proj g| =  0.031778
+        At iterate     15    nfg =    18    J =  0.027901    |proj g| =  0.003941
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
         

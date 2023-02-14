@@ -5033,15 +5033,17 @@ END MODULE MD_FORWARD_STRUCTURE_DIFF
 !%
 !%      contains
 !%
-!%      [1]  get_parameters
-!%      [2]  set0d_parameters
-!%      [3]  set1d_parameters
-!%      [4]  set3d_parameters
-!%      [5]  get_hyper_parameters
-!%      [6]  set0d_hyper_parameters
-!%      [7]  set1d_hyper_parameters
-!%      [8]  set3d_hyper_parameters
-!%      [9]  hyper_parameters_to_parameters
+!%      [1]   get_parameters
+!%      [2]   set0d_parameters
+!%      [3]   set1d_parameters
+!%      [4]   set3d_parameters
+!%      [5]   normalize_parameters
+!%      [6]   denormalize_parameters
+!%      [7]   get_hyper_parameters
+!%      [8]   set0d_hyper_parameters
+!%      [9]   set1d_hyper_parameters
+!%      [10]  set3d_hyper_parameters
+!%      [11]  hyper_parameters_to_parameters
 MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MD_CONSTANT
   USE MWD_SETUP
@@ -5129,7 +5131,12 @@ CONTAINS
   END SUBROUTINE GET_PARAMETERS_D
 
 !  Differentiation of get_parameters in reverse (adjoint) mode (with options fixinterface noISIZE):
-!   gradient     of useful results: a
+!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr) a
 !   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
 !                *(parameters.beta) *(parameters.cft) *(parameters.cst)
 !                *(parameters.alpha) *(parameters.exc) *(parameters.b)
@@ -5150,52 +5157,36 @@ CONTAINS
     TYPE(PARAMETERSDT) :: parameters_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(INOUT) :: a_b
-    parameters_b%lr = 0.0_4
     parameters_b%lr = parameters_b%lr + a_b(:, :, 16)
     a_b(:, :, 16) = 0.0_4
-    parameters_b%ws = 0.0_4
     parameters_b%ws = parameters_b%ws + a_b(:, :, 15)
     a_b(:, :, 15) = 0.0_4
-    parameters_b%dsm = 0.0_4
     parameters_b%dsm = parameters_b%dsm + a_b(:, :, 14)
     a_b(:, :, 14) = 0.0_4
-    parameters_b%ds = 0.0_4
     parameters_b%ds = parameters_b%ds + a_b(:, :, 13)
     a_b(:, :, 13) = 0.0_4
-    parameters_b%ks = 0.0_4
     parameters_b%ks = parameters_b%ks + a_b(:, :, 12)
     a_b(:, :, 12) = 0.0_4
-    parameters_b%clsl = 0.0_4
     parameters_b%clsl = parameters_b%clsl + a_b(:, :, 11)
     a_b(:, :, 11) = 0.0_4
-    parameters_b%cusl2 = 0.0_4
     parameters_b%cusl2 = parameters_b%cusl2 + a_b(:, :, 10)
     a_b(:, :, 10) = 0.0_4
-    parameters_b%cusl1 = 0.0_4
     parameters_b%cusl1 = parameters_b%cusl1 + a_b(:, :, 9)
     a_b(:, :, 9) = 0.0_4
-    parameters_b%b = 0.0_4
     parameters_b%b = parameters_b%b + a_b(:, :, 8)
     a_b(:, :, 8) = 0.0_4
-    parameters_b%exc = 0.0_4
     parameters_b%exc = parameters_b%exc + a_b(:, :, 7)
     a_b(:, :, 7) = 0.0_4
-    parameters_b%alpha = 0.0_4
     parameters_b%alpha = parameters_b%alpha + a_b(:, :, 6)
     a_b(:, :, 6) = 0.0_4
-    parameters_b%cst = 0.0_4
     parameters_b%cst = parameters_b%cst + a_b(:, :, 5)
     a_b(:, :, 5) = 0.0_4
-    parameters_b%cft = 0.0_4
     parameters_b%cft = parameters_b%cft + a_b(:, :, 4)
     a_b(:, :, 4) = 0.0_4
-    parameters_b%beta = 0.0_4
     parameters_b%beta = parameters_b%beta + a_b(:, :, 3)
     a_b(:, :, 3) = 0.0_4
-    parameters_b%cp = 0.0_4
     parameters_b%cp = parameters_b%cp + a_b(:, :, 2)
     a_b(:, :, 2) = 0.0_4
-    parameters_b%ci = 0.0_4
     parameters_b%ci = parameters_b%ci + a_b(:, :, 1)
   END SUBROUTINE GET_PARAMETERS_B
 
@@ -5225,16 +5216,23 @@ CONTAINS
 
 !  Differentiation of set3d_parameters in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
-!                *(parameters.b) *(parameters.cusl1) *(parameters.cusl2)
-!                *(parameters.clsl) *(parameters.ks) *(parameters.ds)
-!                *(parameters.dsm) *(parameters.ws) *(parameters.lr)
-!   with respect to varying inputs: a
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr) a
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.cft:in parameters.cst:in parameters.exc:in
-!                parameters.b:in parameters.cusl1:in parameters.cusl2:in
-!                parameters.clsl:in parameters.ks:in parameters.ds:in
-!                parameters.dsm:in parameters.ws:in parameters.lr:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
   SUBROUTINE SET3D_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -5242,62 +5240,59 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp), INTENT(IN) :: a_d
-    parameters_d%ci = 0.0_4
     parameters_d%ci(:, :) = a_d(:, :, 1)
     parameters%ci(:, :) = a(:, :, 1)
-    parameters_d%cp = 0.0_4
     parameters_d%cp(:, :) = a_d(:, :, 2)
     parameters%cp(:, :) = a(:, :, 2)
-    parameters_d%cft = 0.0_4
+    parameters_d%beta(:, :) = a_d(:, :, 3)
+    parameters%beta(:, :) = a(:, :, 3)
     parameters_d%cft(:, :) = a_d(:, :, 4)
     parameters%cft(:, :) = a(:, :, 4)
-    parameters_d%cst = 0.0_4
     parameters_d%cst(:, :) = a_d(:, :, 5)
     parameters%cst(:, :) = a(:, :, 5)
-    parameters_d%exc = 0.0_4
+    parameters_d%alpha(:, :) = a_d(:, :, 6)
+    parameters%alpha(:, :) = a(:, :, 6)
     parameters_d%exc(:, :) = a_d(:, :, 7)
     parameters%exc(:, :) = a(:, :, 7)
-    parameters_d%b = 0.0_4
     parameters_d%b(:, :) = a_d(:, :, 8)
     parameters%b(:, :) = a(:, :, 8)
-    parameters_d%cusl1 = 0.0_4
     parameters_d%cusl1(:, :) = a_d(:, :, 9)
     parameters%cusl1(:, :) = a(:, :, 9)
-    parameters_d%cusl2 = 0.0_4
     parameters_d%cusl2(:, :) = a_d(:, :, 10)
     parameters%cusl2(:, :) = a(:, :, 10)
-    parameters_d%clsl = 0.0_4
     parameters_d%clsl(:, :) = a_d(:, :, 11)
     parameters%clsl(:, :) = a(:, :, 11)
-    parameters_d%ks = 0.0_4
     parameters_d%ks(:, :) = a_d(:, :, 12)
     parameters%ks(:, :) = a(:, :, 12)
-    parameters_d%ds = 0.0_4
     parameters_d%ds(:, :) = a_d(:, :, 13)
     parameters%ds(:, :) = a(:, :, 13)
-    parameters_d%dsm = 0.0_4
     parameters_d%dsm(:, :) = a_d(:, :, 14)
     parameters%dsm(:, :) = a(:, :, 14)
-    parameters_d%ws = 0.0_4
     parameters_d%ws(:, :) = a_d(:, :, 15)
     parameters%ws(:, :) = a(:, :, 15)
-    parameters_d%lr = 0.0_4
     parameters_d%lr(:, :) = a_d(:, :, 16)
     parameters%lr(:, :) = a(:, :, 16)
   END SUBROUTINE SET3D_PARAMETERS_D
 
 !  Differentiation of set3d_parameters in reverse (adjoint) mode (with options fixinterface noISIZE):
 !   gradient     of useful results: *(parameters.ci) *(parameters.cp)
-!                *(parameters.cft) *(parameters.cst) *(parameters.exc)
-!                *(parameters.b) *(parameters.cusl1) *(parameters.cusl2)
-!                *(parameters.clsl) *(parameters.ks) *(parameters.ds)
-!                *(parameters.dsm) *(parameters.ws) *(parameters.lr)
-!   with respect to varying inputs: a
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr) a
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
-!                parameters.cft:in parameters.cst:in parameters.exc:in
-!                parameters.b:in parameters.cusl1:in parameters.cusl2:in
-!                parameters.clsl:in parameters.ks:in parameters.ds:in
-!                parameters.dsm:in parameters.ws:in parameters.lr:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
   SUBROUTINE SET3D_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -5307,19 +5302,37 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_b
     a_b = 0.0_4
     a_b(:, :, 16) = a_b(:, :, 16) + parameters_b%lr
+    parameters_b%lr = 0.0_4
     a_b(:, :, 15) = a_b(:, :, 15) + parameters_b%ws
+    parameters_b%ws = 0.0_4
     a_b(:, :, 14) = a_b(:, :, 14) + parameters_b%dsm
+    parameters_b%dsm = 0.0_4
     a_b(:, :, 13) = a_b(:, :, 13) + parameters_b%ds
+    parameters_b%ds = 0.0_4
     a_b(:, :, 12) = a_b(:, :, 12) + parameters_b%ks
+    parameters_b%ks = 0.0_4
     a_b(:, :, 11) = a_b(:, :, 11) + parameters_b%clsl
+    parameters_b%clsl = 0.0_4
     a_b(:, :, 10) = a_b(:, :, 10) + parameters_b%cusl2
+    parameters_b%cusl2 = 0.0_4
     a_b(:, :, 9) = a_b(:, :, 9) + parameters_b%cusl1
+    parameters_b%cusl1 = 0.0_4
     a_b(:, :, 8) = a_b(:, :, 8) + parameters_b%b
+    parameters_b%b = 0.0_4
     a_b(:, :, 7) = a_b(:, :, 7) + parameters_b%exc
+    parameters_b%exc = 0.0_4
+    a_b(:, :, 6) = a_b(:, :, 6) + parameters_b%alpha
+    parameters_b%alpha = 0.0_4
     a_b(:, :, 5) = a_b(:, :, 5) + parameters_b%cst
+    parameters_b%cst = 0.0_4
     a_b(:, :, 4) = a_b(:, :, 4) + parameters_b%cft
+    parameters_b%cft = 0.0_4
+    a_b(:, :, 3) = a_b(:, :, 3) + parameters_b%beta
+    parameters_b%beta = 0.0_4
     a_b(:, :, 2) = a_b(:, :, 2) + parameters_b%cp
+    parameters_b%cp = 0.0_4
     a_b(:, :, 1) = a_b(:, :, 1) + parameters_b%ci
+    parameters_b%ci = 0.0_4
   END SUBROUTINE SET3D_PARAMETERS_B
 
   SUBROUTINE SET3D_PARAMETERS(mesh, parameters, a)
@@ -5367,6 +5380,125 @@ CONTAINS
     a1d(:) = a
     CALL SET1D_PARAMETERS(mesh, parameters, a1d)
   END SUBROUTINE SET0D_PARAMETERS
+
+  SUBROUTINE NORMALIZE_PARAMETERS(setup, mesh, parameters)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS(mesh, parameters, a)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+      a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
+    END DO
+    CALL SET_PARAMETERS(mesh, parameters, a)
+  END SUBROUTINE NORMALIZE_PARAMETERS
+
+!  Differentiation of denormalize_parameters in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
+  SUBROUTINE DENORMALIZE_PARAMETERS_D(setup, mesh, parameters, &
+&   parameters_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_d
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+      a_d(:, :, i) = (ub-lb)*a_d(:, :, i)
+      a(:, :, i) = a(:, :, i)*(ub-lb) + lb
+    END DO
+    CALL SET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
+  END SUBROUTINE DENORMALIZE_PARAMETERS_D
+
+!  Differentiation of denormalize_parameters in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
+  SUBROUTINE DENORMALIZE_PARAMETERS_B(setup, mesh, parameters, &
+&   parameters_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_b
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS(mesh, parameters, a)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+    END DO
+    CALL SET_PARAMETERS(mesh, parameters, a)
+    CALL SET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
+    DO i=gnp,1,-1
+      ub = setup%optimize%ub_parameters(i)
+      lb = setup%optimize%lb_parameters(i)
+      a_b(:, :, i) = (ub-lb)*a_b(:, :, i)
+    END DO
+    CALL GET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
+  END SUBROUTINE DENORMALIZE_PARAMETERS_B
+
+  SUBROUTINE DENORMALIZE_PARAMETERS(setup, mesh, parameters)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS(mesh, parameters, a)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+      a(:, :, i) = a(:, :, i)*(ub-lb) + lb
+    END DO
+    CALL SET_PARAMETERS(mesh, parameters, a)
+  END SUBROUTINE DENORMALIZE_PARAMETERS
 
 !  Differentiation of get_hyper_parameters in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: a
@@ -5592,14 +5724,20 @@ CONTAINS
 !                *(hyper_parameters.clsl) *(hyper_parameters.ks)
 !                *(hyper_parameters.ds) *(hyper_parameters.dsm)
 !                *(hyper_parameters.ws) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.b:in
-!                hyper_parameters.cusl1:in hyper_parameters.cusl2:in
-!                hyper_parameters.clsl:in hyper_parameters.ks:in
-!                hyper_parameters.ds:in hyper_parameters.dsm:in
-!                hyper_parameters.ws:in hyper_parameters.lr:in
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in hyper_parameters.ci:in
+!                hyper_parameters.cp:in hyper_parameters.beta:in
+!                hyper_parameters.cft:in hyper_parameters.cst:in
+!                hyper_parameters.alpha:in hyper_parameters.exc:in
+!                hyper_parameters.b:in hyper_parameters.cusl1:in
+!                hyper_parameters.cusl2:in hyper_parameters.clsl:in
+!                hyper_parameters.ks:in hyper_parameters.ds:in
+!                hyper_parameters.dsm:in hyper_parameters.ws:in
+!                hyper_parameters.lr:in
 !%      TODO comment
   SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
 &   hyper_parameters_d, parameters, parameters_d, setup, mesh, &
@@ -5673,6 +5811,22 @@ CONTAINS
       parameters_matrix(:, :, i) = setup%optimize%lb_parameters(i) + &
 &       temp
     END DO
+    parameters_d%ci = 0.0_4
+    parameters_d%cp = 0.0_4
+    parameters_d%beta = 0.0_4
+    parameters_d%cft = 0.0_4
+    parameters_d%cst = 0.0_4
+    parameters_d%alpha = 0.0_4
+    parameters_d%exc = 0.0_4
+    parameters_d%b = 0.0_4
+    parameters_d%cusl1 = 0.0_4
+    parameters_d%cusl2 = 0.0_4
+    parameters_d%clsl = 0.0_4
+    parameters_d%ks = 0.0_4
+    parameters_d%ds = 0.0_4
+    parameters_d%dsm = 0.0_4
+    parameters_d%ws = 0.0_4
+    parameters_d%lr = 0.0_4
     CALL SET_PARAMETERS_D(mesh, parameters, parameters_d, &
 &                   parameters_matrix, parameters_matrix_d)
   END SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_D
@@ -5691,14 +5845,20 @@ CONTAINS
 !                *(hyper_parameters.clsl) *(hyper_parameters.ks)
 !                *(hyper_parameters.ds) *(hyper_parameters.dsm)
 !                *(hyper_parameters.ws) *(hyper_parameters.lr)
-!   Plus diff mem management of: hyper_parameters.ci:in hyper_parameters.cp:in
-!                hyper_parameters.beta:in hyper_parameters.cft:in
-!                hyper_parameters.cst:in hyper_parameters.alpha:in
-!                hyper_parameters.exc:in hyper_parameters.b:in
-!                hyper_parameters.cusl1:in hyper_parameters.cusl2:in
-!                hyper_parameters.clsl:in hyper_parameters.ks:in
-!                hyper_parameters.ds:in hyper_parameters.dsm:in
-!                hyper_parameters.ws:in hyper_parameters.lr:in
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in hyper_parameters.ci:in
+!                hyper_parameters.cp:in hyper_parameters.beta:in
+!                hyper_parameters.cft:in hyper_parameters.cst:in
+!                hyper_parameters.alpha:in hyper_parameters.exc:in
+!                hyper_parameters.b:in hyper_parameters.cusl1:in
+!                hyper_parameters.cusl2:in hyper_parameters.clsl:in
+!                hyper_parameters.ks:in hyper_parameters.ds:in
+!                hyper_parameters.dsm:in hyper_parameters.ws:in
+!                hyper_parameters.lr:in
 !%      TODO comment
   SUBROUTINE HYPER_PARAMETERS_TO_PARAMETERS_B(hyper_parameters, &
 &   hyper_parameters_b, parameters, parameters_b, setup, mesh, &
@@ -5756,6 +5916,8 @@ CONTAINS
       END DO
     END DO
     CALL SET_PARAMETERS(mesh, parameters, parameters_matrix)
+    parameters_b%beta = 0.0_4
+    parameters_b%alpha = 0.0_4
     CALL SET_PARAMETERS_B(mesh, parameters, parameters_b, &
 &                   parameters_matrix, parameters_matrix_b)
     hyper_parameters_matrix_b = 0.0_4
@@ -5867,15 +6029,17 @@ END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 !%
 !%      contains
 !%
-!%      [1]  get_states
-!%      [2]  set0d_states
-!%      [3]  set1d_states
-!%      [4]  set3d_states
-!%      [5]  get_hyper_states
-!%      [6]  set0d_hyper_states
-!%      [7]  set1d_hyper_states
-!%      [8]  set3d_hyper_states
-!%      [9]  hyper_states_to_states
+!%      [1]   get_states
+!%      [2]   set0d_states
+!%      [3]   set1d_states
+!%      [4]   set3d_states
+!%      [5]   normalize_states
+!%      [6]   denormalize_states
+!%      [7]   get_hyper_states
+!%      [8]   set0d_hyper_states
+!%      [9]   set1d_hyper_states
+!%      [10]  set3d_hyper_states
+!%      [11]  hyper_states_to_states
 MODULE MWD_STATES_MANIPULATION_DIFF
   USE MD_CONSTANT
   USE MWD_SETUP
@@ -5940,7 +6104,9 @@ CONTAINS
   END SUBROUTINE GET_STATES_D
 
 !  Differentiation of get_states in reverse (adjoint) mode (with options fixinterface noISIZE):
-!   gradient     of useful results: a
+!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr) a
 !   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
 !                *(states.hst) *(states.husl1) *(states.husl2)
 !                *(states.hlsl) *(states.hlr)
@@ -5955,28 +6121,20 @@ CONTAINS
     TYPE(STATESDT) :: states_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(INOUT) :: a_b
-    states_b%hlr = 0.0_4
     states_b%hlr = states_b%hlr + a_b(:, :, 8)
     a_b(:, :, 8) = 0.0_4
-    states_b%hlsl = 0.0_4
     states_b%hlsl = states_b%hlsl + a_b(:, :, 7)
     a_b(:, :, 7) = 0.0_4
-    states_b%husl2 = 0.0_4
     states_b%husl2 = states_b%husl2 + a_b(:, :, 6)
     a_b(:, :, 6) = 0.0_4
-    states_b%husl1 = 0.0_4
     states_b%husl1 = states_b%husl1 + a_b(:, :, 5)
     a_b(:, :, 5) = 0.0_4
-    states_b%hst = 0.0_4
     states_b%hst = states_b%hst + a_b(:, :, 4)
     a_b(:, :, 4) = 0.0_4
-    states_b%hft = 0.0_4
     states_b%hft = states_b%hft + a_b(:, :, 3)
     a_b(:, :, 3) = 0.0_4
-    states_b%hp = 0.0_4
     states_b%hp = states_b%hp + a_b(:, :, 2)
     a_b(:, :, 2) = 0.0_4
-    states_b%hi = 0.0_4
     states_b%hi = states_b%hi + a_b(:, :, 1)
   END SUBROUTINE GET_STATES_B
 
@@ -6000,7 +6158,9 @@ CONTAINS
 !   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
 !                *(states.hst) *(states.husl1) *(states.husl2)
 !                *(states.hlsl) *(states.hlr)
-!   with respect to varying inputs: a
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr) a
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.husl1:in states.husl2:in
 !                states.hlsl:in states.hlr:in
@@ -6011,28 +6171,20 @@ CONTAINS
     TYPE(STATESDT), INTENT(INOUT) :: states_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns), INTENT(IN) :: a_d
-    states_d%hi = 0.0_4
     states_d%hi(:, :) = a_d(:, :, 1)
     states%hi(:, :) = a(:, :, 1)
-    states_d%hp = 0.0_4
     states_d%hp(:, :) = a_d(:, :, 2)
     states%hp(:, :) = a(:, :, 2)
-    states_d%hft = 0.0_4
     states_d%hft(:, :) = a_d(:, :, 3)
     states%hft(:, :) = a(:, :, 3)
-    states_d%hst = 0.0_4
     states_d%hst(:, :) = a_d(:, :, 4)
     states%hst(:, :) = a(:, :, 4)
-    states_d%husl1 = 0.0_4
     states_d%husl1(:, :) = a_d(:, :, 5)
     states%husl1(:, :) = a(:, :, 5)
-    states_d%husl2 = 0.0_4
     states_d%husl2(:, :) = a_d(:, :, 6)
     states%husl2(:, :) = a(:, :, 6)
-    states_d%hlsl = 0.0_4
     states_d%hlsl(:, :) = a_d(:, :, 7)
     states%hlsl(:, :) = a(:, :, 7)
-    states_d%hlr = 0.0_4
     states_d%hlr(:, :) = a_d(:, :, 8)
     states%hlr(:, :) = a(:, :, 8)
   END SUBROUTINE SET3D_STATES_D
@@ -6041,7 +6193,9 @@ CONTAINS
 !   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
 !                *(states.hst) *(states.husl1) *(states.husl2)
 !                *(states.hlsl) *(states.hlr)
-!   with respect to varying inputs: a
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr) a
 !   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
 !                states.hst:in states.husl1:in states.husl2:in
 !                states.hlsl:in states.hlr:in
@@ -6054,13 +6208,21 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_b
     a_b = 0.0_4
     a_b(:, :, 8) = a_b(:, :, 8) + states_b%hlr
+    states_b%hlr = 0.0_4
     a_b(:, :, 7) = a_b(:, :, 7) + states_b%hlsl
+    states_b%hlsl = 0.0_4
     a_b(:, :, 6) = a_b(:, :, 6) + states_b%husl2
+    states_b%husl2 = 0.0_4
     a_b(:, :, 5) = a_b(:, :, 5) + states_b%husl1
+    states_b%husl1 = 0.0_4
     a_b(:, :, 4) = a_b(:, :, 4) + states_b%hst
+    states_b%hst = 0.0_4
     a_b(:, :, 3) = a_b(:, :, 3) + states_b%hft
+    states_b%hft = 0.0_4
     a_b(:, :, 2) = a_b(:, :, 2) + states_b%hp
+    states_b%hp = 0.0_4
     a_b(:, :, 1) = a_b(:, :, 1) + states_b%hi
+    states_b%hi = 0.0_4
   END SUBROUTINE SET3D_STATES_B
 
   SUBROUTINE SET3D_STATES(mesh, states, a)
@@ -6100,6 +6262,105 @@ CONTAINS
     a1d(:) = a
     CALL SET1D_STATES(mesh, states, a1d)
   END SUBROUTINE SET0D_STATES
+
+  SUBROUTINE NORMALIZE_STATES(setup, mesh, states)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES(mesh, states, a)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+      a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
+    END DO
+    CALL SET_STATES(mesh, states, a)
+  END SUBROUTINE NORMALIZE_STATES
+
+!  Differentiation of denormalize_states in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
+  SUBROUTINE DENORMALIZE_STATES_D(setup, mesh, states, states_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_d
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES_D(mesh, states, states_d, a, a_d)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+      a_d(:, :, i) = (ub-lb)*a_d(:, :, i)
+      a(:, :, i) = a(:, :, i)*(ub-lb) + lb
+    END DO
+    CALL SET_STATES_D(mesh, states, states_d, a, a_d)
+  END SUBROUTINE DENORMALIZE_STATES_D
+
+!  Differentiation of denormalize_states in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
+  SUBROUTINE DENORMALIZE_STATES_B(setup, mesh, states, states_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_b
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES(mesh, states, a)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+    END DO
+    CALL SET_STATES(mesh, states, a)
+    CALL SET_STATES_B(mesh, states, states_b, a, a_b)
+    DO i=gns,1,-1
+      ub = setup%optimize%ub_states(i)
+      lb = setup%optimize%lb_states(i)
+      a_b(:, :, i) = (ub-lb)*a_b(:, :, i)
+    END DO
+    CALL GET_STATES_B(mesh, states, states_b, a, a_b)
+  END SUBROUTINE DENORMALIZE_STATES_B
+
+  SUBROUTINE DENORMALIZE_STATES(setup, mesh, states)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES(mesh, states, a)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+      a(:, :, i) = a(:, :, i)*(ub-lb) + lb
+    END DO
+    CALL SET_STATES(mesh, states, a)
+  END SUBROUTINE DENORMALIZE_STATES
 
 !  Differentiation of get_hyper_states in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: a
@@ -6245,6 +6506,9 @@ CONTAINS
 !   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.husl1:in
 !                hyper_states.husl2:in hyper_states.hlsl:in hyper_states.hlr:in
+!                states.hi:in states.hp:in states.hft:in states.hst:in
+!                states.husl1:in states.husl2:in states.hlsl:in
+!                states.hlr:in
 !%      TODO comment
   SUBROUTINE HYPER_STATES_TO_STATES_D(hyper_states, hyper_states_d, &
 &   states, states_d, setup, mesh, input_data)
@@ -6313,6 +6577,14 @@ CONTAINS
 &       states_matrix_d(:, :, i)/(EXP(-states_matrix(:, :, i))+1._sp)
       states_matrix(:, :, i) = setup%optimize%lb_states(i) + temp
     END DO
+    states_d%hi = 0.0_4
+    states_d%hp = 0.0_4
+    states_d%hft = 0.0_4
+    states_d%hst = 0.0_4
+    states_d%husl1 = 0.0_4
+    states_d%husl2 = 0.0_4
+    states_d%hlsl = 0.0_4
+    states_d%hlr = 0.0_4
     CALL SET_STATES_D(mesh, states, states_d, states_matrix, &
 &               states_matrix_d)
   END SUBROUTINE HYPER_STATES_TO_STATES_D
@@ -6327,6 +6599,9 @@ CONTAINS
 !   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
 !                hyper_states.hft:in hyper_states.hst:in hyper_states.husl1:in
 !                hyper_states.husl2:in hyper_states.hlsl:in hyper_states.hlr:in
+!                states.hi:in states.hp:in states.hft:in states.hst:in
+!                states.husl1:in states.husl2:in states.hlsl:in
+!                states.hlr:in
 !%      TODO comment
   SUBROUTINE HYPER_STATES_TO_STATES_B(hyper_states, hyper_states_b, &
 &   states, states_b, setup, mesh, input_data)
@@ -6858,19 +7133,29 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in states.hi:in
-!                states.hp:in states.hft:in states.hst:in states.husl1:in
-!                states.husl2:in states.hlsl:in states.hlr:in
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in parameters_bgd.ci:in
+!                parameters_bgd.cp:in parameters_bgd.beta:in parameters_bgd.cft:in
+!                parameters_bgd.cst:in parameters_bgd.alpha:in
+!                parameters_bgd.exc:in parameters_bgd.b:in parameters_bgd.cusl1:in
+!                parameters_bgd.cusl2:in parameters_bgd.clsl:in
+!                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
+!                parameters_bgd.ws:in parameters_bgd.lr:in
 !% WIP
   SUBROUTINE COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
-&   parameters_bgd, states, states_d, states_bgd, jreg, jreg_d)
+&   parameters_bgd, parameters_bgd_d, states, states_d, states_bgd, &
+&   states_bgd_d, jreg, jreg_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d, parameters_bgd_d
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT), INTENT(IN) :: states_d
+    TYPE(STATESDT), INTENT(IN) :: states_d, states_bgd_d
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_d
     REAL(sp) :: parameters_jreg, states_jreg
@@ -6917,19 +7202,29 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in states.hi:in
-!                states.hp:in states.hft:in states.hst:in states.husl1:in
-!                states.husl2:in states.hlsl:in states.hlr:in
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in parameters_bgd.ci:in
+!                parameters_bgd.cp:in parameters_bgd.beta:in parameters_bgd.cft:in
+!                parameters_bgd.cst:in parameters_bgd.alpha:in
+!                parameters_bgd.exc:in parameters_bgd.b:in parameters_bgd.cusl1:in
+!                parameters_bgd.cusl2:in parameters_bgd.clsl:in
+!                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
+!                parameters_bgd.ws:in parameters_bgd.lr:in
 !% WIP
   SUBROUTINE COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
-&   parameters_bgd, states, states_b, states_bgd, jreg, jreg_b)
+&   parameters_bgd, parameters_bgd_b, states, states_b, states_bgd, &
+&   states_bgd_b, jreg, jreg_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT) :: parameters_b
+    TYPE(PARAMETERSDT) :: parameters_b, parameters_bgd_b
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT) :: states_b
+    TYPE(STATESDT) :: states_b, states_bgd_b
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_b
     REAL(sp) :: parameters_jreg, states_jreg
@@ -6976,8 +7271,32 @@ CONTAINS
       CALL REG_PRIOR_B(mesh, gnp, parameters_matrix, parameters_matrix_b&
 &                , parameters_bgd_matrix, res_b)
     END IF
+    states_b%hi = 0.0_4
+    states_b%hp = 0.0_4
+    states_b%hft = 0.0_4
+    states_b%hst = 0.0_4
+    states_b%husl1 = 0.0_4
+    states_b%husl2 = 0.0_4
+    states_b%hlsl = 0.0_4
+    states_b%hlr = 0.0_4
     CALL GET_STATES_B(mesh, states, states_b, states_matrix, &
 &               states_matrix_b)
+    parameters_b%ci = 0.0_4
+    parameters_b%cp = 0.0_4
+    parameters_b%beta = 0.0_4
+    parameters_b%cft = 0.0_4
+    parameters_b%cst = 0.0_4
+    parameters_b%alpha = 0.0_4
+    parameters_b%exc = 0.0_4
+    parameters_b%b = 0.0_4
+    parameters_b%cusl1 = 0.0_4
+    parameters_b%cusl2 = 0.0_4
+    parameters_b%clsl = 0.0_4
+    parameters_b%ks = 0.0_4
+    parameters_b%ds = 0.0_4
+    parameters_b%dsm = 0.0_4
+    parameters_b%ws = 0.0_4
+    parameters_b%lr = 0.0_4
     CALL GET_PARAMETERS_B(mesh, parameters, parameters_b, &
 &                   parameters_matrix, parameters_matrix_b)
   END SUBROUTINE COMPUTE_JREG_B
@@ -7030,21 +7349,29 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in output.qsim:in
-!                states.hi:in states.hp:in states.hft:in states.hst:in
-!                states.husl1:in states.husl2:in states.hlsl:in
-!                states.hlr:in
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in output.qsim:in states.hi:in
+!                states.hp:in states.hft:in states.hst:in states.husl1:in
+!                states.husl2:in states.hlsl:in states.hlr:in parameters_bgd.ci:in
+!                parameters_bgd.cp:in parameters_bgd.beta:in parameters_bgd.cft:in
+!                parameters_bgd.cst:in parameters_bgd.alpha:in
+!                parameters_bgd.exc:in parameters_bgd.b:in parameters_bgd.cusl1:in
+!                parameters_bgd.cusl2:in parameters_bgd.clsl:in
+!                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
+!                parameters_bgd.ws:in parameters_bgd.lr:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
-&   parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
-&   output_d, cost, cost_d)
+&   parameters_d, parameters_bgd, parameters_bgd_d, states, states_d, &
+&   states_bgd, states_bgd_d, output, output_d, cost, cost_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d, parameters_bgd_d
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT), INTENT(IN) :: states_d
+    TYPE(STATESDT), INTENT(IN) :: states_d, states_bgd_d
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
     REAL(sp), INTENT(INOUT) :: cost
@@ -7056,8 +7383,8 @@ CONTAINS
 !% Only compute in case wjreg > 0
     IF (setup%optimize%wjreg .GT. 0._sp) THEN
       CALL COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
-&                   parameters_bgd, states, states_d, states_bgd, jreg, &
-&                   jreg_d)
+&                   parameters_bgd, parameters_bgd_d, states, states_d, &
+&                   states_bgd, states_bgd_d, jreg, jreg_d)
     ELSE
       jreg_d = 0.0_4
     END IF
@@ -7080,21 +7407,29 @@ CONTAINS
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in output.qsim:in
-!                states.hi:in states.hp:in states.hft:in states.hst:in
-!                states.husl1:in states.husl2:in states.hlsl:in
-!                states.hlr:in
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in output.qsim:in states.hi:in
+!                states.hp:in states.hft:in states.hst:in states.husl1:in
+!                states.husl2:in states.hlsl:in states.hlr:in parameters_bgd.ci:in
+!                parameters_bgd.cp:in parameters_bgd.beta:in parameters_bgd.cft:in
+!                parameters_bgd.cst:in parameters_bgd.alpha:in
+!                parameters_bgd.exc:in parameters_bgd.b:in parameters_bgd.cusl1:in
+!                parameters_bgd.cusl2:in parameters_bgd.clsl:in
+!                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
+!                parameters_bgd.ws:in parameters_bgd.lr:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
-&   parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
-&   output_b, cost, cost_b)
+&   parameters_b, parameters_bgd, parameters_bgd_b, states, states_b, &
+&   states_bgd, states_bgd_b, output, output_b, cost, cost_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT) :: parameters_b
+    TYPE(PARAMETERSDT) :: parameters_b, parameters_bgd_b
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT) :: states_b
+    TYPE(STATESDT) :: states_b, states_bgd_b
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
     REAL(sp), INTENT(INOUT) :: cost
@@ -7116,8 +7451,8 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
-&                   parameters_bgd, states, states_b, states_bgd, jreg, &
-&                   jreg_b)
+&                   parameters_bgd, parameters_bgd_b, states, states_b, &
+&                   states_bgd, states_bgd_b, jreg, jreg_b)
     ELSE
       parameters_b%ci = 0.0_4
       parameters_b%cp = 0.0_4
@@ -8851,36 +9186,48 @@ END MODULE MWD_COST_DIFF
 !                *(parameters.ws) *(parameters.lr) *(states.hi)
 !                *(states.hp) *(states.hft) *(states.hst) *(states.husl1)
 !                *(states.husl2) *(states.hlsl) *(states.hlr)
-!   RW status of diff variables: parameters.ci:(loc) *(parameters.ci):in
-!                parameters.cp:(loc) *(parameters.cp):in parameters.beta:(loc)
-!                *(parameters.beta):in parameters.cft:(loc) *(parameters.cft):in
-!                parameters.cst:(loc) *(parameters.cst):in parameters.alpha:(loc)
-!                *(parameters.alpha):in parameters.exc:(loc) *(parameters.exc):in
-!                parameters.b:(loc) *(parameters.b):in parameters.cusl1:(loc)
-!                *(parameters.cusl1):in parameters.cusl2:(loc)
-!                *(parameters.cusl2):in parameters.clsl:(loc) *(parameters.clsl):in
-!                parameters.ks:(loc) *(parameters.ks):in parameters.ds:(loc)
-!                *(parameters.ds):in parameters.dsm:(loc) *(parameters.dsm):in
-!                parameters.ws:(loc) *(parameters.ws):in parameters.lr:(loc)
-!                *(parameters.lr):in *(output.qsim):(loc) states.hi:(loc)
-!                *(states.hi):in-killed states.hp:(loc) *(states.hp):in-killed
-!                states.hft:(loc) *(states.hft):in-killed states.hst:(loc)
-!                *(states.hst):in-killed states.husl1:(loc) *(states.husl1):in-killed
-!                states.husl2:(loc) *(states.husl2):in-killed states.hlsl:(loc)
-!                *(states.hlsl):in-killed states.hlr:(loc) *(states.hlr):in-killed
-!                cost:out
+!   RW status of diff variables: parameters.ci:(loc) *(parameters.ci):in-killed
+!                parameters.cp:(loc) *(parameters.cp):in-killed
+!                parameters.beta:(loc) *(parameters.beta):in-killed
+!                parameters.cft:(loc) *(parameters.cft):in-killed
+!                parameters.cst:(loc) *(parameters.cst):in-killed
+!                parameters.alpha:(loc) *(parameters.alpha):in-killed
+!                parameters.exc:(loc) *(parameters.exc):in-killed
+!                parameters.b:(loc) *(parameters.b):in-killed parameters.cusl1:(loc)
+!                *(parameters.cusl1):in-killed parameters.cusl2:(loc)
+!                *(parameters.cusl2):in-killed parameters.clsl:(loc)
+!                *(parameters.clsl):in-killed parameters.ks:(loc)
+!                *(parameters.ks):in-killed parameters.ds:(loc)
+!                *(parameters.ds):in-killed parameters.dsm:(loc)
+!                *(parameters.dsm):in-killed parameters.ws:(loc)
+!                *(parameters.ws):in-killed parameters.lr:(loc)
+!                *(parameters.lr):in-killed *(output.qsim):(loc)
+!                states.hi:(loc) *(states.hi):in-killed states.hp:(loc)
+!                *(states.hp):in-killed states.hft:(loc) *(states.hft):in-killed
+!                states.hst:(loc) *(states.hst):in-killed states.husl1:(loc)
+!                *(states.husl1):in-killed states.husl2:(loc) *(states.husl2):in-killed
+!                states.hlsl:(loc) *(states.hlsl):in-killed states.hlr:(loc)
+!                *(states.hlr):in-killed cost:out
 !   Plus diff mem management of: parameters.ci:in parameters.cp:in
 !                parameters.beta:in parameters.cft:in parameters.cst:in
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in output.qsim:in
-!                states.hi:in-out states.hp:in-out states.hft:in-out
-!                states.hst:in-out states.husl1:in-out states.husl2:in-out
-!                states.hlsl:in-out states.hlr:in-out
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in output.qsim:in states.hi:in-out
+!                states.hp:in-out states.hft:in-out states.hst:in-out
+!                states.husl1:in-out states.husl2:in-out states.hlsl:in-out
+!                states.hlr:in-out parameters_bgd.ci:in parameters_bgd.cp:in
+!                parameters_bgd.beta:in parameters_bgd.cft:in parameters_bgd.cst:in
+!                parameters_bgd.alpha:in parameters_bgd.exc:in
+!                parameters_bgd.b:in parameters_bgd.cusl1:in parameters_bgd.cusl2:in
+!                parameters_bgd.clsl:in parameters_bgd.ks:in parameters_bgd.ds:in
+!                parameters_bgd.dsm:in parameters_bgd.ws:in parameters_bgd.lr:in
 SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
-& parameters_d, parameters_bgd, states, states_d, states_bgd, output, &
-& output_d, cost, cost_d)
+& parameters_d, parameters_bgd, parameters_bgd_d, states, states_d, &
+& states_bgd, states_bgd_d, output, output_d, cost, cost_d)
 !% only: sp
   USE MD_CONSTANT
 !% only: SetupDT
@@ -8897,8 +9244,12 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   USE MWD_OUTPUT_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: denormalize_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: denormalize_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8906,10 +9257,14 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   TYPE(SETUPDT), INTENT(IN) :: setup
   TYPE(MESHDT), INTENT(IN) :: mesh
   TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-  TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
-  TYPE(STATESDT), INTENT(INOUT) :: states, states_bgd
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd_d
+  TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(STATESDT), INTENT(INOUT) :: states_d
+  TYPE(STATESDT), INTENT(IN) :: states_bgd
+  TYPE(STATESDT), INTENT(IN) :: states_bgd_d
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
   REAL(sp), INTENT(INOUT) :: cost
@@ -8917,6 +9272,10 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   TYPE(STATESDT) :: states_imd
   TYPE(STATESDT) :: states_imd_d
   INTRINSIC TRIM
+  IF (setup%optimize%normalize_forward) THEN
+    CALL DENORMALIZE_PARAMETERS_D(setup, mesh, parameters, parameters_d)
+    CALL DENORMALIZE_STATES_D(setup, mesh, states, states_d)
+  END IF
   states_imd_d = states_d
   states_imd = states
   SELECT CASE  (TRIM(setup%structure)) 
@@ -8947,8 +9306,9 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
 !%   Compute J
 !% =================================================================================================================== %!
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
-&               , parameters_bgd, states, states_d, states_bgd, output, &
-&               output_d, cost, cost_d)
+&               , parameters_bgd, parameters_bgd_d, states, states_d, &
+&               states_bgd, states_bgd_d, output, output_d, cost, cost_d&
+&              )
 END SUBROUTINE BASE_FORWARD_D
 
 !  Differentiation of base_forward in reverse (adjoint) mode (with options fixinterface noISIZE):
@@ -8984,13 +9344,21 @@ END SUBROUTINE BASE_FORWARD_D
 !                parameters.alpha:in parameters.exc:in parameters.b:in
 !                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
 !                parameters.ks:in parameters.ds:in parameters.dsm:in
-!                parameters.ws:in parameters.lr:in output.qsim:in
-!                states.hi:in-out states.hp:in-out states.hft:in-out
-!                states.hst:in-out states.husl1:in-out states.husl2:in-out
-!                states.hlsl:in-out states.hlr:in-out
+!                parameters.ws:in parameters.lr:in states_bgd.hi:in
+!                states_bgd.hp:in states_bgd.hft:in states_bgd.hst:in
+!                states_bgd.husl1:in states_bgd.husl2:in states_bgd.hlsl:in
+!                states_bgd.hlr:in output.qsim:in states.hi:in-out
+!                states.hp:in-out states.hft:in-out states.hst:in-out
+!                states.husl1:in-out states.husl2:in-out states.hlsl:in-out
+!                states.hlr:in-out parameters_bgd.ci:in parameters_bgd.cp:in
+!                parameters_bgd.beta:in parameters_bgd.cft:in parameters_bgd.cst:in
+!                parameters_bgd.alpha:in parameters_bgd.exc:in
+!                parameters_bgd.b:in parameters_bgd.cusl1:in parameters_bgd.cusl2:in
+!                parameters_bgd.clsl:in parameters_bgd.ks:in parameters_bgd.ds:in
+!                parameters_bgd.dsm:in parameters_bgd.ws:in parameters_bgd.lr:in
 SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
-& parameters_b, parameters_bgd, states, states_b, states_bgd, output, &
-& output_b, cost, cost_b)
+& parameters_b, parameters_bgd, parameters_bgd_b, states, states_b, &
+& states_bgd, states_bgd_b, output, output_b, cost, cost_b)
 !% only: sp
   USE MD_CONSTANT
 !% only: SetupDT
@@ -9007,8 +9375,12 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   USE MWD_OUTPUT_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: denormalize_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: denormalize_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9016,10 +9388,14 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   TYPE(SETUPDT), INTENT(IN) :: setup
   TYPE(MESHDT), INTENT(IN) :: mesh
   TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-  TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-  TYPE(PARAMETERSDT) :: parameters_b
-  TYPE(STATESDT), INTENT(INOUT) :: states, states_bgd
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+  TYPE(PARAMETERSDT) :: parameters_bgd_b
+  TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(STATESDT), INTENT(INOUT) :: states_b
+  TYPE(STATESDT), INTENT(IN) :: states_bgd
+  TYPE(STATESDT) :: states_bgd_b
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
   REAL(sp), INTENT(INOUT) :: cost
@@ -9028,6 +9404,13 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   TYPE(STATESDT) :: states_imd_b
   INTRINSIC TRIM
   INTEGER :: branch
+  IF (setup%optimize%normalize_forward) THEN
+    CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
+    CALL DENORMALIZE_STATES(setup, mesh, states)
+    CALL PUSHCONTROL1B(0)
+  ELSE
+    CALL PUSHCONTROL1B(1)
+  END IF
   states_imd_b = states_b
   states_imd = states
   SELECT CASE  (TRIM(setup%structure)) 
@@ -9105,8 +9488,9 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   CALL SET_PARAMETERS(mesh, parameters_b, 0.0_4)
   CALL SET_STATES(mesh, states_b, 0.0_4)
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
-&               , parameters_bgd, states, states_b, states_bgd, output, &
-&               output_b, cost, cost_b)
+&               , parameters_bgd, parameters_bgd_b, states, states_b, &
+&               states_bgd, states_bgd_b, output, output_b, cost, cost_b&
+&              )
   CALL POPCONTROL3B(branch)
   IF (branch .LT. 3) THEN
     IF (branch .NE. 0) THEN
@@ -9163,6 +9547,11 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
     CALL VIC_A_FORWARD_B(setup, mesh, input_data, parameters, &
 &                  parameters_b, states, states_b, output, output_b)
   END IF
+  CALL POPCONTROL1B(branch)
+  IF (branch .EQ. 0) THEN
+    CALL DENORMALIZE_STATES_B(setup, mesh, states, states_b)
+    CALL DENORMALIZE_PARAMETERS_B(setup, mesh, parameters, parameters_b)
+  END IF
 END SUBROUTINE BASE_FORWARD_B
 
 SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
@@ -9183,8 +9572,12 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   USE MWD_OUTPUT_DIFF
 !% only: compute_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: denormalize_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: denormalize_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9192,12 +9585,18 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   TYPE(SETUPDT), INTENT(IN) :: setup
   TYPE(MESHDT), INTENT(IN) :: mesh
   TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-  TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-  TYPE(STATESDT), INTENT(INOUT) :: states, states_bgd
+  TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+  TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+  TYPE(STATESDT), INTENT(INOUT) :: states
+  TYPE(STATESDT), INTENT(IN) :: states_bgd
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   REAL(sp), INTENT(INOUT) :: cost
   TYPE(STATESDT) :: states_imd
   INTRINSIC TRIM
+  IF (setup%optimize%normalize_forward) THEN
+    CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
+    CALL DENORMALIZE_STATES(setup, mesh, states)
+  END IF
   cost = 0._sp
   states_imd = states
   SELECT CASE  (TRIM(setup%structure)) 
@@ -9243,7 +9642,8 @@ END SUBROUTINE BASE_FORWARD_NODIFF
 !                *(hyper_parameters.ds) *(hyper_parameters.dsm)
 !                *(hyper_parameters.ws) *(hyper_parameters.lr)
 !   RW status of diff variables: *(parameters.ci):(loc) *(parameters.cp):(loc)
-!                *(parameters.cft):(loc) *(parameters.cst):(loc)
+!                *(parameters.beta):(loc) *(parameters.cft):(loc)
+!                *(parameters.cst):(loc) *(parameters.alpha):(loc)
 !                *(parameters.exc):(loc) *(parameters.b):(loc)
 !                *(parameters.cusl1):(loc) *(parameters.cusl2):(loc)
 !                *(parameters.clsl):(loc) *(parameters.ks):(loc)
@@ -9276,10 +9676,15 @@ END SUBROUTINE BASE_FORWARD_NODIFF
 !                *(states.hft):(loc) *(states.hst):(loc) *(states.husl1):(loc)
 !                *(states.husl2):(loc) *(states.hlsl):(loc) *(states.hlr):(loc)
 !                cost:out
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.husl1:in
-!                hyper_states.husl2:in hyper_states.hlsl:in hyper_states.hlr:in
-!                hyper_parameters.ci:in hyper_parameters.cp:in
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in hyper_states.hi:in
+!                hyper_states.hp:in hyper_states.hft:in hyper_states.hst:in
+!                hyper_states.husl1:in hyper_states.husl2:in hyper_states.hlsl:in
+!                hyper_states.hlr:in hyper_parameters.ci:in hyper_parameters.cp:in
 !                hyper_parameters.beta:in hyper_parameters.cft:in
 !                hyper_parameters.cst:in hyper_parameters.alpha:in
 !                hyper_parameters.exc:in hyper_parameters.b:in
@@ -9287,7 +9692,9 @@ END SUBROUTINE BASE_FORWARD_NODIFF
 !                hyper_parameters.clsl:in hyper_parameters.ks:in
 !                hyper_parameters.ds:in hyper_parameters.dsm:in
 !                hyper_parameters.ws:in hyper_parameters.lr:in
-!                output.qsim:in
+!                output.qsim:in states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
 SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, parameters, &
 & parameters_d, hyper_parameters, hyper_parameters_d, &
 & hyper_parameters_bgd, states, states_d, hyper_states, hyper_states_d, &
@@ -9300,16 +9707,20 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT, ParametersDT_initialise, hyper_parameters_to_parameters
+!% only: Hyper_ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT, StatesDT_initialise, hyper_states_to_states
+!% only: Hyper_StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
 !% only: compute_hyper_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: hyper_parameters_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: hyper_states_to_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9324,18 +9735,16 @@ SUBROUTINE BASE_HYPER_FORWARD_D(setup, mesh, input_data, parameters, &
   TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters_d
   TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(STATESDT), INTENT(INOUT) :: states_d
-  TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states, hyper_states_bgd
-  TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states_d
+  TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states, hyper_states_bgd
+  TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states_d
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
   REAL(sp), INTENT(INOUT) :: cost
   REAL(sp), INTENT(INOUT) :: cost_d
+  INTRINSIC TRIM
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-  TYPE(PARAMETERSDT) :: parameters_bgd
-  TYPE(STATESDT) :: states_bgd
-  INTRINSIC TRIM
   CALL HYPER_PARAMETERS_TO_PARAMETERS_D(hyper_parameters, &
 &                                 hyper_parameters_d, parameters, &
 &                                 parameters_d, setup, mesh, input_data)
@@ -9385,7 +9794,8 @@ END SUBROUTINE BASE_HYPER_FORWARD_D
 !                *(hyper_parameters.ds) *(hyper_parameters.dsm)
 !                *(hyper_parameters.ws) *(hyper_parameters.lr)
 !   RW status of diff variables: *(parameters.ci):(loc) *(parameters.cp):(loc)
-!                *(parameters.cft):(loc) *(parameters.cst):(loc)
+!                *(parameters.beta):(loc) *(parameters.cft):(loc)
+!                *(parameters.cst):(loc) *(parameters.alpha):(loc)
 !                *(parameters.exc):(loc) *(parameters.b):(loc)
 !                *(parameters.cusl1):(loc) *(parameters.cusl2):(loc)
 !                *(parameters.clsl):(loc) *(parameters.ks):(loc)
@@ -9418,10 +9828,15 @@ END SUBROUTINE BASE_HYPER_FORWARD_D
 !                *(states.hi):(loc) *(states.hp):(loc) *(states.hft):(loc)
 !                *(states.hst):(loc) *(states.husl1):(loc) *(states.husl2):(loc)
 !                *(states.hlsl):(loc) *(states.hlr):(loc) cost:in-killed
-!   Plus diff mem management of: hyper_states.hi:in hyper_states.hp:in
-!                hyper_states.hft:in hyper_states.hst:in hyper_states.husl1:in
-!                hyper_states.husl2:in hyper_states.hlsl:in hyper_states.hlr:in
-!                hyper_parameters.ci:in hyper_parameters.cp:in
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in hyper_states.hi:in
+!                hyper_states.hp:in hyper_states.hft:in hyper_states.hst:in
+!                hyper_states.husl1:in hyper_states.husl2:in hyper_states.hlsl:in
+!                hyper_states.hlr:in hyper_parameters.ci:in hyper_parameters.cp:in
 !                hyper_parameters.beta:in hyper_parameters.cft:in
 !                hyper_parameters.cst:in hyper_parameters.alpha:in
 !                hyper_parameters.exc:in hyper_parameters.b:in
@@ -9429,7 +9844,9 @@ END SUBROUTINE BASE_HYPER_FORWARD_D
 !                hyper_parameters.clsl:in hyper_parameters.ks:in
 !                hyper_parameters.ds:in hyper_parameters.dsm:in
 !                hyper_parameters.ws:in hyper_parameters.lr:in
-!                output.qsim:in
+!                output.qsim:in states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
 SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, parameters, &
 & parameters_b, hyper_parameters, hyper_parameters_b, &
 & hyper_parameters_bgd, states, states_b, hyper_states, hyper_states_b, &
@@ -9442,16 +9859,20 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, parameters, &
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT, ParametersDT_initialise, hyper_parameters_to_parameters
+!% only: Hyper_ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT, StatesDT_initialise, hyper_states_to_states
+!% only: Hyper_StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
 !% only: compute_hyper_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: hyper_parameters_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: hyper_states_to_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9466,19 +9887,17 @@ SUBROUTINE BASE_HYPER_FORWARD_B(setup, mesh, input_data, parameters, &
   TYPE(HYPER_PARAMETERSDT) :: hyper_parameters_b
   TYPE(STATESDT), INTENT(INOUT) :: states
   TYPE(STATESDT), INTENT(INOUT) :: states_b
-  TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states, hyper_states_bgd
-  TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states_b
+  TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states, hyper_states_bgd
+  TYPE(HYPER_STATESDT) :: hyper_states_b
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
   REAL(sp), INTENT(INOUT) :: cost
   REAL(sp), INTENT(INOUT) :: cost_b
+  INTRINSIC TRIM
+  INTEGER :: branch
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-  TYPE(PARAMETERSDT) :: parameters_bgd
-  TYPE(STATESDT) :: states_bgd
-  INTRINSIC TRIM
-  INTEGER :: branch
   CALL HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters, &
 &                               setup, mesh, input_data)
   CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, mesh, &
@@ -9764,16 +10183,20 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, parameters&
   USE MWD_MESH
 !% only: Input_DataDT
   USE MWD_INPUT_DATA
-!% only: Hyper_ParametersDT, ParametersDT_initialise, hyper_parameters_to_parameters
+!% only: Hyper_ParametersDT
   USE MWD_PARAMETERS_DIFF
-!% only: Hyper_StatesDT, StatesDT_initialise, hyper_states_to_states
+!% only: Hyper_StatesDT
   USE MWD_STATES_DIFF
 !% only: OutputDT
   USE MWD_OUTPUT_DIFF
 !% only: compute_hyper_cost
   USE MWD_COST_DIFF
-!% only: gr_a_forward, gr_b_forward, vic_a_forward
+!% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward, vic_a_forward
   USE MD_FORWARD_STRUCTURE_DIFF
+!% only: hyper_parameters_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: hyper_states_to_states
+  USE MWD_STATES_MANIPULATION_DIFF
   IMPLICIT NONE
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9785,21 +10208,17 @@ SUBROUTINE BASE_HYPER_FORWARD_NODIFF(setup, mesh, input_data, parameters&
   TYPE(HYPER_PARAMETERSDT), INTENT(IN) :: hyper_parameters, &
 & hyper_parameters_bgd
   TYPE(STATESDT), INTENT(INOUT) :: states
-  TYPE(HYPER_STATESDT), INTENT(INOUT) :: hyper_states, hyper_states_bgd
+  TYPE(HYPER_STATESDT), INTENT(IN) :: hyper_states, hyper_states_bgd
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   REAL(sp), INTENT(INOUT) :: cost
+  INTRINSIC TRIM
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-  TYPE(PARAMETERSDT) :: parameters_bgd
-  TYPE(STATESDT) :: states_bgd
-  INTRINSIC TRIM
   CALL HYPER_PARAMETERS_TO_PARAMETERS(hyper_parameters, parameters, &
 &                               setup, mesh, input_data)
   CALL HYPER_STATES_TO_STATES(hyper_states, states, setup, mesh, &
 &                       input_data)
-  parameters_bgd = parameters
-  states_bgd = states
   SELECT CASE  (TRIM(setup%structure)) 
   CASE ('gr-a') 
     CALL GR_A_FORWARD(setup, mesh, input_data, parameters, states, &
