@@ -47,172 +47,172 @@
 
 module mwd_setup
 
-   use md_constant !% only: sp, lchar, &
-   !% & G_NP, G_NS, GPARAMETERS_NAME, GSTATES_NAME, &
-   !% & GLB_PARAMETERS, GUB_PARAMETERS, GLB_STATES, GUB_STATES
+    use md_constant !% only: sp, lchar, &
+    !% & G_NP, G_NS, GPARAMETERS_NAME, GSTATES_NAME, &
+    !% & GLB_PARAMETERS, GUB_PARAMETERS, GLB_STATES, GUB_STATES
 
-   implicit none
+    implicit none
 
-   type Optimize_SetupDT
+    type Optimize_SetupDT
 
-      !% Notes
-      !% -----
-      !% Optimize_SetupDT Derived Type.
+        !% Notes
+        !% -----
+        !% Optimize_SetupDT Derived Type.
 
-      character(lchar) :: algorithm = "..." !>f90w-char
+        character(lchar) :: algorithm = "..." !>f90w-char
 
-      character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
-      real(sp), dimension(:), allocatable :: wjobs_fun
-      integer :: njf = 0
+        character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
+        real(sp), dimension(:), allocatable :: wjobs_fun
+        integer :: njf = 0
 
-      logical :: verbose = .true.
+        logical :: verbose = .true.
 
-      character(lchar) :: mapping = "..." !>f90w-char
+        character(lchar) :: mapping = "..." !>f90w-char
 
-      logical :: normalize_forward = .false.
+        logical :: normalize_forward = .false.
 
-      integer :: nhyper = 0
+        integer :: nhyper = 0
 
-      character(lchar) :: jreg_fun = "prior" !>f90w-char
-      real(sp) :: wjreg = 0._sp
+        character(lchar) :: jreg_fun = "prior" !>f90w-char
+        real(sp) :: wjreg = 0._sp
 
-      integer :: optimize_start_step = 1
+        integer :: optimize_start_step = 1
 
-      integer :: maxiter = 100
+        integer :: maxiter = 100
 
-      integer, dimension(GNP) :: optim_parameters = 0
-      integer, dimension(GNS) :: optim_states = 0
+        integer, dimension(GNP) :: optim_parameters = 0
+        integer, dimension(GNS) :: optim_states = 0
 
-      real(sp), dimension(GNP) :: lb_parameters = GLB_PARAMETERS
+        real(sp), dimension(GNP) :: lb_parameters = GLB_PARAMETERS
 
-      real(sp), dimension(GNP) :: ub_parameters = GUB_PARAMETERS
+        real(sp), dimension(GNP) :: ub_parameters = GUB_PARAMETERS
 
-      real(sp), dimension(GNS) :: lb_states = GLB_STATES
+        real(sp), dimension(GNS) :: lb_states = GLB_STATES
 
-      real(sp), dimension(GNS) :: ub_states = GUB_STATES
+        real(sp), dimension(GNS) :: ub_states = GUB_STATES
 
-      real(sp), dimension(:), allocatable :: wgauge
+        real(sp), dimension(:), allocatable :: wgauge
 
-      integer, dimension(:, :), allocatable :: mask_event
+        integer, dimension(:, :), allocatable :: mask_event
 
-   end type Optimize_SetupDT
+    end type Optimize_SetupDT
 
-   type SetupDT
+    type SetupDT
 
-      !% Notes
-      !% -----
-      !% SetupDT Derived Type.
+        !% Notes
+        !% -----
+        !% SetupDT Derived Type.
 
-      character(lchar) :: structure = "gr-a" !>f90w-char
+        character(lchar) :: structure = "gr-a" !>f90w-char
 
-      real(sp) :: dt = 3600._sp
+        real(sp) :: dt = 3600._sp
 
-      character(lchar) :: start_time = "..." !>f90w-char
-      character(lchar) :: end_time = "..." !>f90w-char
+        character(lchar) :: start_time = "..." !>f90w-char
+        character(lchar) :: end_time = "..." !>f90w-char
 
-      logical :: sparse_storage = .false.
+        logical :: sparse_storage = .false.
 
-      logical :: read_qobs = .false.
-      character(lchar) :: qobs_directory = "..." !>f90w-char
+        logical :: read_qobs = .false.
+        character(lchar) :: qobs_directory = "..." !>f90w-char
 
-      logical :: read_prcp = .false.
-      character(lchar) :: prcp_format = "tif" !>f90w-char
-      real(sp) :: prcp_conversion_factor = 1._sp
-      character(lchar) :: prcp_directory = "..." !>f90w-char
+        logical :: read_prcp = .false.
+        character(lchar) :: prcp_format = "tif" !>f90w-char
+        real(sp) :: prcp_conversion_factor = 1._sp
+        character(lchar) :: prcp_directory = "..." !>f90w-char
 
-      logical :: read_pet = .false.
-      character(lchar) :: pet_format = "tif" !>f90w-char
-      real(sp) :: pet_conversion_factor = 1._sp
-      character(lchar) :: pet_directory = "..." !>f90w-char
-      logical :: daily_interannual_pet = .false.
+        logical :: read_pet = .false.
+        character(lchar) :: pet_format = "tif" !>f90w-char
+        real(sp) :: pet_conversion_factor = 1._sp
+        character(lchar) :: pet_directory = "..." !>f90w-char
+        logical :: daily_interannual_pet = .false.
 
-      logical :: mean_forcing = .true.
+        logical :: mean_forcing = .true.
 
-      logical :: read_descriptor = .false.
-      character(lchar) :: descriptor_format = "tif" !>f90w-char
-      character(lchar) :: descriptor_directory = "..." !>f90w-char
-      character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
+        logical :: read_descriptor = .false.
+        character(lchar) :: descriptor_format = "tif" !>f90w-char
+        character(lchar) :: descriptor_directory = "..." !>f90w-char
+        character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
 
-      logical :: save_qsim_domain = .false.
-      logical :: save_net_prcp_domain = .false.
+        logical :: save_qsim_domain = .false.
+        logical :: save_net_prcp_domain = .false.
 
-      type(Optimize_SetupDT) :: optimize !>f90w-private
+        type(Optimize_SetupDT) :: optimize !>f90w-private
 
-      integer :: ntime_step = 0 !>f90w-private
-      integer :: nd = 0 !>f90w-private
+        integer :: ntime_step = 0 !>f90w-private
+        integer :: nd = 0 !>f90w-private
 
-      character(10), dimension(GNP) :: parameters_name = GPARAMETERS_NAME !>f90w-private f90w-char_array
+        character(10), dimension(GNP) :: parameters_name = GPARAMETERS_NAME !>f90w-private f90w-char_array
 
-      character(10), dimension(GNS) :: states_name = GSTATES_NAME !>f90w-private f90w-char_array
+        character(10), dimension(GNS) :: states_name = GSTATES_NAME !>f90w-private f90w-char_array
 
-   end type SetupDT
+    end type SetupDT
 
 contains
 
-   subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf)
+    subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf)
 
-      !% Notes
-      !% -----
-      !% Optimize_SetupDT initialisation subroutine
+        !% Notes
+        !% -----
+        !% Optimize_SetupDT initialisation subroutine
 
-      implicit none
+        implicit none
 
-      type(Optimize_SetupDT), intent(inout) :: this
-      integer, intent(in) :: ntime_step, nd, ng, njf
-      character(len=*), intent(in) :: mapping
+        type(Optimize_SetupDT), intent(inout) :: this
+        integer, intent(in) :: ntime_step, nd, ng, njf
+        character(len=*), intent(in) :: mapping
 
-      allocate (this%wgauge(ng))
-      this%wgauge = 1._sp/ng
+        allocate (this%wgauge(ng))
+        this%wgauge = 1._sp/ng
 
-      this%mapping = mapping
+        this%mapping = mapping
 
-      select case (trim(this%mapping))
+        select case (trim(this%mapping))
 
-      case ("hyper-linear")
+        case ("hyper-linear")
 
-         this%nhyper = (1 + nd)
+            this%nhyper = (1 + nd)
 
-      case ("hyper-polynomial")
+        case ("hyper-polynomial")
 
-         this%nhyper = (1 + 2*nd)
+            this%nhyper = (1 + 2*nd)
 
-      end select
+        end select
 
-      this%njf = njf
+        this%njf = njf
 
-      allocate (this%jobs_fun(this%njf))
-      this%jobs_fun = "..."
+        allocate (this%jobs_fun(this%njf))
+        this%jobs_fun = "..."
 
-      allocate (this%wjobs_fun(this%njf))
-      this%wjobs_fun = 0._sp
+        allocate (this%wjobs_fun(this%njf))
+        this%wjobs_fun = 0._sp
 
-      allocate (this%mask_event(ng, ntime_step))
-      this%mask_event = 0
+        allocate (this%mask_event(ng, ntime_step))
+        this%mask_event = 0
 
-   end subroutine Optimize_SetupDT_initialise
+    end subroutine Optimize_SetupDT_initialise
 
-   subroutine SetupDT_initialise(this, nd, ng)
+    subroutine SetupDT_initialise(this, nd, ng)
 
-      !% Notes
-      !% -----
-      !% SetupDT initialisation subroutine
+        !% Notes
+        !% -----
+        !% SetupDT initialisation subroutine
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(inout) :: this
-      integer, intent(in) :: nd, ng
+        type(SetupDT), intent(inout) :: this
+        integer, intent(in) :: nd, ng
 
-      this%nd = nd
+        this%nd = nd
 
-      if (this%nd .gt. 0) then
+        if (this%nd .gt. 0) then
 
-         allocate (this%descriptor_name(this%nd))
-         this%descriptor_name = "..."
+            allocate (this%descriptor_name(this%nd))
+            this%descriptor_name = "..."
 
-      end if
+        end if
 
-      call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0)
+        call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0)
 
-   end subroutine SetupDT_initialise
+    end subroutine SetupDT_initialise
 
 end module mwd_setup

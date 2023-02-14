@@ -29,303 +29,303 @@
 
 module mwd_states_manipulation
 
-   use md_constant
-   use mwd_setup
-   use mwd_input_data
-   use mwd_states
+    use md_constant
+    use mwd_setup
+    use mwd_input_data
+    use mwd_states
 
-   implicit none
+    implicit none
 
-   interface set_states
+    interface set_states
 
-      module procedure set0d_states
-      module procedure set1d_states
-      module procedure set3d_states
+        module procedure set0d_states
+        module procedure set1d_states
+        module procedure set3d_states
 
-   end interface set_states
+    end interface set_states
 
-   interface set_hyper_states
+    interface set_hyper_states
 
-      module procedure set0d_hyper_states
-      module procedure set1d_hyper_states
-      module procedure set3d_hyper_states
+        module procedure set0d_hyper_states
+        module procedure set1d_hyper_states
+        module procedure set3d_hyper_states
 
-   end interface set_hyper_states
+    end interface set_hyper_states
 
 contains
 
 !%      TODO comment
-   subroutine get_states(mesh, states, a)
+    subroutine get_states(mesh, states, a)
 
-      implicit none
+        implicit none
 
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(in) :: states
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS), intent(inout) :: a
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(in) :: states
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS), intent(inout) :: a
 
-      a(:, :, 1) = states%hi(:, :)
-      a(:, :, 2) = states%hp(:, :)
-      a(:, :, 3) = states%hft(:, :)
-      a(:, :, 4) = states%hst(:, :)
+        a(:, :, 1) = states%hi(:, :)
+        a(:, :, 2) = states%hp(:, :)
+        a(:, :, 3) = states%hft(:, :)
+        a(:, :, 4) = states%hst(:, :)
 
-      a(:, :, 5) = states%husl1(:, :)
-      a(:, :, 6) = states%husl2(:, :)
-      a(:, :, 7) = states%hlsl(:, :)
+        a(:, :, 5) = states%husl1(:, :)
+        a(:, :, 6) = states%husl2(:, :)
+        a(:, :, 7) = states%hlsl(:, :)
 
-      a(:, :, 8) = states%hlr(:, :)
+        a(:, :, 8) = states%hlr(:, :)
 
-   end subroutine get_states
+    end subroutine get_states
 
-   subroutine set3d_states(mesh, states, a)
+    subroutine set3d_states(mesh, states, a)
 
-      implicit none
+        implicit none
 
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(inout) :: states
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS), intent(in) :: a
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: states
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS), intent(in) :: a
 
-      states%hi(:, :) = a(:, :, 1)
-      states%hp(:, :) = a(:, :, 2)
-      states%hft(:, :) = a(:, :, 3)
-      states%hst(:, :) = a(:, :, 4)
+        states%hi(:, :) = a(:, :, 1)
+        states%hp(:, :) = a(:, :, 2)
+        states%hft(:, :) = a(:, :, 3)
+        states%hst(:, :) = a(:, :, 4)
 
-      states%husl1(:, :) = a(:, :, 5)
-      states%husl2(:, :) = a(:, :, 6)
-      states%hlsl(:, :) = a(:, :, 7)
+        states%husl1(:, :) = a(:, :, 5)
+        states%husl2(:, :) = a(:, :, 6)
+        states%hlsl(:, :) = a(:, :, 7)
 
-      states%hlr(:, :) = a(:, :, 8)
+        states%hlr(:, :) = a(:, :, 8)
 
-   end subroutine set3d_states
+    end subroutine set3d_states
 
-   subroutine set1d_states(mesh, states, a)
+    subroutine set1d_states(mesh, states, a)
 
-      implicit none
+        implicit none
 
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(inout) :: states
-      real(sp), dimension(GNS), intent(in) :: a
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: states
+        real(sp), dimension(GNS), intent(in) :: a
 
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a3d
-      integer :: i
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a3d
+        integer :: i
 
-      do i = 1, GNS
+        do i = 1, GNS
 
-         a3d(:, :, i) = a(i)
+            a3d(:, :, i) = a(i)
 
-      end do
+        end do
 
-      call set3d_states(mesh, states, a3d)
+        call set3d_states(mesh, states, a3d)
 
-   end subroutine set1d_states
+    end subroutine set1d_states
 
-   subroutine set0d_states(mesh, states, a)
+    subroutine set0d_states(mesh, states, a)
 
-      implicit none
+        implicit none
 
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(inout) :: states
-      real(sp), intent(in) :: a
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: states
+        real(sp), intent(in) :: a
 
-      real(sp), dimension(GNS) :: a1d
+        real(sp), dimension(GNS) :: a1d
 
-      a1d(:) = a
+        a1d(:) = a
 
-      call set1d_states(mesh, states, a1d)
+        call set1d_states(mesh, states, a1d)
 
-   end subroutine set0d_states
+    end subroutine set0d_states
 
-   subroutine normalize_states(setup, mesh, states)
+    subroutine normalize_states(setup, mesh, states)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(inout) :: states
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: states
 
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
-      real(sp) :: lb, ub
-      integer :: i
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
+        real(sp) :: lb, ub
+        integer :: i
 
-      call get_states(mesh, states, a)
+        call get_states(mesh, states, a)
 
-      do i = 1, GNS
+        do i = 1, GNS
 
-         lb = setup%optimize%lb_states(i)
-         ub = setup%optimize%ub_states(i)
+            lb = setup%optimize%lb_states(i)
+            ub = setup%optimize%ub_states(i)
 
-         a(:, :, i) = (a(:, :, i) - lb)/(ub - lb)
+            a(:, :, i) = (a(:, :, i) - lb)/(ub - lb)
 
-      end do
+        end do
 
-      call set_states(mesh, states, a)
+        call set_states(mesh, states, a)
 
-   end subroutine normalize_states
+    end subroutine normalize_states
 
-   subroutine denormalize_states(setup, mesh, states)
+    subroutine denormalize_states(setup, mesh, states)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(StatesDT), intent(inout) :: states
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: states
 
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
-      real(sp) :: lb, ub
-      integer :: i
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: a
+        real(sp) :: lb, ub
+        integer :: i
 
-      call get_states(mesh, states, a)
+        call get_states(mesh, states, a)
 
-      do i = 1, GNS
+        do i = 1, GNS
 
-         lb = setup%optimize%lb_states(i)
-         ub = setup%optimize%ub_states(i)
+            lb = setup%optimize%lb_states(i)
+            ub = setup%optimize%ub_states(i)
 
-         a(:, :, i) = a(:, :, i)*(ub - lb) + lb
+            a(:, :, i) = a(:, :, i)*(ub - lb) + lb
 
-      end do
+        end do
 
-      call set_states(mesh, states, a)
+        call set_states(mesh, states, a)
 
-   end subroutine denormalize_states
+    end subroutine denormalize_states
 
-   subroutine get_hyper_states(setup, hyper_states, a)
+    subroutine get_hyper_states(setup, hyper_states, a)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(Hyper_StatesDT), intent(in) :: hyper_states
-      real(sp), dimension(setup%optimize%nhyper, 1, GNS), intent(inout) :: a
+        type(SetupDT), intent(in) :: setup
+        type(Hyper_StatesDT), intent(in) :: hyper_states
+        real(sp), dimension(setup%optimize%nhyper, 1, GNS), intent(inout) :: a
 
-      a(:, :, 1) = hyper_states%hi(:, :)
-      a(:, :, 2) = hyper_states%hp(:, :)
-      a(:, :, 3) = hyper_states%hft(:, :)
-      a(:, :, 4) = hyper_states%hst(:, :)
+        a(:, :, 1) = hyper_states%hi(:, :)
+        a(:, :, 2) = hyper_states%hp(:, :)
+        a(:, :, 3) = hyper_states%hft(:, :)
+        a(:, :, 4) = hyper_states%hst(:, :)
 
-      a(:, :, 5) = hyper_states%husl1(:, :)
-      a(:, :, 6) = hyper_states%husl2(:, :)
-      a(:, :, 7) = hyper_states%hlsl(:, :)
+        a(:, :, 5) = hyper_states%husl1(:, :)
+        a(:, :, 6) = hyper_states%husl2(:, :)
+        a(:, :, 7) = hyper_states%hlsl(:, :)
 
-      a(:, :, 8) = hyper_states%hlr(:, :)
+        a(:, :, 8) = hyper_states%hlr(:, :)
 
-   end subroutine get_hyper_states
+    end subroutine get_hyper_states
 
-   subroutine set3d_hyper_states(setup, hyper_states, a)
+    subroutine set3d_hyper_states(setup, hyper_states, a)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(Hyper_StatesDT), intent(inout) :: hyper_states
-      real(sp), dimension(setup%optimize%nhyper, 1, GNS), intent(in) :: a
+        type(SetupDT), intent(in) :: setup
+        type(Hyper_StatesDT), intent(inout) :: hyper_states
+        real(sp), dimension(setup%optimize%nhyper, 1, GNS), intent(in) :: a
 
-      hyper_states%hi(:, :) = a(:, :, 1)
-      hyper_states%hp(:, :) = a(:, :, 2)
-      hyper_states%hft(:, :) = a(:, :, 3)
-      hyper_states%hst(:, :) = a(:, :, 4)
+        hyper_states%hi(:, :) = a(:, :, 1)
+        hyper_states%hp(:, :) = a(:, :, 2)
+        hyper_states%hft(:, :) = a(:, :, 3)
+        hyper_states%hst(:, :) = a(:, :, 4)
 
-      hyper_states%husl1(:, :) = a(:, :, 5)
-      hyper_states%husl2(:, :) = a(:, :, 6)
-      hyper_states%hlsl(:, :) = a(:, :, 7)
+        hyper_states%husl1(:, :) = a(:, :, 5)
+        hyper_states%husl2(:, :) = a(:, :, 6)
+        hyper_states%hlsl(:, :) = a(:, :, 7)
 
-      hyper_states%hlr(:, :) = a(:, :, 8)
+        hyper_states%hlr(:, :) = a(:, :, 8)
 
-   end subroutine set3d_hyper_states
+    end subroutine set3d_hyper_states
 
-   subroutine set1d_hyper_states(setup, hyper_states, a)
+    subroutine set1d_hyper_states(setup, hyper_states, a)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(Hyper_StatesDT), intent(inout) :: hyper_states
-      real(sp), dimension(GNS), intent(in) :: a
+        type(SetupDT), intent(in) :: setup
+        type(Hyper_StatesDT), intent(inout) :: hyper_states
+        real(sp), dimension(GNS), intent(in) :: a
 
-      real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: a3d
-      integer :: i
+        real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: a3d
+        integer :: i
 
-      do i = 1, GNS
+        do i = 1, GNS
 
-         a3d(:, :, i) = a(i)
+            a3d(:, :, i) = a(i)
 
-      end do
+        end do
 
-      call set3d_hyper_states(setup, hyper_states, a3d)
+        call set3d_hyper_states(setup, hyper_states, a3d)
 
-   end subroutine set1d_hyper_states
+    end subroutine set1d_hyper_states
 
-   subroutine set0d_hyper_states(setup, hyper_states, a)
+    subroutine set0d_hyper_states(setup, hyper_states, a)
 
-      implicit none
+        implicit none
 
-      type(SetupDT), intent(in) :: setup
-      type(Hyper_StatesDT), intent(inout) :: hyper_states
-      real(sp), intent(in) :: a
+        type(SetupDT), intent(in) :: setup
+        type(Hyper_StatesDT), intent(inout) :: hyper_states
+        real(sp), intent(in) :: a
 
-      real(sp), dimension(GNS) :: a1d
+        real(sp), dimension(GNS) :: a1d
 
-      a1d(:) = a
+        a1d(:) = a
 
-      call set1d_hyper_states(setup, hyper_states, a1d)
+        call set1d_hyper_states(setup, hyper_states, a1d)
 
-   end subroutine set0d_hyper_states
+    end subroutine set0d_hyper_states
 
 !%      TODO comment
-   subroutine hyper_states_to_states(hyper_states, &
-   & states, setup, mesh, input_data)
+    subroutine hyper_states_to_states(hyper_states, &
+    & states, setup, mesh, input_data)
 
-      implicit none
+        implicit none
 
-      type(Hyper_StatesDT), intent(in) :: hyper_states
-      type(StatesDT), intent(inout) :: states
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
+        type(Hyper_StatesDT), intent(in) :: hyper_states
+        type(StatesDT), intent(inout) :: states
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
 
-      real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: hyper_states_matrix
-      real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
-      integer :: i, j
-      real(sp) :: a, b
+        real(sp), dimension(setup%optimize%nhyper, 1, GNS) :: hyper_states_matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: d, dpb
+        integer :: i, j
+        real(sp) :: a, b
 
-      call get_hyper_states(setup, hyper_states, hyper_states_matrix)
-      call get_states(mesh, states, states_matrix)
+        call get_hyper_states(setup, hyper_states, hyper_states_matrix)
+        call get_states(mesh, states, states_matrix)
 
-      !% Add mask later here
-      !% 1 in dim2 will be replace with k and apply where on Omega
-      do i = 1, GNS
+        !% Add mask later here
+        !% 1 in dim2 will be replace with k and apply where on Omega
+        do i = 1, GNS
 
-         states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
+            states_matrix(:, :, i) = hyper_states_matrix(1, 1, i)
 
-         do j = 1, setup%nd
+            do j = 1, setup%nd
 
-            d = input_data%descriptor(:, :, j)
+                d = input_data%descriptor(:, :, j)
 
-            select case (trim(setup%optimize%mapping))
+                select case (trim(setup%optimize%mapping))
 
-            case ("hyper-linear")
+                case ("hyper-linear")
 
-               a = hyper_states_matrix(j + 1, 1, i)
-               b = 1._sp
+                    a = hyper_states_matrix(j + 1, 1, i)
+                    b = 1._sp
 
-            case ("hyper-polynomial")
+                case ("hyper-polynomial")
 
-               a = hyper_states_matrix(2*j, 1, i)
-               b = hyper_states_matrix(2*j + 1, 1, i)
+                    a = hyper_states_matrix(2*j, 1, i)
+                    b = hyper_states_matrix(2*j + 1, 1, i)
 
-            end select
+                end select
 
-            dpb = d**b
+                dpb = d**b
 
-            states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
+                states_matrix(:, :, i) = states_matrix(:, :, i) + a*dpb
 
-         end do
+            end do
 
-         !% sigmoid transformation lambda = 1
-         states_matrix(:, :, i) = (setup%optimize%ub_states(i) - setup%optimize%lb_states(i)) &
-                                 & *(1._sp/(1._sp + exp(-states_matrix(:, :, i)))) + setup%optimize%lb_states(i)
+            !% sigmoid transformation lambda = 1
+            states_matrix(:, :, i) = (setup%optimize%ub_states(i) - setup%optimize%lb_states(i)) &
+                                    & *(1._sp/(1._sp + exp(-states_matrix(:, :, i)))) + setup%optimize%lb_states(i)
 
-      end do
+        end do
 
-      call set_states(mesh, states, states_matrix)
+        call set_states(mesh, states, states_matrix)
 
-   end subroutine hyper_states_to_states
+    end subroutine hyper_states_to_states
 
 end module mwd_states_manipulation

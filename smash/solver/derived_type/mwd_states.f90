@@ -40,115 +40,115 @@
 
 module mwd_states
 
-   use md_constant !% only: sp, ns
-   use mwd_mesh !% only: MeshDT
-   use mwd_input_data !% only: Input_DataDT
+    use md_constant !% only: sp, ns
+    use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
 
-   implicit none
+    implicit none
 
-   type StatesDT
+    type StatesDT
 
-      !% Notes
-      !% -----
-      !% StatesDT Derived Type.
+        !% Notes
+        !% -----
+        !% StatesDT Derived Type.
 
-      ! GR
-      real(sp), dimension(:, :), allocatable :: hi
-      real(sp), dimension(:, :), allocatable :: hp
-      real(sp), dimension(:, :), allocatable :: hft
-      real(sp), dimension(:, :), allocatable :: hst
+        ! GR
+        real(sp), dimension(:, :), allocatable :: hi
+        real(sp), dimension(:, :), allocatable :: hp
+        real(sp), dimension(:, :), allocatable :: hft
+        real(sp), dimension(:, :), allocatable :: hst
 
-      ! VIC
-      real(sp), dimension(:, :), allocatable :: husl1
-      real(sp), dimension(:, :), allocatable :: husl2
-      real(sp), dimension(:, :), allocatable :: hlsl
+        ! VIC
+        real(sp), dimension(:, :), allocatable :: husl1
+        real(sp), dimension(:, :), allocatable :: husl2
+        real(sp), dimension(:, :), allocatable :: hlsl
 
-      ! Routing
-      real(sp), dimension(:, :), allocatable :: hlr
+        ! Routing
+        real(sp), dimension(:, :), allocatable :: hlr
 
-   end type StatesDT
+    end type StatesDT
 
-   type Hyper_StatesDT
+    type Hyper_StatesDT
 
-      !% Notes
-      !% -----
-      !% Hyper_StatesDT Derived Type.
+        !% Notes
+        !% -----
+        !% Hyper_StatesDT Derived Type.
 
-      ! GR
-      real(sp), dimension(:, :), allocatable :: hi
-      real(sp), dimension(:, :), allocatable :: hp
-      real(sp), dimension(:, :), allocatable :: hft
-      real(sp), dimension(:, :), allocatable :: hst
+        ! GR
+        real(sp), dimension(:, :), allocatable :: hi
+        real(sp), dimension(:, :), allocatable :: hp
+        real(sp), dimension(:, :), allocatable :: hft
+        real(sp), dimension(:, :), allocatable :: hst
 
-      ! VIC
-      real(sp), dimension(:, :), allocatable :: husl1
-      real(sp), dimension(:, :), allocatable :: husl2
-      real(sp), dimension(:, :), allocatable :: hlsl
+        ! VIC
+        real(sp), dimension(:, :), allocatable :: husl1
+        real(sp), dimension(:, :), allocatable :: husl2
+        real(sp), dimension(:, :), allocatable :: hlsl
 
-      ! Routing
-      real(sp), dimension(:, :), allocatable :: hlr
+        ! Routing
+        real(sp), dimension(:, :), allocatable :: hlr
 
-   end type Hyper_StatesDT
+    end type Hyper_StatesDT
 
 contains
 
-   subroutine StatesDT_initialise(this, mesh)
+    subroutine StatesDT_initialise(this, mesh)
 
-      !% Notes
-      !% -----
-      !% StatesDT initialisation subroutine.
+        !% Notes
+        !% -----
+        !% StatesDT initialisation subroutine.
 
-      implicit none
+        implicit none
 
-      type(StatesDT), intent(inout) :: this
-      type(MeshDT), intent(in) :: mesh
+        type(StatesDT), intent(inout) :: this
+        type(MeshDT), intent(in) :: mesh
 
-      allocate (this%hi(mesh%nrow, mesh%ncol))
-      allocate (this%hp(mesh%nrow, mesh%ncol))
-      allocate (this%hft(mesh%nrow, mesh%ncol))
-      allocate (this%hst(mesh%nrow, mesh%ncol))
+        allocate (this%hi(mesh%nrow, mesh%ncol))
+        allocate (this%hp(mesh%nrow, mesh%ncol))
+        allocate (this%hft(mesh%nrow, mesh%ncol))
+        allocate (this%hst(mesh%nrow, mesh%ncol))
 
-      allocate (this%husl1(mesh%nrow, mesh%ncol))
-      allocate (this%husl2(mesh%nrow, mesh%ncol))
-      allocate (this%hlsl(mesh%nrow, mesh%ncol))
+        allocate (this%husl1(mesh%nrow, mesh%ncol))
+        allocate (this%husl2(mesh%nrow, mesh%ncol))
+        allocate (this%hlsl(mesh%nrow, mesh%ncol))
 
-      allocate (this%hlr(mesh%nrow, mesh%ncol))
+        allocate (this%hlr(mesh%nrow, mesh%ncol))
 
-      this%hi = 0.01_sp
-      this%hp = 0.01_sp
-      this%hft = 0.01_sp
-      this%hst = 0.01_sp
+        this%hi = 0.01_sp
+        this%hp = 0.01_sp
+        this%hft = 0.01_sp
+        this%hst = 0.01_sp
 
-      this%husl1 = 0.01_sp
-      this%husl2 = 0.01_sp
-      this%hlsl = 0.01_sp
+        this%husl1 = 0.01_sp
+        this%husl2 = 0.01_sp
+        this%hlsl = 0.01_sp
 
-      this%hlr = 0.000001_sp
+        this%hlr = 0.000001_sp
 
-   end subroutine StatesDT_initialise
+    end subroutine StatesDT_initialise
 
-   subroutine Hyper_StatesDT_initialise(this, setup)
+    subroutine Hyper_StatesDT_initialise(this, setup)
 
-      !% Notes
-      !% -----
-      !% Hyper_StatesDT initialisation subroutine.
+        !% Notes
+        !% -----
+        !% Hyper_StatesDT initialisation subroutine.
 
-      implicit none
+        implicit none
 
-      type(Hyper_StatesDT), intent(inout) :: this
-      type(SetupDT), intent(in) :: setup
+        type(Hyper_StatesDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
 
-      allocate (this%hi(setup%optimize%nhyper, 1))
-      allocate (this%hp(setup%optimize%nhyper, 1))
-      allocate (this%hft(setup%optimize%nhyper, 1))
-      allocate (this%hst(setup%optimize%nhyper, 1))
+        allocate (this%hi(setup%optimize%nhyper, 1))
+        allocate (this%hp(setup%optimize%nhyper, 1))
+        allocate (this%hft(setup%optimize%nhyper, 1))
+        allocate (this%hst(setup%optimize%nhyper, 1))
 
-      allocate (this%husl1(setup%optimize%nhyper, 1))
-      allocate (this%husl2(setup%optimize%nhyper, 1))
-      allocate (this%hlsl(setup%optimize%nhyper, 1))
+        allocate (this%husl1(setup%optimize%nhyper, 1))
+        allocate (this%husl2(setup%optimize%nhyper, 1))
+        allocate (this%hlsl(setup%optimize%nhyper, 1))
 
-      allocate (this%hlr(setup%optimize%nhyper, 1))
+        allocate (this%hlr(setup%optimize%nhyper, 1))
 
-   end subroutine Hyper_StatesDT_initialise
+    end subroutine Hyper_StatesDT_initialise
 
 end module mwd_states

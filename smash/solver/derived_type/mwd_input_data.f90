@@ -23,90 +23,90 @@
 
 module mwd_input_data
 
-   use md_constant !% only: sp
-   use mwd_setup !% only: SetupDT
-   use mwd_mesh  !% only: MeshDT
+    use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh  !% only: MeshDT
 
-   implicit none
+    implicit none
 
-   type Input_DataDT
+    type Input_DataDT
 
-      !% Notes
-      !% -----
-      !% Input_DataDT Derived Type.
+        !% Notes
+        !% -----
+        !% Input_DataDT Derived Type.
 
-      real(sp), dimension(:, :), allocatable :: qobs
-      real(sp), dimension(:, :, :), allocatable :: prcp
-      real(sp), dimension(:, :, :), allocatable :: pet
+        real(sp), dimension(:, :), allocatable :: qobs
+        real(sp), dimension(:, :, :), allocatable :: prcp
+        real(sp), dimension(:, :, :), allocatable :: pet
 
-      real(sp), dimension(:, :, :), allocatable :: descriptor
+        real(sp), dimension(:, :, :), allocatable :: descriptor
 
-      real(sp), dimension(:, :), allocatable :: sparse_prcp
-      real(sp), dimension(:, :), allocatable :: sparse_pet
+        real(sp), dimension(:, :), allocatable :: sparse_prcp
+        real(sp), dimension(:, :), allocatable :: sparse_pet
 
-      real(sp), dimension(:, :), allocatable :: mean_prcp
-      real(sp), dimension(:, :), allocatable :: mean_pet
+        real(sp), dimension(:, :), allocatable :: mean_prcp
+        real(sp), dimension(:, :), allocatable :: mean_pet
 
-   end type Input_DataDT
+    end type Input_DataDT
 
 contains
 
-   subroutine Input_DataDT_initialise(this, setup, mesh)
+    subroutine Input_DataDT_initialise(this, setup, mesh)
 
-      !% Notes
-      !% -----
-      !% Input_DataDT initialisation subroutine.
+        !% Notes
+        !% -----
+        !% Input_DataDT initialisation subroutine.
 
-      implicit none
+        implicit none
 
-      type(Input_DataDT), intent(inout) :: this
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
 
-      if (mesh%ng .gt. 0) then
+        if (mesh%ng .gt. 0) then
 
-         allocate (this%qobs(mesh%ng, setup%ntime_step))
-         this%qobs = -99._sp
+            allocate (this%qobs(mesh%ng, setup%ntime_step))
+            this%qobs = -99._sp
 
-      end if
+        end if
 
-      if (setup%sparse_storage) then
+        if (setup%sparse_storage) then
 
-         allocate (this%sparse_prcp(mesh%nac, &
-         & setup%ntime_step))
-         this%sparse_prcp = -99._sp
-         allocate (this%sparse_pet(mesh%nac, &
-         & setup%ntime_step))
-         this%sparse_pet = -99._sp
+            allocate (this%sparse_prcp(mesh%nac, &
+            & setup%ntime_step))
+            this%sparse_prcp = -99._sp
+            allocate (this%sparse_pet(mesh%nac, &
+            & setup%ntime_step))
+            this%sparse_pet = -99._sp
 
-      else
+        else
 
-         allocate (this%prcp(mesh%nrow, mesh%ncol, &
-         & setup%ntime_step))
-         this%prcp = -99._sp
-         allocate (this%pet(mesh%nrow, mesh%ncol, &
-         & setup%ntime_step))
-         this%pet = -99._sp
+            allocate (this%prcp(mesh%nrow, mesh%ncol, &
+            & setup%ntime_step))
+            this%prcp = -99._sp
+            allocate (this%pet(mesh%nrow, mesh%ncol, &
+            & setup%ntime_step))
+            this%pet = -99._sp
 
-      end if
+        end if
 
-      if (setup%nd .gt. 0) then
+        if (setup%nd .gt. 0) then
 
-         allocate (this%descriptor(mesh%nrow, mesh%ncol, &
-         & setup%nd))
+            allocate (this%descriptor(mesh%nrow, mesh%ncol, &
+            & setup%nd))
 
-      end if
+        end if
 
-      if (setup%mean_forcing .and. mesh%ng .gt. 0) then
+        if (setup%mean_forcing .and. mesh%ng .gt. 0) then
 
-         allocate (this%mean_prcp(mesh%ng, &
-         & setup%ntime_step))
-         this%mean_prcp = -99._sp
-         allocate (this%mean_pet(mesh%ng, setup%ntime_step))
-         this%mean_pet = -99._sp
+            allocate (this%mean_prcp(mesh%ng, &
+            & setup%ntime_step))
+            this%mean_prcp = -99._sp
+            allocate (this%mean_pet(mesh%ng, setup%ntime_step))
+            this%mean_pet = -99._sp
 
-      end if
+        end if
 
-   end subroutine Input_DataDT_initialise
+    end subroutine Input_DataDT_initialise
 
 end module mwd_input_data

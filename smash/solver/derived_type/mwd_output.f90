@@ -22,91 +22,91 @@
 
 module mwd_output
 
-   use md_constant !% only: sp
-   use mwd_setup  !% only: SetupDT
-   use mwd_mesh   !%only: MeshDT
-   use mwd_states !%only: StatesDT, StatesDT_initialise
+    use md_constant !% only: sp
+    use mwd_setup  !% only: SetupDT
+    use mwd_mesh   !%only: MeshDT
+    use mwd_states !%only: StatesDT, StatesDT_initialise
 
-   implicit none
+    implicit none
 
-   type :: OutputDT
+    type :: OutputDT
 
-      !% Notes
-      !% -----
-      !% OutputDT Derived Type.
+        !% Notes
+        !% -----
+        !% OutputDT Derived Type.
 
-      real(sp), dimension(:, :), allocatable :: qsim
-      real(sp), dimension(:, :, :), allocatable :: qsim_domain
-      real(sp), dimension(:, :), allocatable :: sparse_qsim_domain
+        real(sp), dimension(:, :), allocatable :: qsim
+        real(sp), dimension(:, :, :), allocatable :: qsim_domain
+        real(sp), dimension(:, :), allocatable :: sparse_qsim_domain
 
-      real(sp), dimension(:, :, :), allocatable :: net_prcp_domain
-      real(sp), dimension(:, :), allocatable   :: sparse_net_prcp_domain
+        real(sp), dimension(:, :, :), allocatable :: net_prcp_domain
+        real(sp), dimension(:, :), allocatable   :: sparse_net_prcp_domain
 
-      real(sp) :: cost
+        real(sp) :: cost
 
-      type(StatesDT) :: fstates
+        type(StatesDT) :: fstates
 
-   end type OutputDT
+    end type OutputDT
 
 contains
 
-   subroutine OutputDT_initialise(this, setup, mesh)
+    subroutine OutputDT_initialise(this, setup, mesh)
 
-      !% Notes
-      !% -----
-      !% OutputDT initialisation subroutine.
+        !% Notes
+        !% -----
+        !% OutputDT initialisation subroutine.
 
-      implicit none
+        implicit none
 
-      type(OutputDT), intent(inout) :: this
-      type(SetupDT), intent(inout) :: setup
-      type(MeshDT), intent(inout) :: mesh
+        type(OutputDT), intent(inout) :: this
+        type(SetupDT), intent(inout) :: setup
+        type(MeshDT), intent(inout) :: mesh
 
-      if (mesh%ng .gt. 0) then
+        if (mesh%ng .gt. 0) then
 
-         allocate (this%qsim(mesh%ng, setup%ntime_step))
-         this%qsim = -99._sp
+            allocate (this%qsim(mesh%ng, setup%ntime_step))
+            this%qsim = -99._sp
 
-      end if
+        end if
 
-      if (setup%save_qsim_domain) then
+        if (setup%save_qsim_domain) then
 
-         if (setup%sparse_storage) then
+            if (setup%sparse_storage) then
 
-            allocate (this%sparse_qsim_domain(mesh%nac, &
-            & setup%ntime_step))
-            this%sparse_qsim_domain = -99._sp
+                allocate (this%sparse_qsim_domain(mesh%nac, &
+                & setup%ntime_step))
+                this%sparse_qsim_domain = -99._sp
 
-         else
+            else
 
-            allocate (this%qsim_domain(mesh%nrow, mesh%ncol, &
-            & setup%ntime_step))
-            this%qsim_domain = -99._sp
+                allocate (this%qsim_domain(mesh%nrow, mesh%ncol, &
+                & setup%ntime_step))
+                this%qsim_domain = -99._sp
 
-         end if
+            end if
 
-      end if
+        end if
 
-      if (setup%save_net_prcp_domain) then
+        if (setup%save_net_prcp_domain) then
 
-         if (setup%sparse_storage) then
+            if (setup%sparse_storage) then
 
-            allocate (this%sparse_net_prcp_domain(mesh%nac, &
-            & setup%ntime_step))
-            this%sparse_net_prcp_domain = -99._sp
+                allocate (this%sparse_net_prcp_domain(mesh%nac, &
+                & setup%ntime_step))
+                this%sparse_net_prcp_domain = -99._sp
 
-         else
+            else
 
-            allocate (this%net_prcp_domain(mesh%nrow, mesh%ncol, &
-            & setup%ntime_step))
-            this%net_prcp_domain = -99._sp
+                allocate (this%net_prcp_domain(mesh%nrow, mesh%ncol, &
+                & setup%ntime_step))
+                this%net_prcp_domain = -99._sp
 
-         end if
+            end if
 
-      end if
+        end if
 
-      call StatesDT_initialise(this%fstates, mesh)
+        call StatesDT_initialise(this%fstates, mesh)
 
-   end subroutine OutputDT_initialise
+    end subroutine OutputDT_initialise
 
 end module mwd_output

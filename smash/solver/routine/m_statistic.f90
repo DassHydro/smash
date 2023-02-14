@@ -49,412 +49,412 @@
 
 module m_statistic
 
-   use md_constant, only: sp
-   use m_sort, only: quicksort
+    use md_constant, only: sp
+    use m_sort, only: quicksort
 
-   implicit none
+    implicit none
 
-   interface quantile
+    interface quantile
 
-      module procedure quantile0d_i
-      module procedure quantile0d_r
-      module procedure quantile1d_i
-      module procedure quantile1d_r
+        module procedure quantile0d_i
+        module procedure quantile0d_r
+        module procedure quantile1d_i
+        module procedure quantile1d_r
 
-   end interface quantile
+    end interface quantile
 
-   interface mean
+    interface mean
 
-      module procedure mean1d_i
-      module procedure mean1d_r
-      module procedure mean2d_i
-      module procedure mean2d_r
+        module procedure mean1d_i
+        module procedure mean1d_r
+        module procedure mean2d_i
+        module procedure mean2d_r
 
-   end interface mean
+    end interface mean
 
-   interface variance
+    interface variance
 
-      module procedure variance1d_i
-      module procedure variance1d_r
-      module procedure variance2d_i
-      module procedure variance2d_r
+        module procedure variance1d_i
+        module procedure variance1d_r
+        module procedure variance2d_i
+        module procedure variance2d_r
 
-   end interface
+    end interface
 
-   interface std
+    interface std
 
-      module procedure std1d_i
-      module procedure std1d_r
-      module procedure std2d_i
-      module procedure std2d_r
+        module procedure std1d_i
+        module procedure std1d_r
+        module procedure std2d_i
+        module procedure std2d_r
 
-   end interface
+    end interface
 
 contains
 
-   subroutine quantile0d_i(a, q, res)
+    subroutine quantile0d_i(a, q, res)
 
-      !% Notes
-      !% -----
-      !%
-      !% Quantile subroutine
-      !%
-      !% Given an integer array of dim(1), a single precision quantile value,
-      !% it returns the value associated to the quantile value.
-      !% Linear interpolation is applied.
-      !% 0: gives array(0)
-      !% 1: gives array(size(array))
+        !% Notes
+        !% -----
+        !%
+        !% Quantile subroutine
+        !%
+        !% Given an integer array of dim(1), a single precision quantile value,
+        !% it returns the value associated to the quantile value.
+        !% Linear interpolation is applied.
+        !% 0: gives array(0)
+        !% 1: gives array(size(array))
 
-      implicit none
+        implicit none
 
-      integer, dimension(:), intent(in) :: a
-      real(sp), intent(in) :: q
-      real(sp), intent(inout) :: res
+        integer, dimension(:), intent(in) :: a
+        real(sp), intent(in) :: q
+        real(sp), intent(inout) :: res
 
-      integer, dimension(size(a)) :: b
-      integer :: n, qt
-      real(sp) :: div, r
+        integer, dimension(size(a)) :: b
+        integer :: n, qt
+        real(sp) :: div, r
 
-      n = size(a)
-      b = a
+        n = size(a)
+        b = a
 
-      call quicksort(b)
+        call quicksort(b)
 
-      if (q .ge. 1._sp) then
+        if (q .ge. 1._sp) then
 
-         res = b(n)
+            res = b(n)
 
-      else
+        else
 
-         div = q*real(n - 1, kind=sp) + 1._sp
-         qt = floor(div)
-         r = mod(div, real(qt, kind=sp))
-
-         res = (1._sp - r)*b(qt) + r*b(qt + 1)
-
-      end if
-
-   end subroutine quantile0d_i
-
-   subroutine quantile0d_r(a, q, res)
-
-      !% Notes
-      !% -----
-      !%
-      !% Quantile subroutine
-      !%
-      !% Given a single precision array of dim(1), a single precision quantile value,
-      !% it returns a single precision value associated to the quantile value.
-      !% Linear interpolation is applied.
-      !% 0: gives array(0)
-      !% 1: gives array(size(array))
-
-      implicit none
-
-      real(sp), dimension(:), intent(in) :: a
-      real(sp), intent(in) :: q
-      real(sp), intent(inout) :: res
-
-      real(sp), dimension(size(a)) :: b
-      integer :: n, qt
-      real(sp) :: div, r
-
-      n = size(a)
-      b = a
-
-      call quicksort(b)
-
-      if (q .ge. 1._sp) then
-
-         res = b(n)
-
-      else
-
-         div = q*real(n - 1, kind=sp) + 1._sp
-         qt = floor(div)
-         r = mod(div, real(qt, kind=sp))
-
-         res = (1._sp - r)*b(qt) + r*b(qt + 1)
-
-      end if
-
-   end subroutine quantile0d_r
-
-   subroutine quantile1d_i(a, q, res)
-
-      !% Notes
-      !% -----
-      !%
-      !% Quantile subroutine
-      !%
-      !% Given an integer array of dim(1), a single precision quantile array of dim(1),
-      !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
-      !% Linear interpolation is applied.
-      !% 0: gives array(0)
-      !% 1: gives array(size(array))
-
-      implicit none
-
-      integer, dimension(:), intent(in) :: a
-      real(sp), dimension(:), intent(in) :: q
-      real(sp), dimension(size(q)), intent(inout) :: res
-
-      integer, dimension(size(a)) :: b
-      integer :: n, qt, i
-      real(sp) :: div, r
-
-      n = size(a)
-      b = a
-
-      call quicksort(b)
-
-      do i = 1, size(q)
-
-         if (q(i) .ge. 1._sp) then
-
-            res(i) = b(n)
-
-         else
-
-            div = q(i)*real(n - 1, kind=sp) + 1._sp
+            div = q*real(n - 1, kind=sp) + 1._sp
             qt = floor(div)
             r = mod(div, real(qt, kind=sp))
 
-            res(i) = (1._sp - r)*b(qt) + r*b(qt + 1)
+            res = (1._sp - r)*b(qt) + r*b(qt + 1)
 
-         end if
+        end if
 
-      end do
+    end subroutine quantile0d_i
 
-   end subroutine quantile1d_i
+    subroutine quantile0d_r(a, q, res)
 
-   subroutine quantile1d_r(a, q, res)
+        !% Notes
+        !% -----
+        !%
+        !% Quantile subroutine
+        !%
+        !% Given a single precision array of dim(1), a single precision quantile value,
+        !% it returns a single precision value associated to the quantile value.
+        !% Linear interpolation is applied.
+        !% 0: gives array(0)
+        !% 1: gives array(size(array))
 
-      !% Notes
-      !% -----
-      !%
-      !% Quantile subroutine
-      !%
-      !% Given a single precision array of dim(1), a single precision quantile array of dim(1),
-      !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
-      !% Linear interpolation is applied.
-      !% 0: gives array(0)
-      !% 1: gives array(size(array))
+        implicit none
 
-      implicit none
+        real(sp), dimension(:), intent(in) :: a
+        real(sp), intent(in) :: q
+        real(sp), intent(inout) :: res
 
-      real(sp), dimension(:), intent(in) :: a
-      real(sp), dimension(:), intent(in) :: q
-      real(sp), dimension(size(q)), intent(inout) :: res
+        real(sp), dimension(size(a)) :: b
+        integer :: n, qt
+        real(sp) :: div, r
 
-      real(sp), dimension(size(a)) :: b
-      integer :: n, qt, i
-      real(sp) :: div, r
+        n = size(a)
+        b = a
 
-      n = size(a)
-      b = a
+        call quicksort(b)
 
-      call quicksort(b)
+        if (q .ge. 1._sp) then
 
-      do i = 1, size(q)
+            res = b(n)
 
-         if (q(i) .ge. 1._sp) then
+        else
 
-            res(i) = b(n)
-
-         else
-
-            div = q(i)*real(n - 1, kind=sp) + 1._sp
+            div = q*real(n - 1, kind=sp) + 1._sp
             qt = floor(div)
             r = mod(div, real(qt, kind=sp))
 
-            res(i) = (1._sp - r)*b(qt) + r*b(qt + 1)
+            res = (1._sp - r)*b(qt) + r*b(qt + 1)
 
-         end if
+        end if
 
-      end do
+    end subroutine quantile0d_r
 
-   end subroutine quantile1d_r
+    subroutine quantile1d_i(a, q, res)
 
-!%      TODO comment
-   subroutine mean1d_i(a, res)
+        !% Notes
+        !% -----
+        !%
+        !% Quantile subroutine
+        !%
+        !% Given an integer array of dim(1), a single precision quantile array of dim(1),
+        !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+        !% Linear interpolation is applied.
+        !% 0: gives array(0)
+        !% 1: gives array(size(array))
 
-      implicit none
+        implicit none
 
-      integer, dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+        integer, dimension(:), intent(in) :: a
+        real(sp), dimension(:), intent(in) :: q
+        real(sp), dimension(size(q)), intent(inout) :: res
 
-      res = sum(a)/size(a)
+        integer, dimension(size(a)) :: b
+        integer :: n, qt, i
+        real(sp) :: div, r
 
-   end subroutine mean1d_i
+        n = size(a)
+        b = a
 
-!%      TODO comment
-   subroutine mean1d_r(a, res)
+        call quicksort(b)
 
-      implicit none
+        do i = 1, size(q)
 
-      real(sp), dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+            if (q(i) .ge. 1._sp) then
 
-      res = sum(a)/size(a)
+                res(i) = b(n)
 
-   end subroutine mean1d_r
+            else
 
-!%      TODO comment
-   subroutine mean2d_i(a, res)
+                div = q(i)*real(n - 1, kind=sp) + 1._sp
+                qt = floor(div)
+                r = mod(div, real(qt, kind=sp))
 
-      implicit none
+                res(i) = (1._sp - r)*b(qt) + r*b(qt + 1)
 
-      integer, dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
+            end if
 
-      res = sum(a)/size(a)
+        end do
 
-   end subroutine mean2d_i
+    end subroutine quantile1d_i
 
-!%      TODO comment
-   subroutine mean2d_r(a, res)
+    subroutine quantile1d_r(a, q, res)
 
-      implicit none
+        !% Notes
+        !% -----
+        !%
+        !% Quantile subroutine
+        !%
+        !% Given a single precision array of dim(1), a single precision quantile array of dim(1),
+        !% it returns a single precision array of dim(1) and size(quantile) associated to the quantile value.
+        !% Linear interpolation is applied.
+        !% 0: gives array(0)
+        !% 1: gives array(size(array))
 
-      real(sp), dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
+        implicit none
 
-      res = sum(a)/size(a)
+        real(sp), dimension(:), intent(in) :: a
+        real(sp), dimension(:), intent(in) :: q
+        real(sp), dimension(size(q)), intent(inout) :: res
 
-   end subroutine mean2d_r
+        real(sp), dimension(size(a)) :: b
+        integer :: n, qt, i
+        real(sp) :: div, r
 
-!%      TODO comment
-   subroutine variance1d_i(a, res)
+        n = size(a)
+        b = a
 
-      implicit none
+        call quicksort(b)
 
-      integer, dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+        do i = 1, size(q)
 
-      real(sp) :: sum_a, sum_a2
-      integer :: n
+            if (q(i) .ge. 1._sp) then
 
-      sum_a = sum(a)
-      sum_a2 = sum(a*a)
-      n = size(a)
+                res(i) = b(n)
 
-      res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
+            else
 
-   end subroutine variance1d_i
+                div = q(i)*real(n - 1, kind=sp) + 1._sp
+                qt = floor(div)
+                r = mod(div, real(qt, kind=sp))
 
-!%      TODO comment
-   subroutine variance1d_r(a, res)
+                res(i) = (1._sp - r)*b(qt) + r*b(qt + 1)
 
-      implicit none
+            end if
 
-      real(sp), dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+        end do
 
-      real(sp) :: sum_a, sum_a2
-      integer :: n
-
-      sum_a = sum(a)
-      sum_a2 = sum(a*a)
-      n = size(a)
-
-      res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
-
-   end subroutine variance1d_r
-
-!%      TODO comment
-   subroutine variance2d_i(a, res)
-
-      implicit none
-
-      integer, dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
-
-      real(sp) :: sum_a, sum_a2
-      integer :: n
-
-      sum_a = sum(a)
-      sum_a2 = sum(a*a)
-      n = size(a)
-
-      res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
-
-   end subroutine variance2d_i
+    end subroutine quantile1d_r
 
 !%      TODO comment
-   subroutine variance2d_r(a, res)
+    subroutine mean1d_i(a, res)
 
-      implicit none
+        implicit none
 
-      real(sp), dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
+        integer, dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
 
-      real(sp) :: sum_a, sum_a2
-      integer :: n
+        res = sum(a)/size(a)
 
-      sum_a = sum(a)
-      sum_a2 = sum(a*a)
-      n = size(a)
-
-      res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
-
-   end subroutine variance2d_r
+    end subroutine mean1d_i
 
 !%      TODO comment
-   subroutine std1d_i(a, res)
+    subroutine mean1d_r(a, res)
 
-      implicit none
+        implicit none
 
-      integer, dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+        real(sp), dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
 
-      call variance1d_i(a, res)
+        res = sum(a)/size(a)
 
-      res = sqrt(res)
-
-   end subroutine std1d_i
+    end subroutine mean1d_r
 
 !%      TODO comment
-   subroutine std1d_r(a, res)
+    subroutine mean2d_i(a, res)
 
-      implicit none
+        implicit none
 
-      real(sp), dimension(:), intent(in) :: a
-      real(sp), intent(inout) :: res
+        integer, dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
 
-      call variance1d_r(a, res)
+        res = sum(a)/size(a)
 
-      res = sqrt(res)
-
-   end subroutine std1d_r
+    end subroutine mean2d_i
 
 !%      TODO comment
-   subroutine std2d_i(a, res)
+    subroutine mean2d_r(a, res)
 
-      implicit none
+        implicit none
 
-      integer, dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
+        real(sp), dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
 
-      call variance2d_i(a, res)
+        res = sum(a)/size(a)
 
-      res = sqrt(res)
-
-   end subroutine std2d_i
+    end subroutine mean2d_r
 
 !%      TODO comment
-   subroutine std2d_r(a, res)
+    subroutine variance1d_i(a, res)
 
-      implicit none
+        implicit none
 
-      real(sp), dimension(:, :), intent(in) :: a
-      real(sp), intent(inout) :: res
+        integer, dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
 
-      call variance2d_r(a, res)
+        real(sp) :: sum_a, sum_a2
+        integer :: n
 
-      res = sqrt(res)
+        sum_a = sum(a)
+        sum_a2 = sum(a*a)
+        n = size(a)
 
-   end subroutine std2d_r
+        res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
+
+    end subroutine variance1d_i
+
+!%      TODO comment
+    subroutine variance1d_r(a, res)
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        real(sp) :: sum_a, sum_a2
+        integer :: n
+
+        sum_a = sum(a)
+        sum_a2 = sum(a*a)
+        n = size(a)
+
+        res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
+
+    end subroutine variance1d_r
+
+!%      TODO comment
+    subroutine variance2d_i(a, res)
+
+        implicit none
+
+        integer, dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        real(sp) :: sum_a, sum_a2
+        integer :: n
+
+        sum_a = sum(a)
+        sum_a2 = sum(a*a)
+        n = size(a)
+
+        res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
+
+    end subroutine variance2d_i
+
+!%      TODO comment
+    subroutine variance2d_r(a, res)
+
+        implicit none
+
+        real(sp), dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        real(sp) :: sum_a, sum_a2
+        integer :: n
+
+        sum_a = sum(a)
+        sum_a2 = sum(a*a)
+        n = size(a)
+
+        res = (sum_a2 - (sum_a*sum_a)/n)/(n - 1)
+
+    end subroutine variance2d_r
+
+!%      TODO comment
+    subroutine std1d_i(a, res)
+
+        implicit none
+
+        integer, dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        call variance1d_i(a, res)
+
+        res = sqrt(res)
+
+    end subroutine std1d_i
+
+!%      TODO comment
+    subroutine std1d_r(a, res)
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        call variance1d_r(a, res)
+
+        res = sqrt(res)
+
+    end subroutine std1d_r
+
+!%      TODO comment
+    subroutine std2d_i(a, res)
+
+        implicit none
+
+        integer, dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        call variance2d_i(a, res)
+
+        res = sqrt(res)
+
+    end subroutine std2d_i
+
+!%      TODO comment
+    subroutine std2d_r(a, res)
+
+        implicit none
+
+        real(sp), dimension(:, :), intent(in) :: a
+        real(sp), intent(inout) :: res
+
+        call variance2d_r(a, res)
+
+        res = sqrt(res)
+
+    end subroutine std2d_r
 
 end module m_statistic
 

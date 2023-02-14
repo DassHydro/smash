@@ -37,96 +37,96 @@
 
 module mwd_mesh
 
-   use md_constant !% only: sp
-   use mwd_setup !% only: SetupDT
+    use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
 
-   implicit none
+    implicit none
 
-   type :: MeshDT
+    type :: MeshDT
 
-      !% Notes
-      !% -----
-      !% MeshDT Derived Type.
+        !% Notes
+        !% -----
+        !% MeshDT Derived Type.
 
-      real(sp) :: dx
-      integer :: nrow
-      integer :: ncol
-      integer :: ng
-      integer :: nac
-      integer :: xmin
-      integer :: ymax
+        real(sp) :: dx
+        integer :: nrow
+        integer :: ncol
+        integer :: ng
+        integer :: nac
+        integer :: xmin
+        integer :: ymax
 
-      integer, dimension(:, :), allocatable :: flwdir
-      integer, dimension(:, :), allocatable :: flwacc
-      integer, dimension(:, :), allocatable :: path !>f90w-index
-      integer, dimension(:, :), allocatable :: active_cell
+        integer, dimension(:, :), allocatable :: flwdir
+        integer, dimension(:, :), allocatable :: flwacc
+        integer, dimension(:, :), allocatable :: path !>f90w-index
+        integer, dimension(:, :), allocatable :: active_cell
 
-      real(sp), dimension(:, :), allocatable :: flwdst
-      integer, dimension(:, :), allocatable :: gauge_pos !>f90w-index
-      character(20), dimension(:), allocatable :: code !>f90w-char_array
-      real(sp), dimension(:), allocatable :: area
+        real(sp), dimension(:, :), allocatable :: flwdst
+        integer, dimension(:, :), allocatable :: gauge_pos !>f90w-index
+        character(20), dimension(:), allocatable :: code !>f90w-char_array
+        real(sp), dimension(:), allocatable :: area
 
-      integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse !>f90w-private
-      integer, dimension(:, :), allocatable :: local_active_cell !>f90w-private
+        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse !>f90w-private
+        integer, dimension(:, :), allocatable :: local_active_cell !>f90w-private
 
-   end type MeshDT
+    end type MeshDT
 
 contains
 
-   subroutine MeshDT_initialise(this, setup, nrow, ncol, ng)
+    subroutine MeshDT_initialise(this, setup, nrow, ncol, ng)
 
-      !% Notes
-      !% -----
-      !% MeshDT initialisation subroutine.
+        !% Notes
+        !% -----
+        !% MeshDT initialisation subroutine.
 
-      implicit none
+        implicit none
 
-      type(MeshDT), intent(inout) :: this
-      type(SetupDT), intent(inout) :: setup
-      integer, intent(in) :: nrow, ncol, ng
+        type(MeshDT), intent(inout) :: this
+        type(SetupDT), intent(inout) :: setup
+        integer, intent(in) :: nrow, ncol, ng
 
-      this%nrow = nrow
-      this%ncol = ncol
-      this%ng = ng
+        this%nrow = nrow
+        this%ncol = ncol
+        this%ng = ng
 
-      this%xmin = 0
-      this%ymax = 0
+        this%xmin = 0
+        this%ymax = 0
 
-      allocate (this%flwdir(this%nrow, this%ncol))
-      this%flwdir = -99
+        allocate (this%flwdir(this%nrow, this%ncol))
+        this%flwdir = -99
 
-      allocate (this%flwacc(this%nrow, this%ncol))
-      this%flwacc = -99
+        allocate (this%flwacc(this%nrow, this%ncol))
+        this%flwacc = -99
 
-      allocate (this%path(2, this%nrow*this%ncol))
-      this%path = -99
+        allocate (this%path(2, this%nrow*this%ncol))
+        this%path = -99
 
-      allocate (this%active_cell(this%nrow, this%ncol))
-      this%active_cell = 1
+        allocate (this%active_cell(this%nrow, this%ncol))
+        this%active_cell = 1
 
-      if (this%ng .gt. 0) then
+        if (this%ng .gt. 0) then
 
-         allocate (this%flwdst(this%nrow, this%ncol))
-         this%flwdst = -99._sp
+            allocate (this%flwdst(this%nrow, this%ncol))
+            this%flwdst = -99._sp
 
-         allocate (this%gauge_pos(this%ng, 2))
+            allocate (this%gauge_pos(this%ng, 2))
 
-         allocate (this%code(this%ng))
-         this%code = "..."
+            allocate (this%code(this%ng))
+            this%code = "..."
 
-         allocate (this%area(this%ng))
+            allocate (this%area(this%ng))
 
-      end if
+        end if
 
-      if (setup%sparse_storage) then
+        if (setup%sparse_storage) then
 
-         allocate (this%rowcol_to_ind_sparse(this%nrow, this%ncol))
+            allocate (this%rowcol_to_ind_sparse(this%nrow, this%ncol))
 
-      end if
+        end if
 
-      allocate (this%local_active_cell(this%nrow, this%ncol))
-      this%local_active_cell = 1
+        allocate (this%local_active_cell(this%nrow, this%ncol))
+        this%local_active_cell = 1
 
-   end subroutine MeshDT_initialise
+    end subroutine MeshDT_initialise
 
 end module mwd_mesh

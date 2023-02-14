@@ -11,923 +11,923 @@
 
 module md_forward_structure
 
-   use md_constant !% only: sp
-   use mwd_setup !% only: SetupDT
-   use mwd_mesh !% only: MeshDT
-   use mwd_input_data !% only: Input_DataDT
-   use mwd_parameters !% only: ParametersDT
-   use mwd_states !% only: StatesDT
-   use mwd_output !% only: OutputDT
-   use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
-   !% & gr_transfer
-   use md_vic_operator !% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
-   use md_routing_operator !% only: upstream_discharge, linear_routing
+    use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !% only: ParametersDT
+    use mwd_states !% only: StatesDT
+    use mwd_output !% only: OutputDT
+    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
+    !% & gr_transfer
+    use md_vic_operator !% only: vic_infiltration, vic_vertical_transfer, vic_interflow, vic_baseflow
+    use md_routing_operator !% only: upstream_discharge, linear_routing
 
-   implicit none
+    implicit none
 
 contains
 
-   subroutine gr_a_forward(setup, mesh, input_data, parameters, states, output)
+    subroutine gr_a_forward(setup, mesh, input_data, parameters, states, output)
 
-      implicit none
+        implicit none
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(ParametersDT), intent(in) :: parameters
-      type(StatesDT), intent(inout) :: states
-      type(OutputDT), intent(inout) :: output
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(inout) :: states
+        type(OutputDT), intent(inout) :: output
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-      & qr, qd, qt, qup, qrout
-      integer :: t, i, row, col, k, g
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
+        & qr, qd, qt, qup, qrout
+        integer :: t, i, row, col, k, g
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
+
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                qd = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
+
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
+
+                if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+
+                    !% ======================================================================================================= %!
+                    !%   Global/Local active cell
+                    !% ======================================================================================================= %!
+
+                    if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+
+                        if (setup%sparse_storage) then
+
+                            prcp = input_data%sparse_prcp(k, t)
+                            pet = input_data%sparse_pet(k, t)
+
+                        else
+
+                            prcp = input_data%prcp(row, col, t)
+                            pet = input_data%pet(row, col, t)
+
+                        end if
+
+                        if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+
+                            !% =============================================================================================== %!
+                            !%   Interception module
+                            !% =============================================================================================== %!
+
+                            ei = min(pet, prcp)
+
+                            pn = max(0._sp, prcp - ei)
+
+                            en = pet - ei
+
+                            !% =============================================================================================== %!
+                            !%   Production module
+                            !% =============================================================================================== %!
+
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
+                            & states%hp(row, col), pr, perc)
+
+                            !% =============================================================================================== %!
+                            !%   Exchange module
+                            !% =============================================================================================== %!
+
+                            call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
+
+                        end if !% [ END IF PRCP GAP ]
+
+                        !% =================================================================================================== %!
+                        !%   Transfer module
+                        !% =================================================================================================== %!
+
+                        prr = 0.9_sp*(pr + perc) + l
+                        prd = 0.1_sp*(pr + perc)
+
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+
+                        qd = max(0._sp, prd + l)
+
+                        qt = (qr + qd)
+
+                        !% =================================================================================================== %!
+                        !%   Routing module
+                        !% =================================================================================================== %!
+
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
+
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+
+                        q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
+                                     & *mesh%dx*mesh%dx*0.001_sp/setup%dt
+
+                        !% =================================================================================================== %!
+                        !%   Store simulated net rainfall on domain (optional)
+                        !%   The net rainfall over a surface is a fictitious quantity that corresponds to
+                        !%   the part of the rainfall water depth that actually causes runoff.
+                        !% =================================================================================================== %!
+
+                        if (setup%save_net_prcp_domain) then
+
+                            if (setup%sparse_storage) then
+
+                                output%sparse_net_prcp_domain(k, t) = qt
+
+                            else
+
+                                output%net_prcp_domain(row, col, t) = qt
+
+                            end if
+
+                        end if
+
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
+
+                        if (setup%save_qsim_domain) then
+
+                            if (setup%sparse_storage) then
+
+                                output%sparse_qsim_domain(k, t) = q(row, col)
+
+                            else
+
+                                output%qsim_domain(row, col, t) = q(row, col)
+
+                            end if
+
+                        end if
+
+                    end if !% [ END IF ACTIVE CELL ]
+
+                end if !% [ END IF PATH ]
+
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            qd = 0._sp
-            qup = 0._sp
-            qrout = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+            end do
 
-               row = mesh%path(1, i)
-               col = mesh%path(2, i)
-               if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+        end do !% [ END DO TIME ]
 
-               !% ======================================================================================================= %!
-               !%   Global/Local active cell
-               !% ======================================================================================================= %!
+    end subroutine gr_a_forward
 
-               if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+    subroutine gr_b_forward(setup, mesh, input_data, parameters, states, output)
 
-                  if (setup%sparse_storage) then
+        implicit none
 
-                     prcp = input_data%sparse_prcp(k, t)
-                     pet = input_data%sparse_pet(k, t)
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-                  else
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(inout) :: states
+        type(OutputDT), intent(inout) :: output
 
-                     prcp = input_data%prcp(row, col, t)
-                     pet = input_data%pet(row, col, t)
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
+        & qr, qd, qt, qup, qrout
+        integer :: t, i, row, col, k, g
 
-                  end if
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-                  if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-                     !% =============================================================================================== %!
-                     !%   Interception module
-                     !% =============================================================================================== %!
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-                     ei = min(pet, prcp)
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-                     pn = max(0._sp, prcp - ei)
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                qd = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
 
-                     en = pet - ei
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-                     !% =============================================================================================== %!
-                     !%   Production module
-                     !% =============================================================================================== %!
+                if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
 
-                     call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
-                     & states%hp(row, col), pr, perc)
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-                     !% =============================================================================================== %!
-                     !%   Exchange module
-                     !% =============================================================================================== %!
+                    !% ======================================================================================================= %!
+                    !%   Global/Local active cell
+                    !% ======================================================================================================= %!
 
-                     call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
+                    if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
 
-                  end if !% [ END IF PRCP GAP ]
+                        if (setup%sparse_storage) then
 
-                  !% =================================================================================================== %!
-                  !%   Transfer module
-                  !% =================================================================================================== %!
+                            prcp = input_data%sparse_prcp(k, t)
+                            pet = input_data%sparse_pet(k, t)
 
-                  prr = 0.9_sp*(pr + perc) + l
-                  prd = 0.1_sp*(pr + perc)
+                        else
 
-                  call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                            prcp = input_data%prcp(row, col, t)
+                            pet = input_data%pet(row, col, t)
 
-                  qd = max(0._sp, prd + l)
+                        end if
 
-                  qt = (qr + qd)
+                        if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-                  !% =================================================================================================== %!
-                  !%   Routing module
-                  !% =================================================================================================== %!
+                            !% =============================================================================================== %!
+                            !%   Interception module
+                            !% =============================================================================================== %!
 
-                  call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                  &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
+                            call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
 
-                  call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            en = pet - ei
 
-                  q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
-                               & *mesh%dx*mesh%dx*0.001_sp/setup%dt
+                            !% =============================================================================================== %!
+                            !%   Production module
+                            !% =============================================================================================== %!
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated net rainfall on domain (optional)
-                  !%   The net rainfall over a surface is a fictitious quantity that corresponds to
-                  !%   the part of the rainfall water depth that actually causes runoff.
-                  !% =================================================================================================== %!
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
+                            & states%hp(row, col), pr, perc)
 
-                  if (setup%save_net_prcp_domain) then
+                            !% =============================================================================================== %!
+                            !%   Exchange module
+                            !% =============================================================================================== %!
 
-                     if (setup%sparse_storage) then
+                            call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
 
-                        output%sparse_net_prcp_domain(k, t) = qt
+                        end if !% [ END IF PRCP GAP ]
 
-                     else
+                        !% =================================================================================================== %!
+                        !%   Transfer module
+                        !% =================================================================================================== %!
 
-                        output%net_prcp_domain(row, col, t) = qt
+                        prr = 0.9_sp*(pr + perc) + l
+                        prd = 0.1_sp*(pr + perc)
 
-                     end if
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
 
-                  end if
+                        qd = max(0._sp, prd + l)
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated discharge on domain (optional)
-                  !% =================================================================================================== %!
+                        qt = (qr + qd)
 
-                  if (setup%save_qsim_domain) then
+                        !% =================================================================================================== %!
+                        !%   Routing module
+                        !% =================================================================================================== %!
 
-                     if (setup%sparse_storage) then
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
 
-                        output%sparse_qsim_domain(k, t) = q(row, col)
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                     else
+                        q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
+                                     & *mesh%dx*mesh%dx*0.001_sp/setup%dt
 
-                        output%qsim_domain(row, col, t) = q(row, col)
+                        !% =================================================================================================== %!
+                        !%   Store simulated net rainfall on domain (optional)
+                        !%   The net rainfall over a surface is a fictitious quantity that corresponds to
+                        !%   the part of the rainfall water depth that actually causes runoff.
+                        !% =================================================================================================== %!
 
-                     end if
+                        if (setup%save_net_prcp_domain) then
 
-                  end if
+                            if (setup%sparse_storage) then
 
-               end if !% [ END IF ACTIVE CELL ]
+                                output%sparse_net_prcp_domain(k, t) = qt
 
-            end if !% [ END IF PATH ]
+                            else
 
-         end do !% [ END DO SPACE ]
+                                output%net_prcp_domain(row, col, t) = qt
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                            end if
 
-         do g = 1, mesh%ng
+                        end if
 
-            output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
 
-         end do
+                        if (setup%save_qsim_domain) then
 
-      end do !% [ END DO TIME ]
+                            if (setup%sparse_storage) then
 
-   end subroutine gr_a_forward
+                                output%sparse_qsim_domain(k, t) = q(row, col)
 
-   subroutine gr_b_forward(setup, mesh, input_data, parameters, states, output)
+                            else
 
-      implicit none
+                                output%qsim_domain(row, col, t) = q(row, col)
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                            end if
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(ParametersDT), intent(in) :: parameters
-      type(StatesDT), intent(inout) :: states
-      type(OutputDT), intent(inout) :: output
+                        end if
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-      & qr, qd, qt, qup, qrout
-      integer :: t, i, row, col, k, g
+                    end if !% [ END IF ACTIVE CELL ]
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+                end if !% [ END IF PATH ]
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
-
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            qd = 0._sp
-            qup = 0._sp
-            qrout = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+            end do
 
-               row = mesh%path(1, i)
-               col = mesh%path(2, i)
-               if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+        end do !% [ END DO TIME ]
 
-               !% ======================================================================================================= %!
-               !%   Global/Local active cell
-               !% ======================================================================================================= %!
+    end subroutine gr_b_forward
 
-               if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+    subroutine gr_c_forward(setup, mesh, input_data, parameters, states, output)
 
-                  if (setup%sparse_storage) then
+        implicit none
 
-                     prcp = input_data%sparse_prcp(k, t)
-                     pet = input_data%sparse_pet(k, t)
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-                  else
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(inout) :: states
+        type(OutputDT), intent(inout) :: output
 
-                     prcp = input_data%prcp(row, col, t)
-                     pet = input_data%pet(row, col, t)
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
+        & qr, ql, qd, qt, qup, qrout
+        integer :: t, i, row, col, k, g
 
-                  end if
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-                  if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-                     !% =============================================================================================== %!
-                     !%   Interception module
-                     !% =============================================================================================== %!
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-                     call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-                     en = pet - ei
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prl = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                ql = 0._sp
+                qd = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
 
-                     !% =============================================================================================== %!
-                     !%   Production module
-                     !% =============================================================================================== %!
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-                     call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
-                     & states%hp(row, col), pr, perc)
+                if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
 
-                     !% =============================================================================================== %!
-                     !%   Exchange module
-                     !% =============================================================================================== %!
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-                     call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
+                    !% ======================================================================================================= %!
+                    !%   Global/Local active cell
+                    !% ======================================================================================================= %!
 
-                  end if !% [ END IF PRCP GAP ]
+                    if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
 
-                  !% =================================================================================================== %!
-                  !%   Transfer module
-                  !% =================================================================================================== %!
+                        if (setup%sparse_storage) then
 
-                  prr = 0.9_sp*(pr + perc) + l
-                  prd = 0.1_sp*(pr + perc)
+                            prcp = input_data%sparse_prcp(k, t)
+                            pet = input_data%sparse_pet(k, t)
 
-                  call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        else
 
-                  qd = max(0._sp, prd + l)
+                            prcp = input_data%prcp(row, col, t)
+                            pet = input_data%pet(row, col, t)
 
-                  qt = (qr + qd)
+                        end if
 
-                  !% =================================================================================================== %!
-                  !%   Routing module
-                  !% =================================================================================================== %!
+                        if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-                  call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                  &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
+                            !% =============================================================================================== %!
+                            !%   Interception module
+                            !% =============================================================================================== %!
 
-                  call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
 
-                  q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
-                               & *mesh%dx*mesh%dx*0.001_sp/setup%dt
+                            en = pet - ei
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated net rainfall on domain (optional)
-                  !%   The net rainfall over a surface is a fictitious quantity that corresponds to
-                  !%   the part of the rainfall water depth that actually causes runoff.
-                  !% =================================================================================================== %!
+                            !% =============================================================================================== %!
+                            !%   Production module
+                            !% =============================================================================================== %!
 
-                  if (setup%save_net_prcp_domain) then
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
+                            & states%hp(row, col), pr, perc)
 
-                     if (setup%sparse_storage) then
+                            !% =============================================================================================== %!
+                            !%   Exchange module
+                            !% =============================================================================================== %!
 
-                        output%sparse_net_prcp_domain(k, t) = qt
+                            call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
 
-                     else
+                        end if !% [ END IF PRCP GAP ]
 
-                        output%net_prcp_domain(row, col, t) = qt
+                        !% =================================================================================================== %!
+                        !%   Transfer module
+                        !% =================================================================================================== %!
 
-                     end if
+                        prr = 0.9_sp*0.6_sp*(pr + perc) + l
+                        prl = 0.9_sp*0.4_sp*(pr + perc)
+                        prd = 0.1_sp*(pr + perc)
 
-                  end if
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated discharge on domain (optional)
-                  !% =================================================================================================== %!
+                        call gr_transfer(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
 
-                  if (setup%save_qsim_domain) then
+                        qd = max(0._sp, prd + l)
 
-                     if (setup%sparse_storage) then
+                        qt = (qr + ql + qd)
 
-                        output%sparse_qsim_domain(k, t) = q(row, col)
+                        !% =================================================================================================== %!
+                        !%   Routing module
+                        !% =================================================================================================== %!
 
-                     else
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
 
-                        output%qsim_domain(row, col, t) = q(row, col)
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                     end if
+                        q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
+                                     & *mesh%dx*mesh%dx*0.001_sp/setup%dt
 
-                  end if
+                        !% =================================================================================================== %!
+                        !%   Store simulated net rainfall on domain (optional)
+                        !%   The net rainfall over a surface is a fictitious quantity that corresponds to
+                        !%   the part of the rainfall water depth that actually causes runoff.
+                        !% =================================================================================================== %!
 
-               end if !% [ END IF ACTIVE CELL ]
+                        if (setup%save_net_prcp_domain) then
 
-            end if !% [ END IF PATH ]
+                            if (setup%sparse_storage) then
 
-         end do !% [ END DO SPACE ]
+                                output%sparse_net_prcp_domain(k, t) = qt
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                            else
 
-         do g = 1, mesh%ng
+                                output%net_prcp_domain(row, col, t) = qt
 
-            output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                            end if
 
-         end do
+                        end if
 
-      end do !% [ END DO TIME ]
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
 
-   end subroutine gr_b_forward
+                        if (setup%save_qsim_domain) then
 
-   subroutine gr_c_forward(setup, mesh, input_data, parameters, states, output)
+                            if (setup%sparse_storage) then
 
-      implicit none
+                                output%sparse_qsim_domain(k, t) = q(row, col)
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                            else
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(ParametersDT), intent(in) :: parameters
-      type(StatesDT), intent(inout) :: states
-      type(OutputDT), intent(inout) :: output
+                                output%qsim_domain(row, col, t) = q(row, col)
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
-      & qr, ql, qd, qt, qup, qrout
-      integer :: t, i, row, col, k, g
+                            end if
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+                        end if
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
+                    end if !% [ END IF ACTIVE CELL ]
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+                end if !% [ END IF PATH ]
+
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prl = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            ql = 0._sp
-            qd = 0._sp
-            qup = 0._sp
-            qrout = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+            end do
 
-               row = mesh%path(1, i)
-               col = mesh%path(2, i)
-               if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+        end do !% [ END DO TIME ]
 
-               !% ======================================================================================================= %!
-               !%   Global/Local active cell
-               !% ======================================================================================================= %!
+    end subroutine gr_c_forward
 
-               if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+    subroutine gr_d_forward(setup, mesh, input_data, parameters, states, output)
 
-                  if (setup%sparse_storage) then
+        implicit none
 
-                     prcp = input_data%sparse_prcp(k, t)
-                     pet = input_data%sparse_pet(k, t)
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-                  else
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(inout) :: states
+        type(OutputDT), intent(inout) :: output
 
-                     prcp = input_data%prcp(row, col, t)
-                     pet = input_data%pet(row, col, t)
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
+        integer :: t, i, row, col, k, g
 
-                  end if
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-                  if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-                     !% =============================================================================================== %!
-                     !%   Interception module
-                     !% =============================================================================================== %!
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-                     call gr_interception(prcp, pet, parameters%ci(row, col), states%hi(row, col), pn, ei)
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-                     en = pet - ei
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                prr = 0._sp
+                qr = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
 
-                     !% =============================================================================================== %!
-                     !%   Production module
-                     !% =============================================================================================== %!
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-                     call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
-                     & states%hp(row, col), pr, perc)
+                if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
 
-                     !% =============================================================================================== %!
-                     !%   Exchange module
-                     !% =============================================================================================== %!
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-                     call gr_exchange(parameters%exc(row, col), states%hft(row, col), l)
+                    !% ======================================================================================================= %!
+                    !%   Global/Local active cell
+                    !% ======================================================================================================= %!
 
-                  end if !% [ END IF PRCP GAP ]
+                    if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
 
-                  !% =================================================================================================== %!
-                  !%   Transfer module
-                  !% =================================================================================================== %!
+                        if (setup%sparse_storage) then
 
-                  prr = 0.9_sp*0.6_sp*(pr + perc) + l
-                  prl = 0.9_sp*0.4_sp*(pr + perc)
-                  prd = 0.1_sp*(pr + perc)
+                            prcp = input_data%sparse_prcp(k, t)
+                            pet = input_data%sparse_pet(k, t)
 
-                  call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        else
 
-                  call gr_transfer(5._sp, prcp, prl, parameters%cst(row, col), states%hst(row, col), ql)
+                            prcp = input_data%prcp(row, col, t)
+                            pet = input_data%pet(row, col, t)
 
-                  qd = max(0._sp, prd + l)
+                        end if
 
-                  qt = (qr + ql + qd)
+                        if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-                  !% =================================================================================================== %!
-                  !%   Routing module
-                  !% =================================================================================================== %!
+                            !% =============================================================================================== %!
+                            !%   Interception module
+                            !% =============================================================================================== %!
 
-                  call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                  &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
+                            ei = min(pet, prcp)
 
-                  call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                            pn = max(0._sp, prcp - ei)
 
-                  q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
-                               & *mesh%dx*mesh%dx*0.001_sp/setup%dt
+                            en = pet - ei
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated net rainfall on domain (optional)
-                  !%   The net rainfall over a surface is a fictitious quantity that corresponds to
-                  !%   the part of the rainfall water depth that actually causes runoff.
-                  !% =================================================================================================== %!
+                            !% =============================================================================================== %!
+                            !%   Production module
+                            !% =============================================================================================== %!
 
-                  if (setup%save_net_prcp_domain) then
+                            call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
+                            & states%hp(row, col), pr, perc)
 
-                     if (setup%sparse_storage) then
+                        end if !% [ END IF PRCP GAP ]
 
-                        output%sparse_net_prcp_domain(k, t) = qt
+                        !% =================================================================================================== %!
+                        !%   Transfer module
+                        !% =================================================================================================== %!
 
-                     else
+                        prr = pr + perc
 
-                        output%net_prcp_domain(row, col, t) = qt
+                        call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
 
-                     end if
+                        qt = qr
 
-                  end if
+                        !% =================================================================================================== %!
+                        !%   Routing module
+                        !% =================================================================================================== %!
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated discharge on domain (optional)
-                  !% =================================================================================================== %!
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
 
-                  if (setup%save_qsim_domain) then
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                     if (setup%sparse_storage) then
+                        q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
+                                     & *mesh%dx*mesh%dx*0.001_sp/setup%dt
 
-                        output%sparse_qsim_domain(k, t) = q(row, col)
+                        !% =================================================================================================== %!
+                        !%   Store simulated net rainfall on domain (optional)
+                        !%   The net rainfall over a surface is a fictitious quantity that corresponds to
+                        !%   the part of the rainfall water depth that actually causes runoff.
+                        !% =================================================================================================== %!
 
-                     else
+                        if (setup%save_net_prcp_domain) then
 
-                        output%qsim_domain(row, col, t) = q(row, col)
+                            if (setup%sparse_storage) then
 
-                     end if
+                                output%sparse_net_prcp_domain(k, t) = qt
 
-                  end if
+                            else
 
-               end if !% [ END IF ACTIVE CELL ]
+                                output%net_prcp_domain(row, col, t) = qt
 
-            end if !% [ END IF PATH ]
+                            end if
 
-         end do !% [ END DO SPACE ]
+                        end if
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
 
-         do g = 1, mesh%ng
+                        if (setup%save_qsim_domain) then
 
-            output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                            if (setup%sparse_storage) then
 
-         end do
+                                output%sparse_qsim_domain(k, t) = q(row, col)
 
-      end do !% [ END DO TIME ]
+                            else
 
-   end subroutine gr_c_forward
+                                output%qsim_domain(row, col, t) = q(row, col)
 
-   subroutine gr_d_forward(setup, mesh, input_data, parameters, states, output)
+                            end if
 
-      implicit none
+                        end if
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                    end if !% [ END IF ACTIVE CELL ]
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(ParametersDT), intent(in) :: parameters
-      type(StatesDT), intent(inout) :: states
-      type(OutputDT), intent(inout) :: output
+                end if !% [ END IF PATH ]
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qt, qup, qrout
-      integer :: t, i, row, col, k, g
-
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
-
-      do t = 1, setup%ntime_step !% [ DO TIME ]
-
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            prr = 0._sp
-            qr = 0._sp
-            qup = 0._sp
-            qrout = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+            end do
 
-               row = mesh%path(1, i)
-               col = mesh%path(2, i)
-               if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+        end do !% [ END DO TIME ]
 
-               !% ======================================================================================================= %!
-               !%   Global/Local active cell
-               !% ======================================================================================================= %!
+    end subroutine gr_d_forward
 
-               if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
+    subroutine vic_a_forward(setup, mesh, input_data, parameters, states, output)
 
-                  if (setup%sparse_storage) then
+        implicit none
 
-                     prcp = input_data%sparse_prcp(k, t)
-                     pet = input_data%sparse_pet(k, t)
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-                  else
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(inout) :: states
+        type(OutputDT), intent(inout) :: output
 
-                     prcp = input_data%prcp(row, col, t)
-                     pet = input_data%pet(row, col, t)
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
 
-                  end if
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q
+        real(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
+        integer :: t, i, row, col, k, g
 
-                  if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-                     !% =============================================================================================== %!
-                     !%   Interception module
-                     !% =============================================================================================== %!
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-                     ei = min(pet, prcp)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-                     pn = max(0._sp, prcp - ei)
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-                     en = pet - ei
+                runoff = 0._sp
+                qi = 0._sp
+                qb = 0._sp
+                qt = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
 
-                     !% =============================================================================================== %!
-                     !%   Production module
-                     !% =============================================================================================== %!
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-                     call gr_production(pn, en, parameters%cp(row, col), 1000._sp, &
-                     & states%hp(row, col), pr, perc)
+                if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
 
-                  end if !% [ END IF PRCP GAP ]
+                    row = mesh%path(1, i)
+                    col = mesh%path(2, i)
+                    if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-                  !% =================================================================================================== %!
-                  !%   Transfer module
-                  !% =================================================================================================== %!
+                    !% ======================================================================================================= %!
+                    !%   Global/Local active cell
+                    !% ======================================================================================================= %!
 
-                  prr = pr + perc
+                    if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
 
-                  call gr_transfer(5._sp, prcp, prr, parameters%cft(row, col), states%hft(row, col), qr)
+                        if (setup%sparse_storage) then
 
-                  qt = qr
+                            prcp = input_data%sparse_prcp(k, t)
+                            pet = input_data%sparse_pet(k, t)
 
-                  !% =================================================================================================== %!
-                  !%   Routing module
-                  !% =================================================================================================== %!
+                        else
 
-                  call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                  &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
+                            prcp = input_data%prcp(row, col, t)
+                            pet = input_data%pet(row, col, t)
 
-                  call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
+                        end if
 
-                  q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
-                               & *mesh%dx*mesh%dx*0.001_sp/setup%dt
+                        if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated net rainfall on domain (optional)
-                  !%   The net rainfall over a surface is a fictitious quantity that corresponds to
-                  !%   the part of the rainfall water depth that actually causes runoff.
-                  !% =================================================================================================== %!
+                            !% =============================================================================================== %!
+                            !%   Infiltration module
+                            !% =============================================================================================== %!
 
-                  if (setup%save_net_prcp_domain) then
+                            call vic_infiltration(prcp, parameters%cusl1(row, col), parameters%cusl2(row, col), &
+                            & parameters%b(row, col), states%husl1(row, col), states%husl2(row, col), &
+                            & runoff)
 
-                     if (setup%sparse_storage) then
+                            !% =============================================================================================== %!
+                            !%   Vertical transfer module
+                            !% =============================================================================================== %!
 
-                        output%sparse_net_prcp_domain(k, t) = qt
+                            call vic_vertical_transfer(pet, parameters%cusl1(row, col), parameters%cusl2(row, col), &
+                            & parameters%clsl(row, col), parameters%ks(row, col), states%husl1(row, col), &
+                            & states%husl2(row, col), states%hlsl(row, col))
 
-                     else
+                        end if !% [ END IF PRCP GAP ]
 
-                        output%net_prcp_domain(row, col, t) = qt
+                        !% =================================================================================================== %!
+                        !%   Horizontal transfer module
+                        !% =================================================================================================== %!
 
-                     end if
+                        call vic_interflow(5._sp, parameters%cusl2(row, col), states%husl2(row, col), qi)
 
-                  end if
+                        call vic_baseflow(parameters%clsl(row, col), parameters%ds(row, col), &
+                        & parameters%dsm(row, col), parameters%ws(row, col), states%hlsl(row, col), qb)
 
-                  !% =================================================================================================== %!
-                  !%   Store simulated discharge on domain (optional)
-                  !% =================================================================================================== %!
+                        qt = (runoff + qi + qb)
 
-                  if (setup%save_qsim_domain) then
+                        !% =================================================================================================== %!
+                        !%   Routing module
+                        !% =================================================================================================== %!
 
-                     if (setup%sparse_storage) then
+                        call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
+                        &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
 
-                        output%sparse_qsim_domain(k, t) = q(row, col)
+                        call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
 
-                     else
+                        q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
+                                     & *mesh%dx*mesh%dx*0.001_sp/setup%dt
 
-                        output%qsim_domain(row, col, t) = q(row, col)
+                        !% =================================================================================================== %!
+                        !%   Store simulated net rainfall on domain (optional)
+                        !%   The net rainfall over a surface is a fictitious quantity that corresponds to
+                        !%   the part of the rainfall water depth that actually causes runoff.
+                        !% =================================================================================================== %!
 
-                     end if
+                        if (setup%save_net_prcp_domain) then
 
-                  end if
+                            if (setup%sparse_storage) then
 
-               end if !% [ END IF ACTIVE CELL ]
+                                output%sparse_net_prcp_domain(k, t) = qt
 
-            end if !% [ END IF PATH ]
+                            else
 
-         end do !% [ END DO SPACE ]
+                                output%net_prcp_domain(row, col, t) = qt
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                            end if
 
-         do g = 1, mesh%ng
+                        end if
 
-            output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                        !% =================================================================================================== %!
+                        !%   Store simulated discharge on domain (optional)
+                        !% =================================================================================================== %!
 
-         end do
+                        if (setup%save_qsim_domain) then
 
-      end do !% [ END DO TIME ]
+                            if (setup%sparse_storage) then
 
-   end subroutine gr_d_forward
+                                output%sparse_qsim_domain(k, t) = q(row, col)
 
-   subroutine vic_a_forward(setup, mesh, input_data, parameters, states, output)
+                            else
 
-      implicit none
+                                output%qsim_domain(row, col, t) = q(row, col)
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                            end if
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(ParametersDT), intent(in) :: parameters
-      type(StatesDT), intent(inout) :: states
-      type(OutputDT), intent(inout) :: output
+                        end if
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
+                    end if !% [ END IF ACTIVE CELL ]
 
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q
-      real(sp) :: prcp, pet, runoff, qi, qb, qt, qup, qrout
-      integer :: t, i, row, col, k, g
+                end if !% [ END IF PATH ]
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
-
-      do t = 1, setup%ntime_step !% [ DO TIME ]
-
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            runoff = 0._sp
-            qi = 0._sp
-            qb = 0._sp
-            qt = 0._sp
-            qup = 0._sp
-            qrout = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            if (mesh%path(1, i) .gt. 0 .and. mesh%path(2, i) .gt. 0) then !% [ IF PATH ]
+            end do
 
-               row = mesh%path(1, i)
-               col = mesh%path(2, i)
-               if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+        end do !% [ END DO TIME ]
 
-               !% ======================================================================================================= %!
-               !%   Global/Local active cell
-               !% ======================================================================================================= %!
-
-               if (mesh%active_cell(row, col) .eq. 1 .and. mesh%local_active_cell(row, col) .eq. 1) then !% [ IF ACTIVE CELL ]
-
-                  if (setup%sparse_storage) then
-
-                     prcp = input_data%sparse_prcp(k, t)
-                     pet = input_data%sparse_pet(k, t)
-
-                  else
-
-                     prcp = input_data%prcp(row, col, t)
-                     pet = input_data%pet(row, col, t)
-
-                  end if
-
-                  if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
-
-                     !% =============================================================================================== %!
-                     !%   Infiltration module
-                     !% =============================================================================================== %!
-
-                     call vic_infiltration(prcp, parameters%cusl1(row, col), parameters%cusl2(row, col), &
-                     & parameters%b(row, col), states%husl1(row, col), states%husl2(row, col), &
-                     & runoff)
-
-                     !% =============================================================================================== %!
-                     !%   Vertical transfer module
-                     !% =============================================================================================== %!
-
-                     call vic_vertical_transfer(pet, parameters%cusl1(row, col), parameters%cusl2(row, col), &
-                     & parameters%clsl(row, col), parameters%ks(row, col), states%husl1(row, col), &
-                     & states%husl2(row, col), states%hlsl(row, col))
-
-                  end if !% [ END IF PRCP GAP ]
-
-                  !% =================================================================================================== %!
-                  !%   Horizontal transfer module
-                  !% =================================================================================================== %!
-
-                  call vic_interflow(5._sp, parameters%cusl2(row, col), states%husl2(row, col), qi)
-
-                  call vic_baseflow(parameters%clsl(row, col), parameters%ds(row, col), &
-                  & parameters%dsm(row, col), parameters%ws(row, col), states%hlsl(row, col), qb)
-
-                  qt = (runoff + qi + qb)
-
-                  !% =================================================================================================== %!
-                  !%   Routing module
-                  !% =================================================================================================== %!
-
-                  call upstream_discharge(setup%dt, mesh%dx, mesh%nrow,&
-                  &  mesh%ncol, mesh%flwdir, mesh%flwacc, row, col, q, qup)
-
-                  call linear_routing(setup%dt, qup, parameters%lr(row, col), states%hlr(row, col), qrout)
-
-                  q(row, col) = (qt + qrout*real(mesh%flwacc(row, col) - 1))&
-                               & *mesh%dx*mesh%dx*0.001_sp/setup%dt
-
-                  !% =================================================================================================== %!
-                  !%   Store simulated net rainfall on domain (optional)
-                  !%   The net rainfall over a surface is a fictitious quantity that corresponds to
-                  !%   the part of the rainfall water depth that actually causes runoff.
-                  !% =================================================================================================== %!
-
-                  if (setup%save_net_prcp_domain) then
-
-                     if (setup%sparse_storage) then
-
-                        output%sparse_net_prcp_domain(k, t) = qt
-
-                     else
-
-                        output%net_prcp_domain(row, col, t) = qt
-
-                     end if
-
-                  end if
-
-                  !% =================================================================================================== %!
-                  !%   Store simulated discharge on domain (optional)
-                  !% =================================================================================================== %!
-
-                  if (setup%save_qsim_domain) then
-
-                     if (setup%sparse_storage) then
-
-                        output%sparse_qsim_domain(k, t) = q(row, col)
-
-                     else
-
-                        output%qsim_domain(row, col, t) = q(row, col)
-
-                     end if
-
-                  end if
-
-               end if !% [ END IF ACTIVE CELL ]
-
-            end if !% [ END IF PATH ]
-
-         end do !% [ END DO SPACE ]
-
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
-
-         do g = 1, mesh%ng
-
-            output%qsim(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
-
-         end do
-
-      end do !% [ END DO TIME ]
-
-   end subroutine vic_a_forward
+    end subroutine vic_a_forward
 
 end module md_forward_structure
