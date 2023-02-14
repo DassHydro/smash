@@ -7,7 +7,6 @@ import pytest
 
 
 def generic_event_seg(model: smash.Model, **kwargs) -> dict:
-
     arr = model.event_segmentation().to_numpy()
 
     res = {"event_seg.arr": arr.astype("S")}
@@ -16,10 +15,8 @@ def generic_event_seg(model: smash.Model, **kwargs) -> dict:
 
 
 def test_event_seg():
-
     res = generic_event_seg(pytest.model)
 
     for key, value in res.items():
-
-        #% Check event segmentation res
+        # % Check event segmentation res
         assert np.array_equal(value, pytest.baseline[key][:]), key

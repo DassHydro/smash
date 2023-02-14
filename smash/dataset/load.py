@@ -79,11 +79,9 @@ def load_dataset(name: str):
     name = name.lower()
 
     if name == "flwdir":
-
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
     elif name == "cance":
-
         setup = smash.read_setup(os.path.join(DATASET_PATH, "Cance/setup_Cance.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "Cance/mesh_Cance.hdf5"))
 
@@ -99,7 +97,6 @@ def load_dataset(name: str):
         return setup, mesh
 
     elif name == "france":
-
         setup = smash.read_setup(os.path.join(DATASET_PATH, "France/setup_France.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "France/mesh_France.hdf5"))
 
@@ -113,5 +110,4 @@ def load_dataset(name: str):
         return setup, mesh
 
     else:
-
         raise ValueError(f"Unknown dataset '{name}'. Choices: {DATASET_NAME}")

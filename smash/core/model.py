@@ -92,11 +92,8 @@ class Model(object):
     """
 
     def __init__(self, setup: dict, mesh: dict):
-
         if setup or mesh:
-
             if isinstance(setup, dict):
-
                 descriptor_name = setup.get("descriptor_name", [])
 
                 nd = 1 if isinstance(descriptor_name, str) else len(descriptor_name)
@@ -106,7 +103,6 @@ class Model(object):
                 _parse_derived_type(self.setup, setup)
 
             else:
-
                 raise TypeError(
                     f"'setup' argument must be dictionary, not {type(setup)}"
                 )
@@ -114,7 +110,6 @@ class Model(object):
             _build_setup(self.setup)
 
             if isinstance(mesh, dict):
-
                 self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
 
                 _parse_derived_type(self.mesh, mesh)
@@ -139,7 +134,6 @@ class Model(object):
             self._last_update = "Initialization"
 
     def __repr__(self):
-
         structure = f"Structure: '{self.setup.structure}'"
         dim = f"Spatio-Temporal dimension: (x: {self.mesh.ncol}, y: {self.mesh.nrow}, time: {self.setup._ntime_step})"
         last_update = f"Last update: {self._last_update}"
@@ -148,7 +142,6 @@ class Model(object):
 
     @property
     def setup(self):
-
         """
         The setup of the Model.
 
@@ -185,7 +178,6 @@ class Model(object):
 
     @setup.setter
     def setup(self, value):
-
         if isinstance(value, SetupDT):
             self._setup = value
 
@@ -229,7 +221,6 @@ class Model(object):
 
     @mesh.setter
     def mesh(self, value):
-
         if isinstance(value, MeshDT):
             self._mesh = value
 
@@ -267,7 +258,6 @@ class Model(object):
 
     @input_data.setter
     def input_data(self, value):
-
         if isinstance(value, Input_DataDT):
             self._input_data = value
 
@@ -310,9 +300,7 @@ class Model(object):
 
     @parameters.setter
     def parameters(self, value):
-
         if isinstance(value, ParametersDT):
-
             self._parameters = value
 
         else:
@@ -350,9 +338,7 @@ class Model(object):
 
     @states.setter
     def states(self, value):
-
         if isinstance(value, StatesDT):
-
             self._states = value
 
         else:
@@ -391,9 +377,7 @@ class Model(object):
 
     @output.setter
     def output(self, value):
-
         if isinstance(value, OutputDT):
-
             self._output = value
 
         else:
@@ -403,14 +387,11 @@ class Model(object):
 
     @property
     def _last_update(self):
-
         return self.__last_update
 
     @_last_update.setter
     def _last_update(self, value):
-
         if isinstance(value, str):
-
             self.__last_update = value
 
         else:
@@ -494,11 +475,9 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
         print("</> Run Model")
@@ -520,7 +499,6 @@ class Model(object):
         instance._last_update = "Forward Run"
 
         if not inplace:
-
             return instance
 
     def optimize(
@@ -685,16 +663,14 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
         print("</> Optimize Model")
 
-        #% standardize args
+        # % standardize args
         (
             mapping,
             algorithm,
@@ -740,7 +716,6 @@ class Model(object):
         instance._last_update = f"{algorithm.upper()} Optimization"
 
         if not inplace:
-
             return instance
 
     def bayes_estimate(
@@ -837,16 +812,14 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
         print("</> Bayes Estimate Model")
 
-        #% standardize args
+        # % standardize args
         (
             control_vector,
             jobs_fun,
@@ -899,7 +872,6 @@ class Model(object):
         instance._last_update = "Bayesian Estimation"
 
         if return_br:
-
             if not inplace:
                 return instance, res
 
@@ -907,7 +879,6 @@ class Model(object):
                 return res
 
         else:
-
             if not inplace:
                 return instance
 
@@ -1029,16 +1000,14 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
         print("</> Bayes Optimize Model")
 
-        #% standardize args
+        # % standardize args
         (
             mapping,
             algorithm,
@@ -1097,7 +1066,6 @@ class Model(object):
         instance._last_update = "Bayesian Optimization"
 
         if return_br:
-
             if not inplace:
                 return instance, res
 
@@ -1105,7 +1073,6 @@ class Model(object):
                 return res
 
         else:
-
             if not inplace:
                 return instance
 
@@ -1219,11 +1186,9 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
         print("</> ANN Optimize Model")
@@ -1234,7 +1199,7 @@ class Model(object):
         else:
             use_default_graph = False
 
-        #% standardize args
+        # % standardize args
         (
             control_vector,
             jobs_fun,
@@ -1275,7 +1240,6 @@ class Model(object):
         instance._last_update = "ANN Optimization"
 
         if return_net and use_default_graph:
-
             if not inplace:
                 return instance, net
 
@@ -1283,7 +1247,6 @@ class Model(object):
                 return net
 
         else:
-
             if not inplace:
                 return instance
 
@@ -1530,7 +1493,6 @@ class Model(object):
         return res
 
     def prcp_indices(self):
-
         """
         Compute precipitations indices of the Model.
 
@@ -1588,7 +1550,6 @@ class Model(object):
         return _prcp_indices(self)
 
     def get_bound_constraints(self, states: bool = False):
-
         """
         Get the boundary constraints of the Model parameters/states.
 

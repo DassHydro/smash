@@ -35,7 +35,6 @@ class Net(object):
     """
 
     def __init__(self):
-
         self.layers = []
 
         self.history = {"loss_train": [], "loss_valid": []}
@@ -47,13 +46,11 @@ class Net(object):
         self._compiled = False
 
     def __repr__(self):
-
         ret = []
 
         ret.append(AsciiTable([["Net summary"]]).table)
 
         if self._compiled and self.layers:
-
             ret.append(f"Input Shape: {self.layers[0].input_shape}")
 
             tab = [["Layer (type)", "Output Shape", "Param #"]]
@@ -62,7 +59,6 @@ class Net(object):
             trainable_params = 0
 
             for layer in self.layers:
-
                 layer_name = layer.layer_name()
 
                 n_params = layer.n_params()
@@ -83,7 +79,6 @@ class Net(object):
             ret.append(f"Non-trainable params: {tot_params - trainable_params}")
 
         else:
-
             ret.append(
                 "The network does not contain layers or has not been compiled yet"
             )
@@ -133,7 +128,6 @@ class Net(object):
 
     @layers.setter
     def layers(self, value):
-
         self._layers = value
 
     @property
@@ -151,7 +145,6 @@ class Net(object):
 
     @history.setter
     def history(self, value):
-
         self._history = value
 
     def add(self, layer: str, options: dict):
@@ -227,11 +220,8 @@ class Net(object):
         layer = LAYERS[layer.lower()](**options)
 
         if not self.layers:  # Check options if first layer
-
             if "input_shape" in options:
-
                 if not isinstance(options["input_shape"], tuple):
-
                     raise ValueError(
                         f"input_shape option should be a tuple, not {type(options['input_shape'])}"
                     )
@@ -242,7 +232,6 @@ class Net(object):
                 )
 
         else:  # If be not the first layer then set the input shape to the output shape of the next added layer
-
             layer._set_input_shape(shape=self.layers[-1].output_shape())
 
         # Add layer to the network
@@ -315,13 +304,10 @@ class Net(object):
             np.random.seed(random_state)
 
         if self.layers:
-
             opt = OPTIMIZERS[optimizer.lower()](learning_rate, **options)
 
             for layer in self.layers:
-
                 if hasattr(layer, "_initialize"):
-
                     layer._initialize(opt)
 
             self._compiled = True
@@ -358,7 +344,6 @@ class Net(object):
         """
 
         if len(trainable) == len(self.layers):
-
             for i, layer in enumerate(self.layers):
                 layer.trainable = trainable[i]
 
@@ -379,7 +364,6 @@ class Net(object):
         early_stopping: bool,
         verbose: bool,
     ):  # fit physiographic descriptors to Model parameters mapping
-
         if not self._compiled:
             raise ValueError(f"The network has not been compiled yet")
 
@@ -387,7 +371,6 @@ class Net(object):
 
         # train model
         for epo in tqdm(range(epochs), desc="Training"):
-
             # Forward propogation
             y_pred = self._forward_pass(x_train)
 
@@ -404,14 +387,11 @@ class Net(object):
 
             # early stopping
             if early_stopping:
-
                 if loss_opt > loss or epo == 0:
                     loss_opt = loss
 
                     for layer in self.layers:
-
                         if hasattr(layer, "_initialize"):
-
                             layer._weight = np.copy(layer.weight)
                             layer._bias = np.copy(layer.bias)
 
@@ -431,32 +411,24 @@ class Net(object):
             self.history["loss_train"].append(loss)
 
         if early_stopping:
-
             for layer in self.layers:
-
                 if hasattr(layer, "_initialize"):
-
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
-
         layer_output = x_train
 
         for layer in self.layers:
-
             layer_output = layer._forward_pass(layer_output, training)
 
         return layer_output
 
     def _backward_pass(self, loss_grad: np.ndarray):
-
         for layer in reversed(self.layers):
-
             loss_grad = layer._backward_pass(loss_grad)
 
     def _predict(self, x_train: np.ndarray):
-
         preds = self._forward_pass(x_train, training=False)
 
         return preds
@@ -505,7 +477,6 @@ class Activation(Layer):
     """
 
     def __init__(self, name: str, **unknown_options):
-
         _check_unknown_options("Activation Layer", unknown_options)
 
         self.input_shape = None
@@ -532,7 +503,6 @@ class Scale(Layer):
     """Scale function for outputs from the last layer w.r.t. parameters bounds."""
 
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
-
         _check_unknown_options("Scale Layer", unknown_options)
 
         self.input_shape = None
@@ -558,7 +528,6 @@ class Scale(Layer):
 
 
 def _wb_initialization(layer: Layer, attr: str):
-
     fin = layer.input_shape[0]
     fout = layer.neurons
 
@@ -573,13 +542,10 @@ def _wb_initialization(layer: Layer, attr: str):
     split_inizer = initializer.split("_")
 
     if split_inizer[-1] == "uniform":
-
         if split_inizer[0] == "glorot":
-
             limit = np.sqrt(6 / (fin + fout))
 
         elif split_inizer[0] == "he":
-
             limit = np.sqrt(6 / fin)
 
         else:
@@ -588,13 +554,10 @@ def _wb_initialization(layer: Layer, attr: str):
         setattr(layer, attr, np.random.uniform(-limit, limit, shape))
 
     elif split_inizer[-1] == "normal":
-
         if split_inizer[0] == "glorot":
-
             std = np.sqrt(2 / (fin + fout))
 
         elif split_inizer[0] == "he":
-
             std = np.sqrt(2 / fin)
 
         else:
@@ -649,7 +612,6 @@ class Dense(Layer):
         bias_initializer: str = "zeros",
         **unknown_options,
     ):
-
         _check_unknown_options("Dense Layer", unknown_options)
 
         self.layer_input = None
@@ -679,7 +641,6 @@ class Dense(Layer):
             )
 
     def _initialize(self, optimizer: function):
-
         # Initialize weights and biases
         _wb_initialization(self, "weight")
         _wb_initialization(self, "bias")
@@ -729,7 +690,6 @@ class Dropout(Layer):
     """
 
     def __init__(self, drop_rate: float, **unknown_options):
-
         _check_unknown_options("Dropout Layer", unknown_options)
 
         self.drop_rate = drop_rate
@@ -741,11 +701,9 @@ class Dropout(Layer):
         self.trainable = True
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
-
         c = 1 - self.drop_rate
 
         if training:
-
             self._mask = np.random.uniform(size=x.shape) > self.drop_rate
             c = self._mask
 
@@ -862,7 +820,6 @@ ACTIVATION_FUNC = {
 
 class MinMaxScale:
     def __init__(self, bounds: np.ndarray):
-
         self._bounds = bounds
 
         self.lower = np.array([b[0] for b in bounds])
@@ -880,7 +837,6 @@ class MinMaxScale:
 
 class StochasticGradientDescent:
     def __init__(self, learning_rate: float, momentum: float = 0, **unknown_options):
-
         _check_unknown_options("SGD optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -906,7 +862,6 @@ class Adam:
         b2: float = 0.999,
         **unknown_options,
     ):
-
         _check_unknown_options("Adam optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -938,7 +893,6 @@ class Adam:
 
 class Adagrad:
     def __init__(self, learning_rate, **unknown_options):
-
         _check_unknown_options("Adagrad optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -958,7 +912,6 @@ class Adagrad:
 
 class RMSprop:
     def __init__(self, learning_rate: float, rho: float = 0.9, **unknown_options):
-
         _check_unknown_options("RMSprop optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -991,7 +944,6 @@ OPTIMIZERS = {
 
 
 def _hcost(instance: Model):
-
     return instance.output.cost
 
 
@@ -1003,10 +955,8 @@ def _hcost_prime(
     parameters_bgd: ParametersDT,
     states_bgd: StatesDT,
 ):
-
-    #% Set parameters or states
+    # % Set parameters or states
     for i, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
             getattr(instance.parameters, name)[mask] = y[:, i]
 
@@ -1058,12 +1008,10 @@ def _hcost_prime(
 
 
 def _inf_norm(grad: np.ndarray):
-
     return np.amax(np.abs(grad))
 
 
 def _check_unknown_options(type_check: str, unknown_options: dict):
-
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
         warnings.warn("Unknown %s options: '%s'" % (type_check, msg))

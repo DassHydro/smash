@@ -30,15 +30,12 @@ def _ann_optimize(
     early_stopping: bool,
     verbose: bool,
 ):
-
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
     for i, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
-
             ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
@@ -46,9 +43,8 @@ def _ann_optimize(
             instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
             instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
 
-        #% Already check, must be states if not parameters
+        # % Already check, must be states if not parameters
         else:
-
             ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
@@ -112,7 +108,6 @@ def _ann_optimize(
     y = net._predict(x_inactive)
 
     for i, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
             getattr(instance.parameters, name)[inactive_mask] = y[:, i]
 
@@ -129,11 +124,9 @@ def _set_graph(
     control_vector: np.ndarray,
     bounds: np.ndarray,
 ):
-
     ncv = control_vector.size
 
     if net is None:  # auto-graph
-
         net = Net()
 
         n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
@@ -177,35 +170,30 @@ def _set_graph(
         raise ValueError(f"The graph has not been set yet")
 
     else:
-        #% check input shape
+        # % check input shape
         ips = net.layers[0].input_shape
 
         if ips[0] != nd:
-
             raise ValueError(
                 f"Inconsistent value between the number of input layer ({ips}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
             )
 
-        #% check output shape
+        # % check output shape
         ios = net.layers[-1].output_shape()
 
         if ios[0] != ncv:
-
             raise ValueError(
                 f"Inconsistent value between the number of output layer ({ios}) and the number of control vectors ({ncv}): {ios[0]} != {ncv}"
             )
 
-        #% check bounds constraints
+        # % check bounds constraints
         if hasattr(net.layers[-1], "_scale_func"):
-
             net_bounds = net.layers[-1]._scale_func._bounds
 
             diff = np.not_equal(net_bounds, bounds)
 
             for i, name in enumerate(control_vector):
-
                 if diff[i].any():
-
                     warnings.warn(
                         f"Inconsistent value(s) between scaling parameters ({net_bounds[i]}) and the bound constraints of control vector {name} ({bounds[i]}). Use get_bound_constraints method of Model instance to properly create scaling layer"
                     )
@@ -219,7 +207,6 @@ def _training_message(
     nx: int,
     net: Net,
 ):
-
     sp4 = " " * 4
 
     jobs_fun = instance.setup._optimize.jobs_fun

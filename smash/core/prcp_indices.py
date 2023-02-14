@@ -60,7 +60,6 @@ class PrcpIndicesResult(dict):
 
 
 def _prcp_indices(instance: Model) -> PrcpIndicesResult:
-
     prcp_indices = np.zeros(
         shape=(len(PRCP_INDICES), instance.mesh.ng, instance.setup._ntime_step),
         dtype=np.float32,

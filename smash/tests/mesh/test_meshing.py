@@ -7,7 +7,6 @@ import pytest
 
 
 def generic_xy_mesh(**kwargs) -> dict:
-
     flwdir = smash.load_dataset("flwdir")
 
     mesh = smash.generate_mesh(
@@ -29,17 +28,14 @@ def generic_xy_mesh(**kwargs) -> dict:
 
 
 def test_xy_mesh():
-
     res = generic_xy_mesh()
 
     for key, value in res.items():
-
-        #% Check xy_mesh flwdir, flwdst and flwacc
+        # % Check xy_mesh flwdir, flwdst and flwacc
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bbox_mesh(**kwargs) -> dict:
-
     flwdir = smash.load_dataset("flwdir")
 
     mesh = smash.generate_mesh(
@@ -57,10 +53,8 @@ def generic_bbox_mesh(**kwargs) -> dict:
 
 
 def test_bbox_mesh():
-
     res = generic_bbox_mesh()
 
     for key, value in res.items():
-
-        #% Check bbox_mesh flwdir, flwdst and flwacc
+        # % Check bbox_mesh flwdir, flwdst and flwacc
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key

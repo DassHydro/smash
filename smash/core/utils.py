@@ -16,9 +16,9 @@ import numpy as np
 
 __all__ = ["sparse_matrix_to_vector", "sparse_vector_to_matrix"]
 
-#% Not usefull for user might remove from public method
-def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
 
+# % Not usefull for user might remove from public method
+def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
     """
     Convert a NumPy 2D array to a 1D array respecting the order of the sparse storage.
 
@@ -48,13 +48,11 @@ def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
     """
 
     if np.issubdtype(matrix.dtype, np.integer):
-
         vector = np.zeros(shape=mesh.nac, dtype=np.int32, order="F")
 
         sparse_matrix_to_vector_i(mesh, matrix, vector)
 
     else:
-
         vector = np.zeros(shape=mesh.nac, dtype=np.float32, order="F")
 
         sparse_matrix_to_vector_r(mesh, matrix, vector)
@@ -63,7 +61,6 @@ def sparse_matrix_to_vector(mesh: MeshDT, matrix: np.ndarray) -> np.ndarray:
 
 
 def sparse_vector_to_matrix(mesh: MeshDT, vector: np.ndarray) -> np.ndarray:
-
     """
     Convert a NumPy 1D array respecting the order of the sparse storage to a 2D array.
 
@@ -110,13 +107,11 @@ def sparse_vector_to_matrix(mesh: MeshDT, vector: np.ndarray) -> np.ndarray:
     """
 
     if np.issubdtype(vector.dtype, np.integer):
-
         matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.int32, order="F")
 
         sparse_vector_to_matrix_i(mesh, vector, matrix)
 
     else:
-
         matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
 
         sparse_vector_to_matrix_r(mesh, vector, matrix)

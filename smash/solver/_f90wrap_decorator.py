@@ -27,7 +27,6 @@ def char_array_getter_handler(func):
 def char_array_setter_handler(func):
     @functools.wraps(func)
     def wrapper(self, value):
-
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 
@@ -38,31 +37,25 @@ def char_array_setter_handler(func):
         shape = tuple(s for i, s in enumerate(array_shape) if i < array_ndim)
 
         if isinstance(value, (list, tuple)):
-
             value = np.array(value)
 
         elif isinstance(value, np.ndarray):
-
             value = value.astype("U")
 
         else:
-
             raise TypeError(
                 f"{func_name} attribute must be list-like object, not {type(value)}"
             )
 
         if value.size != shape[1]:
-
             raise ValueError(
                 f"could not broadcast input array from shape {value.shape} into {(shape[1],)}"
             )
 
         else:
-
             arr = np.zeros(shape, dtype="uint8") + np.uint8(32)
 
             for i, el in enumerate(value):
-
                 arr[0 : len(el), i] = [ord(l) for l in el]
 
         if array_handle in self._arrays:
@@ -91,7 +84,6 @@ def getter_index_handler(func):
 def setter_index_handler(func):
     @functools.wraps(func)
     def wrapper(self, value):
-
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 

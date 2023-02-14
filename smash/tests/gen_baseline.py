@@ -121,7 +121,9 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 
     df.to_csv("diff_baseline.csv", sep="|", index=False)
 
-    os.system(f'echo "$(git show --no-patch)\n\n$(cat diff_baseline.csv)" > diff_baseline.csv')
+    os.system(
+        f'echo "$(git show --no-patch)\n\n$(cat diff_baseline.csv)" > diff_baseline.csv'
+    )
 
 
 if __name__ == "__main__":
