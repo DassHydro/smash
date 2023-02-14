@@ -15,15 +15,17 @@
 !%
 !%      contains
 !%
-!%      [1]  get_parameters
-!%      [2]  set0d_parameters
-!%      [3]  set1d_parameters
-!%      [4]  set3d_parameters
-!%      [5]  get_hyper_parameters
-!%      [6]  set0d_hyper_parameters
-!%      [7]  set1d_hyper_parameters
-!%      [8]  set3d_hyper_parameters
-!%      [9]  hyper_parameters_to_parameters
+!%      [1]   get_parameters
+!%      [2]   set0d_parameters
+!%      [3]   set1d_parameters
+!%      [4]   set3d_parameters
+!%      [5]   normalize_parameters
+!%      [6]   denormalize_parameters
+!%      [7]   get_hyper_parameters
+!%      [8]   set0d_hyper_parameters
+!%      [9]   set1d_hyper_parameters
+!%      [10]  set3d_hyper_parameters
+!%      [11]  hyper_parameters_to_parameters
 
 
 module mwd_parameters_manipulation
@@ -152,6 +154,62 @@ module mwd_parameters_manipulation
             call set1d_parameters(mesh, parameters, a1d)
         
         end subroutine set0d_parameters
+        
+        
+        subroutine normalize_parameters(setup, mesh, parameters)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(ParametersDT), intent(inout) :: parameters
+            
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: a
+            real(sp) :: lb, ub
+            integer :: i
+            
+            call get_parameters(mesh, parameters, a)
+            
+            do i=1, GNP
+            
+                lb = setup%optimize%lb_parameters(i)
+                ub = setup%optimize%ub_parameters(i)
+                
+                a(:,:,i) = (a(:,:,i) - lb) / (ub - lb)
+            
+            end do
+            
+            call set_parameters(mesh, parameters, a)
+        
+        end subroutine normalize_parameters
+        
+        
+        subroutine denormalize_parameters(setup, mesh, parameters)
+        
+            implicit none
+            
+            type(SetupDT), intent(in) :: setup
+            type(MeshDT), intent(in) :: mesh
+            type(ParametersDT), intent(inout) :: parameters
+            
+            real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: a
+            real(sp) :: lb, ub
+            integer :: i
+            
+            call get_parameters(mesh, parameters, a)
+            
+            do i=1, GNP
+            
+                lb = setup%optimize%lb_parameters(i)
+                ub = setup%optimize%ub_parameters(i)
+                
+                a(:,:,i) = a(:,:,i) * (ub - lb) + lb
+            
+            end do
+            
+            call set_parameters(mesh, parameters, a)
+        
+        end subroutine denormalize_parameters
         
         
         subroutine get_hyper_parameters(setup, hyper_parameters, a)

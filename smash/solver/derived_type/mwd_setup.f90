@@ -69,6 +69,8 @@ module mwd_setup
 
         character(lchar) :: mapping = "..." !>f90w-char
         
+        logical :: normalize_forward = .false.
+        
         integer :: nhyper = 0
         
         character(lchar) :: jreg_fun = "prior" !>f90w-char

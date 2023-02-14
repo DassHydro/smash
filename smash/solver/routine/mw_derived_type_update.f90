@@ -31,6 +31,8 @@ module mw_derived_type_update
             
             this%mapping = mapping
             
+            this%normalize_forward = .false.
+            
             select case(trim(this%mapping))
             
             case("hyper-linear")

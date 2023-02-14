@@ -1014,8 +1014,10 @@ def _hcost_prime(
             getattr(instance.states, name)[mask] = y[:, i]
 
     parameters_b = instance.parameters.copy()
+    parameters_bgd_b = instance.parameters.copy()
 
     states_b = instance.states.copy()
+    states_bgd_b = instance.states.copy()
 
     output_b = instance.output.copy()
 
@@ -1029,9 +1031,11 @@ def _hcost_prime(
         instance.parameters,
         parameters_b,
         parameters_bgd,
+        parameters_bgd_b,
         instance.states,
         states_b,
         states_bgd,
+        states_bgd_b,
         instance.output,
         output_b,
         cost,
