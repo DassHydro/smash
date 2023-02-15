@@ -5,7 +5,7 @@ from smash.solver._mw_adjoint_test import scalar_product_test
 from smash.solver._mw_optimize import (
     optimize_sbs,
     optimize_lbfgsb,
-    hyper_optimize_lbfgsb,
+    optimize_hyper_lbfgsb,
 )
 
 from smash.core._event_segmentation import _mask_event
@@ -161,7 +161,7 @@ def _optimize_lbfgsb(
         if verbose:
             _optimize_message(instance, control_vector, mapping)
 
-        hyper_optimize_lbfgsb(
+        optimize_hyper_lbfgsb(
             instance.setup,
             instance.mesh,
             instance.input_data,

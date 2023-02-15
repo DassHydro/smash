@@ -38,13 +38,15 @@ module mw_optimize
 
     implicit none
 
-    public :: optimize_sbs, optimize_lbfgsb, hyper_optimize_lbfgsb
+    public :: optimize_sbs, optimize_lbfgsb, optimize_hyper_lbfgsb
 
-    private :: transformation, inv_transformation, &
-    & var_to_control, control_to_var, &
-    & normalize_descriptor, denormalize_descriptor, &
-    & hyper_problem_initialise, hyper_var_to_control, &
-    & hyper_control_to_var
+    private :: bounds_initialise_sbs, &
+    & var_to_control_sbs, control_to_var_sbs, &
+    & transformation_sbs, inv_transformation_sbs, &
+    & var_to_control_lbfgsb, control_to_var_lbfgsb, &
+    & normalize_descriptor_hyper_lbfgsb, denormalize_descriptor_hyper_lbfgsb, &
+    & problem_initialise_hyper_lbfgsb, &
+    & var_to_control_hyper_lbfgsb, control_to_var_hyper_lbfgsb
 
 contains
 
@@ -65,19 +67,13 @@ contains
 
         type(ParametersDT) :: parameters_bgd
         type(StatesDT) :: states_bgd
-        real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix
-        integer, dimension(2) :: ind_ac
-        integer :: nps, nops, iter, nfg, ia, iaa, iam, jf, jfa, jfaa, j, ps, p, s
-        real(sp), dimension(GNP + GNS) :: x, y, x_tf, y_tf, z_tf, lb, lb_tf, ub, ub_tf, sdx
-        integer, dimension(GNP + GNS) :: optim_ps
+        integer :: n, i, j, iter, nfg, ia, iaa, iam, jf, jfa, jfaa
+        real(sp), dimension(:), allocatable :: x, y, z, l, u, x_t, y_t, z_t, l_t, u_t, sdx
         real(sp) :: gx, ga, clg, ddx, dxn, f, cost
 
         ! =========================================================================================================== !
         !   Initialisation
         ! =========================================================================================================== !
-
-        ind_ac = maxloc(mesh%active_cell)
 
         parameters_bgd = parameters
         states_bgd = states
@@ -85,32 +81,23 @@ contains
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
 
-        call get_parameters(mesh, parameters, parameters_matrix)
-        call get_states(mesh, states, states_matrix)
+        n = count(setup%optimize%optim_parameters .gt. 0) + &
+        & count(setup%optimize%optim_states .gt. 0)
 
-        nps = GNP + GNS
+        allocate (x(n), y(n), z(n), l(n), u(n), x_t(n), y_t(n), z_t(n), l_t(n), u_t(n), sdx(n))
 
-        x(1:GNP) = parameters_matrix(ind_ac(1), ind_ac(2), :)
-        x(GNP + 1:nps) = states_matrix(ind_ac(1), ind_ac(2), :)
+        call bounds_initialise_sbs(n, setup, l, u)
 
-        lb(1:GNP) = setup%optimize%lb_parameters
-        lb(GNP + 1:nps) = setup%optimize%lb_states
+        call var_to_control_sbs(n, setup, mesh, parameters, states, x)
 
-        ub(1:GNP) = setup%optimize%ub_parameters
-        ub(GNP + 1:nps) = setup%optimize%ub_states
+        call transformation_sbs(n, x, l, u, x_t)
+        call transformation_sbs(n, l, l, u, l_t)
+        call transformation_sbs(n, u, l, u, u_t)
 
-        optim_ps(1:GNP) = setup%optimize%optim_parameters
-        optim_ps(GNP + 1:nps) = setup%optimize%optim_states
-
-        call transformation(x, lb, ub, x_tf)
-        call transformation(lb, lb, ub, lb_tf)
-        call transformation(ub, lb, ub, ub_tf)
-
-        nops = count(optim_ps .eq. 1)
         gx = cost
         ga = gx
-        clg = 0.7_sp**(1._sp/real(nops))
-        z_tf = x_tf
+        clg = 0.7_sp**(1._sp/real(n, kind(x)))
+        z_t = x_t
         sdx = 0._sp
         ddx = 0.64_sp
         dxn = ddx
@@ -125,7 +112,7 @@ contains
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
         end if
 
-        do iter = 1, setup%optimize%maxiter*nops
+        do iter = 1, setup%optimize%maxiter*n
 
             ! ======================================================================================================= !
             !   Optimize
@@ -134,66 +121,41 @@ contains
             if (dxn .gt. ddx) dxn = ddx
             if (ddx .gt. 2._sp) ddx = dxn
 
-            do ps = 1, nps
+            do i = 1, n
 
-                if (optim_ps(ps) .eq. 1) then
+                y_t = x_t
 
-                    y_tf = x_tf
+                do 7 j = 1, 2
 
-                    do 7 j = 1, 2
+                    jf = 2*j - 3
+                    if (i .eq. iaa .and. jf .eq. -jfaa) goto 7
+                    if (x_t(i) .le. l_t(i) .and. jf .lt. 0) goto 7
+                    if (x_t(i) .ge. u_t(i) .and. jf .gt. 0) goto 7
 
-                        jf = 2*j - 3
-                        if (ps .eq. iaa .and. jf .eq. -jfaa) goto 7
-                        if (x_tf(ps) .le. lb_tf(ps) .and. jf .lt. 0) goto 7
-                        if (x_tf(ps) .ge. ub_tf(ps) .and. jf .gt. 0) goto 7
+                    y_t(i) = x_t(i) + jf*ddx
+                    if (y_t(i) .lt. l_t(i)) y_t(i) = l_t(i)
+                    if (y_t(i) .gt. u_t(i)) y_t(i) = u_t(i)
 
-                        y_tf(ps) = x_tf(ps) + jf*ddx
-                        if (y_tf(ps) .lt. lb_tf(ps)) y_tf(ps) = lb_tf(ps)
-                        if (y_tf(ps) .gt. ub_tf(ps)) y_tf(ps) = ub_tf(ps)
+                    call inv_transformation_sbs(n, y, l, u, y_t)
 
-                        call inv_transformation(y_tf, lb, ub, y)
+                    call control_to_var_sbs(n, setup, mesh, parameters, states, y)
 
-                        do p = 1, GNP
+                    call forward(setup, mesh, input_data, parameters, parameters_bgd, &
+                    & states, states_bgd, output, cost)
 
-                            where (mesh%active_cell .eq. 1)
+                    f = cost
+                    nfg = nfg + 1
 
-                                parameters_matrix(:, :, p) = y(p)
+                    if (f .lt. gx) then
 
-                            end where
+                        z_t = y_t
+                        gx = f
+                        ia = i
+                        jfa = jf
 
-                        end do
+                    end if
 
-                        do s = 1, GNS
-
-                            where (mesh%active_cell .eq. 1)
-
-                                states_matrix(:, :, s) = y(GNP + s)
-
-                            end where
-
-                        end do
-
-                        call set_parameters(mesh, parameters, parameters_matrix)
-                        call set_states(mesh, states, states_matrix)
-
-                        call forward(setup, mesh, input_data, parameters, parameters_bgd, &
-                        & states, states_bgd, output, cost)
-
-                        f = cost
-                        nfg = nfg + 1
-
-                        if (f .lt. gx) then
-
-                            z_tf = y_tf
-                            gx = f
-                            ia = ps
-                            jfa = jf
-
-                        end if
-
-7                   continue
-
-                end if
+7               continue
 
             end do
 
@@ -202,38 +164,18 @@ contains
 
             if (ia .ne. 0) then
 
-                x_tf = z_tf
-                call inv_transformation(x_tf, lb, ub, x)
+                x_t = z_t
 
-                do p = 1, GNP
+                call inv_transformation_sbs(n, x, l, u, x_t)
 
-                    where (mesh%active_cell .eq. 1)
-
-                        parameters_matrix(:, :, p) = x(p)
-
-                    end where
-
-                end do
-
-                do s = 1, GNS
-
-                    where (mesh%active_cell .eq. 1)
-
-                        states_matrix(:, :, s) = x(GNP + s)
-
-                    end where
-
-                end do
-
-                call set_parameters(mesh, parameters, parameters_matrix)
-                call set_states(mesh, states, states_matrix)
+                call control_to_var_sbs(n, setup, mesh, parameters, states, x)
 
                 sdx = clg*sdx
-                sdx(ia) = (1._sp - clg)*real(jfa)*ddx + clg*sdx(ia)
+                sdx(ia) = (1._sp - clg)*real(jfa, kind(x))*ddx + clg*sdx(ia)
 
                 iam = iam + 1
 
-                if (iam .gt. 2*nops) then
+                if (iam .gt. 2*n) then
 
                     ddx = ddx*2._sp
                     iam = 0
@@ -253,44 +195,19 @@ contains
 
             end if
 
-            if (iter .gt. 4*nops) then
+            if (iter .gt. 4*n) then
 
-                do ps = 1, nps
+                do i = 1, n
 
-                    if (optim_ps(ps) .eq. 1) then
-
-                        y_tf(ps) = x_tf(ps) + sdx(ps)
-                        if (y_tf(ps) .lt. lb_tf(ps)) y_tf(ps) = lb_tf(ps)
-                        if (y_tf(ps) .gt. ub_tf(ps)) y_tf(ps) = ub_tf(ps)
-
-                    end if
+                    y_t(i) = x_t(i) + sdx(i)
+                    if (y_t(i) .lt. l_t(i)) y_t(i) = l_t(i)
+                    if (y_t(i) .gt. u_t(i)) y_t(i) = u_t(i)
 
                 end do
 
-                call inv_transformation(y_tf, lb, ub, y)
+                call inv_transformation_sbs(n, y, l, u, y_t)
 
-                do p = 1, GNP
-
-                    where (mesh%active_cell .eq. 1)
-
-                        parameters_matrix(:, :, p) = y(p)
-
-                    end where
-
-                end do
-
-                do s = 1, GNS
-
-                    where (mesh%active_cell .eq. 1)
-
-                        states_matrix(:, :, s) = y(GNP + s)
-
-                    end where
-
-                end do
-
-                call set_parameters(mesh, parameters, parameters_matrix)
-                call set_states(mesh, states, states_matrix)
+                call control_to_var_sbs(n, setup, mesh, parameters, states, y)
 
                 call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                 & states, states_bgd, output, cost)
@@ -303,32 +220,11 @@ contains
 
                     gx = f
                     jfaa = 0
-                    x_tf = y_tf
+                    x_t = y_t
 
-                    call inv_transformation(x_tf, lb, ub, x)
+                    call inv_transformation_sbs(n, x, l, u, x_t)
 
-                    do p = 1, GNP
-
-                        where (mesh%active_cell .eq. 1)
-
-                            parameters_matrix(:, :, p) = x(p)
-
-                        end where
-
-                    end do
-
-                    do s = 1, GNS
-
-                        where (mesh%active_cell .eq. 1)
-
-                            states_matrix(:, :, s) = x(GNP + s)
-
-                        end where
-
-                    end do
-
-                    call set_parameters(mesh, parameters, parameters_matrix)
-                    call set_states(mesh, states, states_matrix)
+                    call control_to_var_sbs(n, setup, mesh, parameters, states, x)
 
                     if (gx .lt. ga - 2) then
 
@@ -346,11 +242,11 @@ contains
             !   Iterate writting
             ! ======================================================================================================= !
 
-            if (mod(iter, nops) .eq. 0) then
+            if (mod(iter, n) .eq. 0) then
 
                 if (setup%optimize%verbose) then
                     write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
-                    & "At iterate", (iter/nops), "nfg = ", nfg, "J =", gx, "ddx =", ddx
+                    & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
                 end if
 
             end if
@@ -365,28 +261,7 @@ contains
                     write (*, '(4x,a)') "CONVERGENCE: DDX < 0.01"
                 end if
 
-                do p = 1, GNP
-
-                    where (mesh%active_cell .eq. 1)
-
-                        parameters_matrix(:, :, p) = x(p)
-
-                    end where
-
-                end do
-
-                do s = 1, GNS
-
-                    where (mesh%active_cell .eq. 1)
-
-                        states_matrix(:, :, s) = x(GNP + s)
-
-                    end where
-
-                end do
-
-                call set_parameters(mesh, parameters, parameters_matrix)
-                call set_states(mesh, states, states_matrix)
+                call control_to_var_sbs(n, setup, mesh, parameters, states, x)
 
                 call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                 & states, states_bgd, output, cost)
@@ -399,34 +274,13 @@ contains
             !   Maximum Number of Iteration
             ! ======================================================================================================= !
 
-            if (iter .eq. setup%optimize%maxiter*nops) then
+            if (iter .eq. setup%optimize%maxiter*n) then
 
                 if (setup%optimize%verbose) then
                     write (*, '(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
                 end if
 
-                do p = 1, GNP
-
-                    where (mesh%active_cell .eq. 1)
-
-                        parameters_matrix(:, :, p) = x(p)
-
-                    end where
-
-                end do
-
-                do s = 1, GNS
-
-                    where (mesh%active_cell .eq. 1)
-
-                        states_matrix(:, :, s) = x(GNP + s)
-
-                    end where
-
-                end do
-
-                call set_parameters(mesh, parameters, parameters_matrix)
-                call set_states(mesh, states, states_matrix)
+                call control_to_var_sbs(n, setup, mesh, parameters, states, x)
 
                 call forward(setup, mesh, input_data, parameters, parameters_bgd, &
                 & states, states_bgd, output, cost)
@@ -439,65 +293,192 @@ contains
 
     end subroutine optimize_sbs
 
-!%      TODO comment
-    subroutine transformation(x, lb, ub, x_tf)
+    subroutine bounds_initialise_sbs(n, setup, l, u)
 
         implicit none
 
-        real(sp), dimension(GNP + GNS), intent(in) :: x, lb, ub
-        real(sp), dimension(GNP + GNS), intent(inout) :: x_tf
+        integer, intent(in) :: n
+        type(SetupDT), intent(in) :: setup
+        real(sp), dimension(n), intent(inout) :: l, u
 
-        integer :: i
+        real(sp), dimension(GNP + GNS) :: lb, ub
+        integer, dimension(GNP + GNS) :: optim
+        integer :: i, j
+
+        lb(1:GNP) = setup%optimize%lb_parameters
+        lb(GNP + 1:GNP + GNS) = setup%optimize%lb_states
+
+        ub(1:GNP) = setup%optimize%ub_parameters
+        ub(GNP + 1:GNP + GNS) = setup%optimize%ub_states
+
+        optim(1:GNP) = setup%optimize%optim_parameters
+        optim(GNP + 1:GNP + GNS) = setup%optimize%optim_states
+
+        j = 0
 
         do i = 1, GNP + GNS
 
-            if (lb(i) .lt. 0._sp) then
+            if (optim(i) .gt. 0) then
 
-                x_tf(i) = asinh(x(i))
+                j = j + 1
 
-            else if (lb(i) .ge. 0._sp .and. ub(i) .le. 1._sp) then
-
-                x_tf(i) = log(x(i)/(1._sp - x(i)))
-
-            else
-
-                x_tf(i) = log(x(i))
+                l(j) = lb(i)
+                u(j) = ub(i)
 
             end if
 
         end do
 
-    end subroutine transformation
+    end subroutine bounds_initialise_sbs
 
-!%      TODO comment
-    subroutine inv_transformation(x_tf, lb, ub, x)
+    subroutine var_to_control_sbs(n, setup, mesh, parameters, states, x)
 
         implicit none
 
-        real(sp), dimension(GNP + GNS), intent(in) :: x_tf, lb, ub
-        real(sp), dimension(GNP + GNS), intent(inout) :: x
+        integer, intent(in) :: n
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(ParametersDT), intent(in) :: parameters
+        type(StatesDT), intent(in) :: states
+        real(sp), dimension(n), intent(inout) :: x
 
-        integer :: i
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNP + GNS) :: matrix
+        integer, dimension(GNP + GNS) :: optim
+        integer, dimension(2) :: ind_ac
+        integer :: i, j
+
+        ind_ac = maxloc(mesh%active_cell)
+
+        call get_parameters(mesh, parameters, matrix(:, :, 1:GNP))
+        call get_states(mesh, states, matrix(:, :, GNP + 1:GNP + GNS))
+
+        optim(1:GNP) = setup%optimize%optim_parameters
+        optim(GNP + 1:GNP + GNS) = setup%optimize%optim_states
+
+        j = 0
 
         do i = 1, GNP + GNS
 
-            if (lb(i) .lt. 0._sp) then
+            if (optim(i) .gt. 0) then
 
-                x(i) = sinh(x_tf(i))
+                j = j + 1
 
-            else if (lb(i) .ge. 0._sp .and. ub(i) .le. 1._sp) then
-
-                x(i) = exp(x_tf(i))/(1._sp + exp(x_tf(i)))
-
-            else
-
-                x(i) = exp(x_tf(i))
+                x(j) = matrix(ind_ac(1), ind_ac(2), i)
 
             end if
 
         end do
 
-    end subroutine inv_transformation
+    end subroutine var_to_control_sbs
+
+    subroutine control_to_var_sbs(n, setup, mesh, parameters, states, x)
+
+        implicit none
+
+        integer, intent(in) :: n
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(ParametersDT), intent(inout) :: parameters
+        type(StatesDT), intent(inout) :: states
+        real(sp), dimension(n), intent(in) :: x
+
+        logical, dimension(mesh%nrow, mesh%ncol) :: mask
+        integer, dimension(GNP + GNS) :: optim
+        real(sp), dimension(mesh%nrow, mesh%ncol, GNP + GNS) :: matrix
+        integer :: i, j
+
+        mask = (mesh%active_cell .eq. 1)
+
+        call get_parameters(mesh, parameters, matrix(:, :, 1:GNP))
+        call get_states(mesh, states, matrix(:, :, GNP + 1:GNP + GNS))
+
+        optim(1:GNP) = setup%optimize%optim_parameters
+        optim(GNP + 1:GNP + GNS) = setup%optimize%optim_states
+
+        j = 0
+
+        do i = 1, GNP + GNS
+
+            if (optim(i) .gt. 0) then
+
+                j = j + 1
+
+                where (mask)
+
+                    matrix(:, :, i) = x(j)
+
+                end where
+
+            end if
+
+        end do
+
+        call set_parameters(mesh, parameters, matrix(:, :, 1:GNP))
+        call set_states(mesh, states, matrix(:, :, GNP + 1:GNP + GNS))
+
+    end subroutine control_to_var_sbs
+
+!%      TODO comment
+    subroutine transformation_sbs(n, x, l, u, x_t)
+
+        implicit none
+
+        integer, intent(in) :: n
+        real(sp), dimension(n), intent(in) :: x, l, u
+        real(sp), dimension(n), intent(inout) :: x_t
+
+        integer :: i
+
+        do i = 1, n
+
+            if (l(i) .lt. 0._sp) then
+
+                x_t(i) = asinh(x(i))
+
+            else if (l(i) .ge. 0._sp .and. u(i) .le. 1._sp) then
+
+                x_t(i) = log(x(i)/(1._sp - x(i)))
+
+            else
+
+                x_t(i) = log(x(i))
+
+            end if
+
+        end do
+
+    end subroutine transformation_sbs
+
+!%      TODO comment
+    subroutine inv_transformation_sbs(n, x, l, u, x_t)
+
+        implicit none
+
+        integer, intent(in) :: n
+        real(sp), dimension(n), intent(inout) :: x
+        real(sp), dimension(n), intent(in) :: x_t, l, u
+
+        integer :: i
+
+        do i = 1, n
+
+            if (l(i) .lt. 0._sp) then
+
+                x(i) = sinh(x_t(i))
+
+            else if (l(i) .ge. 0._sp .and. u(i) .le. 1._sp) then
+
+                x(i) = exp(x_t(i))/(1._sp + exp(x_t(i)))
+
+            else
+
+                x(i) = exp(x_t(i))
+
+            end if
+
+        end do
+
+    end subroutine inv_transformation_sbs
 
     subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
 
@@ -544,10 +525,6 @@ contains
         allocate (iwa(3*n))
         allocate (wa(2*m*n + 5*n + 11*m*m + 8*m))
 
-        nbd = 2
-        l = 0._dp
-        u = 1._dp
-
         ! =========================================================================================================== !
         !   Initialize forward_b args
         ! =========================================================================================================== !
@@ -567,11 +544,15 @@ contains
         call normalize_parameters(setup, mesh, parameters)
         call normalize_states(setup, mesh, states)
 
+        nbd = 2
+        l = 0._dp
+        u = 1._dp
+
         ! Background is normalize
         parameters_bgd = parameters
         states_bgd = states
 
-        call var_to_control(setup, mesh, parameters, states, x)
+        call var_to_control_lbfgsb(n, setup, mesh, parameters, states, x)
 
         ! Trigger the denormalization subroutine in forward
         setup%optimize%normalize_forward = .true.
@@ -603,7 +584,7 @@ contains
                         isave, &   ! working array
                         dsave)       ! working array
 
-            call control_to_var(setup, mesh, parameters, states, x)
+            call control_to_var_lbfgsb(n, setup, mesh, parameters, states, x)
 
             if (task(1:2) .eq. 'FG') then
 
@@ -624,7 +605,7 @@ contains
 
                 f = real(cost, kind(f))
 
-                call var_to_control(setup, mesh, parameters_b, states_b, g)
+                call var_to_control_lbfgsb(n, setup, mesh, parameters_b, states_b, g)
 
                 if (task(4:8) .eq. 'START') then
 
@@ -676,19 +657,19 @@ contains
 
     end subroutine optimize_lbfgsb
 
-    subroutine var_to_control(setup, mesh, parameters, states, x)
+    subroutine var_to_control_lbfgsb(n, setup, mesh, parameters, states, x)
 
         implicit none
 
+        integer, intent(in) :: n
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(ParametersDT), intent(in) :: parameters
         type(StatesDT), intent(in) :: states
-        real(dp), dimension(:), intent(inout) :: x
+        real(dp), dimension(n), intent(inout) :: x
 
         real(sp), dimension(mesh%nrow, mesh%ncol, GNP + GNS) :: matrix
         integer, dimension(GNP + GNS) :: optim
-        real(sp), dimension(GNP + GNS) :: lb, ub
         integer :: i, j, col, row
 
         call get_parameters(mesh, parameters, matrix(:, :, 1:GNP))
@@ -696,12 +677,6 @@ contains
 
         optim(1:GNP) = setup%optimize%optim_parameters
         optim(GNP + 1:GNP + GNS) = setup%optimize%optim_states
-
-        lb(1:GNP) = setup%optimize%lb_parameters
-        lb(GNP + 1:GNP + GNS) = setup%optimize%lb_states
-
-        ub(1:GNP) = setup%optimize%ub_parameters
-        ub(GNP + 1:GNP + GNS) = setup%optimize%ub_states
 
         j = 0
 
@@ -729,21 +704,21 @@ contains
 
         end do
 
-    end subroutine var_to_control
+    end subroutine var_to_control_lbfgsb
 
-    subroutine control_to_var(setup, mesh, parameters, states, x)
+    subroutine control_to_var_lbfgsb(n, setup, mesh, parameters, states, x)
 
         implicit none
 
+        integer, intent(in) :: n
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(ParametersDT), intent(inout) :: parameters
         type(StatesDT), intent(inout) :: states
-        real(dp), dimension(:), intent(in) :: x
+        real(dp), dimension(n), intent(in) :: x
 
         real(sp), dimension(mesh%nrow, mesh%ncol, GNP + GNS) :: matrix
         integer, dimension(GNP + GNS) :: optim
-        real(sp), dimension(GNP + GNS) :: lb, ub
         integer :: i, j, col, row
 
         call get_parameters(mesh, parameters, matrix(:, :, 1:GNP))
@@ -751,12 +726,6 @@ contains
 
         optim(1:GNP) = setup%optimize%optim_parameters
         optim(GNP + 1:GNP + GNS) = setup%optimize%optim_states
-
-        lb(1:GNP) = setup%optimize%lb_parameters
-        lb(GNP + 1:GNP + GNS) = setup%optimize%lb_states
-
-        ub(1:GNP) = setup%optimize%ub_parameters
-        ub(GNP + 1:GNP + GNS) = setup%optimize%ub_states
 
         j = 0
 
@@ -787,9 +756,9 @@ contains
         call set_parameters(mesh, parameters, matrix(:, :, 1:GNP))
         call set_states(mesh, states, matrix(:, :, GNP + 1:GNP + GNS))
 
-    end subroutine control_to_var
+    end subroutine control_to_var_lbfgsb
 
-    subroutine hyper_optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
+    subroutine optimize_hyper_lbfgsb(setup, mesh, input_data, parameters, states, output)
 
         !% Notes
         !% -----
@@ -844,7 +813,7 @@ contains
         !   Initialize hyper_forward_b args (normalize descriptors)
         ! =========================================================================================================== !
 
-        call normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        call normalize_descriptor_hyper_lbfgsb(setup, input_data, min_descriptor, max_descriptor)
 
         call ParametersDT_initialise(parameters_b, mesh)
         call Hyper_ParametersDT_initialise(hyper_parameters, setup)
@@ -860,13 +829,13 @@ contains
         !   Initialize control (problem initialise and var to control)
         ! =========================================================================================================== !
 
-        call hyper_problem_initialise(hyper_parameters, &
-        & hyper_states, nbd, l, u, setup, mesh, parameters, states)
+        call problem_initialise_hyper_lbfgsb(n, setup, mesh, parameters, states, &
+        & hyper_parameters, hyper_states, nbd, l, u)
 
         hyper_parameters_bgd = hyper_parameters
         hyper_states_bgd = hyper_states
 
-        call hyper_var_to_control(setup, hyper_parameters, hyper_states, x)
+        call var_to_control_hyper_lbfgsb(n, setup, hyper_parameters, hyper_states, x)
 
         ! =========================================================================================================== !
         !   Start minimization
@@ -895,7 +864,7 @@ contains
                         isave, &   ! working array
                         dsave)       ! working array
 
-            call hyper_control_to_var(setup, hyper_parameters, hyper_states, x)
+            call control_to_var_hyper_lbfgsb(n, setup, hyper_parameters, hyper_states, x)
 
             if (task(1:2) .eq. 'FG') then
 
@@ -912,7 +881,7 @@ contains
 
                 f = real(cost, kind(f))
 
-                call hyper_var_to_control(setup, hyper_parameters_b, hyper_states_b, g)
+                call var_to_control_hyper_lbfgsb(n, setup, hyper_parameters_b, hyper_states_b, g)
 
                 if (task(4:8) .eq. 'START') then
 
@@ -962,11 +931,11 @@ contains
         call hyper_parameters_to_parameters(hyper_parameters, parameters, setup, mesh, input_data)
         call hyper_states_to_states(hyper_states, states, setup, mesh, input_data)
 
-        call denormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+        call denormalize_descriptor_hyper_lbfgsb(setup, input_data, min_descriptor, max_descriptor)
 
-    end subroutine hyper_optimize_lbfgsb
+    end subroutine optimize_hyper_lbfgsb
 
-    subroutine normalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+    subroutine normalize_descriptor_hyper_lbfgsb(setup, input_data, min_descriptor, max_descriptor)
 
         implicit none
 
@@ -986,9 +955,9 @@ contains
 
         end do
 
-    end subroutine normalize_descriptor
+    end subroutine normalize_descriptor_hyper_lbfgsb
 
-    subroutine denormalize_descriptor(setup, input_data, min_descriptor, max_descriptor)
+    subroutine denormalize_descriptor_hyper_lbfgsb(setup, input_data, min_descriptor, max_descriptor)
 
         implicit none
 
@@ -1005,20 +974,21 @@ contains
 
         end do
 
-    end subroutine denormalize_descriptor
+    end subroutine denormalize_descriptor_hyper_lbfgsb
 
-    subroutine hyper_problem_initialise(hyper_parameters, hyper_states, nbd, l, u, setup, mesh, parameters, states)
+    subroutine problem_initialise_hyper_lbfgsb(n, setup, mesh, parameters, states, hyper_parameters, hyper_states, nbd, l, u)
 
         implicit none
 
-        type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
-        type(Hyper_StatesDT), intent(inout) :: hyper_states
-        integer, dimension(:), intent(inout) :: nbd
-        real(dp), dimension(:), intent(inout) :: l, u
+        integer, intent(in) :: n
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(ParametersDT), intent(in) :: parameters
         type(StatesDT), intent(in) :: states
+        type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
+        type(Hyper_StatesDT), intent(inout) :: hyper_states
+        integer, dimension(n), intent(inout) :: nbd
+        real(dp), dimension(n), intent(inout) :: l, u
 
         real(sp), dimension(mesh%nrow, mesh%ncol, GNP + GNS) :: matrix
         real(sp), dimension(setup%optimize%nhyper, 1, GNP + GNS) :: hyper_matrix
@@ -1101,16 +1071,17 @@ contains
         call set_hyper_parameters(setup, hyper_parameters, hyper_matrix(:, :, 1:GNP))
         call set_hyper_states(setup, hyper_states, hyper_matrix(:, :, GNP + 1:GNP + GNS))
 
-    end subroutine hyper_problem_initialise
+    end subroutine problem_initialise_hyper_lbfgsb
 
-    subroutine hyper_var_to_control(setup, hyper_parameters, hyper_states, x)
+    subroutine var_to_control_hyper_lbfgsb(n, setup, hyper_parameters, hyper_states, x)
 
         implicit none
 
+        integer, intent(in) :: n
         type(SetupDT), intent(in) :: setup
         type(Hyper_ParametersDT), intent(in) :: hyper_parameters
         type(Hyper_StatesDT), intent(in) :: hyper_states
-        real(dp), dimension(:), intent(inout) :: x
+        real(dp), dimension(n), intent(inout) :: x
 
         real(sp), dimension(setup%optimize%nhyper, 1, GNP + GNS) :: matrix
         integer, dimension(GNP + GNS) :: optim
@@ -1139,16 +1110,17 @@ contains
 
         end do
 
-    end subroutine hyper_var_to_control
+    end subroutine var_to_control_hyper_lbfgsb
 
-    subroutine hyper_control_to_var(setup, hyper_parameters, hyper_states, x)
+    subroutine control_to_var_hyper_lbfgsb(n, setup, hyper_parameters, hyper_states, x)
 
         implicit none
 
+        integer, intent(in) :: n
         type(SetupDT), intent(in) :: setup
         type(Hyper_ParametersDT), intent(inout) :: hyper_parameters
         type(Hyper_StatesDT), intent(inout) :: hyper_states
-        real(dp), dimension(:), intent(in) :: x
+        real(dp), dimension(n), intent(in) :: x
 
         real(sp), dimension(setup%optimize%nhyper, 1, GNP + GNS) :: matrix
         integer, dimension(GNP + GNS) :: optim
@@ -1180,6 +1152,6 @@ contains
         call set_hyper_parameters(setup, hyper_parameters, matrix(:, :, 1:GNP))
         call set_hyper_states(setup, hyper_states, matrix(:, :, GNP + 1:GNP + GNS))
 
-    end subroutine hyper_control_to_var
+    end subroutine control_to_var_hyper_lbfgsb
 
 end module mw_optimize
