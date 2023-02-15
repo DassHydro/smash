@@ -67,6 +67,14 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
 
     res["optimize.uniform_sbs_mtg.cost"] = output_cost(instance)
 
+    # % states hp optimization
+    instance = model.optimize(
+        control_vector=["cp", "hp"], options={"maxiter": 1}, verbose=False
+    )
+
+    res["optimize.uniform_sbs_states.cost"] = output_cost(instance)
+    res["optimize.uniform_sbs_states.hp"] = model.states.hp.copy()
+
     return res
 
 
@@ -76,6 +84,22 @@ def test_optimize():
     for key, value in res.items():
         # % Check cost in optimize
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+
+    # % Check that optimize sbs does not modify parameters that are not optimized
+    # % (case of spatially distributed prior only)
+    # % Does not need a baseline. Should work like this in any case
+    tmp = pytest.model.parameters.cft.copy()
+    pytest.model.parameters.cft = np.random.rand(*tmp.shape) + 500
+
+    instance = pytest.model.optimize(
+        control_vector="cp", options={"maxiter": 1}, verbose=False
+    )
+
+    assert np.array_equal(
+        pytest.model.parameters.cft, instance.parameters.cft
+    ), "optimize.uniform_sbs_sdp.cft"
+
+    pytest.model.parameters.cft = tmp.copy()
 
 
 def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:

@@ -1,13 +1,13 @@
-commit c610000d9a3366dce6e0e5308a0881d0afbdb213
-Merge: c7852a2 9bcce04
+commit 64ec95a2bf78c61f0eed0d161f93b8887299b519
+Merge: 7699010 133cda2
 Author: Colleoni François <francois.colleoni@inrae.fr>
-Date:   Mon Feb 13 15:18:55 2023 +0100
+Date:   Tue Feb 14 17:45:52 2023 +0100
 
-    Merge branch 'enc-py311-conda-env' into 'maintenance/0.2.x'
+    Merge branch 'maint-format-py-f90' into 'maintenance/0.2.x'
     
-    ENC: Update python version in conda env 3.10 -> 3.11
+    MAINT: Formatting of the files (new black version for python and fprettify for fortran)
     
-    See merge request francois.colleoni/smash!67
+    See merge request francois.colleoni/smash!69
 
 TEST NAME                               |STATUS
 ann_optimize_1.cost                     |NON MODIFIED
@@ -16,8 +16,8 @@ ann_optimize_2.cost                     |NON MODIFIED
 ann_optimize_2.loss                     |NON MODIFIED
 bayes_estimate.br_cost                  |NON MODIFIED
 bayes_estimate.cost                     |NON MODIFIED
-bayes_optimize.br_cost                  |MODIFIED
-bayes_optimize.cost                     |MODIFIED
+bayes_optimize.br_cost                  |NON MODIFIED
+bayes_optimize.cost                     |NON MODIFIED
 bbox_mesh.flwacc                        |NON MODIFIED
 bbox_mesh.flwdir                        |NON MODIFIED
 event_seg.arr                           |NON MODIFIED
@@ -47,12 +47,14 @@ net_init.weight_layer_1                 |NON MODIFIED
 net_init.weight_layer_2                 |NON MODIFIED
 net_init.weight_layer_3                 |NON MODIFIED
 net_init.weight_layer_4                 |NON MODIFIED
-optimize.distributed_l-bfgs-b.cost      |MODIFIED
+optimize.distributed_l-bfgs-b.cost      |NON MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost     |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost |NON MODIFIED
 optimize.uniform_nelder-mead.cost       |NON MODIFIED
 optimize.uniform_sbs.cost               |NON MODIFIED
 optimize.uniform_sbs_mtg.cost           |NON MODIFIED
+optimize.uniform_sbs_states.cost        |ADDED
+optimize.uniform_sbs_states.hp          |ADDED
 run.cost                                |NON MODIFIED
 signatures.cont_obs                     |NON MODIFIED
 signatures.cont_sim                     |NON MODIFIED
