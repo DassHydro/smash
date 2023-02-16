@@ -1,0 +1,183 @@
+.. _release_notes.0.3.0:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.3.0 Release Notes
+=========================
+
+The smash 0.3.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+- Update compatibility of Conda environments and Dockerfile.
+- Improvement of flow accumulation algorithm.
+- Improvement of event segmentation algorithm for different time steps in addition to hourly time step.
+- New hydrological structure.
+- New flow percentiles signatures in optimization.
+- New multi-site cost function aggregation method.
+- New method to save a sample of Model object data into hdf5.
+- Major fixes in distributed optimization and uniform optimization.
+
+---------------
+Compatibilities
+---------------
+
+Conda environment
+*****************
+
+- ``smash`` 
+    - environment has been updated to support Python 3.11. 
+    - The NumPy version has been pinned ``numpy>=1.13,<1.24`` because of compatibility issue with f90wrap library (see issue `here <https://github.com/jameskermode/f90wrap/issues/175>`__).
+
+- ``smash-dev`` 
+    - environment has been updated to support Python 3.11. 
+    - The NumPy version has been pinned ``numpy>=1.13,<1.24`` because of compatibility issue with f90wrap library (see issue `here <https://github.com/jameskermode/f90wrap/issues/175>`__). 
+    - The `fprettify <https://pypi.org/project/fprettify/>`__ library has been added to format dependencies. Formatting of Fortran files.
+
+Dockerfile
+**********
+
+The Dockerfile has been updated and works correctly on Visual Studio Code.
+
+------------
+Improvements
+------------
+
+Flow accumulation algorithm
+***************************
+
+The flow accumulation algorithm used in the :meth:`smash.generate_mesh` method has been changed. The new time complexity is :math:`O(N)`. 
+The algorithm is described `here <https://www.abstr-int-cartogr-assoc.net/1/434/2019/ica-abs-1-434-2019.pdf>`__ .
+
+Event segmentation on non-hourly time steps
+*******************************************
+
+The :meth:`Model.event_segmentation` method is now adapted for different time steps in addition to hourly time step.
+
+------------
+New Features
+------------
+
+gr-d Model structure
+********************
+
+A new model structure ``gr-d`` with 3 parameters (``cp``, ``cft``, ``lr``) and 3 states (``hp``, ``hft``, ``hlr``) derived from the GR model has been added. 
+
+.. note::
+    
+    More information can be find in the User Guide section: :ref:`Model structure <user_guide.model_structure.gr_d>`.
+
+Flow percentiles signatures optimization 
+****************************************
+
+The following signatures have been added to optimization:
+
+- ``Cfp2``
+   0.02-quantile from flow duration curve.
+
+- ``Cfp10``
+   0.1-quantile from flow duration curve.
+
+- ``Cfp50``
+   0.5-quantile from flow duration curve.
+
+- ``Cfp90``
+   0.9-quantile from flow duration curve.
+
+.. note::
+    
+    More information can be find in the Math / Num Documentation section :ref:`math_num_documentation.hydrological_signature`.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(jobs_fun=["nse", "Cfp2"])
+    
+Multi-site optimization with the median of the cost functions
+*************************************************************
+
+A new alias has been added to compute the median of the cost functions for a multi-site optimization.
+
+.. math::
+    
+    J_{obs} = \text{med}(J_{obs,k})
+    
+It can be used as follows:
+
+.. code-block:: python
+    
+    >>> model.optimize(wgauge="median")
+    
+Save a sample of the Model object data
+**************************************
+
+Two new methods `smash.save_model_ddt` and `smash.read_model_ddt` had been added to avoid to save all the data of the Model object (i.e. all precipitation data) but
+only the main data. A set of default has been choosen in order to facilitate the use of the method but any kind of data can be extra saved.
+
+.. note::
+    
+    More information can be find in the API reference section: :ref:`api_reference.io`.
+    
+It can be used as follows:
+
+To only save default data
+
+.. code-block:: python
+    
+    >>> smash.save_model_ddt(model, "model_ddt.hdf5")
+    
+To save default data and subsidiary data
+
+.. code-block:: python
+    
+    >>> smash.save_model_ddt(model, "model_ddt.hdf5", sub_data={"cost": model.output.cost})
+    
+To read the file
+
+.. code-block:: python
+
+    >>> dat = smash.read_model_ddt("model_ddt.hdf5")
+    
+-----
+Fixes
+-----
+
+Uniform optimization
+********************
+
+A bug has been find in spatially uniform optimization with the ``sbs`` algorithm. If one non-optimized parameter is spatially distributed. 
+Even if it is not optimized, its value at the output of the optimization is changed to a uniform value. This bug has been fixed by looping only on optimized parameters
+instead of all. This bug should have only impacted the following method:
+
+- :meth:`Model.optimize`
+    if ``mapping`` is set to ``uniform``, the ``algorithm`` is set to ``sbs`` and one of the non-optimized parameters is spatially distributed.
+    
+    .. code-block:: python
+    
+        # Assuming that cft is spatially distributed
+        >>> cft_before = model.parameters.cft.copy()
+        >>> model.optimize(mapping="uniform", algorithm="sbs", control_vector=["cp"], inplace=True)
+        >>> cft_after = model.parameters.cft.copy()
+        >>> np.array_equal(cft_before, cft_after)
+        False
+
+Distributed optimization
+************************
+
+A bug has been find in spatially distributed optimization. The gradients were not correctly computed with respect to the control vector normalization. 
+This bug has been fixed by moving the denormalization routine into the forward model which can be now seen by the inverse model. This bug should have only impacteted the
+following methods:
+
+- :meth:`Model.optimize`
+   if ``mapping`` argument is set to ``distributed``.
+   
+   .. code-block:: python
+        
+        >>> model.optimize(mapping="distributed")
+
+- :meth:`Model.bayes_optimize`
+   if ``mapping`` argument is set to ``distributed``.
+   
+   .. code-block:: python
+        
+        >>> model.bayes_optimize(mapping="distributed")

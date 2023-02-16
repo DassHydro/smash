@@ -142,6 +142,8 @@ Operating
 - filling the routing storage by the upstream flux :math:`Q_{up}`,
 - computation of the final routed flow :math:`Q` at the output of the routing storage.
 
+.. _user_guide.model_structure.gr_d:
+
 gr-d
 ''''
 

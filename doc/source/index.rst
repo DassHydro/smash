@@ -91,5 +91,5 @@ smash documentation
    user_guide/index
    api_reference/index
    math_num_documentation/index
-
-   more/biblio
+   release/index
+   bibliography/index
