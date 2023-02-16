@@ -17,7 +17,9 @@ There are 3 different structures available:
 - "gr-c"
     5 parameters and 5 states structure derived from the GR model.
     
-
+- "gr-d"
+    3 parameters and 3 states structure derived from the GR model.
+    
 .. note::
     see the :ref:`Math / Num Documentation <math_num_documentation.hydrological_operators.gr>` for more information about GR model.
     
@@ -47,7 +49,7 @@ States
 
 - ``hp``: the relative state of the production storage :math:`(-)`,
 - ``hft``: the relative state of the transfer storage :math:`(-)`,
-- ``hr``: the absolute state of the routing storage :math:`(mm)`.
+- ``hlr``: the absolute state of the routing storage :math:`(mm)`.
 
 Operating
 *********
@@ -57,8 +59,8 @@ Operating
 - splitting :math:`P_r` into two branches, 90% filling the transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in both branches,
 - summing :math:`Q_{ft}`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
-- filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
-- calculation of the final routed flow :math:`Q` at the output of the routing storage.
+- filling the routing storage by the upstream flux :math:`Q_{up}`,
+- computation of the final routed flow :math:`Q` at the output of the routing storage.
 
 gr-b
 ''''
@@ -81,7 +83,7 @@ States
 - ``hi``: the relative state of the interception storage :math:`(-)`,
 - ``hp``: the relative state of the production storage :math:`(-)`,
 - ``hft``: the relative state of the transfer storage :math:`(-)`,
-- ``hr``: the absolute state of the routing storage :math:`(mm)`.
+- ``hlr``: the absolute state of the routing storage :math:`(mm)`.
 
 Operating
 *********
@@ -96,8 +98,8 @@ Operating
 - splitting :math:`P_r` into two branches, 90% filling the transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in both branches,
 - summing :math:`Q_{ft}`, the outgoing flux of the transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
-- filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
-- calculation of the final routed flow :math:`Q` at the output of the routing storage.
+- filling the routing storage by the upstream flux :math:`Q_{up}`,
+- computation of the final routed flow :math:`Q` at the output of the routing storage.
 
 gr-c
 ''''
@@ -122,7 +124,7 @@ States
 - ``hp``: the relative state of the production storage :math:`(-)`,
 - ``hft``: the relative state of the transfer storage :math:`(-)`,
 - ``hst``: the relative state of the transfer storage :math:`(-)`,
-- ``hr``: the absolute state of the routing storage :math:`(mm)`.
+- ``hlr``: the absolute state of the routing storage :math:`(mm)`.
 
 Operating
 *********
@@ -137,5 +139,38 @@ Operating
 - splitting :math:`P_r` into three branches, 54% filling the first transfer storage, 36% filling the second transfer storage and 10% into the direct branch,
 - application of the non-conservative flux :math:`F` (which can be either positive or negative) in the first transfer and direct branches,
 - summing :math:`Q_{ft}`, the outgoing flux of the first transfer storage, :math:`Q_{st}`, the outgoing flux of the second transfer storage and :math:`Q_d`, the outgoing flux of the direct branch giving the cell flux :math:`Q_t`,
-- filling the routing storage by the upstream flux :math:`Q_{up}` and the cell flux :math:`Q_t`,
-- calculation of the final routed flow :math:`Q` at the output of the routing storage.
+- filling the routing storage by the upstream flux :math:`Q_{up}`,
+- computation of the final routed flow :math:`Q` at the output of the routing storage.
+
+.. _user_guide.model_structure.gr_d:
+
+gr-d
+''''
+
+.. image:: ../../_static/diagram_gr-d.png
+    :width: 300
+    :align: center
+    
+Parameters
+**********
+
+- ``cp``: the maximum capacity of the production storage :math:`(mm)`,
+- ``cft``: the maximum capacity of the transfer storage :math:`(mm)`,
+- ``lr``: the linear routing parameter :math:`(min)`.
+
+States
+******
+
+- ``hp``: the relative state of the production storage :math:`(-)`,
+- ``hft``: the relative state of the transfer storage :math:`(-)`,
+- ``hlr``: the absolute state of the routing storage :math:`(mm)`.
+
+Operating
+*********
+
+- neutralization of :math:`P` by :math:`E` to determine a net rainfall :math:`P_n` and a net evapotranspiration :math:`E_n`,
+- filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
+- :math:`P_r` inflows the transfer storage,
+- :math:`Q_{ft}`, the outgoing flux of the transfer storage, is the cell flux :math:`Q_t`,
+- filling the routing storage by the upstream flux :math:`Q_{up}`,
+- computation of the final routed flow :math:`Q` at the output of the routing storage.

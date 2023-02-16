@@ -121,7 +121,6 @@ def generate_samples(
         np.random.seed(random_state)
 
     for i, p in enumerate(problem["names"]):
-
         low = problem["bounds"][i][0]
         upp = problem["bounds"][i][1]
 
@@ -132,11 +131,9 @@ def generate_samples(
             ubi = [backg_sol[i]]
 
         if generator == "uniform":
-
             df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
 
         elif generator in ["normal", "gaussian"]:
-
             if coef_std is None:
                 sd = (upp - low) / 3
 
@@ -160,12 +157,10 @@ def generate_samples(
 
 
 def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):
-
     return truncnorm((low - mean) / sd, (upp - mean) / sd, loc=mean, scale=sd)
 
 
 def _get_bound_constraints(setup: SetupDT, states: bool):
-
     if states:
         control_vector = STRUCTURE_STATES[setup.structure]
 
@@ -175,16 +170,13 @@ def _get_bound_constraints(setup: SetupDT, states: bool):
     bounds = []
 
     for name in control_vector:
-
         if name in setup._states_name:
-
             ind = np.argwhere(setup._states_name == name)
 
             l = setup._optimize.lb_states[ind].item()
             u = setup._optimize.ub_states[ind].item()
 
         else:
-
             ind = np.argwhere(setup._parameters_name == name)
 
             l = setup._optimize.lb_parameters[ind].item()
@@ -202,17 +194,13 @@ def _get_bound_constraints(setup: SetupDT, states: bool):
 
 
 def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
-
     if problem is None:
-
         problem = _get_bound_constraints(setup, states)
 
     elif isinstance(problem, dict):
-
         prl_keys = problem.keys()
 
         if not all(k in prl_keys for k in PROBLEM_KEYS):
-
             raise KeyError(
                 f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
             )
@@ -220,7 +208,6 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
         unk_keys = tuple(k for k in prl_keys if k not in PROBLEM_KEYS)
 
         if unk_keys:
-
             warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}")
 
     else:

@@ -33,15 +33,12 @@ import numpy as np
 
 
 def _parse_derived_type(derived_type: SetupDT | MeshDT, data: dict):
-
     """
     Derived type parser
     """
 
     for key, value in data.items():
-
         if hasattr(derived_type, key):
-
             setattr(derived_type, key, value)
 
         else:
@@ -51,7 +48,6 @@ def _parse_derived_type(derived_type: SetupDT | MeshDT, data: dict):
 
 
 def _standardize_setup(setup: SetupDT):
-
     """
     Check every SetupDT error/warning exception
     """
@@ -162,7 +158,6 @@ def _standardize_setup(setup: SetupDT):
 
 
 def _build_setup(setup: SetupDT):
-
     """
     Build setup
     """
@@ -177,7 +172,6 @@ def _build_setup(setup: SetupDT):
 
 
 def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
-
     """
     Check every MeshDT error/warning exception
     """
@@ -200,12 +194,11 @@ def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
     if np.all(mesh.flwdir == -99):
         raise ValueError("argument flwdir of MeshDT contains only NaN value")
 
-    if np.all(mesh.drained_area == -99):
-        raise ValueError("argument drained_area of MeshDT contains only NaN value")
+    if np.all(mesh.flwacc == -99):
+        raise ValueError("argument flwacc of MeshDT contains only NaN value")
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
-
     """
     Build mesh
     """
@@ -213,44 +206,35 @@ def _build_mesh(setup: SetupDT, mesh: MeshDT):
     _standardize_mesh(setup, mesh)
 
     if setup.sparse_storage:
-
-        compute_rowcol_to_ind_sparse(mesh)  #% Fortran subroutine mw_routine
+        compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine mw_routine
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-
     """
     Build input_data
     """
 
     if setup.read_qobs:
-
         _read_qobs(setup, mesh, input_data)
 
     if setup.read_prcp:
-
         _read_prcp(setup, mesh, input_data)
 
     if setup.read_pet:
-
         _read_pet(setup, mesh, input_data)
 
     if setup.mean_forcing:
-
-        compute_mean_forcing(setup, mesh, input_data)  #% Fortran subroutine mw_routine
+        compute_mean_forcing(setup, mesh, input_data)  # % Fortran subroutine mw_routine
 
     if setup.read_descriptor:
-
         _read_descriptor(setup, mesh, input_data)
 
 
 def _build_parameters(
     setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, parameters: ParametersDT
 ):
-
     if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400:
-
-        #% Handle dates with Python before calling Fortran subroutine
+        # % Handle dates with Python before calling Fortran subroutine
         date_range = pd.date_range(
             start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s"
         )[1:].strftime("%Y%m%d")
@@ -258,7 +242,6 @@ def _build_parameters(
         n = 1
         day_index = np.ones(shape=len(date_range), dtype=np.int64)
         for i in range(1, len(date_range)):
-
             if date_range[i] != date_range[i - 1]:
                 n += 1
 
@@ -266,4 +249,4 @@ def _build_parameters(
 
         adjust_interception_store(
             setup, mesh, input_data, parameters, n, day_index
-        )  #% Fortran subroutine _mw_interception_store
+        )  # % Fortran subroutine _mw_interception_store

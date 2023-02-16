@@ -186,14 +186,14 @@ To get into the details:
     @savefig flwdir_rc_Cance_user_guide.png
     plt.title("Real case - Cance - Flow direction");
     
-- ``dirained_area``: the drained area in number of cells,
+- ``flwacc``: the flow accumulation in number of cells,
 
 .. ipython:: python
     
-    plt.imshow(mesh["drained_area"]);
-    plt.colorbar(label="Drained area (nb cells)");
-    @savefig da_rc_Cance_user_guide.png
-    plt.title("Real case - Cance - Drained area");
+    plt.imshow(mesh["flwacc"]);
+    plt.colorbar(label="Flow accumulation (nb cells)");
+    @savefig flwacc_rc_Cance_user_guide.png
+    plt.title("Real case - Cance - Flow accumulation");
     
 - ``flwdst``: the flow distances from the main outlet in m,
 
@@ -378,6 +378,7 @@ We can visualize the simulated discharges after a forward run for the most downs
     @savefig qsim_fw_rc_user_guide.png
     plt.legend();
 
+.. _quickstart.cance.optimization:
 
 Optimization
 ************
@@ -424,8 +425,8 @@ While the optimization routine is in progress, some information are provided.
         wg: 1 [ 1.0 ]
 
         At iterate      0    nfg =     1    J =  0.677404    ddx = 0.64
-        At iterate      1    nfg =    30    J =  0.130163    ddx = 0.64
-        At iterate      2    nfg =    59    J =  0.044362    ddx = 0.32
+        At iterate      1    nfg =    30    J =  0.130012    ddx = 0.64
+        At iterate      2    nfg =    59    J =  0.043658    ddx = 0.32
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
 This information remainds the ptimization options:
@@ -496,7 +497,7 @@ We consider here for optimization:
 - a spatially distributed parameter set :math:`\theta = \left( \mathrm{cp, cft, lr, exc} \right)^T` with :math:`\mathrm{cp}` being the maximum capacity of the production reservoir, :math:`\mathrm{cft}` being the maximum capacity of the transfer reservoir, :math:`\mathrm{lr}` being the linear routing parameter and :math:`\mathrm{exc}` being the non-conservative exchange parameter.
 - a prior set of parameters :math:`\bar{\theta}^*` generated from the previous spatially uniform global optimization.
 
-Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 10.
+Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with "distributed" and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 15.
 
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model_su`` instance which had stored the previous optimized parameters.
 
@@ -505,7 +506,7 @@ As we run this optimization from the previously generated uniform parameter set,
 
     model_sd = model_su.optimize(
             mapping="distributed",
-            options={"maxiter": 10}
+            options={"maxiter": 15}
         )
 
 .. ipython:: python
@@ -513,7 +514,7 @@ As we run this optimization from the previously generated uniform parameter set,
 
     model_sd = model_su.optimize(
             mapping="distributed",
-            options={"maxiter": 10}
+            options={"maxiter": 15}
         )
     
 While the optimization routine is in progress, some information are provided.
@@ -533,17 +534,22 @@ While the optimization routine is in progress, some information are provided.
         Ng: 1 [ V3524010 ]
         wg: 1 [ 1.0 ]
 
-        At iterate      0    nfg =     1    J =  0.044362    |proj g| =  0.000000
-        At iterate      1    nfg =     2    J =  0.044120    |proj g| =  0.000144
-        At iterate      2    nfg =     3    J =  0.039302    |proj g| =  0.000076
-        At iterate      3    nfg =     4    J =  0.038627    |proj g| =  0.000088
-        At iterate      4    nfg =     5    J =  0.035662    |proj g| =  0.000019
-        At iterate      5    nfg =     7    J =  0.034909    |proj g| =  0.000011
-        At iterate      6    nfg =     8    J =  0.033658    |proj g| =  0.000010
-        At iterate      7    nfg =     9    J =  0.032117    |proj g| =  0.000013
-        At iterate      8    nfg =    10    J =  0.031270    |proj g| =  0.000010
-        At iterate      9    nfg =    11    J =  0.028342    |proj g| =  0.000076
-        At iterate     10    nfg =    12    J =  0.026772    |proj g| =  0.000025
+        At iterate      0    nfg =     1    J =  0.043658    |proj g| =  0.000000
+        At iterate      1    nfg =     3    J =  0.039536    |proj g| =  0.025741
+        At iterate      2    nfg =     4    J =  0.039269    |proj g| =  0.010773
+        At iterate      3    nfg =     5    J =  0.039050    |proj g| =  0.012686
+        At iterate      4    nfg =     6    J =  0.038270    |proj g| =  0.031537
+        At iterate      5    nfg =     7    J =  0.037304    |proj g| =  0.035111
+        At iterate      6    nfg =     8    J =  0.036115    |proj g| =  0.029365
+        At iterate      7    nfg =     9    J =  0.035208    |proj g| =  0.007301
+        At iterate      8    nfg =    10    J =  0.034932    |proj g| =  0.015130
+        At iterate      9    nfg =    11    J =  0.034774    |proj g| =  0.018046
+        At iterate     10    nfg =    12    J =  0.034298    |proj g| =  0.013504
+        At iterate     11    nfg =    13    J =  0.033304    |proj g| =  0.012190
+        At iterate     12    nfg =    14    J =  0.031491    |proj g| =  0.014053
+        At iterate     13    nfg =    15    J =  0.029747    |proj g| =  0.012535
+        At iterate     14    nfg =    16    J =  0.028294    |proj g| =  0.031778
+        At iterate     15    nfg =    18    J =  0.027901    |proj g| =  0.003941
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
         
         

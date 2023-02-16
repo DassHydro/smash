@@ -5,7 +5,7 @@ from smash.solver._mw_adjoint_test import scalar_product_test
 from smash.solver._mw_optimize import (
     optimize_sbs,
     optimize_lbfgsb,
-    hyper_optimize_lbfgsb,
+    optimize_hyper_lbfgsb,
 )
 
 from smash.core._event_segmentation import _mask_event
@@ -37,10 +37,9 @@ def _optimize_sbs(
     maxiter: int = 100,
     **unknown_options,
 ):
-
     _check_unknown_options(unknown_options)
 
-    #% Fortran verbose
+    # % Fortran verbose
     instance.setup._optimize.verbose = verbose
 
     # send mask_event to Fortran in case of event signatures based optimization
@@ -50,9 +49,7 @@ def _optimize_sbs(
     instance.setup._optimize.algorithm = "sbs"
 
     for i, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
-
             ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
@@ -60,9 +57,8 @@ def _optimize_sbs(
             instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
             instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
 
-        #% Already check, must be states if not parameters
+        # % Already check, must be states if not parameters
         else:
-
             ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
@@ -114,10 +110,9 @@ def _optimize_lbfgsb(
     adjoint_test: bool = False,
     **unknown_options,
 ):
-
     _check_unknown_options(unknown_options)
 
-    #% Fortran verbose
+    # % Fortran verbose
     instance.setup._optimize.verbose = verbose
 
     # send mask_event to Fortran in case of event signatures based optimization
@@ -127,9 +122,7 @@ def _optimize_lbfgsb(
     instance.setup._optimize.algorithm = "l-bfgs-b"
 
     for i, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
-
             ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
@@ -137,9 +130,8 @@ def _optimize_lbfgsb(
             instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
             instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
 
-        #% Already check, must be states if not parameters
+        # % Already check, must be states if not parameters
         else:
-
             ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
@@ -164,13 +156,12 @@ def _optimize_lbfgsb(
     instance.setup._optimize.wjreg = wjreg
 
     if instance.setup._optimize.mapping.startswith("hyper"):
-
-        #% Add Adjoint test for hyper
+        # % Add Adjoint test for hyper
 
         if verbose:
             _optimize_message(instance, control_vector, mapping)
 
-        hyper_optimize_lbfgsb(
+        optimize_hyper_lbfgsb(
             instance.setup,
             instance.mesh,
             instance.input_data,
@@ -180,9 +171,7 @@ def _optimize_lbfgsb(
         )
 
     else:
-
         if adjoint_test:
-
             scalar_product_test(
                 instance.setup,
                 instance.mesh,
@@ -254,7 +243,6 @@ def _optimize_nelder_mead(
     callback_args = {"iterate": 0, "nfg": 0, "J": 0, "verbose": verbose}
 
     if mapping == "uniform":
-
         parameters_bgd = instance.parameters.copy()
         states_bgd = instance.states.copy()
 
@@ -287,7 +275,6 @@ def _optimize_nelder_mead(
 
     #! WIP
     elif mapping == "hyper-linear":
-
         #! Change for hyper_ regularization
         parameters_bgd = instance.parameters.copy()
         states_bgd = instance.states.copy()
@@ -330,7 +317,6 @@ def _optimize_nelder_mead(
     _callback(res.x)
 
     if verbose:
-
         if res.success:
             print(f"{' ' * 4}CONVERGENCE: (XATOL, FATOL) < ({xatol}, {fatol})")
 
@@ -339,7 +325,6 @@ def _optimize_nelder_mead(
 
 
 def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str):
-
     sp4 = " " * 4
 
     algorithm = instance.setup._optimize.algorithm
@@ -352,7 +337,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     code = [
         el
         for ind, el in enumerate(instance.mesh.code)
-        if instance.setup._optimize.wgauge[ind] > 0
+        if instance.setup._optimize.wgauge[ind] != 0
     ]
     wgauge = np.array([el for el in instance.setup._optimize.wgauge if el > 0])
 
@@ -401,7 +386,6 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
 
 def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.ndarray:
-
     ac_ind = np.unravel_index(
         np.argmax(instance.mesh.active_cell, axis=None), instance.mesh.active_cell.shape
     )
@@ -409,13 +393,10 @@ def _parameters_states_to_x(instance: Model, control_vector: np.ndarray) -> np.n
     x = np.zeros(shape=control_vector.size, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
-
             x[ind] = getattr(instance.parameters, name)[ac_ind]
 
         else:
-
             x[ind] = getattr(instance.states, name)[ac_ind]
 
     return x
@@ -426,7 +407,6 @@ def _hyper_parameters_states_to_x(
     control_vector: np.ndarray,
     bounds: np.ndarray,
 ) -> np.ndarray:
-
     ac_ind = np.unravel_index(
         np.argmax(instance.mesh.active_cell, axis=None), instance.mesh.active_cell.shape
     )
@@ -436,15 +416,12 @@ def _hyper_parameters_states_to_x(
     x = np.zeros(shape=control_vector.size * nd_step, dtype=np.float32)
 
     for ind, name in enumerate(control_vector):
-
         lb, ub = bounds[ind, :]
 
         if name in instance.setup._parameters_name:
-
             y = getattr(instance.parameters, name)[ac_ind]
 
         else:
-
             y = getattr(instance.states, name)[ac_ind]
 
         x[ind * nd_step] = np.log((y - lb) / (ub - y))
@@ -453,11 +430,8 @@ def _hyper_parameters_states_to_x(
 
 
 def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: np.ndarray):
-
     for ind, name in enumerate(control_vector):
-
         if name in instance.setup._parameters_name:
-
             setattr(
                 instance.parameters,
                 name,
@@ -469,7 +443,6 @@ def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: np.n
             )
 
         else:
-
             setattr(
                 instance.states,
                 name,
@@ -484,17 +457,14 @@ def _x_to_parameters_states(x: np.ndarray, instance: Model, control_vector: np.n
 def _x_to_hyper_parameters_states(
     x: np.ndarray, instance: Model, control_vector: np.ndarray, bounds: np.ndarray
 ):
-
     nd_step = 1 + instance.setup._nd
 
     for ind, name in enumerate(control_vector):
-
         value = x[ind * nd_step] * np.ones(
             shape=(instance.mesh.nrow, instance.mesh.ncol), dtype=np.float32
         )
 
         for i in range(instance.setup._nd):
-
             value += x[ind * nd_step + (i + 1)] * instance.input_data.descriptor[..., i]
 
         lb, ub = bounds[ind, :]
@@ -502,18 +472,15 @@ def _x_to_hyper_parameters_states(
         y = (ub - lb) * (1.0 / (1.0 + np.exp(-value))) + lb
 
         if name in instance.setup._parameters_name:
-
             setattr(instance.parameters, name, y)
 
         else:
-
             setattr(instance.states, name, y)
 
 
 def _normalize_descriptor(
     instance: Model, min_descriptor: np.ndarray, max_descriptor: np.ndarray
 ):
-
     for i in range(instance.setup._nd):
         min_descriptor[i] = np.amin(instance.input_data.descriptor[..., i])
         max_descriptor[i] = np.amax(instance.input_data.descriptor[..., i])
@@ -526,7 +493,6 @@ def _normalize_descriptor(
 def _denormalize_descriptor(
     instance: Model, min_descriptor: np.ndarray, max_descriptor: np.ndarray
 ):
-
     for i in range(instance.setup._nd):
         instance.input_data.descriptor[..., i] = (
             instance.input_data.descriptor[..., i]
@@ -542,7 +508,6 @@ def _problem(
     parameters_bgd: ParametersDT,
     states_bgd: StatesDT,
 ):
-
     global callback_args
 
     _x_to_parameters_states(x, instance, control_vector)
@@ -575,7 +540,6 @@ def _hyper_problem(
     states_bgd: StatesDT,
     bounds: np.ndarray,
 ):
-
     global callback_args
 
     _x_to_hyper_parameters_states(x, instance, control_vector, bounds)
@@ -601,11 +565,9 @@ def _hyper_problem(
 
 
 def _callback(x: np.ndarray, *args):
-
     global callback_args
 
     if callback_args["verbose"]:
-
         sp4 = " " * 4
 
         ret = []
@@ -621,7 +583,6 @@ def _callback(x: np.ndarray, *args):
 
 
 def _check_unknown_options(unknown_options: dict):
-
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
         warnings.warn("Unknown algorithm options: '%s'" % msg)

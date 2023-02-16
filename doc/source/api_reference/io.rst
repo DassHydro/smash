@@ -31,3 +31,12 @@ Model
    save_model
    read_model
 
+Model derived data
+******************
+
+.. autosummary::
+   :toctree: smash/
+
+   save_model_ddt
+   read_model_ddt
+

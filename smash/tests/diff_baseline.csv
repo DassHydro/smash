@@ -1,0 +1,81 @@
+commit 64ec95a2bf78c61f0eed0d161f93b8887299b519
+Merge: 7699010 133cda2
+Author: Colleoni François <francois.colleoni@inrae.fr>
+Date:   Tue Feb 14 17:45:52 2023 +0100
+
+    Merge branch 'maint-format-py-f90' into 'maintenance/0.2.x'
+    
+    MAINT: Formatting of the files (new black version for python and fprettify for fortran)
+    
+    See merge request francois.colleoni/smash!69
+
+TEST NAME                               |STATUS
+ann_optimize_1.cost                     |NON MODIFIED
+ann_optimize_1.loss                     |NON MODIFIED
+ann_optimize_2.cost                     |NON MODIFIED
+ann_optimize_2.loss                     |NON MODIFIED
+bayes_estimate.br_cost                  |NON MODIFIED
+bayes_estimate.cost                     |NON MODIFIED
+bayes_optimize.br_cost                  |NON MODIFIED
+bayes_optimize.cost                     |NON MODIFIED
+bbox_mesh.flwacc                        |NON MODIFIED
+bbox_mesh.flwdir                        |NON MODIFIED
+event_seg.arr                           |NON MODIFIED
+gen_samples.nor                         |NON MODIFIED
+gen_samples.uni                         |NON MODIFIED
+mesh_io.active_cell                     |NON MODIFIED
+mesh_io.area                            |NON MODIFIED
+mesh_io.code                            |NON MODIFIED
+mesh_io.dx                              |NON MODIFIED
+mesh_io.flwacc                          |NON MODIFIED
+mesh_io.flwdir                          |NON MODIFIED
+mesh_io.flwdst                          |NON MODIFIED
+mesh_io.gauge_pos                       |NON MODIFIED
+mesh_io.nac                             |NON MODIFIED
+mesh_io.ncol                            |NON MODIFIED
+mesh_io.ng                              |NON MODIFIED
+mesh_io.nrow                            |NON MODIFIED
+mesh_io.path                            |NON MODIFIED
+mesh_io.xmin                            |NON MODIFIED
+mesh_io.ymax                            |NON MODIFIED
+net_init.bias_layer_1                   |NON MODIFIED
+net_init.bias_layer_2                   |NON MODIFIED
+net_init.bias_layer_3                   |NON MODIFIED
+net_init.bias_layer_4                   |NON MODIFIED
+net_init.graph                          |NON MODIFIED
+net_init.weight_layer_1                 |NON MODIFIED
+net_init.weight_layer_2                 |NON MODIFIED
+net_init.weight_layer_3                 |NON MODIFIED
+net_init.weight_layer_4                 |NON MODIFIED
+optimize.distributed_l-bfgs-b.cost      |NON MODIFIED
+optimize.hyper-linear_l-bfgs-b.cost     |NON MODIFIED
+optimize.hyper-polynomial_l-bfgs-b.cost |NON MODIFIED
+optimize.uniform_nelder-mead.cost       |NON MODIFIED
+optimize.uniform_sbs.cost               |NON MODIFIED
+optimize.uniform_sbs_mtg.cost           |NON MODIFIED
+optimize.uniform_sbs_states.cost        |ADDED
+optimize.uniform_sbs_states.hp          |ADDED
+run.cost                                |NON MODIFIED
+signatures.cont_obs                     |NON MODIFIED
+signatures.cont_sim                     |NON MODIFIED
+signatures.event_obs                    |NON MODIFIED
+signatures.event_sim                    |NON MODIFIED
+signatures_sens.cont_first_si_cft       |NON MODIFIED
+signatures_sens.cont_first_si_cp        |NON MODIFIED
+signatures_sens.cont_first_si_exc       |NON MODIFIED
+signatures_sens.cont_first_si_lr        |NON MODIFIED
+signatures_sens.cont_total_si_cft       |NON MODIFIED
+signatures_sens.cont_total_si_cp        |NON MODIFIED
+signatures_sens.cont_total_si_exc       |NON MODIFIED
+signatures_sens.cont_total_si_lr        |NON MODIFIED
+signatures_sens.event_first_si_cft      |NON MODIFIED
+signatures_sens.event_first_si_cp       |NON MODIFIED
+signatures_sens.event_first_si_exc      |NON MODIFIED
+signatures_sens.event_first_si_lr       |NON MODIFIED
+signatures_sens.event_total_si_cft      |NON MODIFIED
+signatures_sens.event_total_si_cp       |NON MODIFIED
+signatures_sens.event_total_si_exc      |NON MODIFIED
+signatures_sens.event_total_si_lr       |NON MODIFIED
+xy_mesh.flwacc                          |NON MODIFIED
+xy_mesh.flwdir                          |NON MODIFIED
+xy_mesh.flwdst                          |NON MODIFIED

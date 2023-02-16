@@ -92,11 +92,8 @@ class Model(object):
     """
 
     def __init__(self, setup: dict, mesh: dict):
-
         if setup or mesh:
-
             if isinstance(setup, dict):
-
                 descriptor_name = setup.get("descriptor_name", [])
 
                 nd = 1 if isinstance(descriptor_name, str) else len(descriptor_name)
@@ -106,7 +103,6 @@ class Model(object):
                 _parse_derived_type(self.setup, setup)
 
             else:
-
                 raise TypeError(
                     f"'setup' argument must be dictionary, not {type(setup)}"
                 )
@@ -114,7 +110,6 @@ class Model(object):
             _build_setup(self.setup)
 
             if isinstance(mesh, dict):
-
                 self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
 
                 _parse_derived_type(self.mesh, mesh)
@@ -139,7 +134,6 @@ class Model(object):
             self._last_update = "Initialization"
 
     def __repr__(self):
-
         structure = f"Structure: '{self.setup.structure}'"
         dim = f"Spatio-Temporal dimension: (x: {self.mesh.ncol}, y: {self.mesh.nrow}, time: {self.setup._ntime_step})"
         last_update = f"Last update: {self._last_update}"
@@ -148,7 +142,6 @@ class Model(object):
 
     @property
     def setup(self):
-
         """
         The setup of the Model.
 
@@ -185,7 +178,6 @@ class Model(object):
 
     @setup.setter
     def setup(self, value):
-
         if isinstance(value, SetupDT):
             self._setup = value
 
@@ -213,11 +205,12 @@ class Model(object):
         model.mesh.area          model.mesh.nac
         model.mesh.code          model.mesh.ncol
         model.mesh.copy(         model.mesh.ng
-        model.mesh.drained_area  model.mesh.nrow
-        model.mesh.dx            model.mesh.path
+        model.mesh.dx            model.mesh.nrow
+        model.mesh.flwacc        model.mesh.path
         model.mesh.flwdir        model.mesh.xmin
         model.mesh.flwdst        model.mesh.ymax
         model.mesh.from_handle(
+
 
         Notes
         -----
@@ -228,7 +221,6 @@ class Model(object):
 
     @mesh.setter
     def mesh(self, value):
-
         if isinstance(value, MeshDT):
             self._mesh = value
 
@@ -266,7 +258,6 @@ class Model(object):
 
     @input_data.setter
     def input_data(self, value):
-
         if isinstance(value, Input_DataDT):
             self._input_data = value
 
@@ -309,9 +300,7 @@ class Model(object):
 
     @parameters.setter
     def parameters(self, value):
-
         if isinstance(value, ParametersDT):
-
             self._parameters = value
 
         else:
@@ -349,9 +338,7 @@ class Model(object):
 
     @states.setter
     def states(self, value):
-
         if isinstance(value, StatesDT):
-
             self._states = value
 
         else:
@@ -390,9 +377,7 @@ class Model(object):
 
     @output.setter
     def output(self, value):
-
         if isinstance(value, OutputDT):
-
             self._output = value
 
         else:
@@ -402,14 +387,11 @@ class Model(object):
 
     @property
     def _last_update(self):
-
         return self.__last_update
 
     @_last_update.setter
     def _last_update(self, value):
-
         if isinstance(value, str):
-
             self.__last_update = value
 
         else:
@@ -493,14 +475,12 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
-        print("</> Model Run Y = M (k)")
+        print("</> Run Model")
 
         cost = np.float32(0)
 
@@ -519,7 +499,6 @@ class Model(object):
         instance._last_update = "Forward Run"
 
         if not inplace:
-
             return instance
 
     def optimize(
@@ -586,7 +565,7 @@ class Model(object):
             - ``Classical Objective Function``
                 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
             - ``Continuous Signature``
-                'Crc'
+                'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90'
             - ``Flood Event Signature``
                 'Epf', 'Elt', 'Erc'
 
@@ -622,7 +601,7 @@ class Model(object):
             Type of gauge weights. There are two ways to specify it:
 
             1. A sequence of value whose size must be equal to the number of gauges optimized.
-            2. An alias among ``mean``, ``area`` or ``minv_area``.
+            2. An alias among ``mean``, ``median``, ``area`` or ``minv_area``.
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
@@ -661,13 +640,13 @@ class Model(object):
         >>> model
         Structure: 'gr-a'
         Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
-        Last update: Step By Step Optimization
+        Last update: SBS Optimization
 
         Access to simulated discharge
 
         >>> model.output.qsim[0,:]
-        array([5.7140866e-04, 4.7018618e-04, 3.5345653e-04, ..., 1.9009293e+01,
-               1.8772749e+01, 1.8541389e+01], dtype=float32)
+        array([5.7140866e-04, 4.7018618e-04, 3.5345653e-04, ..., 1.9017689e+01,
+               1.8781073e+01, 1.8549627e+01], dtype=float32)
 
         Access to optimized parameters
 
@@ -680,20 +659,18 @@ class Model(object):
         ... "exc", model.parameters.exc[ind],
         ... "lr", model.parameters.lr[ind],
         ... )
-        ('cp', 76.57858, 'cft', 263.64627, 'exc', -1.4613823, 'lr', 30.859276)
+        ('cp', 76.57858, 'cft', 263.64627, 'exc', -1.455813, 'lr', 30.859276)
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
-        print("</> Optimize Model J")
+        print("</> Optimize Model")
 
-        #% standardize args
+        # % standardize args
         (
             mapping,
             algorithm,
@@ -739,7 +716,6 @@ class Model(object):
         instance._last_update = f"{algorithm.upper()} Optimization"
 
         if not inplace:
-
             return instance
 
     def bayes_estimate(
@@ -836,16 +812,14 @@ class Model(object):
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
-        print("</> Bayes Estimate Model J")
+        print("</> Bayes Estimate Model")
 
-        #% standardize args
+        # % standardize args
         (
             control_vector,
             jobs_fun,
@@ -898,7 +872,6 @@ class Model(object):
         instance._last_update = "Bayesian Estimation"
 
         if return_br:
-
             if not inplace:
                 return instance, res
 
@@ -906,7 +879,6 @@ class Model(object):
                 return res
 
         else:
-
             if not inplace:
                 return instance
 
@@ -1017,28 +989,25 @@ class Model(object):
         >>> cost = br.data["cost"]
         >>> cost.sort()  # sort the values by ascending order
         >>> cost
-        array([0.06491096, 0.07514387, 0.07857202, 0.07885404, 0.0957346 ,
+        array([0.04417887, 0.04713613, 0.05019313, 0.0512022 , 0.0563822 ,
             ...
-            1.16908765, 1.17005932, 1.17838395, 1.17910016, 1.19542003])
+            1.14625084, 1.15444124, 1.17005932, 1.19171917, 1.19486201])
 
         Compare to the cost value of the Model with the optimized parameters using Bayesian apporach
 
         >>> model.output.cost
-        0.048890236765146255
-
+        0.04369253292679787
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
-        print("</> Bayes Optimize Model J")
+        print("</> Bayes Optimize Model")
 
-        #% standardize args
+        # % standardize args
         (
             mapping,
             algorithm,
@@ -1097,7 +1066,6 @@ class Model(object):
         instance._last_update = "Bayesian Optimization"
 
         if return_br:
-
             if not inplace:
                 return instance, res
 
@@ -1105,7 +1073,6 @@ class Model(object):
                 return res
 
         else:
-
             if not inplace:
                 return instance
 
@@ -1120,7 +1087,6 @@ class Model(object):
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
-        validation: float | None = None,
         epochs: int = 500,
         early_stopping: bool = False,
         verbose: bool = True,
@@ -1144,12 +1110,6 @@ class Model(object):
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
-
-        validation : float or None, default None
-            Temporal validation percentage to split simulated discharge into training-validation sets.
-
-            .. note::
-                If not given, the function will be computed on the whole time series (simulated discharge).
 
         epochs : int, default 500
             The number of epochs to train the network.
@@ -1213,19 +1173,25 @@ class Model(object):
         Access to some training information
 
         >>> net.history['loss_train']  # training loss
-        >>> net.layers  # defined graph
+        [1.2267546653747559, ..., 0.03432881459593773]
         >>> net.layers[0].weight  # trained weights of the first layer
+        array([[ 0.07801535,  0.10680847, -0.33354243, -0.17218271,  0.09706582,
+                 0.63727553,  0.00399343,  0.00982828,  0.13701385, -0.00708624,
+                -0.25468548, -0.29651733, -0.02438137, -0.10962573,  0.19415941,
+                -0.2962292 ,  0.54098361,  0.70156156],
+               [ 0.55410658,  0.12130747,  0.12366326,  0.53987803,  0.16916006,
+                 0.30923786, -0.20702523,  0.48505195,  0.24157872,  0.38465208,
+                -0.45171199, -0.29186438,  0.73921878, -0.00474557, -0.16782353,
+                 0.27061135,  0.55383291,  0.71541684]])
         """
 
         if inplace:
-
             instance = self
 
         else:
-
             instance = self.copy()
 
-        print("</> ANN Optimize Model J")
+        print("</> ANN Optimize Model")
 
         if net is None:
             use_default_graph = True
@@ -1233,7 +1199,7 @@ class Model(object):
         else:
             use_default_graph = False
 
-        #% standardize args
+        # % standardize args
         (
             control_vector,
             jobs_fun,
@@ -1266,7 +1232,6 @@ class Model(object):
             wgauge,
             ost,
             net,
-            validation,
             epochs,
             early_stopping,
             verbose,
@@ -1275,7 +1240,6 @@ class Model(object):
         instance._last_update = "ANN Optimization"
 
         if return_net and use_default_graph:
-
             if not inplace:
                 return instance, net
 
@@ -1283,11 +1247,10 @@ class Model(object):
                 return net
 
         else:
-
             if not inplace:
                 return instance
 
-    def event_segmentation(self, peak_quant: float = 0.999, max_duration: int = 240):
+    def event_segmentation(self, peak_quant: float = 0.999, max_duration: float = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
@@ -1299,7 +1262,7 @@ class Model(object):
         peak_quant: float, default 0.999
             An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
 
-        max_duration: int, default 240
+        max_duration: float, default 240
             The maximum duration of an event (in hour).
 
         Returns
@@ -1371,7 +1334,7 @@ class Model(object):
             See `smash.Model.event_segmentation` for more.
 
             .. note::
-                If not given in case flood signatures are computed, the default values will be set for these parameters. 
+                If not given in case flood signatures are computed, the default values will be set for these parameters.
 
         Returns
         -------
@@ -1530,7 +1493,6 @@ class Model(object):
         return res
 
     def prcp_indices(self):
-
         """
         Compute precipitations indices of the Model.
 
@@ -1588,7 +1550,6 @@ class Model(object):
         return _prcp_indices(self)
 
     def get_bound_constraints(self, states: bool = False):
-
         """
         Get the boundary constraints of the Model parameters/states.
 

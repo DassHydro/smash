@@ -1,8 +1,5 @@
 .. _user_guide.signatures:
 
-.. role:: bolditalic
-    :class: bolditalic
-
 ==========
 Signatures
 ==========
@@ -112,7 +109,11 @@ Then you can redefine the problem to estimate the sensitivities of 3 parameters 
 
 .. ipython:: python
 
-    problem = {"num_vars": 3, "names": ["cp", "cft", "lr"], "bounds": [[1,1000], [1,800], [1,500]]}
+    problem = {
+        "num_vars": 3, 
+        "names": ["cp", "cft", "lr"], 
+        "bounds": [[1,1000], [1,800], [1,500]]
+    }
 
 The estimated sensitivities of the Model parameters to the signatures are available using the :meth:`Model.signatures_sensitivity() <smash.Model.signatures_sensitivity>` method.
 

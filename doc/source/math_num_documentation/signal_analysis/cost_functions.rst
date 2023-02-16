@@ -23,8 +23,14 @@ with :math:`J_{obs}` measuring the misfit to observations, :math:`J_{reg}` being
 Firstly, the observation term :math:`J_{obs}` can be generally expressed as follows for multi-gauge observation:
 
 .. math ::
+    :nowrap:
     
-    J_{obs} = \sum_{k=1} ^ {N_o} \phi_k J_{obs,k}
+    \begin{eqnarray}
+
+        &J_{obs}& &=& &\sum_{k=1} ^ {N_o} \phi_k J_{obs,k}& \\
+        &J_{obs}& &=& &\text{med}(J_{obs,k})&
+
+    \end{eqnarray}
     
 with :math:`J_{obs,k}` and :math:`\phi_{k}` being respectively the constrained term and 
 weight associated to each gauge :math:`k\in\left[1..N_{o}\right]`. 

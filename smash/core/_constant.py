@@ -16,6 +16,7 @@ STRUCTURE_PARAMETERS = {
     "gr-a": ["cp", "cft", "exc", "lr"],
     "gr-b": ["cp", "cft", "exc", "lr"],
     "gr-c": ["cp", "cft", "cst", "exc", "lr"],
+    "gr-d": ["cp", "cft", "lr"],
     "vic-a": ["b", "cusl1", "cusl2", "clsl", "ks", "ds", "dsm", "ws", "lr"],
 }
 
@@ -23,6 +24,7 @@ STRUCTURE_STATES = {
     "gr-a": ["hp", "hft", "hlr"],
     "gr-b": ["hi", "hp", "hft", "hlr"],
     "gr-c": ["hi", "hp", "hft", "hst", "hlr"],
+    "gr-d": ["hp", "hft", "hlr"],
     "vic-a": ["husl1", "husl2", "hlsl"],
 }
 
@@ -30,6 +32,7 @@ STRUCTURE_ADJUST_CI = {
     "gr-a": False,
     "gr-b": True,
     "gr-c": True,
+    "gr-d": False,
     "vic-a": False,
 }
 
@@ -102,7 +105,7 @@ JOBS_FUN = [
     "logarithmic",
 ]
 
-CSIGN_OPTIM = ["Crc"]
+CSIGN_OPTIM = ["Crc", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 
 ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
@@ -112,7 +115,7 @@ OPTIM_FUNC = {
     "sbs": _optimize_sbs,
     "l-bfgs-b": _optimize_lbfgsb,
     "nelder-mead": _optimize_nelder_mead,
-}  #% TODO add nsga
+}  # % TODO add nsga
 
 
 ### ANN OPTIMIZE ###

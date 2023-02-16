@@ -1,20 +1,30 @@
+from __future__ import annotations
+
 import smash
+
 import numpy as np
 import pytest
 
 
-def test_gen_samples():
+def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
+    problem = model.get_bound_constraints()
 
-    problem = pytest.model.get_bound_constraints()
-
-    sample_uni = smash.generate_samples(
+    uni = smash.generate_samples(
         problem, generator="uniform", n=20, random_state=11
     ).to_numpy()
 
-    sample_nor = smash.generate_samples(
+    nor = smash.generate_samples(
         problem, generator="normal", n=20, random_state=11
     ).to_numpy()
 
-    assert np.allclose(sample_uni, pytest.baseline["gen_samples.uni"][:], atol=1e-06)
+    res = {"gen_samples.uni": uni, "gen_samples.nor": nor}
 
-    assert np.allclose(sample_nor, pytest.baseline["gen_samples.nor"][:], atol=1e-06)
+    return res
+
+
+def test_gen_samples():
+    res = generic_gen_samples(pytest.model)
+
+    for key, value in res.items():
+        # % Check generate samples uniform/normal
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key

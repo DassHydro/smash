@@ -15,6 +15,7 @@ import pandas as pd
 import numpy as np
 from scipy.stats import gaussian_kde
 import multiprocessing as mp
+from tqdm import tqdm
 
 
 class BayesResult(dict):
@@ -95,19 +96,17 @@ def _bayes_computation(
     options: dict | None,
     ncpu: int,
 ) -> BayesResult:
-
-    #% returns
+    # % returns
     ret_data = {}
     ret_density = {}
     ret_l_curve = {}
 
-    #% verbose
+    # % verbose
     if verbose:
         _bayes_message(n, generator, backg_sol, density_estimate, k)
 
-    #% standardize density_estimate
+    # % standardize density_estimate
     if density_estimate is None:
-
         if generator.lower() == "uniform":
             density_estimate = False
 
@@ -143,7 +142,6 @@ def _bayes_computation(
         bounds,
         wgauge,
         ost,
-        verbose,
         options,
         ncpu,
     )
@@ -151,7 +149,6 @@ def _bayes_computation(
     ret_data["cost"] = np.array(res_simu["cost"])
 
     for p in control_vector:
-
         dat_p = np.dstack(res_simu[p])
 
         ret_data[p] = dat_p
@@ -176,7 +173,6 @@ def _bayes_computation(
     ### Bayes compute
 
     if isinstance(k, list):
-
         _lcurve_compute_param(
             instance,
             jobs_fun,
@@ -193,7 +189,6 @@ def _bayes_computation(
         )
 
     else:
-
         _compute_param(
             instance,
             jobs_fun,
@@ -220,7 +215,6 @@ def _bayes_message(
     density_estimate: bool,
     k: int | float | list,
 ):
-
     sp4 = " " * 4
 
     if isinstance(k, list):
@@ -254,14 +248,13 @@ def _run(
     wgauge: np.ndarray,
     ost: pd.Timestamp,
 ):
-
     ### SETTING MODEL TO COMPUTE COST VALUES ###
 
-    #% send mask_event to Fortran in case of event signatures based optimization
+    # % send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
 
-    #% Set values for Fortran derived type variables
+    # % Set values for Fortran derived type variables
     instance.setup._optimize.jobs_fun = jobs_fun
     instance.setup._optimize.wjobs_fun = wjobs_fun
     instance.setup._optimize.wgauge = wgauge
@@ -273,7 +266,7 @@ def _run(
 
     ###
 
-    #% FORWARD MODEL
+    # % FORWARD MODEL
 
     cost = np.float32(0)
 
@@ -303,24 +296,17 @@ def _unit_simu(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    verbose: bool,
     options: dict | None,
 ) -> dict:
-
-    #% SET PARAMS/STATES
+    # % SET PARAMS/STATES
     for name in control_vector:
-
         if name in instance.setup._parameters_name:
             setattr(instance.parameters, name, sample.iloc[i][name])
 
         else:
             setattr(instance.states, name, sample.iloc[i][name])
 
-    #% verbose
-    if verbose:
-        print(f"....SET {i+1} computing....")
-
-    #% SIMU (RUN OR OPTIMIZE)
+    # % SIMU (RUN OR OPTIMIZE)
     if algorithm is None:
         _run(instance, jobs_fun, wjobs_fun, event_seg, wgauge, ost)
 
@@ -335,7 +321,7 @@ def _unit_simu(
             bounds,
             wgauge,
             ost,
-            verbose,
+            False,
             **options,
         )
 
@@ -344,7 +330,6 @@ def _unit_simu(
     res["cost"] = instance.output.cost
 
     for name in control_vector:
-
         if name in instance.setup._parameters_name:
             res[name] = np.copy(getattr(instance.parameters, name))
 
@@ -366,13 +351,16 @@ def _multi_simu(
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
-    verbose: bool,
     options: dict | None,
     ncpu: int,
 ) -> dict:
+    if algorithm is None:
+        pgbar_mess = "</> Running forward Model on multiset"
+
+    else:
+        pgbar_mess = "</> Optimizing Model parameters on multiset"
 
     if ncpu > 1:
-
         list_instance = [instance.copy() for i in range(len(sample))]
 
         pool = mp.Pool(ncpu)
@@ -392,20 +380,17 @@ def _multi_simu(
                     bounds,
                     wgauge,
                     ost,
-                    verbose,
                     options,
                 )
-                for i, instance in enumerate(list_instance)
+                for i, instance in tqdm(enumerate(list_instance), desc=pgbar_mess)
             ],
         )
         pool.close()
 
     elif ncpu == 1:
-
         list_result = []
 
-        for i in range(len(sample)):
-
+        for i in tqdm(range(len(sample)), desc=pgbar_mess):
             list_result.append(
                 _unit_simu(
                     i,
@@ -420,7 +405,6 @@ def _multi_simu(
                     bounds,
                     wgauge,
                     ost,
-                    verbose,
                     options,
                 )
             )
@@ -433,9 +417,7 @@ def _multi_simu(
     res = {k: [] for k in res_keys}
 
     for result in list_result:
-
         for k in res.keys():
-
             res[k].append(result[k])
 
     return res
@@ -453,22 +435,18 @@ def _estimate_density(
     bw_method: str | None,
     weights: np.ndarray | None,
 ):
-
     coord = np.dstack([active_mask[0], active_mask[1]])[0]
 
     for p in control_vector:
-
         dat_p = np.copy(data[p])
 
         if algorithm == "l-bfgs-b":
-
             for c in coord:
                 density[p][c[0], c[1]] = gaussian_kde(
                     dat_p[c[0], c[1]], bw_method=bw_method, weights=weights
                 )(dat_p[c[0], c[1]])
 
         else:
-
             u_dis = np.mean(dat_p[active_mask], axis=0)
             uniform_density = gaussian_kde(u_dis, bw_method=bw_method, weights=weights)(
                 u_dis
@@ -484,7 +462,6 @@ def _estimate_density(
 def _compute_mean_U(
     U: np.ndarray, J: np.ndarray, rho: np.ndarray, k: float, mask: np.ndarray
 ) -> tuple:
-
     # U is 3-D array
     # rho is 3-D array
     # J is 1-D array
@@ -519,7 +496,6 @@ def _compute_param(
     ret_density: dict,
     k: int | float,
 ) -> tuple:
-
     Dk = []
 
     J = np.copy(ret_data["cost"])
@@ -527,7 +503,6 @@ def _compute_param(
     var = {}
 
     for name in control_vector:
-
         U = np.copy(ret_data[name])
         rho = np.copy(ret_density[name])
 
@@ -569,13 +544,11 @@ def _lcurve_compute_param(
     ret_l_curve: dict,
     k: list,
 ):
-
     cost = []
     Dk = []
     var = []
 
     for k_i in k:
-
         co, dk, vr = _compute_param(
             instance,
             jobs_fun,

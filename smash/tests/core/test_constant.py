@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,
@@ -15,17 +17,19 @@ import numpy as np
 
 
 def test_structure_parameters():
-
-    #% Check parameters gr-a
+    # % Check parameters gr-a
     assert STRUCTURE_PARAMETERS["gr-a"] == ["cp", "cft", "exc", "lr"]
 
-    #% Check parameters gr-b
+    # % Check parameters gr-b
     assert STRUCTURE_PARAMETERS["gr-b"] == ["cp", "cft", "exc", "lr"]
 
-    #% Check parameters gr-c
+    # % Check parameters gr-c
     assert STRUCTURE_PARAMETERS["gr-c"] == ["cp", "cft", "cst", "exc", "lr"]
 
-    #% Check parameters vic-a
+    # % Check parameters gr-d
+    assert STRUCTURE_PARAMETERS["gr-d"] == ["cp", "cft", "lr"]
+
+    # % Check parameters vic-a
     assert STRUCTURE_PARAMETERS["vic-a"] == [
         "b",
         "cusl1",
@@ -40,38 +44,41 @@ def test_structure_parameters():
 
 
 def test_structure_states():
-
-    #% Check states gr-a
+    # % Check states gr-a
     assert STRUCTURE_STATES["gr-a"] == ["hp", "hft", "hlr"]
 
-    #% Check states gr-b
+    # % Check states gr-b
     assert STRUCTURE_STATES["gr-b"] == ["hi", "hp", "hft", "hlr"]
 
-    #% Check states gr-c
+    # % Check states gr-c
     assert STRUCTURE_STATES["gr-c"] == ["hi", "hp", "hft", "hst", "hlr"]
 
-    #% Check states vic-a
+    # % Check states gr-d
+    assert STRUCTURE_STATES["gr-d"] == ["hp", "hft", "hlr"]
+
+    # % Check states vic-a
     assert STRUCTURE_STATES["vic-a"] == ["husl1", "husl2", "hlsl"]
 
 
 def test_structure_adjust_ci():
-
-    #% Check adjust ci gr-a
+    # % Check adjust ci gr-a
     assert ~STRUCTURE_ADJUST_CI["gr-a"]
 
-    #% Check adjust ci gr-b
+    # % Check adjust ci gr-b
     assert STRUCTURE_ADJUST_CI["gr-b"]
 
-    #% Check adjust ci gr-c
+    # % Check adjust ci gr-c
     assert STRUCTURE_ADJUST_CI["gr-c"]
 
-    #% Check adjust ci vic-a
+    # % Check adjust ci gr-d
+    assert ~STRUCTURE_ADJUST_CI["gr-d"]
+
+    # % Check adjust ci vic-a
     assert ~STRUCTURE_ADJUST_CI["vic-a"]
 
 
 def test_ratio_pet_hourly():
-
-    #% Check ratio_pet_hourly
+    # % Check ratio_pet_hourly
     assert np.array_equal(
         RATIO_PET_HOURLY,
         np.array(
@@ -107,18 +114,15 @@ def test_ratio_pet_hourly():
 
 
 def test_csign_optim():
-
-    #% Check that all values in CSIGN_OPTIM are in CSIGN
+    # % Check that all values in CSIGN_OPTIM are in CSIGN
     assert all(sign in CSIGN for sign in CSIGN_OPTIM)
 
 
 def test_esign_optim():
-
-    #% Check that all values in ESIGN_OPTIM are in ESIGN
+    # % Check that all values in ESIGN_OPTIM are in ESIGN
     assert all(sign in ESIGN for sign in ESIGN_OPTIM)
 
 
 def test_optim_fun():
-
-    #% Check that there is a callable for each algorithm
+    # % Check that there is a callable for each algorithm
     assert all(alg in ALGORITHM and callable(clb) for alg, clb in OPTIM_FUNC.items())

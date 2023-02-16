@@ -18,24 +18,6 @@ ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
 
 RUN export JAVA_HOME
 
-RUN pip3 install \
-    f90wrap \
-    numpy \
-    pandas \
-    matplotlib \
-    h5py \
-    tqdm \
-    gdal \
-    scipy \
-    pyyaml \
-    SALib \
-    terminaltables \
-    sphinx \
-    numpydoc \
-    pydata-sphinx-theme \
-    ipython \
-    sphinxcontrib-bibtex \
-    sphinx-design \
-    sphinx-autosummary-accessors \
-    pytest \
-    black
+RUN pip3 install -r requirements-dev.txt
+
+RUN make

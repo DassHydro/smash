@@ -1,0 +1,28 @@
+# required dependencies
+f90wrap
+numpy>=1.13,<1.24
+pandas
+matplotlib
+h5py
+tqdm
+gdal
+scipy
+pyyaml
+SALib
+terminaltables
+
+# documentation
+sphinx
+numpydoc
+pydata-sphinx-theme
+ipython
+sphinxcontrib-bibtex
+sphinx-design
+sphinx-autosummary-accessors
+
+# test
+pytest
+
+# format
+black
+fprettify

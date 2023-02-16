@@ -21,6 +21,8 @@ TAPENADEDIR := tapenade
 F90WRAPDIR := f90wrap
 SOLVERDIR := smash/solver
 MESHDIR := smash/mesh
+TESTSDIR := smash/tests
+DOCDIR := doc
 
 #% INC and MOD for obj
 INC := -I$(BUILDDIR)
@@ -127,7 +129,7 @@ meshing:
 	@echo " Making meshing extension "
 	@echo ""
 	@echo "********************************************"
-	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells downstream_cell_drained_area argsort_i
+	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i
 
 #% Making python library (pip3)
 library:
@@ -159,9 +161,14 @@ finalize:
 #% Generating tapenade files (adjoint and tangent linear models)
 tap:
 	cd $(TAPENADEDIR) ; make
-	
+
+#% Testing code with pytest
 test:
-	pytest
+	cd $(TESTSDIR) ; pytest
+
+#% Generating baseline for test with args (see argparser in gen_baseline.py)
+baseline_test:
+	cd $(TESTSDIR) ; python3 gen_baseline.py $(args)
 
 #% Clean
 clean:
