@@ -7,6 +7,14 @@
    height: 50px;
 }
 
+.bd-sidebar-primary {
+   max-width: 20%;
+}
+
+.bd-sidebar-secondary {
+   max-width: 20%;
+}
+
 body {
   font-family: 'Open Sans', sans-serif;
   color:#4A4A4A; /* numpy.org body color */
