@@ -28,7 +28,7 @@ def load_dataset(name: str):
         - 'flwdir' : The absolute path to a 1km² France flow directions in `smash` convention.
         - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment.
         - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France.
-        - 'path/to/dataset' : Path to a external and complete dataset.
+        - 'path/to/dataset' : Path to an external and complete dataset.
 
     Returns
     -------
@@ -92,10 +92,10 @@ def load_dataset(name: str):
     {'dx': 1000.0, 'nac': 383, ...}
     """
 
-    if name == "flwdir":
+    if name.lower() == "flwdir":
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
-    elif name == "cance":
+    elif name.lower() == "cance":
         setup = smash.read_setup(os.path.join(DATASET_PATH, "Cance/setup_Cance.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "Cance/mesh_Cance.hdf5"))
 
@@ -110,7 +110,7 @@ def load_dataset(name: str):
 
         return setup, mesh
 
-    elif name == "france":
+    elif name.lower() == "france":
         setup = smash.read_setup(os.path.join(DATASET_PATH, "France/setup_France.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "France/mesh_France.hdf5"))
 
@@ -123,33 +123,50 @@ def load_dataset(name: str):
 
         return setup, mesh
 
-    #load an external dataset
-    elif (os.path.exists(name)):
-        
+    # load an external dataset
+    elif os.path.exists(name):
         local_dataset_path = os.path.dirname(os.path.realpath(name))
         local_dataset_dir_name = os.path.basename(os.path.realpath(name))
-        config_file="setup_"+local_dataset_dir_name+".yaml"
-        mesh_file="mesh_"+local_dataset_dir_name+".hdf5"
-        
-        if ( os.path.exists(os.path.join(local_dataset_path, local_dataset_dir_name, config_file)) == False ) :
-            raise ValueError(f"Bad dataset '{name}'. Missing file '{config_file}'")
-        
-        if ( os.path.exists(os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)) == False ) :
-            raise valueerror(f"bad dataset '{name}'. missing file '{mesh_file}'")
-        
-        setup = smash.read_setup(os.path.join(local_dataset_path, local_dataset_dir_name, config_file))
-        mesh = smash.read_mesh(os.path.join(local_dataset_path,  local_dataset_dir_name, mesh_file))
-        
+        setup_file = "setup_" + local_dataset_dir_name + ".yaml"
+        mesh_file = "mesh_" + local_dataset_dir_name + ".hdf5"
+
+        if not os.path.exists(
+            os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
+        ):
+            raise ValueError(f"Missing setup file '{setup_file}'")
+
+        if not os.path.exists(
+            os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
+        ):
+            raise ValueError(f"Missing mesh file '{mesh_file}'")
+
+        setup = smash.read_setup(
+            os.path.join(local_dataset_path, local_dataset_dir_name, config_file)
+        )
+        mesh = smash.read_mesh(
+            os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
+        )
+
         setup.update(
             {
-                "qobs_directory": os.path.join(local_dataset_path,local_dataset_dir_name, "qobs"),
-                "prcp_directory": os.path.join(local_dataset_path,local_dataset_dir_name, "prcp"),
-                "pet_directory": os.path.join(local_dataset_path, local_dataset_dir_name, "pet"),
-                "descriptor_directory": os.path.join(local_dataset_path, local_dataset_dir_name, "descriptor"),
+                "qobs_directory": os.path.join(
+                    local_dataset_path, local_dataset_dir_name, "qobs"
+                ),
+                "prcp_directory": os.path.join(
+                    local_dataset_path, local_dataset_dir_name, "prcp"
+                ),
+                "pet_directory": os.path.join(
+                    local_dataset_path, local_dataset_dir_name, "pet"
+                ),
+                "descriptor_directory": os.path.join(
+                    local_dataset_path, local_dataset_dir_name, "descriptor"
+                ),
             }
         )
-        
+
         return setup, mesh
 
     else:
-        raise ValueError(f"Unknown dataset '{name}'. Choices: {DATASET_NAME}")
+        raise ValueError(
+            f"Unknown dataset '{name}'. Choices: {DATASET_NAME}. Or non existing external dataset"
+        )
