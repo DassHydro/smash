@@ -28,6 +28,7 @@ def load_dataset(name: str):
         - 'flwdir' : The absolute path to a 1km² France flow directions in `smash` convention.
         - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment.
         - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France.
+        - 'path/to/dataset' : Path to a external and complete dataset.
 
     Returns
     -------
@@ -37,6 +38,7 @@ def load_dataset(name: str):
         - 'flwdir' : Returns a file path.
         - 'cance' : Returns a tuple of dictionaries (setup and mesh).
         - 'france' : Returns a tuple of dictionaries (setup and mesh).
+        - 'path/to/dataset' : Returns a tuple of dictionaries (setup and mesh).
 
     Examples
     --------
@@ -74,6 +76,20 @@ def load_dataset(name: str):
     {'structure': 'gr-a', 'dt': 3600, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 906044, ...}
+
+    Load ``path/to/dataset`` as a tuple of dictionaries.
+
+    >>> dataset = smash.load_dataset("path/to/dataset")
+    >>> dataset
+    ({'structure': 'gr-a', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
+
+    Or each dictionary in a different variable.
+
+    >>> setup, mesh = smash.load_dataset("path/to/dataset")
+    >>> setup
+    {'structure': 'gr-a', 'dt': 3600, ...}
+    >>> mesh
+    {'dx': 1000.0, 'nac': 383, ...}
     """
 
     if name == "flwdir":
