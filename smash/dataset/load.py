@@ -76,8 +76,6 @@ def load_dataset(name: str):
     {'dx': 1000.0, 'nac': 906044, ...}
     """
 
-    name = name.lower()
-
     if name == "flwdir":
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
@@ -107,6 +105,34 @@ def load_dataset(name: str):
             }
         )
 
+        return setup, mesh
+
+    #load an external dataset
+    elif (os.path.exists(name)):
+        
+        local_dataset_path = os.path.dirname(os.path.realpath(name))
+        local_dataset_dir_name = os.path.basename(os.path.realpath(name))
+        config_file="setup_"+local_dataset_dir_name+".yaml"
+        mesh_file="mesh_"+local_dataset_dir_name+".hdf5"
+        
+        if ( os.path.exists(os.path.join(local_dataset_path, local_dataset_dir_name, config_file)) == False ) :
+            raise ValueError(f"Bad dataset '{name}'. Missing file '{config_file}'")
+        
+        if ( os.path.exists(os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)) == False ) :
+            raise valueerror(f"bad dataset '{name}'. missing file '{mesh_file}'")
+        
+        setup = smash.read_setup(os.path.join(local_dataset_path, local_dataset_dir_name, config_file))
+        mesh = smash.read_mesh(os.path.join(local_dataset_path,  local_dataset_dir_name, mesh_file))
+        
+        setup.update(
+            {
+                "qobs_directory": os.path.join(local_dataset_path,local_dataset_dir_name, "qobs"),
+                "prcp_directory": os.path.join(local_dataset_path,local_dataset_dir_name, "prcp"),
+                "pet_directory": os.path.join(local_dataset_path, local_dataset_dir_name, "pet"),
+                "descriptor_directory": os.path.join(local_dataset_path, local_dataset_dir_name, "descriptor"),
+            }
+        )
+        
         return setup, mesh
 
     else:
