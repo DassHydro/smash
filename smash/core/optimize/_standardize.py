@@ -194,72 +194,69 @@ def _standardize_wjobs(
 
 
 def _standardize_bounds(
-    bounds: list | tuple | set | None, control_vector: np.ndarray, setup: SetupDT
+    user_bounds: dict | None, control_vector: np.ndarray, setup: SetupDT
 ) -> np.ndarray:
     # % Default values
-    if bounds is None:
-        bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
+    bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
 
-        for i, name in enumerate(control_vector):
-            if name in setup._parameters_name:
-                ind = np.argwhere(setup._parameters_name == name)
+    for i, name in enumerate(control_vector):
+        if name in setup._parameters_name:
+            ind = np.argwhere(setup._parameters_name == name)
 
-                bounds[i, :] = (
-                    setup._optimize.lb_parameters[ind].item(),
-                    setup._optimize.ub_parameters[ind].item(),
-                )
+            bounds[i, :] = (
+                setup._optimize.lb_parameters[ind].item(),
+                setup._optimize.ub_parameters[ind].item(),
+            )
 
-            elif name in setup._states_name:
-                ind = np.argwhere(setup._states_name == name)
+        elif name in setup._states_name:
+            ind = np.argwhere(setup._states_name == name)
 
-                bounds[i, :] = (
-                    setup._optimize.lb_states[ind].item(),
-                    setup._optimize.ub_states[ind].item(),
+            bounds[i, :] = (
+                setup._optimize.lb_states[ind].item(),
+                setup._optimize.ub_states[ind].item(),
+            )
+
+    if user_bounds is None:
+        pass
+
+    elif isinstance(user_bounds, dict):
+        for name, b in user_bounds.items():
+            if name in control_vector:
+                if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
+                    raise ValueError(
+                        f"bounds values for '{name}' must be list-like object of length 2"
+                    )
+
+                if not isinstance(b[0], (int, float)) and b[0] is not None:
+                    raise ValueError(
+                        f"Lower bound value {b[0]} for '{name}' must be int, float or None"
+                    )
+
+                if not isinstance(b[1], (int, float)) and b[1] is not None:
+                    raise ValueError(
+                        f"Upper bound value {b[1]} for '{name}' must be int, float or None"
+                    )
+
+                ind = np.argwhere(control_vector == name)
+
+                if b[0] is not None:
+                    bounds[ind, 0] = b[0]
+
+                if b[1] is not None:
+                    bounds[ind, 1] = b[1]
+
+                if bounds[ind, 0] >= bounds[ind, 1]:
+                    raise ValueError(
+                        f"bounds values for '{name}' is invalid, lower bound ({bounds[ind, 0].item()}) is greater than or equal to upper bound ({bounds[ind, 1].item()})"
+                    )
+
+            else:
+                raise ValueError(
+                    f"bounds values for '{name}' cannot be changed because '{name}' is not present in the control vector {control_vector}"
                 )
 
     else:
-        if isinstance(bounds, set):
-            bounds = np.array(list(bounds))
-
-        elif isinstance(bounds, (list, tuple)):
-            bounds = np.array(bounds)
-
-        else:
-            raise TypeError(f"bounds argument must be list-like object")
-
-        if bounds.shape[0] != control_vector.size:
-            raise ValueError(
-                f"Inconsistent size between control_vector ({control_vector.size}) and bounds ({bounds.shape[0]})"
-            )
-
-        for i, b in enumerate(bounds):
-            if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
-                raise ValueError(
-                    f"bounds values for '{control_vector[i]}' must be list-like object of length 2"
-                )
-
-            if b[0] is None:
-                if control_vector[i] in setup._parameters_name:
-                    ind = np.argwhere(setup._parameters_name == control_vector[i])
-                    b[0] = setup._optimize.lb_parameters[ind].item()
-
-                else:
-                    ind = np.argwhere(setup._states_name == control_vector[i])
-                    b[0] = setup._optimize.lb_states[ind].item()
-
-            if b[1] is None:
-                if control_vector[i] in setup._parameters_name:
-                    ind = np.argwhere(setup._parameters_name == control_vector[i])
-                    b[1] = setup._optimize.ub_parameters[ind].item()
-
-                else:
-                    ind = np.argwhere(setup._states_name == control_vector[i])
-                    b[1] = setup._optimize.ub_states[ind].item()
-
-            if b[0] >= b[1]:
-                raise ValueError(
-                    f"bounds values for '{control_vector[i]}' is invalid lower bound ({b[0]}) is greater than or equal to upper bound ({b[1]})"
-                )
+        raise TypeError(f"bounds argument must be dict")
 
     return bounds
 
