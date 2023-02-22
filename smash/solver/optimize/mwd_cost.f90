@@ -351,7 +351,9 @@ contains
         real(sp), intent(inout) :: cost
 
         real(sp) :: jobs, jreg
-
+        
+        jobs = 0._sp
+        
         call compute_jobs(setup, mesh, input_data, output, jobs)
 
         jreg = 0._sp
@@ -373,7 +375,10 @@ contains
         end if
 
         cost = jobs + setup%optimize%wjreg*jreg
+        
         output%cost = cost
+        output%cost_jobs = jobs
+        output%cost_jreg = jreg
 
     end subroutine compute_cost
 

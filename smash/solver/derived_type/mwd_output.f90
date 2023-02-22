@@ -42,7 +42,11 @@ module mwd_output
         real(sp), dimension(:, :, :), allocatable :: net_prcp_domain
         real(sp), dimension(:, :), allocatable   :: sparse_net_prcp_domain
 
-        real(sp) :: cost
+        real(sp) :: cost = 0._sp
+        real(sp) :: cost_jobs = 0._sp
+        real(sp) :: cost_jreg = 0._sp
+        real(sp) :: cost_jobs_initial = 0._sp
+        real(sp) :: cost_jreg_initial = 0._sp
 
         type(StatesDT) :: fstates
 

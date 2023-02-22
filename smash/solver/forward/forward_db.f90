@@ -329,7 +329,11 @@ MODULE MWD_OUTPUT_DIFF
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_qsim_domain
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: net_prcp_domain
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: sparse_net_prcp_domain
-      REAL(sp) :: cost
+      REAL(sp) :: cost=0._sp
+      REAL(sp) :: cost_jobs=0._sp
+      REAL(sp) :: cost_jreg=0._sp
+      REAL(sp) :: cost_jobs_initial=0._sp
+      REAL(sp) :: cost_jreg_initial=0._sp
       TYPE(STATESDT) :: fstates
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
@@ -8154,6 +8158,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     REAL(sp), INTENT(INOUT) :: cost
     REAL(sp) :: jobs, jreg
+    jobs = 0._sp
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
     jreg = 0._sp
     IF (setup%optimize%denormalize_forward) THEN
@@ -8168,6 +8173,8 @@ CONTAINS
     END IF
     cost = jobs + setup%optimize%wjreg*jreg
     output%cost = cost
+    output%cost_jobs = jobs
+    output%cost_jreg = jreg
   END SUBROUTINE COMPUTE_COST
 
 !  Differentiation of hyper_compute_cost in forward (tangent) mode (with options fixinterface noISIZE):

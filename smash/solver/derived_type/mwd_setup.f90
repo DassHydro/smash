@@ -67,6 +67,7 @@ module mwd_setup
         character(20), dimension(:), allocatable :: jreg_fun !>f90w-char_array
         real(sp), dimension(:), allocatable :: wjreg_fun
         real(sp) :: wjreg = 0._sp
+        character(lchar) :: auto_regul = "..."
         
         integer :: njf = 0
         integer :: njr = 0

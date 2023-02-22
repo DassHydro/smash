@@ -105,6 +105,7 @@ def _optimize_lbfgsb(
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
+    auto_regul: str = "...",
     maxiter: int = 100,
     wjreg: float = 0.0,
     adjoint_test: bool = False,
@@ -148,6 +149,8 @@ def _optimize_lbfgsb(
     instance.setup._optimize.wjreg_fun = wjreg_fun
 
     instance.setup._optimize.wjreg = wjreg
+    
+    instance.setup._optimize.auto_regul = auto_regul
 
     instance.setup._optimize.wgauge = wgauge
 
