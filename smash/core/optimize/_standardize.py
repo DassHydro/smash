@@ -6,6 +6,7 @@ from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,
     JOBS_FUN,
+    JREG_FUN,
     CSIGN_OPTIM,
     ESIGN_OPTIM,
 )
@@ -191,6 +192,61 @@ def _standardize_wjobs(
             )
 
     return wjobs_fun
+    
+    
+    
+def _standardize_jreg_fun(
+    jreg_fun: str | list | tuple | set | None
+) -> np.ndarray:
+    
+    if jreg_fun is not None:
+    
+        if isinstance(jreg_fun, str):
+            jreg_fun = np.array(jreg_fun, ndmin=1)
+
+        elif isinstance(jreg_fun, set):
+            jreg_fun = np.array(list(jreg_fun))
+
+        elif isinstance(jreg_fun, (list, tuple)):
+            jreg_fun = np.array(jreg_fun)
+
+        else:
+            raise TypeError("jobs_fun argument must be str or list-like object")
+
+        list_jreg_fun = JREG_FUN
+
+        check_obj = np.array([1 if o in list_jreg_fun else 0 for o in jreg_fun])
+
+        if sum(check_obj) < len(check_obj):
+            raise ValueError(
+                f"Unknown regularization function: {np.array(jreg_fun)[np.where(check_obj == 0)]}. Choices {list_jreg_fun}"
+            )
+    
+    else:
+        jreg_fun=np.array("...", ndmin=1)
+
+    return jreg_fun
+
+
+def _standardize_wjreg_fun(
+    wjreg_fun: list | None, jreg_fun: np.ndarray
+) -> np.ndarray:
+    if wjreg_fun is None:
+            wjreg_fun = np.ones(jreg_fun.size)
+
+    else:
+        if isinstance(wjreg_fun, (list, tuple)):
+            wjreg_fun = np.array(wjreg_fun)
+
+        else:
+            raise TypeError("wjobs_fun argument must be a list or tuple object")
+
+        if wjreg_fun.size != jreg_fun.size:
+            raise ValueError(
+                f"Inconsistent size between jreg_fun ({jreg_fun.size}) and wjreg_fun ({wjreg_fun.size})"
+            )
+
+    return wjreg_fun
 
 
 def _standardize_bounds(
@@ -491,6 +547,8 @@ def _standardize_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
+    jreg_fun: str | list | tuple | set | None,
+    wjreg_fun: list | None,
     event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
@@ -513,6 +571,10 @@ def _standardize_optimize_args(
 
     wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
 
+    jreg_fun = _standardize_jreg_fun(jreg_fun)
+
+    wjreg_fun = _standardize_wjreg_fun(wjreg_fun, jreg_fun)
+
     event_seg = _standardize_event_seg_options(event_seg)
 
     # % Update optimize setup derived type according to new optimize args.
@@ -526,6 +588,7 @@ def _standardize_optimize_args(
         mesh.ng,
         mapping,
         jobs_fun.size,
+        jreg_fun.size,
     )
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
@@ -542,6 +605,8 @@ def _standardize_optimize_args(
         control_vector,
         jobs_fun,
         wjobs_fun,
+        jreg_fun,
+        wjreg_fun,
         event_seg,
         bounds,
         wgauge,

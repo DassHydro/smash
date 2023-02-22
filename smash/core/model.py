@@ -19,6 +19,13 @@ from smash.core._build_model import (
     _build_parameters,
 )
 
+
+from smash.core.optimize._optimize import (
+    _optimize_sbs,
+    _optimize_nelder_mead,
+    _optimize_lbfgsb,
+)
+
 from smash.core.optimize._ann_optimize import _ann_optimize
 
 from smash.core.optimize.bayes_optimize import _bayes_computation
@@ -509,6 +516,8 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
+        jreg_fun: str | list | tuple | set = None,
+        wjreg_fun: list | tuple | None = None,
         event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
@@ -577,6 +586,22 @@ class Model(object):
 
             .. note::
                 If not given, the weights will correspond to the mean of the objective functions.
+
+        jreg_fun : str, sequence or None, default is None
+            Type of regularization function(s) to be minimized. Should be one or a sequence of any
+
+            - ``Regularization Function``
+                'prior', 'smoothing'
+
+            .. hint::
+                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+
+        wjreg_fun : sequence or None, default None
+            Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize).
+
+            .. note::
+                If not given, the weights is set to 1.
+
 
         event_seg : dict or None, default None
             A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
@@ -677,6 +702,8 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            jreg_fun,
+            wjreg_fun,
             event_seg,
             bounds,
             wgauge,
@@ -687,6 +714,8 @@ class Model(object):
             control_vector,
             jobs_fun,
             wjobs_fun,
+            jreg_fun,
+            wjreg_fun,
             event_seg,
             bounds,
             gauge,
@@ -699,19 +728,64 @@ class Model(object):
 
         options = _standardize_optimize_options(options)
 
-        OPTIM_FUNC[algorithm](
-            instance,
-            control_vector,
-            mapping,
-            jobs_fun,
-            wjobs_fun,
-            event_seg,
-            bounds,
-            wgauge,
-            ost,
-            verbose,
-            **options,
-        )
+        if algorithm == "sbs":
+            _optimize_sbs(
+                instance,
+                control_vector,
+                mapping,
+                jobs_fun,
+                wjobs_fun,
+                event_seg,
+                bounds,
+                wgauge,
+                ost,
+                verbose,
+                **options,
+            )
+        elif algorithm == "l-bfgs-b":
+            _optimize_lbfgsb(
+                instance,
+                control_vector,
+                mapping,
+                jobs_fun,
+                wjobs_fun,
+                jreg_fun,
+                wjreg_fun,
+                event_seg,
+                bounds,
+                wgauge,
+                ost,
+                verbose,
+                **options,
+            )
+        elif algorithm == "nelder-mead":
+            _optimize_nelder_mead(
+                instance,
+                control_vector,
+                mapping,
+                jobs_fun,
+                wjobs_fun,
+                event_seg,
+                bounds,
+                wgauge,
+                ost,
+                verbose,
+                **options,
+            )
+            
+        # ~ OPTIM_FUNC[algorithm](
+            # ~ instance,
+            # ~ control_vector,
+            # ~ mapping,
+            # ~ jobs_fun,
+            # ~ wjobs_fun,
+            # ~ event_seg,
+            # ~ bounds,
+            # ~ wgauge,
+            # ~ ost,
+            # ~ verbose,
+            # ~ **options,
+        # ~ )
 
         instance._last_update = f"{algorithm.upper()} Optimization"
 

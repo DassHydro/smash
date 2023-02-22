@@ -63,18 +63,21 @@ module mwd_setup
 
         character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
         real(sp), dimension(:), allocatable :: wjobs_fun
+        
+        character(20), dimension(:), allocatable :: jreg_fun !>f90w-char_array
+        real(sp), dimension(:), allocatable :: wjreg_fun
+        real(sp) :: wjreg = 0._sp
+        
         integer :: njf = 0
+        integer :: njr = 0
 
         logical :: verbose = .true.
 
         character(lchar) :: mapping = "..." !>f90w-char
 
-        logical :: normalize_forward = .false.
+        logical :: denormalize_forward = .false.
 
         integer :: nhyper = 0
-
-        character(lchar) :: jreg_fun = "prior" !>f90w-char
-        real(sp) :: wjreg = 0._sp
 
         integer :: optimize_start_step = 1
 
@@ -185,7 +188,13 @@ contains
 
         allocate (this%wjobs_fun(this%njf))
         this%wjobs_fun = 0._sp
+        
+        allocate (this%jreg_fun(this%njr))
+        this%jreg_fun = "..."
 
+        allocate (this%wjreg_fun(this%njr))
+        this%wjreg_fun = 1._sp
+        
         allocate (this%mask_event(ng, ntime_step))
         this%mask_event = 0
 

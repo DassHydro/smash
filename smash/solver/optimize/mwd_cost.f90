@@ -183,7 +183,9 @@ contains
         real(sp) :: parameters_jreg, states_jreg
         real(sp), dimension(mesh%nrow, mesh%ncol, GNP) :: parameters_matrix, parameters_bgd_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol, GNS) :: states_matrix, states_bgd_matrix
-
+        
+        integer :: i
+        
         call get_parameters(mesh, parameters, parameters_matrix)
         call get_parameters(mesh, parameters_bgd, parameters_bgd_matrix)
 
@@ -193,20 +195,131 @@ contains
         jreg = 0._sp
         parameters_jreg = 0._sp
         states_jreg = 0._sp
+        
+        do i=1,setup%optimize%njr
 
-        select case (setup%optimize%jreg_fun)
+            select case (setup%optimize%jreg_fun(i))
 
-            !% Normalize prior between parameters and states
-        case ("prior")
+                !% Normalize prior between parameters and states
+                case ("prior")
 
-            parameters_jreg = reg_prior(mesh, GNP, parameters_matrix, parameters_bgd_matrix)
-            states_jreg = reg_prior(mesh, GNS, states_matrix, states_bgd_matrix)
+                    parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)*&
+                    &reg_prior(setup, mesh, GNP, parameters_matrix, parameters_bgd_matrix)
+                    
+                    states_jreg = states_jreg + setup%optimize%wjreg_fun(i)*&
+                    &reg_prior(setup, mesh, GNS, states_matrix, states_bgd_matrix)
 
-        end select
+                case ("smoothing")
+                
+                    parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**4.*&
+                    &reg_smoothing(setup, mesh, GNP, parameters_matrix,parameters_bgd_matrix)
+                    
+                    states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4.*&
+                    &reg_smoothing(setup, mesh, GNS, states_matrix, states_bgd_matrix)
 
+            end select
+        
+        end do
+        
         jreg = parameters_jreg + states_jreg
 
     end subroutine compute_jreg
+    
+    function reg_prior(setup, mesh, size_mat3, matrix, matrix_bgd) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Prior regularization (PR) computation function
+        !%
+        !% Given two matrix of dim(3) and size(mesh%nrow, mesh%ncol, size_mat3),
+        !% it returns the result of PR computation. (Square Error between matrix)
+        !%
+        !% PR = sum((mat1 - mat2) ** 2)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: size_mat3
+        real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix, matrix_bgd
+        real(sp) :: res
+        
+        integer :: iz
+        
+        res=0._sp
+        
+        do iz=1, size_mat3
+            
+            if (setup%optimize%optim_parameters(iz)>0) then
+                
+                res = sum((matrix(:,:,iz) - matrix_bgd(:,:,iz))*(matrix(:,:,iz) - matrix_bgd(:,:,iz)))
+            
+            end if
+        
+        end do
+        
+    end function reg_prior
+
+    function reg_smoothing(setup, mesh, size_mat3, matrix, matrix_bgd) result(smoothing)
+        !% Notes
+        !% -----
+        !%
+        !% Smoothing regularization computation function
+        !%
+        !% Given one matrix of dim(3) and size(mesh%nrow, mesh%ncol, size_mat3),
+        !% it returns the spatial second derivative multiplicated by pond_smoothing**4
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: size_mat3
+        real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix_bgd
+        real(sp) :: smoothing
+        
+        integer :: i,j,z
+        integer :: ix,iy,ixmin,ixmax,iymin,iymax
+        real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3) :: mat
+        
+        !matrix relative to the bgd. We don't want to penalize initial spatial variation. 
+        mat=matrix-matrix_bgd
+        
+        smoothing=0._sp
+        
+        do z=1, size_mat3
+            
+            if (setup%optimize%optim_parameters(z)>0) then
+            
+                do ix=1, mesh%nrow
+                    
+                    do iy=1, mesh%ncol
+                        
+                        ixmin = ix - 1
+                        ixmax = ix + 1
+                        iymin = iy - 1
+                        iymax = iy + 1
+
+                        !condition limite !
+                        if (ix .eq. 1) ixmin = ix
+                        if (ix .eq. mesh%nrow) ixmax = ix
+                        if (iy .eq. 1) iymin = iy
+                        if (iy .eq. mesh%ncol) iymax = iy
+                        
+                        smoothing=smoothing+&
+                        &( (mat(ixmax,iy,z)-2.*mat(ix,iy,z)+mat(ixmin,iy,z)) + &
+                        &(mat(ix,iymax,z)-2.*mat(ix,iy,z)+mat(ix,iymin,z)) )**2.
+                        
+                    end do
+                    
+                end do
+            
+            end if
+            
+        end do
+        
+    end function reg_smoothing
 
     subroutine compute_cost(setup, mesh, input_data, parameters, parameters_bgd, states, states_bgd, output, cost)
 
@@ -230,8 +343,10 @@ contains
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(in) :: parameters, parameters_bgd
-        type(StatesDT), intent(in) :: states, states_bgd
+        type(ParametersDT), intent(inout) :: parameters
+        type(ParametersDT), intent(in) :: parameters_bgd
+        type(StatesDT), intent(inout) :: states
+        type(StatesDT), intent(in) :: states_bgd
         type(OutputDT), intent(inout) :: output
         real(sp), intent(inout) :: cost
 
@@ -239,14 +354,21 @@ contains
 
         call compute_jobs(setup, mesh, input_data, output, jobs)
 
-        !% Only compute in case wjreg > 0
-        if (setup%optimize%wjreg .gt. 0._sp) then
+        jreg = 0._sp
+        
+        if (setup%optimize%denormalize_forward) then
 
-            call compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
+            call normalize_parameters(setup, mesh, parameters)
+            call normalize_states(setup, mesh, states)
 
-        else
+        end if
 
-            jreg = 0._sp
+        call compute_jreg(setup, mesh, parameters, parameters_bgd, states, states_bgd, jreg)
+
+        if (setup%optimize%denormalize_forward) then
+
+            call denormalize_parameters(setup, mesh, parameters)
+            call denormalize_states(setup, mesh, states)
 
         end if
 
@@ -917,29 +1039,5 @@ contains
         end if
 
     end function signature
-
-    !% TODO refactorize
-    function reg_prior(mesh, size_mat3, matrix, matrix_bgd) result(res)
-
-        !% Notes
-        !% -----
-        !%
-        !% Prior regularization (PR) computation function
-        !%
-        !% Given two matrix of dim(3) and size(mesh%nrow, mesh%ncol, size_mat3),
-        !% it returns the result of PR computation. (Square Error between matrix)
-        !%
-        !% PR = sum((mat1 - mat2) ** 2)
-
-        implicit none
-
-        type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: size_mat3
-        real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix, matrix_bgd
-        real(sp) :: res
-
-        res = sum((matrix - matrix_bgd)*(matrix - matrix_bgd))
-
-    end function reg_prior
 
 end module mwd_cost

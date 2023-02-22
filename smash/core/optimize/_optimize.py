@@ -91,21 +91,21 @@ def _optimize_sbs(
         instance.states,
         instance.output,
     )
-
-
+    
 def _optimize_lbfgsb(
     instance: Model,
     control_vector: np.ndarray,
     mapping: str,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
+    jreg_fun: np.ndarray | None,
+    wjreg_fun: np.ndarray | None,
     event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
     maxiter: int = 100,
-    jreg_fun: str = "prior",
     wjreg: float = 0.0,
     adjoint_test: bool = False,
     **unknown_options,
@@ -143,6 +143,12 @@ def _optimize_lbfgsb(
 
     instance.setup._optimize.wjobs_fun = wjobs_fun
 
+    instance.setup._optimize.jreg_fun = jreg_fun
+
+    instance.setup._optimize.wjreg_fun = wjreg_fun
+
+    instance.setup._optimize.wjreg = wjreg
+
     instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
@@ -152,8 +158,6 @@ def _optimize_lbfgsb(
     ).total_seconds() / instance.setup.dt + 1
 
     instance.setup._optimize.maxiter = maxiter
-    instance.setup._optimize.jreg_fun = jreg_fun
-    instance.setup._optimize.wjreg = wjreg
 
     if instance.setup._optimize.mapping.startswith("hyper"):
         # % Add Adjoint test for hyper
@@ -331,6 +335,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     jobs_fun = instance.setup._optimize.jobs_fun
     wjobs_fun = instance.setup._optimize.wjobs_fun
     jreg_fun = instance.setup._optimize.jreg_fun
+    wjreg_fun = instance.setup._optimize.wjreg_fun
     wjreg = instance.setup._optimize.wjreg
     parameters = [el for el in control_vector if el in instance.setup._parameters_name]
     states = [el for el in control_vector if el in instance.setup._states_name]
@@ -374,6 +379,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
 
     if algorithm == "l-bfgs-b":
         ret.append(f"Jreg function: '{jreg_fun}'")
+        ret.append(f"wJreg function: [ {' '.join(wjreg_fun.astype('U'))} ]")
         ret.append(f"wJreg: {'{:.6f}'.format(wjreg)}")
 
     ret.append(f"Nx: {nx}")

@@ -111,6 +111,11 @@ ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
+JREG_FUN = [
+    "prior",
+    "smoothing",
+]
+
 OPTIM_FUNC = {
     "sbs": _optimize_sbs,
     "l-bfgs-b": _optimize_lbfgsb,

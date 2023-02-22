@@ -5381,6 +5381,147 @@ CONTAINS
     CALL SET1D_PARAMETERS(mesh, parameters, a1d)
   END SUBROUTINE SET0D_PARAMETERS
 
+!  Differentiation of normalize_parameters in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
+  SUBROUTINE NORMALIZE_PARAMETERS_D(setup, mesh, parameters, &
+&   parameters_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_d
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+      a_d(:, :, i) = a_d(:, :, i)/(ub-lb)
+      a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
+    END DO
+    CALL SET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
+  END SUBROUTINE NORMALIZE_PARAMETERS_D
+
+!  Differentiation of normalize_parameters in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   with respect to varying inputs: *(parameters.ci) *(parameters.cp)
+!                *(parameters.beta) *(parameters.cft) *(parameters.cst)
+!                *(parameters.alpha) *(parameters.exc) *(parameters.b)
+!                *(parameters.cusl1) *(parameters.cusl2) *(parameters.clsl)
+!                *(parameters.ks) *(parameters.ds) *(parameters.dsm)
+!                *(parameters.ws) *(parameters.lr)
+!   Plus diff mem management of: parameters.ci:in parameters.cp:in
+!                parameters.beta:in parameters.cft:in parameters.cst:in
+!                parameters.alpha:in parameters.exc:in parameters.b:in
+!                parameters.cusl1:in parameters.cusl2:in parameters.clsl:in
+!                parameters.ks:in parameters.ds:in parameters.dsm:in
+!                parameters.ws:in parameters.lr:in
+  SUBROUTINE NORMALIZE_PARAMETERS_B(setup, mesh, parameters, &
+&   parameters_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gnp) :: a_b
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_PARAMETERS(mesh, parameters, a)
+    DO i=1,gnp
+      lb = setup%optimize%lb_parameters(i)
+      ub = setup%optimize%ub_parameters(i)
+    END DO
+    CALL PUSHREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                 parameters%ci, 2))
+    CALL PUSHREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                 parameters%cp, 2))
+    CALL PUSHREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                 parameters%cft, 2))
+    CALL PUSHREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                 parameters%cst, 2))
+    CALL PUSHREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                 parameters%exc, 2))
+    CALL PUSHREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                 parameters%b, 2))
+    CALL PUSHREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE&
+&                 (parameters%cusl1, 2))
+    CALL PUSHREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE&
+&                 (parameters%cusl2, 2))
+    CALL PUSHREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&                 parameters%clsl, 2))
+    CALL PUSHREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                 parameters%ks, 2))
+    CALL PUSHREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                 parameters%ds, 2))
+    CALL PUSHREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                 parameters%dsm, 2))
+    CALL PUSHREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                 parameters%ws, 2))
+    CALL PUSHREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                 parameters%lr, 2))
+    CALL SET_PARAMETERS(mesh, parameters, a)
+    CALL POPREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                parameters%lr, 2))
+    CALL POPREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                parameters%ws, 2))
+    CALL POPREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                parameters%dsm, 2))
+    CALL POPREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                parameters%ds, 2))
+    CALL POPREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                parameters%ks, 2))
+    CALL POPREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&                parameters%clsl, 2))
+    CALL POPREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE(&
+&                parameters%cusl2, 2))
+    CALL POPREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE(&
+&                parameters%cusl1, 2))
+    CALL POPREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                parameters%b, 2))
+    CALL POPREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                parameters%exc, 2))
+    CALL POPREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                parameters%cst, 2))
+    CALL POPREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                parameters%cft, 2))
+    CALL POPREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                parameters%cp, 2))
+    CALL POPREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                parameters%ci, 2))
+    CALL SET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
+    DO i=gnp,1,-1
+      ub = setup%optimize%ub_parameters(i)
+      lb = setup%optimize%lb_parameters(i)
+      a_b(:, :, i) = a_b(:, :, i)/(ub-lb)
+    END DO
+    CALL GET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
+  END SUBROUTINE NORMALIZE_PARAMETERS_B
+
   SUBROUTINE NORMALIZE_PARAMETERS(setup, mesh, parameters)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -5473,7 +5614,71 @@ CONTAINS
       lb = setup%optimize%lb_parameters(i)
       ub = setup%optimize%ub_parameters(i)
     END DO
+    CALL PUSHREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                 parameters%ci, 2))
+    CALL PUSHREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                 parameters%cp, 2))
+    CALL PUSHREAL4ARRAY(parameters%beta, SIZE(parameters%beta, 1)*SIZE(&
+&                 parameters%beta, 2))
+    CALL PUSHREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                 parameters%cft, 2))
+    CALL PUSHREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                 parameters%cst, 2))
+    CALL PUSHREAL4ARRAY(parameters%alpha, SIZE(parameters%alpha, 1)*SIZE&
+&                 (parameters%alpha, 2))
+    CALL PUSHREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                 parameters%exc, 2))
+    CALL PUSHREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                 parameters%b, 2))
+    CALL PUSHREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE&
+&                 (parameters%cusl1, 2))
+    CALL PUSHREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE&
+&                 (parameters%cusl2, 2))
+    CALL PUSHREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&                 parameters%clsl, 2))
+    CALL PUSHREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                 parameters%ks, 2))
+    CALL PUSHREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                 parameters%ds, 2))
+    CALL PUSHREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                 parameters%dsm, 2))
+    CALL PUSHREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                 parameters%ws, 2))
+    CALL PUSHREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                 parameters%lr, 2))
     CALL SET_PARAMETERS(mesh, parameters, a)
+    CALL POPREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                parameters%lr, 2))
+    CALL POPREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                parameters%ws, 2))
+    CALL POPREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                parameters%dsm, 2))
+    CALL POPREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                parameters%ds, 2))
+    CALL POPREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                parameters%ks, 2))
+    CALL POPREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&                parameters%clsl, 2))
+    CALL POPREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE(&
+&                parameters%cusl2, 2))
+    CALL POPREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE(&
+&                parameters%cusl1, 2))
+    CALL POPREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                parameters%b, 2))
+    CALL POPREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                parameters%exc, 2))
+    CALL POPREAL4ARRAY(parameters%alpha, SIZE(parameters%alpha, 1)*SIZE(&
+&                parameters%alpha, 2))
+    CALL POPREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                parameters%cst, 2))
+    CALL POPREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                parameters%cft, 2))
+    CALL POPREAL4ARRAY(parameters%beta, SIZE(parameters%beta, 1)*SIZE(&
+&                parameters%beta, 2))
+    CALL POPREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                parameters%cp, 2))
+    CALL POPREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                parameters%ci, 2))
     CALL SET_PARAMETERS_B(mesh, parameters, parameters_b, a, a_b)
     DO i=gnp,1,-1
       ub = setup%optimize%ub_parameters(i)
@@ -6263,6 +6468,71 @@ CONTAINS
     CALL SET1D_STATES(mesh, states, a1d)
   END SUBROUTINE SET0D_STATES
 
+!  Differentiation of normalize_states in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
+  SUBROUTINE NORMALIZE_STATES_D(setup, mesh, states, states_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_d
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES_D(mesh, states, states_d, a, a_d)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+      a_d(:, :, i) = a_d(:, :, i)/(ub-lb)
+      a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
+    END DO
+    CALL SET_STATES_D(mesh, states, states_d, a, a_d)
+  END SUBROUTINE NORMALIZE_STATES_D
+
+!  Differentiation of normalize_states in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   with respect to varying inputs: *(states.hi) *(states.hp) *(states.hft)
+!                *(states.hst) *(states.husl1) *(states.husl2)
+!                *(states.hlsl) *(states.hlr)
+!   Plus diff mem management of: states.hi:in states.hp:in states.hft:in
+!                states.hst:in states.husl1:in states.husl2:in
+!                states.hlsl:in states.hlr:in
+  SUBROUTINE NORMALIZE_STATES_B(setup, mesh, states, states_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: a_b
+    REAL(sp) :: lb, ub
+    INTEGER :: i
+    CALL GET_STATES(mesh, states, a)
+    DO i=1,gns
+      lb = setup%optimize%lb_states(i)
+      ub = setup%optimize%ub_states(i)
+    END DO
+    CALL SET_STATES(mesh, states, a)
+    CALL SET_STATES_B(mesh, states, states_b, a, a_b)
+    DO i=gns,1,-1
+      ub = setup%optimize%ub_states(i)
+      lb = setup%optimize%lb_states(i)
+      a_b(:, :, i) = a_b(:, :, i)/(ub-lb)
+    END DO
+    CALL GET_STATES_B(mesh, states, states_b, a, a_b)
+  END SUBROUTINE NORMALIZE_STATES_B
+
   SUBROUTINE NORMALIZE_STATES(setup, mesh, states)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6335,7 +6605,37 @@ CONTAINS
       lb = setup%optimize%lb_states(i)
       ub = setup%optimize%ub_states(i)
     END DO
+    CALL PUSHREAL4ARRAY(states%hi, SIZE(states%hi, 1)*SIZE(states%hi, 2)&
+&                )
+    CALL PUSHREAL4ARRAY(states%hp, SIZE(states%hp, 1)*SIZE(states%hp, 2)&
+&                )
+    CALL PUSHREAL4ARRAY(states%hft, SIZE(states%hft, 1)*SIZE(states%hft&
+&                 , 2))
+    CALL PUSHREAL4ARRAY(states%hst, SIZE(states%hst, 1)*SIZE(states%hst&
+&                 , 2))
+    CALL PUSHREAL4ARRAY(states%husl1, SIZE(states%husl1, 1)*SIZE(states%&
+&                 husl1, 2))
+    CALL PUSHREAL4ARRAY(states%husl2, SIZE(states%husl2, 1)*SIZE(states%&
+&                 husl2, 2))
+    CALL PUSHREAL4ARRAY(states%hlsl, SIZE(states%hlsl, 1)*SIZE(states%&
+&                 hlsl, 2))
+    CALL PUSHREAL4ARRAY(states%hlr, SIZE(states%hlr, 1)*SIZE(states%hlr&
+&                 , 2))
     CALL SET_STATES(mesh, states, a)
+    CALL POPREAL4ARRAY(states%hlr, SIZE(states%hlr, 1)*SIZE(states%hlr, &
+&                2))
+    CALL POPREAL4ARRAY(states%hlsl, SIZE(states%hlsl, 1)*SIZE(states%&
+&                hlsl, 2))
+    CALL POPREAL4ARRAY(states%husl2, SIZE(states%husl2, 1)*SIZE(states%&
+&                husl2, 2))
+    CALL POPREAL4ARRAY(states%husl1, SIZE(states%husl1, 1)*SIZE(states%&
+&                husl1, 2))
+    CALL POPREAL4ARRAY(states%hst, SIZE(states%hst, 1)*SIZE(states%hst, &
+&                2))
+    CALL POPREAL4ARRAY(states%hft, SIZE(states%hft, 1)*SIZE(states%hft, &
+&                2))
+    CALL POPREAL4ARRAY(states%hp, SIZE(states%hp, 1)*SIZE(states%hp, 2))
+    CALL POPREAL4ARRAY(states%hi, SIZE(states%hi, 1)*SIZE(states%hi, 2))
     CALL SET_STATES_B(mesh, states, states_b, a, a_b)
     DO i=gns,1,-1
       ub = setup%optimize%ub_states(i)
@@ -7167,23 +7467,41 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_d
+    INTEGER :: i
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL*4 :: temp
     CALL GET_PARAMETERS_D(mesh, parameters, parameters_d, &
 &                   parameters_matrix, parameters_matrix_d)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
     CALL GET_STATES_D(mesh, states, states_d, states_matrix, &
 &               states_matrix_d)
     CALL GET_STATES(mesh, states_bgd, states_bgd_matrix)
-    SELECT CASE  (setup%optimize%jreg_fun) 
-    CASE ('prior') 
+    parameters_jreg_d = 0.0_4
+    states_jreg_d = 0.0_4
+    DO i=1,setup%optimize%njr
+      SELECT CASE  (setup%optimize%jreg_fun(i)) 
+      CASE ('prior') 
 !% Normalize prior between parameters and states
-      parameters_jreg_d = REG_PRIOR_D(mesh, gnp, parameters_matrix, &
-&       parameters_matrix_d, parameters_bgd_matrix, parameters_jreg)
-      states_jreg_d = REG_PRIOR_D(mesh, gns, states_matrix, &
-&       states_matrix_d, states_bgd_matrix, states_jreg)
-    CASE DEFAULT
-      parameters_jreg_d = 0.0_4
-      states_jreg_d = 0.0_4
-    END SELECT
+        result1_d = REG_PRIOR_D(setup, mesh, gnp, parameters_matrix, &
+&         parameters_matrix_d, parameters_bgd_matrix, result1)
+        parameters_jreg_d = parameters_jreg_d + setup%optimize%wjreg_fun&
+&         (i)*result1_d
+        result1_d = REG_PRIOR_D(setup, mesh, gns, states_matrix, &
+&         states_matrix_d, states_bgd_matrix, result1)
+        states_jreg_d = states_jreg_d + setup%optimize%wjreg_fun(i)*&
+&         result1_d
+      CASE ('smoothing') 
+        result1_d = REG_SMOOTHING_D(setup, mesh, gnp, parameters_matrix&
+&         , parameters_matrix_d, parameters_bgd_matrix, result1)
+        temp = setup%optimize%wjreg_fun(i)**4.
+        parameters_jreg_d = parameters_jreg_d + temp*result1_d
+        result1_d = REG_SMOOTHING_D(setup, mesh, gns, states_matrix, &
+&         states_matrix_d, states_bgd_matrix, result1)
+        temp = setup%optimize%wjreg_fun(i)**4.
+        states_jreg_d = states_jreg_d + temp*result1_d
+      END SELECT
+    END DO
     jreg_d = parameters_jreg_d + states_jreg_d
   END SUBROUTINE COMPUTE_JREG_D
 
@@ -7236,41 +7554,68 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix_b
+    INTEGER :: i
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
     REAL(sp) :: res
     REAL(sp) :: res_b
     REAL(sp) :: res0
     REAL(sp) :: res_b0
+    REAL(sp) :: res1
+    REAL(sp) :: res_b1
+    REAL(sp) :: res2
+    REAL(sp) :: res_b2
     INTEGER :: branch
     CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
     CALL GET_STATES(mesh, states, states_matrix)
     CALL GET_STATES(mesh, states_bgd, states_bgd_matrix)
-    SELECT CASE  (setup%optimize%jreg_fun) 
-    CASE ('prior') 
+    DO i=1,setup%optimize%njr
+      SELECT CASE  (setup%optimize%jreg_fun(i)) 
+      CASE ('prior') 
 !% Normalize prior between parameters and states
-      res = REG_PRIOR(mesh, gnp, parameters_matrix, &
-&       parameters_bgd_matrix)
-      res0 = REG_PRIOR(mesh, gns, states_matrix, states_bgd_matrix)
-      CALL PUSHCONTROL1B(1)
-    CASE DEFAULT
-      CALL PUSHCONTROL1B(0)
-    END SELECT
+        res = REG_PRIOR(setup, mesh, gnp, parameters_matrix, &
+&         parameters_bgd_matrix)
+        res0 = REG_PRIOR(setup, mesh, gns, states_matrix, &
+&         states_bgd_matrix)
+        CALL PUSHCONTROL2B(1)
+      CASE ('smoothing') 
+        res1 = REG_SMOOTHING(setup, mesh, gnp, parameters_matrix, &
+&         parameters_bgd_matrix)
+        res2 = REG_SMOOTHING(setup, mesh, gns, states_matrix, &
+&         states_bgd_matrix)
+        CALL PUSHCONTROL2B(0)
+      CASE DEFAULT
+        CALL PUSHCONTROL2B(2)
+      END SELECT
+    END DO
     parameters_jreg_b = jreg_b
     states_jreg_b = jreg_b
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      states_matrix_b = 0.0_4
-      parameters_matrix_b = 0.0_4
-    ELSE
-      states_matrix_b = 0.0_4
-      res_b0 = states_jreg_b
-      CALL REG_PRIOR_B(mesh, gns, states_matrix, states_matrix_b, &
-&                states_bgd_matrix, res_b0)
-      parameters_matrix_b = 0.0_4
-      res_b = parameters_jreg_b
-      CALL REG_PRIOR_B(mesh, gnp, parameters_matrix, parameters_matrix_b&
-&                , parameters_bgd_matrix, res_b)
-    END IF
+    states_matrix_b = 0.0_4
+    parameters_matrix_b = 0.0_4
+    DO i=setup%optimize%njr,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .EQ. 0) THEN
+        result1_b = setup%optimize%wjreg_fun(i)**4.*states_jreg_b
+        res_b2 = result1_b
+        CALL REG_SMOOTHING_B(setup, mesh, gns, states_matrix, &
+&                      states_matrix_b, states_bgd_matrix, res_b2)
+        result1_b = setup%optimize%wjreg_fun(i)**4.*parameters_jreg_b
+        res_b1 = result1_b
+        CALL REG_SMOOTHING_B(setup, mesh, gnp, parameters_matrix, &
+&                      parameters_matrix_b, parameters_bgd_matrix, &
+&                      res_b1)
+      ELSE IF (branch .EQ. 1) THEN
+        result1_b = setup%optimize%wjreg_fun(i)*states_jreg_b
+        res_b0 = result1_b
+        CALL REG_PRIOR_B(setup, mesh, gns, states_matrix, &
+&                  states_matrix_b, states_bgd_matrix, res_b0)
+        result1_b = setup%optimize%wjreg_fun(i)*parameters_jreg_b
+        res_b = result1_b
+        CALL REG_PRIOR_B(setup, mesh, gnp, parameters_matrix, &
+&                  parameters_matrix_b, parameters_bgd_matrix, res_b)
+      END IF
+    END DO
     states_b%hi = 0.0_4
     states_b%hp = 0.0_4
     states_b%hft = 0.0_4
@@ -7315,6 +7660,8 @@ CONTAINS
 &   , parameters_bgd_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, gns) :: states_matrix, &
 &   states_bgd_matrix
+    INTEGER :: i
+    REAL(sp) :: result1
     CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
     CALL GET_STATES(mesh, states, states_matrix)
@@ -7322,16 +7669,284 @@ CONTAINS
     jreg = 0._sp
     parameters_jreg = 0._sp
     states_jreg = 0._sp
-    SELECT CASE  (setup%optimize%jreg_fun) 
-    CASE ('prior') 
+    DO i=1,setup%optimize%njr
+      SELECT CASE  (setup%optimize%jreg_fun(i)) 
+      CASE ('prior') 
 !% Normalize prior between parameters and states
-      parameters_jreg = REG_PRIOR(mesh, gnp, parameters_matrix, &
-&       parameters_bgd_matrix)
-      states_jreg = REG_PRIOR(mesh, gns, states_matrix, &
-&       states_bgd_matrix)
-    END SELECT
+        result1 = REG_PRIOR(setup, mesh, gnp, parameters_matrix, &
+&         parameters_bgd_matrix)
+        parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)*&
+&         result1
+        result1 = REG_PRIOR(setup, mesh, gns, states_matrix, &
+&         states_bgd_matrix)
+        states_jreg = states_jreg + setup%optimize%wjreg_fun(i)*result1
+      CASE ('smoothing') 
+        result1 = REG_SMOOTHING(setup, mesh, gnp, parameters_matrix, &
+&         parameters_bgd_matrix)
+        parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)&
+&         **4.*result1
+        result1 = REG_SMOOTHING(setup, mesh, gns, states_matrix, &
+&         states_bgd_matrix)
+        states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4.*&
+&         result1
+      END SELECT
+    END DO
     jreg = parameters_jreg + states_jreg
   END SUBROUTINE COMPUTE_JREG
+
+!  Differentiation of reg_prior in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: res
+!   with respect to varying inputs: matrix
+  FUNCTION REG_PRIOR_D(setup, mesh, size_mat3, matrix, matrix_d, &
+&   matrix_bgd, res) RESULT (RES_D)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix, matrix_bgd
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: iz
+    INTRINSIC SUM
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: arg1
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: arg1_d
+    res_d = 0.0_4
+    DO iz=1,size_mat3
+      IF (setup%optimize%optim_parameters(iz) .GT. 0) THEN
+        arg1_d(:, :) = 2*(matrix(:, :, iz)-matrix_bgd(:, :, iz))*&
+&         matrix_d(:, :, iz)
+        arg1(:, :) = (matrix(:, :, iz)-matrix_bgd(:, :, iz))*(matrix(:, &
+&         :, iz)-matrix_bgd(:, :, iz))
+        res_d = SUM(arg1_d(:, :))
+        res = SUM(arg1(:, :))
+      END IF
+    END DO
+  END FUNCTION REG_PRIOR_D
+
+!  Differentiation of reg_prior in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: res matrix
+!   with respect to varying inputs: matrix
+  SUBROUTINE REG_PRIOR_B(setup, mesh, size_mat3, matrix, matrix_b, &
+&   matrix_bgd, res_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix, matrix_bgd
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: matrix_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: iz
+    INTRINSIC SUM
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: arg1
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: arg1_b
+    INTEGER :: branch
+    DO iz=1,size_mat3
+      IF (setup%optimize%optim_parameters(iz) .GT. 0) THEN
+        arg1(:, :) = (matrix(:, :, iz)-matrix_bgd(:, :, iz))*(matrix(:, &
+&         :, iz)-matrix_bgd(:, :, iz))
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    DO iz=size_mat3,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        arg1_b = 0.0_4
+        arg1_b(:, :) = res_b
+        matrix_b(:, :, iz) = matrix_b(:, :, iz) + 2*(matrix(:, :, iz)-&
+&         matrix_bgd(:, :, iz))*arg1_b
+        res_b = 0.0_4
+      END IF
+    END DO
+  END SUBROUTINE REG_PRIOR_B
+
+  FUNCTION REG_PRIOR(setup, mesh, size_mat3, matrix, matrix_bgd) RESULT &
+& (RES)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix, matrix_bgd
+    REAL(sp) :: res
+    INTEGER :: iz
+    INTRINSIC SUM
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: arg1
+    res = 0._sp
+    DO iz=1,size_mat3
+      IF (setup%optimize%optim_parameters(iz) .GT. 0) THEN
+        arg1(:, :) = (matrix(:, :, iz)-matrix_bgd(:, :, iz))*(matrix(:, &
+&         :, iz)-matrix_bgd(:, :, iz))
+        res = SUM(arg1(:, :))
+      END IF
+    END DO
+  END FUNCTION REG_PRIOR
+
+!  Differentiation of reg_smoothing in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: smoothing
+!   with respect to varying inputs: matrix
+  FUNCTION REG_SMOOTHING_D(setup, mesh, size_mat3, matrix, matrix_d, &
+&   matrix_bgd, smoothing) RESULT (SMOOTHING_D)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix_bgd
+    REAL(sp) :: smoothing
+    REAL(sp) :: smoothing_d
+    INTEGER :: i, j, z
+    INTEGER :: ix, iy, ixmin, ixmax, iymin, iymax
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: mat
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: mat_d
+!matrix relative to the bgd. We don't want to penalize initial spatial variation. 
+    mat_d = matrix_d
+    mat = matrix - matrix_bgd
+    smoothing_d = 0.0_4
+    DO z=1,size_mat3
+      IF (setup%optimize%optim_parameters(z) .GT. 0) THEN
+        DO ix=1,mesh%nrow
+          DO iy=1,mesh%ncol
+            ixmin = ix - 1
+            ixmax = ix + 1
+            iymin = iy - 1
+            iymax = iy + 1
+!condition limite !
+            IF (ix .EQ. 1) ixmin = ix
+            IF (ix .EQ. mesh%nrow) ixmax = ix
+            IF (iy .EQ. 1) iymin = iy
+            IF (iy .EQ. mesh%ncol) iymax = iy
+            smoothing_d = smoothing_d + 2.*(mat(ixmax, iy, z)-2*2.*mat(&
+&             ix, iy, z)+mat(ixmin, iy, z)+mat(ix, iymax, z)+mat(ix, &
+&             iymin, z))*(mat_d(ixmax, iy, z)-2*2.*mat_d(ix, iy, z)+&
+&             mat_d(ixmin, iy, z)+mat_d(ix, iymax, z)+mat_d(ix, iymin, z&
+&             ))
+          END DO
+        END DO
+      END IF
+    END DO
+  END FUNCTION REG_SMOOTHING_D
+
+!  Differentiation of reg_smoothing in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: smoothing matrix
+!   with respect to varying inputs: matrix
+  SUBROUTINE REG_SMOOTHING_B(setup, mesh, size_mat3, matrix, matrix_b, &
+&   matrix_bgd, smoothing_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix_bgd
+    REAL(sp) :: smoothing
+    REAL(sp) :: smoothing_b
+    INTEGER :: i, j, z
+    INTEGER :: ix, iy, ixmin, ixmax, iymin, iymax
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: mat
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: mat_b
+    REAL*4 :: temp_b
+    INTEGER :: branch
+!matrix relative to the bgd. We don't want to penalize initial spatial variation. 
+    mat = matrix - matrix_bgd
+    DO z=1,size_mat3
+      IF (setup%optimize%optim_parameters(z) .GT. 0) THEN
+        DO ix=1,mesh%nrow
+          DO iy=1,mesh%ncol
+            CALL PUSHINTEGER4(ixmin)
+            ixmin = ix - 1
+            CALL PUSHINTEGER4(ixmax)
+            ixmax = ix + 1
+            CALL PUSHINTEGER4(iymin)
+            iymin = iy - 1
+            CALL PUSHINTEGER4(iymax)
+            iymax = iy + 1
+!condition limite !
+            IF (ix .EQ. 1) ixmin = ix
+            IF (ix .EQ. mesh%nrow) ixmax = ix
+            IF (iy .EQ. 1) iymin = iy
+            IF (iy .EQ. mesh%ncol) iymax = iy
+          END DO
+        END DO
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    mat_b = 0.0_4
+    DO z=size_mat3,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO ix=mesh%nrow,1,-1
+          DO iy=mesh%ncol,1,-1
+            temp_b = 2.*(mat(ixmax, iy, z)-2*2.*mat(ix, iy, z)+mat(ixmin&
+&             , iy, z)+mat(ix, iymax, z)+mat(ix, iymin, z))*smoothing_b
+            mat_b(ixmax, iy, z) = mat_b(ixmax, iy, z) + temp_b
+            mat_b(ix, iy, z) = mat_b(ix, iy, z) - 2*2.*temp_b
+            mat_b(ixmin, iy, z) = mat_b(ixmin, iy, z) + temp_b
+            mat_b(ix, iymax, z) = mat_b(ix, iymax, z) + temp_b
+            mat_b(ix, iymin, z) = mat_b(ix, iymin, z) + temp_b
+            CALL POPINTEGER4(iymax)
+            CALL POPINTEGER4(iymin)
+            CALL POPINTEGER4(ixmax)
+            CALL POPINTEGER4(ixmin)
+          END DO
+        END DO
+      END IF
+    END DO
+    matrix_b = matrix_b + mat_b
+  END SUBROUTINE REG_SMOOTHING_B
+
+  FUNCTION REG_SMOOTHING(setup, mesh, size_mat3, matrix, matrix_bgd) &
+& RESULT (SMOOTHING)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: size_mat3
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
+&   matrix_bgd
+    REAL(sp) :: smoothing
+    INTEGER :: i, j, z
+    INTEGER :: ix, iy, ixmin, ixmax, iymin, iymax
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: mat
+!matrix relative to the bgd. We don't want to penalize initial spatial variation. 
+    mat = matrix - matrix_bgd
+    smoothing = 0._sp
+    DO z=1,size_mat3
+      IF (setup%optimize%optim_parameters(z) .GT. 0) THEN
+        DO ix=1,mesh%nrow
+          DO iy=1,mesh%ncol
+            ixmin = ix - 1
+            ixmax = ix + 1
+            iymin = iy - 1
+            iymax = iy + 1
+!condition limite !
+            IF (ix .EQ. 1) ixmin = ix
+            IF (ix .EQ. mesh%nrow) ixmax = ix
+            IF (iy .EQ. 1) iymin = iy
+            IF (iy .EQ. mesh%ncol) iymax = iy
+            smoothing = smoothing + (mat(ixmax, iy, z)-2.*mat(ix, iy, z)&
+&             +mat(ixmin, iy, z)+(mat(ix, iymax, z)-2.*mat(ix, iy, z)+&
+&             mat(ix, iymin, z)))**2.
+          END DO
+        END DO
+      END IF
+    END DO
+  END FUNCTION REG_SMOOTHING
 
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: cost
@@ -7368,10 +7983,14 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d, parameters_bgd_d
-    TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT), INTENT(IN) :: states_d, states_bgd_d
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd_d
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_d
+    TYPE(STATESDT), INTENT(IN) :: states_bgd
+    TYPE(STATESDT), INTENT(IN) :: states_bgd_d
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_d
     REAL(sp), INTENT(INOUT) :: cost
@@ -7380,14 +7999,15 @@ CONTAINS
     REAL(sp) :: jobs_d, jreg_d
     CALL COMPUTE_JOBS_D(setup, mesh, input_data, output, output_d, jobs&
 &                 , jobs_d)
-!% Only compute in case wjreg > 0
-    IF (setup%optimize%wjreg .GT. 0._sp) THEN
-      CALL COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
-&                   parameters_bgd, parameters_bgd_d, states, states_d, &
-&                   states_bgd, states_bgd_d, jreg, jreg_d)
-    ELSE
-      jreg_d = 0.0_4
+    IF (setup%optimize%denormalize_forward) THEN
+      CALL NORMALIZE_PARAMETERS_D(setup, mesh, parameters, parameters_d)
+      CALL NORMALIZE_STATES_D(setup, mesh, states, states_d)
     END IF
+    CALL COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
+&                 parameters_bgd, parameters_bgd_d, states, states_d, &
+&                 states_bgd, states_bgd_d, jreg, jreg_d)
+    CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
+    CALL DENORMALIZE_STATES(setup, mesh, states)
     cost_d = jobs_d + setup%optimize%wjreg*jreg_d
   END SUBROUTINE COMPUTE_COST_D
 
@@ -7426,10 +8046,14 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(PARAMETERSDT) :: parameters_b, parameters_bgd_b
-    TYPE(STATESDT), INTENT(IN) :: states, states_bgd
-    TYPE(STATESDT) :: states_b, states_bgd_b
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+    TYPE(PARAMETERSDT) :: parameters_bgd_b
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(INOUT) :: states_b
+    TYPE(STATESDT), INTENT(IN) :: states_bgd
+    TYPE(STATESDT) :: states_bgd_b
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT_DIFF), INTENT(INOUT) :: output_b
     REAL(sp), INTENT(INOUT) :: cost
@@ -7438,46 +8062,80 @@ CONTAINS
     REAL(sp) :: jobs_b, jreg_b
     INTEGER :: branch
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
-!% Only compute in case wjreg > 0
-    IF (setup%optimize%wjreg .GT. 0._sp) THEN
-      CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states&
-&                 , states_bgd, jreg)
+    IF (setup%optimize%denormalize_forward) THEN
+      CALL PUSHREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                   parameters%ci, 2))
+      CALL PUSHREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                   parameters%cp, 2))
+      CALL PUSHREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                   parameters%cft, 2))
+      CALL PUSHREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                   parameters%cst, 2))
+      CALL PUSHREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                   parameters%exc, 2))
+      CALL PUSHREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                   parameters%b, 2))
+      CALL PUSHREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*&
+&                   SIZE(parameters%cusl1, 2))
+      CALL PUSHREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*&
+&                   SIZE(parameters%cusl2, 2))
+      CALL PUSHREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE&
+&                   (parameters%clsl, 2))
+      CALL PUSHREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                   parameters%ks, 2))
+      CALL PUSHREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                   parameters%ds, 2))
+      CALL PUSHREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                   parameters%dsm, 2))
+      CALL PUSHREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                   parameters%ws, 2))
+      CALL PUSHREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                   parameters%lr, 2))
+      CALL NORMALIZE_PARAMETERS(setup, mesh, parameters)
+      CALL NORMALIZE_STATES(setup, mesh, states)
       CALL PUSHCONTROL1B(0)
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
+    CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states, &
+&               states_bgd, jreg)
     jobs_b = cost_b
     jreg_b = setup%optimize%wjreg*cost_b
+    CALL COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
+&                 parameters_bgd, parameters_bgd_b, states, states_b, &
+&                 states_bgd, states_bgd_b, jreg, jreg_b)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      CALL COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
-&                   parameters_bgd, parameters_bgd_b, states, states_b, &
-&                   states_bgd, states_bgd_b, jreg, jreg_b)
-    ELSE
-      parameters_b%ci = 0.0_4
-      parameters_b%cp = 0.0_4
-      parameters_b%beta = 0.0_4
-      parameters_b%cft = 0.0_4
-      parameters_b%cst = 0.0_4
-      parameters_b%alpha = 0.0_4
-      parameters_b%exc = 0.0_4
-      parameters_b%b = 0.0_4
-      parameters_b%cusl1 = 0.0_4
-      parameters_b%cusl2 = 0.0_4
-      parameters_b%clsl = 0.0_4
-      parameters_b%ks = 0.0_4
-      parameters_b%ds = 0.0_4
-      parameters_b%dsm = 0.0_4
-      parameters_b%ws = 0.0_4
-      parameters_b%lr = 0.0_4
-      states_b%hi = 0.0_4
-      states_b%hp = 0.0_4
-      states_b%hft = 0.0_4
-      states_b%hst = 0.0_4
-      states_b%husl1 = 0.0_4
-      states_b%husl2 = 0.0_4
-      states_b%hlsl = 0.0_4
-      states_b%hlr = 0.0_4
+      CALL NORMALIZE_STATES_B(setup, mesh, states, states_b)
+      CALL POPREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&                  parameters%lr, 2))
+      CALL POPREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&                  parameters%ws, 2))
+      CALL POPREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&                  parameters%dsm, 2))
+      CALL POPREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&                  parameters%ds, 2))
+      CALL POPREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&                  parameters%ks, 2))
+      CALL POPREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&                  parameters%clsl, 2))
+      CALL POPREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*&
+&                  SIZE(parameters%cusl2, 2))
+      CALL POPREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*&
+&                  SIZE(parameters%cusl1, 2))
+      CALL POPREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&                  parameters%b, 2))
+      CALL POPREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&                  parameters%exc, 2))
+      CALL POPREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&                  parameters%cst, 2))
+      CALL POPREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&                  parameters%cft, 2))
+      CALL POPREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&                  parameters%cp, 2))
+      CALL POPREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&                  parameters%ci, 2))
+      CALL NORMALIZE_PARAMETERS_B(setup, mesh, parameters, parameters_b)
     END IF
     CALL COMPUTE_JOBS_B(setup, mesh, input_data, output, output_b, jobs&
 &                 , jobs_b)
@@ -7489,18 +8147,24 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
-    TYPE(STATESDT), INTENT(IN) :: states, states_bgd
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_bgd
+    TYPE(STATESDT), INTENT(INOUT) :: states
+    TYPE(STATESDT), INTENT(IN) :: states_bgd
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     REAL(sp), INTENT(INOUT) :: cost
     REAL(sp) :: jobs, jreg
     CALL COMPUTE_JOBS(setup, mesh, input_data, output, jobs)
-!% Only compute in case wjreg > 0
-    IF (setup%optimize%wjreg .GT. 0._sp) THEN
-      CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states&
-&                 , states_bgd, jreg)
-    ELSE
-      jreg = 0._sp
+    jreg = 0._sp
+    IF (setup%optimize%denormalize_forward) THEN
+      CALL NORMALIZE_PARAMETERS(setup, mesh, parameters)
+      CALL NORMALIZE_STATES(setup, mesh, states)
+    END IF
+    CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states, &
+&               states_bgd, jreg)
+    IF (setup%optimize%denormalize_forward) THEN
+      CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
+      CALL DENORMALIZE_STATES(setup, mesh, states)
     END IF
     cost = jobs + setup%optimize%wjreg*jreg
     output%cost = cost
@@ -9123,57 +9787,6 @@ CONTAINS
     END IF
   END FUNCTION SIGNATURE
 
-!  Differentiation of reg_prior in forward (tangent) mode (with options fixinterface noISIZE):
-!   variations   of useful results: res
-!   with respect to varying inputs: matrix
-!% TODO refactorize
-  FUNCTION REG_PRIOR_D(mesh, size_mat3, matrix, matrix_d, matrix_bgd, &
-&   res) RESULT (RES_D)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: size_mat3
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
-&   matrix, matrix_bgd
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
-&   matrix_d
-    REAL(sp) :: res
-    REAL(sp) :: res_d
-    INTRINSIC SUM
-    res_d = SUM(2*(matrix-matrix_bgd)*matrix_d)
-    res = SUM((matrix-matrix_bgd)*(matrix-matrix_bgd))
-  END FUNCTION REG_PRIOR_D
-
-!  Differentiation of reg_prior in reverse (adjoint) mode (with options fixinterface noISIZE):
-!   gradient     of useful results: res
-!   with respect to varying inputs: matrix
-!% TODO refactorize
-  SUBROUTINE REG_PRIOR_B(mesh, size_mat3, matrix, matrix_b, matrix_bgd, &
-&   res_b)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: size_mat3
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
-&   matrix, matrix_bgd
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3) :: matrix_b
-    REAL(sp) :: res
-    REAL(sp) :: res_b
-    INTRINSIC SUM
-    matrix_b = 0.0_4
-    matrix_b = 2*(matrix-matrix_bgd)*res_b
-  END SUBROUTINE REG_PRIOR_B
-
-!% TODO refactorize
-  FUNCTION REG_PRIOR(mesh, size_mat3, matrix, matrix_bgd) RESULT (RES)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: size_mat3
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, size_mat3), INTENT(IN) :: &
-&   matrix, matrix_bgd
-    REAL(sp) :: res
-    INTRINSIC SUM
-    res = SUM((matrix-matrix_bgd)*(matrix-matrix_bgd))
-  END FUNCTION REG_PRIOR
-
 END MODULE MWD_COST_DIFF
 
 !  Differentiation of base_forward in forward (tangent) mode (with options fixinterface noISIZE):
@@ -9272,7 +9885,7 @@ SUBROUTINE BASE_FORWARD_D(setup, mesh, input_data, parameters, &
   TYPE(STATESDT) :: states_imd
   TYPE(STATESDT) :: states_imd_d
   INTRINSIC TRIM
-  IF (setup%optimize%normalize_forward) THEN
+  IF (setup%optimize%denormalize_forward) THEN
     CALL DENORMALIZE_PARAMETERS_D(setup, mesh, parameters, parameters_d)
     CALL DENORMALIZE_STATES_D(setup, mesh, states, states_d)
   END IF
@@ -9404,7 +10017,7 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
   TYPE(STATESDT) :: states_imd_b
   INTRINSIC TRIM
   INTEGER :: branch
-  IF (setup%optimize%normalize_forward) THEN
+  IF (setup%optimize%denormalize_forward) THEN
     CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
     CALL DENORMALIZE_STATES(setup, mesh, states)
     CALL PUSHCONTROL1B(0)
@@ -9483,8 +10096,100 @@ SUBROUTINE BASE_FORWARD_B(setup, mesh, input_data, parameters, &
 !% =================================================================================================================== %!
 !%   Compute J
 !% =================================================================================================================== %!
+  CALL PUSHREAL4ARRAY(states%hi, SIZE(states%hi, 1)*SIZE(states%hi, 2))
+  CALL PUSHREAL4ARRAY(states%hp, SIZE(states%hp, 1)*SIZE(states%hp, 2))
+  CALL PUSHREAL4ARRAY(states%hft, SIZE(states%hft, 1)*SIZE(states%hft, 2&
+&               ))
+  CALL PUSHREAL4ARRAY(states%hst, SIZE(states%hst, 1)*SIZE(states%hst, 2&
+&               ))
+  CALL PUSHREAL4ARRAY(states%husl1, SIZE(states%husl1, 1)*SIZE(states%&
+&               husl1, 2))
+  CALL PUSHREAL4ARRAY(states%husl2, SIZE(states%husl2, 1)*SIZE(states%&
+&               husl2, 2))
+  CALL PUSHREAL4ARRAY(states%hlsl, SIZE(states%hlsl, 1)*SIZE(states%hlsl&
+&               , 2))
+  CALL PUSHREAL4ARRAY(states%hlr, SIZE(states%hlr, 1)*SIZE(states%hlr, 2&
+&               ))
+  CALL PUSHREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&               parameters%ci, 2))
+  CALL PUSHREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&               parameters%cp, 2))
+  CALL PUSHREAL4ARRAY(parameters%beta, SIZE(parameters%beta, 1)*SIZE(&
+&               parameters%beta, 2))
+  CALL PUSHREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&               parameters%cft, 2))
+  CALL PUSHREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&               parameters%cst, 2))
+  CALL PUSHREAL4ARRAY(parameters%alpha, SIZE(parameters%alpha, 1)*SIZE(&
+&               parameters%alpha, 2))
+  CALL PUSHREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&               parameters%exc, 2))
+  CALL PUSHREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(&
+&               parameters%b, 2))
+  CALL PUSHREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE(&
+&               parameters%cusl1, 2))
+  CALL PUSHREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE(&
+&               parameters%cusl2, 2))
+  CALL PUSHREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&               parameters%clsl, 2))
+  CALL PUSHREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&               parameters%ks, 2))
+  CALL PUSHREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&               parameters%ds, 2))
+  CALL PUSHREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&               parameters%dsm, 2))
+  CALL PUSHREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&               parameters%ws, 2))
+  CALL PUSHREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&               parameters%lr, 2))
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, parameters_bgd&
 &             , states, states_bgd, output, cost)
+  CALL POPREAL4ARRAY(parameters%lr, SIZE(parameters%lr, 1)*SIZE(&
+&              parameters%lr, 2))
+  CALL POPREAL4ARRAY(parameters%ws, SIZE(parameters%ws, 1)*SIZE(&
+&              parameters%ws, 2))
+  CALL POPREAL4ARRAY(parameters%dsm, SIZE(parameters%dsm, 1)*SIZE(&
+&              parameters%dsm, 2))
+  CALL POPREAL4ARRAY(parameters%ds, SIZE(parameters%ds, 1)*SIZE(&
+&              parameters%ds, 2))
+  CALL POPREAL4ARRAY(parameters%ks, SIZE(parameters%ks, 1)*SIZE(&
+&              parameters%ks, 2))
+  CALL POPREAL4ARRAY(parameters%clsl, SIZE(parameters%clsl, 1)*SIZE(&
+&              parameters%clsl, 2))
+  CALL POPREAL4ARRAY(parameters%cusl2, SIZE(parameters%cusl2, 1)*SIZE(&
+&              parameters%cusl2, 2))
+  CALL POPREAL4ARRAY(parameters%cusl1, SIZE(parameters%cusl1, 1)*SIZE(&
+&              parameters%cusl1, 2))
+  CALL POPREAL4ARRAY(parameters%b, SIZE(parameters%b, 1)*SIZE(parameters&
+&              %b, 2))
+  CALL POPREAL4ARRAY(parameters%exc, SIZE(parameters%exc, 1)*SIZE(&
+&              parameters%exc, 2))
+  CALL POPREAL4ARRAY(parameters%alpha, SIZE(parameters%alpha, 1)*SIZE(&
+&              parameters%alpha, 2))
+  CALL POPREAL4ARRAY(parameters%cst, SIZE(parameters%cst, 1)*SIZE(&
+&              parameters%cst, 2))
+  CALL POPREAL4ARRAY(parameters%cft, SIZE(parameters%cft, 1)*SIZE(&
+&              parameters%cft, 2))
+  CALL POPREAL4ARRAY(parameters%beta, SIZE(parameters%beta, 1)*SIZE(&
+&              parameters%beta, 2))
+  CALL POPREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
+&              parameters%cp, 2))
+  CALL POPREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
+&              parameters%ci, 2))
+  CALL POPREAL4ARRAY(states%hlr, SIZE(states%hlr, 1)*SIZE(states%hlr, 2)&
+&             )
+  CALL POPREAL4ARRAY(states%hlsl, SIZE(states%hlsl, 1)*SIZE(states%hlsl&
+&              , 2))
+  CALL POPREAL4ARRAY(states%husl2, SIZE(states%husl2, 1)*SIZE(states%&
+&              husl2, 2))
+  CALL POPREAL4ARRAY(states%husl1, SIZE(states%husl1, 1)*SIZE(states%&
+&              husl1, 2))
+  CALL POPREAL4ARRAY(states%hst, SIZE(states%hst, 1)*SIZE(states%hst, 2)&
+&             )
+  CALL POPREAL4ARRAY(states%hft, SIZE(states%hft, 1)*SIZE(states%hft, 2)&
+&             )
+  CALL POPREAL4ARRAY(states%hp, SIZE(states%hp, 1)*SIZE(states%hp, 2))
+  CALL POPREAL4ARRAY(states%hi, SIZE(states%hi, 1)*SIZE(states%hi, 2))
   CALL SET_PARAMETERS(mesh, parameters_b, 0.0_4)
   CALL SET_STATES(mesh, states_b, 0.0_4)
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
@@ -9593,7 +10298,7 @@ SUBROUTINE BASE_FORWARD_NODIFF(setup, mesh, input_data, parameters, &
   REAL(sp), INTENT(INOUT) :: cost
   TYPE(STATESDT) :: states_imd
   INTRINSIC TRIM
-  IF (setup%optimize%normalize_forward) THEN
+  IF (setup%optimize%denormalize_forward) THEN
     CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
     CALL DENORMALIZE_STATES(setup, mesh, states)
   END IF

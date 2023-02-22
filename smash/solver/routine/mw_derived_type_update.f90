@@ -10,12 +10,12 @@ module mw_derived_type_update
 
 contains
 
-    subroutine update_optimize_setup(this, ntime_step, nd, ng, mapping, njf)
+    subroutine update_optimize_setup(this, ntime_step, nd, ng, mapping, njf, njr)
 
         implicit none
 
         type(Optimize_SetupDT), intent(inout) :: this
-        integer, intent(in) :: ntime_step, nd, ng, njf
+        integer, intent(in) :: ntime_step, nd, ng, njf, njr
         character(len=*), intent(in) :: mapping
 
         if (ng .ne. size(this%wgauge)) then
@@ -30,7 +30,7 @@ contains
 
         this%mapping = mapping
 
-        this%normalize_forward = .false.
+        this%denormalize_forward = .false.
 
         select case (trim(this%mapping))
 
@@ -55,6 +55,20 @@ contains
 
             this%jobs_fun = "..."
             this%wjobs_fun = 0._sp
+
+        end if
+        
+        this%njr = njr
+        
+        if (this%njr .ne. size(this%jreg_fun)) then
+
+            if (allocated(this%jreg_fun)) deallocate (this%jreg_fun)
+            if (allocated(this%wjreg_fun)) deallocate (this%wjreg_fun)
+            allocate (this%jreg_fun(this%njr))
+            allocate (this%wjreg_fun(this%njr))
+
+            this%jreg_fun = "..."
+            this%wjreg_fun = 1._sp
 
         end if
 

@@ -555,7 +555,7 @@ contains
         call var_to_control_lbfgsb(n, setup, mesh, parameters, states, x)
 
         ! Trigger the denormalization subroutine in forward
-        setup%optimize%normalize_forward = .true.
+        setup%optimize%denormalize_forward = .true.
 
         ! =========================================================================================================== !
         !   Start minimization
@@ -653,7 +653,7 @@ contains
         & parameters_bgd, states, states_bgd, output, cost)
 
         ! Remove the denormalization subroutine in forward
-        setup%optimize%normalize_forward = .false.
+        setup%optimize%denormalize_forward = .false.
 
     end subroutine optimize_lbfgsb
 
