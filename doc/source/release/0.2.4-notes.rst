@@ -6,4 +6,4 @@
 smash 0.2.4 Release Notes
 =========================
 
-First release ...
+This is the initial release.
