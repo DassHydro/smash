@@ -506,7 +506,7 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
+        bounds: dict | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
         event_seg: dict | None = None,
