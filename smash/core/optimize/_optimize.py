@@ -21,7 +21,7 @@ import warnings
 import numpy as np
 import scipy.optimize
 import pandas as pd
-
+import math
 
 def _optimize_sbs(
     instance: Model,
@@ -106,12 +106,15 @@ def _optimize_lbfgsb(
     ost: pd.Timestamp,
     verbose: bool,
     auto_regul: str = "...",
+    nb_wjreg_lcurve: int = 6,
     maxiter: int = 100,
     wjreg: float = 0.0,
     adjoint_test: bool = False,
     **unknown_options,
 ):
     _check_unknown_options(unknown_options)
+
+    
 
     # % Fortran verbose
     instance.setup._optimize.verbose = verbose
@@ -151,7 +154,7 @@ def _optimize_lbfgsb(
     instance.setup._optimize.wjreg = wjreg
     
     instance.setup._optimize.auto_regul = auto_regul
-
+    
     instance.setup._optimize.wgauge = wgauge
 
     st = pd.Timestamp(instance.setup.start_time)
@@ -187,18 +190,183 @@ def _optimize_lbfgsb(
                 instance.states,
                 instance.output,
             )
+        
+        
+        if (auto_regul == 'balanced'):
+            
+            parameters_bgd=instance.parameters.copy()
+            states_bgd=instance.states.copy()
+            
+            instance.setup._optimize.wjreg = 0.
+            
+            if verbose:
+                _optimize_message(instance, control_vector, mapping)
 
-        if verbose:
-            _optimize_message(instance, control_vector, mapping)
+            
+            optimize_lbfgsb(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+            
+            instance.setup._optimize.wjreg = (instance.output.cost_jobs_initial - instance.output.cost_jobs) / (instance.output.cost_jreg - instance.output.cost_jreg_initial)
+            
+            instance.parameters=parameters_bgd.copy()
+            instance.states=states_bgd.copy()
+            
+            if verbose:
+                _optimize_message(instance, control_vector, mapping)
+            
+            optimize_lbfgsb(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+            
+            
+        elif (auto_regul == "lcurve"):
+            
+            parameters_bgd=instance.parameters.copy()
+            states_bgd=instance.states.copy()
+            
+            instance.setup._optimize.wjreg = 0.
+            
+            if verbose:
+                _optimize_message(instance, control_vector, mapping)
+            
+            optimize_lbfgsb(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+            
+            #initialisation bounds for jobs and jreg
+            job_min=instance.output.cost_jobs
+            jobs_max=instance.output.cost_jobs_initial
+            jreg_min=instance.output.cost_jreg_initial
+            jreg_max=instance.output.cost_jreg
+            
+            lcurve={"iter0":{"j":instance.output.cost,"jobs":instance.output.cost_jobs,"jreg":instance.output.cost_jreg,"wjreg":instance.setup._optimize.wjreg}}
+            
+            
+            wjreg_opt = (instance.output.cost_jobs_initial - instance.output.cost_jobs) / (instance.output.cost_jreg - instance.output.cost_jreg_initial) 
+            
+            nb_wjreg_lcurve_base=nb_wjreg_lcurve-2
+            log_wjreg_opt=math.log10(wjreg_opt)
+            
+            if (nb_wjreg_lcurve_base>0):
+                
+                min_wjreg=log_wjreg_opt-(nb_wjreg_lcurve_base/2.)
+                max_wjreg=log_wjreg_opt+(nb_wjreg_lcurve_base/2.)
+                a=list(10**np.arange(min_wjreg,log_wjreg_opt-1))
+                c=list(10**np.arange(log_wjreg_opt+1,max_wjreg))
+            
+            b=list(10**np.arange(log_wjreg_opt-0.5,log_wjreg_opt+1.,0.5))
+            
+            #print(a,b,c)
+            
+            #print(wjreg_opt)
+            
+            wjreg_range=a+b+c
+            
+            #print(wjreg_range)
+            
+            i=0
+            for wjreg in wjreg_range:
+                
+                i=i+1
+                instance.setup._optimize.wjreg = wjreg
+                
+                instance.parameters=parameters_bgd.copy()
+                instance.states=states_bgd.copy()
+                
+                if verbose:
+                    _optimize_message(instance, control_vector, mapping)
+            
+                optimize_lbfgsb(
+                    instance.setup,
+                    instance.mesh,
+                    instance.input_data,
+                    instance.parameters,
+                    instance.states,
+                    instance.output,
+                )
+                
+                res={"j":instance.output.cost,"jobs":instance.output.cost_jobs,"jreg":instance.output.cost_jreg,"wjreg":instance.setup._optimize.wjreg}
+                
+                lcurve["iter"+str(i)]=res
+                
+                if (job_min/instance.output.cost_jobs<=0.2):
+                    break
+            
+            
+            print(lcurve)
+            
+            #select the best wjreg base on the lcurve
+            for key,value in lcurve.items():
+                
+                hypth=( ((jobs_max-value["jobs"])/(jobs_max-job_min))**2.+((value["jreg"]-jreg_min)/(jreg_max-jreg_min))**2.)**0.5
+                alpha=45.-math.cos((jobs_max-value["jobs"])/(jobs_max-job_min)/hypth)
+                hnew=hypth*math.sin(alpha)
+                
+                if not (key=="iter0"):
+                    
+                    if (hnew>h) :
+                        h=hnew
+                        wjreg_opt=value["wjreg"]
+                        key_opt=key
+                    
+                else:
+                    h=hnew
+                    wjreg_opt=value["wjreg"]
+                    key_opt=key
 
-        optimize_lbfgsb(
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
-            instance.parameters,
-            instance.states,
-            instance.output,
-        )
+            print("h_max=",h,"wjreg=",wjreg_opt,"key_opt=",key_opt)
+            
+            #save the lcurve
+            instance.output.lcurve=lcurve
+            
+            #last optim with best wjreg
+            instance.parameters=parameters_bgd.copy()
+            instance.states=states_bgd.copy()
+            
+            instance.setup._optimize.wjreg = wjreg_opt
+            
+            if verbose:
+                _optimize_message(instance, control_vector, mapping)
+            
+            optimize_lbfgsb(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
+        
+        
+        else :
+            
+            if verbose:
+                _optimize_message(instance, control_vector, mapping)
+            
+            optimize_lbfgsb(
+                instance.setup,
+                instance.mesh,
+                instance.input_data,
+                instance.parameters,
+                instance.states,
+                instance.output,
+            )
 
 
 def _optimize_nelder_mead(

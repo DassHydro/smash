@@ -480,7 +480,8 @@ contains
 
     end subroutine inv_transformation_sbs
     
-    subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
+    
+    subroutine control_lbfgsb(setup, mesh, input_data, parameters, states, output)
         implicit none
 
         type(SetupDT), intent(inout) :: setup
@@ -503,18 +504,18 @@ contains
             
             setup%optimize%wjreg=0.
             
-            call control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
             
             setup%optimize%wjreg= (output%cost_jobs_initial - output%cost_jobs) / (output%cost_jreg - output%cost_jreg_initial)
             
             parameters=parameters_bgd
             states=states_bgd
             
-            call control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
         
         else
         
-            call control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
         
         end if
         
@@ -522,7 +523,7 @@ contains
             
 !~             setup%optimize%wjreg=0.
             
-!~             call control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+!~             call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
             
 !~             setup%optimize%wjreg= (output%cost_jobs_initial - output%cost_jobs) / (output%cost_jreg - output%cost_jreg_initial) / 10000.
             
@@ -531,7 +532,7 @@ contains
 !~                 parameters=parameters_bgd
 !~                 states=states_bgd
             
-!~                 call control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+!~                 call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
 !~                 setup%optimize%wjreg=10.*setup%optimize%wjreg
                 
 !~                 !output%lcurve_jobs=
@@ -541,9 +542,9 @@ contains
             
 !~         end if
         
-    end subroutine optimize_lbfgsb
+    end subroutine control_lbfgsb
     
-    subroutine control_lbfgsb(setup, mesh, input_data, parameters, states, output)
+    subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
 
         !% Notes
         !% -----
@@ -742,7 +743,7 @@ contains
         ! Remove the denormalization subroutine in forward
         setup%optimize%denormalize_forward = .false.
 
-    end subroutine control_lbfgsb
+    end subroutine optimize_lbfgsb
 
     subroutine var_to_control_lbfgsb(n, setup, mesh, parameters, states, x)
 
