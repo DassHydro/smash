@@ -1,0 +1,63 @@
+.. _release_notes.0.3.x:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.3.x Release Notes
+=========================
+
+The smash 0.3.x release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+---------------
+Compatibilities
+---------------
+
+------------
+Improvements
+------------
+
+Bounds definition
+*****************
+
+The ``bounds`` argument in the optimization methods (:meth:`Model.optimize`, :meth:`Model.bayes_estimate`, :meth:`Model.bayes_optimize`, :meth:`Model.ann_optimize`) 
+is now defined by a dictionary instead of a list, a tuple, or a set. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(bounds={"lr": [10., 20.]})
+
+BayesResult object
+******************
+
+The generated Model parameters/states in the attribute ``data`` of :class:`smash.BayesResult` object is a scalar instead of a 2D-array for each generated sample.
+
+Users can easily save the results of :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods into a `pandas.DataFrame` as follows:
+
+.. code-block:: python
+
+    >>> import pandas as pd
+    >>> br = model.bayes_estimate(inplace=True, return_br=True)
+    >>> pd.DataFrame(br.data).to_csv("br_data.csv")  # br.data[parameter/state] is a 1D-array instead of a 3D-array
+    >>> pd.DataFrame(br.l_curve).to_csv("br_lcurve.csv")
+
+------------
+New Features
+------------
+
+Loading external dataset
+************************
+
+External datasets can be loaded using the :meth:`smash.load_dataset` method. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.load_dataset("path_to_external_data")
+
+-----
+Fixes
+-----
+

@@ -1,11 +1,11 @@
 ## <img src="doc/source/_static/logo_smash.svg" width=180 align="center" alt=""/> - Spatially distributed Modelling and ASsimilation for Hydrology
-[![Build Status](https://img.shields.io/badge/docs-public-brightgreen)](https://gitlab.irstea.fr/francois.colleoni/smash/)
+[![Build Status](https://img.shields.io/badge/docs-public-brightgreen)](https://gitlab.irstea.fr/hydrology/smash)
     
 ## Compilation Instructions on Conda Environment
 
 1.  Clone the SMASH repository from GitLab.
     ```bash
-    git clone https://gitlab.irstea.fr/francois.colleoni/smash.git
+    git clone https://gitlab.irstea.fr/hydrology/smash.git
     ```
 2.  Create the conda environment `(smash)`
     ```bash

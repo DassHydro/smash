@@ -113,7 +113,6 @@ def wrap_mangling_directive(base_directive):
                     continue
 
                 if j >= rules_ind:
-
                     if impl_flag <= len(impl_defaults):
                         options.append((opt_name, impl_defaults[impl_flag]))
                         impl_flag += 1
@@ -165,7 +164,6 @@ def wrap_mangling_directive(base_directive):
             new_lines = []
             for line in lines:
                 if line.strip() == ":Other Parameters:":
-
                     if self.options["solver"] in "nelder-mead":
                         new_lines.extend((BLURB_NELDER_MEAD % (name,)).splitlines())
 
