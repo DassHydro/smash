@@ -1,8 +1,13 @@
-commit b516da0303d6ae7c06706a59973c93dbb6245092
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Mon Feb 27 12:04:25 2023 +0100
+commit f9bd2a515c16b27231392cec0a475624ece0795c
+Merge: 6531240 c80772f
+Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Mon Feb 27 12:32:10 2023 +0100
 
-    FIX/ENC: change the formula of signatures cost
+    Merge branch 'fix-signatures-cost' into 'maintenance/0.3.x'
+    
+    FIX/ENC: change signatures cost function
+    
+    See merge request hydrology/smash!3
 
 TEST NAME                                 |STATUS
 ann_optimize_1.cost                       |NON MODIFIED
@@ -48,11 +53,12 @@ optimize.distributed_l-bfgs-b_bounds.cost |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cp   |NON MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost       |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost   |NON MODIFIED
-optimize.uniform_nelder-mead.cost         |MODIFIED
+optimize.uniform_nelder-mead.cost         |NON MODIFIED
 optimize.uniform_sbs.cost                 |NON MODIFIED
 optimize.uniform_sbs_mtg.cost             |NON MODIFIED
-optimize.uniform_sbs_states.cost          |NON MODIFIED
-optimize.uniform_sbs_states.hp            |NON MODIFIED
+optimize.uniform_sbs_states.cost          |MODIFIED
+optimize.uniform_sbs_states.hlr           |ADDED
+optimize.uniform_sbs_states.hp            |DELETED
 run.cost                                  |NON MODIFIED
 signatures.cont_obs                       |NON MODIFIED
 signatures.cont_sim                       |NON MODIFIED
