@@ -101,18 +101,14 @@ Then, for each signature type :math:`i`, the corresponding SOF is computed depen
 
 .. math::
 
-    j_{k,s,i} = \left(\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right)^2
+    j_{k,s,i} = \left|\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right|
 
 - flood event signature:
 
 .. math::
 
-    j_{k,s,i} = \frac{1}{N_E}\sum_{e=1}^{N_{E}}\left(\frac{S_{i,e}^{s}(k)}{S_{i,e}^{o}(k)}-1\right)^2
+    j_{k,s,i} = \frac{1}{N_E}\sum_{e=1}^{N_{E}}\left|\frac{S_{i,e}^{s}(k)}{S_{i,e}^{o}(k)}-1\right|
 
 where :math:`S_{i,e}^{s},S_{i,e}^{o}` are the simulated and observed signature of event number :math:`e\in\left[1..N_{E}\right]`.
-
-.. note::
-
-    The square operators appear in the formulas to ensure the convexity and differentiable property of the cost function when optimizing with VDA algorithms.
 
 Regularization term :math:`J_{reg}` (**TODO**: à compléter)

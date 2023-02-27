@@ -8636,6 +8636,9 @@ CONTAINS
     REAL(sp) :: sum_qs_d, max_qs_d, num_d
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_d
     res = 0._sp
     n_event = 0
     IF (stype(:1) .EQ. 'E') THEN
@@ -8706,8 +8709,15 @@ CONTAINS
           END IF
         END SELECT
         IF (den .GT. 0._sp) THEN
-          res_d = res_d + 2*(num/den-1._sp)*num_d/den
-          res = res + (num/den-1._sp)*(num/den-1._sp)
+          IF (num/den - 1._sp .GE. 0.) THEN
+            abs0_d = num_d/den
+            abs0 = num/den - 1._sp
+          ELSE
+            abs0_d = -(num_d/den)
+            abs0 = -(num/den-1._sp)
+          END IF
+          res_d = res_d + abs0_d
+          res = res + abs0
         END IF
       END DO
       IF (n_event .GT. 0) THEN
@@ -8748,8 +8758,13 @@ CONTAINS
         num_d = 0.0_4
       END SELECT
       IF (den .GT. 0._sp) THEN
-        res_d = 2*(num/den-1._sp)*num_d/den
-        res = (num/den-1._sp)*(num/den-1._sp)
+        IF (num/den - 1._sp .GE. 0.) THEN
+          res_d = num_d/den
+          res = num/den - 1._sp
+        ELSE
+          res_d = -(num_d/den)
+          res = -(num/den-1._sp)
+        END IF
       ELSE
         res_d = 0.0_4
       END IF
@@ -8774,6 +8789,9 @@ CONTAINS
     REAL(sp) :: sum_qs_b, max_qs_b, num_b
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_b
     INTEGER :: ad_count
     INTEGER :: i0
     INTEGER :: branch
@@ -8858,20 +8876,17 @@ CONTAINS
         CALL PUSHINTEGER4(ad_from)
         SELECT CASE  (stype) 
         CASE ('Epf') 
-          CALL PUSHREAL4(num)
           num = max_qs
           CALL PUSHREAL4(den)
           den = max_qo
           CALL PUSHCONTROL3B(1)
         CASE ('Elt') 
-          CALL PUSHREAL4(num)
           num = imax_qs - imax_po
           CALL PUSHREAL4(den)
           den = imax_qo - imax_po
           CALL PUSHCONTROL3B(2)
         CASE ('Erc') 
           IF (sum_po .GT. 0._sp) THEN
-            CALL PUSHREAL4(num)
             num = sum_qs/sum_po
             CALL PUSHREAL4(den)
             den = sum_qo/sum_po
@@ -8883,6 +8898,11 @@ CONTAINS
           CALL PUSHCONTROL3B(0)
         END SELECT
         IF (den .GT. 0._sp) THEN
+          IF (num/den - 1._sp .GE. 0.) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHCONTROL1B(1)
+          END IF
           CALL PUSHCONTROL1B(1)
         ELSE
           CALL PUSHCONTROL1B(0)
@@ -8892,7 +8912,15 @@ CONTAINS
       num_b = 0.0_4
       DO i=n_event,1,-1
         CALL POPCONTROL1B(branch)
-        IF (branch .NE. 0) num_b = num_b + 2*(num/den-1._sp)*res_b/den
+        IF (branch .NE. 0) THEN
+          abs0_b = res_b
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            num_b = num_b + abs0_b/den
+          ELSE
+            num_b = num_b - abs0_b/den
+          END IF
+        END IF
         CALL POPCONTROL3B(branch)
         IF (branch .LT. 2) THEN
           IF (branch .EQ. 0) THEN
@@ -8900,21 +8928,18 @@ CONTAINS
             sum_qs_b = 0.0_4
           ELSE
             CALL POPREAL4(den)
-            CALL POPREAL4(num)
             max_qs_b = num_b
             num_b = 0.0_4
             sum_qs_b = 0.0_4
           END IF
         ELSE IF (branch .EQ. 2) THEN
           CALL POPREAL4(den)
-          CALL POPREAL4(num)
           max_qs_b = 0.0_4
           num_b = 0.0_4
           sum_qs_b = 0.0_4
         ELSE
           IF (branch .EQ. 3) THEN
             CALL POPREAL4(den)
-            CALL POPREAL4(num)
             sum_qs_b = num_b/sum_po
             num_b = 0.0_4
           ELSE
@@ -8986,7 +9011,11 @@ CONTAINS
         CALL PUSHCONTROL3B(0)
       END SELECT
       IF (den .GT. 0._sp) THEN
-        num_b = 2*(num/den-1._sp)*res_b/den
+        IF (num/den - 1._sp .GE. 0.) THEN
+          num_b = res_b/den
+        ELSE
+          num_b = -(res_b/den)
+        END IF
       ELSE
         num_b = 0.0_4
       END IF
@@ -9030,6 +9059,8 @@ CONTAINS
     REAL(sp) :: sum_qo, sum_qs, sum_po, max_qo, max_qs, max_po, num, den
     INTEGER :: imax_qo, imax_qs, imax_po
     INTRINSIC COUNT
+    INTRINSIC ABS
+    REAL(sp) :: abs0
     res = 0._sp
     n_event = 0
     IF (stype(:1) .EQ. 'E') THEN
@@ -9090,7 +9121,14 @@ CONTAINS
             den = sum_qo/sum_po
           END IF
         END SELECT
-        IF (den .GT. 0._sp) res = res + (num/den-1._sp)*(num/den-1._sp)
+        IF (den .GT. 0._sp) THEN
+          IF (num/den - 1._sp .GE. 0.) THEN
+            abs0 = num/den - 1._sp
+          ELSE
+            abs0 = -(num/den-1._sp)
+          END IF
+          res = res + abs0
+        END IF
       END DO
       IF (n_event .GT. 0) res = res/n_event
     ELSE
@@ -9119,7 +9157,13 @@ CONTAINS
       CASE ('Cfp90') 
         CALL FLOW_PERCENTILE(qo, qs, 0.9_sp, num, den)
       END SELECT
-      IF (den .GT. 0._sp) res = (num/den-1._sp)*(num/den-1._sp)
+      IF (den .GT. 0._sp) THEN
+        IF (num/den - 1._sp .GE. 0.) THEN
+          res = num/den - 1._sp
+        ELSE
+          res = -(num/den-1._sp)
+        END IF
+      END IF
     END IF
   END FUNCTION SIGNATURE
 
