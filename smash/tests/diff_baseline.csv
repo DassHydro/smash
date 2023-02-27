@@ -1,8 +1,8 @@
-commit 777085bb37490abcb1eca7dcb44246f6f18f188f
+commit b516da0303d6ae7c06706a59973c93dbb6245092
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Thu Feb 23 20:58:21 2023 +0100
+Date:   Mon Feb 27 12:04:25 2023 +0100
 
-    ENC/FIX: BayesResult and minor fixes doc
+    FIX/ENC: change the formula of signatures cost
 
 TEST NAME                                 |STATUS
 ann_optimize_1.cost                       |NON MODIFIED
@@ -43,12 +43,12 @@ net_init.weight_layer_2                   |NON MODIFIED
 net_init.weight_layer_3                   |NON MODIFIED
 net_init.weight_layer_4                   |NON MODIFIED
 optimize.distributed_l-bfgs-b.cost        |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cft  |ADDED
-optimize.distributed_l-bfgs-b_bounds.cost |ADDED
-optimize.distributed_l-bfgs-b_bounds.cp   |ADDED
+optimize.distributed_l-bfgs-b_bounds.cft  |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cost |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cp   |NON MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost       |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost   |NON MODIFIED
-optimize.uniform_nelder-mead.cost         |NON MODIFIED
+optimize.uniform_nelder-mead.cost         |MODIFIED
 optimize.uniform_sbs.cost                 |NON MODIFIED
 optimize.uniform_sbs_mtg.cost             |NON MODIFIED
 optimize.uniform_sbs_states.cost          |NON MODIFIED

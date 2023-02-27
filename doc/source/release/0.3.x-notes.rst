@@ -42,6 +42,26 @@ Users can easily save the results of :meth:`Model.bayes_estimate` and :meth:`Mod
     >>> pd.DataFrame(br.data).to_csv("br_data.csv")  # br.data[parameter/state] is a 1D-array instead of a 3D-array
     >>> pd.DataFrame(br.l_curve).to_csv("br_lcurve.csv")
 
+Signatures-based cost function
+******************************
+
+The formula for the signatures-based cost function has been changed from a squared relative value to an absolute relative value. 
+For example:
+
+.. math::
+
+    j_{k,s,i} = \left|\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right|
+
+instead of:
+
+.. math::
+
+    j_{k,s,i} = \left(\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right)^2
+
+.. note::
+    
+    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
+
 ------------
 New Features
 ------------
