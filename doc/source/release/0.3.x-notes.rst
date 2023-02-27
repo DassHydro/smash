@@ -81,3 +81,8 @@ It can be used as follows:
 Fixes
 -----
 
+F2PY f2cmap warnings
+********************
+
+Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``
+
