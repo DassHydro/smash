@@ -749,34 +749,35 @@ def _check_unknown_options(unknown_options: dict):
         warnings.warn("Unknown algorithm options: '%s'" % msg)
 
 
-def _compute_wjreg_range(wjreg_opt: float, nb_lcurve_point: int = 4):
+def _compute_wjreg_range(wjreg_opt: float, nb_lcurve_point: int = 6):
     # Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
-
+    
     log_wjreg_opt = math.log10(wjreg_opt)
-    nb_wjreg_lcurve_base = nb_lcurve_point - 4
-
+    nb_wjreg_lcurve_base = nb_lcurve_point - 6
+    
     base = list(
-        (10 ** np.arange(log_wjreg_opt - 0.33, log_wjreg_opt + 0.66, 0.33))
-    )  # 3 points minimum
+        (10 ** np.arange(log_wjreg_opt - 0.66, log_wjreg_opt + 0.67, 0.33))
+    )  # 5 points minimum
     lower = list()
     upper = list()
-
+    
     if nb_wjreg_lcurve_base > 0:
         min_wjreg = (
             log_wjreg_opt
-            - 0.33
-            - (nb_wjreg_lcurve_base - math.floor(nb_wjreg_lcurve_base / 2.0))
+            - 0.66
+            - (nb_wjreg_lcurve_base - math.ceil(nb_wjreg_lcurve_base / 2.0))
         )
         max_wjreg = (
             log_wjreg_opt
             + 0.66
-            + (nb_wjreg_lcurve_base - math.ceil(nb_wjreg_lcurve_base / 2.0))
+            + 1.0
+            + (nb_wjreg_lcurve_base - math.floor(nb_wjreg_lcurve_base / 2.0))
         )
-        lower = list((10 ** np.arange(min_wjreg, log_wjreg_opt - 0.33)))
-        upper = list((10 ** np.arange(log_wjreg_opt + 0.66, max_wjreg)))
-
+        lower = list((10 ** np.arange(min_wjreg, log_wjreg_opt - 0.66)))
+        upper = list((10 ** np.arange(log_wjreg_opt + 0.66 + 1.0, max_wjreg)))
+    
     wjreg_range = lower + base + upper
-
+    
     return wjreg_range
 
 

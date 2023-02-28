@@ -204,18 +204,18 @@ contains
                 case ("prior")
 
                     parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)*&
-                    &reg_prior(setup, mesh, GNP, parameters_matrix, parameters_bgd_matrix)
+                    &reg_prior(setup, mesh, "params", GNP, parameters_matrix, parameters_bgd_matrix)
                     
                     states_jreg = states_jreg + setup%optimize%wjreg_fun(i)*&
-                    &reg_prior(setup, mesh, GNS, states_matrix, states_bgd_matrix)
+                    &reg_prior(setup, mesh, "states", GNS, states_matrix, states_bgd_matrix)
 
                 case ("smoothing")
                 
                     parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**4.*&
-                    &reg_smoothing(setup, mesh, GNP, parameters_matrix,parameters_bgd_matrix)
+                    &reg_smoothing(setup, mesh, "params", GNP, parameters_matrix,parameters_bgd_matrix)
                     
                     states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4.*&
-                    &reg_smoothing(setup, mesh, GNS, states_matrix, states_bgd_matrix)
+                    &reg_smoothing(setup, mesh, "states", GNS, states_matrix, states_bgd_matrix)
 
             end select
         
@@ -225,7 +225,132 @@ contains
 
     end subroutine compute_jreg
     
-    function reg_prior(setup, mesh, size_mat3, matrix, matrix_bgd) result(res)
+    
+    
+    
+!~     subroutine correlationbymask(setup, mesh, input_data, target_control,nbz,parameters_matrix,penalty_total)
+        
+!~         implicit none
+        
+!~         type(SetupDT), intent(in) :: setup
+!~         type(MeshDT), intent(in) :: mesh
+!~         character(6), intent(in) :: target_control
+!~         type(InputDataDT), intent(in) :: input_data
+!~         integer, intent(in) :: nbz
+!~         real,dimension(nbx,nby,nbz), intent(in) :: parameters_matrix
+!~         real, intent(out) :: penalty_total
+        
+!~         real :: penalty,penalty_class,corr,corr_active_cell,distance
+!~         integer :: i,j,ii,jj,p,label,minmask,maxmask,indice,nbpixbyclass
+!~         integer :: jj_start, ii_start
+!~         real,dimension(nbx,nby,nbz) :: array_param
+!~         integer :: desc
+            
+!~             integer, dimension(size_mat3) :: optim
+        
+!~             if (target_control=="params") then
+!~                 optim=setup%optimize%optim_parameters
+!~             end if
+            
+!~             if (target_control=="states") then
+!~                 optim=setup%optimize%optim_states
+!~             end if
+
+!~         ! penality term
+!~         penalty_total=0.0
+        
+!~         do p=1,nbz ! loop on all parameters
+        
+!~             if (optim(p)>0) then
+            
+!~                 penalty=0.0
+                
+!~                 #TODO seklect approriate descriptor for parameter
+!~                 if (target_control=="params") then desc=setup%optimize%parameters_descriptors(p) endif
+!~                 if (target_control=="states") then desc=setup%optimize%states_descriptors(p) endif
+                
+!~                 minmask=0
+!~                 maxmask=int(maxval(input_data%descriptor(:,:,desc)))
+                
+!~                 !Boucle sur les différents indices du masque
+!~                 do indice=minmask,maxmask
+                
+!~                     label=indice
+!~                     nbpixbyclass=0
+!~                     penalty_class=0.
+                    
+!~                     do i=1,mesh%ncol
+!~                         do j=1,mesh%nrow
+                            
+!~                             if (input_data%descriptor(i,j,p)==label) then
+                                
+!~                                 nbpixbyclass=nbpixbyclass+1
+                                
+!~                                 jj_start=j+1
+!~                                 ii_start=i
+!~                                 if ((j==mesh%nrow).and.(i<mesh%ncol)) then
+!~                                     jj_start=1
+!~                                     ii_start=i+1
+!~                                 endif
+!~                                 if ((i==mesh%ncol) .and. (j==mesh%nrow)) then
+!~                                     jj_start=j
+!~                                     ii_start=i
+!~                                 end if
+                                
+                                
+!~                                 do ii=ii_start,mesh%ncol
+                                
+!~                                     do jj=jj_start,mesh%nrow
+                                                                    
+!~                                         !corr=0.
+!~                                         if (input_data%descriptor(ii,jj,desc)==label) then
+                                            
+!~                                             distance=sqrt(((ii-i))**2.+((jj-j))**2.)
+!~                                             if (distance==0.) then
+!~                                                 distance=1.
+!~                                             end if
+                                            
+!~                                             !penalty_class=penalty_class+corr*corr_active_cell*(1./(distance))*&
+!~                                             !&(array_param(i,j,p)-array_param(ii,jj,p))**2.
+!~                                             penalty_class=penalty_class+(1./(distance**2.))*&
+!~                                             &(parameters_matrix(i,j,p)-parameters_matrix(ii,jj,p))**2.
+                                            
+!~                                         endif
+                                          
+!~                                     end do
+                                    
+!~                                     jj_start=1
+                                    
+!~                                 end do
+
+!~                             end if
+                            
+!~                         enddo
+!~                     enddo
+                    
+!~                     if (nbpixbyclass>=1) then
+!~                         penalty=penalty+penalty_class/(real(nbpixbyclass)) 
+!~                     else
+!~                         penalty=penalty+penalty_class
+!~                     endif
+                    
+!~                 end do
+                
+!~                 write(*,*) "Penalty correlation for parameter",setupDT%parameters_name(p),"=",penalty
+!~                 penalty_total=penalty_total+penalty
+                
+!~             end if
+            
+!~         end do
+        
+!~         write(*,*) "Penalty total for correlation=",penalty_total
+        
+!~     end subroutine correlationbymask
+    
+    
+    
+    
+    function reg_prior(setup, mesh, target_control, size_mat3, matrix, matrix_bgd) result(res)
 
         !% Notes
         !% -----
@@ -241,17 +366,28 @@ contains
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        character(6), intent(in) :: target_control
         integer, intent(in) :: size_mat3
         real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix, matrix_bgd
         real(sp) :: res
         
+        integer, dimension(size_mat3) :: optim
         integer :: iz
         
+        if (target_control=="params") then
+            optim=setup%optimize%optim_parameters
+        end if
+        
+        if (target_control=="states") then
+            optim=setup%optimize%optim_states
+        end if
+        
+         
         res=0._sp
         
         do iz=1, size_mat3
             
-            if (setup%optimize%optim_parameters(iz)>0) then
+            if (optim(iz)>0) then
                 
                 res = sum((matrix(:,:,iz) - matrix_bgd(:,:,iz))*(matrix(:,:,iz) - matrix_bgd(:,:,iz)))
             
@@ -261,7 +397,7 @@ contains
         
     end function reg_prior
 
-    function reg_smoothing(setup, mesh, size_mat3, matrix, matrix_bgd) result(smoothing)
+    function reg_smoothing(setup, mesh, target_control, size_mat3, matrix, matrix_bgd) result(smoothing)
         !% Notes
         !% -----
         !%
@@ -274,6 +410,7 @@ contains
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        character(6), intent(in) :: target_control
         integer, intent(in) :: size_mat3
         real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix
         real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3), intent(in) :: matrix_bgd
@@ -283,6 +420,16 @@ contains
         integer :: ix,iy,ixmin,ixmax,iymin,iymax
         real(sp), dimension(mesh%nrow, mesh%ncol, size_mat3) :: mat
         
+        integer, dimension(size_mat3) :: optim
+        
+        if (target_control=="params") then
+            optim=setup%optimize%optim_parameters
+        end if
+        
+        if (target_control=="states") then
+            optim=setup%optimize%optim_states
+        end if
+        
         !matrix relative to the bgd. We don't want to penalize initial spatial variation. 
         mat=matrix-matrix_bgd
         
@@ -290,7 +437,7 @@ contains
         
         do z=1, size_mat3
             
-            if (setup%optimize%optim_parameters(z)>0) then
+            if (optim(z)>0) then
             
                 do ix=1, mesh%nrow
                     
