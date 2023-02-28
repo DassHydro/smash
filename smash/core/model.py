@@ -772,19 +772,19 @@ class Model(object):
                 verbose,
                 **options,
             )
-            
+
         # ~ OPTIM_FUNC[algorithm](
-            # ~ instance,
-            # ~ control_vector,
-            # ~ mapping,
-            # ~ jobs_fun,
-            # ~ wjobs_fun,
-            # ~ event_seg,
-            # ~ bounds,
-            # ~ wgauge,
-            # ~ ost,
-            # ~ verbose,
-            # ~ **options,
+        # ~ instance,
+        # ~ control_vector,
+        # ~ mapping,
+        # ~ jobs_fun,
+        # ~ wjobs_fun,
+        # ~ event_seg,
+        # ~ bounds,
+        # ~ wgauge,
+        # ~ ost,
+        # ~ verbose,
+        # ~ **options,
         # ~ )
 
         instance._last_update = f"{algorithm.upper()} Optimization"
