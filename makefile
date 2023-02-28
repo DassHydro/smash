@@ -129,7 +129,7 @@ meshing:
 	@echo " Making meshing extension "
 	@echo ""
 	@echo "********************************************"
-	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _meshing meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i
+	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _mw_meshing mw_meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
 
 #% Making python library (pip3)
 library:
