@@ -7450,12 +7450,13 @@ CONTAINS
 !                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
 !                parameters_bgd.ws:in parameters_bgd.lr:in
 !% WIP
-  SUBROUTINE COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
-&   parameters_bgd, parameters_bgd_d, states, states_d, states_bgd, &
-&   states_bgd_d, jreg, jreg_d)
+  SUBROUTINE COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
+&   parameters_d, parameters_bgd, parameters_bgd_d, states, states_d, &
+&   states_bgd, states_bgd_d, jreg, jreg_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d, parameters_bgd_d
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
@@ -7506,6 +7507,17 @@ CONTAINS
 &         states_matrix, states_matrix_d, states_bgd_matrix, result1)
         temp = setup%optimize%wjreg_fun(i)**4.
         states_jreg_d = states_jreg_d + temp*result1_d
+      CASE ('distance_correlation') 
+        result1_d = DISTANCE_CORRELATION_DESCRIPTORS_D(setup, mesh, &
+&         input_data, 'params', gnp, parameters_matrix, &
+&         parameters_matrix_d, result1)
+        parameters_jreg_d = parameters_jreg_d + setup%optimize%wjreg_fun&
+&         (i)*result1_d
+        result1_d = DISTANCE_CORRELATION_DESCRIPTORS_D(setup, mesh, &
+&         input_data, 'states', gns, states_matrix, states_matrix_d, &
+&         result1)
+        states_jreg_d = states_jreg_d + setup%optimize%wjreg_fun(i)*&
+&         result1_d
       END SELECT
     END DO
     jreg_d = parameters_jreg_d + states_jreg_d
@@ -7539,12 +7551,13 @@ CONTAINS
 !                parameters_bgd.ks:in parameters_bgd.ds:in parameters_bgd.dsm:in
 !                parameters_bgd.ws:in parameters_bgd.lr:in
 !% WIP
-  SUBROUTINE COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
-&   parameters_bgd, parameters_bgd_b, states, states_b, states_bgd, &
-&   states_bgd_b, jreg, jreg_b)
+  SUBROUTINE COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
+&   parameters_b, parameters_bgd, parameters_bgd_b, states, states_b, &
+&   states_bgd, states_bgd_b, jreg, jreg_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
     TYPE(PARAMETERSDT) :: parameters_b, parameters_bgd_b
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
@@ -7571,6 +7584,10 @@ CONTAINS
     REAL(sp) :: res_b1
     REAL(sp) :: res2
     REAL(sp) :: res_b2
+    REAL(sp) :: res3
+    REAL(sp) :: res_b3
+    REAL(sp) :: res4
+    REAL(sp) :: res_b4
     INTEGER :: branch
     CALL GET_PARAMETERS(mesh, parameters, parameters_matrix)
     CALL GET_PARAMETERS(mesh, parameters_bgd, parameters_bgd_matrix)
@@ -7584,15 +7601,21 @@ CONTAINS
 &         parameters_bgd_matrix)
         res0 = REG_PRIOR(setup, mesh, 'states', gns, states_matrix, &
 &         states_bgd_matrix)
-        CALL PUSHCONTROL2B(1)
+        CALL PUSHCONTROL2B(2)
       CASE ('smoothing') 
         res1 = REG_SMOOTHING(setup, mesh, 'params', gnp, &
 &         parameters_matrix, parameters_bgd_matrix)
         res2 = REG_SMOOTHING(setup, mesh, 'states', gns, states_matrix, &
 &         states_bgd_matrix)
+        CALL PUSHCONTROL2B(1)
+      CASE ('distance_correlation') 
+        res3 = DISTANCE_CORRELATION_DESCRIPTORS(setup, mesh, input_data&
+&         , 'params', gnp, parameters_matrix)
+        res4 = DISTANCE_CORRELATION_DESCRIPTORS(setup, mesh, input_data&
+&         , 'states', gns, states_matrix)
         CALL PUSHCONTROL2B(0)
       CASE DEFAULT
-        CALL PUSHCONTROL2B(2)
+        CALL PUSHCONTROL2B(3)
       END SELECT
     END DO
     parameters_jreg_b = jreg_b
@@ -7601,17 +7624,32 @@ CONTAINS
     parameters_matrix_b = 0.0_4
     DO i=setup%optimize%njr,1,-1
       CALL POPCONTROL2B(branch)
-      IF (branch .EQ. 0) THEN
-        result1_b = setup%optimize%wjreg_fun(i)**4.*states_jreg_b
-        res_b2 = result1_b
-        CALL REG_SMOOTHING_B(setup, mesh, 'states', gns, states_matrix, &
-&                      states_matrix_b, states_bgd_matrix, res_b2)
-        result1_b = setup%optimize%wjreg_fun(i)**4.*parameters_jreg_b
-        res_b1 = result1_b
-        CALL REG_SMOOTHING_B(setup, mesh, 'params', gnp, &
-&                      parameters_matrix, parameters_matrix_b, &
-&                      parameters_bgd_matrix, res_b1)
-      ELSE IF (branch .EQ. 1) THEN
+      IF (branch .LT. 2) THEN
+        IF (branch .EQ. 0) THEN
+          result1_b = setup%optimize%wjreg_fun(i)*states_jreg_b
+          res_b4 = result1_b
+          CALL DISTANCE_CORRELATION_DESCRIPTORS_B(setup, mesh, &
+&                                           input_data, 'states', gns, &
+&                                           states_matrix, &
+&                                           states_matrix_b, res_b4)
+          result1_b = setup%optimize%wjreg_fun(i)*parameters_jreg_b
+          res_b3 = result1_b
+          CALL DISTANCE_CORRELATION_DESCRIPTORS_B(setup, mesh, &
+&                                           input_data, 'params', gnp, &
+&                                           parameters_matrix, &
+&                                           parameters_matrix_b, res_b3)
+        ELSE
+          result1_b = setup%optimize%wjreg_fun(i)**4.*states_jreg_b
+          res_b2 = result1_b
+          CALL REG_SMOOTHING_B(setup, mesh, 'states', gns, states_matrix&
+&                        , states_matrix_b, states_bgd_matrix, res_b2)
+          result1_b = setup%optimize%wjreg_fun(i)**4.*parameters_jreg_b
+          res_b1 = result1_b
+          CALL REG_SMOOTHING_B(setup, mesh, 'params', gnp, &
+&                        parameters_matrix, parameters_matrix_b, &
+&                        parameters_bgd_matrix, res_b1)
+        END IF
+      ELSE IF (branch .EQ. 2) THEN
         result1_b = setup%optimize%wjreg_fun(i)*states_jreg_b
         res_b0 = result1_b
         CALL REG_PRIOR_B(setup, mesh, 'states', gns, states_matrix, &
@@ -7653,11 +7691,12 @@ CONTAINS
   END SUBROUTINE COMPUTE_JREG_B
 
 !% WIP
-  SUBROUTINE COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, &
-&   states, states_bgd, jreg)
+  SUBROUTINE COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&   parameters_bgd, states, states_bgd, jreg)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters, parameters_bgd
     TYPE(STATESDT), INTENT(IN) :: states, states_bgd
     REAL(sp), INTENT(INOUT) :: jreg
@@ -7695,95 +7734,392 @@ CONTAINS
 &         states_matrix, states_bgd_matrix)
         states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4.*&
 &         result1
+      CASE ('distance_correlation') 
+        result1 = DISTANCE_CORRELATION_DESCRIPTORS(setup, mesh, &
+&         input_data, 'params', gnp, parameters_matrix)
+        parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)*&
+&         result1
+        result1 = DISTANCE_CORRELATION_DESCRIPTORS(setup, mesh, &
+&         input_data, 'states', gns, states_matrix)
+        states_jreg = states_jreg + setup%optimize%wjreg_fun(i)*result1
       END SELECT
     END DO
     jreg = parameters_jreg + states_jreg
   END SUBROUTINE COMPUTE_JREG
 
+!  Differentiation of distance_correlation_descriptors in forward (tangent) mode (with options fixinterface noISIZE):
+!   variations   of useful results: penalty_total
+!   with respect to varying inputs: parameters_matrix
+  FUNCTION DISTANCE_CORRELATION_DESCRIPTORS_D(setup, mesh, input_data, &
+&   target_control, nbz, parameters_matrix, parameters_matrix_d, &
+&   penalty_total) RESULT (PENALTY_TOTAL_D)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    CHARACTER(len=6), INTENT(IN) :: target_control
+    INTEGER, INTENT(IN) :: nbz
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nbz), INTENT(IN) :: &
+&   parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nbz), INTENT(IN) :: &
+&   parameters_matrix_d
+    REAL(sp) :: penalty_total
+    REAL(sp) :: penalty_total_d
+    REAL :: penalty, penalty_class, distance
+    REAL :: penalty_d, penalty_class_d
+    INTEGER :: i, j, ii, jj, p, label, minmask, maxmask, indice, &
+&   nbpixbyclass
+    INTEGER :: jj_start, ii_start
+    INTEGER, DIMENSION(setup%nd) :: descriptor_indexes
+    INTEGER :: desc
+    INTEGER, DIMENSION(nbz) :: optim
+    INTRINSIC MAXVAL
+    INTRINSIC INT
+    INTRINSIC SQRT
+    INTRINSIC REAL
+    REAL(sp) :: result1
+    REAL :: arg1
+    REAL :: temp
+    IF (target_control .EQ. 'params') optim = setup%optimize%&
+&       optim_parameters
+    IF (target_control .EQ. 'states') optim = setup%optimize%&
+&       optim_states
+    penalty_total_d = 0.0_4
+! loop on all parameters
+    DO p=1,nbz
+      IF (optim(p) .GT. 0) THEN
+!#TODO seklect approriate descriptor for parameter
+        IF (target_control .EQ. 'params') descriptor_indexes = setup%&
+&           optimize%reg_descriptors_for_params(p, :)
+        IF (target_control .EQ. 'states') THEN
+          descriptor_indexes = setup%optimize%reg_descriptors_for_states&
+&           (p, :)
+          penalty_d = 0.0
+        ELSE
+          penalty_d = 0.0
+        END IF
+        DO desc=1,setup%nd
+          IF (descriptor_indexes(desc) .GT. 0) THEN
+            minmask = 0
+            result1 = MAXVAL(input_data%descriptor(:, :, desc))
+            maxmask = INT(result1)
+!Boucle sur les différents indices du masque
+            DO indice=minmask,maxmask
+              label = indice
+              nbpixbyclass = 0
+              penalty_class_d = 0.0
+              DO i=1,mesh%nrow
+                DO j=1,mesh%ncol
+                  IF (INT(input_data%descriptor(i, j, p)) .EQ. label) &
+&                 THEN
+                    nbpixbyclass = nbpixbyclass + 1
+                    jj_start = j + 1
+                    ii_start = i
+                    IF (j .EQ. mesh%ncol .AND. i .LT. mesh%nrow) THEN
+                      jj_start = 1
+                      ii_start = i + 1
+                    END IF
+                    IF (i .EQ. mesh%nrow .AND. j .EQ. mesh%ncol) THEN
+                      jj_start = j
+                      ii_start = i
+                    END IF
+                    DO ii=ii_start,mesh%nrow
+                      DO jj=jj_start,mesh%ncol
+                        IF (INT(input_data%descriptor(ii, jj, desc)) &
+&                           .EQ. label) THEN
+                          arg1 = (ii-i)**2. + (jj-j)**2.
+                          distance = SQRT(arg1)
+                          IF (distance .LT. 1.) distance = 1.
+                          temp = distance**2.
+                          penalty_class_d = penalty_class_d + 2.*(&
+&                           parameters_matrix(i, j, p)-parameters_matrix&
+&                           (ii, jj, p))*(parameters_matrix_d(i, j, p)-&
+&                           parameters_matrix_d(ii, jj, p))/temp
+                        END IF
+                      END DO
+                      jj_start = 1
+                    END DO
+                  END IF
+                END DO
+              END DO
+              IF (nbpixbyclass .GE. 1) THEN
+                temp = REAL(nbpixbyclass)
+                penalty_d = penalty_d + penalty_class_d/temp
+              ELSE
+                penalty_d = penalty_d + penalty_class_d
+              END IF
+            END DO
+          END IF
+        END DO
+        penalty_total_d = penalty_total_d + penalty_d
+      END IF
+    END DO
+  END FUNCTION DISTANCE_CORRELATION_DESCRIPTORS_D
+
+!  Differentiation of distance_correlation_descriptors in reverse (adjoint) mode (with options fixinterface noISIZE):
+!   gradient     of useful results: parameters_matrix penalty_total
+!   with respect to varying inputs: parameters_matrix
+  SUBROUTINE DISTANCE_CORRELATION_DESCRIPTORS_B(setup, mesh, input_data&
+&   , target_control, nbz, parameters_matrix, parameters_matrix_b, &
+&   penalty_total_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    CHARACTER(len=6), INTENT(IN) :: target_control
+    INTEGER, INTENT(IN) :: nbz
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nbz), INTENT(IN) :: &
+&   parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nbz) :: &
+&   parameters_matrix_b
+    REAL(sp) :: penalty_total
+    REAL(sp) :: penalty_total_b
+    REAL :: penalty, penalty_class, distance
+    REAL :: penalty_b, penalty_class_b
+    INTEGER :: i, j, ii, jj, p, label, minmask, maxmask, indice, &
+&   nbpixbyclass
+    INTEGER :: jj_start, ii_start
+    INTEGER, DIMENSION(setup%nd) :: descriptor_indexes
+    INTEGER :: desc
+    INTEGER, DIMENSION(nbz) :: optim
+    INTRINSIC MAXVAL
+    INTRINSIC INT
+    INTRINSIC SQRT
+    INTRINSIC REAL
+    REAL(sp) :: result1
+    REAL :: arg1
+    REAL(sp) :: temp_b
+    INTEGER :: ad_from
+    INTEGER :: branch
+    INTEGER :: ad_from0
+    INTEGER :: ad_from1
+    INTEGER :: ad_to
+    IF (target_control .EQ. 'params') optim = setup%optimize%&
+&       optim_parameters
+    IF (target_control .EQ. 'states') optim = setup%optimize%&
+&       optim_states
+! loop on all parameters
+    DO p=1,nbz
+      IF (optim(p) .GT. 0) THEN
+!#TODO seklect approriate descriptor for parameter
+        IF (target_control .EQ. 'params') descriptor_indexes = setup%&
+&           optimize%reg_descriptors_for_params(p, :)
+        IF (target_control .EQ. 'states') descriptor_indexes = setup%&
+&           optimize%reg_descriptors_for_states(p, :)
+        DO desc=1,setup%nd
+          IF (descriptor_indexes(desc) .GT. 0) THEN
+            minmask = 0
+            result1 = MAXVAL(input_data%descriptor(:, :, desc))
+            maxmask = INT(result1)
+            ad_from1 = minmask
+!Boucle sur les différents indices du masque
+            DO indice=ad_from1,maxmask
+              label = indice
+              CALL PUSHINTEGER4(nbpixbyclass)
+              nbpixbyclass = 0
+              DO i=1,mesh%nrow
+                DO j=1,mesh%ncol
+                  IF (INT(input_data%descriptor(i, j, p)) .EQ. label) &
+&                 THEN
+                    nbpixbyclass = nbpixbyclass + 1
+                    jj_start = j + 1
+                    ii_start = i
+                    IF (j .EQ. mesh%ncol .AND. i .LT. mesh%nrow) THEN
+                      jj_start = 1
+                      ii_start = i + 1
+                    END IF
+                    IF (i .EQ. mesh%nrow .AND. j .EQ. mesh%ncol) THEN
+                      jj_start = j
+                      ii_start = i
+                    END IF
+                    ad_from0 = ii_start
+                    DO ii=ad_from0,mesh%nrow
+                      ad_from = jj_start
+                      DO jj=ad_from,mesh%ncol
+                        IF (INT(input_data%descriptor(ii, jj, desc)) &
+&                           .EQ. label) THEN
+                          arg1 = (ii-i)**2. + (jj-j)**2.
+                          CALL PUSHREAL4(distance)
+                          distance = SQRT(arg1)
+                          IF (distance .LT. 1.) distance = 1.
+                          CALL PUSHCONTROL1B(1)
+                        ELSE
+                          CALL PUSHCONTROL1B(0)
+                        END IF
+                      END DO
+                      CALL PUSHINTEGER4(ad_from)
+                      jj_start = 1
+                    END DO
+                    CALL PUSHINTEGER4(ad_from0)
+                    CALL PUSHCONTROL1B(1)
+                  ELSE
+                    CALL PUSHCONTROL1B(0)
+                  END IF
+                END DO
+              END DO
+              IF (nbpixbyclass .GE. 1) THEN
+                CALL PUSHCONTROL1B(1)
+              ELSE
+                CALL PUSHCONTROL1B(0)
+              END IF
+            END DO
+            CALL PUSHINTEGER4(indice - 1)
+            CALL PUSHINTEGER4(ad_from1)
+            CALL PUSHCONTROL1B(1)
+          ELSE
+            CALL PUSHCONTROL1B(0)
+          END IF
+        END DO
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    DO p=nbz,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        penalty_b = penalty_total_b
+        DO desc=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            CALL POPINTEGER4(ad_from1)
+            CALL POPINTEGER4(ad_to)
+            DO indice=ad_to,ad_from1,-1
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                penalty_class_b = penalty_b
+              ELSE
+                penalty_class_b = penalty_b/REAL(nbpixbyclass)
+              END IF
+              DO i=mesh%nrow,1,-1
+                DO j=mesh%ncol,1,-1
+                  CALL POPCONTROL1B(branch)
+                  IF (branch .NE. 0) THEN
+                    CALL POPINTEGER4(ad_from0)
+                    DO ii=mesh%nrow,ad_from0,-1
+                      CALL POPINTEGER4(ad_from)
+                      DO jj=mesh%ncol,ad_from,-1
+                        CALL POPCONTROL1B(branch)
+                        IF (branch .NE. 0) THEN
+                          temp_b = 2.*(parameters_matrix(i, j, p)-&
+&                           parameters_matrix(ii, jj, p))*&
+&                           penalty_class_b/distance**2.
+                          parameters_matrix_b(i, j, p) = &
+&                           parameters_matrix_b(i, j, p) + temp_b
+                          parameters_matrix_b(ii, jj, p) = &
+&                           parameters_matrix_b(ii, jj, p) - temp_b
+                          CALL POPREAL4(distance)
+                        END IF
+                      END DO
+                    END DO
+                  END IF
+                END DO
+              END DO
+              CALL POPINTEGER4(nbpixbyclass)
+            END DO
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTANCE_CORRELATION_DESCRIPTORS_B
+
+  FUNCTION DISTANCE_CORRELATION_DESCRIPTORS(setup, mesh, input_data, &
+&   target_control, nbz, parameters_matrix) RESULT (PENALTY_TOTAL)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    CHARACTER(len=6), INTENT(IN) :: target_control
+    INTEGER, INTENT(IN) :: nbz
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nbz), INTENT(IN) :: &
+&   parameters_matrix
+    REAL(sp) :: penalty_total
+    REAL :: penalty, penalty_class, distance
+    INTEGER :: i, j, ii, jj, p, label, minmask, maxmask, indice, &
+&   nbpixbyclass
+    INTEGER :: jj_start, ii_start
+    INTEGER, DIMENSION(setup%nd) :: descriptor_indexes
+    INTEGER :: desc
+    INTEGER, DIMENSION(nbz) :: optim
+    INTRINSIC MAXVAL
+    INTRINSIC INT
+    INTRINSIC SQRT
+    INTRINSIC REAL
+    REAL(sp) :: result1
+    REAL :: arg1
+    IF (target_control .EQ. 'params') optim = setup%optimize%&
+&       optim_parameters
+    IF (target_control .EQ. 'states') optim = setup%optimize%&
+&       optim_states
+! penality term
+    penalty_total = 0.0
+! loop on all parameters
+    DO p=1,nbz
+      IF (optim(p) .GT. 0) THEN
+        penalty = 0.0
+!#TODO seklect approriate descriptor for parameter
+        IF (target_control .EQ. 'params') descriptor_indexes = setup%&
+&           optimize%reg_descriptors_for_params(p, :)
+        IF (target_control .EQ. 'states') descriptor_indexes = setup%&
+&           optimize%reg_descriptors_for_states(p, :)
+        DO desc=1,setup%nd
+          IF (descriptor_indexes(desc) .GT. 0) THEN
+            minmask = 0
+            result1 = MAXVAL(input_data%descriptor(:, :, desc))
+            maxmask = INT(result1)
+!Boucle sur les différents indices du masque
+            DO indice=minmask,maxmask
+              label = indice
+              nbpixbyclass = 0
+              penalty_class = 0.
+              DO i=1,mesh%nrow
+                DO j=1,mesh%ncol
+                  IF (INT(input_data%descriptor(i, j, p)) .EQ. label) &
+&                 THEN
+                    nbpixbyclass = nbpixbyclass + 1
+                    jj_start = j + 1
+                    ii_start = i
+                    IF (j .EQ. mesh%ncol .AND. i .LT. mesh%nrow) THEN
+                      jj_start = 1
+                      ii_start = i + 1
+                    END IF
+                    IF (i .EQ. mesh%nrow .AND. j .EQ. mesh%ncol) THEN
+                      jj_start = j
+                      ii_start = i
+                    END IF
+                    DO ii=ii_start,mesh%nrow
+                      DO jj=jj_start,mesh%ncol
+                        IF (INT(input_data%descriptor(ii, jj, desc)) &
+&                           .EQ. label) THEN
+                          arg1 = (ii-i)**2. + (jj-j)**2.
+                          distance = SQRT(arg1)
+                          IF (distance .LT. 1.) distance = 1.
+                          penalty_class = penalty_class + 1./distance**&
+&                           2.*(parameters_matrix(i, j, p)-&
+&                           parameters_matrix(ii, jj, p))**2.
+                        END IF
+                      END DO
+                      jj_start = 1
+                    END DO
+                  END IF
+                END DO
+              END DO
+              IF (nbpixbyclass .GE. 1) THEN
+                penalty = penalty + penalty_class/REAL(nbpixbyclass)
+              ELSE
+                penalty = penalty + penalty_class
+              END IF
+            END DO
+          END IF
+        END DO
+        penalty_total = penalty_total + penalty
+      END IF
+    END DO
+  END FUNCTION DISTANCE_CORRELATION_DESCRIPTORS
+
 !  Differentiation of reg_prior in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: res
 !   with respect to varying inputs: matrix
-!~     subroutine correlationbymask(setup, mesh, input_data, target_control,nbz,parameters_matrix,penalty_total)
-!~         implicit none
-!~         type(SetupDT), intent(in) :: setup
-!~         type(MeshDT), intent(in) :: mesh
-!~         character(6), intent(in) :: target_control
-!~         type(InputDataDT), intent(in) :: input_data
-!~         integer, intent(in) :: nbz
-!~         real,dimension(nbx,nby,nbz), intent(in) :: parameters_matrix
-!~         real, intent(out) :: penalty_total
-!~         real :: penalty,penalty_class,corr,corr_active_cell,distance
-!~         integer :: i,j,ii,jj,p,label,minmask,maxmask,indice,nbpixbyclass
-!~         integer :: jj_start, ii_start
-!~         real,dimension(nbx,nby,nbz) :: array_param
-!~         integer :: desc
-!~             integer, dimension(size_mat3) :: optim
-!~             if (target_control=="params") then
-!~                 optim=setup%optimize%optim_parameters
-!~             end if
-!~             if (target_control=="states") then
-!~                 optim=setup%optimize%optim_states
-!~             end if
-!~         ! penality term
-!~         penalty_total=0.0
-!~         do p=1,nbz ! loop on all parameters
-!~             if (optim(p)>0) then
-!~                 penalty=0.0
-!~                 #TODO seklect approriate descriptor for parameter
-!~                 desc=setup%optimize%parameters_descriptors(p)
-!~                 desc=setup%optimize%states_descriptors(p)
-!~                 minmask=0
-!~                 maxmask=int(maxval(input_data%descriptor(:,:,desc)))
-!~                 !Boucle sur les différents indices du masque
-!~                 do indice=minmask,maxmask
-!~                     label=indice
-!~                     nbpixbyclass=0
-!~                     penalty_class=0.
-!~                     do i=1,mesh%ncol
-!~                         do j=1,mesh%nrow
-!~                             if (input_data%descriptor(i,j,p)==label) then
-!~                                 nbpixbyclass=nbpixbyclass+1
-!~                                 jj_start=j+1
-!~                                 ii_start=i
-!~                                 if ((j==mesh%nrow).and.(i<mesh%ncol)) then
-!~                                     jj_start=1
-!~                                     ii_start=i+1
-!~                                 endif
-!~                                 if ((i==mesh%ncol) .and. (j==mesh%nrow)) then
-!~                                     jj_start=j
-!~                                     ii_start=i
-!~                                 end if
-!~                                 do ii=ii_start,mesh%ncol
-!~                                     do jj=jj_start,mesh%nrow
-!~                                         !corr=0.
-!~                                         if (input_data%descriptor(ii,jj,desc)==label) then
-!~                                             distance=sqrt(((ii-i))**2.+((jj-j))**2.)
-!~                                             if (distance==0.) then
-!~                                                 distance=1.
-!~                                             end if
-!~                                             !penalty_class=penalty_class+corr*corr_active_cell*(1./(distance))*&
-!~                                             !&(array_param(i,j,p)-array_param(ii,jj,p))**2.
-!~                                             penalty_class=penalty_class+(1./(distance**2.))*&
-!~                                             &(parameters_matrix(i,j,p)-parameters_matrix(ii,jj,p))**2.
-!~                                         endif
-!~                                     end do
-!~                                     jj_start=1
-!~                                 end do
-!~                             end if
-!~                         enddo
-!~                     enddo
-!~                     if (nbpixbyclass>=1) then
-!~                         penalty=penalty+penalty_class/(real(nbpixbyclass)) 
-!~                     else
-!~                         penalty=penalty+penalty_class
-!~                     endif
-!~                 end do
-!~                 write(*,*) "Penalty correlation for parameter",setupDT%parameters_name(p),"=",penalty
-!~                 penalty_total=penalty_total+penalty
-!~             end if
-!~         end do
-!~         write(*,*) "Penalty total for correlation=",penalty_total
-!~     end subroutine correlationbymask
   FUNCTION REG_PRIOR_D(setup, mesh, target_control, size_mat3, matrix, &
 &   matrix_d, matrix_bgd, res) RESULT (RES_D)
     IMPLICIT NONE
@@ -7822,87 +8158,6 @@ CONTAINS
 !  Differentiation of reg_prior in reverse (adjoint) mode (with options fixinterface noISIZE):
 !   gradient     of useful results: res matrix
 !   with respect to varying inputs: matrix
-!~     subroutine correlationbymask(setup, mesh, input_data, target_control,nbz,parameters_matrix,penalty_total)
-!~         implicit none
-!~         type(SetupDT), intent(in) :: setup
-!~         type(MeshDT), intent(in) :: mesh
-!~         character(6), intent(in) :: target_control
-!~         type(InputDataDT), intent(in) :: input_data
-!~         integer, intent(in) :: nbz
-!~         real,dimension(nbx,nby,nbz), intent(in) :: parameters_matrix
-!~         real, intent(out) :: penalty_total
-!~         real :: penalty,penalty_class,corr,corr_active_cell,distance
-!~         integer :: i,j,ii,jj,p,label,minmask,maxmask,indice,nbpixbyclass
-!~         integer :: jj_start, ii_start
-!~         real,dimension(nbx,nby,nbz) :: array_param
-!~         integer :: desc
-!~             integer, dimension(size_mat3) :: optim
-!~             if (target_control=="params") then
-!~                 optim=setup%optimize%optim_parameters
-!~             end if
-!~             if (target_control=="states") then
-!~                 optim=setup%optimize%optim_states
-!~             end if
-!~         ! penality term
-!~         penalty_total=0.0
-!~         do p=1,nbz ! loop on all parameters
-!~             if (optim(p)>0) then
-!~                 penalty=0.0
-!~                 #TODO seklect approriate descriptor for parameter
-!~                 desc=setup%optimize%parameters_descriptors(p)
-!~                 desc=setup%optimize%states_descriptors(p)
-!~                 minmask=0
-!~                 maxmask=int(maxval(input_data%descriptor(:,:,desc)))
-!~                 !Boucle sur les différents indices du masque
-!~                 do indice=minmask,maxmask
-!~                     label=indice
-!~                     nbpixbyclass=0
-!~                     penalty_class=0.
-!~                     do i=1,mesh%ncol
-!~                         do j=1,mesh%nrow
-!~                             if (input_data%descriptor(i,j,p)==label) then
-!~                                 nbpixbyclass=nbpixbyclass+1
-!~                                 jj_start=j+1
-!~                                 ii_start=i
-!~                                 if ((j==mesh%nrow).and.(i<mesh%ncol)) then
-!~                                     jj_start=1
-!~                                     ii_start=i+1
-!~                                 endif
-!~                                 if ((i==mesh%ncol) .and. (j==mesh%nrow)) then
-!~                                     jj_start=j
-!~                                     ii_start=i
-!~                                 end if
-!~                                 do ii=ii_start,mesh%ncol
-!~                                     do jj=jj_start,mesh%nrow
-!~                                         !corr=0.
-!~                                         if (input_data%descriptor(ii,jj,desc)==label) then
-!~                                             distance=sqrt(((ii-i))**2.+((jj-j))**2.)
-!~                                             if (distance==0.) then
-!~                                                 distance=1.
-!~                                             end if
-!~                                             !penalty_class=penalty_class+corr*corr_active_cell*(1./(distance))*&
-!~                                             !&(array_param(i,j,p)-array_param(ii,jj,p))**2.
-!~                                             penalty_class=penalty_class+(1./(distance**2.))*&
-!~                                             &(parameters_matrix(i,j,p)-parameters_matrix(ii,jj,p))**2.
-!~                                         endif
-!~                                     end do
-!~                                     jj_start=1
-!~                                 end do
-!~                             end if
-!~                         enddo
-!~                     enddo
-!~                     if (nbpixbyclass>=1) then
-!~                         penalty=penalty+penalty_class/(real(nbpixbyclass)) 
-!~                     else
-!~                         penalty=penalty+penalty_class
-!~                     endif
-!~                 end do
-!~                 write(*,*) "Penalty correlation for parameter",setupDT%parameters_name(p),"=",penalty
-!~                 penalty_total=penalty_total+penalty
-!~             end if
-!~         end do
-!~         write(*,*) "Penalty total for correlation=",penalty_total
-!~     end subroutine correlationbymask
   SUBROUTINE REG_PRIOR_B(setup, mesh, target_control, size_mat3, matrix&
 &   , matrix_b, matrix_bgd, res_b)
     IMPLICIT NONE
@@ -7946,87 +8201,6 @@ CONTAINS
     END DO
   END SUBROUTINE REG_PRIOR_B
 
-!~     subroutine correlationbymask(setup, mesh, input_data, target_control,nbz,parameters_matrix,penalty_total)
-!~         implicit none
-!~         type(SetupDT), intent(in) :: setup
-!~         type(MeshDT), intent(in) :: mesh
-!~         character(6), intent(in) :: target_control
-!~         type(InputDataDT), intent(in) :: input_data
-!~         integer, intent(in) :: nbz
-!~         real,dimension(nbx,nby,nbz), intent(in) :: parameters_matrix
-!~         real, intent(out) :: penalty_total
-!~         real :: penalty,penalty_class,corr,corr_active_cell,distance
-!~         integer :: i,j,ii,jj,p,label,minmask,maxmask,indice,nbpixbyclass
-!~         integer :: jj_start, ii_start
-!~         real,dimension(nbx,nby,nbz) :: array_param
-!~         integer :: desc
-!~             integer, dimension(size_mat3) :: optim
-!~             if (target_control=="params") then
-!~                 optim=setup%optimize%optim_parameters
-!~             end if
-!~             if (target_control=="states") then
-!~                 optim=setup%optimize%optim_states
-!~             end if
-!~         ! penality term
-!~         penalty_total=0.0
-!~         do p=1,nbz ! loop on all parameters
-!~             if (optim(p)>0) then
-!~                 penalty=0.0
-!~                 #TODO seklect approriate descriptor for parameter
-!~                 desc=setup%optimize%parameters_descriptors(p)
-!~                 desc=setup%optimize%states_descriptors(p)
-!~                 minmask=0
-!~                 maxmask=int(maxval(input_data%descriptor(:,:,desc)))
-!~                 !Boucle sur les différents indices du masque
-!~                 do indice=minmask,maxmask
-!~                     label=indice
-!~                     nbpixbyclass=0
-!~                     penalty_class=0.
-!~                     do i=1,mesh%ncol
-!~                         do j=1,mesh%nrow
-!~                             if (input_data%descriptor(i,j,p)==label) then
-!~                                 nbpixbyclass=nbpixbyclass+1
-!~                                 jj_start=j+1
-!~                                 ii_start=i
-!~                                 if ((j==mesh%nrow).and.(i<mesh%ncol)) then
-!~                                     jj_start=1
-!~                                     ii_start=i+1
-!~                                 endif
-!~                                 if ((i==mesh%ncol) .and. (j==mesh%nrow)) then
-!~                                     jj_start=j
-!~                                     ii_start=i
-!~                                 end if
-!~                                 do ii=ii_start,mesh%ncol
-!~                                     do jj=jj_start,mesh%nrow
-!~                                         !corr=0.
-!~                                         if (input_data%descriptor(ii,jj,desc)==label) then
-!~                                             distance=sqrt(((ii-i))**2.+((jj-j))**2.)
-!~                                             if (distance==0.) then
-!~                                                 distance=1.
-!~                                             end if
-!~                                             !penalty_class=penalty_class+corr*corr_active_cell*(1./(distance))*&
-!~                                             !&(array_param(i,j,p)-array_param(ii,jj,p))**2.
-!~                                             penalty_class=penalty_class+(1./(distance**2.))*&
-!~                                             &(parameters_matrix(i,j,p)-parameters_matrix(ii,jj,p))**2.
-!~                                         endif
-!~                                     end do
-!~                                     jj_start=1
-!~                                 end do
-!~                             end if
-!~                         enddo
-!~                     enddo
-!~                     if (nbpixbyclass>=1) then
-!~                         penalty=penalty+penalty_class/(real(nbpixbyclass)) 
-!~                     else
-!~                         penalty=penalty+penalty_class
-!~                     endif
-!~                 end do
-!~                 write(*,*) "Penalty correlation for parameter",setupDT%parameters_name(p),"=",penalty
-!~                 penalty_total=penalty_total+penalty
-!~             end if
-!~         end do
-!~         write(*,*) "Penalty total for correlation=",penalty_total
-!~     end subroutine correlationbymask
   FUNCTION REG_PRIOR(setup, mesh, target_control, size_mat3, matrix, &
 &   matrix_bgd) RESULT (RES)
     IMPLICIT NONE
@@ -8288,9 +8462,9 @@ CONTAINS
       CALL NORMALIZE_PARAMETERS_D(setup, mesh, parameters, parameters_d)
       CALL NORMALIZE_STATES_D(setup, mesh, states, states_d)
     END IF
-    CALL COMPUTE_JREG_D(setup, mesh, parameters, parameters_d, &
-&                 parameters_bgd, parameters_bgd_d, states, states_d, &
-&                 states_bgd, states_bgd_d, jreg, jreg_d)
+    CALL COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
+&                 parameters_d, parameters_bgd, parameters_bgd_d, states&
+&                 , states_d, states_bgd, states_bgd_d, jreg, jreg_d)
     CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
     CALL DENORMALIZE_STATES(setup, mesh, states)
     cost_d = jobs_d + setup%optimize%wjreg*jreg_d
@@ -8382,13 +8556,13 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
-    CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states, &
-&               states_bgd, jreg)
+    CALL COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&               parameters_bgd, states, states_bgd, jreg)
     jobs_b = cost_b
     jreg_b = setup%optimize%wjreg*cost_b
-    CALL COMPUTE_JREG_B(setup, mesh, parameters, parameters_b, &
-&                 parameters_bgd, parameters_bgd_b, states, states_b, &
-&                 states_bgd, states_bgd_b, jreg, jreg_b)
+    CALL COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
+&                 parameters_b, parameters_bgd, parameters_bgd_b, states&
+&                 , states_b, states_bgd, states_bgd_b, jreg, jreg_b)
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL NORMALIZE_STATES_B(setup, mesh, states, states_b)
@@ -8446,8 +8620,8 @@ CONTAINS
       CALL NORMALIZE_PARAMETERS(setup, mesh, parameters)
       CALL NORMALIZE_STATES(setup, mesh, states)
     END IF
-    CALL COMPUTE_JREG(setup, mesh, parameters, parameters_bgd, states, &
-&               states_bgd, jreg)
+    CALL COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&               parameters_bgd, states, states_bgd, jreg)
     IF (setup%optimize%denormalize_forward) THEN
       CALL DENORMALIZE_PARAMETERS(setup, mesh, parameters)
       CALL DENORMALIZE_STATES(setup, mesh, states)

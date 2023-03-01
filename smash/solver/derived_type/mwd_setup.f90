@@ -67,7 +67,9 @@ module mwd_setup
         character(20), dimension(:), allocatable :: jreg_fun !>f90w-char_array
         real(sp), dimension(:), allocatable :: wjreg_fun
         real(sp) :: wjreg = 0._sp
-        character(lchar) :: auto_regul = "..."
+        character(lchar) :: auto_regul = "..." !>f90w-char
+        integer, dimension(:,:),allocatable :: reg_descriptors_for_params
+        integer, dimension(:,:),allocatable :: reg_descriptors_for_states
         
         integer :: njf = 0
         integer :: njr = 0
@@ -198,6 +200,12 @@ contains
         
         allocate (this%mask_event(ng, ntime_step))
         this%mask_event = 0
+        
+        allocate (this%reg_descriptors_for_params(GNP,nd))
+        this%reg_descriptors_for_params = 0
+        
+        allocate (this%reg_descriptors_for_states(GNS,nd))
+        this%reg_descriptors_for_states = 0
 
     end subroutine Optimize_SetupDT_initialise
 

@@ -114,6 +114,7 @@ MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 JREG_FUN = [
     "prior",
     "smoothing",
+    "distance_correlation"
 ]
 
 OPTIM_FUNC = {

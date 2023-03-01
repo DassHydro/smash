@@ -726,7 +726,7 @@ class Model(object):
             instance.input_data,
         )
 
-        options = _standardize_optimize_options(options)
+        options = _standardize_optimize_options(options,instance.setup)
 
         if algorithm == "sbs":
             _optimize_sbs(

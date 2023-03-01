@@ -455,9 +455,73 @@ def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Times
     return ost
 
 
-def _standardize_optimize_options(options: dict | None) -> dict:
+def _standardize_optimize_options(options: dict | None, setup: SetupDT) -> dict:
     if options is None:
+    
         options = {}
+    
+    else:
+        
+        for key,values in options.items():
+            
+            if key=="reg_descriptors":
+                
+                reg_descriptors_for_params=np.zeros(shape=(setup._parameters_name.size, setup._nd), dtype=int)
+                reg_descriptors_for_states=np.zeros(shape=(setup._states_name.size, setup._nd), dtype=int)
+                
+                if  isinstance(values,dict):
+                    
+                    for p,desc in values.items():
+                        
+                        if p in setup._parameters_name:
+                            ind = np.argwhere(setup._parameters_name == p)
+                            #reg_descriptors_for_params[ind]=
+                        
+                            if isinstance(desc,str):
+                                pos=np.argwhere(setup.descriptor_name==desc)
+                                reg_descriptors_for_params[ind,0]=pos+1
+                                
+                            elif isinstance(desc,(list,set)):
+                                
+                                i=0
+                                for d in desc:
+                                    pos=np.argwhere(setup.descriptor_name==d)
+                                    reg_descriptors_for_params[ind,i]=pos+1
+                                    i=i+1
+                            
+                            else:
+                                raise ValueError(
+                                    f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
+                                )
+                            
+                        if p in setup._states_name:
+                            ind = np.argwhere(setup._states_name == p)
+                            #reg_descriptors_for_params[ind]=
+                        
+                            if isinstance(desc,str):
+                                pos=np.argwhere(setup.descriptor_name==desc)
+                                reg_descriptors_for_states[ind,0]=pos+1
+                                
+                            elif isinstance(desc,(list,set)):
+                                
+                                i=0
+                                for d in desc:
+                                    pos=np.argwhere(setup.descriptor_name==d)
+                                    reg_descriptors_for_states[ind,i]=pos+1
+                                    i=i+1
+                            
+                            else:
+                                raise ValueError(
+                                    f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
+                                )
+                    
+                    options["reg_descriptors"]={"params":reg_descriptors_for_params,"states":reg_descriptors_for_states}
+                
+                else:
+                    raise ValueError(
+                        f"reg_descriptors '{reg_descriptors}' argument must be a dictionary"
+                    )
+    
 
     return options
 

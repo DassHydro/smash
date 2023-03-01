@@ -112,6 +112,7 @@ def _optimize_lbfgsb(
     maxiter: int = 100,
     wjreg: float = 0.0,
     adjoint_test: bool = False,
+    reg_descriptors: np.ndarray | None = None,
     **unknown_options,
 ):
     _check_unknown_options(unknown_options)
@@ -142,18 +143,25 @@ def _optimize_lbfgsb(
 
             instance.setup._optimize.lb_states[ind] = bounds[i, 0]
             instance.setup._optimize.ub_states[ind] = bounds[i, 1]
+            
 
     instance.setup._optimize.jobs_fun = jobs_fun
 
     instance.setup._optimize.wjobs_fun = wjobs_fun
 
-    instance.setup._optimize.jreg_fun = jreg_fun
+    if not (type(jreg_fun)==type(None)):
+        instance.setup._optimize.jreg_fun = jreg_fun
 
-    instance.setup._optimize.wjreg_fun = wjreg_fun
+    if not (type(jreg_fun)==type(None)):
+        instance.setup._optimize.wjreg_fun = wjreg_fun
 
     instance.setup._optimize.wjreg = wjreg
 
     instance.setup._optimize.auto_regul = auto_regul
+
+    if not (type(reg_descriptors)==type(None)):
+        instance.setup._optimize.reg_descriptors_for_params = reg_descriptors["params"]
+        instance.setup._optimize.reg_descriptors_for_states = reg_descriptors["states"]
 
     instance.setup._optimize.wgauge = wgauge
 
