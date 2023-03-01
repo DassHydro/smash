@@ -312,6 +312,22 @@ def _optimize_lbfgsb(
                     jobs_max - jobs_min
                 ) >= 0.8:
                     break
+            
+            # bounds updates for jobs and jreg
+            jobs_min = min(cost_jobs)
+            index_jobs_min=cost_jobs.index(jobs_min)            
+            #jreg_max = max(cost_jreg)
+            jreg_max=cost_jreg[index_jobs_min]
+            
+            #if (cost_jreg[index_jobs_min]<jreg_max):
+            #    index_jreg_max=cost_jreg.index(jreg_max)
+            #    jreg_max=cost_jreg[index_jobs_min]
+            #    cost_jreg.pop(index_jreg_max)
+            #    cost_jobs.pop(index_jreg_max)
+            #    cost_j.pop(index_jreg_max)
+            #    wjreg.pop(index_jreg_max)
+                #wjreg_opt = (jobs_max - jobs_min) / (jreg_max - jreg_min)
+
 
             # select the best wjreg based on the transformed lcurve and using our own method decrived in ...
             hlist, wjreg_lcurve_opt = _compute_best_lcurve_weigth(
@@ -812,23 +828,31 @@ def _compute_best_lcurve_weigth(
 
     h = 0.0
     distance = list()
-
+    
+    first_point=True
     for i in range(0, len(cost_jobs)):
-        hypth = (
-            ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ** 2.0
-            + ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) ** 2.0
-        ) ** 0.5
-        alpha = 45.0 - math.acos(
-            (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) / hypth
-        )
-        distance.append(hypth * math.sin(alpha))
+        
+        #skip point above y=x
+        if ( ( (cost_jreg[i] - jreg_min) / (jreg_max - jreg_min) ) <= 1. ):
+            
+            hypth = (
+                ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ** 2.0
+                + ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) ** 2.0
+            ) ** 0.5
+            alpha = 45.0 - math.acos(
+                (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) / hypth
+            )
+            distance.append(hypth * math.sin(alpha))
 
-        if (i > 0) and (distance[i] > h):
-            h = distance[i]
-            wjreg_lcurve_opt = wjreg[i]
+            if (distance[i] >= h):
+                h = distance[i]
+                wjreg_lcurve_opt = wjreg[i]
 
-        if i == 0.0:
-            h = distance[i]
-            wjreg_lcurve_opt = wjreg[i]
+            #if first_point:
+            #    h = distance[i]
+            #    wjreg_lcurve_opt = wjreg[i]
+            #    first_point=False
+        else:
+            distance.append(None)
 
     return distance, wjreg_lcurve_opt
