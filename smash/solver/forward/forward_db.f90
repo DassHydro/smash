@@ -5422,6 +5422,7 @@ CONTAINS
       a_d(:, :, i) = a_d(:, :, i)/(ub-lb)
       a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
     END DO
+!Check if 0<a<=1. else a is outside bounds
     CALL SET_PARAMETERS_D(mesh, parameters, parameters_d, a, a_d)
   END SUBROUTINE NORMALIZE_PARAMETERS_D
 
@@ -5460,6 +5461,7 @@ CONTAINS
       lb = setup%optimize%lb_parameters(i)
       ub = setup%optimize%ub_parameters(i)
     END DO
+!Check if 0<a<=1. else a is outside bounds
     CALL PUSHREAL4ARRAY(parameters%ci, SIZE(parameters%ci, 1)*SIZE(&
 &                 parameters%ci, 2))
     CALL PUSHREAL4ARRAY(parameters%cp, SIZE(parameters%cp, 1)*SIZE(&
@@ -5540,6 +5542,7 @@ CONTAINS
       ub = setup%optimize%ub_parameters(i)
       a(:, :, i) = (a(:, :, i)-lb)/(ub-lb)
     END DO
+!Check if 0<a<=1. else a is outside bounds
     CALL SET_PARAMETERS(mesh, parameters, a)
   END SUBROUTINE NORMALIZE_PARAMETERS
 

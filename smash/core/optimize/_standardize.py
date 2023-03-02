@@ -245,10 +245,12 @@ def _standardize_wjreg_fun(wjreg_fun: list | None, jreg_fun: np.ndarray) -> np.n
 def _standardize_bounds(
     user_bounds: dict | None, control_vector: np.ndarray, setup: SetupDT
 ) -> np.ndarray:
+    
     # % Default values
     bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
 
     for i, name in enumerate(control_vector):
+        
         if name in setup._parameters_name:
             ind = np.argwhere(setup._parameters_name == name)
 
@@ -456,74 +458,156 @@ def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Times
 
 
 def _standardize_optimize_options(options: dict | None, setup: SetupDT) -> dict:
+    
+    standardized_options = {}
+    
+    if not isinstance(options, dict):
+        
+        raise ValueError(
+                f"options '{options}' argument must be a dicitonary"
+            )
+    
     if options is None:
     
-        options = {}
+        standardized_options = {}
     
     else:
         
-        for key,values in options.items():
+        if "reg_descriptors" in options:
             
-            if key=="reg_descriptors":
+            standardized_options["reg_descriptors"]=standardize_reg_descriptors(options["reg_descriptors"],setup)
+            
+        if "jreg_fun" in options:
+            
+            standardized_options["jreg_fun"] = _standardize_jreg_fun(options["jreg_fun"])
+            
+            if not "wjreg_fun" in options:
+                standardized_options["wjreg_fun"]=_standardize_wjreg_fun(None, options["jreg_fun"])
+        
+        else:
+            
+            standardized_options["jreg_fun"] = _standardize_jreg_fun(None)
+        
+        if "wjreg_fun" in options:
+            
+            standardized_options["wjreg_fun"] = _standardize_wjreg_fun(options["wjreg_fun"], standardized_options["jreg_fun"])
+            
+        if "wjreg" in options:
+            
+            if isinstance(options["wjreg"],float) and options["wjreg"]>=0.:
+                standardized_options["wjreg"]=options["wjreg"]
+            else:
+                raise ValueError(
+                    f"options['wjreg'] '{options['wjreg']}' must be a float >=0."
+                )
+            
+        if "maxiter" in options:
+            
+            if isinstance(options["maxiter"],int) and options["maxiter"]>=0:
+                standardized_options["maxiter"]=options["maxiter"]
+            else:
+                raise ValueError(
+                    f"options['maxiter'] '{options['maxiter']}' must be a int >=0"
+                )
+            
+        if "auto_regul" in options:
+            
+            if type(options["auto_regul"])==type(None):
                 
-                reg_descriptors_for_params=np.zeros(shape=(setup._parameters_name.size, setup._nd), dtype=int)
-                reg_descriptors_for_states=np.zeros(shape=(setup._states_name.size, setup._nd), dtype=int)
+                standardized_options["auto_regul"]='...'
+            
+            else:
                 
-                if  isinstance(values,dict):
+                if isinstance(options["auto_regul"],str) :
                     
-                    for p,desc in values.items():
-                        
-                        if p in setup._parameters_name:
-                            ind = np.argwhere(setup._parameters_name == p)
-                            #reg_descriptors_for_params[ind]=
-                        
-                            if isinstance(desc,str):
-                                pos=np.argwhere(setup.descriptor_name==desc)
-                                reg_descriptors_for_params[ind,0]=pos+1
-                                
-                            elif isinstance(desc,(list,set)):
-                                
-                                i=0
-                                for d in desc:
-                                    pos=np.argwhere(setup.descriptor_name==d)
-                                    reg_descriptors_for_params[ind,i]=pos+1
-                                    i=i+1
-                            
-                            else:
-                                raise ValueError(
-                                    f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
-                                )
-                            
-                        if p in setup._states_name:
-                            ind = np.argwhere(setup._states_name == p)
-                            #reg_descriptors_for_params[ind]=
-                        
-                            if isinstance(desc,str):
-                                pos=np.argwhere(setup.descriptor_name==desc)
-                                reg_descriptors_for_states[ind,0]=pos+1
-                                
-                            elif isinstance(desc,(list,set)):
-                                
-                                i=0
-                                for d in desc:
-                                    pos=np.argwhere(setup.descriptor_name==d)
-                                    reg_descriptors_for_states[ind,i]=pos+1
-                                    i=i+1
-                            
-                            else:
-                                raise ValueError(
-                                    f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
-                                )
+                    if not options["auto_regul"] in ('lcurve', 'fast'):
+                        raise ValueError(
+                            f"options['auto_regul'] '{options['auto_regul']}' must be 'lcurve' | 'fast' | None"
+                        )
+                    else:
+                        standardized_options["auto_regul"]=options["auto_regul"]
+                else:
+                    raise ValueError(
+                        f"options['auto_regul'] '{options['auto_regul']}' must be a str"
+                    )
+            
+        if "nb_wjreg_lcurve" in options:
+            
+            if isinstance(options["nb_wjreg_lcurve"],int) and options["nb_wjreg_lcurve"]>=6:
+                standardized_options["nb_wjreg_lcurve"]=options["nb_wjreg_lcurve"]
+            else:
+                raise ValueError(
+                    f"options['nb_wjreg_lcurve'] '{options['nb_wjreg_lcurve']}' must be a int >=6"
+                )
+        
+        
+    return standardized_options
+
+
+def standardize_reg_descriptors( reg_descriptors:dict, setup:SetupDT ) -> dict:
+    
+    reg_descriptors_for_params=np.zeros(shape=(setup._parameters_name.size, setup._nd), dtype=int)
+    reg_descriptors_for_states=np.zeros(shape=(setup._states_name.size, setup._nd), dtype=int)
+    
+    standardized_reg_descriptors={}
+    
+    if  isinstance(reg_descriptors,dict):
+
+        for p,desc in reg_descriptors.items():
+            
+            if p in setup._parameters_name:
+                
+                ind = np.argwhere(setup._parameters_name == p)
+                
+                if isinstance(desc,str):
                     
-                    options["reg_descriptors"]={"params":reg_descriptors_for_params,"states":reg_descriptors_for_states}
+                    pos=np.argwhere(setup.descriptor_name==desc)
+                    reg_descriptors_for_params[ind,0]=pos+1
+                    
+                elif isinstance(desc,(list,set)):
+                    
+                    i=0
+                    for d in desc:
+                        pos=np.argwhere(setup.descriptor_name==d)
+                        reg_descriptors_for_params[ind,i]=pos+1
+                        i=i+1
                 
                 else:
                     raise ValueError(
-                        f"reg_descriptors '{reg_descriptors}' argument must be a dictionary"
+                        f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
                     )
+                
+            if p in setup._states_name:
+                
+                ind = np.argwhere(setup._states_name == p)
+                
+                if isinstance(desc,str):
+                    
+                    pos=np.argwhere(setup.descriptor_name==desc)
+                    reg_descriptors_for_states[ind,0]=pos+1
+                    
+                elif isinstance(desc,(list,set)):
+                    
+                    i=0
+                    for d in desc:
+                        pos=np.argwhere(setup.descriptor_name==d)
+                        reg_descriptors_for_states[ind,i]=pos+1
+                        i=i+1
+                
+                else:
+                    
+                    raise ValueError(
+                        f"reg_descriptors['{p}'], '{desc}', must be a string, list or set"
+                    )
+        
+        standardized_reg_descriptors={"params":reg_descriptors_for_params,"states":reg_descriptors_for_states}
+        
+    else:
+        raise ValueError(
+            f"reg_descriptors '{reg_descriptors}' argument must be a dictionary"
+        )
     
-
-    return options
+    return standardized_reg_descriptors
 
 
 def _standardize_jobs_fun_wo_mapping(
@@ -598,8 +682,6 @@ def _standardize_optimize_args(
     control_vector: str | list | tuple | set | None,
     jobs_fun: str | list | tuple | set,
     wjobs_fun: list | None,
-    jreg_fun: str | list | tuple | set | None,
-    wjreg_fun: list | None,
     event_seg: dict | None,
     bounds: list | tuple | set | None,
     gauge: str | list | tuple | set,
@@ -622,25 +704,9 @@ def _standardize_optimize_args(
 
     wjobs_fun = _standardize_wjobs(wjobs_fun, jobs_fun, algorithm)
 
-    jreg_fun = _standardize_jreg_fun(jreg_fun)
-
-    wjreg_fun = _standardize_wjreg_fun(wjreg_fun, jreg_fun)
-
     event_seg = _standardize_event_seg_options(event_seg)
 
-    # % Update optimize setup derived type according to new optimize args.
-    # % This Fortran subroutine reset optimize_setup values and realloc arrays.
-    # % After wjobs_fun to realloc considering new size.
-    # % Before bounds to be consistent with default Fortran bounds.
-    update_optimize_setup(
-        setup._optimize,
-        setup._ntime_step,
-        setup._nd,
-        mesh.ng,
-        mapping,
-        jobs_fun.size,
-        jreg_fun.size,
-    )
+    
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
 
@@ -656,8 +722,8 @@ def _standardize_optimize_args(
         control_vector,
         jobs_fun,
         wjobs_fun,
-        jreg_fun,
-        wjreg_fun,
+        #jreg_fun,
+        #wjreg_fun,
         event_seg,
         bounds,
         wgauge,
@@ -698,6 +764,7 @@ def _standardize_bayes_estimate_args(
         mesh.ng,
         "...",
         jobs_fun.size,
+        0,
     )
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
@@ -755,6 +822,7 @@ def _standardize_bayes_optimize_args(
         mesh.ng,
         mapping,
         jobs_fun.size,
+        0,
     )
 
     bounds = _standardize_bounds(bounds, control_vector, setup)
@@ -815,6 +883,7 @@ def _standardize_ann_optimize_args(
         mesh.ng,
         "...",
         jobs_fun.size,
+        0,
     )
 
     bounds = _standardize_bounds(bounds, control_vector, setup)

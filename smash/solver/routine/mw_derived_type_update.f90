@@ -17,7 +17,7 @@ contains
         type(Optimize_SetupDT), intent(inout) :: this
         integer, intent(in) :: ntime_step, nd, ng, njf, njr
         character(len=*), intent(in) :: mapping
-
+        
         if (ng .ne. size(this%wgauge)) then
 
             !% Not necessary to check allocated statement but safer
@@ -89,5 +89,5 @@ contains
         this%optim_states = 0
 
     end subroutine update_optimize_setup
-
+    
 end module mw_derived_type_update

@@ -155,7 +155,7 @@ module mwd_setup
 
 contains
 
-    subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf)
+    subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf, njr)
 
         !% Notes
         !% -----
@@ -164,7 +164,7 @@ contains
         implicit none
 
         type(Optimize_SetupDT), intent(inout) :: this
-        integer, intent(in) :: ntime_step, nd, ng, njf
+        integer, intent(in) :: ntime_step, nd, ng, njf, njr
         character(len=*), intent(in) :: mapping
 
         allocate (this%wgauge(ng))
@@ -185,6 +185,7 @@ contains
         end select
 
         this%njf = njf
+        this%njr = njr
 
         allocate (this%jobs_fun(this%njf))
         this%jobs_fun = "..."
@@ -229,7 +230,7 @@ contains
 
         end if
 
-        call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0)
+        call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0, 0)
 
     end subroutine SetupDT_initialise
 

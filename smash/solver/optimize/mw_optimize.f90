@@ -481,69 +481,6 @@ contains
     end subroutine inv_transformation_sbs
     
     
-    subroutine control_lbfgsb(setup, mesh, input_data, parameters, states, output)
-        implicit none
-
-        type(SetupDT), intent(inout) :: setup
-        type(MeshDT), intent(inout) :: mesh
-        type(Input_DataDT), intent(inout) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(StatesDT), intent(inout) :: states
-        type(OutputDT), intent(inout) :: output
-        
-        type(ParametersDT) :: parameters_bgd
-        type(StatesDT) :: states_bgd
-        
-        call ParametersDT_initialise(parameters_bgd, mesh)
-        call StatesDT_initialise(states_bgd, mesh)
-        
-        parameters_bgd=parameters
-        states_bgd=states
-        
-        if (setup%optimize%auto_regul=="balanced") then
-            
-            setup%optimize%wjreg=0.
-            
-            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-            
-            setup%optimize%wjreg= (output%cost_jobs_initial - output%cost_jobs) / (output%cost_jreg - output%cost_jreg_initial)
-            
-            parameters=parameters_bgd
-            states=states_bgd
-            
-            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-        
-        else
-        
-            call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-        
-        end if
-        
-!~         if (setup%optimize%auto_reg=="lcurve") then
-            
-!~             setup%optimize%wjreg=0.
-            
-!~             call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-            
-!~             setup%optimize%wjreg= (output%cost_jobs_initial - output%cost_jobs) / (output%cost_jreg - output%cost_jreg_initial) / 10000.
-            
-!~             do while (output%cost_jobs_initial - output%cost_jobs)/output%cost_jobs_initial>=0.1 
-                
-!~                 parameters=parameters_bgd
-!~                 states=states_bgd
-            
-!~                 call optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
-!~                 setup%optimize%wjreg=10.*setup%optimize%wjreg
-                
-!~                 !output%lcurve_jobs=
-!~                 !output%lcurve_jobs=
-                
-!~             end do
-            
-!~         end if
-        
-    end subroutine control_lbfgsb
-    
     subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
 
         !% Notes

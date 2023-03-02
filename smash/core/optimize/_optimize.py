@@ -100,8 +100,6 @@ def _optimize_lbfgsb(
     mapping: str,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
-    jreg_fun: np.ndarray | None,
-    wjreg_fun: np.ndarray | None,
     event_seg: dict,
     bounds: np.ndarray,
     wgauge: np.ndarray,
@@ -113,6 +111,8 @@ def _optimize_lbfgsb(
     wjreg: float = 0.0,
     adjoint_test: bool = False,
     reg_descriptors: np.ndarray | None = None,
+    jreg_fun: np.ndarray | None = None,
+    wjreg_fun: np.ndarray | None = None,
     **unknown_options,
 ):
     _check_unknown_options(unknown_options)
@@ -131,19 +131,32 @@ def _optimize_lbfgsb(
             ind = np.argwhere(instance.setup._parameters_name == name)
 
             instance.setup._optimize.optim_parameters[ind] = 1
-
-            instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
-            instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
-
+            
+            #check if param are inside the bounds
+            param=getattr(instance.parameters,name)
+            if ( (param>=bounds[i, 0]).all() and (param<=bounds[i, 1]).all() ):
+                instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
+                instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
+            else:
+                raise ValueError(
+                    f"Background parameters: {name} outside the bounds {bounds[i,:]}"
+                )
+        
         # % Already check, must be states if not parameters
         else:
             ind = np.argwhere(instance.setup._states_name == name)
 
             instance.setup._optimize.optim_states[ind] = 1
 
-            instance.setup._optimize.lb_states[ind] = bounds[i, 0]
-            instance.setup._optimize.ub_states[ind] = bounds[i, 1]
-            
+            #check if param are inside the bounds
+            states=getattr(instance.states,name)
+            if ( (states>=bounds[i, 0]).all() and (states<=bounds[i, 1]).all() ):
+                instance.setup._optimize.lb_states[ind] = bounds[i, 0]
+                instance.setup._optimize.ub_states[ind] = bounds[i, 1]
+            else:
+                raise ValueError(
+                    f"Background states: {name} outside the bounds {bounds[i,:]}"
+                )
 
     instance.setup._optimize.jobs_fun = jobs_fun
 
@@ -172,6 +185,8 @@ def _optimize_lbfgsb(
     ).total_seconds() / instance.setup.dt + 1
 
     instance.setup._optimize.maxiter = maxiter
+    
+    
 
     if instance.setup._optimize.mapping.startswith("hyper"):
         # % Add Adjoint test for hyper
@@ -316,19 +331,8 @@ def _optimize_lbfgsb(
             # bounds updates for jobs and jreg
             jobs_min = min(cost_jobs)
             index_jobs_min=cost_jobs.index(jobs_min)            
-            #jreg_max = max(cost_jreg)
             jreg_max=cost_jreg[index_jobs_min]
             
-            #if (cost_jreg[index_jobs_min]<jreg_max):
-            #    index_jreg_max=cost_jreg.index(jreg_max)
-            #    jreg_max=cost_jreg[index_jobs_min]
-            #    cost_jreg.pop(index_jreg_max)
-            #    cost_jobs.pop(index_jreg_max)
-            #    cost_j.pop(index_jreg_max)
-            #    wjreg.pop(index_jreg_max)
-                #wjreg_opt = (jobs_max - jobs_min) / (jreg_max - jreg_min)
-
-
             # select the best wjreg based on the transformed lcurve and using our own method decrived in ...
             hlist, wjreg_lcurve_opt = _compute_best_lcurve_weigth(
                 cost_jobs, cost_jreg, wjreg, jobs_min, jobs_max, jreg_min, jreg_max
@@ -848,10 +852,6 @@ def _compute_best_lcurve_weigth(
                 h = distance[i]
                 wjreg_lcurve_opt = wjreg[i]
 
-            #if first_point:
-            #    h = distance[i]
-            #    wjreg_lcurve_opt = wjreg[i]
-            #    first_point=False
         else:
             distance.append(None)
 
