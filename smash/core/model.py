@@ -518,8 +518,6 @@ class Model(object):
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
-        #jreg_fun: str | list | tuple | set = None,
-        #wjreg_fun: list | tuple | None = None,
         event_seg: dict | None = None,
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
@@ -740,6 +738,11 @@ class Model(object):
 
         options = _standardize_optimize_options(options,instance.setup)
         
+        if not "jreg_fun" in options:
+            njr=0
+        else:
+            njr=options["jreg_fun"].size
+        
         # % Update optimize setup derived type according to new optimize args and options !
         # % This Fortran subroutine reset optimize_setup values and realloc arrays.
         update_optimize_setup(
@@ -749,7 +752,7 @@ class Model(object):
             instance.mesh.ng,
             mapping,
             jobs_fun.size,
-            options["jreg_fun"].size, 
+            njr, 
         )
 
         OPTIM_FUNC[algorithm](
@@ -1089,7 +1092,7 @@ class Model(object):
             k,
         )
 
-        options = _standardize_optimize_options(options)
+        options = _standardize_optimize_options(options,instance.setup)
 
         res = _bayes_computation(
             instance,

@@ -92,10 +92,10 @@ def load_dataset(name: str):
     {'dx': 1000.0, 'nac': 383, ...}
     """
 
-    if name == "flwdir":
+    if name.lower() == "flwdir":
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
-    elif name == "cance":
+    elif name.lower() == "cance":
         setup = smash.read_setup(os.path.join(DATASET_PATH, "Cance/setup_Cance.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "Cance/mesh_Cance.hdf5"))
 
@@ -110,7 +110,7 @@ def load_dataset(name: str):
 
         return setup, mesh
 
-    elif name == "france":
+    elif name.lower() == "france":
         setup = smash.read_setup(os.path.join(DATASET_PATH, "France/setup_France.yaml"))
         mesh = smash.read_mesh(os.path.join(DATASET_PATH, "France/mesh_France.hdf5"))
 

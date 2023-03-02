@@ -482,15 +482,16 @@ def _standardize_optimize_options(options: dict | None, setup: SetupDT) -> dict:
             standardized_options["jreg_fun"] = _standardize_jreg_fun(options["jreg_fun"])
             
             if not "wjreg_fun" in options:
-                standardized_options["wjreg_fun"]=_standardize_wjreg_fun(None, options["jreg_fun"])
-        
-        else:
-            
-            standardized_options["jreg_fun"] = _standardize_jreg_fun(None)
+                standardized_options["wjreg_fun"]=_standardize_wjreg_fun(None, standardized_options["jreg_fun"])
+            else:
+                standardized_options["wjreg_fun"] = _standardize_wjreg_fun(options["wjreg_fun"], standardized_options["jreg_fun"])
         
         if "wjreg_fun" in options:
             
-            standardized_options["wjreg_fun"] = _standardize_wjreg_fun(options["wjreg_fun"], standardized_options["jreg_fun"])
+            if not "jreg_fun" in options:
+                raise ValueError(
+                    f"options['wjreg_fun'] is present but options['jreg_fun'] is missing"
+                )
             
         if "wjreg" in options:
             
