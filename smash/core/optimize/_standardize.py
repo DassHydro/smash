@@ -245,12 +245,10 @@ def _standardize_wjreg_fun(wjreg_fun: list | None, jreg_fun: np.ndarray) -> np.n
 def _standardize_bounds(
     user_bounds: dict | None, control_vector: np.ndarray, setup: SetupDT
 ) -> np.ndarray:
-    
     # % Default values
     bounds = np.empty(shape=(control_vector.size, 2), dtype=np.float32)
 
     for i, name in enumerate(control_vector):
-        
         if name in setup._parameters_name:
             ind = np.argwhere(setup._parameters_name == name)
 
@@ -267,57 +265,47 @@ def _standardize_bounds(
                 setup._optimize.ub_states[ind].item(),
             )
 
-    # % Default values
     if user_bounds is None:
         pass
 
-    else:
-        if isinstance(user_bounds, dict):
-            for name, b in user_bounds.items():
-                if name in control_vector:
-                    if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
-                        raise ValueError(
-                            f"bounds values for '{name}' must be list-like object of length 2"
-                        )
-
-                    if not (
-                        type(b[0]) == float
-                        or type(b[0]) == np.float64
-                        or type(b[0]) == type(None)
-                    ):
-                        raise ValueError(
-                            f"bounds value for '{name}' must be a type of float, np.float64 or None"
-                        )
-
-                    if not (
-                        type(b[1]) == float
-                        or type(b[1]) == np.float64
-                        or type(b[1]) == type(None)
-                    ):
-                        raise ValueError(
-                            f"bounds value for '{name}' must be a type of float, np.float64 or None"
-                        )
-
-                    ind = np.argwhere(control_vector == name)
-
-                    if b[0] is not None:
-                        bounds[ind, 0] = user_bounds[name][0]
-
-                    if b[1] is not None:
-                        bounds[ind, 1] = user_bounds[name][1]
-
-                    if bounds[ind, 0] >= bounds[ind, 1]:
-                        raise ValueError(
-                            f"bounds values for '{name}' is invalid, lower bound ({bounds[ind, 0]}) is greater than or equal to upper bound ({bounds[ind, 1]})"
-                        )
-
-                else:
+    elif isinstance(user_bounds, dict):
+        for name, b in user_bounds.items():
+            if name in control_vector:
+                if not isinstance(b, (np.ndarray, list, tuple, set)) or len(b) != 2:
                     raise ValueError(
-                        f"bounds values for '{name}' cannot be changed because '{name}' is not present in the control vector)"
+                        f"bounds values for '{name}' must be list-like object of length 2"
                     )
 
-        else:
-            raise TypeError(f"bounds argument must be dict-like object")
+                if not isinstance(b[0], (int, float)) and b[0] is not None:
+                    raise ValueError(
+                        f"Lower bound value {b[0]} for '{name}' must be int, float or None"
+                    )
+
+                if not isinstance(b[1], (int, float)) and b[1] is not None:
+                    raise ValueError(
+                        f"Upper bound value {b[1]} for '{name}' must be int, float or None"
+                    )
+
+                ind = np.argwhere(control_vector == name)
+
+                if b[0] is not None:
+                    bounds[ind, 0] = b[0]
+
+                if b[1] is not None:
+                    bounds[ind, 1] = b[1]
+
+                if bounds[ind, 0] >= bounds[ind, 1]:
+                    raise ValueError(
+                        f"bounds values for '{name}' is invalid, lower bound ({bounds[ind, 0].item()}) is greater than or equal to upper bound ({bounds[ind, 1].item()})"
+                    )
+
+            else:
+                raise ValueError(
+                    f"bounds values for '{name}' cannot be changed because '{name}' is not present in the control vector {control_vector}"
+                )
+
+    else:
+        raise TypeError(f"bounds argument must be dict")
 
     return bounds
 

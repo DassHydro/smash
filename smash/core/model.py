@@ -515,7 +515,7 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
+        bounds: dict | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
         event_seg: dict | None = None,
@@ -559,11 +559,11 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
-        bounds : sequence or None, default None
-            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
-            The size of the bounds sequence must be equal to the control vector size.
-            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
-            None value inside the sequence will be filled in with default bound values.
+        bounds : dict or None, default None
+            Bounds on control vector. The bounds argument is a dictionary where keys are the name of the
+            parameters and/or states in the control vector (can be a subset of control vector sequence)
+            and the values are pairs of ``(min, max)`` values (i.e. list, set or tuple) with ``min`` lower than ``max``.
+            None value inside the dictionary will be filled in with default bound values.
 
             .. note::
                 If not given, the bounds will be filled in with default bound values.

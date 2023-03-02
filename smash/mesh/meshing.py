@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.mesh._meshing import mw_meshing
+from smash.mesh._mw_meshing import mw_meshing
 
 import errno
 import os
@@ -8,28 +8,26 @@ import warnings
 import numpy as np
 from osgeo import gdal, osr
 
-METER_TO_DEGREE = 0.000008512223965693407
-DEGREE_TO_METER = 117478.11195173833
 D8_VALUE = np.arange(1, 9)
 
 __all__ = ["generate_mesh"]
 
 
-def _xy_to_colrow(x, y, xmin, ymax, xres, yres):
-    col = int((x - xmin) / xres)
+def _xy_to_rowcol(x, y, xmin, ymax, xres, yres):
     row = int((ymax - y) / yres)
+    col = int((x - xmin) / xres)
 
-    return col, row
+    return row, col
 
 
-def _colrow_to_xy(col, row, xmin, ymax, xres, yres):
+def _rowcol_to_xy(row, col, xmin, ymax, xres, yres):
     x = int(col * xres + xmin)
     y = int(ymax - row * yres)
 
     return x, y
 
 
-def _trim_zeros_2D(array, shift_value=False):
+def _trim_zeros_2d(array, shift_value=False):
     for ax in [0, 1]:
         mask = ~(array == 0).all(axis=ax)
 
@@ -117,7 +115,7 @@ def _get_srs(ds_flwdir, epsg):
 
         else:
             raise ValueError(
-                "Flow direction file does not contain 'CRS' information. Can be specified with the 'epsg' argument"
+                "Flow direction file does not contain projection information. Can be specified with the 'epsg' argument"
             )
 
     return srs
@@ -144,7 +142,7 @@ def _standardize_gauge(ds_flwdir, x, y, area, code):
     if np.any(area < 0):
         raise ValueError(f"Negative 'area' value(s) {area}")
 
-    # % Setting _c0, _c1, ... _cN as default codes
+    # % Setting _c0, _c1, ... _cN-1 as default codes
     if code is None:
         code = np.array([f"_c{i}" for i in range(x.size)])
 
@@ -235,52 +233,38 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     flwdir = _get_array(ds_flwdir)
 
-    # % Convert (approximate) area from square meter to square degree
-    if srs.GetAttrValue("UNIT") == "degree":
-        area = area * METER_TO_DEGREE**2
-        dx = xres * DEGREE_TO_METER
+    dx = xres
 
-    else:
-        dx = xres
-
-    col_ol = np.zeros(shape=x.shape, dtype=np.int32)
-    row_ol = np.zeros(shape=x.shape, dtype=np.int32)
-    area_ol = np.zeros(shape=x.shape, dtype=np.float32)
+    row_dln = np.zeros(shape=x.shape, dtype=np.int32)
+    col_dln = np.zeros(shape=x.shape, dtype=np.int32)
+    area_dln = np.zeros(shape=x.shape, dtype=np.float32)
     mask_dln = np.zeros(shape=flwdir.shape, dtype=np.int32)
 
     for ind in range(x.size):
-        col, row = _xy_to_colrow(x[ind], y[ind], xmin, ymax, xres, yres)
+        row, col = _xy_to_rowcol(x[ind], y[ind], xmin, ymax, xres, yres)
 
-        mask_dln_imd, col_ol[ind], row_ol[ind] = mw_meshing.catchment_dln(
-            flwdir, col, row, xres, yres, area[ind], max_depth
+        mask_dln_imd, row_dln[ind], col_dln[ind] = mw_meshing.catchment_dln(
+            flwdir, row, col, xres, yres, area[ind], max_depth
         )
 
-        if srs.GetAttrValue("UNIT") == "degree":
-            area_ol[ind] = (
-                np.count_nonzero(mask_dln_imd == 1)
-                * (xres * yres)
-                * DEGREE_TO_METER**2
-            )
-
-        else:
-            area_ol[ind] = np.count_nonzero(mask_dln_imd == 1) * (xres * yres)
+        area_dln[ind] = np.count_nonzero(mask_dln_imd == 1) * (xres * yres)
 
         mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
 
     flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
 
-    flwdir, scol, ecol, srow, erow = _trim_zeros_2D(flwdir, shift_value=True)
-    mask_dln = _trim_zeros_2D(mask_dln)
+    mask_dln, scol, ecol, srow, erow = _trim_zeros_2d(mask_dln, shift_value=True)
+    flwdir = flwdir[srow:erow, scol:ecol]
 
     xmin_shifted = xmin + scol * xres
     ymax_shifted = ymax - srow * yres
 
-    col_ol = col_ol - scol
-    row_ol = row_ol - srow
-
-    flwdst = mw_meshing.flow_distance(flwdir, col_ol, row_ol, area_ol, dx)
+    row_dln = row_dln - srow
+    col_dln = col_dln - scol
 
     flwacc = mw_meshing.flow_accumulation(flwdir)
+
+    flwdst = mw_meshing.flow_distance(flwdir, row_dln, col_dln, area_dln, dx)
 
     path = _get_path(flwacc)
 
@@ -290,7 +274,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     active_cell = mask_dln.astype(np.int32)
 
-    gauge_pos = np.column_stack((row_ol, col_ol))
+    gauge_pos = np.column_stack((row_dln, col_dln))
 
     mesh = {
         "dx": dx,
@@ -306,7 +290,7 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
         "path": path,
         "gauge_pos": gauge_pos,
         "code": code,
-        "area": area_ol,
+        "area": area_dln,
         "active_cell": active_cell,
     }
 
@@ -324,11 +308,7 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
     flwdir = np.ma.masked_array(flwdir, mask=(flwdir < 1))
 
-    if srs.GetAttrValue("UNIT") == "degree":
-        dx = xres * DEGREE_TO_METER
-
-    else:
-        dx = xres
+    dx = xres
 
     flwacc = mw_meshing.flow_accumulation(flwdir)
 
@@ -424,10 +404,10 @@ def generate_mesh(
             :width: 350
 
     epsg : str, int or None, default None
-        The EPSG value of the flow directions file. By default, if the CRS is well
+        The EPSG value of the flow directions file. By default, if the projection is well
         defined in the flow directions file. It is not necessary to provide the value of
-        the EPSG. On the other hand, if the CRS is not well defined in the flow directions file
-        (in ASCII file). The ``epsg`` argument must be filled in.
+        the EPSG. On the other hand, if the projection is not well defined in the flow directions file
+        (i.e. in ASCII file). The ``epsg`` argument must be filled in.
 
     Returns
     -------
