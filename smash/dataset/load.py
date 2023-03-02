@@ -141,7 +141,7 @@ def load_dataset(name: str):
             raise ValueError(f"Missing mesh file '{mesh_file}'")
 
         setup = smash.read_setup(
-            os.path.join(local_dataset_path, local_dataset_dir_name, config_file)
+            os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
         )
         mesh = smash.read_mesh(
             os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
