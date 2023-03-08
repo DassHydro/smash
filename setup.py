@@ -33,7 +33,7 @@ setup(
         "gdal",
         "scipy",
         "pyyaml",
-        "SALib",
+        "SALib>=1.4.5",
         "terminaltables",
     ],
     zip_safe=False,
