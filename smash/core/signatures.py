@@ -20,8 +20,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
-from SALib.sample.sobol import sample as sb_generate_sample
-from SALib.analyze.sobol import analyze as sb_analyze
+from SALib import ProblemSpec
 from tqdm import tqdm
 import warnings
 
@@ -487,16 +486,21 @@ def _signatures_sensitivity(
     if es:
         _check_unknown_options_event_seg(unknown_options)
 
-    # generate samples
-    sample = sb_generate_sample(problem, n, calc_second_order=False, seed=seed)
+    second_order = False  # do not compute second order sensitivity
 
-    # signatures computation
-    dfs_cs = []  # list of dataframes concerned to CS
-    dfs_es = []  # list of dataframes concerned to ES
+    # % Define problem and initialize SALib object
+    sp = ProblemSpec(problem)
 
-    for i in tqdm(range(len(sample)), desc="</> Computing signatures sensitivity"):
+    # % Generate samples
+    sp.sample_sobol(n, calc_second_order=second_order, seed=seed)
+
+    # % Compute outputs (signatures computation)
+    dfs_cs = []  # list of dataframes for CS
+    dfs_es = []  # list of dataframes for ES
+
+    for i in tqdm(range(len(sp.samples)), desc="</> Computing signatures sensitivity"):
         for j, name in enumerate(problem["names"]):
-            setattr(instance.parameters, name, sample[i, j])
+            setattr(instance.parameters, name, sp.samples[i, j])
 
         cost = np.float32(0)
 
@@ -519,7 +523,7 @@ def _signatures_sensitivity(
         dfs_cs.append(res_sign.cont["sim"])
         dfs_es.append(res_sign.event["sim"])
 
-    # sensitivity computation
+    # % Sensitivity computation
     dfinfo_cs = dfs_cs[0][["code"]]
     dfinfo_es = dfs_es[0][["code", "season", "start", "end"]]
 
@@ -536,9 +540,15 @@ def _signatures_sensitivity(
             first_si = {key: [] for key in problem["names"]}
 
             for j in range(len(dfinfo["code"])):
-                y = np.array([dfs[i][name].loc[j] for i in range(len(dfs))])
+                y = np.array(
+                    [dfs[i][name].loc[j] for i in range(len(dfs))]
+                )  # signature output
 
-                tsi, fsi = sb_analyze(problem, y, calc_second_order=False).to_df()
+                sp.set_results(y)  # send the output to the SALib interface
+
+                sp.analyze_sobol(calc_second_order=second_order)  # estimate sensitivity
+
+                tsi, fsi = sp.to_df()  # get estimated results
 
                 for ip, param in enumerate(problem["names"]):
                     total_si[param].append(tsi.iloc[:, 0].iloc[ip])
@@ -571,7 +581,7 @@ def _signatures_sensitivity(
         dict(
             zip(
                 ["cont", "event", "sample"],
-                res_sa + [pd.DataFrame(sample, columns=problem["names"])],
+                res_sa + [pd.DataFrame(sp.samples, columns=problem["names"])],
             )
         )
     )
