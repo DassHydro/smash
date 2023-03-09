@@ -134,12 +134,12 @@ def _optimize_lbfgsb(
             
             #check if param are inside the bounds
             param=getattr(instance.parameters,name)
-            if ( (param>=bounds[i, 0]).all() and (param<=bounds[i, 1]).all() ):
+            if ( (param+1.0e-6>=bounds[i, 0]).all() and (param-1.0e-6<=bounds[i, 1]).all() ):
                 instance.setup._optimize.lb_parameters[ind] = bounds[i, 0]
                 instance.setup._optimize.ub_parameters[ind] = bounds[i, 1]
             else:
                 raise ValueError(
-                    f"Background parameters: {name} outside the bounds {bounds[i,:]}"
+                    f"Background parameters: {name}=[{np.min(param)}:{np.max(param)}] outside the bounds {bounds[i,:]}"
                 )
         
         # % Already check, must be states if not parameters
@@ -150,12 +150,12 @@ def _optimize_lbfgsb(
 
             #check if param are inside the bounds
             states=getattr(instance.states,name)
-            if ( (states>=bounds[i, 0]).all() and (states<=bounds[i, 1]).all() ):
+            if ( ((states+1.0e-6)>=bounds[i, 0]).all() and ((states-1.0e-6)<=bounds[i, 1]).all() ):
                 instance.setup._optimize.lb_states[ind] = bounds[i, 0]
                 instance.setup._optimize.ub_states[ind] = bounds[i, 1]
             else:
                 raise ValueError(
-                    f"Background states: {name} outside the bounds {bounds[i,:]}"
+                    f"Background states: {name}=[{np.min(states)}:{np.max(states)}] outside the bounds {bounds[i,:]}"
                 )
 
     instance.setup._optimize.jobs_fun = jobs_fun
@@ -288,14 +288,21 @@ def _optimize_lbfgsb(
             cost_jreg.append(instance.output.cost_jreg)
             wjreg.append(instance.setup._optimize.wjreg)
 
-            # Computation of the best wjreg using the "fast" method
-            wjreg_opt = (
-                instance.output.cost_jobs_initial - instance.output.cost_jobs
-            ) / (instance.output.cost_jreg - instance.output.cost_jreg_initial)
+            if (instance.output.cost_jobs/jobs_max < 0.95) and ((instance.output.cost_jreg - instance.output.cost_jreg_initial)>0.) :
 
-            # Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
-            wjreg_range = _compute_wjreg_range(wjreg_opt, nb_wjreg_lcurve)
-
+                # Computation of the best wjreg using the "fast" method
+                wjreg_opt = (
+                    instance.output.cost_jobs_initial - instance.output.cost_jobs
+                ) / (instance.output.cost_jreg - instance.output.cost_jreg_initial)
+                
+                # Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
+                wjreg_range = _compute_wjreg_range(wjreg_opt, nb_wjreg_lcurve)
+                    
+            else:
+                wjreg_opt=0.
+                wjreg_range={}
+                
+            
             # Doing the lcurve with wjreg_range for optimization
             i = 0
             for wj in wjreg_range:
@@ -350,23 +357,43 @@ def _optimize_lbfgsb(
             }
 
             # last optim with best wjreg
-            instance.parameters = parameters_bgd.copy()
-            instance.states = states_bgd.copy()
+            if wjreg_lcurve_opt is not None:
+                
+                instance.parameters = parameters_bgd.copy()
+                instance.states = states_bgd.copy()
 
-            instance.setup._optimize.wjreg = wjreg_lcurve_opt
+                instance.setup._optimize.wjreg = wjreg_lcurve_opt
 
-            if verbose:
-                _optimize_message(instance, control_vector, mapping)
+                if verbose:
+                    _optimize_message(instance, control_vector, mapping)
 
-            optimize_lbfgsb(
-                instance.setup,
-                instance.mesh,
-                instance.input_data,
-                instance.parameters,
-                instance.states,
-                instance.output,
-            )
-
+                optimize_lbfgsb(
+                    instance.setup,
+                    instance.mesh,
+                    instance.input_data,
+                    instance.parameters,
+                    instance.states,
+                    instance.output,
+                )
+                
+                
+            else:
+                instance.parameters = parameters_bgd.copy()
+                instance.states = states_bgd.copy()
+                cost = np.float32(0)
+                
+                #run the model as it is
+                forward(
+                    instance.setup,
+                    instance.mesh,
+                    instance.input_data,
+                    instance.parameters,
+                    instance.parameters.copy(),
+                    instance.states,
+                    instance.states.copy(),
+                    instance.output,
+                    cost,
+                )
         else:
             if verbose:
                 _optimize_message(instance, control_vector, mapping)
@@ -780,31 +807,37 @@ def _check_unknown_options(unknown_options: dict):
 def _compute_wjreg_range(wjreg_opt: float, nb_lcurve_point: int = 6):
     # Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
     
-    log_wjreg_opt = math.log10(wjreg_opt)
-    nb_wjreg_lcurve_base = nb_lcurve_point - 6
+    if wjreg_opt>0.:
     
-    base = list(
-        (10 ** np.arange(log_wjreg_opt - 0.66, log_wjreg_opt + 0.67, 0.33))
-    )  # 5 points minimum
-    lower = list()
-    upper = list()
+        log_wjreg_opt = math.log10(wjreg_opt)
+        nb_wjreg_lcurve_base = nb_lcurve_point - 6
+        
+        base = list(
+            (10 ** np.arange(log_wjreg_opt - 0.66, log_wjreg_opt + 0.67, 0.33))
+        )  # 5 points minimum
+        lower = list()
+        upper = list()
+        
+        if nb_wjreg_lcurve_base > 0:
+            min_wjreg = (
+                log_wjreg_opt
+                - 0.66
+                - (nb_wjreg_lcurve_base - math.ceil(nb_wjreg_lcurve_base / 2.0))
+            )
+            max_wjreg = (
+                log_wjreg_opt
+                + 0.66
+                + 1.0
+                + (nb_wjreg_lcurve_base - math.floor(nb_wjreg_lcurve_base / 2.0))
+            )
+            lower = list((10 ** np.arange(min_wjreg, log_wjreg_opt - 0.66)))
+            upper = list((10 ** np.arange(log_wjreg_opt + 0.66 + 1.0, max_wjreg)))
+        
+        wjreg_range = lower + base + upper
     
-    if nb_wjreg_lcurve_base > 0:
-        min_wjreg = (
-            log_wjreg_opt
-            - 0.66
-            - (nb_wjreg_lcurve_base - math.ceil(nb_wjreg_lcurve_base / 2.0))
-        )
-        max_wjreg = (
-            log_wjreg_opt
-            + 0.66
-            + 1.0
-            + (nb_wjreg_lcurve_base - math.floor(nb_wjreg_lcurve_base / 2.0))
-        )
-        lower = list((10 ** np.arange(min_wjreg, log_wjreg_opt - 0.66)))
-        upper = list((10 ** np.arange(log_wjreg_opt + 0.66 + 1.0, max_wjreg)))
-    
-    wjreg_range = lower + base + upper
+    else:
+        
+        wjreg_range=list()
     
     return wjreg_range
 
@@ -830,29 +863,38 @@ def _compute_best_lcurve_weigth(
             f"Inconsistent size between cost_jobs ({len(cost_jobs)}) and wjreg ({len(wjreg)})"
         )
 
-    h = 0.0
-    distance = list()
-    
-    first_point=True
-    for i in range(0, len(cost_jobs)):
+
+    if (len(cost_jobs) > 2) and ((jreg_max - jreg_min)!=0.) and ((jobs_max - jobs_min)!=0.) :
         
-        #skip point above y=x
-        if ( ( (cost_jreg[i] - jreg_min) / (jreg_max - jreg_min) ) <= 1. ):
+        h = 0.0
+        distance = list()
+        
+        first_point=True
+        for i in range(0, len(cost_jobs)):
             
-            hypth = (
-                ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ** 2.0
-                + ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) ** 2.0
-            ) ** 0.5
-            alpha = 45.0 - math.acos(
-                (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) / hypth
-            )
-            distance.append(hypth * math.sin(alpha))
+            #skip point above y=x
+            if ( ( (cost_jreg[i] - jreg_min) / (jreg_max - jreg_min) ) <= 1. ):
+                
+                if cost_jobs[i]<jobs_max :
+                    hypth = (
+                        ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ** 2.0
+                        + ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) ** 2.0
+                    ) ** 0.5
+                    alpha = 45.0 - math.acos(
+                        (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) / hypth
+                    )
+                    distance.append(hypth * math.sin(alpha))
+                else:
+                    distance.append(0.)
 
-            if (distance[i] >= h):
-                h = distance[i]
-                wjreg_lcurve_opt = wjreg[i]
-
-        else:
-            distance.append(None)
+                if (distance[i] >= h):
+                    h = distance[i]
+                    wjreg_lcurve_opt = wjreg[i]
+            
+            else:
+                distance.append(None)
+    else:
+        distance=list()
+        wjreg_lcurve_opt=None
 
     return distance, wjreg_lcurve_opt
