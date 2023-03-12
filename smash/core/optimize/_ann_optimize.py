@@ -89,7 +89,9 @@ def _ann_optimize(
     nd = instance.setup._nd
     nx = len(x_train)
 
-    net = _set_graph(net, optimizer, learning_rate, random_state, nx, nd, control_vector, bounds)
+    net = _set_graph(
+        net, optimizer, learning_rate, random_state, nx, nd, control_vector, bounds
+    )
 
     if verbose:
         _training_message(instance, control_vector, nx, net)

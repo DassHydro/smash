@@ -80,7 +80,7 @@ It can be used as follows:
 Adjusting additional options in ann_optimize
 ********************************************
 
-Optimizer algorithm, learning rate random state can be adjusted if the neural network is not set when using :meth:`Model.ann_optimize`.
+Optimizer algorithm, learning rate and random state can be adjusted if the neural network is not set when using :meth:`Model.ann_optimize`.
 
 .. code-block:: python
 

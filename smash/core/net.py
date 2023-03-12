@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward_b
 
-from smash.core._constant import WB_INITIALIZER
+from smash.core._constant import WB_INITIALIZER, OPTIMIZER, LAYER_TYPE
 
 from typing import TYPE_CHECKING
 
@@ -217,7 +217,9 @@ class Net(object):
         Non-trainable params: 0
         """
 
-        layer = LAYERS[layer.lower()](**options)
+        layer = _standardize_layer(layer)
+
+        lay = LAYERS[layer](**options)
 
         if not self.layers:  # Check options if first layer
             if "input_shape" in options:
@@ -232,10 +234,10 @@ class Net(object):
                 )
 
         else:  # If be not the first layer then set the input shape to the output shape of the next added layer
-            layer._set_input_shape(shape=self.layers[-1].output_shape())
+            lay._set_input_shape(shape=self.layers[-1].output_shape())
 
         # Add layer to the network
-        self.layers.append(layer)
+        self.layers.append(lay)
 
     def compile(
         self,
@@ -304,7 +306,9 @@ class Net(object):
             np.random.seed(random_state)
 
         if self.layers:
-            opt = OPTIMIZERS[optimizer.lower()](learning_rate, **options)
+            optimizer = _standardize_optimizer(optimizer)
+
+            opt = OPTIMIZERS[optimizer](learning_rate, **options)
 
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):
@@ -1002,6 +1006,37 @@ def _hcost_prime(
     )
 
     return grad
+
+
+### STANDARDIZE ###
+
+
+def _standardize_layer(layer: str):
+    if isinstance(layer, str):
+        layer = layer.lower()
+
+        if layer in LAYER_TYPE:
+            return layer
+
+        else:
+            raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_TYPE}")
+
+    else:
+        raise TypeError(f"layer argument must be str")
+
+
+def _standardize_optimizer(optimizer: str):
+    if isinstance(optimizer, str):
+        optimizer = optimizer.lower()
+
+        if optimizer in OPTIMIZER:
+            return optimizer
+
+        else:
+            raise ValueError(f"Unknown optimizer '{optimizer}'. Choices: {OPTIMIZER}")
+
+    else:
+        raise TypeError(f"optimizer argument must be str")
 
 
 ### OTHERS ###
