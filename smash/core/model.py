@@ -1135,6 +1135,9 @@ class Model(object):
         random_state : int or None, default None
             Random seed used to initialize weights. Only used if net is not set.
 
+            .. note::
+                If not given, the weights will be initialized with a random seed.
+
         verbose : bool, default True
             Display information while training.
 
