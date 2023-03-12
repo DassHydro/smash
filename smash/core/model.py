@@ -1079,6 +1079,8 @@ class Model(object):
     def ann_optimize(
         self,
         net: Net | None = None,
+        optimizer: str = "adam",
+        learning_rate: float = 0.003,
         control_vector: str | list | tuple | set | None = None,
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
@@ -1087,7 +1089,7 @@ class Model(object):
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
-        epochs: int = 500,
+        epochs: int = 400,
         early_stopping: bool = False,
         verbose: bool = True,
         inplace: bool = False,
@@ -1107,11 +1109,23 @@ class Model(object):
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
+        optimizer : str, default 'adam'
+            Optimizer algorithm. Only used if net is not set.
+            Should be one of
+
+            - 'sgd'
+            - 'adam'
+            - 'adagrad'
+            - 'rmsprop'
+
+        learning_rate : float, default 0.003
+            Learning rate that determines the step size of the optimization problem. Only used if net is not set.
+
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
-        epochs : int, default 500
+        epochs : int, default 400
             The number of epochs to train the network.
 
         early_stopping : bool, default False
@@ -1232,6 +1246,8 @@ class Model(object):
             wgauge,
             ost,
             net,
+            optimizer,
+            learning_rate,
             epochs,
             early_stopping,
             verbose,
@@ -1250,7 +1266,7 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def event_segmentation(self, peak_quant: float = 0.999, max_duration: float = 240):
+    def event_segmentation(self, peak_quant: float = 0.995, max_duration: float = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
@@ -1259,7 +1275,7 @@ class Model(object):
 
         Parameters
         ----------
-        peak_quant: float, default 0.999
+        peak_quant: float, default 0.995
             An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
 
         max_duration: float, default 240

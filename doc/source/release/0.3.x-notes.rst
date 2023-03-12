@@ -77,6 +77,15 @@ It can be used as follows:
 
     >>> model.load_dataset("path_to_external_data")
 
+Adjusting optimizer and learning rate
+*************************************
+
+Optimizer algorithm and learning rate can be adjusted if the neural network is not set when using :meth:`Model.ann_optimize`.
+
+.. code-block:: python
+
+    >>> model.ann_optimize(optimizer="sgd", learning_rate=0.01)
+
 -----
 Fixes
 -----

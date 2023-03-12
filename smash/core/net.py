@@ -249,7 +249,7 @@ class Net(object):
 
         Parameters
         ----------
-        optimizer : str, default adam
+        optimizer : str, default 'adam'
             Optimizer algorithm. Should be one of
 
             - 'sgd'
@@ -581,7 +581,7 @@ class Dense(Layer):
         the number of features of the input. Must be specified if it is the first layer in
         the network.
 
-    kernel_initializer : str, default glorot_uniform
+    kernel_initializer : str, default 'glorot_uniform'
         Weight initialization method. Should be one of
 
         - 'uniform'
@@ -592,7 +592,7 @@ class Dense(Layer):
         - 'he_normal'
         - 'zeros'
 
-    bias_initializer : str, default zeros
+    bias_initializer : str, default 'zeros'
         Bias initialization method. Should be one of
 
         - 'uniform'

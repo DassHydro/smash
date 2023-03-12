@@ -277,7 +277,7 @@ def _events_grad(
 
 def _mask_event(
     instance: Model,
-    peak_quant: float = 0.999,
+    peak_quant: float = 0.995,
     max_duration: float = 240,  # in hour
     **unknown_options,
 ):
