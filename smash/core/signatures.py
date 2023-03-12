@@ -460,7 +460,7 @@ def _signatures(
     cs: list[str],
     es: list[str],
     obs_comp: bool,
-    peak_quant: float = 0.999,
+    peak_quant: float = 0.995,
     max_duration: float = 240,
     **unknown_options,
 ):
@@ -479,7 +479,7 @@ def _signatures_sensitivity(
     cs: list[str],
     es: list[str],
     seed: None | int,
-    peak_quant: float = 0.999,
+    peak_quant: float = 0.995,
     max_duration: float = 240,
     **unknown_options,
 ):

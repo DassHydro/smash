@@ -131,6 +131,10 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
+OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
+
+LAYER_TYPE = ["dense", "activation", "scale", "dropout"]
+
 
 ### GENERATE SAMPLES ###
 ########################

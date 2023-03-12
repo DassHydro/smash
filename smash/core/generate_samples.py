@@ -45,7 +45,7 @@ def generate_samples(
         .. hint::
             This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
 
-    generator : str, default uniform
+    generator : str, default 'uniform'
         Samples generator. Should be one of
 
         - 'uniform'
