@@ -1091,6 +1091,7 @@ class Model(object):
         ost: str | pd.Timestamp | None = None,
         epochs: int = 400,
         early_stopping: bool = False,
+        random_state: int | None = None,
         verbose: bool = True,
         inplace: bool = False,
         return_net: bool = False,
@@ -1131,6 +1132,9 @@ class Model(object):
         early_stopping : bool, default False
             Stop updating weights and biases when the loss function stops decreasing.
 
+        random_state : int or None, default None
+            Random seed used to initialize weights. Only used if net is not set.
+
         verbose : bool, default True
             Display information while training.
 
@@ -1156,7 +1160,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> net = model.ann_optimize(inplace=True, return_net=True)
+        >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True, random_state=11)
         >>> model
         Structure: 'gr-a'
         Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
@@ -1187,16 +1191,16 @@ class Model(object):
         Access to some training information
 
         >>> net.history['loss_train']  # training loss
-        [1.2267546653747559, ..., 0.03432881459593773]
+        [1.2064831256866455, ..., 0.03552241995930672]
         >>> net.layers[0].weight  # trained weights of the first layer
-        array([[ 0.07801535,  0.10680847, -0.33354243, -0.17218271,  0.09706582,
-                 0.63727553,  0.00399343,  0.00982828,  0.13701385, -0.00708624,
-                -0.25468548, -0.29651733, -0.02438137, -0.10962573,  0.19415941,
-                -0.2962292 ,  0.54098361,  0.70156156],
-               [ 0.55410658,  0.12130747,  0.12366326,  0.53987803,  0.16916006,
-                 0.30923786, -0.20702523,  0.48505195,  0.24157872,  0.38465208,
-                -0.45171199, -0.29186438,  0.73921878, -0.00474557, -0.16782353,
-                 0.27061135,  0.55383291,  0.71541684]])
+        array([[-0.35024701, -0.5263885 ,  0.06432176,  0.31493864, -0.08741257,
+                -0.01596381, -0.53372188, -0.01383371,  0.54957057,  0.51538232,
+                0.23674032, -0.42860816,  0.53083172,  0.42429858, -0.24634816,
+                0.07233667, -0.58225892, -0.34835798],
+            [-0.20115953, -0.37473829,  0.43865405,  0.48463052, -0.17020534,
+                -0.19849597, -0.42540381, -0.4557565 ,  0.3663841 ,  0.27515033,
+                -0.50145176, -0.02213097,  0.02078811,  0.48562112,  0.40088665,
+                0.12205882, -0.00624188,  0.62118917]])
         """
 
         if inplace:
@@ -1250,6 +1254,7 @@ class Model(object):
             learning_rate,
             epochs,
             early_stopping,
+            random_state,
             verbose,
         )
 

@@ -30,6 +30,7 @@ def _ann_optimize(
     learning_rate: float,
     epochs: int,
     early_stopping: bool,
+    random_state: int | None,
     verbose: bool,
 ):
     # send mask_event to Fortran in case of event signatures based optimization
@@ -88,7 +89,7 @@ def _ann_optimize(
     nd = instance.setup._nd
     nx = len(x_train)
 
-    net = _set_graph(net, optimizer, learning_rate, nx, nd, control_vector, bounds)
+    net = _set_graph(net, optimizer, learning_rate, random_state, nx, nd, control_vector, bounds)
 
     if verbose:
         _training_message(instance, control_vector, nx, net)
@@ -123,6 +124,7 @@ def _set_graph(
     net: Net | None,
     opt: str,
     lr: float,
+    rd_state: int | None,
     ntrain: int,
     nd: int,
     control_vector: np.ndarray,
@@ -165,7 +167,7 @@ def _set_graph(
             options={"bounds": bounds},
         )
 
-        net.compile(optimizer=opt, learning_rate=lr)
+        net.compile(optimizer=opt, learning_rate=lr, random_state=rd_state)
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")
