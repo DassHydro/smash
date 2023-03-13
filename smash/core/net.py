@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward_b
 
-from smash.core._constant import WB_INITIALIZER, OPTIMIZER, LAYER_TYPE
+from smash.core._constant import WB_INITIALIZER, NET_OPTIMIZER, LAYER_NAME
 
 from typing import TYPE_CHECKING
 
@@ -166,12 +166,6 @@ class Net(object):
 
         Examples
         --------
-        Define some concerned hydrological parameters
-
-        >>> nd = 6  # number of hydrological descriptors
-        >>> ncv = 4  # number of control vectors ("cp", "cft", "exc", "lr")
-        >>> bounds = [[1.e-06,1000], [1.e-06,1000], [-50, 50], [1.e-06,1000]]  # bound constraints
-
         Initialize the neural network
 
         >>> net = smash.Net()
@@ -179,7 +173,8 @@ class Net(object):
         Define graph
 
         >>> # First Dense Layer
-        >>> net.add(layer="dense", options={"input_shape": (nd,), "neurons": 32})  # input_shape is only required for the first layer
+        >>> # input_shape is only required for the first layer
+        >>> net.add(layer="dense", options={"input_shape": (8,), "neurons": 32})
         >>> # Activation funcion following the first dense layer
         >>> net.add(layer="activation", options={"name": "relu"})
         >>> # Second Dense Layer
@@ -187,11 +182,9 @@ class Net(object):
         >>> # Activation function following the second dense layer
         >>> net.add(layer="activation", options={"name": "relu"})
         >>> # Third Dense Layer
-        >>> net.add(layer="dense", options={"neurons": ncv})
-        >>> # Activation function following the third dense layer
+        >>> net.add(layer="dense", options={"neurons": 4})
+        >>> # Last Activation function (output of the network)
         >>> net.add(layer="activation", options={"name": "sigmoid"})
-        >>> # Scaling layer for the output of the network
-        >>> net.add(layer="scale", options={"bounds": bounds})
 
         Compile and display a summary of the network
 
@@ -200,20 +193,19 @@ class Net(object):
         +-------------+
         | Net summary |
         +-------------+
-        Input Shape: (6,)
+        Input Shape: (8,)
         +----------------------+--------------+---------+
         | Layer (type)         | Output Shape | Param # |
         +----------------------+--------------+---------+
-        | Dense                | (32,)        | 224     |
+        | Dense                | (32,)        | 288     |
         | Activation (ReLU)    | (32,)        | 0       |
         | Dense                | (16,)        | 528     |
         | Activation (ReLU)    | (16,)        | 0       |
         | Dense                | (4,)         | 68      |
         | Activation (Sigmoid) | (4,)         | 0       |
-        | Scale (MinMaxScale)  | (4,)         | 0       |
         +----------------------+--------------+---------+
-        Total params: 820
-        Trainable params: 820
+        Total params: 884
+        Trainable params: 884
         Non-trainable params: 0
         """
 
@@ -252,7 +244,7 @@ class Net(object):
         Parameters
         ----------
         optimizer : str, default 'adam'
-            Optimizer algorithm. Should be one of
+            Name of optimizer. Should be one of
 
             - 'sgd'
             - 'adam'
@@ -299,16 +291,16 @@ class Net(object):
         Non-trainable params: 0
         """
 
-        if options is None:
-            options = {}
-
-        if random_state is not None:
-            np.random.seed(random_state)
-
         if self.layers:
+            if options is None:
+                options = {}
+
             optimizer = _standardize_optimizer(optimizer)
 
-            opt = OPTIMIZERS[optimizer](learning_rate, **options)
+            if random_state is not None:
+                np.random.seed(random_state)
+
+            opt = OPT_FUNC[optimizer](learning_rate, **options)
 
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):
@@ -343,8 +335,10 @@ class Net(object):
             List of booleans with a length of the total number of the network's layers.
 
             .. note::
-                Dropout, Activation and Scaling functions do not have any weights and biases,
-                so it is not important to set trainable weights at these layers.
+                Dropout, activation, and scaling functions are non-parametric layers,
+                meaning they do not have any learnable weights or biases.
+                Therefore, it is not necessary to set these layers as trainable
+                since they do not involve any weight updates during training.
         """
 
         if len(trainable) == len(self.layers):
@@ -936,7 +930,7 @@ class RMSprop:
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)
 
 
-OPTIMIZERS = {
+OPT_FUNC = {
     "sgd": StochasticGradientDescent,
     "adam": Adam,
     "adagrad": Adagrad,
@@ -1015,11 +1009,11 @@ def _standardize_layer(layer: str):
     if isinstance(layer, str):
         layer = layer.lower()
 
-        if layer in LAYER_TYPE:
+        if layer in LAYER_NAME:
             return layer
 
         else:
-            raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_TYPE}")
+            raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_NAME}")
 
     else:
         raise TypeError(f"layer argument must be str")
@@ -1029,11 +1023,13 @@ def _standardize_optimizer(optimizer: str):
     if isinstance(optimizer, str):
         optimizer = optimizer.lower()
 
-        if optimizer in OPTIMIZER:
+        if optimizer in NET_OPTIMIZER:
             return optimizer
 
         else:
-            raise ValueError(f"Unknown optimizer '{optimizer}'. Choices: {OPTIMIZER}")
+            raise ValueError(
+                f"Unknown optimizer '{optimizer}'. Choices: {NET_OPTIMIZER}"
+            )
 
     else:
         raise TypeError(f"optimizer argument must be str")

@@ -80,6 +80,8 @@ class Model(object):
     generate_mesh: Automatic mesh generation.
     save_model: Save Model object.
     read_model: Read Model object.
+    save_model_ddt: Save some derived data types of the Model object to HDF5 file.
+    read_model_ddt: Read derived data types of the Model object from HDF5 file.
 
     Examples
     --------
@@ -155,7 +157,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.setup.<TAB>
-        model.setup.copy(                   model.setup.prcp_directory
+        model.setup.copy()                  model.setup.prcp_directory
         model.setup.daily_interannual_pet   model.setup.prcp_format
         model.setup.descriptor_directory    model.setup.qobs_directory
         model.setup.descriptor_format       model.setup.read_descriptor
@@ -204,13 +206,12 @@ class Model(object):
         model.mesh.active_cell   model.mesh.gauge_pos
         model.mesh.area          model.mesh.nac
         model.mesh.code          model.mesh.ncol
-        model.mesh.copy(         model.mesh.ng
+        model.mesh.copy()        model.mesh.ng
         model.mesh.dx            model.mesh.nrow
         model.mesh.flwacc        model.mesh.path
         model.mesh.flwdir        model.mesh.xmin
         model.mesh.flwdst        model.mesh.ymax
         model.mesh.from_handle(
-
 
         Notes
         -----
@@ -244,7 +245,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.input_data.<TAB>
-        model.input_data.copy(         model.input_data.pet
+        model.input_data.copy()        model.input_data.pet
         model.input_data.descriptor    model.input_data.prcp
         model.input_data.from_handle(  model.input_data.qobs
         model.input_data.mean_pet      model.input_data.sparse_pet
@@ -287,7 +288,7 @@ class Model(object):
         model.parameters.cft           model.parameters.dsm
         model.parameters.ci            model.parameters.exc
         model.parameters.clsl          model.parameters.from_handle(
-        model.parameters.copy(         model.parameters.ks
+        model.parameters.copy()        model.parameters.ks
         model.parameters.cp            model.parameters.lr
         model.parameters.cst           model.parameters.ws
 
@@ -323,7 +324,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.states.<TAB>
-        model.states.copy(         model.states.hlsl
+        model.states.copy()        model.states.hlsl
         model.states.from_handle(  model.states.hp
         model.states.hft           model.states.hst
         model.states.hi            model.states.husl1
@@ -361,12 +362,11 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.output.<TAB>
-        model.output.an                   model.output.parameters_gradient
-        model.output.copy(                model.output.qsim
-        model.output.cost                 model.output.qsim_domain
-        model.output.from_handle(         model.output.sp1
-        model.output.fstates              model.output.sp2
-        model.output.ian                  model.output.sparse_qsim_domain
+        model.output.copy()                  model.output.qsim
+        model.output.cost                    model.output.qsim_domain
+        model.output.from_handle(            model.output.sparse_net_prcp_domain
+        model.output.fstates                 model.output.sparse_qsim_domain
+        model.output.net_prcp_domain
 
         Notes
         -----
@@ -1111,7 +1111,7 @@ class Model(object):
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
         optimizer : str, default 'adam'
-            Optimizer algorithm. Only used if net is not set.
+            Name of optimizer. Only used if net is not set.
             Should be one of
 
             - 'sgd'
@@ -1284,10 +1284,10 @@ class Model(object):
         Parameters
         ----------
         peak_quant: float, default 0.995
-            An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
+            Events will be selected if their discharge peaks exceed the ``peak_quant``-quantile of the observed discharge timeseries.
 
         max_duration: float, default 240
-            The maximum duration of an event (in hour).
+            The expected maximum duration of an event (in hour).
 
         Returns
         -------
