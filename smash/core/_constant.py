@@ -131,7 +131,7 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-OPTIMIZER_NAME = ["sgd", "adam", "adagrad", "rmsprop"]
+NET_OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
 
 LAYER_NAME = ["dense", "activation", "scale", "dropout"]
 

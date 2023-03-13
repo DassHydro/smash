@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward_b
 
-from smash.core._constant import WB_INITIALIZER, OPTIMIZER_NAME, LAYER_NAME
+from smash.core._constant import WB_INITIALIZER, NET_OPTIMIZER, LAYER_NAME
 
 from typing import TYPE_CHECKING
 
@@ -1023,12 +1023,12 @@ def _standardize_optimizer(optimizer: str):
     if isinstance(optimizer, str):
         optimizer = optimizer.lower()
 
-        if optimizer in OPTIMIZER_NAME:
+        if optimizer in NET_OPTIMIZER:
             return optimizer
 
         else:
             raise ValueError(
-                f"Unknown optimizer '{optimizer}'. Choices: {OPTIMIZER_NAME}"
+                f"Unknown optimizer '{optimizer}'. Choices: {NET_OPTIMIZER}"
             )
 
     else:

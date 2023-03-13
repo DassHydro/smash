@@ -80,7 +80,7 @@ class Model(object):
     generate_mesh: Automatic mesh generation.
     save_model: Save Model object.
     read_model: Read Model object.
-    save_model_ddt: Save some derived data types of the Model object.
+    save_model_ddt: Save some derived data types of the Model object to HDF5 file.
     read_model_ddt: Read derived data types of the Model object from HDF5 file.
 
     Examples

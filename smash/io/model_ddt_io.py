@@ -84,7 +84,7 @@ def _parse_selected_derived_type_to_hdf5(
 
 def save_model_ddt(model: Model, path: str, sub_data=None, sub_only=False):
     """
-    Save some derived data types of the Model object.
+    Save some derived data types of the Model object to HDF5 file.
 
     This method is considerably lighter than `smash.save_model` method that saves the entire Model object.
     However, it is not capable of reconstructing the Model object from the saved data file.
@@ -213,7 +213,7 @@ def read_model_ddt(path: str) -> dict:
 
     See Also
     --------
-    save_model_ddt: Save some derived data types of the Model object.
+    save_model_ddt: Save some derived data types of the Model object to HDF5 file.
 
     Examples
     --------
