@@ -635,20 +635,17 @@ class Model(object):
             Maximum number of iterations for the optimization
         
         jreg_fun : str, sequence or None, default is None
-            Type of regularization function(s) to be minimized. Should be one or a sequence of any
-
-        - ``Regularization Function``
-            'prior', 'smoothing'
+            Type of regularization function(s) to be minimized. Should be one or a sequence of any 'prior', 'smoothing'
 
         .. hint::
             See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjreg_fun : sequence or None, default None
             Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize).
-            
+
             .. note::
             If not given, the weights is set to 1.
-        
+
         wjreg: float, default is 0.
             Global regularization weith
         
@@ -657,7 +654,6 @@ class Model(object):
         
         nb_wjreg_lcurve: int, default is 6
             Number of optimization cycle during the lcurve process. 6 is the minimum required.
-            
 
         Returns
         -------
@@ -754,25 +750,61 @@ class Model(object):
             jobs_fun.size,
             njr, 
         )
-
-        OPTIM_FUNC[algorithm](
-        instance,
-        control_vector,
-        mapping,
-        jobs_fun,
-        wjobs_fun,
-        event_seg,
-        bounds,
-        wgauge,
-        ost,
-        verbose,
-        **options,
-        )
-
+        
+        results=dict()
+        
+        if algorithm == "sbs":
+            results=_optimize_sbs(instance,
+                            control_vector,
+                            mapping,
+                            jobs_fun,
+                            wjobs_fun,
+                            event_seg,
+                            bounds,
+                            wgauge,
+                            ost,
+                            verbose,
+                            **options,
+                        )
+        
+        if algorithm == "l-bfgs-b":
+            results=_optimize_lbfgsb(instance,
+                            control_vector,
+                            mapping,
+                            jobs_fun,
+                            wjobs_fun,
+                            event_seg,
+                            bounds,
+                            wgauge,
+                            ost,
+                            verbose,
+                            **options,
+                        )
+        
+        if algorithm == "nelder-mead":
+            results=_optimize_nelder_mead(instance,
+                            control_vector,
+                            mapping,
+                            jobs_fun,
+                            wjobs_fun,
+                            event_seg,
+                            bounds,
+                            wgauge,
+                            ost,
+                            verbose,
+                            **options,
+                        )
+        
         instance._last_update = f"{algorithm.upper()} Optimization"
 
         if not inplace:
-            return instance
+            if len(results)>0:
+                return results,instance
+            else:
+                return instance
+        else:
+            if len(results)>0:
+                return results
 
     def bayes_estimate(
         self,

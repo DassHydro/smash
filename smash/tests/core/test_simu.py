@@ -83,7 +83,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
         mapping="distributed",
         algorithm="l-bfgs-b",
         control_vector=["cp", "cft"],
-        bounds={"cp": [1, 50]},
+        bounds={"cp": [1, 300]},
         options={"maxiter": 1},
         verbose=False,
     )

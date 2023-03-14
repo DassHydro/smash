@@ -39,6 +39,9 @@ def _optimize_sbs(
     **unknown_options,
 ):
     _check_unknown_options(unknown_options)
+    
+    #return results
+    results=dict()
 
     # % Fortran verbose
     instance.setup._optimize.verbose = verbose
@@ -92,6 +95,8 @@ def _optimize_sbs(
         instance.states,
         instance.output,
     )
+    
+    return results
 
 
 def _optimize_lbfgsb(
@@ -116,7 +121,10 @@ def _optimize_lbfgsb(
     **unknown_options,
 ):
     _check_unknown_options(unknown_options)
-
+    
+    #return results
+    results=dict()
+    
     # % Fortran verbose
     instance.setup._optimize.verbose = verbose
 
@@ -346,16 +354,20 @@ def _optimize_lbfgsb(
             )
 
             # save the lcurve
-            instance.output.lcurve = {
+            lcurve={
+                "cost_jobs_initial":jobs_max,
+                "cost_jreg_initial":jreg_min,
                 "wjreg_lcurve_opt": wjreg_lcurve_opt,
                 "wjreg_fast": wjreg_opt,
-                "wjreg": wjreg,
-                "distance": hlist,
-                "cost_j": cost_j,
-                "cost_jobs": cost_jobs,
-                "cost_jreg": cost_jreg,
+                "wjreg": np.array(wjreg),
+                "distance": np.array(hlist),
+                "cost_j": np.array(cost_j),
+                "cost_jobs": np.array(cost_jobs),
+                "cost_jreg": np.array(cost_jreg),
             }
-
+            
+            results.update({"lcurve":lcurve})
+            
             # last optim with best wjreg
             if wjreg_lcurve_opt is not None:
                 
@@ -394,6 +406,9 @@ def _optimize_lbfgsb(
                     instance.output,
                     cost,
                 )
+            
+            return lcurve
+            
         else:
             if verbose:
                 _optimize_message(instance, control_vector, mapping)
@@ -406,6 +421,8 @@ def _optimize_lbfgsb(
                 instance.states,
                 instance.output,
             )
+    
+    return results
 
 
 def _optimize_nelder_mead(
@@ -432,7 +449,10 @@ def _optimize_nelder_mead(
     global callback_args
 
     _check_unknown_options(unknown_options)
-
+    
+    #return results
+    results=dict()
+    
     # send mask_event to Fortran in case of event signatures based optimization
     if any([fn[0] == "E" for fn in jobs_fun]):
         instance.setup._optimize.mask_event = _mask_event(instance, **event_seg)
@@ -536,6 +556,9 @@ def _optimize_nelder_mead(
 
         else:
             print(f"{' ' * 4}STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT")
+    
+    #return results
+    return results
 
 
 def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str):

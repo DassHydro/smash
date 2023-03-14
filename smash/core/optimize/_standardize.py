@@ -449,17 +449,17 @@ def _standardize_optimize_options(options: dict | None, setup: SetupDT) -> dict:
     
     standardized_options = {}
     
-    if not isinstance(options, dict):
-        
-        raise ValueError(
-                f"options '{options}' argument must be a dicitonary"
-            )
-    
     if options is None:
     
         standardized_options = {}
     
     else:
+        
+        if not isinstance(options, dict):
+            
+            raise ValueError(
+                f"options '{options}' argument must be a dicitonary"
+            )
         
         if "reg_descriptors" in options:
             
