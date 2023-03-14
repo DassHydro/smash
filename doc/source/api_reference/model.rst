@@ -32,6 +32,18 @@ Simulation
 
    Model.run
    Model.optimize
+
+.. toctree::
+   :hidden:
+   :maxdepth: 1
+
+   optimize_sbs
+   optimize_nelder-mead
+   optimize_l-bfgs-b
+
+.. autosummary::
+   :toctree: smash/
+
    Model.bayes_estimate
    Model.bayes_optimize
    Model.ann_optimize

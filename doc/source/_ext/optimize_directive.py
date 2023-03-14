@@ -17,7 +17,7 @@ from scipy._lib._util import getfullargspec_no_self
 
 
 def setup(app):
-    app.add_domain(SmashMinimize)
+    app.add_domain(SmashOptimize)
     return {"parallel_read_safe": True}
 
 
@@ -41,7 +41,7 @@ def _import_object_implementation(name):
     return obj
 
 
-class SmashMinimize(PythonDomain):
+class SmashOptimize(PythonDomain):
     name = "smash-optimize"
 
     def __init__(self, *a, **kw):
@@ -54,16 +54,6 @@ class SmashMinimize(PythonDomain):
 
 BLURB = """
 .. seealso:: For documentation for the rest of the parameters, see `%s`
-"""
-
-BLURB_NELDER_MEAD = """
-.. seealso:: For documentation for the rest of the parameters, see `%s` 
-\n For documentation for the rest of the options, see SciPy minimize documentation `here <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-neldermead.html#optimize-minimize-neldermead>`__
-"""
-
-BLURB_L_BFGS_B = """
-.. seealso:: For documentation for the rest of the parameters, see `%s` 
-\n For documentation for the rest of the options, see SciPy minimize documentation `here <https://docs.scipy.org/doc/scipy/reference/optimize.minimize-lbfgsb.html#optimize-minimize-lbfgsb>`__
 """
 
 
@@ -89,7 +79,7 @@ def wrap_mangling_directive(base_directive):
 
             # Format signature taking implementation into account
             args = list(args)
-            defaults = [None] + list(defaults)
+            defaults = list(defaults)
 
             def set_default(arg, value):
                 j = args.index(arg)
@@ -106,48 +96,58 @@ def wrap_mangling_directive(base_directive):
                     del args[j]
 
             options = []
-            rules_ind = args.index("rules")
-            impl_flag = 0
             for j, opt_name in enumerate(impl_args):
                 if opt_name in args:
                     continue
-
-                if j >= rules_ind:
-                    if impl_flag <= len(impl_defaults):
-                        options.append((opt_name, impl_defaults[impl_flag]))
-                        impl_flag += 1
-
-                    else:
-                        options.append((opt_name, None))
+                if j >= len(impl_args) - len(impl_defaults):
+                    options.append(
+                        (
+                            opt_name,
+                            impl_defaults[len(impl_defaults) - (len(impl_args) - j)],
+                        )
+                    )
+                else:
+                    options.append((opt_name, None))
 
             set_default("options", dict(options))
 
-            if "method" in self.options and "method" in args:
-                set_default("method", self.options["method"].strip())
-            elif "solver" in self.options and "solver" in args:
-                set_default("solver", self.options["solver"].strip())
+            if "algorithm" in self.options and "algorithm" in args:
+                set_default("algorithm", self.options["algorithm"].strip())
+            elif "alg" in self.options and "alg" in args:
+                set_default("alg", self.options["alg"].strip())
 
-            special_args = {
-                "solver",
-                "obj_fun",
-                "method",
-                "rules",
-                "inplace",
-                "options",
-            }
+            special_args = set(inspect.getfullargspec(smash.Model.optimize).args)
+
             for arg in list(args):
                 if arg not in impl_args and arg not in special_args:
                     remove_arg(arg)
 
-            # XXX deprecation that we should fix someday using Signature (?)
             with warnings.catch_warnings(record=True):
                 warnings.simplefilter("ignore")
-                signature = inspect.formatargspec(args, varargs, keywords, defaults)
+                signature = inspect.signature(obj)
+                mangled_signature = []
+                for parameters in signature.parameters.values():
+                    if parameters.name == "self":
+                        continue
+                    elif (
+                        parameters.name == "mapping"
+                        and self.options["alg"] == "l-bfgs-b"
+                    ):
+                        default = "'distributed'"
+                    else:
+                        if isinstance(parameters.default, str):
+                            default = f"'{parameters.default}'"
+                        else:
+                            default = parameters.default
+
+                    mangled_signature.append(f"{parameters.name}={default}")
+                mangled_signature = f"({', '.join(mangled_signature)})"
 
             # Produce output
             self.options["noindex"] = True
-            self.arguments[0] = name + signature
+            self.arguments[0] = name + mangled_signature
             lines = textwrap.dedent(pydoc.getdoc(impl_obj)).splitlines()
+
             # Change "Options" to "Other Parameters", run numpydoc, reset
             new_lines = []
             for line in lines:
@@ -158,22 +158,22 @@ def wrap_mangling_directive(base_directive):
                     new_lines.extend([line, "-" * len(line)])
                     continue
                 new_lines.append(line)
+
             # use impl_name instead of name here to avoid duplicate refs
             mangle_docstrings(env.app, "function", impl_name, None, None, new_lines)
             lines = new_lines
             new_lines = []
             for line in lines:
                 if line.strip() == ":Other Parameters:":
-                    if self.options["solver"] in "nelder-mead":
-                        new_lines.extend((BLURB_NELDER_MEAD % (name,)).splitlines())
-
-                    else:
-                        new_lines.extend((BLURB % (name,)).splitlines())
-
+                    new_lines.extend((BLURB % (name,)).splitlines())
                     new_lines.append("\n")
                     new_lines.append(":Options:")
 
-                elif line.strip() == "**-------**":
+                elif line.strip() in [
+                    "**-------**",
+                    "..",
+                    "!! processed by numpydoc !!",
+                ]:
                     pass
 
                 else:
@@ -183,6 +183,6 @@ def wrap_mangling_directive(base_directive):
 
         option_spec = dict(base_directive.option_spec)
         option_spec["impl"] = _option_required_str
-        option_spec["solver"] = _option_required_str
+        option_spec["alg"] = _option_required_str
 
     return directive

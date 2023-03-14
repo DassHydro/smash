@@ -453,10 +453,6 @@ class Model(object):
         Model : Model or None
             Model with run outputs or None if inplace.
 
-        Notes
-        -----
-        This method is directly calling the forward model :math:`Y = M(k)`.
-
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
@@ -570,7 +566,7 @@ class Model(object):
                 'Epf', 'Elt', 'Erc'
 
             .. hint::
-                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
@@ -605,15 +601,22 @@ class Model(object):
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
-            optimization start time ``ost`` and the end time. The value can be a str which can be interpreted by
+            optimization start time and the end time. The value can be a str which can be interpreted by
             pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
-            The ``ost`` date value must be between the start time and the end time defined in the Model setup.
+            The ost date value must be between the start time and the end time defined in the Model setup.
 
             .. note::
                 If not given, the optimization start time will be equal to the start time.
 
         options : dict or None, default None
-            A dictionary of algorithm options.
+            A dictionary of algorithm options. Depending on the algorithm, different options can be pass.
+
+            .. hint::
+                See each algorithm options:
+
+                - 'sbs' :ref:`(see here) <api_reference.optimize_sbs>`
+                - 'nelder-mead' :ref:`(see here) <api_reference.optimize_nelder-mead>`
+                - 'l-bfgs-b' :ref:`(see here) <api_reference.optimize_l-bfgs-b>`
 
         verbose : bool, default True
             Display information while optimizing.
@@ -625,12 +628,6 @@ class Model(object):
         -------
         Model : Model or None
             Model with optimize outputs or None if inplace.
-
-        Notes
-        -----
-        This method is directly calling the forward model :math:`Y = M(k)` and the adjoint model
-        :math:`\\delta k^* = \\left( \\frac{\\delta M}{\\delta k} \\right)^* . \\delta Y^*`
-        if the algorithm ``l-bfgs-b`` is choosen to retrieve the gradient of the cost function wrt the control vector.
 
         Examples
         --------
