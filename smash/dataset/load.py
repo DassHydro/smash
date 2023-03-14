@@ -8,7 +8,7 @@ __all__ = ["load_dataset"]
 
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
 
-DATASET_NAME = ["flwdir", "cance", "france"]
+DATASET_NAME = ["flwdir", "cance", "lez", "france"]
 
 
 def load_dataset(name: str):
@@ -26,8 +26,9 @@ def load_dataset(name: str):
         The dataset name. Should be one of
 
         - 'flwdir' : The absolute path to a 1km² France flow directions in `smash` convention.
-        - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment.
-        - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France.
+        - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment at **hourly** timestep.
+        - 'lez' : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at **daily** timestep.
+        - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France at **hourly** timestep.
         - 'path/to/dataset' : Path to an external and complete dataset.
 
     Returns
@@ -37,6 +38,7 @@ def load_dataset(name: str):
 
         - 'flwdir' : Returns a file path.
         - 'cance' : Returns a tuple of dictionaries (setup and mesh).
+        - 'lez' : Returns a tuple of dictionaries (setup and mesh).
         - 'france' : Returns a tuple of dictionaries (setup and mesh).
         - 'path/to/dataset' : Returns a tuple of dictionaries (setup and mesh).
 
@@ -62,6 +64,20 @@ def load_dataset(name: str):
     {'structure': 'gr-a', 'dt': 3600, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 383, ...}
+
+    Load ``lez`` dataset as a tuple of dictionaries.
+
+    >>> lez = smash.load_dataset("lez")
+    >>> lez
+    ({'structure': 'gr-a', 'dt': 86400, ...}, {'dx': 1000.0, 'nac': 172, ...})
+
+    Or each dictionary in a different variable.
+
+    >>> setup, mesh = smash.load_dataset("lez")
+    >>> setup
+    {'structure': 'gr-a', 'dt': 86400, ...}
+    >>> mesh
+    {'dx': 1000.0, 'nac': 172, ...}
 
     Load ``france`` dataset as a tuple of dictionaries.
 
@@ -95,29 +111,24 @@ def load_dataset(name: str):
     if name.lower() == "flwdir":
         return os.path.join(DATASET_PATH, "France_flwdir.tif")
 
-    elif name.lower() == "cance":
-        setup = smash.read_setup(os.path.join(DATASET_PATH, "Cance/setup_Cance.yaml"))
-        mesh = smash.read_mesh(os.path.join(DATASET_PATH, "Cance/mesh_Cance.hdf5"))
+    elif name.lower() in ["cance", "lez", "france"]:
+        cptl_name = name.capitalize()
 
-        setup.update(
-            {
-                "qobs_directory": os.path.join(DATASET_PATH, "Cance/qobs"),
-                "prcp_directory": os.path.join(DATASET_PATH, "Cance/prcp"),
-                "pet_directory": os.path.join(DATASET_PATH, "Cance/pet"),
-                "descriptor_directory": os.path.join(DATASET_PATH, "Cance/descriptor"),
-            }
+        setup = smash.read_setup(
+            os.path.join(DATASET_PATH, cptl_name, f"setup_{cptl_name}.yaml")
+        )
+        mesh = smash.read_mesh(
+            os.path.join(DATASET_PATH, cptl_name, f"mesh_{cptl_name}.hdf5")
         )
 
-        return setup, mesh
-
-    elif name.lower() == "france":
-        setup = smash.read_setup(os.path.join(DATASET_PATH, "France/setup_France.yaml"))
-        mesh = smash.read_mesh(os.path.join(DATASET_PATH, "France/mesh_France.hdf5"))
-
         setup.update(
             {
-                "prcp_directory": os.path.join(DATASET_PATH, "France/prcp"),
-                "pet_directory": os.path.join(DATASET_PATH, "France/pet"),
+                "qobs_directory": os.path.join(DATASET_PATH, cptl_name, "qobs"),
+                "prcp_directory": os.path.join(DATASET_PATH, cptl_name, "prcp"),
+                "pet_directory": os.path.join(DATASET_PATH, cptl_name, "pet"),
+                "descriptor_directory": os.path.join(
+                    DATASET_PATH, cptl_name, "descriptor"
+                ),
             }
         )
 
@@ -141,7 +152,7 @@ def load_dataset(name: str):
             raise ValueError(f"Missing mesh file '{mesh_file}'")
 
         setup = smash.read_setup(
-            os.path.join(local_dataset_path, local_dataset_dir_name, config_file)
+            os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
         )
         mesh = smash.read_mesh(
             os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
