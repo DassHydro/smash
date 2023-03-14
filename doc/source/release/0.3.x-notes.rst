@@ -75,12 +75,34 @@ It can be used as follows:
 
 .. code-block:: python
 
-    >>> model.load_dataset("path_to_external_data")
+    >>> setup, mesh = model.load_dataset("path_to_external_data")
+
+New dataset on daily timestep
+*****************************
+
+A new dataset called ``Lez`` is available in the :meth:`smash.load_dataset` method. This dataset contains 3 nested gauges with a total area of 169km².
+The simulation is over a period of one year between 2012-08-01 and 2013-07-31 at daily time step with the ``gr-a`` structure.
+Moreover, 6 descriptors are available:
+
+- "slope"
+- "drainage_density"
+- "karst"
+- "woodland"
+- "urban"
+- "soil_water_storage"
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = model.load_dataset("Lez")
 
 Adjusting additional options in ann_optimize
 ********************************************
 
 Optimizer, learning rate and random state can be adjusted if the neural network is not set when using :meth:`Model.ann_optimize`.
+
+It can be used as follows:
 
 .. code-block:: python
 
