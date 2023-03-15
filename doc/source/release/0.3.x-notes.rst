@@ -62,6 +62,11 @@ instead of:
     
     More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
 
+Optimize Options Documentation
+******************************
+
+Add the documentation of the different algorithm options using a customize sphinx directive.
+
 ------------
 New Features
 ------------
@@ -115,5 +120,6 @@ Fixes
 F2PY f2cmap warnings
 ********************
 
-Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``
+Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``.
+Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.
 
