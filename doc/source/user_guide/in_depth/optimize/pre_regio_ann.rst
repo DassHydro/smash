@@ -81,8 +81,8 @@ If you do not specify the neural network (``net`` argument) in the :meth:`smash.
 a default network will be used to learn the descriptors-to-parameters mapping. 
 This example shows how to define a custom neural network using the :meth:`smash.Net` method.
 
-To define your custom neural network, you may need to have information about the physiographic descriptors and hydrological parameters. 
-This information will be used to determine the input and output layers of your network, including the number of descriptors, 
+To define a custom neural network, you may need to have information about the physiographic descriptors and hydrological parameters. 
+This information will be used to determine the input and output layers of the network, including the number of descriptors, 
 the control vector, and the boundary condition (if you want to scale the network output to the boundary condition). 
 The default values of these parameters can be obtained as follows:
 
@@ -94,7 +94,7 @@ The default values of these parameters can be obtained as follows:
     bc = problem["bounds"] # default boundary condition
     nd = model.input_data.descriptor.shape[-1]  # number of descriptors
 
-Next, we need to initialize your Net object:
+Next, we need to initialize the Net object:
 
 .. ipython:: python
 
@@ -115,7 +115,7 @@ we apply a ``MinMaxScale`` function:
     net.add(layer="activation", options={"name": "sigmoid"})
     net.add(layer="scale", options={"bounds": bc})
 
-Make sure to compile the network after defining it. We can also specify the optimizer and its hyper-parameters:
+Make sure to compile the network after defining it. We can also specify the optimizer and its hyperparameters:
 
 .. ipython:: python
 
@@ -126,8 +126,8 @@ Make sure to compile the network after defining it. We can also specify the opti
 Training the neural network
 ---------------------------
 
-Now, we can train the neural network with your custom graph using the :meth:`smash.Model.ann_optimize` method. 
-This method performs operation in-place on your ``net``:
+Now, we can train the neural network with the custom graph using the :meth:`smash.Model.ann_optimize` method. 
+This method performs operation in-place on ``net``:
 
 .. ipython:: python
         :suppress:
@@ -256,4 +256,4 @@ And finally, the spatially distributed model parameters constrained by physiogra
     
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig theta_sd_optimize_pre-regio_ann_user_guide.png
-    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/h)");
+    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");

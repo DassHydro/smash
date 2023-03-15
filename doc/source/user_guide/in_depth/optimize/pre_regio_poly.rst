@@ -78,19 +78,16 @@ Finding a uniform first guess
 
 Similar to the :ref:`fully-distributed optimization <user_guide.optimize.bayes_estimate>` method, 
 providing a uniform first guess is recommended for this method. 
-In this case, we use the :meth:`smash.Model.bayes_estimate` method to find a suitable first guess:
+In this case, we use the SBS algorithm to find such a first guess:
 
 .. ipython:: python
 
-    model_ufg = model.bayes_estimate(k=np.linspace(-2, 12, 50), n=200, random_state=0)
-
-In the example above, we generated a set of 200 random spatially uniform model parameters, and 
-used the L-curve approach to find an optimal regularization parameter within a search range of :math:`[-2, 12]`.
+    model_su = model.optimize(mapping="uniform", algorithm="sbs", options={"maxiter": 2});
 
 .. hint::
 
-    Check out the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section for an example of 
-    how to improve the first guess using the Bayesian estimation approach.
+    You may want to refer to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
+    for information on how to improve the first guess using a Bayesian estimation approach.
 
 ----------------------------------------------------------
 Optimizing hyperparameters for pre-regionalization mapping
@@ -106,7 +103,7 @@ As an example, the hyper-polynomial mapping can be combined with the variational
 .. ipython:: python
     :suppress:
 
-    model_hp = model_ufg.optimize(
+    model_hp = model_su.optimize(
             mapping="hyper-polynomial", 
             algorithm="l-bfgs-b", 
             options={"maxiter": 30}
@@ -115,7 +112,7 @@ As an example, the hyper-polynomial mapping can be combined with the variational
 .. ipython:: python
     :verbatim:
 
-    model_hp = model_ufg.optimize(
+    model_hp = model_su.optimize(
             mapping="hyper-polynomial", 
             algorithm="l-bfgs-b", 
             options={"maxiter": 30}
@@ -138,22 +135,22 @@ Some information are also provided during the optimization:
         Ng: 1 [ Y3204040 ]
         wg: 1 [ 1.0 ]
 
-        At iterate      0    nfg =     1    J =  0.450582    |proj g| =  0.000000
-        At iterate      1    nfg =     2    J =  0.384291    |proj g| =  0.206485
-        At iterate      2    nfg =     4    J =  0.292124    |proj g| =  0.341891
-        At iterate      3    nfg =     6    J =  0.256965    |proj g| =  0.359353
-        At iterate      4    nfg =     7    J =  0.195863    |proj g| =  0.151185
-        At iterate      5    nfg =     9    J =  0.189970    |proj g| =  0.042805
-        At iterate      6    nfg =    10    J =  0.188656    |proj g| =  0.057944
-        At iterate      7    nfg =    11    J =  0.188190    |proj g| =  0.032824
-        At iterate      8    nfg =    12    J =  0.187963    |proj g| =  0.018767
-        At iterate      9    nfg =    14    J =  0.185999    |proj g| =  0.058310
-        At iterate     10    nfg =    15    J =  0.176684    |proj g| =  0.205041
-        At iterate     11    nfg =    16    J =  0.165673    |proj g| =  0.547557
+        At iterate      0    nfg =     1    J =  0.176090    |proj g| =  0.000000
+        At iterate      1    nfg =     3    J =  0.174870    |proj g| =  0.160574
+        At iterate      2    nfg =     4    J =  0.173283    |proj g| =  0.059085
+        At iterate      3    nfg =     5    J =  0.172243    |proj g| =  0.043317
+        At iterate      4    nfg =     6    J =  0.171181    |proj g| =  0.045926
+        At iterate      5    nfg =     7    J =  0.170460    |proj g| =  0.023084
+        At iterate      6    nfg =     8    J =  0.169568    |proj g| =  0.025826
+        At iterate      7    nfg =     9    J =  0.168186    |proj g| =  0.046616
+        At iterate      8    nfg =    10    J =  0.165931    |proj g| =  0.069842
+        At iterate      9    nfg =    11    J =  0.160961    |proj g| =  0.077036
+        At iterate     10    nfg =    13    J =  0.152905    |proj g| =  0.209049
+        At iterate     11    nfg =    14    J =  0.148905    |proj g| =  0.056703
     ...
-        At iterate     28    nfg =    37    J =  0.134749    |proj g| =  0.003044
-        At iterate     29    nfg =    38    J =  0.134725    |proj g| =  0.001460
-        At iterate     30    nfg =    39    J =  0.134716    |proj g| =  0.004003
+        At iterate     28    nfg =    34    J =  0.133811    |proj g| =  0.008069
+        At iterate     29    nfg =    35    J =  0.133753    |proj g| =  0.003290
+        At iterate     30    nfg =    36    J =  0.133749    |proj g| =  0.001082
         STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
 
 ------------------------
@@ -205,4 +202,4 @@ And finally, the spatially distributed model parameters constrained by physiogra
     
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig theta_sd_optimize_pre-regio_hp_user_guide.png
-    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/h)");
+    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");

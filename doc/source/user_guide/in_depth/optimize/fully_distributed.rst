@@ -39,8 +39,8 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Spatially uniform optimization
 ------------------------------
 
-To find the uniform first guess, you can perform a spatially-uniform calibration using global optimization algorithms. 
-Here's an example how you can do it with the SBS algorithm:
+To find the uniform first guess, we can perform a spatially-uniform calibration using global optimization algorithms. 
+Here's an example how we can do it with the SBS algorithm:
 
 .. ipython:: python
 
@@ -66,6 +66,11 @@ And the cost function value :math:`J`:
 .. ipython:: python
 
     model_su.output.cost
+
+.. hint::
+
+    You may want to refer to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
+    for information on how to improve the first guess using a Bayesian estimation approach.
 
 ----------------------------------
 Spatially distributed optimization
@@ -138,11 +143,4 @@ And finally, the distributed model parameters in this case:
     
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig theta_sd_optimize_fd_user_guide.png
-    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/h)");
-
-.. note::
-
-    Note that the variational calibration algorithm was unable to spatialize the linear routing parameter ``lr`` in this case. 
-    This could be due to the fact that the uniform first guess obtained by the SBS algorithm may not be appropriate for certain situations. 
-    Consider referring to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
-    for information on how to improve the first guess using a Bayesian estimation approach.
+    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
