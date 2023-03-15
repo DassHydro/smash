@@ -20,5 +20,5 @@ dependencies:
     - gdal
     - scipy
     - pyyaml
-    - SALib
+    - SALib>=1.4.5
     - terminaltables

@@ -173,9 +173,9 @@ def test_bayes_optimize():
 
 
 def generic_ann_optimize_1(model: smash.Model, **kwargs) -> dict:
-    np.random.seed(11)
-
-    instance, net = model.ann_optimize(epochs=5, return_net=True, verbose=False)
+    instance, net = model.ann_optimize(
+        epochs=5, learning_rate=0.001, return_net=True, random_state=11, verbose=False
+    )
 
     res = {
         "ann_optimize_1.loss": np.array(net.history["loss_train"]),

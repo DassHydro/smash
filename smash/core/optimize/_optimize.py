@@ -38,6 +38,15 @@ def _optimize_sbs(
     maxiter: int = 100,
     **unknown_options,
 ):
+    """
+    Optimize the Model using the step-by-step (sbs) algorithm.
+
+    Options
+    -------
+    maxiter : int, default 100
+        Maximum allowed number of iterations.
+    """
+
     _check_unknown_options(unknown_options)
     
     #return results
@@ -120,6 +129,32 @@ def _optimize_lbfgsb(
     wjreg_fun: np.ndarray | None = None,
     **unknown_options,
 ):
+    """
+    Optimize the Model using the Limited-memory Broyden-Fletcher-Goldfarb-Shanno Bounded (L-BFGS-B) algorithm.
+
+    Options
+    -------
+    maxiter : int, default 100
+        Maximum allowed number of iterations.
+
+    jreg_fun : str, default 'prior'
+        Type of regularization function(s) to be minimized. Should be one or a sequence of any
+
+        - 'prior'
+
+        .. hint::
+                See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+
+    wjreg : float, default 0.0
+        Regularization function(s) weights.
+
+    adjoint_test : bool, default False
+        if True, perform an adjoint test (i.e. scalar product test).
+
+        .. note::
+            This option is only available with a distributed mapping.
+    """
+
     _check_unknown_options(unknown_options)
     
     #return results
@@ -446,6 +481,52 @@ def _optimize_nelder_mead(
     adaptive: bool = True,
     **unknown_options,
 ):
+    """
+    Optimize the Model using the Nelder-Mead algorithm.
+
+    Options
+    -------
+    maxiter, maxfev : int or None, default None
+        Maximum allowed number of iterations and function evaluations.
+
+        .. note::
+            If not given, default to ``N*200``, where ``N`` is the number of
+            variables, if neither maxiter or maxfev is set. If both
+            maxiter and maxfev are set, minimization will stop at the
+            first reached.
+
+    disp : bool, default False
+        Set to True to print convergence messages.
+
+    return_all : bool, default False
+        Set to True to return a list of the best solution at each of the
+        iterations.
+
+        .. warning::
+            Not working at the moment.
+
+    initial_simplex : np.ndarray of shape (N + 1, N) or None, default None
+        Initial simplex.
+
+        .. note::
+            If given, overrides prior control.
+            ``initial_simplex[j,:]`` should contain the coordinates of
+            the jth vertex of the ``N+1`` vertices in the simplex, where
+            ``N`` is the dimension.
+
+    xatol : float, default 0.0001
+        Absolute error in xopt between iterations that is acceptable for
+        convergence.
+
+    fatol : float, default 0.0001
+        Absolute error in func(xopt) between iterations that is acceptable for
+        convergence.
+
+    adaptive : bool, default True
+        Adapt algorithm parameters to dimensionality of problem. Useful for
+        high-dimensional minimization.
+    """
+
     global callback_args
 
     _check_unknown_options(unknown_options)

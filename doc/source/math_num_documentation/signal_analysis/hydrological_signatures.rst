@@ -9,12 +9,12 @@ in view to analyze and calibrate hydrological models :cite:p:`westerberg2015unce
 These signatures permit to describe various aspects of the rainfall-runoff behavior such as: 
 flow distribution (based for instance on flow percentiles), 
 flow dynamics (based for instance on base-flow separation :cite:p:`nathan1990evaluation,lyne1979stochastic`), 
-flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole studied period.
+flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole study period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
 These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.hydrograph_segmentation>`.
 
-Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the studied period. 
+Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the study period. 
 Then :math:`Qb(t)` and :math:`Qq(t)` are the baseflow and quickflow computed using a classical technique for streamflow separation 
 (please refer to :cite:p:`lyne1979stochastic` and :cite:p:`nathan1990evaluation` for more details). 
 Considering a flood event in a period denoted :math:`\mathbf{E} \subset \mathbf{U}`, 
