@@ -62,10 +62,15 @@ instead of:
     
     More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
 
-Optimize Options Documentation
-******************************
+Documentation
+*************
 
-Add the documentation of the different algorithm options using a customize sphinx directive.
+- Add the documentation of the different algorithm options using a customize sphinx directive.
+
+- Add the user guide for advanced optimization techniques, including:
+    - Fully-distributed optimization
+    - Pre-regionalization using polynomial mapping
+    - Pre-regionalization using ANN
 
 ------------
 New Features
