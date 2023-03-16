@@ -65,7 +65,9 @@ instead of:
 Setting the learning rate for Net
 *********************************
 
-The ``learning_rate`` argument is passed to the ``options`` argument of the :meth:`Net.compile` method. 
+Instead of passing the ``learning_rate`` argument directly as a parameter in the :meth:`Net.compile` method, 
+it is now included as a key-value pair within the ``options`` dictionary argument. 
+
 The default value of the learning rate depends on the optimizer that you choose. Here are some examples:
 
 .. code-block:: python
@@ -82,11 +84,13 @@ The default value of the learning rate depends on the optimizer that you choose.
 Documentation
 *************
 
-Add the documentation of the different algorithm options using a customize sphinx directive.
+Add the documentation for the ``options`` argument in the :meth:`Model.optimize`, :meth:`Net.add` and :meth:`Net.compile` 
+methods using a customize sphinx directive.
 
 Add the user guide for advanced optimization techniques, including:
 
 - Fully-distributed optimization
+- Improving the first guess using Bayesian estimation
 - Pre-regionalization using polynomial mapping
 - Pre-regionalization using ANN
 

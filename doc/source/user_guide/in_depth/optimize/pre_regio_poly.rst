@@ -76,7 +76,7 @@ We can visualize these descriptors and verify if they were successfully loaded:
 Finding a uniform first guess
 -----------------------------
 
-Similar to the :ref:`fully-distributed optimization <user_guide.optimize.bayes_estimate>` method, 
+Similar to the :ref:`fully-distributed optimization <user_guide.optimize.fully_distributed>` method, 
 providing a uniform first guess is recommended for this method. 
 In this case, we use the SBS algorithm to find such a first guess:
 
