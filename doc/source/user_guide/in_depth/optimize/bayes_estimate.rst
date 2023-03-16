@@ -65,8 +65,8 @@ with the random set of parameters using the following code:
 
 .. ipython:: python
 
-    plt.hist(br.data["cost"], range=[0, 2]);  # limit cost range 
-    plt.grid(alpha=.7, ls="--");
+    plt.hist(br.data["cost"], range=[0, 2], zorder=2);  # limit cost range 
+    plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Cost");
     plt.ylabel("Frequency");
     @savefig distribution_cost_be_user_guide.png
@@ -93,7 +93,18 @@ We can also visualize the L-curve that was used to find the optimal regularizati
     plt.title("L-curve");
     @savefig lcurve_estimate_be_user_guide.png
     plt.legend();
+.. ipython:: python
 
+    ind = tuple(model_be.mesh.gauge_pos[0,:])
+    
+    ind
+
+    (
+     model_be.parameters.cp[ind],
+     model_be.parameters.cft[ind],
+     model_be.parameters.exc[ind],
+     model_be.parameters.lr[ind],
+    )
 -------------------------------------------------------------
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
@@ -113,11 +124,13 @@ the Bayesian first guess:
 .. ipython:: python
     :verbatim:
 
-    model_hp = model_su.optimize(
-            mapping="hyper-polynomial", 
+        model_sd = model_be.optimize(
+            mapping="distributed", 
             algorithm="l-bfgs-b", 
             options={"maxiter": 30}
         )
+
+
 
 .. ipython:: python
 
