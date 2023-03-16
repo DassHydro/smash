@@ -286,7 +286,7 @@ class Net(object):
 
         Compile the network
 
-        >>> net.compile(optimizer='sgd', options={'learning_rate'=0.009, 'momentum': 0.001})
+        >>> net.compile(optimizer='sgd', options={'learning_rate': 0.009, 'momentum': 0.001})
         >>> net
         +-------------+
         | Net summary |
