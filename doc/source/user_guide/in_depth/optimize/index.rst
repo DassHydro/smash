@@ -4,7 +4,11 @@
 Model optimization
 ==================
 
-This section represents advanced approaches for optimizing Model parameters and initial states in addition to classical methods in the :ref:`Quickstart <quickstart.cance.optimization>` section.
+This section covers advanced techniques for optimizing model parameters and initial states, 
+in addition to the classical methods explained in the :ref:`Quickstart <quickstart.cance.optimization>` section.
+
+The examples in this section use the ``Lez`` dataset, 
+which contains daily data from 3 nested gauges spanning a total area of 169km².
 
 .. warning::
 
@@ -13,6 +17,7 @@ This section represents advanced approaches for optimizing Model parameters and 
 .. toctree::
     :maxdepth: 1
 
+    fully_distributed
     multi_site
     multi_criteria
     bayes_estimate
