@@ -6,8 +6,8 @@ from smash.dataset.load import DATASET_NAME
 
 import pytest
 
-def test_load_dataset(**kwargs):
 
+def test_load_dataset(**kwargs):
     # % Check dataset loading
     for name in DATASET_NAME:
         try:

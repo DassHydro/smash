@@ -1111,13 +1111,13 @@ class Model(object):
             Name of optimizer. Only used if net is not set.
             Should be one of
 
-            - 'sgd'
-            - 'adam'
-            - 'adagrad'
-            - 'rmsprop'
+            - 'sgd' : Stochastic Gradient Descent
+            - 'adam' : Adaptive Moment Estimation
+            - 'adagrad' : Adaptive Gradient
+            - 'rmsprop' : Root Mean Square Propagation
 
         learning_rate : float, default 0.003
-            Learning rate that determines the step size of the optimization problem. Only used if net is not set.
+            The learning rate used to update the weights during training. Only used if net is not set.
 
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.

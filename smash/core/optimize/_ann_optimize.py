@@ -169,7 +169,7 @@ def _set_graph(
             options={"bounds": bounds},
         )
 
-        net.compile(optimizer=opt, learning_rate=lr, random_state=rd_state)
+        net.compile(optimizer=opt, random_state=rd_state, options={"learning_rate": lr})
 
     elif not isinstance(net, Net):
         raise ValueError(f"Unknown network {net}")

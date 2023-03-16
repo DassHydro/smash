@@ -62,15 +62,33 @@ instead of:
     
     More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
 
+Setting the learning rate for Net
+*********************************
+
+The ``learning_rate`` argument is passed to the ``options`` argument of the :meth:`Net.compile` method. 
+The default value of the learning rate depends on the optimizer that you choose. Here are some examples:
+
+.. code-block:: python
+
+    # A default learning rate of 0.01 will be set with the adagrad optimizer
+    >>> net.compile(optimizer="adagrad")
+
+    # A default learning rate of 0.001 will be set with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop")
+
+    # Set a custom learning rate of 0.002 with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop", options={"learning_rate": 0.002})
+
 Documentation
 *************
 
-- Add the documentation of the different algorithm options using a customize sphinx directive.
+Add the documentation of the different algorithm options using a customize sphinx directive.
 
-- Add the user guide for advanced optimization techniques, including:
-    - Fully-distributed optimization
-    - Pre-regionalization using polynomial mapping
-    - Pre-regionalization using ANN
+Add the user guide for advanced optimization techniques, including:
+
+- Fully-distributed optimization
+- Pre-regionalization using polynomial mapping
+- Pre-regionalization using ANN
 
 ------------
 New Features
@@ -126,5 +144,5 @@ F2PY f2cmap warnings
 ********************
 
 Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``.
-Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.
 
+Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.
