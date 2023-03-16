@@ -89,9 +89,13 @@ The default values of these parameters can be obtained as follows:
 .. ipython:: python
 
     problem = model.get_bound_constraints()
+    problem
+
+.. ipython:: python
+
     ncv = problem["num_vars"]  # number of control vector
-    cv = problem["names"] # control vector
-    bc = problem["bounds"] # default boundary condition
+    cv = problem["names"]  # control vector
+    bc = problem["bounds"]  # default boundary condition
     nd = model.input_data.descriptor.shape[-1]  # number of descriptors
 
 Next, we need to initialize the Net object:
