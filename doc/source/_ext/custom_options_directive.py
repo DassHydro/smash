@@ -47,7 +47,7 @@ def _import_object_implementation(name):
 
 
 class SmashOptimize(PythonDomain):
-    name = "smash-optimize"
+    name = "smash-model-optimize"
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -58,7 +58,7 @@ class SmashOptimize(PythonDomain):
 
 
 class SmashNetAdd(PythonDomain):
-    name = "smash-add"
+    name = "smash-net-add"
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
@@ -69,7 +69,7 @@ class SmashNetAdd(PythonDomain):
 
 
 class SmashNetCompile(PythonDomain):
-    name = "smash-compile"
+    name = "smash-net-compile"
 
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)

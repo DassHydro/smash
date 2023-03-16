@@ -472,8 +472,8 @@ class Activation(Layer):
     """
     Activation layer that applies a specified activation function to the input.
 
-    Parameters
-    ----------
+    Options
+    -------
     name : str
         The name of the activation function that will be used. Should be one of
 
@@ -515,8 +515,8 @@ class Scale(Layer):
     """
     Scale layer that applies the min-max scaling function to the outputs.
 
-    Parameters
-    ----------
+    Options
+    -------
     bounds : list, tuple or array-like
         A sequence of ``(min, max)`` values that the outputs will be scaled to.
     """
@@ -593,8 +593,8 @@ class Dense(Layer):
     """
     Fully-connected (dense) layer.
 
-    Parameters
-    ----------
+    Options
+    -------
     neurons : int
         The number of neurons in the layer.
 
@@ -705,8 +705,8 @@ class Dropout(Layer):
     """
     Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
 
-    Parameters
-    ----------
+    Options
+    -------
     drop_rate: float
         The probability of setting a given output value to zero.
     """
@@ -862,8 +862,8 @@ class StochasticGradientDescent:
     """
     Compile the neural network with SGD.
 
-    Parameters
-    ----------
+    Options
+    -------
     learning_rate : float, default 0.01
         The learning rate used to update the weights during training.
 
@@ -896,8 +896,8 @@ class Adam:
     """
     Compile the neural network with Adam optimizer.
 
-    Parameters
-    ----------
+    Options
+    -------
     learning_rate : float, default 0.001
         The learning rate used to update the weights during training.
 
@@ -949,8 +949,8 @@ class Adagrad:
     """
     Compile the neural network with Adagrad optimizer.
 
-    Parameters
-    ----------
+    Options
+    -------
     learning_rate : float, default 0.01
         The learning rate used to update the weights during training.
 
@@ -979,8 +979,8 @@ class RMSprop:
     """
     Compile the neural network with RMSprop optimizer.
 
-    Parameters
-    ----------
+    Options
+    -------
     learning_rate : float, default 0.001
         The learning rate used to update the weights during training.
 
