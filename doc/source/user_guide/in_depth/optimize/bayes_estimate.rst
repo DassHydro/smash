@@ -93,6 +93,9 @@ We can also visualize the L-curve that was used to find the optimal regularizati
     plt.title("L-curve");
     @savefig lcurve_estimate_be_user_guide.png
     plt.legend();
+
+The spatially uniform first guess:
+
 .. ipython:: python
 
     ind = tuple(model_be.mesh.gauge_pos[0,:])
@@ -105,6 +108,7 @@ We can also visualize the L-curve that was used to find the optimal regularizati
      model_be.parameters.exc[ind],
      model_be.parameters.lr[ind],
     )
+
 -------------------------------------------------------------
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
@@ -124,14 +128,38 @@ the Bayesian first guess:
 .. ipython:: python
     :verbatim:
 
-        model_sd = model_be.optimize(
-            mapping="distributed", 
-            algorithm="l-bfgs-b", 
-            options={"maxiter": 30}
-        )
-
-
+    model_sd = model_be.optimize(
+        mapping="distributed", 
+        algorithm="l-bfgs-b", 
+        options={"maxiter": 30}
+    )
 
 .. ipython:: python
 
     model_sd.output.cost  # the cost value
+
+The spatially distributed model parameters:
+
+.. ipython:: python
+
+    ma = (model_sd.mesh.active_cell == 0)
+
+    ma_cp = np.where(ma, np.nan, model_sd.parameters.cp)
+    ma_cft = np.where(ma, np.nan, model_sd.parameters.cft)
+    ma_lr = np.where(ma, np.nan, model_sd.parameters.lr)
+    ma_exc = np.where(ma, np.nan, model_sd.parameters.exc)
+    
+    f, ax = plt.subplots(2, 2)
+    
+    map_cp = ax[0,0].imshow(ma_cp);
+    f.colorbar(map_cp, ax=ax[0,0], label="cp (mm)");
+    
+    map_cft = ax[0,1].imshow(ma_cft);
+    f.colorbar(map_cft, ax=ax[0,1], label="cft (mm)");
+    
+    map_lr = ax[1,0].imshow(ma_lr);
+    f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
+    
+    map_exc = ax[1,1].imshow(ma_exc);
+    @savefig theta_sd_optimize_fd_user_guide.png
+    f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
