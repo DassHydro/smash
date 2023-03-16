@@ -123,7 +123,7 @@ Make sure to compile the network after defining it. We can also specify the opti
 
 .. ipython:: python
 
-    net.compile(optimizer="Adam", learning_rate=0.004, random_state=23)
+    net.compile(optimizer="Adam", random_state=23, options={"learning_rate": 0.004})
     net  # display a summary of the network
 
 ---------------------------

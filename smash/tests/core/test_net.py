@@ -46,7 +46,9 @@ def generic_net_init(**kwargs):
     net.add(layer="activation", options={"name": "sigmoid"})
 
     net.compile(
-        "adam", learning_rate=0.002, options={"b1": 0.8, "b2": 0.99}, random_state=11
+        optimizer="adam",
+        options={"learning_rate": 0.002, "b1": 0.8, "b2": 0.99},
+        random_state=11,
     )
 
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
