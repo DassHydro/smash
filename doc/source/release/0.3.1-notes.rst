@@ -1,16 +1,17 @@
-.. _release_notes.0.3.x:
+.. _release_notes.0.3.1:
 
 .. currentmodule:: smash
 
 =========================
-smash 0.3.x Release Notes
+smash 0.3.1 Release Notes
 =========================
-
-The smash 0.3.x release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
 ---------------
 Compatibilities
 ---------------
+
+In order to ensure compatibility with the latest versions of SALib, the SALib version used by ``smash`` and ``smash-dev`` 
+has been pinned to ``SALib>=1.4.5``.
 
 ------------
 Improvements
