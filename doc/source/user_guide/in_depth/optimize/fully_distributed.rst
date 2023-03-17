@@ -61,11 +61,26 @@ Once the optimization is complete. We can visualize the simulated discharge:
     @savefig qsim_su_optimize_fd_user_guide.png
     plt.legend();
     
-And the cost function value :math:`J`:
+The cost function value :math:`J`:
 
 .. ipython:: python
 
     model_su.output.cost
+
+And the spatially uniform first guess:
+
+.. ipython:: python
+
+    ind = tuple(model_su.mesh.gauge_pos[0,:])
+    
+    ind
+
+    (
+     model_su.parameters.cp[ind],
+     model_su.parameters.cft[ind],
+     model_su.parameters.exc[ind],
+     model_su.parameters.lr[ind],
+    )
 
 .. hint::
 
