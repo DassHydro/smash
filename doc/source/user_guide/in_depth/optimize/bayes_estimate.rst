@@ -161,5 +161,5 @@ The spatially distributed model parameters:
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig theta_sd_optimize_fd_user_guide.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.theta_sd.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
