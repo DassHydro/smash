@@ -48,7 +48,7 @@ extensions = [
     "IPython.sphinxext.ipython_console_highlighting",
     "matplotlib.sphinxext.plot_directive",
     "sphinx_autosummary_accessors",
-    "optimize_directive",
+    "custom_options_directive",
 ]
 
 
@@ -85,7 +85,7 @@ html_theme = "pydata_sphinx_theme"
 html_last_updated_fmt = "%b %d, %Y"
 
 html_theme_options = {
-    "gitlab_url": "https://gitlab.irstea.fr/francois.colleoni/smash/",
+    "gitlab_url": "https://gitlab.irstea.fr/hydrology/smash",
     "collapse_navigation": True,
     "logo": {
         "image_light": "logo_smash.svg",

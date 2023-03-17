@@ -29,7 +29,7 @@ class BayesResult(dict):
     Attributes
     ----------
     data : dict
-        Rrepresenting the generated Model parameters/sates and the corresponding cost values after
+        Rrepresenting the generated spatially uniform Model parameters/sates and the corresponding cost values after
         running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
     density : dict
         Representing the estimated distribution at pixel scale of Model parameters/states after
@@ -96,6 +96,8 @@ def _bayes_computation(
     options: dict | None,
     ncpu: int,
 ) -> BayesResult:
+    prior_data = {}
+
     # % returns
     ret_data = {}
     ret_density = {}
@@ -146,12 +148,16 @@ def _bayes_computation(
         ncpu,
     )
 
+    prior_data["cost"] = np.array(res_simu["cost"])
+
     ret_data["cost"] = np.array(res_simu["cost"])
 
     for p in control_vector:
+        ret_data[p] = sample[p].to_numpy()
+
         dat_p = np.dstack(res_simu[p])
 
-        ret_data[p] = dat_p
+        prior_data[p] = dat_p
 
         ret_density[p] = np.ones(dat_p.shape)
 
@@ -161,7 +167,7 @@ def _bayes_computation(
 
     if density_estimate:
         _estimate_density(
-            ret_data,
+            prior_data,
             active_mask,
             ret_density,
             algorithm,
@@ -182,7 +188,7 @@ def _bayes_computation(
             ost,
             active_mask,
             control_vector,
-            ret_data,
+            prior_data,
             ret_density,
             ret_l_curve,
             k,
@@ -198,7 +204,7 @@ def _bayes_computation(
             ost,
             active_mask,
             control_vector,
-            ret_data,
+            prior_data,
             ret_density,
             k,
         )
@@ -492,18 +498,18 @@ def _compute_param(
     ost: pd.Timestamp,
     active_mask: np.ndarray,
     control_vector: np.ndarray,
-    ret_data: dict,
+    prior_data: dict,
     ret_density: dict,
     k: int | float,
 ) -> tuple:
     Dk = []
 
-    J = np.copy(ret_data["cost"])
+    J = np.copy(prior_data["cost"])
 
     var = {}
 
     for name in control_vector:
-        U = np.copy(ret_data[name])
+        U = np.copy(prior_data[name])
         rho = np.copy(ret_density[name])
 
         u, v, d = _compute_mean_U(U, J, rho, k, active_mask)
@@ -539,7 +545,7 @@ def _lcurve_compute_param(
     ost: pd.Timestamp,
     active_mask: np.ndarray,
     control_vector: np.ndarray,
-    ret_data: dict,
+    prior_data: dict,
     ret_density: dict,
     ret_l_curve: dict,
     k: list,
@@ -558,7 +564,7 @@ def _lcurve_compute_param(
             ost,
             active_mask,
             control_vector,
-            ret_data,
+            prior_data,
             ret_density,
             k_i,
         )
@@ -583,7 +589,7 @@ def _lcurve_compute_param(
         ost,
         active_mask,
         control_vector,
-        ret_data,
+        prior_data,
         ret_density,
         kopt,
     )

@@ -80,6 +80,8 @@ class Model(object):
     generate_mesh: Automatic mesh generation.
     save_model: Save Model object.
     read_model: Read Model object.
+    save_model_ddt: Save some derived data types of the Model object to HDF5 file.
+    read_model_ddt: Read derived data types of the Model object from HDF5 file.
 
     Examples
     --------
@@ -155,7 +157,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.setup.<TAB>
-        model.setup.copy(                   model.setup.prcp_directory
+        model.setup.copy()                  model.setup.prcp_directory
         model.setup.daily_interannual_pet   model.setup.prcp_format
         model.setup.descriptor_directory    model.setup.qobs_directory
         model.setup.descriptor_format       model.setup.read_descriptor
@@ -204,13 +206,12 @@ class Model(object):
         model.mesh.active_cell   model.mesh.gauge_pos
         model.mesh.area          model.mesh.nac
         model.mesh.code          model.mesh.ncol
-        model.mesh.copy(         model.mesh.ng
+        model.mesh.copy()        model.mesh.ng
         model.mesh.dx            model.mesh.nrow
         model.mesh.flwacc        model.mesh.path
         model.mesh.flwdir        model.mesh.xmin
         model.mesh.flwdst        model.mesh.ymax
         model.mesh.from_handle(
-
 
         Notes
         -----
@@ -244,7 +245,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.input_data.<TAB>
-        model.input_data.copy(         model.input_data.pet
+        model.input_data.copy()        model.input_data.pet
         model.input_data.descriptor    model.input_data.prcp
         model.input_data.from_handle(  model.input_data.qobs
         model.input_data.mean_pet      model.input_data.sparse_pet
@@ -287,7 +288,7 @@ class Model(object):
         model.parameters.cft           model.parameters.dsm
         model.parameters.ci            model.parameters.exc
         model.parameters.clsl          model.parameters.from_handle(
-        model.parameters.copy(         model.parameters.ks
+        model.parameters.copy()        model.parameters.ks
         model.parameters.cp            model.parameters.lr
         model.parameters.cst           model.parameters.ws
 
@@ -323,7 +324,7 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.states.<TAB>
-        model.states.copy(         model.states.hlsl
+        model.states.copy()        model.states.hlsl
         model.states.from_handle(  model.states.hp
         model.states.hft           model.states.hst
         model.states.hi            model.states.husl1
@@ -361,12 +362,11 @@ class Model(object):
         If you are using IPython, tab completion allows you to visualize all the attributes and methods:
 
         >>> model.output.<TAB>
-        model.output.an                   model.output.parameters_gradient
-        model.output.copy(                model.output.qsim
-        model.output.cost                 model.output.qsim_domain
-        model.output.from_handle(         model.output.sp1
-        model.output.fstates              model.output.sp2
-        model.output.ian                  model.output.sparse_qsim_domain
+        model.output.copy()                  model.output.qsim
+        model.output.cost                    model.output.qsim_domain
+        model.output.from_handle(            model.output.sparse_net_prcp_domain
+        model.output.fstates                 model.output.sparse_qsim_domain
+        model.output.net_prcp_domain
 
         Notes
         -----
@@ -453,10 +453,6 @@ class Model(object):
         Model : Model or None
             Model with run outputs or None if inplace.
 
-        Notes
-        -----
-        This method is directly calling the forward model :math:`Y = M(k)`.
-
         Examples
         --------
         >>> setup, mesh = smash.load_dataset("cance")
@@ -506,7 +502,7 @@ class Model(object):
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
+        bounds: dict | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
         event_seg: dict | None = None,
@@ -550,11 +546,11 @@ class Model(object):
             .. note::
                 If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
 
-        bounds : sequence or None, default None
-            Bounds on control vector. The bounds argument is a sequence of ``(min, max)``.
-            The size of the bounds sequence must be equal to the control vector size.
-            The bounds argument accepts pairs of values with ``min`` lower than ``max``.
-            None value inside the sequence will be filled in with default bound values.
+        bounds : dict or None, default None
+            Bounds on control vector. The bounds argument is a dictionary where keys are the name of the
+            parameters and/or states in the control vector (can be a subset of control vector sequence)
+            and the values are pairs of ``(min, max)`` values (i.e. list, set or tuple) with ``min`` lower than ``max``.
+            None value inside the dictionary will be filled in with default bound values.
 
             .. note::
                 If not given, the bounds will be filled in with default bound values.
@@ -570,7 +566,7 @@ class Model(object):
                 'Epf', 'Elt', 'Erc'
 
             .. hint::
-                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
@@ -605,15 +601,22 @@ class Model(object):
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
-            optimization start time ``ost`` and the end time. The value can be a str which can be interpreted by
+            optimization start time and the end time. The value can be a str which can be interpreted by
             pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
-            The ``ost`` date value must be between the start time and the end time defined in the Model setup.
+            The ost date value must be between the start time and the end time defined in the Model setup.
 
             .. note::
                 If not given, the optimization start time will be equal to the start time.
 
         options : dict or None, default None
-            A dictionary of algorithm options.
+            A dictionary of algorithm options. Depending on the algorithm, different options can be pass.
+
+            .. hint::
+                See each algorithm options:
+
+                - 'sbs' :ref:`(see here) <api_reference.optimize_sbs>`
+                - 'nelder-mead' :ref:`(see here) <api_reference.optimize_nelder-mead>`
+                - 'l-bfgs-b' :ref:`(see here) <api_reference.optimize_l-bfgs-b>`
 
         verbose : bool, default True
             Display information while optimizing.
@@ -625,12 +628,6 @@ class Model(object):
         -------
         Model : Model or None
             Model with optimize outputs or None if inplace.
-
-        Notes
-        -----
-        This method is directly calling the forward model :math:`Y = M(k)` and the adjoint model
-        :math:`\\delta k^* = \\left( \\frac{\\delta M}{\\delta k} \\right)^* . \\delta Y^*`
-        if the algorithm ``l-bfgs-b`` is choosen to retrieve the gradient of the cost function wrt the control vector.
 
         Examples
         --------
@@ -1079,6 +1076,8 @@ class Model(object):
     def ann_optimize(
         self,
         net: Net | None = None,
+        optimizer: str = "adam",
+        learning_rate: float = 0.003,
         control_vector: str | list | tuple | set | None = None,
         bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
@@ -1087,8 +1086,9 @@ class Model(object):
         gauge: str | list | tuple | set = "downstream",
         wgauge: str | list | tuple | set = "mean",
         ost: str | pd.Timestamp | None = None,
-        epochs: int = 500,
+        epochs: int = 400,
         early_stopping: bool = False,
+        random_state: int | None = None,
         verbose: bool = True,
         inplace: bool = False,
         return_net: bool = False,
@@ -1107,15 +1107,33 @@ class Model(object):
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
 
+        optimizer : str, default 'adam'
+            Name of optimizer. Only used if net is not set.
+            Should be one of
+
+            - 'sgd' : Stochastic Gradient Descent
+            - 'adam' : Adaptive Moment Estimation
+            - 'adagrad' : Adaptive Gradient
+            - 'rmsprop' : Root Mean Square Propagation
+
+        learning_rate : float, default 0.003
+            The learning rate used to update the weights during training. Only used if net is not set.
+
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
                 Optimization setting to run the forward hydrological model and compute the cost values.
                 See `smash.Model.optimize` for more.
 
-        epochs : int, default 500
+        epochs : int, default 400
             The number of epochs to train the network.
 
         early_stopping : bool, default False
             Stop updating weights and biases when the loss function stops decreasing.
+
+        random_state : int or None, default None
+            Random seed used to initialize weights. Only used if net is not set.
+
+            .. note::
+                If not given and net is not set, the weights will be initialized with a random seed.
 
         verbose : bool, default True
             Display information while training.
@@ -1142,7 +1160,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> net = model.ann_optimize(inplace=True, return_net=True)
+        >>> net = model.ann_optimize(epochs=200, inplace=True, return_net=True, random_state=11)
         >>> model
         Structure: 'gr-a'
         Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
@@ -1173,16 +1191,16 @@ class Model(object):
         Access to some training information
 
         >>> net.history['loss_train']  # training loss
-        [1.2267546653747559, ..., 0.03432881459593773]
+        [1.2064831256866455, ..., 0.03552241995930672]
         >>> net.layers[0].weight  # trained weights of the first layer
-        array([[ 0.07801535,  0.10680847, -0.33354243, -0.17218271,  0.09706582,
-                 0.63727553,  0.00399343,  0.00982828,  0.13701385, -0.00708624,
-                -0.25468548, -0.29651733, -0.02438137, -0.10962573,  0.19415941,
-                -0.2962292 ,  0.54098361,  0.70156156],
-               [ 0.55410658,  0.12130747,  0.12366326,  0.53987803,  0.16916006,
-                 0.30923786, -0.20702523,  0.48505195,  0.24157872,  0.38465208,
-                -0.45171199, -0.29186438,  0.73921878, -0.00474557, -0.16782353,
-                 0.27061135,  0.55383291,  0.71541684]])
+        array([[-0.35024701, -0.5263885 ,  0.06432176,  0.31493864, -0.08741257,
+                -0.01596381, -0.53372188, -0.01383371,  0.54957057,  0.51538232,
+                0.23674032, -0.42860816,  0.53083172,  0.42429858, -0.24634816,
+                0.07233667, -0.58225892, -0.34835798],
+            [-0.20115953, -0.37473829,  0.43865405,  0.48463052, -0.17020534,
+                -0.19849597, -0.42540381, -0.4557565 ,  0.3663841 ,  0.27515033,
+                -0.50145176, -0.02213097,  0.02078811,  0.48562112,  0.40088665,
+                0.12205882, -0.00624188,  0.62118917]])
         """
 
         if inplace:
@@ -1232,8 +1250,11 @@ class Model(object):
             wgauge,
             ost,
             net,
+            optimizer,
+            learning_rate,
             epochs,
             early_stopping,
+            random_state,
             verbose,
         )
 
@@ -1250,7 +1271,7 @@ class Model(object):
             if not inplace:
                 return instance
 
-    def event_segmentation(self, peak_quant: float = 0.999, max_duration: float = 240):
+    def event_segmentation(self, peak_quant: float = 0.995, max_duration: float = 240):
         """
         Compute segmentation information of flood events over all catchments of the Model.
 
@@ -1259,11 +1280,11 @@ class Model(object):
 
         Parameters
         ----------
-        peak_quant: float, default 0.999
-            An event will be selected if its discharge exceed this quantile of the observed discharge timeseries.
+        peak_quant: float, default 0.995
+            Events will be selected if their discharge peaks exceed the ``peak_quant``-quantile of the observed discharge timeseries.
 
         max_duration: float, default 240
-            The maximum duration of an event (in hour).
+            The expected maximum duration of an event (in hour).
 
         Returns
         -------

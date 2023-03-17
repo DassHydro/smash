@@ -68,12 +68,29 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
     res["optimize.uniform_sbs_mtg.cost"] = output_cost(instance)
 
     # % states hp optimization
+    tmp = model.states.hlr.copy()
+    model.states.hlr = 1
     instance = model.optimize(
-        control_vector=["cp", "hp"], options={"maxiter": 1}, verbose=False
+        control_vector=["cp", "hlr"], options={"maxiter": 1}, verbose=False
     )
+    model.states.hlr = tmp.copy()
 
     res["optimize.uniform_sbs_states.cost"] = output_cost(instance)
-    res["optimize.uniform_sbs_states.hp"] = model.states.hp.copy()
+    res["optimize.uniform_sbs_states.hlr"] = instance.states.hlr.copy()
+
+    # % adjust bounds
+    instance = model.optimize(
+        mapping="distributed",
+        algorithm="l-bfgs-b",
+        control_vector=["cp", "cft"],
+        bounds={"cp": [1, 50]},
+        options={"maxiter": 1},
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_bounds.cost"] = output_cost(instance)
+    res["optimize.distributed_l-bfgs-b_bounds.cp"] = instance.parameters.cp.copy()
+    res["optimize.distributed_l-bfgs-b_bounds.cft"] = instance.parameters.cft.copy()
 
     return res
 
@@ -156,9 +173,9 @@ def test_bayes_optimize():
 
 
 def generic_ann_optimize_1(model: smash.Model, **kwargs) -> dict:
-    np.random.seed(11)
-
-    instance, net = model.ann_optimize(epochs=5, return_net=True, verbose=False)
+    instance, net = model.ann_optimize(
+        epochs=5, learning_rate=0.001, return_net=True, random_state=11, verbose=False
+    )
 
     res = {
         "ann_optimize_1.loss": np.array(net.history["loss_train"]),
@@ -198,8 +215,7 @@ def generic_ann_optimize_2(model: smash.Model, **kwargs) -> dict:
 
     net.compile(
         optimizer="sgd",
-        learning_rate=0.01,
-        options={"momentum": 0.001},
+        options={"learning_rate": 0.01, "momentum": 0.001},
         random_state=11,
     )
 

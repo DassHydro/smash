@@ -27,7 +27,7 @@ Imports
 Model object creation
 ---------------------
 
-To obtain flood events segmentation, you must create a :class:`smash.Model` object. 
+To obtain flood events segmentation, you need to create a :class:`smash.Model` object. 
 For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
 
 Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset()` method and create the :class:`smash.Model` object.
@@ -85,7 +85,7 @@ Then the segmented event, for instance of catchment ``V3524010``, is shown in th
         ax2.axvspan(starts[0], ends[0], alpha=.1, color="red");
         ax2.grid(alpha=.7, ls="--")
         ax2.tick_params(axis="x", labelrotation=20)
-        ax2.set_ylabel("$mm$");
+        ax2.set_ylabel("$m^3/s$");
         ax2.set_xlim(ax1.get_xlim());
 
         fig.legend();
@@ -122,7 +122,7 @@ We can once again visualize, the segmented events of catchment ``V3524010`` on t
         ax2.axvspan(starts[1], ends[1], alpha=.1, color="red");
         ax2.grid(alpha=.7, ls="--")
         ax2.tick_params(axis="x", labelrotation=20)
-        ax2.set_ylabel("$mm$");
+        ax2.set_ylabel("$m^3/s$");
         ax2.set_xlim(ax1.get_xlim());
 
         fig.legend();

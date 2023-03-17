@@ -1,0 +1,153 @@
+.. _release_notes.0.3.1:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.3.1 Release Notes
+=========================
+
+---------------
+Compatibilities
+---------------
+
+In order to ensure compatibility with the latest versions of SALib, the SALib version used by ``smash`` and ``smash-dev`` 
+has been pinned to ``SALib>=1.4.5``.
+
+------------
+Improvements
+------------
+
+Bounds definition
+*****************
+
+The ``bounds`` argument in the optimization methods (:meth:`Model.optimize`, :meth:`Model.bayes_estimate`, :meth:`Model.bayes_optimize`, :meth:`Model.ann_optimize`) 
+is now defined by a dictionary instead of a list, a tuple, or a set. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(bounds={"lr": [10., 20.]})
+
+BayesResult object
+******************
+
+The generated Model parameters/states in the attribute ``data`` of :class:`smash.BayesResult` object is a scalar instead of a 2D-array for each generated sample.
+
+Users can easily save the results of :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods into a `pandas.DataFrame` as follows:
+
+.. code-block:: python
+
+    >>> import pandas as pd
+    >>> br = model.bayes_estimate(inplace=True, return_br=True)
+    >>> pd.DataFrame(br.data).to_csv("br_data.csv")  # br.data[parameter/state] is a 1D-array instead of a 3D-array
+    >>> pd.DataFrame(br.l_curve).to_csv("br_lcurve.csv")
+
+Signatures-based cost function
+******************************
+
+The formula for the signatures-based cost function has been changed from a squared relative value to an absolute relative value. 
+For example:
+
+.. math::
+
+    j_{k,s,i} = \left|\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right|
+
+instead of:
+
+.. math::
+
+    j_{k,s,i} = \left(\frac{S_{i}^{s}(k)}{S_{i}^{o}(k)}-1\right)^2
+
+.. note::
+    
+    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
+
+Setting the learning rate for Net
+*********************************
+
+Instead of passing the ``learning_rate`` argument directly as a parameter in the :meth:`Net.compile` method, 
+it is now included as a key-value pair within the ``options`` dictionary argument. 
+
+The default value of the learning rate depends on the optimizer that you choose. Here are some examples:
+
+.. code-block:: python
+
+    # A default learning rate of 0.01 will be set with the adagrad optimizer
+    >>> net.compile(optimizer="adagrad")
+
+    # A default learning rate of 0.001 will be set with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop")
+
+    # Set a custom learning rate of 0.002 with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop", options={"learning_rate": 0.002})
+
+Documentation
+*************
+
+Add the documentation for the ``options`` argument in the :meth:`Model.optimize`, :meth:`Net.add` and :meth:`Net.compile` 
+methods using a customize sphinx directive.
+
+Add the user guide for advanced optimization techniques, including:
+
+- Fully-distributed optimization
+- Improving the first guess using Bayesian estimation
+- Pre-regionalization using polynomial mapping
+- Pre-regionalization using ANN
+
+------------
+New Features
+------------
+
+Loading external dataset
+************************
+
+External datasets can be loaded using the :meth:`smash.load_dataset` method. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = model.load_dataset("path_to_external_data")
+
+New dataset on daily timestep
+*****************************
+
+A new dataset called ``Lez`` is available in the :meth:`smash.load_dataset` method. This dataset contains 3 nested gauges with a total area of 169km².
+The simulation is over a period of one year between 2012-08-01 and 2013-07-31 at daily time step with the ``gr-a`` structure.
+Moreover, 6 descriptors are available:
+
+- "slope"
+- "drainage_density"
+- "karst"
+- "woodland"
+- "urban"
+- "soil_water_storage"
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = model.load_dataset("Lez")
+
+Adjusting additional options in ann_optimize
+********************************************
+
+Optimizer, learning rate and random state can be adjusted if the neural network is not set when using :meth:`Model.ann_optimize`.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.ann_optimize(optimizer="sgd", learning_rate=0.01, random_state=11)
+
+-----
+Fixes
+-----
+
+F2PY f2cmap warnings
+********************
+
+Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``.
+
+Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.

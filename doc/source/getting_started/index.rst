@@ -18,7 +18,7 @@ Install `smash` from this gitlab repository,
 
 .. code-block:: none
 
-    git clone https://gitlab.irstea.fr/francois.colleoni/smash.git
+    git clone https://gitlab.irstea.fr/hydrology/smash.git
     
 A ``smash`` directory should've been cloned into your current working directory.
 

@@ -118,8 +118,8 @@ OPTIM_FUNC = {
 }  # % TODO add nsga
 
 
-### ANN OPTIMIZE ###
-####################
+### NET ###
+###########
 
 WB_INITIALIZER = [
     "uniform",
@@ -130,6 +130,10 @@ WB_INITIALIZER = [
     "he_normal",
     "zeros",
 ]
+
+NET_OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
+
+LAYER_NAME = ["dense", "activation", "scale", "dropout"]
 
 
 ### GENERATE SAMPLES ###

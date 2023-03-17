@@ -849,7 +849,7 @@ contains
 
                 if (den .gt. 0._sp) then
 
-                    res = res + (num/den - 1._sp)*(num/den - 1._sp)
+                    res = res + abs(num/den - 1._sp)
 
                 end if
 
@@ -910,7 +910,7 @@ contains
 
             if (den .gt. 0._sp) then
 
-                res = (num/den - 1._sp)*(num/den - 1._sp)
+                res = abs(num/den - 1._sp)
 
             end if
 

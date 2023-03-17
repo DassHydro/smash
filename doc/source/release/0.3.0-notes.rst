@@ -112,7 +112,7 @@ Save a sample of the Model object data
 **************************************
 
 Two new methods `smash.save_model_ddt` and `smash.read_model_ddt` had been added to avoid to save all the data of the Model object (i.e. all precipitation data) but
-only the main data. A set of default has been choosen in order to facilitate the use of the method but any kind of data can be extra saved.
+only the main data. A set of default has been chosen in order to facilitate the use of the method but any kind of data can be extra saved.
 
 .. note::
     
@@ -145,7 +145,7 @@ Fixes
 Uniform optimization
 ********************
 
-A bug has been find in spatially uniform optimization with the ``sbs`` algorithm. If one non-optimized parameter is spatially distributed. 
+A bug has been found in spatially uniform optimization with the ``sbs`` algorithm. If one non-optimized parameter is spatially distributed. 
 Even if it is not optimized, its value at the output of the optimization is changed to a uniform value. This bug has been fixed by looping only on optimized parameters
 instead of all. This bug should have only impacted the following method:
 
@@ -164,7 +164,7 @@ instead of all. This bug should have only impacted the following method:
 Distributed optimization
 ************************
 
-A bug has been find in spatially distributed optimization. The gradients were not correctly computed with respect to the control vector normalization. 
+A bug has been found in spatially distributed optimization. The gradients were not correctly computed with respect to the control vector normalization. 
 This bug has been fixed by moving the denormalization routine into the forward model which can be now seen by the inverse model. This bug should have only impacteted the
 following methods:
 

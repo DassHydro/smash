@@ -4,32 +4,29 @@
 Hydrograph segmentation
 =======================
 
-Segmentation algorithm aims to capture important events occuring over the studied period on each catchment. 
+Segmentation algorithm aims to capture important events occuring over the study period on each catchment. 
 We propose an algorithm for capturing flood events with the aid of the rainfall gradient and rainfall energy.
 
 -----------
 Description
 -----------
 
-First of all, the peaks of discharge are detected using a simple peak
-detection algorithm :cite:p:`marcos_duarte_2021_4599319`. 
-We thus consider those exceed the ``peak_quant``-quantile (by default ``peak_quant`` = 0.999) of the observed discharge 
-as important events (or flood events). Then the starting date of each event can be determined as the moment
-it starts raining dramatically sometime since 72h before the flood event. 
-For calculating this, we need to compute the gradient
-of the rainfall and then we choose the peaks of rainfall gradient
-which exceed its 0.8-quantile. These peaks correspond to the moments
-when we have a sharp increase in rainfall. Next, the
-rainfall energy is computed as the sum of squares of the rainfall
-observed in 24h counted from 1h before the peak of rainfall gradient.
-So the starting date is the first moment when the rainfall energy
-exceeds 0.2 of the maximal rainfall energy observed in 72h before
-the peak discharge (w.r.t. gradient criterion). Finally, we aim
-to find an ending date based on the baseflow separation. Effectively, we
-compute the difference between the discharge and its baseflow from
-the peak of discharge until the end of researched period (lasts ``max_duration`` hours (by default ``max_duration`` = 240) from starting date of event). Then, the ending date is the moment
-that the difference between the discharge and its baseflow is minimal
-in 48h counted from 1 hour before this moment.
+The discharge peaks are first detected using a simple peak detection algorithm :cite:p:`marcos_duarte_2021_4599319`. 
+We consider events that exceed the ``peak_quant``-quantile (we set ``peak_quant`` = 0.995 by default) 
+of the observed discharge as important events (or flood events), and events are considered to be distinct 
+if they are separated by at least 12h. The starting date of the event is considered to be the moment when 
+the rain starts to increase dramatically, which is sometime 72h before the peak of discharge. 
+To calculate this, we compute the gradient of the rainfall and choose the peaks of rainfall gradient that exceed the 0.8-quantile. 
+These peaks correspond to the moments when there is a sharp increase in rainfall. 
+Next, the rainfall energy is computed as the sum of squares of the rainfall observed in a 24h-period, 
+counted from 1h before the peak of rainfall gradient.
+The starting date is the first moment when the rainfall energy exceeds 0.2 of the maximal rainfall energy observed 
+in the 72h-period before the peak of discharge, based on the gradient criterion. 
+Finally, we aim to find the ending date by computing the difference between the discharge and its baseflow from
+the peak of discharge until the end of study period (which lasts for ``max_duration`` hours 
+(we set ``max_duration`` = 240 by default) from the starting date of the event). 
+The ending date is the moment when the difference between the discharge and its baseflow is minimal in a 48h-period, 
+counted from 1 hour before this moment.
 
 ---------
 Algorithm

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.solver._mw_forward import forward_b
 
-from smash.core._constant import WB_INITIALIZER
+from smash.core._constant import WB_INITIALIZER, NET_OPTIMIZER, LAYER_NAME
 
 from typing import TYPE_CHECKING
 
@@ -164,14 +164,16 @@ class Net(object):
         options : dict
             A dictionary to configure layers added to the network.
 
+            .. hint::
+                See options for each layer type:
+
+                - 'dense' :ref:`(see here) <api_reference.add_dense>`
+                - 'activation' :ref:`(see here) <api_reference.add_activation>`
+                - 'scale' :ref:`(see here) <api_reference.add_scale>`
+                - 'dropout' :ref:`(see here) <api_reference.add_dropout>`
+
         Examples
         --------
-        Define some concerned hydrological parameters
-
-        >>> nd = 6  # number of hydrological descriptors
-        >>> ncv = 4  # number of control vectors ("cp", "cft", "exc", "lr")
-        >>> bounds = [[1.e-06,1000], [1.e-06,1000], [-50, 50], [1.e-06,1000]]  # bound constraints
-
         Initialize the neural network
 
         >>> net = smash.Net()
@@ -179,7 +181,8 @@ class Net(object):
         Define graph
 
         >>> # First Dense Layer
-        >>> net.add(layer="dense", options={"input_shape": (nd,), "neurons": 32})  # input_shape is only required for the first layer
+        >>> # input_shape is only required for the first layer
+        >>> net.add(layer="dense", options={"input_shape": (8,), "neurons": 32})
         >>> # Activation funcion following the first dense layer
         >>> net.add(layer="activation", options={"name": "relu"})
         >>> # Second Dense Layer
@@ -187,11 +190,9 @@ class Net(object):
         >>> # Activation function following the second dense layer
         >>> net.add(layer="activation", options={"name": "relu"})
         >>> # Third Dense Layer
-        >>> net.add(layer="dense", options={"neurons": ncv})
-        >>> # Activation function following the third dense layer
+        >>> net.add(layer="dense", options={"neurons": 4})
+        >>> # Last Activation function (output of the network)
         >>> net.add(layer="activation", options={"name": "sigmoid"})
-        >>> # Scaling layer for the output of the network
-        >>> net.add(layer="scale", options={"bounds": bounds})
 
         Compile and display a summary of the network
 
@@ -200,24 +201,25 @@ class Net(object):
         +-------------+
         | Net summary |
         +-------------+
-        Input Shape: (6,)
+        Input Shape: (8,)
         +----------------------+--------------+---------+
         | Layer (type)         | Output Shape | Param # |
         +----------------------+--------------+---------+
-        | Dense                | (32,)        | 224     |
+        | Dense                | (32,)        | 288     |
         | Activation (ReLU)    | (32,)        | 0       |
         | Dense                | (16,)        | 528     |
         | Activation (ReLU)    | (16,)        | 0       |
         | Dense                | (4,)         | 68      |
         | Activation (Sigmoid) | (4,)         | 0       |
-        | Scale (MinMaxScale)  | (4,)         | 0       |
         +----------------------+--------------+---------+
-        Total params: 820
-        Trainable params: 820
+        Total params: 884
+        Trainable params: 884
         Non-trainable params: 0
         """
 
-        layer = LAYERS[layer.lower()](**options)
+        layer = _standardize_layer(layer)
+
+        lay = LAYERS[layer](**options)
 
         if not self.layers:  # Check options if first layer
             if "input_shape" in options:
@@ -232,15 +234,14 @@ class Net(object):
                 )
 
         else:  # If be not the first layer then set the input shape to the output shape of the next added layer
-            layer._set_input_shape(shape=self.layers[-1].output_shape())
+            lay._set_input_shape(shape=self.layers[-1].output_shape())
 
         # Add layer to the network
-        self.layers.append(layer)
+        self.layers.append(lay)
 
     def compile(
         self,
         optimizer: str = "adam",
-        learning_rate: float = 0.001,
         options: dict | None = None,
         random_state: int | None = None,
     ):
@@ -249,19 +250,24 @@ class Net(object):
 
         Parameters
         ----------
-        optimizer : str, default adam
-            Optimizer algorithm. Should be one of
+        optimizer : str, default 'adam'
+            Name of optimizer. Should be one of
 
-            - 'sgd'
-            - 'adam'
-            - 'adagrad'
-            - 'rmsprop'
-
-        learning_rate : float, default 0.001
-            Learning rate that determines the step size of the optimization problem.
+            - 'sgd' : Stochastic Gradient Descent
+            - 'adam' : Adaptive Moment Estimation
+            - 'adagrad' : Adaptive Gradient
+            - 'rmsprop' : Root Mean Square Propagation
 
         options : dict or None, default None
             A dictionary of optimizer options.
+
+            .. hint::
+                See options for each optimizer:
+
+                - 'sgd' :ref:`(see here) <api_reference.compile_sgd>`
+                - 'adam' :ref:`(see here) <api_reference.compile_adam>`
+                - 'adagrad' :ref:`(see here) <api_reference.compile_adagrad>`
+                - 'rmsprop' :ref:`(see here) <api_reference.compile_rmsprop>`
 
         random_state : int or None, default None
             Random seed used to initialize weights.
@@ -280,7 +286,7 @@ class Net(object):
 
         Compile the network
 
-        >>> net.compile(optimizer='sgd', learning_rate=0.01, options={'momentum': 0.001})
+        >>> net.compile(optimizer='sgd', options={'learning_rate': 0.009, 'momentum': 0.001})
         >>> net
         +-------------+
         | Net summary |
@@ -297,14 +303,16 @@ class Net(object):
         Non-trainable params: 0
         """
 
-        if options is None:
-            options = {}
-
-        if random_state is not None:
-            np.random.seed(random_state)
-
         if self.layers:
-            opt = OPTIMIZERS[optimizer.lower()](learning_rate, **options)
+            if options is None:
+                options = {}
+
+            optimizer = _standardize_optimizer(optimizer)
+
+            if random_state is not None:
+                np.random.seed(random_state)
+
+            opt = OPT_FUNC[optimizer](**options)
 
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):
@@ -312,7 +320,7 @@ class Net(object):
 
             self._compiled = True
             self._optimizer = optimizer
-            self._learning_rate = learning_rate
+            self._learning_rate = opt.learning_rate
 
         else:
             raise ValueError("The network does not contain layers")
@@ -339,8 +347,10 @@ class Net(object):
             List of booleans with a length of the total number of the network's layers.
 
             .. note::
-                Dropout, Activation and Scaling functions do not have any weights and biases,
-                so it is not important to set trainable weights at these layers.
+                Dropout, activation, and scaling functions are non-parametric layers,
+                meaning they do not have any learnable weights or biases.
+                Therefore, it is not necessary to set these layers as trainable
+                since they do not involve any weight updates during training.
         """
 
         if len(trainable) == len(self.layers):
@@ -439,41 +449,42 @@ class Net(object):
 
 class Layer(object):
     def _set_input_shape(self, shape: tuple):
-        """Sets the shape that the layer expects of the input in the forward
-        pass method"""
         self.input_shape = shape
 
     def layer_name(self):
-        """The name of the layer. Used in model summary."""
         return self.__class__.__name__
 
     def n_params(self):
-        """The number of trainable parameters used by the layer"""
         return 0
 
     def _forward_pass(self, x: np.ndarray, training: bool):
-        """Propogates the signal forward in the network"""
         raise NotImplementedError()
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        """Propogates the accumulated gradient backwards in the network.
-        If the has trainable weights then these weights are also tuned in this method.
-        As input (accum_grad) it receives the gradient with respect to the output of the layer and
-        returns the gradient with respect to the output of the previous layer."""
         raise NotImplementedError()
 
     def output_shape(self):
-        """The shape of the output produced by forward_pass"""
         raise NotImplementedError()
 
 
 class Activation(Layer):
-    """A layer that applies an activation operation to the input.
 
-    Parameters:
-    -----------
-    name: string
-        The name of the activation function that will be used.
+    """
+    Activation layer that applies a specified activation function to the input.
+
+    Options
+    -------
+    name : str
+        The name of the activation function that will be used. Should be one of
+
+        - 'relu' : Rectified Linear Unit
+        - 'sigmoid' : Sigmoid
+        - 'selu' : Scaled Exponential Linear Unit
+        - 'elu' : Exponential Linear Unit
+        - 'softmax' : Softmax
+        - 'leaky_relu' : Leaky Rectified Linear Unit
+        - 'tanh' : Hyperbolic Tangent
+        - 'softplus' : Softplus
     """
 
     def __init__(self, name: str, **unknown_options):
@@ -500,7 +511,15 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    """Scale function for outputs from the last layer w.r.t. parameters bounds."""
+
+    """
+    Scale layer that applies the min-max scaling function to the outputs.
+
+    Options
+    -------
+    bounds : list, tuple or array-like
+        A sequence of ``(min, max)`` values that the outputs will be scaled to.
+    """
 
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
         _check_unknown_options("Scale Layer", unknown_options)
@@ -570,18 +589,20 @@ def _wb_initialization(layer: Layer, attr: str):
 
 
 class Dense(Layer):
-    """A fully-connected NN layer.
-    Parameters:
-    -----------
-    neurons: int
+
+    """
+    Fully-connected (dense) layer.
+
+    Options
+    -------
+    neurons : int
         The number of neurons in the layer.
 
-    input_shape: tuple, default None
-        The expected input shape of the layer. For dense layers a single digit specifying
-        the number of features of the input. Must be specified if it is the first layer in
-        the network.
+    input_shape : tuple or None, default None
+        The expected input shape of the dense layer.
+        It must be specified if this is the first layer in the network.
 
-    kernel_initializer : str, default glorot_uniform
+    kernel_initializer : str, default 'glorot_uniform'
         Weight initialization method. Should be one of
 
         - 'uniform'
@@ -592,7 +613,7 @@ class Dense(Layer):
         - 'he_normal'
         - 'zeros'
 
-    bias_initializer : str, default zeros
+    bias_initializer : str, default 'zeros'
         Bias initialization method. Should be one of
 
         - 'uniform'
@@ -680,13 +701,14 @@ class Dense(Layer):
 
 
 class Dropout(Layer):
-    """Randomly sets the output of the previous layer
-    to be zero with a drop rate.
 
-    Parameters:
-    -----------
+    """
+    Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
+
+    Options
+    -------
     drop_rate: float
-        Drop rate.
+        The probability of setting a given output value to zero.
     """
 
     def __init__(self, drop_rate: float, **unknown_options):
@@ -836,7 +858,22 @@ class MinMaxScale:
 
 
 class StochasticGradientDescent:
-    def __init__(self, learning_rate: float, momentum: float = 0, **unknown_options):
+
+    """
+    Compile the neural network with SGD.
+
+    Options
+    -------
+    learning_rate : float, default 0.01
+        The learning rate used to update the weights during training.
+
+    momentum : float, default 0
+        The momentum used to smooth the gradient updates.
+    """
+
+    def __init__(
+        self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
+    ):
         _check_unknown_options("SGD optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -855,9 +892,25 @@ class StochasticGradientDescent:
 
 
 class Adam:
+
+    """
+    Compile the neural network with Adam optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.001
+        The learning rate used to update the weights during training.
+
+    b1 : float, default 0.9
+        Exponential decay rate for the first moment estimate.
+
+    b2 : float, default 0.999
+        Exponential decay rate for the second moment estimate.
+    """
+
     def __init__(
         self,
-        learning_rate: float,
+        learning_rate: float = 0.001,
         b1: float = 0.9,
         b2: float = 0.999,
         **unknown_options,
@@ -892,7 +945,18 @@ class Adam:
 
 
 class Adagrad:
-    def __init__(self, learning_rate, **unknown_options):
+
+    """
+    Compile the neural network with Adagrad optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.01
+        The learning rate used to update the weights during training.
+
+    """
+
+    def __init__(self, learning_rate: float = 0.01, **unknown_options):
         _check_unknown_options("Adagrad optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -911,7 +975,22 @@ class Adagrad:
 
 
 class RMSprop:
-    def __init__(self, learning_rate: float, rho: float = 0.9, **unknown_options):
+
+    """
+    Compile the neural network with RMSprop optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.001
+        The learning rate used to update the weights during training.
+
+    rho : float, default 0.9
+        The decay rate for the running average of the squared gradients.
+    """
+
+    def __init__(
+        self, learning_rate: float = 0.001, rho: float = 0.9, **unknown_options
+    ):
         _check_unknown_options("RMSprop optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -932,7 +1011,7 @@ class RMSprop:
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)
 
 
-OPTIMIZERS = {
+OPT_FUNC = {
     "sgd": StochasticGradientDescent,
     "adam": Adam,
     "adagrad": Adagrad,
@@ -1002,6 +1081,39 @@ def _hcost_prime(
     )
 
     return grad
+
+
+### STANDARDIZE ###
+
+
+def _standardize_layer(layer: str):
+    if isinstance(layer, str):
+        layer = layer.lower()
+
+        if layer in LAYER_NAME:
+            return layer
+
+        else:
+            raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_NAME}")
+
+    else:
+        raise TypeError(f"layer argument must be str")
+
+
+def _standardize_optimizer(optimizer: str):
+    if isinstance(optimizer, str):
+        optimizer = optimizer.lower()
+
+        if optimizer in NET_OPTIMIZER:
+            return optimizer
+
+        else:
+            raise ValueError(
+                f"Unknown optimizer '{optimizer}'. Choices: {NET_OPTIMIZER}"
+            )
+
+    else:
+        raise TypeError(f"optimizer argument must be str")
 
 
 ### OTHERS ###
