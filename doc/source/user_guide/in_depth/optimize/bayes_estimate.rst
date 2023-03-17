@@ -76,19 +76,16 @@ We can also visualize the L-curve that was used to find the optimal regularizati
 
 .. ipython:: python
 
+    opt_ind = np.where(br.l_curve["k"]==br.l_curve["k_opt"])[0][0]
+    plt.scatter(br.l_curve["Mahalanobis_distance"], br.l_curve["cost"]);
     plt.scatter(
-            br.l_curve["k"], 
-            br.l_curve["cost"], 
-            label="Regularization parameter"
-        );
-    plt.scatter(
-            br.l_curve["k_opt"], 
-            model_be.output.cost, 
+            br.l_curve["Mahalanobis_distance"][opt_ind], 
+            br.l_curve["cost"][opt_ind], 
             color="red", 
-            label="Optimal regularization parameter"
+            label="Optimal regularization point"
         );
     plt.grid(alpha=.7, ls="--");
-    plt.xlabel("k");
+    plt.xlabel("Mahalanobis distance");
     plt.ylabel("Cost");
     plt.title("L-curve");
     @savefig lcurve_estimate_be_user_guide.png
