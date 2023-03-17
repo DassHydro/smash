@@ -46,7 +46,7 @@ Next, we find a uniform first guess using Bayesian estimation on a random set of
 .. ipython:: python
 
     model_be, br = model.bayes_estimate(
-            k=np.linspace(-1, 8, 20), 
+            k=np.linspace(-1, 8, 50), 
             n=400, 
             random_state=11, 
             return_br=True
