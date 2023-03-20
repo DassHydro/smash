@@ -110,8 +110,8 @@ The spatially uniform first guess:
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
 
-Finally, we perform a variational calibration on the model parameters using the ``L-BFGS-B`` algorithm with 
-the Bayesian first guess:
+Finally, we perform a variational calibration on the model parameters using 
+the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm and the Bayesian first guess:
 
 .. ipython:: python
     :suppress:

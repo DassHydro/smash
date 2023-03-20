@@ -253,10 +253,10 @@ class Net(object):
         optimizer : str, default 'adam'
             Name of optimizer. Should be one of
 
-            - 'sgd' : Stochastic Gradient Descent
-            - 'adam' : Adaptive Moment Estimation
-            - 'adagrad' : Adaptive Gradient
-            - 'rmsprop' : Root Mean Square Propagation
+            - 'sgd'
+            - 'adam'
+            - 'adagrad'
+            - 'rmsprop'
 
         options : dict or None, default None
             A dictionary of optimizer options.
@@ -860,7 +860,7 @@ class MinMaxScale:
 class StochasticGradientDescent:
 
     """
-    Compile the neural network with SGD.
+    Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
 
     Options
     -------
@@ -894,7 +894,7 @@ class StochasticGradientDescent:
 class Adam:
 
     """
-    Compile the neural network with Adam optimizer.
+    Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
 
     Options
     -------
@@ -947,7 +947,7 @@ class Adam:
 class Adagrad:
 
     """
-    Compile the neural network with Adagrad optimizer.
+    Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
 
     Options
     -------
@@ -977,7 +977,7 @@ class Adagrad:
 class RMSprop:
 
     """
-    Compile the neural network with RMSprop optimizer.
+    Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
 
     Options
     -------

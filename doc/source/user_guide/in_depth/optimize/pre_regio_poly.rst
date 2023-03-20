@@ -78,7 +78,7 @@ Finding a uniform first guess
 
 Similar to the :ref:`fully-distributed optimization <user_guide.optimize.fully_distributed>` method, 
 providing a uniform first guess is recommended for this method. 
-In this case, we use the SBS algorithm to find such a first guess:
+In this case, we use the :math:`\mathrm{SBS}` algorithm to find such a first guess:
 
 .. ipython:: python
 
@@ -98,7 +98,8 @@ There are two types of polynomial mapping that can be employed for pre-regionali
 - ``hyper-linear``: a linear mapping where the hyperparameters to be estimated are the coefficients.
 - ``hyper-polynomial``: a polynomial mapping where the hyperparameters to be estimated are the coefficients and the degree.
 
-As an example, the hyper-polynomial mapping can be combined with the variational calibration algorithm ``L-BFGS-B`` as shown below:
+As an example, the hyper-polynomial mapping can be combined with the variational calibration algorithm 
+:math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` as shown below:
 
 .. ipython:: python
     :suppress:

@@ -15,7 +15,7 @@ from scipy._lib._util import getfullargspec_no_self
 
 
 def setup(app):
-    app.add_domain(SmashOptimize)
+    app.add_domain(SmashModelOptimize)
     app.add_domain(SmashNetAdd)
     app.add_domain(SmashNetCompile)
     return {"parallel_read_safe": True}
@@ -46,7 +46,7 @@ def _import_object_implementation(name):
     return obj
 
 
-class SmashOptimize(PythonDomain):
+class SmashModelOptimize(PythonDomain):
     name = "smash-model-optimize"
 
     def __init__(self, *a, **kw):

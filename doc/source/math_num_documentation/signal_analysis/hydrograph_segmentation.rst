@@ -15,15 +15,15 @@ The discharge peaks are first detected using a simple peak detection algorithm :
 We consider events that exceed the ``peak_quant``-quantile (we set ``peak_quant`` = 0.995 by default) 
 of the observed discharge as important events (or flood events), and events are considered to be distinct 
 if they are separated by at least 12h. The starting date of the event is considered to be the moment when 
-the rain starts to increase dramatically, which is sometime 72h before the peak of discharge. 
+the rain starts to increase dramatically, which is sometime 72h before the discharge peak. 
 To calculate this, we compute the gradient of the rainfall and choose the peaks of rainfall gradient that exceed the 0.8-quantile. 
 These peaks correspond to the moments when there is a sharp increase in rainfall. 
 Next, the rainfall energy is computed as the sum of squares of the rainfall observed in a 24h-period, 
 counted from 1h before the peak of rainfall gradient.
 The starting date is the first moment when the rainfall energy exceeds 0.2 of the maximal rainfall energy observed 
-in the 72h-period before the peak of discharge, based on the gradient criterion. 
+in the 72h-period before the discharge peak, based on the gradient criterion. 
 Finally, we aim to find the ending date by computing the difference between the discharge and its baseflow from
-the peak of discharge until the end of study period (which lasts for ``max_duration`` hours 
+the discharge peak until the end of study period (which lasts for ``max_duration`` hours 
 (we set ``max_duration`` = 240 by default) from the starting date of the event). 
 The ending date is the moment when the difference between the discharge and its baseflow is minimal in a 48h-period, 
 counted from 1 hour before this moment.

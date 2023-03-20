@@ -446,7 +446,7 @@ class Model(object):
         Parameters
         ----------
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         Returns
         -------
@@ -622,7 +622,7 @@ class Model(object):
             Display information while optimizing.
 
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         Returns
         -------
@@ -768,7 +768,7 @@ class Model(object):
             Display information while estimating.
 
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         return_br : bool, default False
             If True, also return the Bayesian estimation results ``BayesResult``.
@@ -958,7 +958,7 @@ class Model(object):
             Display information while optimizing.
 
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         return_br : bool, default False
             If True, also return the Bayesian optimization results ``BayesResult``.
@@ -1102,7 +1102,7 @@ class Model(object):
         Parameters
         ----------
         net : Net or None, default None
-            The neural network Net will be trained to learn the descriptors to parameters mapping.
+            The neural network Net will be trained to learn the descriptors-to-parameters mapping.
 
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
@@ -1111,10 +1111,10 @@ class Model(object):
             Name of optimizer. Only used if net is not set.
             Should be one of
 
-            - 'sgd' : Stochastic Gradient Descent
-            - 'adam' : Adaptive Moment Estimation
-            - 'adagrad' : Adaptive Gradient
-            - 'rmsprop' : Root Mean Square Propagation
+            - 'sgd'
+            - 'adam'
+            - 'adagrad'
+            - 'rmsprop'
 
         learning_rate : float, default 0.003
             The learning rate used to update the weights during training. Only used if net is not set.
@@ -1139,7 +1139,7 @@ class Model(object):
             Display information while training.
 
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         return_net : bool, default False
             If True and the default graph is used (net is None), also return the trained neural network.
