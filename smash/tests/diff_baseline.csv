@@ -1,13 +1,9 @@
-commit f9bd2a515c16b27231392cec0a475624ece0795c
-Merge: 6531240 c80772f
-Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Mon Feb 27 12:32:10 2023 +0100
+commit 233aa2548359b39d507de62e76dfbba8a5dd8eb8
+Merge: d7acece a7d29db
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Tue Mar 21 13:19:50 2023 +0100
 
-    Merge branch 'fix-signatures-cost' into 'maintenance/0.3.x'
-    
-    FIX/ENC: change signatures cost function
-    
-    See merge request hydrology/smash!3
+    Merge branch 'jreg' of gitlab-ssh.irstea.fr:hydrology/smash into jreg
 
 TEST NAME                                 |STATUS
 ann_optimize_1.cost                       |NON MODIFIED
@@ -48,17 +44,16 @@ net_init.weight_layer_2                   |NON MODIFIED
 net_init.weight_layer_3                   |NON MODIFIED
 net_init.weight_layer_4                   |NON MODIFIED
 optimize.distributed_l-bfgs-b.cost        |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cft  |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cost |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cp   |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cft  |MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cost |MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cp   |MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost       |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost   |NON MODIFIED
 optimize.uniform_nelder-mead.cost         |NON MODIFIED
 optimize.uniform_sbs.cost                 |NON MODIFIED
 optimize.uniform_sbs_mtg.cost             |NON MODIFIED
-optimize.uniform_sbs_states.cost          |MODIFIED
-optimize.uniform_sbs_states.hlr           |ADDED
-optimize.uniform_sbs_states.hp            |DELETED
+optimize.uniform_sbs_states.cost          |NON MODIFIED
+optimize.uniform_sbs_states.hlr           |NON MODIFIED
 run.cost                                  |NON MODIFIED
 signatures.cont_obs                       |NON MODIFIED
 signatures.cont_sim                       |NON MODIFIED
