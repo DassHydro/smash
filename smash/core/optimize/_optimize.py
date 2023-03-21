@@ -345,8 +345,7 @@ def _optimize_lbfgsb(
             
             # bounds updates for jobs and jreg
             jobs_min = min(cost_jobs)
-            index_jobs_min=cost_jobs.index(jobs_min)            
-            jreg_max=cost_jreg[index_jobs_min]
+            jreg_max=max(cost_jreg)
             
             # select the best wjreg based on the transformed lcurve and using our own method decrived in ...
             hlist, wjreg_lcurve_opt = _compute_best_lcurve_weigth(
@@ -887,26 +886,25 @@ def _compute_best_lcurve_weigth(
         )
 
 
-    if (len(cost_jobs) > 2) and ((jreg_max - jreg_min)!=0.) and ((jobs_max - jobs_min)!=0.) :
+    if (len(cost_jobs) > 2) and ((jreg_max - jreg_min)>0.) and ((jobs_max - jobs_min)>0.) :
         
         h = 0.0
         distance = list()
         
-        first_point=True
         for i in range(0, len(cost_jobs)):
             
             #skip point above y=x
-            if ( ( (cost_jreg[i] - jreg_min) / (jreg_max - jreg_min) ) <= 1. ):
+            if ( ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) < ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ):
                 
                 if cost_jobs[i]<jobs_max :
                     hypth = (
                         ((jobs_max - cost_jobs[i]) / (jobs_max - jobs_min)) ** 2.0
                         + ((cost_jreg[i] - jreg_min) / (jreg_max - jreg_min)) ** 2.0
                     ) ** 0.5
-                    alpha = 45.0 - math.acos(
-                        (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) / hypth
-                    )
-                    distance.append(hypth * math.sin(alpha))
+                    alpha = 45.0 - math.degrees( math.acos(
+                        ( (jobs_max - cost_jobs[i]) / (jobs_max - jobs_min) ) / hypth
+                    ))
+                    distance.append(hypth * math.sin(math.radians(alpha)))
                 else:
                     distance.append(0.)
 
@@ -921,3 +919,4 @@ def _compute_best_lcurve_weigth(
         wjreg_lcurve_opt=None
 
     return distance, wjreg_lcurve_opt
+
