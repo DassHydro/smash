@@ -13,8 +13,8 @@ contains
         integer, intent(in) :: row, col
         integer, dimension(nrow, ncol), intent(inout) :: mask
 
-        integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-        integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
+        integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
+        integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
         integer :: i, row_imd, col_imd
 
         mask(row, col) = 1
@@ -112,8 +112,8 @@ contains
         integer, dimension(nrow, ncol), intent(in) :: flwdir
         integer, dimension(nrow, ncol), intent(inout) :: nipd
 
-        integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-        integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
+        integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
+        integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
 
         integer :: row, col, row_imd, col_imd, i
 
@@ -156,8 +156,8 @@ contains
         integer, intent(in) :: row, col
         integer, dimension(nrow, ncol), intent(inout) :: nipd, flwacc
 
-        integer, dimension(8) :: drow = [-1, -1, 0, 1, 1, 1, 0, -1]
-        integer, dimension(8) :: dcol = [0, 1, 1, 1, 0, -1, -1, -1]
+        integer, dimension(8) :: drow = (/-1, -1, 0, 1, 1, 1, 0, -1/)
+        integer, dimension(8) :: dcol = (/0, 1, 1, 1, 0, -1, -1, -1/)
 
         integer :: fd, row_imd, col_imd
 
@@ -331,8 +331,8 @@ contains
 
         real(4), dimension(nrow, ncol), intent(inout) :: flwdst
 
-        integer, dimension(8) :: drow = [1, 1, 0, -1, -1, -1, 0, 1]
-        integer, dimension(8) :: dcol = [0, -1, -1, -1, 0, 1, 1, 1]
+        integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
+        integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
 
         integer :: i, j, row_imd, col_imd
 
