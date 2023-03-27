@@ -1,0 +1,44 @@
+.. _release_notes.0.x.y:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.x.y Release Notes
+=========================
+
+The smash 0.x.y release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+---------------
+Compatibilities
+---------------
+
+------------
+Improvements
+------------
+
+BayesResult object
+******************
+
+The key ``Mahalanobis_distance`` in the attribute ``l_curve`` of :class:`smash.BayesResult` object 
+has been changed to a shortened name ``mahal_dist``.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> br = model.bayes_estimate(k=range(5), inplace=True, return_br=True)
+    >>> br.l_curve["mahal_dist"]
+
+instead of:
+
+.. code-block:: python
+
+    >>> br.l_curve["Mahalanobis_distance"]
+
+------------
+New Features
+------------
+
+-----
+Fixes
+-----

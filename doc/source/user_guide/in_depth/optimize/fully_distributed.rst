@@ -40,7 +40,7 @@ Spatially uniform optimization
 ------------------------------
 
 To find the uniform first guess, we can perform a spatially-uniform calibration using global optimization algorithms. 
-Here's an example how we can do it with the SBS algorithm:
+Here's an example how we can do it with the :math:`\mathrm{SBS}` algorithm:
 
 .. ipython:: python
 
@@ -92,7 +92,8 @@ Spatially distributed optimization
 ----------------------------------
 
 Next, using the first guess provided by a global calibration, which had stored the optimized parameters 
-in the previous step, we perform a spatially distributed calibration using ``L-BFGS-B`` algorithm:
+in the previous step, we perform a spatially distributed calibration using 
+the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm:
 
 .. ipython:: python
     :suppress:

@@ -77,9 +77,9 @@ We can also visualize the L-curve that was used to find the optimal regularizati
 .. ipython:: python
 
     opt_ind = np.where(br.l_curve["k"]==br.l_curve["k_opt"])[0][0]
-    plt.scatter(br.l_curve["Mahalanobis_distance"], br.l_curve["cost"]);
+    plt.scatter(br.l_curve["mahal_dist"], br.l_curve["cost"]);
     plt.scatter(
-            br.l_curve["Mahalanobis_distance"][opt_ind], 
+            br.l_curve["mahal_dist"][opt_ind], 
             br.l_curve["cost"][opt_ind], 
             color="red", 
             label="Optimal regularization point"
@@ -110,8 +110,8 @@ The spatially uniform first guess:
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
 
-Finally, we perform a variational calibration on the model parameters using the ``L-BFGS-B`` algorithm with 
-the Bayesian first guess:
+Finally, we perform a variational calibration on the model parameters using 
+the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm and the Bayesian first guess:
 
 .. ipython:: python
     :suppress:

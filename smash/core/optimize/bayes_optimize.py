@@ -39,7 +39,7 @@ class BayesResult(dict):
 
         - 'k' : a list of regularisation parameters to optimize.
         - 'cost' : a list of corresponding cost values.
-        - 'Mahalanobis_distance' : a list of corresponding Mahalanobis distance values.
+        - 'mahal_dist' : a list of corresponding Mahalanobis distance values.
         - 'var' : a list of corresponding dictionaries. Each represents the variance of Model parameters/states. The keys are the names of Model parameters/states considered.
         - 'k_opt' : the optimal regularisation value.
 
@@ -598,7 +598,7 @@ def _lcurve_compute_param(
 
     ret_l_curve["k_opt"] = kopt
 
-    ret_l_curve["Mahalanobis_distance"] = Dk
+    ret_l_curve["mahal_dist"] = Dk
 
     ret_l_curve["cost"] = cost
 
