@@ -35,6 +35,19 @@ instead of:
 
     >>> br.l_curve["Mahalanobis_distance"]
 
+Return of generated samples
+***************************
+
+The :meth:`smash.generate_samples` method now returns an instance of the :class:`smash.SampleResult` object instead of a ``pandas.DataFrame``. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)
+    >>> sr.cp
+
 ------------
 New Features
 ------------

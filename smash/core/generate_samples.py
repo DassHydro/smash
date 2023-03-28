@@ -15,11 +15,56 @@ from smash.core._constant import (
 import warnings
 
 import numpy as np
-import pandas as pd
 from scipy.stats import truncnorm
 
 
-__all__ = ["generate_samples"]
+__all__ = ["generate_samples", "SampleResult"]
+
+
+class SampleResult(dict):
+    """
+    Represents the generated samples using `smash.generate_samples` method.
+
+    Notes
+    -----
+    This class is essentially a subclass of dict with attribute accessors,
+    which also have additional attributes not listed here depending on the specific names
+    provided in the argument ``problem`` in the `smash.generate_samples` method.
+
+    Attributes
+    ----------
+    generator: str
+        The generator used to generate the samples.
+
+    n_sample: int
+        The number of generated samples.
+
+    See Also
+    --------
+    smash.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
+
+    """
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __repr__(self):
+        if self.keys():
+            m = max(map(len, list(self.keys()))) + 1
+            return "\n".join(
+                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
+    def __dir__(self):
+        return list(self.keys())
 
 
 def generate_samples(
@@ -84,11 +129,12 @@ def generate_samples(
 
     Returns
     -------
-    res : pandas.DataFrame
-        A dataframe with generated samples.
+    res : SampleResult
+        The generated samples result represented as a ``SampleResult`` object.
 
     See Also
     --------
+    smash.SampleResult: Represents the generated samples using `smash.generate_samples` method.
     Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
@@ -101,21 +147,26 @@ def generate_samples(
     ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
     ... }
 
-    Generate samples with `uniform` generator:
+    Generate samples with the uniform generator:
 
-    >>> smash.generate_samples(problem, n=5, random_state=99)
-                    cp         cft        exc          lr
-        0  1344.884839  566.051802  -0.755174  396.058590
-        1   976.668720  298.324876  -1.330822  973.982341
-        2  1651.164853   47.649025 -10.564027  524.890301
-        3    63.861329  990.636772  -7.646314   94.519480
-        4  1616.291877    7.818907   3.223710  813.495104
+    >>> sr = smash.generate_samples(problem, n=3, random_state=99)
+    >>> sr.keys()
+    dict_keys(['cp', 'cft', 'exc', 'lr'])
+
+    Access to generated sample result
+
+    >>> sr.cp
+    array([1344.8848387 ,  976.66872008, 1651.1648529 ])
 
     """
 
-    df = pd.DataFrame(columns=problem["names"])
+    ret_dict = {key: [] for key in problem["names"]}
 
     generator = generator.lower()
+
+    ret_dict["generator"] = generator
+
+    ret_dict["n_sample"] = n
 
     if random_state is not None:
         np.random.seed(random_state)
@@ -131,7 +182,7 @@ def generate_samples(
             ubi = [backg_sol[i]]
 
         if generator == "uniform":
-            df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
+            ret_dict[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
 
         elif generator in ["normal", "gaussian"]:
             if coef_std is None:
@@ -146,14 +197,14 @@ def generate_samples(
             else:
                 trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
 
-            df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
+            ret_dict[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
 
         else:
             raise ValueError(
                 f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
             )
 
-    return df
+    return SampleResult(ret_dict)
 
 
 def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):

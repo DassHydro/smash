@@ -130,6 +130,10 @@ def _bayes_computation(
         coef_std=coef_std,
     )
 
+    sample = pd.DataFrame(
+        {key: sample[key] for key in control_vector}
+    )  # convert from SampleResult to dataframe
+
     ### Build data from sample
 
     res_simu = _multi_simu(

@@ -3,19 +3,18 @@ from __future__ import annotations
 import smash
 
 import numpy as np
+import pandas as pd
 import pytest
 
 
 def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
     problem = model.get_bound_constraints()
 
-    uni = smash.generate_samples(
-        problem, generator="uniform", n=20, random_state=11
-    ).to_numpy()
+    sample = smash.generate_samples(problem, generator="uniform", n=20, random_state=11)
+    uni = pd.DataFrame({key: sample[key] for key in problem["names"]}).to_numpy()
 
-    nor = smash.generate_samples(
-        problem, generator="normal", n=20, random_state=11
-    ).to_numpy()
+    sample = smash.generate_samples(problem, generator="normal", n=20, random_state=11)
+    nor = pd.DataFrame({key: sample[key] for key in problem["names"]}).to_numpy()
 
     res = {"gen_samples.uni": uni, "gen_samples.nor": nor}
 

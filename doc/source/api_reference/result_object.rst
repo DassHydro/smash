@@ -33,3 +33,10 @@ Bayesian optimization result
     :toctree: smash/
 
     BayesResult
+
+Generated samples result
+************************
+.. autosummary::
+    :toctree: smash/
+
+    SampleResult
