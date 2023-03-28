@@ -1,16 +1,17 @@
-.. _release_notes.0.3.x:
+.. _release_notes.0.3.1:
 
 .. currentmodule:: smash
 
 =========================
-smash 0.3.x Release Notes
+smash 0.3.1 Release Notes
 =========================
-
-The smash 0.3.x release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
 ---------------
 Compatibilities
 ---------------
+
+In order to ensure compatibility with the latest versions of SALib, the SALib version used by ``smash`` and ``smash-dev`` 
+has been pinned to ``SALib>=1.4.5``.
 
 ------------
 Improvements
@@ -62,10 +63,37 @@ instead of:
     
     More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
 
-Optimize Options Documentation
-******************************
+Setting the learning rate for Net
+*********************************
 
-Add the documentation of the different algorithm options using a customize sphinx directive.
+Instead of passing the ``learning_rate`` argument directly as a parameter in the :meth:`Net.compile` method, 
+it is now included as a key-value pair within the ``options`` dictionary argument. 
+
+The default value of the learning rate depends on the optimizer that you choose. Here are some examples:
+
+.. code-block:: python
+
+    # A default learning rate of 0.01 will be set with the adagrad optimizer
+    >>> net.compile(optimizer="adagrad")
+
+    # A default learning rate of 0.001 will be set with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop")
+
+    # Set a custom learning rate of 0.002 with the rmsprop optimizer
+    >>> net.compile(optimizer="rmsprop", options={"learning_rate": 0.002})
+
+Documentation
+*************
+
+Add the documentation for the ``options`` argument in the :meth:`Model.optimize`, :meth:`Net.add` and :meth:`Net.compile` 
+methods using a customize sphinx directive.
+
+Add the user guide for advanced optimization techniques, including:
+
+- Fully-distributed optimization
+- Improving the first guess using Bayesian estimation
+- Pre-regionalization using polynomial mapping
+- Pre-regionalization using ANN
 
 ------------
 New Features
@@ -121,5 +149,5 @@ F2PY f2cmap warnings
 ********************
 
 Fix F2PY ``c_int`` warnings by adding into kind_map file: ``dict("integer": dict("c_int": "int"))``.
-Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.
 
+Fix mw_meshing.f9O ``drow`` and ``dcol`` variable initialisation.

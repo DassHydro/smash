@@ -215,8 +215,7 @@ def generic_ann_optimize_2(model: smash.Model, **kwargs) -> dict:
 
     net.compile(
         optimizer="sgd",
-        learning_rate=0.01,
-        options={"momentum": 0.001},
+        options={"learning_rate": 0.01, "momentum": 0.001},
         random_state=11,
     )
 

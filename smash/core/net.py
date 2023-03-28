@@ -164,6 +164,14 @@ class Net(object):
         options : dict
             A dictionary to configure layers added to the network.
 
+            .. hint::
+                See options for each layer type:
+
+                - 'dense' :ref:`(see here) <api_reference.add_dense>`
+                - 'activation' :ref:`(see here) <api_reference.add_activation>`
+                - 'scale' :ref:`(see here) <api_reference.add_scale>`
+                - 'dropout' :ref:`(see here) <api_reference.add_dropout>`
+
         Examples
         --------
         Initialize the neural network
@@ -234,7 +242,6 @@ class Net(object):
     def compile(
         self,
         optimizer: str = "adam",
-        learning_rate: float = 0.001,
         options: dict | None = None,
         random_state: int | None = None,
     ):
@@ -251,11 +258,16 @@ class Net(object):
             - 'adagrad'
             - 'rmsprop'
 
-        learning_rate : float, default 0.001
-            Learning rate that determines the step size of the optimization problem.
-
         options : dict or None, default None
             A dictionary of optimizer options.
+
+            .. hint::
+                See options for each optimizer:
+
+                - 'sgd' :ref:`(see here) <api_reference.compile_sgd>`
+                - 'adam' :ref:`(see here) <api_reference.compile_adam>`
+                - 'adagrad' :ref:`(see here) <api_reference.compile_adagrad>`
+                - 'rmsprop' :ref:`(see here) <api_reference.compile_rmsprop>`
 
         random_state : int or None, default None
             Random seed used to initialize weights.
@@ -274,7 +286,7 @@ class Net(object):
 
         Compile the network
 
-        >>> net.compile(optimizer='sgd', learning_rate=0.01, options={'momentum': 0.001})
+        >>> net.compile(optimizer='sgd', options={'learning_rate': 0.009, 'momentum': 0.001})
         >>> net
         +-------------+
         | Net summary |
@@ -300,7 +312,7 @@ class Net(object):
             if random_state is not None:
                 np.random.seed(random_state)
 
-            opt = OPT_FUNC[optimizer](learning_rate, **options)
+            opt = OPT_FUNC[optimizer](**options)
 
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):
@@ -308,7 +320,7 @@ class Net(object):
 
             self._compiled = True
             self._optimizer = optimizer
-            self._learning_rate = learning_rate
+            self._learning_rate = opt.learning_rate
 
         else:
             raise ValueError("The network does not contain layers")
@@ -437,41 +449,42 @@ class Net(object):
 
 class Layer(object):
     def _set_input_shape(self, shape: tuple):
-        """Sets the shape that the layer expects of the input in the forward
-        pass method"""
         self.input_shape = shape
 
     def layer_name(self):
-        """The name of the layer. Used in model summary."""
         return self.__class__.__name__
 
     def n_params(self):
-        """The number of trainable parameters used by the layer"""
         return 0
 
     def _forward_pass(self, x: np.ndarray, training: bool):
-        """Propogates the signal forward in the network"""
         raise NotImplementedError()
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        """Propogates the accumulated gradient backwards in the network.
-        If the has trainable weights then these weights are also tuned in this method.
-        As input (accum_grad) it receives the gradient with respect to the output of the layer and
-        returns the gradient with respect to the output of the previous layer."""
         raise NotImplementedError()
 
     def output_shape(self):
-        """The shape of the output produced by forward_pass"""
         raise NotImplementedError()
 
 
 class Activation(Layer):
-    """A layer that applies an activation operation to the input.
 
-    Parameters:
-    -----------
-    name: string
-        The name of the activation function that will be used.
+    """
+    Activation layer that applies a specified activation function to the input.
+
+    Options
+    -------
+    name : str
+        The name of the activation function that will be used. Should be one of
+
+        - 'relu' : Rectified Linear Unit
+        - 'sigmoid' : Sigmoid
+        - 'selu' : Scaled Exponential Linear Unit
+        - 'elu' : Exponential Linear Unit
+        - 'softmax' : Softmax
+        - 'leaky_relu' : Leaky Rectified Linear Unit
+        - 'tanh' : Hyperbolic Tangent
+        - 'softplus' : Softplus
     """
 
     def __init__(self, name: str, **unknown_options):
@@ -498,7 +511,15 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    """Scale function for outputs from the last layer w.r.t. parameters bounds."""
+
+    """
+    Scale layer that applies the min-max scaling function to the outputs.
+
+    Options
+    -------
+    bounds : list, tuple or array-like
+        A sequence of ``(min, max)`` values that the outputs will be scaled to.
+    """
 
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
         _check_unknown_options("Scale Layer", unknown_options)
@@ -568,16 +589,18 @@ def _wb_initialization(layer: Layer, attr: str):
 
 
 class Dense(Layer):
-    """A fully-connected NN layer.
-    Parameters:
-    -----------
-    neurons: int
+
+    """
+    Fully-connected (dense) layer.
+
+    Options
+    -------
+    neurons : int
         The number of neurons in the layer.
 
-    input_shape: tuple, default None
-        The expected input shape of the layer. For dense layers a single digit specifying
-        the number of features of the input. Must be specified if it is the first layer in
-        the network.
+    input_shape : tuple or None, default None
+        The expected input shape of the dense layer.
+        It must be specified if this is the first layer in the network.
 
     kernel_initializer : str, default 'glorot_uniform'
         Weight initialization method. Should be one of
@@ -678,13 +701,14 @@ class Dense(Layer):
 
 
 class Dropout(Layer):
-    """Randomly sets the output of the previous layer
-    to be zero with a drop rate.
 
-    Parameters:
-    -----------
+    """
+    Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
+
+    Options
+    -------
     drop_rate: float
-        Drop rate.
+        The probability of setting a given output value to zero.
     """
 
     def __init__(self, drop_rate: float, **unknown_options):
@@ -834,7 +858,22 @@ class MinMaxScale:
 
 
 class StochasticGradientDescent:
-    def __init__(self, learning_rate: float, momentum: float = 0, **unknown_options):
+
+    """
+    Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.01
+        The learning rate used to update the weights during training.
+
+    momentum : float, default 0
+        The momentum used to smooth the gradient updates.
+    """
+
+    def __init__(
+        self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
+    ):
         _check_unknown_options("SGD optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -853,9 +892,25 @@ class StochasticGradientDescent:
 
 
 class Adam:
+
+    """
+    Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.001
+        The learning rate used to update the weights during training.
+
+    b1 : float, default 0.9
+        Exponential decay rate for the first moment estimate.
+
+    b2 : float, default 0.999
+        Exponential decay rate for the second moment estimate.
+    """
+
     def __init__(
         self,
-        learning_rate: float,
+        learning_rate: float = 0.001,
         b1: float = 0.9,
         b2: float = 0.999,
         **unknown_options,
@@ -890,7 +945,18 @@ class Adam:
 
 
 class Adagrad:
-    def __init__(self, learning_rate, **unknown_options):
+
+    """
+    Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.01
+        The learning rate used to update the weights during training.
+
+    """
+
+    def __init__(self, learning_rate: float = 0.01, **unknown_options):
         _check_unknown_options("Adagrad optimizer", unknown_options)
 
         self.learning_rate = learning_rate
@@ -909,7 +975,22 @@ class Adagrad:
 
 
 class RMSprop:
-    def __init__(self, learning_rate: float, rho: float = 0.9, **unknown_options):
+
+    """
+    Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
+
+    Options
+    -------
+    learning_rate : float, default 0.001
+        The learning rate used to update the weights during training.
+
+    rho : float, default 0.9
+        The decay rate for the running average of the squared gradients.
+    """
+
+    def __init__(
+        self, learning_rate: float = 0.001, rho: float = 0.9, **unknown_options
+    ):
         _check_unknown_options("RMSprop optimizer", unknown_options)
 
         self.learning_rate = learning_rate

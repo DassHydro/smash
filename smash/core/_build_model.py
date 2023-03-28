@@ -250,3 +250,10 @@ def _build_parameters(
         adjust_interception_store(
             setup, mesh, input_data, parameters, n, day_index
         )  # % Fortran subroutine _mw_interception_store
+
+    # % Adjust routing parameter lr depending on the time step
+    # % We assumed that at hourly time step lr_1 = 5 and
+    # % lr_2 = dt_2 * (lr_1 / dt_1) , with lr_1 / dt_1 = 5 / 3600
+    parameters.lr = setup.dt * (5 / 3600)
+
+    # % TODO: Refactorize this with milestones on constants

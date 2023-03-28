@@ -27,7 +27,7 @@ Imports
 Model object creation
 ---------------------
 
-To obtain flood events segmentation, you must create a :class:`smash.Model` object. 
+To obtain flood events segmentation, you need to create a :class:`smash.Model` object. 
 For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
 
 Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset()` method and create the :class:`smash.Model` object.

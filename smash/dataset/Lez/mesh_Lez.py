@@ -11,4 +11,3 @@ mesh = smash.generate_mesh(
 )
 
 smash.save_mesh(mesh, f"mesh_Lez.hdf5")
-
