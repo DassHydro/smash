@@ -461,75 +461,82 @@ def _standardize_optimize_options(options: dict | None, setup: SetupDT) -> dict:
                 f"options '{options}' argument must be a dicitonary"
             )
         
-        if "reg_descriptors" in options:
-            
-            standardized_options["reg_descriptors"]=standardize_reg_descriptors(options["reg_descriptors"],setup)
-            
-        if "jreg_fun" in options:
-            
-            standardized_options["jreg_fun"] = _standardize_jreg_fun(options["jreg_fun"])
-            
-            if not "wjreg_fun" in options:
-                standardized_options["wjreg_fun"]=_standardize_wjreg_fun(None, standardized_options["jreg_fun"])
-            else:
-                standardized_options["wjreg_fun"] = _standardize_wjreg_fun(options["wjreg_fun"], standardized_options["jreg_fun"])
+        for key,value in options.items():
         
-        if "wjreg_fun" in options:
-            
-            if not "jreg_fun" in options:
-                raise ValueError(
-                    f"options['wjreg_fun'] is present but options['jreg_fun'] is missing"
-                )
-            
-        if "wjreg" in options:
-            
-            if isinstance(options["wjreg"],float) and options["wjreg"]>=0.:
-                standardized_options["wjreg"]=options["wjreg"]
-            else:
-                raise ValueError(
-                    f"options['wjreg'] '{options['wjreg']}' must be a float >=0."
-                )
-            
-        if "maxiter" in options:
-            
-            if isinstance(options["maxiter"],int) and options["maxiter"]>=0:
-                standardized_options["maxiter"]=options["maxiter"]
-            else:
-                raise ValueError(
-                    f"options['maxiter'] '{options['maxiter']}' must be a int >=0"
-                )
-            
-        if "auto_regul" in options:
-            
-            if type(options["auto_regul"])==type(None):
+            if key=="reg_descriptors":
                 
-                standardized_options["auto_regul"]='...'
-            
-            else:
+                standardized_options["reg_descriptors"]=standardize_reg_descriptors(options["reg_descriptors"],setup)
                 
-                if isinstance(options["auto_regul"],str) :
-                    
-                    if not options["auto_regul"] in ('lcurve', 'fast'):
-                        raise ValueError(
-                            f"options['auto_regul'] '{options['auto_regul']}' must be 'lcurve' | 'fast' | None"
-                        )
-                    else:
-                        standardized_options["auto_regul"]=options["auto_regul"]
+            elif key=="jreg_fun":
+                
+                standardized_options["jreg_fun"] = _standardize_jreg_fun(options["jreg_fun"])
+                
+                if not "wjreg_fun" in options:
+                    standardized_options["wjreg_fun"]=_standardize_wjreg_fun(None, standardized_options["jreg_fun"])
+                else:
+                    standardized_options["wjreg_fun"] = _standardize_wjreg_fun(options["wjreg_fun"], standardized_options["jreg_fun"])
+            
+            elif key=="wjreg_fun":
+                
+                if not "jreg_fun" in options:
+                    raise ValueError(
+                        f"options['wjreg_fun'] is present but options['jreg_fun'] is missing"
+                    )
+                
+            elif key=="wjreg":
+                
+                if isinstance(options["wjreg"],float) and options["wjreg"]>=0.:
+                    standardized_options["wjreg"]=options["wjreg"]
                 else:
                     raise ValueError(
-                        f"options['auto_regul'] '{options['auto_regul']}' must be a str"
+                        f"options['wjreg'] '{options['wjreg']}' must be a float >=0."
+                    )
+                
+            elif key=="maxiter":
+                
+                if isinstance(options["maxiter"],int) and options["maxiter"]>=0:
+                    standardized_options["maxiter"]=options["maxiter"]
+                else:
+                    raise ValueError(
+                        f"options['maxiter'] '{options['maxiter']}' must be a int >=0"
+                    )
+                
+            elif key=="auto_regul":
+                
+                if type(options["auto_regul"])==type(None):
+                    
+                    standardized_options["auto_regul"]='...'
+                
+                else:
+                    
+                    if isinstance(options["auto_regul"],str) :
+                        
+                        if not options["auto_regul"] in ('lcurve', 'fast'):
+                            raise ValueError(
+                                f"options['auto_regul'] '{options['auto_regul']}' must be 'lcurve' | 'fast' | None"
+                            )
+                        else:
+                            standardized_options["auto_regul"]=options["auto_regul"]
+                    else:
+                        raise ValueError(
+                            f"options['auto_regul'] '{options['auto_regul']}' must be a str"
+                        )
+                
+            elif key=="nb_wjreg_lcurve":
+                
+                if isinstance(options["nb_wjreg_lcurve"],int) and options["nb_wjreg_lcurve"]>=6:
+                    standardized_options["nb_wjreg_lcurve"]=options["nb_wjreg_lcurve"]
+                else:
+                    raise ValueError(
+                        f"options['nb_wjreg_lcurve'] '{options['nb_wjreg_lcurve']}' must be a int >=6"
                     )
             
-        if "nb_wjreg_lcurve" in options:
-            
-            if isinstance(options["nb_wjreg_lcurve"],int) and options["nb_wjreg_lcurve"]>=6:
-                standardized_options["nb_wjreg_lcurve"]=options["nb_wjreg_lcurve"]
             else:
                 raise ValueError(
-                    f"options['nb_wjreg_lcurve'] '{options['nb_wjreg_lcurve']}' must be a int >=6"
-                )
+                        f"Unknown {key} option in function standardize_options()"
+                    )
         
-        
+    
     return standardized_options
 
 
