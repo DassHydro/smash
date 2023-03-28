@@ -639,14 +639,14 @@ class Model(object):
         jreg_fun : str, sequence or None, default is None
             Type of regularization function(s) to be minimized. Should be one or a sequence of any 'prior', 'smoothing'
 
-        .. hint::
-            See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+            .. hint::
+                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
         wjreg_fun : sequence or None, default None
             Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize).
 
             .. note::
-            If not given, the weights is set to 1.
+                If not given, the weights is set to 1.
 
         wjreg: float, default is 0.
             Global regularization weith
