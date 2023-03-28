@@ -583,7 +583,6 @@ class Model(object):
             .. note::
                 If not given, the weights will correspond to the mean of the objective functions.
 
-
         event_seg : dict or None, default None
             A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
 
@@ -618,6 +617,12 @@ class Model(object):
             .. note::
                 If not given, the optimization start time will be equal to the start time.
 
+        verbose : bool, default True
+            Display information while optimizing.
+
+        inplace : bool, default False
+            if True, perform operation in-place.
+
         options : dict or None, default None
             A dictionary of algorithm options. Depending on the algorithm, different options can be pass.
 
@@ -628,15 +633,6 @@ class Model(object):
                 - 'nelder-mead' :ref:`(see here) <api_reference.optimize_nelder-mead>`
                 - 'l-bfgs-b' :ref:`(see here) <api_reference.optimize_l-bfgs-b>`
 
-        verbose : bool, default True
-            Display information while optimizing.
-
-        inplace : bool, default False
-            if True, perform operation in-place.
-
-        options : dict or None, default None
-            A dictionary of algorithm options. The following options are available:
-        
         maxiter : int, default is 40
             Maximum number of iterations for the optimization
         
@@ -703,7 +699,6 @@ class Model(object):
             instance = self.copy()
 
         print("</> Optimize Model")
-        
 
         # % standardize args
         (
