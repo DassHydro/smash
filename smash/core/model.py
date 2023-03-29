@@ -44,7 +44,11 @@ from smash.core.signatures import (
 
 from smash.core.prcp_indices import _prcp_indices
 
-from smash.core.generate_samples import _get_bound_constraints, _standardize_problem
+from smash.core.generate_samples import (
+    _get_bound_constraints,
+    _standardize_problem,
+    SampleResult,
+)
 
 from typing import TYPE_CHECKING
 
@@ -718,13 +722,9 @@ class Model(object):
     def bayes_estimate(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
-        generator: str = "uniform",
+        sample: SampleResult | None = None,
         n: int = 1000,
         random_state: int | None = None,
-        backg_sol: np.ndarray | None = None,
-        coef_std: float | None = None,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
         jobs_fun: str | list | tuple | set = "nse",
         wjobs_fun: list | tuple | set | None = None,
         event_seg: dict | None = None,
@@ -745,24 +745,33 @@ class Model(object):
         Parameters
         ----------
         k : int, float or sequence, default 4
-            A regularisation parameter that controls the decay rate of the likelihood function.
+            A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
                 If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
 
-        generator, n, random_state, backg_sol, coef_std : multiple types
-            Multiple arguments to generate spatially uniform Model parameters/states.
-            See `smash.generate_samples` for more.
+        sample : SampleResult or None, default None
+            An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
 
-            .. hint::
-                The generating samples problem can be redefined by using control_vector and bounds arguments.
+            .. note::
+                If not given, the Model parameters' samples will be generated automatically using the uniform generator
+                based on the Model structure considered.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
-                Optimization setting to run the forward hydrological model and compute the cost values.
-                See `smash.Model.optimize` for more.
+        n : int, default 1000
+            Number of generated samples. Only used if sample is not set.
+
+        random_state : int or None, default None
+            Random seed used to generate samples. Only used if sample is not set.
+
+            .. note::
+                If not given and sample is not set, generates the parameters set with a random seed.
+
+        jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
+            Optimization setting to run the forward hydrological model and compute the cost values.
+            See `smash.Model.optimize` for more.
 
         ncpu : integer, default 1
-                If ncpu > 1, perform a parallel computation for all parameter sets.
+            If ncpu > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while estimating.
@@ -771,7 +780,7 @@ class Model(object):
             If True, perform operation in-place.
 
         return_br : bool, default False
-            If True, also return the Bayesian estimation results ``BayesResult``.
+            If True, also return the Bayesian estimation result `BayesResult`.
 
 
         Returns
@@ -780,11 +789,12 @@ class Model(object):
             Model with optimize outputs if not inplace.
 
         res : BayesResult
-            The Bayesian estimation results represented as a ``BayesResult`` object if return_br.
+            The Bayesian estimation results represented as a `BayesResult` object if return_br.
 
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
+        SampleResult: Represents the generated samples using `smash.generate_samples` method.
 
         Examples
         --------
@@ -818,20 +828,20 @@ class Model(object):
 
         # % standardize args
         (
-            control_vector,
             jobs_fun,
             wjobs_fun,
             event_seg,
-            bounds,
             wgauge,
             ost,
+            sample,
             k,
         ) = _standardize_bayes_estimate_args(
-            control_vector,
+            sample,
+            n,
+            random_state,
             jobs_fun,
             wjobs_fun,
             event_seg,
-            bounds,
             gauge,
             wgauge,
             ost,
@@ -843,22 +853,16 @@ class Model(object):
 
         res = _bayes_computation(
             instance,
-            generator,
-            n,
-            random_state,
-            backg_sol,
-            coef_std,
+            sample,
             k,
             None,
             None,
             None,
             None,
-            control_vector,
-            None,
             jobs_fun,
             wjobs_fun,
             event_seg,
-            bounds,
+            None,
             wgauge,
             ost,
             verbose,
@@ -882,14 +886,11 @@ class Model(object):
     def bayes_optimize(
         self,
         k: int | float | range | list | tuple | set | np.ndarray = 4,
-        density_estimate: bool = True,
-        de_bw_method: str | None = None,
-        de_weights: np.ndarray | None = None,
-        generator: str = "uniform",
+        sample: SampleResult | None = None,
         n: int = 1000,
         random_state: int | None = None,
-        backg_sol: np.ndarray | None = None,
-        coef_std: float | None = None,
+        de_bw_method: str | None = None,
+        de_weights: np.ndarray | None = None,
         mapping: str = "uniform",
         algorithm: str | None = None,
         control_vector: str | list | tuple | set | None = None,
@@ -915,44 +916,50 @@ class Model(object):
         Parameters
         ----------
         k : int, float or sequence, default 4
-            A regularisation parameter that controls the decay rate of the likelihood function.
+            A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
                 If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
 
-        density_estimate : bool, default True
-            Take into account the density function estimated using Gaussian kernel.
+        sample : SampleResult or None, default None
+            An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
+
+            .. note::
+                If not given, the Model parameters' samples will be generated automatically using the uniform generator
+                based on the control vector and bounds arguments.
+
+        n : int, default 1000
+            Number of generated samples. Only used if sample is not set.
+
+        random_state : int or None, default None
+            Random seed used to generate samples. Only used if sample is not set.
+
+            .. note::
+                If not given and sample is not set, generates the parameters set with a random seed.
 
         de_bw_method : str, scalar, callable or None, default None
-            The method used to calculate the estimator bandwidth if density_estimate.
+            The method used to calculate the estimator bandwidth to estimate the density distribution.
             This can be 'scott', 'silverman', a scalar constant or a callable.
 
             .. note::
-                If not given and density_estimate=True, 'scott' is used as default.
+                If not given, 'scott' is used as default.
 
             See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
 
         de_weights : array-like or None, default None
-            A parameter related to weights of datapoints when estimating the density distribution.
+            A parameter related to weights of datapoints to estimate the density distribution.
 
             .. note::
-                If not given and density_estimate=True, the samples are assumed to be equally weighted.
+                If not given, the samples are assumed to be equally weighted.
 
             See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
 
-        generator, n, random_state, backg_sol, coef_std : multiple types
-            Multiple arguments to generate spatially uniform Model parameters/states.
-            See `smash.generate_samples` for more.
-
-            .. hint::
-                The generating samples problem can be redefined by using control_vector and bounds arguments.
-
         mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost, options : multiple types
-                Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
-                See `smash.Model.optimize` for more.
+            Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
+            See `smash.Model.optimize` for more.
 
         ncpu : integer, default 1
-                If ncpu > 1, perform a parallel computation for all parameter sets.
+            If ncpu > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while optimizing.
@@ -961,7 +968,7 @@ class Model(object):
             If True, perform operation in-place.
 
         return_br : bool, default False
-            If True, also return the Bayesian optimization results ``BayesResult``.
+            If True, also return the Bayesian optimization result `BayesResult`.
 
         Returns
         -------
@@ -969,11 +976,12 @@ class Model(object):
             Model with optimize outputs if not inplace.
 
         res : BayesResult
-            The Bayesian optimization results represented as a ``BayesResult`` object if return_br.
+            The Bayesian optimization results represented as a `BayesResult` object if return_br.
 
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
+        SampleResult: Represents the generated samples using `smash.generate_samples` method.
 
         Examples
         --------
@@ -1008,15 +1016,18 @@ class Model(object):
         (
             mapping,
             algorithm,
-            control_vector,
             jobs_fun,
             wjobs_fun,
             event_seg,
             bounds,
             wgauge,
             ost,
+            sample,
             k,
         ) = _standardize_bayes_optimize_args(
+            sample,
+            n,
+            random_state,
             mapping,
             algorithm,
             control_vector,
@@ -1037,17 +1048,11 @@ class Model(object):
 
         res = _bayes_computation(
             instance,
-            generator,
-            n,
-            random_state,
-            backg_sol,
-            coef_std,
+            sample,
             k,
-            density_estimate,
             de_bw_method,
             de_weights,
             algorithm,
-            control_vector,
             mapping,
             jobs_fun,
             wjobs_fun,
@@ -1102,7 +1107,7 @@ class Model(object):
         Parameters
         ----------
         net : Net or None, default None
-            The neural network Net will be trained to learn the descriptors-to-parameters mapping.
+            The neural network `Net` will be trained to learn the descriptors-to-parameters mapping.
 
             .. note::
                 If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
@@ -1120,8 +1125,8 @@ class Model(object):
             The learning rate used to update the weights during training. Only used if net is not set.
 
         control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
-                Optimization setting to run the forward hydrological model and compute the cost values.
-                See `smash.Model.optimize` for more.
+            Optimization setting to run the forward hydrological model and compute the cost values.
+            See `smash.Model.optimize` for more.
 
         epochs : int, default 400
             The number of epochs to train the network.
@@ -1150,7 +1155,7 @@ class Model(object):
             Model with optimize outputs if not inplace.
 
         Net : Net or None
-            Net with trained weights and biases if return_net and the default graph is used.
+            `Net` with trained weights and biases if return_net and the default graph is used.
 
         See Also
         --------
@@ -1360,7 +1365,7 @@ class Model(object):
         Returns
         -------
         res : SignResult
-            The signatures computation results represented as a ``SignResult`` object.
+            The signatures computation results represented as a `SignResult` object.
 
         See Also
         --------
@@ -1458,12 +1463,12 @@ class Model(object):
             Random seed used to generate samples for sensitivity computation.
 
             .. note::
-                If not given, generates parameters sets with a random seed.
+                If not given, generates the parameters set with a random seed.
 
         Returns
         -------
         res : SignSensResult
-            The signatures sensitivity computation results represented as a ``SignSensResult`` object.
+            The signatures sensitivity computation results represented as a `SignSensResult` object.
 
         See Also
         --------
@@ -1530,7 +1535,7 @@ class Model(object):
         Returns
         -------
         res : PrcpIndicesResult
-            The precipitation indices results represented as a ``PrcpIndicesResult`` object.
+            The precipitation indices results represented as a `PrcpIndicesResult` object.
 
         See Also
         --------

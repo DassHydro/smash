@@ -41,19 +41,43 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Bayesian estimation
 -------------------
 
-Next, we find a uniform first guess using Bayesian estimation on a random set of the model parameters:
+Next, we find a uniform first guess using Bayesian estimation on a random set of the Model parameters using the :meth:`Model.bayes_estimate` method. 
+By default, the ``sample`` argument is not required to be set, and it is automatically set based on the Model structure. 
+This example shows how to define a custom ``sample`` using the :meth:`smash.generate_samples` method. 
+
+You may refer to the :meth:`Model.get_bound_constraints` method to obtain some information about the Model parameters/states:
+
+.. ipython:: python
+
+    model.get_bound_constraints()
+
+Here we define a problem that only contains three Model parameters, which means the fourth one will be fixed:
+
+.. ipython:: python
+
+    problem = {
+            "num_vars": 3,
+            "names": ["cp", "lr", "cft"],
+            "bounds": [[1, 1000], [1, 1000], [1, 1000]]
+        }
+
+Next, we generate a set of 400 random Model parameters:
+
+.. ipython:: python
+
+    sr = smash.generate_samples(problem, n=400, random_state=1)
+
+We then perform Bayesian estimation:
 
 .. ipython:: python
 
     model_be, br = model.bayes_estimate(
-            k=np.linspace(-1, 8, 50), 
-            n=400, 
-            random_state=11, 
+            k=np.linspace(-1, 4, 50), 
+            sample=sr, 
             return_br=True
-        )
+        );
 
-In the code above, we generated a set of 400 random model parameters, and 
-used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 8]`.
+In the code above, we used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 4]`.
 
 -----------------------------------
 Visualization of estimation results
@@ -65,7 +89,7 @@ with the random set of parameters using the following code:
 
 .. ipython:: python
 
-    plt.hist(br.data["cost"], range=[0, 2], zorder=2);  # limit cost range 
+    plt.hist(br.data["cost"], bins=30, zorder=2);
     plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Cost");
     plt.ylabel("Frequency");
@@ -77,14 +101,15 @@ We can also visualize the L-curve that was used to find the optimal regularizati
 .. ipython:: python
 
     opt_ind = np.where(br.l_curve["k"]==br.l_curve["k_opt"])[0][0]
-    plt.scatter(br.l_curve["mahal_dist"], br.l_curve["cost"]);
+    plt.scatter(br.l_curve["mahal_dist"], br.l_curve["cost"], zorder=2);
     plt.scatter(
             br.l_curve["mahal_dist"][opt_ind], 
             br.l_curve["cost"][opt_ind], 
             color="red", 
-            label="Optimal regularization point"
+            label="Optimal regularization point",
+            zorder=3
         );
-    plt.grid(alpha=.7, ls="--");
+    plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Mahalanobis distance");
     plt.ylabel("Cost");
     plt.title("L-curve");
@@ -106,11 +131,30 @@ The spatially uniform first guess:
      model_be.parameters.lr[ind],
     )
 
+Comparing to the initial values of the parameters:
+
+.. ipython:: python
+
+    (
+     model.parameters.cp[ind],
+     model.parameters.cft[ind],
+     model.parameters.exc[ind],
+     model.parameters.lr[ind],
+    )
+
+We can see that the value of ``exc`` did not change since it is not set to be estimated.
+
+.. ipython:: python
+    :suppress:
+
+    if not np.allclose(model.parameters.exc, model_be.parameters.exc, atol=1e-08):
+        raise AssertionError("Bug found in bayes_estimate")
+
 -------------------------------------------------------------
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
 
-Finally, we perform a variational calibration on the model parameters using 
+Finally, we perform a variational calibration on the Model parameters using 
 the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm and the Bayesian first guess:
 
 .. ipython:: python

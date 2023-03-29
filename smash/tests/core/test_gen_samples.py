@@ -13,7 +13,14 @@ def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
     sample = smash.generate_samples(problem, generator="uniform", n=20, random_state=11)
     uni = pd.DataFrame({key: sample[key] for key in problem["names"]}).to_numpy()
 
-    sample = smash.generate_samples(problem, generator="normal", n=20, random_state=11)
+    sample = smash.generate_samples(
+        problem,
+        generator="normal",
+        n=20,
+        mean={problem["names"][1]: np.mean(problem["bounds"][1])},
+        coef_std=3,
+        random_state=11,
+    )
     nor = pd.DataFrame({key: sample[key] for key in problem["names"]}).to_numpy()
 
     res = {"gen_samples.uni": uni, "gen_samples.nor": nor}

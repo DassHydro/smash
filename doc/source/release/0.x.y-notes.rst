@@ -48,6 +48,20 @@ It can be used as follows:
     >>> sr = smash.generate_samples(problem)
     >>> sr.cp
 
+Bayesian optimization
+*********************
+
+The :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods now allow you to define an instance of 
+the :class:`smash.SampleResult` object for generating samples. As a result, we have removed all arguments related to sample generation from both methods.
+
+It can be use as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)
+    >>> model.bayes_estimate(sample=sr)
+
 ------------
 New Features
 ------------

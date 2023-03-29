@@ -33,10 +33,10 @@ class SampleResult(dict):
 
     Attributes
     ----------
-    generator: str
+    generator : str
         The generator used to generate the samples.
 
-    n_sample: int
+    n_sample : int
         The number of generated samples.
 
     See Also
@@ -72,7 +72,7 @@ def generate_samples(
     generator: str = "uniform",
     n: int = 1000,
     random_state: int | None = None,
-    backg_sol: np.ndarray | None = None,
+    mean: np.ndarray | None = None,
     coef_std: float | None = None,
 ):
     """
@@ -85,7 +85,7 @@ def generate_samples(
 
         - 'num_vars' : the number of Model parameters/states.
         - 'names' : the name of Model parameters/states.
-        - 'bounds' : the upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+        - 'bounds' : the upper and lower bounds of each Model parameter/state (a sequence of ``(min, max)``).
 
         .. hint::
             This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
@@ -105,13 +105,14 @@ def generate_samples(
         .. note::
             If not given, generates parameters sets with a random seed.
 
-    backg_sol : numpy.ndarray or None, default None
-        Spatially uniform prior parameters/states could be included in generated sets, and are
-        used as the mean when generating with Gaussian distribution.
-        In this case, truncated normal distribution could be used with respect to the boundary conditions defined by the above problem.
+    mean : dict or None, default None
+        If the samples are generated using a Gaussian distribution, ``mean`` is used to define the mean of the distribution for each Model parameter/state.
+        It is a dictionary where keys are the name of the parameters/states defined in the ``problem`` argument.
+        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in the ``problem`` argument.
+        None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given, the mean is the center of the parameter/state bound if in case of Gaussian generator.
+            If not given, the mean of the distribution will be set to the center of the parameter/state bounds if a Gaussian distribution is used.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -122,19 +123,19 @@ def generate_samples(
         where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
         .. note::
-            If not given, a default value for this coefficient will be assigned to define the standard deviation:
+            If not given, a default value for this coefficient will be assigned to define the standard deviation if a Gaussian distribution is used:
 
-        .. math::
+            .. math::
                 std = \\frac{u - l}{3}
 
     Returns
     -------
     res : SampleResult
-        The generated samples result represented as a ``SampleResult`` object.
+        The generated samples result represented as a `SampleResult` object.
 
     See Also
     --------
-    smash.SampleResult: Represents the generated samples using `smash.generate_samples` method.
+    SampleResult: Represents the generated samples using `smash.generate_samples` method.
     Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
@@ -150,15 +151,13 @@ def generate_samples(
     Generate samples with the uniform generator:
 
     >>> sr = smash.generate_samples(problem, n=3, random_state=99)
-    >>> sr.keys()
-    dict_keys(['cp', 'cft', 'exc', 'lr'])
-
-    Access to generated sample result
-
     >>> sr.cp
     array([1344.8848387 ,  976.66872008, 1651.1648529 ])
 
     """
+
+    if mean is None:
+        mean = {}
 
     ret_dict = {key: [] for key in problem["names"]}
 
@@ -168,6 +167,8 @@ def generate_samples(
 
     ret_dict["n_sample"] = n
 
+    ret_dict["_problem"] = problem.copy()
+
     if random_state is not None:
         np.random.seed(random_state)
 
@@ -175,29 +176,29 @@ def generate_samples(
         low = problem["bounds"][i][0]
         upp = problem["bounds"][i][1]
 
-        if backg_sol is None:
-            ubi = []
-
-        else:
-            ubi = [backg_sol[i]]
-
         if generator == "uniform":
-            ret_dict[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
+            ret_dict[p] = np.random.uniform(low, upp, n)
+
+            ret_dict["_" + p] = 1 / n * np.ones(n)
 
         elif generator in ["normal", "gaussian"]:
+            try:
+                ubi = mean[p]
+
+            except:
+                ubi = (low + upp) / 2
+
             if coef_std is None:
                 sd = (upp - low) / 3
 
             else:
                 sd = (upp - low) / coef_std
 
-            if backg_sol is None:
-                trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
+            trunc_normal = _get_truncated_normal(ubi, sd, low, upp)
 
-            else:
-                trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
+            ret_dict[p] = trunc_normal.rvs(size=n)
 
-            ret_dict[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
+            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
 
         else:
             raise ValueError(

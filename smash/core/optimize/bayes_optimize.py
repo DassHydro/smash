@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model import Model
+    from smash.core.generate_samples import SampleResult
 
 import pandas as pd
 import numpy as np
@@ -32,16 +33,16 @@ class BayesResult(dict):
         Rrepresenting the generated spatially uniform Model parameters/sates and the corresponding cost values after
         running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
     density : dict
-        Representing the estimated distribution at pixel scale of Model parameters/states after
-        running the simulations. The keys are the names of Model parameters/states considered.
+        Representing the estimated distribution at pixel scale of the Model parameters/sates after
+        running the simulations. The keys are the names of the Model parameters/sates.
     l_curve : dict
-        The optimization results on the regularisation parameter if the L-curve approach is used. The keys are
+        The optimization results on the regularization parameter if the L-curve approach is used. The keys are
 
-        - 'k' : a list of regularisation parameters to optimize.
+        - 'k' : a list of regularization parameters to optimize.
         - 'cost' : a list of corresponding cost values.
         - 'mahal_dist' : a list of corresponding Mahalanobis distance values.
-        - 'var' : a list of corresponding dictionaries. Each represents the variance of Model parameters/states. The keys are the names of Model parameters/states considered.
-        - 'k_opt' : the optimal regularisation value.
+        - 'var' : a list of corresponding dictionaries. The keys are the names of the Model parameters/sates, and each represents its variance.
+        - 'k_opt' : the optimal regularization value.
 
     See Also
     --------
@@ -74,28 +75,23 @@ class BayesResult(dict):
 
 def _bayes_computation(
     instance: Model,
-    generator: str,
-    n: int,
-    random_state: int | None,
-    backg_sol: np.ndarray | None,
-    coef_std: float | None,
+    sample: SampleResult,
     k: int | float | list,
-    density_estimate: bool | None,
     bw_method: str | None,
     weights: np.ndarray | None,
     algorithm: str | None,
-    control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
     event_seg: dict,
-    bounds: np.ndarray,
+    bounds: np.ndarray | None,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     verbose: bool,
     options: dict | None,
     ncpu: int,
 ) -> BayesResult:
+    # % Prior solution
     prior_data = {}
 
     # % returns
@@ -105,42 +101,13 @@ def _bayes_computation(
 
     # % verbose
     if verbose:
-        _bayes_message(n, generator, backg_sol, density_estimate, k)
+        _bayes_message(sample, k)
 
-    # % standardize density_estimate
-    if density_estimate is None:
-        if generator.lower() == "uniform":
-            density_estimate = False
-
-        else:
-            density_estimate = True
-
-    ### Generate sample
-    problem = {
-        "num_vars": len(control_vector),
-        "names": list(control_vector),
-        "bounds": [list(bound) for bound in bounds],
-    }
-    sample = generate_samples(
-        problem=problem,
-        generator=generator,
-        n=n,
-        random_state=random_state,
-        backg_sol=backg_sol,
-        coef_std=coef_std,
-    )
-
-    sample = pd.DataFrame(
-        {key: sample[key] for key in control_vector}
-    )  # convert from SampleResult to dataframe
-
-    ### Build data from sample
-
+    # % Build data from sample
     res_simu = _multi_simu(
         instance,
         sample,
         algorithm,
-        control_vector,
         mapping,
         jobs_fun,
         wjobs_fun,
@@ -156,8 +123,8 @@ def _bayes_computation(
 
     ret_data["cost"] = np.array(res_simu["cost"])
 
-    for p in control_vector:
-        ret_data[p] = sample[p].to_numpy()
+    for p in sample._problem["names"]:
+        ret_data[p] = getattr(sample, p)
 
         dat_p = np.dstack(res_simu[p])
 
@@ -165,33 +132,30 @@ def _bayes_computation(
 
         ret_density[p] = np.ones(dat_p.shape)
 
-    ### Density estimate
-
+    # % Density compute
     active_mask = np.where(instance.mesh.active_cell == 1)
 
-    if density_estimate:
-        _estimate_density(
-            prior_data,
-            active_mask,
-            ret_density,
-            algorithm,
-            control_vector,
-            bw_method,
-            weights,
-        )
+    _compute_density(
+        sample,
+        prior_data,
+        active_mask,
+        ret_density,
+        algorithm,
+        bw_method,
+        weights,
+    )
 
-    ### Bayes compute
-
+    # % Bayes compute
     if isinstance(k, list):
         _lcurve_compute_param(
             instance,
+            sample,
             jobs_fun,
             wjobs_fun,
             event_seg,
             wgauge,
             ost,
             active_mask,
-            control_vector,
             prior_data,
             ret_density,
             ret_l_curve,
@@ -201,13 +165,13 @@ def _bayes_computation(
     else:
         _compute_param(
             instance,
+            sample,
             jobs_fun,
             wjobs_fun,
             event_seg,
             wgauge,
             ost,
             active_mask,
-            control_vector,
             prior_data,
             ret_density,
             k,
@@ -218,29 +182,15 @@ def _bayes_computation(
     )
 
 
-def _bayes_message(
-    n_set: int,
-    generator: str,
-    backg_sol: np.ndarray | None,
-    density_estimate: bool,
-    k: int | float | list,
-):
+def _bayes_message(sr: SampleResult, k: int | float | list):
     sp4 = " " * 4
 
-    if isinstance(k, list):
-        lcurve = True
-
-    else:
-        lcurve = False
+    lcurve = True if isinstance(k, list) else False
 
     ret = []
 
-    ret.append(f"{sp4}Parameters/States set size: {n_set}")
-    ret.append(f"Sample generator: {generator}")
-    ret.append(f"Spatially uniform prior parameters/states: {backg_sol}")
-
-    if density_estimate is not None:
-        ret.append(f"Density estimation: {density_estimate}")
+    ret.append(f"{sp4}Parameters/States set size: {sr.n_sample}")
+    ret.append(f"Sample generator: {sr.generator}")
 
     ret.append(f"L-curve approach: {lcurve}")
 
@@ -296,9 +246,8 @@ def _run(
 def _unit_simu(
     i: int,
     instance: Model,
-    sample: pd.DataFrame,
+    sample: SampleResult,
     algorithm: str | None,
-    control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
@@ -309,12 +258,12 @@ def _unit_simu(
     options: dict | None,
 ) -> dict:
     # % SET PARAMS/STATES
-    for name in control_vector:
+    for name in sample._problem["names"]:
         if name in instance.setup._parameters_name:
-            setattr(instance.parameters, name, sample.iloc[i][name])
+            setattr(instance.parameters, name, getattr(sample, name)[i])
 
         else:
-            setattr(instance.states, name, sample.iloc[i][name])
+            setattr(instance.states, name, getattr(sample, name)[i])
 
     # % SIMU (RUN OR OPTIMIZE)
     if algorithm is None:
@@ -323,7 +272,7 @@ def _unit_simu(
     else:
         OPTIM_FUNC[algorithm](
             instance,
-            control_vector,
+            sample._problem["names"],
             mapping,
             jobs_fun,
             wjobs_fun,
@@ -339,7 +288,7 @@ def _unit_simu(
 
     res["cost"] = instance.output.cost
 
-    for name in control_vector:
+    for name in sample._problem["names"]:
         if name in instance.setup._parameters_name:
             res[name] = np.copy(getattr(instance.parameters, name))
 
@@ -351,9 +300,8 @@ def _unit_simu(
 
 def _multi_simu(
     instance: Model,
-    sample: pd.DataFrame,
+    sample: SampleResult,
     algorithm: str | None,
-    control_vector: np.ndarray,
     mapping: str | None,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
@@ -371,7 +319,7 @@ def _multi_simu(
         pgbar_mess = "</> Optimizing Model parameters on multiset"
 
     if ncpu > 1:
-        list_instance = [instance.copy() for i in range(len(sample))]
+        list_instance = [instance.copy() for i in range(sample.n_sample)]
 
         pool = mp.Pool(ncpu)
         list_result = pool.starmap(
@@ -382,7 +330,6 @@ def _multi_simu(
                     instance,
                     sample,
                     algorithm,
-                    control_vector,
                     mapping,
                     jobs_fun,
                     wjobs_fun,
@@ -400,14 +347,13 @@ def _multi_simu(
     elif ncpu == 1:
         list_result = []
 
-        for i in tqdm(range(len(sample)), desc=pgbar_mess):
+        for i in tqdm(range(sample.n_sample), desc=pgbar_mess):
             list_result.append(
                 _unit_simu(
                     i,
                     instance,
                     sample,
                     algorithm,
-                    control_vector,
                     mapping,
                     jobs_fun,
                     wjobs_fun,
@@ -422,7 +368,7 @@ def _multi_simu(
     else:
         raise ValueError(f"ncpu should be a positive integer, not {ncpu}")
 
-    res_keys = list(control_vector)
+    res_keys = list(sample._problem["names"])
     res_keys.append("cost")
     res = {k: [] for k in res_keys}
 
@@ -436,31 +382,38 @@ def _multi_simu(
 ### DENSITY ESTIMATE ###
 
 
-def _estimate_density(
+def _compute_density(
+    sample: SampleResult,
     data: dict,
     active_mask: np.ndarray,
     density: dict,
     algorithm: str | None,
-    control_vector: np.ndarray,
     bw_method: str | None,
     weights: np.ndarray | None,
 ):
     coord = np.dstack([active_mask[0], active_mask[1]])[0]
 
-    for p in control_vector:
+    for p in sample._problem["names"]:
         dat_p = np.copy(data[p])
 
-        if algorithm == "l-bfgs-b":
+        if algorithm == "l-bfgs-b":  # variational Bayes optim (HD)
             for c in coord:
                 density[p][c[0], c[1]] = gaussian_kde(
                     dat_p[c[0], c[1]], bw_method=bw_method, weights=weights
                 )(dat_p[c[0], c[1]])
 
         else:
-            u_dis = np.mean(dat_p[active_mask], axis=0)
-            uniform_density = gaussian_kde(u_dis, bw_method=bw_method, weights=weights)(
-                u_dis
-            )
+            if isinstance(algorithm, str):
+                u_dis = np.mean(dat_p[active_mask], axis=0)
+
+                uniform_density = gaussian_kde(
+                    u_dis, bw_method=bw_method, weights=weights
+                )(
+                    u_dis
+                )  # global Bayes optim (LD)
+
+            else:
+                uniform_density = getattr(sample, "_" + p)  # Bayes estim (LD)
 
             for c in coord:
                 density[p][c[0], c[1]] = uniform_density
@@ -495,13 +448,13 @@ def _compute_mean_U(
 
 def _compute_param(
     instance: Model,
+    sample: SampleResult,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
     event_seg: dict,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     active_mask: np.ndarray,
-    control_vector: np.ndarray,
     prior_data: dict,
     ret_density: dict,
     k: int | float,
@@ -512,7 +465,7 @@ def _compute_param(
 
     var = {}
 
-    for name in control_vector:
+    for name in sample._problem["names"]:
         U = np.copy(prior_data[name])
         rho = np.copy(ret_density[name])
 
@@ -542,13 +495,13 @@ def _compute_param(
 
 def _lcurve_compute_param(
     instance: Model,
+    sample: SampleResult,
     jobs_fun: np.ndarray,
     wjobs_fun: np.ndarray,
     event_seg: dict,
     wgauge: np.ndarray,
     ost: pd.Timestamp,
     active_mask: np.ndarray,
-    control_vector: np.ndarray,
     prior_data: dict,
     ret_density: dict,
     ret_l_curve: dict,
@@ -561,13 +514,13 @@ def _lcurve_compute_param(
     for k_i in k:
         co, dk, vr = _compute_param(
             instance,
+            sample,
             jobs_fun,
             wjobs_fun,
             event_seg,
             wgauge,
             ost,
             active_mask,
-            control_vector,
             prior_data,
             ret_density,
             k_i,
@@ -586,13 +539,13 @@ def _lcurve_compute_param(
 
     _compute_param(
         instance,
+        sample,
         jobs_fun,
         wjobs_fun,
         event_seg,
         wgauge,
         ost,
         active_mask,
-        control_vector,
         prior_data,
         ret_density,
         kopt,
