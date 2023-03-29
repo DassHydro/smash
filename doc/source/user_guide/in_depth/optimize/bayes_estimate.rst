@@ -41,11 +41,11 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 Bayesian estimation
 -------------------
 
-Next, we find a uniform first guess using Bayesian estimation on a random set of the Model parameters using the :meth:`Model.bayes_estimate` method. 
+Next, we find a uniform first guess using Bayesian estimation on a random set of the Model parameters using the :meth:`smash.Model.bayes_estimate` method. 
 By default, the ``sample`` argument is not required to be set, and it is automatically set based on the Model structure. 
 This example shows how to define a custom ``sample`` using the :meth:`smash.generate_samples` method. 
 
-You may refer to the :meth:`Model.get_bound_constraints` method to obtain some information about the Model parameters/states:
+You may refer to the :meth:`smash.Model.get_bound_constraints` method to obtain some information about the Model parameters/states:
 
 .. ipython:: python
 
@@ -71,11 +71,8 @@ We then perform Bayesian estimation:
 
 .. ipython:: python
 
-    model_be, br = model.bayes_estimate(
-            k=np.linspace(-1, 4, 50), 
-            sample=sr, 
-            return_br=True
-        );
+    regul = np.linspace(-1, 4, 50)
+    model_be, br = model.bayes_estimate(regul, sample=sr, return_br=True);
 
 In the code above, we used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 4]`.
 
