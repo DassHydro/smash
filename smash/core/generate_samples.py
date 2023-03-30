@@ -15,6 +15,7 @@ from smash.core._constant import (
 import warnings
 
 import numpy as np
+import pandas as pd
 from scipy.stats import truncnorm
 
 
@@ -27,8 +28,9 @@ class SampleResult(dict):
 
     Notes
     -----
-    This class is essentially a subclass of dict with attribute accessors,
-    which also have additional attributes not listed here depending on the specific names
+    This class is essentially a subclass of dict with attribute accessors and two additional methods, which are
+    `SampleResult.to_numpy` and `SampleResult.to_dataframe`.
+    This also have additional attributes not listed here depending on the specific names
     provided in the argument ``problem`` in the `smash.generate_samples` method.
 
     Attributes
@@ -42,6 +44,30 @@ class SampleResult(dict):
     See Also
     --------
     smash.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
+
+    Examples
+    --------
+    >>> problem = {"num_vars": 2, "names": ["cp", "lr"], "bounds": [[1,200], [1,500]]}
+    >>> sr = smash.generate_samples(problem, n=5, random_state=1)
+
+    Convert the result to a numpy.ndarray:
+
+    >>> sr.to_numpy(axis=-1)
+    array([[ 83.98737894,  47.07695879],
+           [144.34457419,  93.94384548],
+           [  1.02276059, 173.43480279],
+           [ 61.16418195, 198.98696964],
+           [ 30.20442227, 269.86955027]])
+
+    Convert the result to a pandas.DataFrame:
+
+    >>> sr.to_dataframe()
+               cp          lr
+    0   83.987379   47.076959
+    1  144.344574   93.943845
+    2    1.022761  173.434803
+    3   61.164182  198.986970
+    4   30.204422  269.869550
 
     """
 
@@ -65,6 +91,40 @@ class SampleResult(dict):
 
     def __dir__(self):
         return list(self.keys())
+
+    def to_numpy(self, axis=0):
+        """
+        Convert the `SampleResult` object to a numpy.ndarray.
+
+        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
+        based on the names of the Model parameters/states.
+
+        Parameters
+        ----------
+        axis : int, default 0
+            The axis along which the generated samples of each Model parameter/state will be joined.
+
+        Returns
+        -------
+        res : numpy.ndarray
+            The `SampleResult` object as a numpy.ndarray.
+
+        """
+        keys = sorted(self._problem["names"])
+
+        return np.stack([self[k] for k in keys], axis=axis)
+
+    def to_dataframe(self):
+        """
+        Convert the `SampleResult` object to a pandas.DataFrame.
+
+        Returns
+        -------
+        res : pandas.DataFrame
+            The SampleResult object as a pandas.DataFrame.
+        """
+
+        return pd.DataFrame({k: self[k] for k in self._problem["names"]})
 
 
 def generate_samples(

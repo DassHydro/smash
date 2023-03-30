@@ -954,9 +954,25 @@ class Model(object):
 
             See `here <https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.gaussian_kde.html>`__ for more details.
 
-        mapping, algorithm, control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost, options : multiple types
+        mapping, algorithm, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost, options : multiple types
             Optimization setting to optimize the Model using each generated spatially uniform parameters/states set as a first guess.
             See `smash.Model.optimize` for more.
+
+        control_vector : str, sequence or None, default None
+            Parameters and/or states to be optimized. The control vector argument
+            can be any parameter or state name or any sequence of parameter and/or state names.
+
+            .. note::
+                If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
+
+        bounds : dict or None, default None
+            Bounds on control vector. The bounds argument is a dictionary where keys are the name of the
+            parameters and/or states in the control vector (can be a subset of control vector sequence)
+            and the values are pairs of ``(min, max)`` values (i.e. list, set or tuple) with ``min`` lower than ``max``.
+            None value inside the dictionary will be filled in with default bound values.
+
+            .. note::
+                If not given, the bounds will be filled in with default bound values.
 
         ncpu : integer, default 1
             If ncpu > 1, perform a parallel computation through the parameters set.
@@ -1124,7 +1140,23 @@ class Model(object):
         learning_rate : float, default 0.003
             The learning rate used to update the weights during training. Only used if net is not set.
 
-        control_vector, bounds, jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
+        control_vector : str, sequence or None, default None
+            Parameters and/or states to be optimized. The control vector argument
+            can be any parameter or state name or any sequence of parameter and/or state names.
+
+            .. note::
+                If not given, the control vector will be composed of the parameters of the structure defined in the Model setup.
+
+        bounds : dict or None, default None
+            Bounds on control vector. The bounds argument is a dictionary where keys are the name of the
+            parameters and/or states in the control vector (can be a subset of control vector sequence)
+            and the values are pairs of ``(min, max)`` values (i.e. list, set or tuple) with ``min`` lower than ``max``.
+            None value inside the dictionary will be filled in with default bound values.
+
+            .. note::
+                If not given, the bounds will be filled in with default bound values.
+
+        jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
             Optimization setting to run the forward hydrological model and compute the cost values.
             See `smash.Model.optimize` for more.
 

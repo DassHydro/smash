@@ -38,7 +38,7 @@ instead of:
 Return of generated samples
 ***************************
 
-The :meth:`smash.generate_samples` method now returns an instance of the :class:`smash.SampleResult` object instead of a ``pandas.DataFrame``. 
+The :meth:`smash.generate_samples` method now returns an instance of the :class:`smash.SampleResult` object instead of a pandas.DataFrame. 
 
 It can be used as follows:
 
@@ -65,6 +65,23 @@ It can be use as follows:
 ------------
 New Features
 ------------
+
+Conversion of Result objects
+****************************
+
+We have added additional methods to some Result objects, which are:
+
+- :meth:`PrcpIndicesResult.to_numpy` for the :class:`PrcpIndicesResult` object.
+- :meth:`SampleResult.to_numpy` and :meth:`SampleResult.to_dataframe` for the :class:`SampleResult` object.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)  # create a SampleResult object
+    >>> sr.to_numpy()  # convert to numpy array
+    >>> sr.to_dataframe()  # convert to pandas dataframe  
 
 -----
 Fixes
