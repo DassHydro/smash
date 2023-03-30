@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
-
 from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,
     SAMPLE_GENERATORS,
     PROBLEM_KEYS,
 )
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.solver._mwd_setup import SetupDT
 
 import warnings
 
@@ -216,12 +216,9 @@ def generate_samples(
 
     """
 
-    if mean is None:
-        mean = {}
+    generator, mean = _standardize_generate_samples_args(problem, generator, mean)
 
     ret_dict = {key: [] for key in problem["names"]}
-
-    generator = generator.lower()
 
     ret_dict["generator"] = generator
 
@@ -242,28 +239,17 @@ def generate_samples(
             ret_dict["_" + p] = 1 / n * np.ones(n)
 
         elif generator in ["normal", "gaussian"]:
-            try:
-                ubi = mean[p]
-
-            except:
-                ubi = (low + upp) / 2
-
             if coef_std is None:
                 sd = (upp - low) / 3
 
             else:
                 sd = (upp - low) / coef_std
 
-            trunc_normal = _get_truncated_normal(ubi, sd, low, upp)
+            trunc_normal = _get_truncated_normal(mean[p], sd, low, upp)
 
             ret_dict[p] = trunc_normal.rvs(size=n)
 
             ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
-
-        else:
-            raise ValueError(
-                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
-            )
 
     return SampleResult(ret_dict)
 
@@ -326,3 +312,50 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
         raise TypeError("The problem definition must be a dictionary or None")
 
     return problem
+
+
+def _standardize_generate_samples_args(problem: dict, generator: str, user_mean: dict):
+    if isinstance(problem, dict):  # simple check problem
+        _standardize_problem(problem, None, None)
+
+    else:
+        raise TypeError("problem must be a dictionary")
+
+    if isinstance(generator, str):  # check generator
+        generator = generator.lower()
+
+        if generator not in SAMPLE_GENERATORS:
+            raise ValueError(
+                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
+            )
+
+        elif generator in ["normal", "gaussian"]:
+            # check mean
+            mean = dict(zip(problem["names"], np.mean(problem["bounds"], axis=1)))
+
+            if user_mean is None:
+                pass
+
+            elif isinstance(user_mean, dict):
+                for name, um in user_mean.items():
+                    if not name in problem["names"]:
+                        warnings.warn(
+                            f"Key {name} does not match any existing names in the problem definition {problem['names']}"
+                        )
+
+                    if isinstance(um, (int, float)):
+                        mean.update({name: um})
+
+                    else:
+                        raise TypeError("mean value must be float or integer")
+
+            else:
+                raise TypeError("mean must be None or a dictionary")
+
+        else:
+            mean = user_mean
+
+    else:
+        raise TypeError("generator must be a string")
+
+    return generator, mean
