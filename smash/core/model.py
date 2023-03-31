@@ -9,8 +9,6 @@ from smash.solver._mwd_output import OutputDT
 
 from smash.solver._mw_forward import forward
 
-from smash.solver._mw_derived_type_update import update_optimize_setup
-
 from smash.core._constant import OPTIM_FUNC
 
 from smash.core._build_model import (
@@ -19,13 +17,6 @@ from smash.core._build_model import (
     _build_mesh,
     _build_input_data,
     _build_parameters,
-)
-
-
-from smash.core.optimize._optimize import (
-    _optimize_sbs,
-    _optimize_nelder_mead,
-    _optimize_lbfgsb,
 )
 
 from smash.core.optimize._ann_optimize import _ann_optimize
@@ -510,13 +501,13 @@ class Model(object):
         self,
         mapping: str = "uniform",
         algorithm: str | None = None,
-        control_vector: str | list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
         bounds: dict | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         options: dict | None = None,
         verbose: bool = True,
@@ -635,27 +626,6 @@ class Model(object):
 
         maxiter : int, default is 40
             Maximum number of iterations for the optimization
-        
-        jreg_fun : str, sequence or None, default is None
-            Type of regularization function(s) to be minimized. Should be one or a sequence of any 'prior', 'smoothing'
-
-            .. hint::
-                See a detailed explanation on the cost function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
-
-        wjreg_fun : sequence or None, default None
-            Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize).
-
-            .. note::
-                If not given, the weights is set to 1.
-
-        wjreg: float, default is 0.
-            Global regularization weith
-        
-        auto_regul: str {lcurve, fast} | None
-            Methods to automatically compute the wjreg weith. the "fast" method consist of 2 optimizations cycle. The lcurve methods is more accurate and consist to nb_wjreg_lcurve optimization cycle.
-        
-        nb_wjreg_lcurve: int, default is 6
-            Number of optimization cycle during the lcurve process. 6 is the minimum required.
 
         Returns
         -------
@@ -722,100 +692,53 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
         )
 
-        options = _standardize_optimize_options(options,instance.setup)
-        
-        if not "jreg_fun" in options:
-            njr=0
-        else:
-            njr=options["jreg_fun"].size
-        
-        # % Update optimize setup derived type according to new optimize args and options !
-        # % This Fortran subroutine reset optimize_setup values and realloc arrays.
-        update_optimize_setup(
-            instance.setup._optimize,
-            instance.setup._ntime_step,
-            instance.setup._nd,
-            instance.mesh.ng,
+        options = _standardize_optimize_options(options, instance)
+
+        res = OPTIM_FUNC[algorithm](
+            instance,
+            control_vector,
             mapping,
-            jobs_fun.size,
-            njr, 
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            bounds,
+            wgauge,
+            ost,
+            verbose,
+            **options,
         )
-        
-        results=dict()
-        
-        if algorithm == "sbs":
-            results=_optimize_sbs(instance,
-                            control_vector,
-                            mapping,
-                            jobs_fun,
-                            wjobs_fun,
-                            event_seg,
-                            bounds,
-                            wgauge,
-                            ost,
-                            verbose,
-                            **options,
-                        )
-        
-        if algorithm == "l-bfgs-b":
-            results=_optimize_lbfgsb(instance,
-                            control_vector,
-                            mapping,
-                            jobs_fun,
-                            wjobs_fun,
-                            event_seg,
-                            bounds,
-                            wgauge,
-                            ost,
-                            verbose,
-                            **options,
-                        )
-        
-        if algorithm == "nelder-mead":
-            results=_optimize_nelder_mead(instance,
-                            control_vector,
-                            mapping,
-                            jobs_fun,
-                            wjobs_fun,
-                            event_seg,
-                            bounds,
-                            wgauge,
-                            ost,
-                            verbose,
-                            **options,
-                        )
-        
+
         instance._last_update = f"{algorithm.upper()} Optimization"
 
-        if not inplace:
-            if len(results)>0:
-                return results,instance
+        if res is not None:
+            if not inplace:
+                return instance, res
+
             else:
-                return instance
+                return res
+
         else:
-            if len(results)>0:
-                return results
+            if not inplace:
+                return instance
 
     def bayes_estimate(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        k: int | float | range | list | tuple | np.ndarray = 4,
         generator: str = "uniform",
         n: int = 1000,
         random_state: int | None = None,
         backg_sol: np.ndarray | None = None,
         coef_std: float | None = None,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         ncpu: int = 1,
         verbose: bool = True,
@@ -921,9 +844,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
             k,
         )
 
@@ -967,7 +888,7 @@ class Model(object):
 
     def bayes_optimize(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        k: int | float | range | list | tuple | np.ndarray = 4,
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
@@ -978,13 +899,13 @@ class Model(object):
         coef_std: float | None = None,
         mapping: str = "uniform",
         algorithm: str | None = None,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         options: dict | None = None,
         ncpu: int = 1,
@@ -1113,13 +1034,11 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
             k,
         )
 
-        options = _standardize_optimize_options(options,instance.setup)
+        options = _standardize_optimize_options(options, instance)
 
         res = _bayes_computation(
             instance,
@@ -1164,13 +1083,13 @@ class Model(object):
         net: Net | None = None,
         optimizer: str = "adam",
         learning_rate: float = 0.003,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         epochs: int = 400,
         early_stopping: bool = False,
@@ -1321,9 +1240,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
         )
 
         net = _ann_optimize(

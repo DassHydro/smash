@@ -92,6 +92,37 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
     res["optimize.distributed_l-bfgs-b_bounds.cp"] = instance.parameters.cp.copy()
     res["optimize.distributed_l-bfgs-b_bounds.cft"] = instance.parameters.cft.copy()
 
+    # % Regularization auto_wjreg fast
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 1,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "fast",
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_fast.cost"] = output_cost(instance)
+
+    # % Regularization auto_wjreg lcurve
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 1,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "lcurve",
+            "nb_wjreg_lcurve": 8,
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_lcurve.cost"] = output_cost(instance)
+
     return res
 
 

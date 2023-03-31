@@ -95,7 +95,6 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
         test_name.append(key)
 
         if key in new_f_keys and key in f_keys:
-
             if f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
                 is_equal = np.array_equal(f[key][:], new_f[key][:])
             else:
