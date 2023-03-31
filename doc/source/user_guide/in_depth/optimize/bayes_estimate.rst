@@ -61,18 +61,17 @@ Here we define a problem that only contains three Model parameters, which means 
             "bounds": [[1, 1000], [1, 1000], [1, 1000]]
         }
 
-Next, we generate a set of 400 random Model parameters:
+We then generate a set of 400 random Model parameters:
 
 .. ipython:: python
 
     sr = smash.generate_samples(problem, n=400, random_state=1)
 
-We then perform Bayesian estimation:
+and perform Bayesian estimation:
 
 .. ipython:: python
 
-    regul = np.linspace(-1, 4, 50)
-    model_be, br = model.bayes_estimate(regul, sample=sr, return_br=True);
+    model_be, br = model.bayes_estimate(sr, alpha=np.linspace(-1, 4, 50), return_br=True);
 
 In the code above, we used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 4]`.
 
@@ -91,19 +90,24 @@ with the random set of parameters using the following code:
     plt.xlabel("Cost");
     plt.ylabel("Frequency");
     @savefig distribution_cost_be_user_guide.png
-    plt.title("Distribution of cost values on the parameters set");
+    plt.title("Cost value histogram for parameter set");
 
 We can also visualize the L-curve that was used to find the optimal regularization parameter:
 
 .. ipython:: python
 
-    opt_ind = np.where(br.l_curve["k"]==br.l_curve["k_opt"])[0][0]
-    plt.scatter(br.l_curve["mahal_dist"], br.l_curve["cost"], zorder=2);
+    opt_ind = np.where(br.l_curve["alpha"]==br.l_curve["alpha_opt"])[0][0]
+    plt.scatter(
+            br.l_curve["mahal_dist"], 
+            br.l_curve["cost"],
+            label="Regularization parameter",
+            zorder=2
+        );
     plt.scatter(
             br.l_curve["mahal_dist"][opt_ind], 
             br.l_curve["cost"][opt_ind], 
             color="red", 
-            label="Optimal regularization point",
+            label="Optimal value",
             zorder=3
         );
     plt.grid(alpha=.7, ls="--", zorder=1);

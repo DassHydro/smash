@@ -721,8 +721,8 @@ class Model(object):
 
     def bayes_estimate(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
         sample: SampleResult | None = None,
+        alpha: int | float | range | list | tuple | set | np.ndarray = 4,
         n: int = 1000,
         random_state: int | None = None,
         jobs_fun: str | list | tuple | set = "nse",
@@ -744,18 +744,18 @@ class Model(object):
 
         Parameters
         ----------
-        k : int, float or sequence, default 4
-            A regularization parameter that controls the decay rate of the likelihood function.
-
-            .. note::
-                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
-
         sample : SampleResult or None, default None
             An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
 
             .. note::
                 If not given, the Model parameters' samples will be generated automatically using the uniform generator
                 based on the Model structure considered.
+
+        alpha : int, float or sequence, default 4
+            A regularization parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
             Number of generated samples. Only used if sample is not set.
@@ -781,7 +781,6 @@ class Model(object):
 
         return_br : bool, default False
             If True, also return the Bayesian estimation result `BayesResult`.
-
 
         Returns
         -------
@@ -834,7 +833,7 @@ class Model(object):
             wgauge,
             ost,
             sample,
-            k,
+            alpha,
         ) = _standardize_bayes_estimate_args(
             sample,
             n,
@@ -848,13 +847,13 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
-            k,
+            alpha,
         )
 
         res = _bayes_computation(
             instance,
             sample,
-            k,
+            alpha,
             None,
             None,
             None,
@@ -885,8 +884,8 @@ class Model(object):
 
     def bayes_optimize(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
         sample: SampleResult | None = None,
+        alpha: int | float | range | list | tuple | set | np.ndarray = 4,
         n: int = 1000,
         random_state: int | None = None,
         de_bw_method: str | None = None,
@@ -915,18 +914,18 @@ class Model(object):
 
         Parameters
         ----------
-        k : int, float or sequence, default 4
-            A regularization parameter that controls the decay rate of the likelihood function.
-
-            .. note::
-                If k is a sequence, then the L-curve approach will be used to find an optimal value of k.
-
         sample : SampleResult or None, default None
             An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
 
             .. note::
                 If not given, the Model parameters' samples will be generated automatically using the uniform generator
                 based on the control vector and bounds arguments.
+
+        alpha : int, float or sequence, default 4
+            A regularization parameter that controls the decay rate of the likelihood function.
+
+            .. note::
+                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
             Number of generated samples. Only used if sample is not set.
@@ -1003,7 +1002,7 @@ class Model(object):
         --------
         >>> setup, mesh = smash.load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> br = model.bayes_optimize(k=1.75, n=100, inplace=True, options={"maxiter": 2}, return_br=True, random_state=99)
+        >>> br = model.bayes_optimize(alpha=1.75, n=100, inplace=True, options={"maxiter": 2}, return_br=True, random_state=99)
 
         Access to cost values of the optimizations with different set of Model parameters
 
@@ -1039,7 +1038,7 @@ class Model(object):
             wgauge,
             ost,
             sample,
-            k,
+            alpha,
         ) = _standardize_bayes_optimize_args(
             sample,
             n,
@@ -1057,7 +1056,7 @@ class Model(object):
             instance.setup,
             instance.mesh,
             instance.input_data,
-            k,
+            alpha,
         )
 
         options = _standardize_optimize_options(options)
@@ -1065,7 +1064,7 @@ class Model(object):
         res = _bayes_computation(
             instance,
             sample,
-            k,
+            alpha,
             de_bw_method,
             de_weights,
             algorithm,

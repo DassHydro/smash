@@ -32,17 +32,19 @@ class BayesResult(dict):
     data : dict
         Rrepresenting the generated spatially uniform Model parameters/sates and the corresponding cost values after
         running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
+
     density : dict
         Representing the estimated distribution at pixel scale of the Model parameters/sates after
         running the simulations. The keys are the names of the Model parameters/sates.
+
     l_curve : dict
         The optimization results on the regularization parameter if the L-curve approach is used. The keys are
 
-        - 'k' : a list of regularization parameters to optimize.
+        - 'alpha' : a list of regularization parameters to be optimized.
         - 'cost' : a list of corresponding cost values.
         - 'mahal_dist' : a list of corresponding Mahalanobis distance values.
         - 'var' : a list of corresponding dictionaries. The keys are the names of the Model parameters/sates, and each represents its variance.
-        - 'k_opt' : the optimal regularization value.
+        - 'alpha_opt' : the optimal value of the regularization parameter.
 
     See Also
     --------
@@ -76,7 +78,7 @@ class BayesResult(dict):
 def _bayes_computation(
     instance: Model,
     sample: SampleResult,
-    k: int | float | list,
+    alpha: int | float | list,
     bw_method: str | None,
     weights: np.ndarray | None,
     algorithm: str | None,
@@ -101,7 +103,7 @@ def _bayes_computation(
 
     # % verbose
     if verbose:
-        _bayes_message(sample, k)
+        _bayes_message(sample, alpha)
 
     # % Build data from sample
     res_simu = _multi_simu(
@@ -146,7 +148,7 @@ def _bayes_computation(
     )
 
     # % Bayes compute
-    if isinstance(k, list):
+    if isinstance(alpha, list):
         _lcurve_compute_param(
             instance,
             sample,
@@ -159,7 +161,7 @@ def _bayes_computation(
             prior_data,
             ret_density,
             ret_l_curve,
-            k,
+            alpha,
         )
 
     else:
@@ -174,7 +176,7 @@ def _bayes_computation(
             active_mask,
             prior_data,
             ret_density,
-            k,
+            alpha,
         )
 
     return BayesResult(
@@ -182,10 +184,10 @@ def _bayes_computation(
     )
 
 
-def _bayes_message(sr: SampleResult, k: int | float | list):
+def _bayes_message(sr: SampleResult, alpha: int | float | list):
     sp4 = " " * 4
 
-    lcurve = True if isinstance(k, list) else False
+    lcurve = True if isinstance(alpha, list) else False
 
     ret = []
 
@@ -423,27 +425,27 @@ def _compute_density(
 
 
 def _compute_mean_U(
-    U: np.ndarray, J: np.ndarray, rho: np.ndarray, k: float, mask: np.ndarray
+    U: np.ndarray, J: np.ndarray, rho: np.ndarray, alpha: float, mask: np.ndarray
 ) -> tuple:
     # U is 3-D array
     # rho is 3-D array
     # J is 1-D array
 
-    L = np.exp(-(2**k) * (J / min(J) - 1) ** 2)  # likelihood
+    L = np.exp(-(2**alpha) * (J / min(J) - 1) ** 2)  # likelihood
     Lrho = L * rho  # 3-D array
 
     C = np.sum(Lrho, axis=2)  # C is 2-D array
 
-    U_k = 1 / C * np.sum(U * Lrho, axis=2)  # 2-D array
+    U_alp = 1 / C * np.sum(U * Lrho, axis=2)  # 2-D array
 
-    varU = 1 / C * np.sum((U - U_k[..., np.newaxis]) ** 2 * Lrho, axis=2)  # 2-D array
+    varU = 1 / C * np.sum((U - U_alp[..., np.newaxis]) ** 2 * Lrho, axis=2)  # 2-D array
     varU = np.mean(varU[mask])
 
     Uinf = np.mean(U, axis=2)  # 2-D array
 
-    Dk = np.mean(np.square(U_k - Uinf)[mask]) / varU
+    D_alp = np.mean(np.square(U_alp - Uinf)[mask]) / varU
 
-    return U_k, varU, Dk
+    return U_alp, varU, D_alp
 
 
 def _compute_param(
@@ -457,9 +459,9 @@ def _compute_param(
     active_mask: np.ndarray,
     prior_data: dict,
     ret_density: dict,
-    k: int | float,
+    alpha: int | float,
 ) -> tuple:
-    Dk = []
+    D_alp = []
 
     J = np.copy(prior_data["cost"])
 
@@ -469,7 +471,7 @@ def _compute_param(
         U = np.copy(prior_data[name])
         rho = np.copy(ret_density[name])
 
-        u, v, d = _compute_mean_U(U, J, rho, k, active_mask)
+        u, v, d = _compute_mean_U(U, J, rho, alpha, active_mask)
 
         if name in instance.setup._parameters_name:
             setattr(instance.parameters, name, u)
@@ -477,7 +479,7 @@ def _compute_param(
         else:
             setattr(instance.states, name, u)
 
-        Dk.append(d)
+        D_alp.append(d)
 
         var[name] = v
 
@@ -490,7 +492,7 @@ def _compute_param(
         ost,
     )
 
-    return instance.output.cost, np.mean(Dk), var
+    return instance.output.cost, np.mean(D_alp), var
 
 
 def _lcurve_compute_param(
@@ -505,14 +507,14 @@ def _lcurve_compute_param(
     prior_data: dict,
     ret_density: dict,
     ret_l_curve: dict,
-    k: list,
+    alpha: list,
 ):
     cost = []
-    Dk = []
+    D_alp = []
     var = []
 
-    for k_i in k:
-        co, dk, vr = _compute_param(
+    for alpha_i in alpha:
+        co, d_alp, vr = _compute_param(
             instance,
             sample,
             jobs_fun,
@@ -523,19 +525,19 @@ def _lcurve_compute_param(
             active_mask,
             prior_data,
             ret_density,
-            k_i,
+            alpha_i,
         )
 
         cost.append(co)
-        Dk.append(dk)
+        D_alp.append(d_alp)
         var.append(vr)
 
     cost_scaled = (cost - np.min(cost)) / (np.max(cost) - np.min(cost))
-    Dk_scaled = (Dk - np.min(Dk)) / (np.max(Dk) - np.min(Dk))
+    D_alp_scaled = (D_alp - np.min(D_alp)) / (np.max(D_alp) - np.min(D_alp))
 
-    d = np.square(cost_scaled) + np.square(Dk_scaled)
+    d = np.square(cost_scaled) + np.square(D_alp_scaled)
 
-    kopt = k[np.argmin(d)]
+    alpha_opt = alpha[np.argmin(d)]
 
     _compute_param(
         instance,
@@ -548,14 +550,14 @@ def _lcurve_compute_param(
         active_mask,
         prior_data,
         ret_density,
-        kopt,
+        alpha_opt,
     )
 
-    ret_l_curve["k"] = k
+    ret_l_curve["alpha"] = alpha
 
-    ret_l_curve["k_opt"] = kopt
+    ret_l_curve["alpha_opt"] = alpha_opt
 
-    ret_l_curve["mahal_dist"] = Dk
+    ret_l_curve["mahal_dist"] = D_alp
 
     ret_l_curve["cost"] = cost
 

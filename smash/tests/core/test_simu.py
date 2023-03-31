@@ -121,7 +121,7 @@ def test_optimize():
 
 def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_estimate(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         return_br=True,
         random_state=11,
@@ -146,7 +146,7 @@ def test_bayes_estimate():
 
 def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_optimize(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         mapping="distributed",
         algorithm="l-bfgs-b",

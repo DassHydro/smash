@@ -16,25 +16,6 @@ Compatibilities
 Improvements
 ------------
 
-BayesResult object
-******************
-
-The key ``Mahalanobis_distance`` in the attribute ``l_curve`` of :class:`smash.BayesResult` object 
-has been changed to a shortened name ``mahal_dist``.
-
-It can be used as follows:
-
-.. code-block:: python
-
-    >>> br = model.bayes_estimate(k=range(5), inplace=True, return_br=True)
-    >>> br.l_curve["mahal_dist"]
-
-instead of:
-
-.. code-block:: python
-
-    >>> br.l_curve["Mahalanobis_distance"]
-
 Return of generated samples
 ***************************
 
@@ -86,3 +67,39 @@ It can be used as follows:
 -----
 Fixes
 -----
+
+Regularization parameter name
+*****************************
+
+The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been changed from ``k`` to ``alpha``. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(alpha=2)
+
+instead of:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(k=2)
+
+BayesResult object
+******************
+
+The key ``Mahalanobis_distance`` in the attribute ``l_curve`` of :class:`smash.BayesResult` object 
+has been changed to a shortened name ``mahal_dist``.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> br = model.bayes_estimate(alpha=range(5), inplace=True, return_br=True)
+    >>> br.l_curve["mahal_dist"]
+
+instead of:
+
+.. code-block:: python
+
+    >>> br.l_curve["Mahalanobis_distance"]
