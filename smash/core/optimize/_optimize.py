@@ -132,46 +132,43 @@ def _optimize_lbfgsb(
         Maximum allowed number of iterations.
 
     jreg_fun : str, sequence or None, default None
-        Type of regularization function(s) to be minimized. Should be one or a sequence of any
+        Type(s) of regularization function(s) to be minimized when using distributed mapping. Should be one or a sequence of any of
 
         - 'prior'
         - 'smoothing'
 
         .. note::
-            'prior' and 'smoothing' jreg_fun are only available with a distributed mapping.
+            If not given, the Model will be optimized without any regularization terms.
 
         .. hint::
             See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
     wjreg: float, default 0
-        Global regularization weigth.
+        Global regularization weight. Only used if jreg_fun is set.
 
     wjreg_fun : sequence or None, default None
-        Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize).
+        Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize). Only used if jreg_fun is set.
 
         .. note::
-            If not given, the weights are set to 1.
+            If not given and jreg_fun is set, the weights are set to 1.
 
     auto_wjreg : str or None, default None
-        Type of method to automatically compute wjreg. Should be one of
+        Type of method to automatically compute the regularization function weight(s) wjreg_fun. Only used if jreg_fun is set. Should be one of
 
         - 'fast' (it consists of 2 optimization cycles)
         - 'lcurve' (it consists of nb_wjreg_lcurve optimization cycles)
+        
+        .. note::
+            If not given, the regularization weight(s) are computed using the values set in wjreg_fun.
 
     nb_wjreg_lcurve : int, default 6
-        Number of optimization cycles during the auto_wjreg lcurve process. 6 is the minimum required.
-
-    adjoint_test : bool, default False
-        if True, perform an adjoint test (i.e. scalar product test).
-
-        .. note::
-            This option is only available with a distributed mapping.
+        Number of optimization cycles during the process of automatically computing the regularization function weight(s) using the L-curve approach. Only used if jreg_fun is set and auto_wjreg='lcurve'. The minimum value required is 6.
 
     return_lcurve : bool, default False
-        If True, also return the lcurve results in the form of a dictionary.
+        If True, also return the L-curve results in the form of a dictionary. Only used if jreg_fun is set and auto_wjreg='lcurve'.
 
-        .. note::
-            This options is only available with a lcurve auto_wjreg.
+    adjoint_test : bool, default False
+        if True, perform an adjoint test (i.e. a scalar product test). Only used if mapping='distributed'.
     """
 
     _check_unknown_options(unknown_options)
@@ -394,7 +391,7 @@ def _optimize_lbfgsb(
             jreg_max = np.max(cost_jreg_arr)
 
             # % select the best wjreg based on the transformed lcurve and using our own method decribed in ...
-            distance, wjreg_lcurve_opt = _compute_best_lcurve_weigth(
+            distance, wjreg_lcurve_opt = _compute_best_lcurve_weight(
                 cost_jobs_arr,
                 cost_jreg_arr,
                 wjreg_arr,
@@ -953,7 +950,7 @@ def _compute_wjreg_range(wjreg_opt: float, nb_wjreg_lcurve: int):
     return wjreg_range
 
 
-def _compute_best_lcurve_weigth(
+def _compute_best_lcurve_weight(
     cost_jobs_arr: np.ndarray,
     cost_jreg_arr: np.ndarray,
     wjreg_arr: np.ndarray,

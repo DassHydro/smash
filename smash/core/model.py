@@ -612,7 +612,7 @@ class Model(object):
             Display information while optimizing.
 
         inplace : bool, default False
-            if True, perform operation in-place.
+            If True, perform operation in-place.
 
         options : dict or None, default None
             A dictionary of algorithm options. Depending on the algorithm, different options can be pass.
@@ -625,7 +625,7 @@ class Model(object):
                 - 'l-bfgs-b' :ref:`(see here) <api_reference.optimize_l-bfgs-b>`
 
         maxiter : int, default is 40
-            Maximum number of iterations for the optimization
+            Maximum number of iterations for the optimization.
 
         Returns
         -------

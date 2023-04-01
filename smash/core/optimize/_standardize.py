@@ -25,6 +25,9 @@ from smash.solver._mw_derived_type_update import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from smash.core.model import Model
+    from smash.solver._mwd_parameters import ParametersDT
+    from smash.solver._mwd_states import StatesDT
     from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
@@ -147,7 +150,7 @@ def _standardize_jobs_fun(jobs_fun: str | list | tuple, algorithm: str) -> np.nd
 
     if "kge" in jobs_fun and algorithm == "l-bfgs-b":
         raise ValueError(
-            f"'kge' objective function can not be use with '{algorithm}' algorithm (non convex function)"
+            f"'kge' objective function can not be used with '{algorithm}' algorithm (non convex function)"
         )
 
     list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
