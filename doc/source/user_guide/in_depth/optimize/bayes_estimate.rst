@@ -96,16 +96,16 @@ We can also visualize the L-curve that was used to find the optimal regularizati
 
 .. ipython:: python
 
-    opt_ind = np.where(br.l_curve["alpha"]==br.l_curve["alpha_opt"])[0][0]
+    opt_ind = np.where(br.lcurve["alpha"]==br.lcurve["alpha_opt"])[0][0]
     plt.scatter(
-            br.l_curve["mahal_dist"], 
-            br.l_curve["cost"],
+            br.lcurve["mahal_dist"], 
+            br.lcurve["cost"],
             label="Regularization parameter",
             zorder=2
         );
     plt.scatter(
-            br.l_curve["mahal_dist"][opt_ind], 
-            br.l_curve["cost"][opt_ind], 
+            br.lcurve["mahal_dist"][opt_ind], 
+            br.lcurve["cost"][opt_ind], 
             color="red", 
             label="Optimal value",
             zorder=3

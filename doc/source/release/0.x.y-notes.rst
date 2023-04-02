@@ -88,15 +88,15 @@ instead of:
 BayesResult object
 ******************
 
-The key ``Mahalanobis_distance`` in the attribute ``l_curve`` of :class:`smash.BayesResult` object 
-has been changed to a shortened name ``mahal_dist``.
+The attribute ``l_curve`` of :class:`smash.BayesResult` object has been changed to ``lcurve``, 
+and the key ``Mahalanobis_distance`` has also been changed to a shortened name ``mahal_dist``.
 
 It can be used as follows:
 
 .. code-block:: python
 
     >>> br = model.bayes_estimate(alpha=range(5), inplace=True, return_br=True)
-    >>> br.l_curve["mahal_dist"]
+    >>> br.lcurve["mahal_dist"]
 
 instead of:
 

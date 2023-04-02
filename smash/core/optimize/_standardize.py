@@ -537,19 +537,19 @@ def _standardize_bayes_optimize_sample(
     return sample
 
 
-def _standardize_bayes_k(
-    k: int | float | range | list | tuple | set | np.ndarray,
+def _standardize_bayes_alpha(
+    alpha: int | float | range | list | tuple | set | np.ndarray,
 ):
-    if isinstance(k, (int, float, list)):
+    if isinstance(alpha, (int, float, list)):
         pass
 
-    elif isinstance(k, (range, np.ndarray, tuple, set)):
-        k = list(k)
+    elif isinstance(alpha, (range, np.ndarray, tuple, set)):
+        alpha = list(alpha)
 
     else:
-        raise TypeError("k argument must be numerical or list-like object")
+        raise TypeError("alpha must be numerical or list-like object")
 
-    return k
+    return alpha
 
 
 def _standardize_optimize_args(
@@ -629,7 +629,7 @@ def _standardize_bayes_estimate_args(
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
-    k: int | float | range | list | tuple | set | np.ndarray,
+    alpha: int | float | range | list | tuple | set | np.ndarray,
 ):
     jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
@@ -658,7 +658,7 @@ def _standardize_bayes_estimate_args(
 
     sample = _standardize_bayes_estimate_sample(sample, n, random_state, setup)
 
-    k = _standardize_bayes_k(k)
+    alpha = _standardize_bayes_alpha(alpha)
 
     return (
         jobs_fun,
@@ -667,7 +667,7 @@ def _standardize_bayes_estimate_args(
         wgauge,
         ost,
         sample,
-        k,
+        alpha,
     )
 
 
@@ -688,7 +688,7 @@ def _standardize_bayes_optimize_args(
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
-    k: int | float | range | list | tuple | set | np.ndarray,
+    alpha: int | float | range | list | tuple | set | np.ndarray,
 ):
     mapping = _standardize_mapping(mapping)
 
@@ -730,7 +730,7 @@ def _standardize_bayes_optimize_args(
         sample, n, random_state, control_vector, bounds
     )
 
-    k = _standardize_bayes_k(k)
+    alpha = _standardize_bayes_alpha(alpha)
 
     return (
         mapping,
@@ -742,7 +742,7 @@ def _standardize_bayes_optimize_args(
         wgauge,
         ost,
         sample,
-        k,
+        alpha,
     )
 
 

@@ -37,7 +37,7 @@ class BayesResult(dict):
         Representing the estimated distribution at pixel scale of the Model parameters/sates after
         running the simulations. The keys are the names of the Model parameters/sates.
 
-    l_curve : dict
+    lcurve : dict
         The optimization results on the regularization parameter if the L-curve approach is used. The keys are
 
         - 'alpha' : a list of regularization parameters to be optimized.
@@ -99,7 +99,7 @@ def _bayes_computation(
     # % returns
     ret_data = {}
     ret_density = {}
-    ret_l_curve = {}
+    ret_lcurve = {}
 
     # % verbose
     if verbose:
@@ -160,7 +160,7 @@ def _bayes_computation(
             active_mask,
             prior_data,
             ret_density,
-            ret_l_curve,
+            ret_lcurve,
             alpha,
         )
 
@@ -180,7 +180,7 @@ def _bayes_computation(
         )
 
     return BayesResult(
-        dict(zip(["data", "density", "l_curve"], [ret_data, ret_density, ret_l_curve]))
+        dict(zip(["data", "density", "lcurve"], [ret_data, ret_density, ret_lcurve]))
     )
 
 
@@ -506,7 +506,7 @@ def _lcurve_compute_param(
     active_mask: np.ndarray,
     prior_data: dict,
     ret_density: dict,
-    ret_l_curve: dict,
+    ret_lcurve: dict,
     alpha: list,
 ):
     cost = []
@@ -553,12 +553,12 @@ def _lcurve_compute_param(
         alpha_opt,
     )
 
-    ret_l_curve["alpha"] = alpha
+    ret_lcurve["alpha"] = alpha
 
-    ret_l_curve["alpha_opt"] = alpha_opt
+    ret_lcurve["alpha_opt"] = alpha_opt
 
-    ret_l_curve["mahal_dist"] = D_alp
+    ret_lcurve["mahal_dist"] = D_alp
 
-    ret_l_curve["cost"] = cost
+    ret_lcurve["cost"] = cost
 
-    ret_l_curve["var"] = var
+    ret_lcurve["var"] = var
