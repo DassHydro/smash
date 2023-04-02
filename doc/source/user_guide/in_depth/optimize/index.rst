@@ -18,6 +18,7 @@ which contains daily data from 3 nested gauges spanning a total area of 169km².
     :maxdepth: 1
 
     fully_distributed
+    regularization
     multi_site
     multi_criteria
     bayes_estimate

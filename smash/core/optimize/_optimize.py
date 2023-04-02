@@ -115,12 +115,12 @@ def _optimize_lbfgsb(
     verbose: bool,
     maxiter: int = 100,
     jreg_fun: np.ndarray | None = None,
-    wjreg: float = 0.0,
+    wjreg: float = 0.01,
     wjreg_fun: np.ndarray | None = None,
     auto_wjreg: str | None = None,
     nb_wjreg_lcurve: int = 6,
-    adjoint_test: bool = False,
     return_lcurve: bool = False,
+    adjoint_test: bool = False,
     **unknown_options,
 ):
     """
@@ -143,21 +143,21 @@ def _optimize_lbfgsb(
         .. hint::
             See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
-    wjreg: float, default 0
+    wjreg: float, default 0.01
         Global regularization weight. Only used if jreg_fun is set.
 
     wjreg_fun : sequence or None, default None
         Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize). Only used if jreg_fun is set.
 
         .. note::
-            If not given and jreg_fun is set, the weights are set to 1.
+            If not given and jreg_fun is set with multi-regularization, the weights are set to 1.
 
     auto_wjreg : str or None, default None
         Type of method to automatically compute the regularization function weight(s) wjreg_fun. Only used if jreg_fun is set. Should be one of
 
         - 'fast' (it consists of 2 optimization cycles)
         - 'lcurve' (it consists of nb_wjreg_lcurve optimization cycles)
-        
+
         .. note::
             If not given, the regularization weight(s) are computed using the values set in wjreg_fun.
 
@@ -207,10 +207,12 @@ def _optimize_lbfgsb(
     if jreg_fun is not None:
         instance.setup._optimize.jreg_fun = jreg_fun
 
+        instance.setup._optimize.wjreg = wjreg
+    else:
+        instance.setup._optimize.wjreg = 0
+
     if wjreg_fun is not None:
         instance.setup._optimize.wjreg_fun = wjreg_fun
-
-    instance.setup._optimize.wjreg = wjreg
 
     # %TODO: Add "distance_correlation" once clearly verified
     # ~ if not (type(reg_descriptors)==type(None)):
@@ -506,7 +508,7 @@ def _optimize_nelder_mead(
             first reached.
 
     disp : bool, default False
-        Set to True to print convergence messages.
+        If True, display convergence messages.
 
     return_all : bool, default False
         Set to True to return a list of the best solution at each of the
@@ -698,6 +700,7 @@ def _optimize_message(instance: Model, control_vector: np.ndarray, mapping: str)
     if algorithm == "l-bfgs-b":
         ret.append(f"Jreg function: [ {' '.join(jreg_fun)} ]")
         ret.append(f"wJreg function: [ {' '.join(wjreg_fun.astype('U'))} ]")
+        ret.append(f"wJreg: {wjreg}")
 
     ret.append(f"Nx: {nx}")
     ret.append(f"Np: {len_parameters} [ {' '.join(parameters)} ]")

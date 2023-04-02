@@ -90,19 +90,19 @@ def _standardize_algorithm(algorithm: str | None, mapping: str) -> str:
         if algorithm == "sbs":
             if mapping in ["distributed", "hyper-linear", "hyper-polynomial"]:
                 raise ValueError(
-                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                    f"'{algorithm}' algorithm can not be used with '{mapping}' mapping"
                 )
 
         elif algorithm == "nelder-mead":
             if mapping in ["distributed", "hyper-polynomial"]:
                 raise ValueError(
-                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                    f"'{algorithm}' algorithm can not be used with '{mapping}' mapping"
                 )
 
         elif algorithm == "l-bfgs-b":
             if mapping == "uniform":
                 raise ValueError(
-                    f"'{algorithm}' algorithm can not be use with '{mapping}' mapping"
+                    f"'{algorithm}' algorithm can not be used with '{mapping}' mapping"
                 )
 
     return algorithm
@@ -155,11 +155,11 @@ def _standardize_jobs_fun(jobs_fun: str | list | tuple, algorithm: str) -> np.nd
 
     list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
 
-    check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
+    unk_jobs_fun = [jof for jof in jobs_fun if jof not in list_jobs_fun]
 
-    if sum(check_obj) < len(check_obj):
+    if unk_jobs_fun:
         raise ValueError(
-            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
+            f"Unknown objective function {unk_jobs_fun}. Choices: {list_jobs_fun}"
         )
 
     return jobs_fun
@@ -439,25 +439,18 @@ def _standardize_jreg_fun(jreg_fun: str | list | tuple, setup: SetupDT) -> np.nd
         jreg_fun = np.array(jreg_fun)
 
     else:
-        raise TypeError("jreg_fun option must be str or list-like object")
+        raise TypeError("jreg_fun option must str or list-like object")
 
-    if "prior" in jreg_fun and setup._optimize.mapping.startswith("hyper"):
+    if list(jreg_fun) and setup._optimize.mapping.startswith("hyper"):
         raise ValueError(
-            f"'prior' regularization function can not be use with '{setup._optimize.mapping}' mapping"
+            f"Regularization function(s) can not be used with '{setup._optimize.mapping}' mapping"
         )
 
-    if "smoothing" in jreg_fun and setup._optimize.mapping.startswith("hyper"):
+    unk_jreg_fun = [jrf for jrf in jreg_fun if jrf not in JREG_FUN]
+
+    if unk_jreg_fun:
         raise ValueError(
-            f"'smoothing' regularization function can not be use with '{setup._optimize.mapping}' mapping"
-        )
-
-    list_jreg_fun = JREG_FUN
-
-    check_reg = np.array([1 if o in list_jreg_fun else 0 for o in jreg_fun])
-
-    if sum(check_reg) < len(check_reg):
-        raise ValueError(
-            f"Unknown regularization function: {np.array(jreg_fun)[np.where(check_reg == 0)]}. Choices {list_jreg_fun}"
+            f"Unknown regularization function(s) {unk_jreg_fun}. Choices: {JREG_FUN}"
         )
 
     return jreg_fun
@@ -470,7 +463,7 @@ def _standardize_wjreg(wjreg: int | float, jreg_fun: np.ndarray) -> float:
 
         if jreg_fun.size == 0:
             warnings.warn(
-                "no regularization function has been choosen with the options jreg_fun. wjreg option will have no effect"
+                "No regularization function has been choosen with the options jreg_fun. wjreg option will have no effect"
             )
 
     else:
@@ -503,7 +496,7 @@ def _standardize_auto_wjreg(auto_wjreg: str, jreg_fun: np.ndarray) -> str:
 
         if jreg_fun.size == 0:
             warnings.warn(
-                "no regularization function has been choosen with the option jreg_fun. auto_wjreg option will have no effect"
+                "No regularization function has been choosen with the option jreg_fun. auto_wjreg option will have no effect"
             )
 
     else:
@@ -526,7 +519,7 @@ def _standardize_nb_wjreg_lcurve(
 
         if jreg_fun.size == 0:
             warnings.warn(
-                "no regularization function has been choosen with the option jreg_fun. nb_wjreg_lcurve option will have no effect"
+                "No regularization function has been choosen with the option jreg_fun. nb_wjreg_lcurve option will have no effect"
             )
 
     else:
@@ -640,11 +633,11 @@ def _standardize_jobs_fun_wo_mapping(
 
     list_jobs_fun = JOBS_FUN + CSIGN_OPTIM + ESIGN_OPTIM
 
-    check_obj = np.array([1 if o in list_jobs_fun else 0 for o in jobs_fun])
+    unk_jobs_fun = [jof for jof in jobs_fun if jof not in list_jobs_fun]
 
-    if sum(check_obj) < len(check_obj):
+    if unk_jobs_fun:
         raise ValueError(
-            f"Unknown objective function: {np.array(jobs_fun)[np.where(check_obj == 0)]}. Choices {list_jobs_fun}"
+            f"Unknown objective function(s) {unk_jobs_fun}. Choices: {list_jobs_fun}"
         )
 
     return jobs_fun
