@@ -13,6 +13,15 @@ Compatibilities
 ---------------
 
 ------------
+Deprecations
+------------
+
+Makefile command
+****************
+
+The ``baseline_test`` makefile command has been deprecated and replaced by ``test_baseline``.
+
+------------
 Improvements
 ------------
 
@@ -35,9 +44,24 @@ instead of:
 
     >>> br.l_curve["Mahalanobis_distance"]
 
+Pipeline stage
+**************
+
+The pipeline stage ``build-tap`` has been renamed to ``tap-cmp`` and updated allowing a comparison between the source tapenade file and the new regenerated one.
+If an error occurs during this stage, it means that the source tapenade file has not been regenerated.
+
 ------------
 New Features
 ------------
+
+Makefile command
+****************
+
+3 news makefile commands are available:
+
+- ``tap_cmp``: compare source tapenade file with new regenerated one,
+- ``doc``: generate sphinx documentation,
+- ``doc_clean``: clean sphinx documentation.
 
 -----
 Fixes

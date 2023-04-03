@@ -5,6 +5,7 @@ __pycache__
 .f2py*
 
 tapenade/*.msg*
+tapenade/*.f90*
 tapenade/*~
 
 **/tmp*
