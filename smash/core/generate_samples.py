@@ -306,7 +306,9 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
         unk_keys = [k for k in prl_keys if k not in PROBLEM_KEYS]
 
         if unk_keys:
-            warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}")
+            warnings.warn(
+                f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}"
+            )
 
     else:
         raise TypeError("The problem definition must be a dictionary or None")

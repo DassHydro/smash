@@ -62,7 +62,19 @@ It can be used as follows:
     >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
     >>> sr = smash.generate_samples(problem)  # create a SampleResult object
     >>> sr.to_numpy()  # convert to numpy array
-    >>> sr.to_dataframe()  # convert to pandas dataframe  
+    >>> sr.to_dataframe()  # convert to pandas dataframe
+    
+Regularization with full distributed mapping
+********************************************
+
+The regularization terms have been added for the optimization with a distributed mapping. 
+Two types of regularization function are considered, which are ``prior`` and ``smoothing``. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(mapping="distributed", options={"jreg_fun": "smoothing"})
 
 -----
 Fixes
