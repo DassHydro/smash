@@ -1,8 +1,9 @@
-commit 079238414d3cf219c11cded24aa52bcd36f37716
-Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
-Date:   Tue Mar 28 16:36:03 2023 +0200
+commit d4f8662f24f888aa8c33a7ad373487b06e95619d
+Merge: 632562b e4ac143
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Mon Apr 3 12:29:21 2023 +0200
 
-    Fix indentation in comments
+    MERGE: fix conflicts for merging from jreg-review into enc-bayes-optimize
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
@@ -16,8 +17,8 @@ bayes_optimize.cost                           |NON MODIFIED
 bbox_mesh.flwacc                              |NON MODIFIED
 bbox_mesh.flwdir                              |NON MODIFIED
 event_seg.arr                                 |NON MODIFIED
-gen_samples.nor                               |NON MODIFIED
-gen_samples.uni                               |NON MODIFIED
+gen_samples.nor                               |MODIFIED
+gen_samples.uni                               |MODIFIED
 mesh_io.active_cell                           |NON MODIFIED
 mesh_io.area                                  |NON MODIFIED
 mesh_io.code                                  |NON MODIFIED
@@ -46,8 +47,8 @@ optimize.distributed_l-bfgs-b.cost            |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cft      |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cost     |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cp       |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_fast.cost   |ADDED
-optimize.distributed_l-bfgs-b_reg_lcurve.cost |ADDED
+optimize.distributed_l-bfgs-b_reg_fast.cost   |NON MODIFIED
+optimize.distributed_l-bfgs-b_reg_lcurve.cost |NON MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost           |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost       |NON MODIFIED
 optimize.uniform_nelder-mead.cost             |NON MODIFIED
