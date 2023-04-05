@@ -17,7 +17,6 @@ if TYPE_CHECKING:
     from smash.solver._mwd_parameters import ParametersDT
     from smash.solver._mwd_states import StatesDT
 
-import warnings
 import numpy as np
 import scipy.optimize
 import pandas as pd
@@ -911,7 +910,7 @@ def _callback(x: np.ndarray, *args):
 def _check_unknown_options(unknown_options: dict):
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
-        warnings.warn("Unknown algorithm options: '%s'" % msg)
+        raise KeyError("Unknown algorithm options: '%s'" % msg)
 
 
 def _compute_wjreg_range(wjreg_opt: float, nb_wjreg_lcurve: int):

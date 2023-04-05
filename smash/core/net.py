@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from smash.solver._mwd_parameters import ParametersDT
     from smash.solver._mwd_states import StatesDT
 
-import warnings
 import copy
 import numpy as np
 from terminaltables import AsciiTable
@@ -1126,4 +1125,4 @@ def _inf_norm(grad: np.ndarray):
 def _check_unknown_options(type_check: str, unknown_options: dict):
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
-        warnings.warn("Unknown %s options: '%s'" % (type_check, msg))
+        raise KeyError("Unknown %s options: '%s'" % (type_check, msg))

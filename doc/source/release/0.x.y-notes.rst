@@ -61,19 +61,19 @@ Sample generator
 ****************
 
 The argument **backg_sol** in the :class:`smash.generate_samples` has been deprecated and replaced by **mean**. 
-Note that **mean** is now a dictionary, whereas **backg_sol** used to be a list.
+Note that **mean** is now a dictionary, whereas **backg_sol** used to be a 1D array-like.
 
 It can be used as follows:
 
 .. code-block:: python
 
-    >>> sr = smash.generate_samples(problem, generator="normal", mean={"cp": 500})
+    >>> sr = smash.generate_samples(problem, generator="normal", mean={"cp": 500, "cft": 200})
 
 instead of:
 
 .. code-block:: python
 
-    >>> sr = smash.generate_samples(problem, generator="normal", backg_sol=500)
+    >>> sr = smash.generate_samples(problem, generator="normal", backg_sol=[500, 200])
 
 ------------
 Improvements
@@ -157,3 +157,19 @@ Three new makefile commands are available:
 -----
 Fixes
 -----
+
+Fix an issue where passing an unknown key in the **options** arguments in the :class:`Model.optimize()`, :class:`Net.add()`, 
+:class:`Net.compile()` methods, and **event_seg** argument in the :class:`Model.optimize()` method, would result in a warning. 
+The warning has been replaced with a KeyError to provide clearer feedback when typing a key that does not exist.
+
+For example:
+
+.. code-block:: python
+
+    >>> model.optimize(options={"unknown_key": 1})
+
+resulting an error:
+
+.. code-block:: python
+
+    KeyError: "Unknown algorithm options: 'unknown_key'"
