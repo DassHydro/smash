@@ -345,7 +345,7 @@ def _standardize_generate_samples_args(problem: dict, generator: str, user_mean:
                 for name, um in user_mean.items():
                     if not name in problem["names"]:
                         warnings.warn(
-                            f"Key {name} does not match any existing names in the problem definition {problem['names']}"
+                            f"Key '{name}' does not match any existing names in the problem definition {problem['names']}"
                         )
 
                     if isinstance(um, (int, float)):

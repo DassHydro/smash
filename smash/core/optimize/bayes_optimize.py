@@ -17,6 +17,8 @@ from scipy.stats import gaussian_kde
 import multiprocessing as mp
 from tqdm import tqdm
 
+__all__ = ["BayesResult"]
+
 
 class BayesResult(dict):
     """
@@ -33,8 +35,8 @@ class BayesResult(dict):
         running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
 
     density : dict
-        Representing the estimated distribution at pixel scale of the Model parameters/sates after
-        running the simulations. The keys are the names of the Model parameters/sates.
+        Representing the estimated distribution at pixel scale of the Model parameters/states after
+        running the simulations. The keys are the names of the Model parameters/states.
 
     lcurve : dict
         The optimization results on the regularization parameter if the L-curve approach is used. The keys are
@@ -42,7 +44,7 @@ class BayesResult(dict):
         - 'alpha' : a list of regularization parameters to be optimized.
         - 'cost' : a list of corresponding cost values.
         - 'mahal_dist' : a list of corresponding Mahalanobis distance values.
-        - 'var' : a list of corresponding dictionaries. The keys are the names of the Model parameters/sates, and each represents its variance.
+        - 'var' : a list of corresponding dictionaries. The keys are the names of the Model parameters/states, and each represents its variance.
         - 'alpha_opt' : the optimal value of the regularization parameter.
 
     See Also

@@ -11,7 +11,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 
-
+__all__ = ["PrcpIndicesResult"]
 class PrcpIndicesResult(dict):
     """
     Represents the precipitation indices result.

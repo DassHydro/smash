@@ -754,7 +754,7 @@ class Model(object):
             An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
 
             .. note::
-                If not given, the Model parameters' samples will be generated automatically using the uniform generator
+                If not given, the Model parameters samples will be generated automatically using the uniform generator
                 based on the Model structure considered.
 
         alpha : int, float or sequence, default 4
@@ -922,7 +922,7 @@ class Model(object):
             An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
 
             .. note::
-                If not given, the Model parameters' samples will be generated automatically using the uniform generator
+                If not given, the Model parameters samples will be generated automatically using the uniform generator
                 based on the control vector and bounds arguments.
 
         alpha : int, float or sequence, default 4

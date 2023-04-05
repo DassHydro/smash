@@ -67,13 +67,13 @@ It can be used as follows:
 
 .. code-block:: python
 
-    >>> sr=smash.generate_samples(problem, generator="normal", mean={"cp": 500})
+    >>> sr = smash.generate_samples(problem, generator="normal", mean={"cp": 500})
 
 instead of:
 
 .. code-block:: python
 
-    >>> sr=smash.generate_samples(problem, generator="normal", backg_sol=500)
+    >>> sr = smash.generate_samples(problem, generator="normal", backg_sol=500)
 
 ------------
 Improvements
