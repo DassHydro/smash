@@ -1,15 +1,15 @@
 image: gitlab-registry.irstea.fr/francois.colleoni/smash:latest
   
 stages:
-  - build-tap
+  - tap-cmp
   - build-code
   - build-doc
   - test
   
-build-tap:
-  stage: build-tap
+tap-cmp:
+  stage: tap-cmp
   script:
-    - make tap
+    - make tap_cmp
 
 build-code:
   stage: build-code
@@ -24,8 +24,7 @@ build-doc:
   stage: build-doc
   script:
     - make library
-    - cd doc
-    - make html
+    - make doc
 
 test:
   stage: test

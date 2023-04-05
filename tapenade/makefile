@@ -3,7 +3,9 @@ NAME=md_constant.f90 mwd_setup.f90 mwd_mesh.f90 mwd_input_data.f90 mwd_parameter
 FILES=$(addprefix $(SRC)/*/,$(NAME))
 TAPENADE=./tapenade_3.16/
 
-all: bd finalize
+all: bd sed mv
+
+tap_cmp: bd sed cmp
 
 bd:
 	$(TAPENADE)/bin/tapenade \
@@ -19,8 +21,7 @@ bd:
 	-head "base_hyper_forward(hyper_parameters, hyper_states)\(cost)" \
 	-O $(PWD) $(FILES)
 
-
-finalize:
+sed:
 	# sed forward_b
 	sed -i "s/.*CALL.COMPUTE\_COST\_B.*/  CALL SET\_PARAMETERS(mesh, parameters\_b, 0.0_4)\n  CALL SET\_STATES(mesh, states\_b, 0.0_4)\n&/" forward_db.f90
 	
@@ -29,7 +30,14 @@ finalize:
 	
 	# sed \t for 4 spaces
 	sed -i "s/\t/    /g" forward_db.f90
-	
+
+mv:
 	# mv
 	mv forward_db.f90 $(SRC)/forward/.
-	
+
+cmp:
+	# compare old and new tap file
+	cmp forward_db.f90 $(SRC)/forward/forward_db.f90
+
+.PHONY: all tap_cmp bd sed mv cmp
+
