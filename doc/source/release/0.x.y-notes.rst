@@ -24,7 +24,7 @@ The ``baseline_test`` makefile command has been deprecated and replaced by ``tes
 Regularization parameter name
 *****************************
 
-The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been deprecated and changed from ``k`` to ``alpha``. 
+The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been deprecated and changed from **k** to **alpha**. 
 
 It can be used as follows:
 
@@ -56,6 +56,24 @@ instead of:
 .. code-block:: python
 
     >>> br.l_curve["Mahalanobis_distance"]
+
+Sample generator
+****************
+
+The argument **backg_sol** in the :class:`smash.generate_samples` has been deprecated and replaced by **mean**. 
+Note that **mean** is now a dictionary, whereas **backg_sol** used to be a list.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> sr=smash.generate_samples(problem, generator="normal", mean={"cp": 500})
+
+instead of:
+
+.. code-block:: python
+
+    >>> sr=smash.generate_samples(problem, generator="normal", backg_sol=500)
 
 ------------
 Improvements
