@@ -7493,7 +7493,6 @@ CONTAINS
     DO i=1,setup%optimize%njr
       SELECT CASE  (setup%optimize%jreg_fun(i)) 
       CASE ('prior') 
-!% Normalize prior between parameters and states
         result1_d = REG_PRIOR_D(setup, setup%optimize%optim_parameters, &
 &         parameters_matrix, parameters_matrix_d, parameters_bgd_matrix&
 &         , result1)
@@ -7504,13 +7503,14 @@ CONTAINS
         states_jreg_d = states_jreg_d + setup%optimize%wjreg_fun(i)*&
 &         result1_d
       CASE ('smoothing') 
-        result1_d = REG_SMOOTHING_D(setup, setup%optimize%&
+        result1_d = REG_SMOOTHING_D(setup, mesh, setup%optimize%&
 &         optim_parameters, parameters_matrix, parameters_matrix_d, &
 &         parameters_bgd_matrix, result1)
         temp = setup%optimize%wjreg_fun(i)**4
         parameters_jreg_d = parameters_jreg_d + temp*result1_d
-        result1_d = REG_SMOOTHING_D(setup, setup%optimize%optim_states, &
-&         states_matrix, states_matrix_d, states_bgd_matrix, result1)
+        result1_d = REG_SMOOTHING_D(setup, mesh, setup%optimize%&
+&         optim_states, states_matrix, states_matrix_d, &
+&         states_bgd_matrix, result1)
         temp = setup%optimize%wjreg_fun(i)**4
         states_jreg_d = states_jreg_d + temp*result1_d
       CASE ('distance_correlation') 
@@ -7602,16 +7602,15 @@ CONTAINS
     DO i=1,setup%optimize%njr
       SELECT CASE  (setup%optimize%jreg_fun(i)) 
       CASE ('prior') 
-!% Normalize prior between parameters and states
         res = REG_PRIOR(setup, setup%optimize%optim_parameters, &
 &         parameters_matrix, parameters_bgd_matrix)
         res0 = REG_PRIOR(setup, setup%optimize%optim_states, &
 &         states_matrix, states_bgd_matrix)
         CALL PUSHCONTROL2B(2)
       CASE ('smoothing') 
-        res1 = REG_SMOOTHING(setup, setup%optimize%optim_parameters, &
-&         parameters_matrix, parameters_bgd_matrix)
-        res2 = REG_SMOOTHING(setup, setup%optimize%optim_states, &
+        res1 = REG_SMOOTHING(setup, mesh, setup%optimize%&
+&         optim_parameters, parameters_matrix, parameters_bgd_matrix)
+        res2 = REG_SMOOTHING(setup, mesh, setup%optimize%optim_states, &
 &         states_matrix, states_bgd_matrix)
         CALL PUSHCONTROL2B(1)
       CASE ('distance_correlation') 
@@ -7647,14 +7646,15 @@ CONTAINS
         ELSE
           result1_b = setup%optimize%wjreg_fun(i)**4*states_jreg_b
           res_b2 = result1_b
-          CALL REG_SMOOTHING_B(setup, setup%optimize%optim_states, &
-&                        states_matrix, states_matrix_b, &
+          CALL REG_SMOOTHING_B(setup, mesh, setup%optimize%optim_states&
+&                        , states_matrix, states_matrix_b, &
 &                        states_bgd_matrix, res_b2)
           result1_b = setup%optimize%wjreg_fun(i)**4*parameters_jreg_b
           res_b1 = result1_b
-          CALL REG_SMOOTHING_B(setup, setup%optimize%optim_parameters, &
-&                        parameters_matrix, parameters_matrix_b, &
-&                        parameters_bgd_matrix, res_b1)
+          CALL REG_SMOOTHING_B(setup, mesh, setup%optimize%&
+&                        optim_parameters, parameters_matrix, &
+&                        parameters_matrix_b, parameters_bgd_matrix, &
+&                        res_b1)
         END IF
       ELSE IF (branch .EQ. 2) THEN
         result1_b = setup%optimize%wjreg_fun(i)*states_jreg_b
@@ -7726,7 +7726,6 @@ CONTAINS
     DO i=1,setup%optimize%njr
       SELECT CASE  (setup%optimize%jreg_fun(i)) 
       CASE ('prior') 
-!% Normalize prior between parameters and states
         result1 = REG_PRIOR(setup, setup%optimize%optim_parameters, &
 &         parameters_matrix, parameters_bgd_matrix)
         parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)*&
@@ -7735,12 +7734,12 @@ CONTAINS
 &         states_matrix, states_bgd_matrix)
         states_jreg = states_jreg + setup%optimize%wjreg_fun(i)*result1
       CASE ('smoothing') 
-        result1 = REG_SMOOTHING(setup, setup%optimize%optim_parameters, &
-&         parameters_matrix, parameters_bgd_matrix)
+        result1 = REG_SMOOTHING(setup, mesh, setup%optimize%&
+&         optim_parameters, parameters_matrix, parameters_bgd_matrix)
         parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)&
 &         **4*result1
-        result1 = REG_SMOOTHING(setup, setup%optimize%optim_states, &
-&         states_matrix, states_bgd_matrix)
+        result1 = REG_SMOOTHING(setup, mesh, setup%optimize%optim_states&
+&         , states_matrix, states_bgd_matrix)
         states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4*&
 &         result1
       CASE ('distance_correlation') 
@@ -10018,10 +10017,11 @@ CONTAINS
 !  Differentiation of reg_smoothing in forward (tangent) mode (with options fixinterface noISIZE):
 !   variations   of useful results: res
 !   with respect to varying inputs: matrix
-  FUNCTION REG_SMOOTHING_D(setup, optim_arr, matrix, matrix_d, &
+  FUNCTION REG_SMOOTHING_D(setup, mesh, optim_arr, matrix, matrix_d, &
 &   matrix_bgd, res) RESULT (RES_D)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     INTEGER, DIMENSION(:), INTENT(IN) :: optim_arr
     REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: matrix, matrix_bgd
     REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: matrix_d
@@ -10033,6 +10033,10 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(matrix, 1), SIZE(matrix, 2), SIZE(matrix, 3&
 &   )) :: mat_d
     INTEGER :: i, col, row, min_col, max_col, min_row, max_row
+    INTRINSIC MAX
+    INTRINSIC MIN
+    INTEGER :: x1
+    INTEGER :: x2
 ! matrix relative to the bgd. We don't want to penalize initial spatial variation.
     mat_d = matrix_d
     mat = matrix - matrix_bgd
@@ -10041,20 +10045,41 @@ CONTAINS
       IF (optim_arr(i) .GT. 0) THEN
         DO col=1,SIZE(matrix, 2)
           DO row=1,SIZE(matrix, 1)
-            min_col = col - 1
-            max_col = col + 1
-            min_row = row - 1
-            max_row = row + 1
-! condition limite
-            IF (col .EQ. 1) min_col = col
-            IF (col .EQ. SIZE(matrix, 2)) max_col = col
-            IF (row .EQ. 1) min_row = row
-            IF (row .EQ. SIZE(matrix, 1)) max_row = row
-            res_d = res_d + 2*(mat(max_row, col, i)-2*2._sp*mat(row, col&
-&             , i)+mat(min_row, col, i)+mat(row, max_col, i)+mat(row, &
-&             min_col, i))*(mat_d(max_row, col, i)-2*2._sp*mat_d(row, &
-&             col, i)+mat_d(min_row, col, i)+mat_d(row, max_col, i)+&
-&             mat_d(row, min_col, i))
+            IF (mesh%active_cell(row, col) .EQ. 1) THEN
+              IF (1 .LT. col - 1) THEN
+                min_col = col - 1
+              ELSE
+                min_col = 1
+              END IF
+              x1 = SIZE(matrix, 2)
+              IF (x1 .GT. col + 1) THEN
+                max_col = col + 1
+              ELSE
+                max_col = x1
+              END IF
+              IF (1 .LT. row - 1) THEN
+                min_row = row - 1
+              ELSE
+                min_row = 1
+              END IF
+              x2 = SIZE(matrix, 1)
+              IF (x2 .GT. row + 1) THEN
+                max_row = row + 1
+              ELSE
+                max_row = x2
+              END IF
+! if active_cell, do not take into account the cells outside the catchment
+! since only cells in active_cell are included in the control vector
+              IF (mesh%active_cell(row, min_col) .EQ. 0) min_col = col
+              IF (mesh%active_cell(row, max_col) .EQ. 0) max_col = col
+              IF (mesh%active_cell(min_row, col) .EQ. 0) min_row = row
+              IF (mesh%active_cell(max_row, col) .EQ. 0) max_row = row
+              res_d = res_d + 2*(mat(max_row, col, i)-2*2._sp*mat(row, &
+&               col, i)+mat(min_row, col, i)+mat(row, max_col, i)+mat(&
+&               row, min_col, i))*(mat_d(max_row, col, i)-2*2._sp*mat_d(&
+&               row, col, i)+mat_d(min_row, col, i)+mat_d(row, max_col, &
+&               i)+mat_d(row, min_col, i))
+            END IF
           END DO
         END DO
       END IF
@@ -10064,10 +10089,11 @@ CONTAINS
 !  Differentiation of reg_smoothing in reverse (adjoint) mode (with options fixinterface noISIZE):
 !   gradient     of useful results: res matrix
 !   with respect to varying inputs: matrix
-  SUBROUTINE REG_SMOOTHING_B(setup, optim_arr, matrix, matrix_b, &
+  SUBROUTINE REG_SMOOTHING_B(setup, mesh, optim_arr, matrix, matrix_b, &
 &   matrix_bgd, res_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     INTEGER, DIMENSION(:), INTENT(IN) :: optim_arr
     REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: matrix, matrix_bgd
     REAL(sp), DIMENSION(:, :, :) :: matrix_b
@@ -10079,30 +10105,70 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(matrix, 1), SIZE(matrix, 2), SIZE(matrix, 3&
 &   )) :: mat_b
     INTEGER :: i, col, row, min_col, max_col, min_row, max_row
+    INTRINSIC MAX
+    INTRINSIC MIN
+    INTEGER :: x1
+    INTEGER :: x2
     REAL(sp) :: temp_b
+    INTEGER :: branch
     INTEGER :: ad_to
     INTEGER :: ad_to0
     INTEGER :: ad_to1
-    INTEGER :: branch
 ! matrix relative to the bgd. We don't want to penalize initial spatial variation.
     mat = matrix - matrix_bgd
     DO i=1,SIZE(matrix, 3)
       IF (optim_arr(i) .GT. 0) THEN
         DO col=1,SIZE(matrix, 2)
           DO row=1,SIZE(matrix, 1)
-            CALL PUSHINTEGER4(min_col)
-            min_col = col - 1
-            CALL PUSHINTEGER4(max_col)
-            max_col = col + 1
-            CALL PUSHINTEGER4(min_row)
-            min_row = row - 1
-            CALL PUSHINTEGER4(max_row)
-            max_row = row + 1
-! condition limite
-            IF (col .EQ. 1) min_col = col
-            IF (col .EQ. SIZE(matrix, 2)) max_col = col
-            IF (row .EQ. 1) min_row = row
-            IF (row .EQ. SIZE(matrix, 1)) max_row = row
+            IF (mesh%active_cell(row, col) .EQ. 1) THEN
+              IF (1 .LT. col - 1) THEN
+                CALL PUSHINTEGER4(min_col)
+                min_col = col - 1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHINTEGER4(min_col)
+                min_col = 1
+                CALL PUSHCONTROL1B(1)
+              END IF
+              x1 = SIZE(matrix, 2)
+              IF (x1 .GT. col + 1) THEN
+                CALL PUSHINTEGER4(max_col)
+                max_col = col + 1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHINTEGER4(max_col)
+                max_col = x1
+                CALL PUSHCONTROL1B(1)
+              END IF
+              IF (1 .LT. row - 1) THEN
+                CALL PUSHINTEGER4(min_row)
+                min_row = row - 1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHINTEGER4(min_row)
+                min_row = 1
+                CALL PUSHCONTROL1B(1)
+              END IF
+              x2 = SIZE(matrix, 1)
+              IF (x2 .GT. row + 1) THEN
+                CALL PUSHINTEGER4(max_row)
+                max_row = row + 1
+                CALL PUSHCONTROL1B(0)
+              ELSE
+                CALL PUSHINTEGER4(max_row)
+                max_row = x2
+                CALL PUSHCONTROL1B(1)
+              END IF
+! if active_cell, do not take into account the cells outside the catchment
+! since only cells in active_cell are included in the control vector
+              IF (mesh%active_cell(row, min_col) .EQ. 0) min_col = col
+              IF (mesh%active_cell(row, max_col) .EQ. 0) max_col = col
+              IF (mesh%active_cell(min_row, col) .EQ. 0) min_row = row
+              IF (mesh%active_cell(max_row, col) .EQ. 0) max_row = row
+              CALL PUSHCONTROL1B(1)
+            ELSE
+              CALL PUSHCONTROL1B(0)
+            END IF
           END DO
           CALL PUSHINTEGER4(row - 1)
         END DO
@@ -10121,18 +10187,41 @@ CONTAINS
         DO col=ad_to0,1,-1
           CALL POPINTEGER4(ad_to)
           DO row=ad_to,1,-1
-            temp_b = 2*(mat(max_row, col, i)-2*2._sp*mat(row, col, i)+&
-&             mat(min_row, col, i)+mat(row, max_col, i)+mat(row, min_col&
-&             , i))*res_b
-            mat_b(max_row, col, i) = mat_b(max_row, col, i) + temp_b
-            mat_b(row, col, i) = mat_b(row, col, i) - 2*2._sp*temp_b
-            mat_b(min_row, col, i) = mat_b(min_row, col, i) + temp_b
-            mat_b(row, max_col, i) = mat_b(row, max_col, i) + temp_b
-            mat_b(row, min_col, i) = mat_b(row, min_col, i) + temp_b
-            CALL POPINTEGER4(max_row)
-            CALL POPINTEGER4(min_row)
-            CALL POPINTEGER4(max_col)
-            CALL POPINTEGER4(min_col)
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              temp_b = 2*(mat(max_row, col, i)-2*2._sp*mat(row, col, i)+&
+&               mat(min_row, col, i)+mat(row, max_col, i)+mat(row, &
+&               min_col, i))*res_b
+              mat_b(max_row, col, i) = mat_b(max_row, col, i) + temp_b
+              mat_b(row, col, i) = mat_b(row, col, i) - 2*2._sp*temp_b
+              mat_b(min_row, col, i) = mat_b(min_row, col, i) + temp_b
+              mat_b(row, max_col, i) = mat_b(row, max_col, i) + temp_b
+              mat_b(row, min_col, i) = mat_b(row, min_col, i) + temp_b
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPINTEGER4(max_row)
+              ELSE
+                CALL POPINTEGER4(max_row)
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPINTEGER4(min_row)
+              ELSE
+                CALL POPINTEGER4(min_row)
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPINTEGER4(max_col)
+              ELSE
+                CALL POPINTEGER4(max_col)
+              END IF
+              CALL POPCONTROL1B(branch)
+              IF (branch .EQ. 0) THEN
+                CALL POPINTEGER4(min_col)
+              ELSE
+                CALL POPINTEGER4(min_col)
+              END IF
+            END IF
           END DO
         END DO
       END IF
@@ -10140,10 +10229,11 @@ CONTAINS
     matrix_b = matrix_b + mat_b
   END SUBROUTINE REG_SMOOTHING_B
 
-  FUNCTION REG_SMOOTHING(setup, optim_arr, matrix, matrix_bgd) RESULT (&
-& RES)
+  FUNCTION REG_SMOOTHING(setup, mesh, optim_arr, matrix, matrix_bgd) &
+& RESULT (RES)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
     INTEGER, DIMENSION(:), INTENT(IN) :: optim_arr
     REAL(sp), DIMENSION(:, :, :), INTENT(IN) :: matrix, matrix_bgd
     REAL(sp) :: res
@@ -10151,6 +10241,10 @@ CONTAINS
     REAL(sp), DIMENSION(SIZE(matrix, 1), SIZE(matrix, 2), SIZE(matrix, 3&
 &   )) :: mat
     INTEGER :: i, col, row, min_col, max_col, min_row, max_row
+    INTRINSIC MAX
+    INTRINSIC MIN
+    INTEGER :: x1
+    INTEGER :: x2
     res = 0._sp
 ! matrix relative to the bgd. We don't want to penalize initial spatial variation.
     mat = matrix - matrix_bgd
@@ -10158,18 +10252,39 @@ CONTAINS
       IF (optim_arr(i) .GT. 0) THEN
         DO col=1,SIZE(matrix, 2)
           DO row=1,SIZE(matrix, 1)
-            min_col = col - 1
-            max_col = col + 1
-            min_row = row - 1
-            max_row = row + 1
-! condition limite
-            IF (col .EQ. 1) min_col = col
-            IF (col .EQ. SIZE(matrix, 2)) max_col = col
-            IF (row .EQ. 1) min_row = row
-            IF (row .EQ. SIZE(matrix, 1)) max_row = row
-            res = res + (mat(max_row, col, i)-2._sp*mat(row, col, i)+mat&
-&             (min_row, col, i)+(mat(row, max_col, i)-2._sp*mat(row, col&
-&             , i)+mat(row, min_col, i)))**2
+            IF (mesh%active_cell(row, col) .EQ. 1) THEN
+              IF (1 .LT. col - 1) THEN
+                min_col = col - 1
+              ELSE
+                min_col = 1
+              END IF
+              x1 = SIZE(matrix, 2)
+              IF (x1 .GT. col + 1) THEN
+                max_col = col + 1
+              ELSE
+                max_col = x1
+              END IF
+              IF (1 .LT. row - 1) THEN
+                min_row = row - 1
+              ELSE
+                min_row = 1
+              END IF
+              x2 = SIZE(matrix, 1)
+              IF (x2 .GT. row + 1) THEN
+                max_row = row + 1
+              ELSE
+                max_row = x2
+              END IF
+! if active_cell, do not take into account the cells outside the catchment
+! since only cells in active_cell are included in the control vector
+              IF (mesh%active_cell(row, min_col) .EQ. 0) min_col = col
+              IF (mesh%active_cell(row, max_col) .EQ. 0) max_col = col
+              IF (mesh%active_cell(min_row, col) .EQ. 0) min_row = row
+              IF (mesh%active_cell(max_row, col) .EQ. 0) max_row = row
+              res = res + (mat(max_row, col, i)-2._sp*mat(row, col, i)+&
+&               mat(min_row, col, i)+(mat(row, max_col, i)-2._sp*mat(row&
+&               , col, i)+mat(row, min_col, i)))**2
+            END IF
           END DO
         END DO
       END IF

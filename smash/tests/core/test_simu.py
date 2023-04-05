@@ -97,7 +97,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
         mapping="distributed",
         control_vector=["cp", "cft", "lr"],
         options={
-            "maxiter": 1,
+            "maxiter": 2,
             "jreg_fun": ["prior", "smoothing"],
             "wjreg_fun": [1.0, 2.0],
             "auto_wjreg": "fast",
@@ -112,7 +112,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
         mapping="distributed",
         control_vector=["cp", "cft", "lr"],
         options={
-            "maxiter": 1,
+            "maxiter": 2,
             "jreg_fun": ["prior", "smoothing"],
             "wjreg_fun": [1.0, 2.0],
             "auto_wjreg": "lcurve",

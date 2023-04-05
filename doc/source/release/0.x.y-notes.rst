@@ -139,6 +139,9 @@ Regularization with full distributed mapping
 The regularization terms have been added for the optimization with a distributed mapping. 
 Two types of regularization function are considered, which are ``prior`` and ``smoothing``.
 
+.. hint::
+    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+
 It can be used as follows:
 
 .. code-block:: python
