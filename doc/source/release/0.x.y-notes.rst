@@ -54,6 +54,18 @@ If an error occurs during this stage, it means that the source tapenade file has
 New Features
 ------------
 
+Regularization with full distributed mapping
+********************************************
+
+The regularization terms have been added for the optimization with a distributed mapping. 
+Two types of regularization function are considered, which are ``prior`` and ``smoothing``.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(mapping="distributed", options={"jreg_fun": "smoothing"})
+
 Makefile command
 ****************
 
