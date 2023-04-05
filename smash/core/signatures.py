@@ -24,6 +24,8 @@ from SALib import ProblemSpec
 from tqdm import tqdm
 import warnings
 
+__all__ = ["SignResult", "SignSensResult"]
+
 
 class SignResult(dict):
     """
