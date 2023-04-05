@@ -22,6 +22,12 @@ from smash.solver._mw_derived_type_update import (
     update_optimize_setup_optimize_options,
 )
 
+from smash.core.generate_samples import (
+    _get_bound_constraints,
+    generate_samples,
+    SampleResult,
+)
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -442,6 +448,8 @@ def _standardize_jreg_fun(jreg_fun: str | list | tuple, setup: SetupDT) -> np.nd
         raise TypeError("jreg_fun option must str or list-like object")
 
     if list(jreg_fun) and setup._optimize.mapping.startswith("hyper"):
+        # re-check if future jreg_fun can be handled
+
         raise ValueError(
             f"Regularization function(s) can not be used with '{setup._optimize.mapping}' mapping"
         )
@@ -664,19 +672,96 @@ def _standardize_wjobs_fun_wo_mapping(
     return wjobs_fun
 
 
-def _standardize_bayes_k(
-    k: int | float | range | list | tuple | np.ndarray,
+def _standardize_bayes_estimate_sample(
+    sample: SampleResult | None,
+    n: int,
+    random_state: int | None,
+    setup: SetupDT,
 ):
-    if isinstance(k, (int, float, list)):
-        pass
+    if sample is None:
+        sample = generate_samples(
+            problem=_get_bound_constraints(setup, states=False),
+            generator="uniform",
+            n=n,
+            random_state=random_state,
+        )
 
-    elif isinstance(k, (range, np.ndarray, tuple)):
-        k = list(k)
+    elif isinstance(sample, SampleResult):
+        param_state = (
+            STRUCTURE_PARAMETERS[setup.structure] + STRUCTURE_STATES[setup.structure]
+        )
+
+        unk_cv = [cv for cv in sample._problem["names"] if cv not in param_state]
+
+        if unk_cv:
+            warnings.warn(
+                f"Problem names ({unk_cv}) do not present for any Model parameters and/or states in the {setup.structure} structure"
+            )
 
     else:
-        raise TypeError("k argument must be numerical or list-like object")
+        raise TypeError("sample must be a SampleResult object or None")
 
-    return k
+    return sample
+
+
+def _standardize_bayes_optimize_sample(
+    sample: SampleResult | None,
+    n: int,
+    random_state: int | None,
+    control_vector: np.ndarray,
+    bounds: np.ndarray,
+):
+    if sample is None:
+        problem = {
+            "num_vars": len(control_vector),
+            "names": list(control_vector),
+            "bounds": [list(bound) for bound in bounds],
+        }
+
+        sample = generate_samples(
+            problem=problem,
+            generator="uniform",
+            n=n,
+            random_state=random_state,
+        )
+
+    elif isinstance(sample, SampleResult):
+        # check if problem names and control_vector have the same elements
+        if set(sample._problem["names"]) != set(control_vector):
+            raise ValueError(
+                f"Problem names ({sample._problem['names']}) and control vectors ({control_vector}) must have the same elements"
+            )
+
+        else:  # check if problem bounds inside optimization bounds
+            dict_prl = dict(zip(sample._problem["names"], sample._problem["bounds"]))
+
+            dict_optim = dict(zip(control_vector, bounds))
+
+            for key, val in dict_optim.items():
+                if val[0] > dict_prl[key][0] or val[1] < dict_prl[key][1]:
+                    raise ValueError(
+                        f"Problem bound of {key} ({dict_prl[key]}) is outside the boundary condition {val}"
+                    )
+
+    else:
+        raise TypeError("sample must be a SampleResult object or None")
+
+    return sample
+
+
+def _standardize_bayes_alpha(
+    alpha: int | float | range | list | tuple | np.ndarray,
+):
+    if isinstance(alpha, (int, float, list)):
+        pass
+
+    elif isinstance(alpha, (range, np.ndarray, tuple)):
+        alpha = list(alpha)
+
+    else:
+        raise TypeError("alpha must be numerical or list-like object")
+
+    return alpha
 
 
 def _standardize_optimize_args(
@@ -746,32 +831,27 @@ def _standardize_optimize_args(
 
 
 def _standardize_bayes_estimate_args(
-    control_vector: str | list | tuple | None,
+    sample: SampleResult,
+    n: int,
+    random_state: int | None,
     jobs_fun: str | list | tuple,
     wjobs_fun: list | None,
     event_seg: dict | None,
-    bounds: list | tuple | None,
     gauge: str | list | tuple,
     wgauge: str | list | tuple,
     ost: str | pd.Timestamp | None,
+    alpha: int | float | range | list | tuple | np.ndarray,
     instance: Model,
-    k: int | float | range | list | tuple | np.ndarray,
 ):
     reset_optimize_setup(
         instance.setup._optimize
     )  # % Fortran subroutine mw_derived_type_update
-
-    control_vector = _standardize_control_vector(control_vector, instance.setup)
 
     jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
     wjobs_fun = _standardize_wjobs_fun_wo_mapping(wjobs_fun, jobs_fun)
 
     event_seg = _standardize_event_seg_options(event_seg)
-
-    bounds = _standardize_bounds(
-        bounds, control_vector, instance.setup, instance.parameters, instance.states
-    )
 
     gauge = _standardize_gauge(
         gauge, instance.setup, instance.mesh, instance.input_data
@@ -781,7 +861,9 @@ def _standardize_bayes_estimate_args(
 
     ost = _standardize_ost(ost, instance.setup)
 
-    k = _standardize_bayes_k(k)
+    sample = _standardize_bayes_estimate_sample(sample, n, random_state, instance.setup)
+
+    alpha = _standardize_bayes_alpha(alpha)
 
     update_optimize_setup_optimize_args(
         instance.setup._optimize,
@@ -792,10 +874,21 @@ def _standardize_bayes_estimate_args(
         jobs_fun.size,
     )  # % Fortran subroutine mw_derived_type_update
 
-    return control_vector, jobs_fun, wjobs_fun, event_seg, bounds, wgauge, ost, k
+    return (
+        jobs_fun,
+        wjobs_fun,
+        event_seg,
+        wgauge,
+        ost,
+        sample,
+        alpha,
+    )
 
 
 def _standardize_bayes_optimize_args(
+    sample: SampleResult,
+    n: int,
+    random_state: int | None,
     mapping: str,
     algorithm: str | None,
     control_vector: str | list | tuple | None,
@@ -806,8 +899,8 @@ def _standardize_bayes_optimize_args(
     gauge: str | list | tuple,
     wgauge: str | list | tuple,
     ost: str | pd.Timestamp | None,
+    alpha: int | float | range | list | tuple | np.ndarray,
     instance: Model,
-    k: int | float | range | list | tuple | np.ndarray,
 ):
     reset_optimize_setup(
         instance.setup._optimize
@@ -840,7 +933,11 @@ def _standardize_bayes_optimize_args(
 
     ost = _standardize_ost(ost, instance.setup)
 
-    k = _standardize_bayes_k(k)
+    sample = _standardize_bayes_optimize_sample(
+        sample, n, random_state, control_vector, bounds
+    )
+
+    alpha = _standardize_bayes_alpha(alpha)
 
     update_optimize_setup_optimize_args(
         instance.setup._optimize,
@@ -854,14 +951,14 @@ def _standardize_bayes_optimize_args(
     return (
         mapping,
         algorithm,
-        control_vector,
         jobs_fun,
         wjobs_fun,
         event_seg,
         bounds,
         wgauge,
         ost,
-        k,
+        sample,
+        alpha,
     )
 
 
