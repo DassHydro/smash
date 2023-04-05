@@ -12,6 +12,7 @@ from smash.io.setup_io import save_setup, read_setup
 from smash.io.mesh_io import save_mesh, read_mesh
 from smash.io.model_io import save_model, read_model
 from smash.io.model_ddt_io import save_model_ddt, read_model_ddt
+from smash.io.multi_model_io import save_multi_model, read_multi_model
 
 from smash.dataset.load import load_dataset
 
@@ -41,6 +42,8 @@ __all__ = [
     "read_model",
     "save_model_ddt",
     "read_model_ddt",
+    "save_multi_model",
+    "read_multi_model",
     "load_dataset",
 ]
 
