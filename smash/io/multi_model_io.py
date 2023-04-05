@@ -110,11 +110,11 @@ def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_onl
     path : str
         The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
     
-    group : str
-        subgroup name to group data in the hdf5 file.
+    location : str
+        location, absolute path, to store the data in the hdf5 file.
         
         .. note::
-            If not given, no subgroub is created and data are stored at the roots.
+            If not given, the data are stored at the root of the hdf5 file.
 
     sub_data : dict or None, default None
         Dictionary which indicates the subsidiary data to store into the HDF5 file.
@@ -145,6 +145,7 @@ def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_onl
     Save spatially distributed precipitation in addition to default derived data types of Model
 
     >>> smash.save_model_ddt(model, "model_ddt.hdf5", sub_data={"prcp": model.input_data.prcp})
+    >>> smash.save_multi_model(model,"multi_model_ddt.hdf5", location="rainfall", sub_data={"prcp": model.input_data.prcp})
 
     """
 
@@ -156,10 +157,10 @@ def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_onl
     else:
         f= h5py.File(path, "a")
     
-    if group is not None:
-        groupe_name=os.path.basename(group)
-        groupe_path=os.path.dirname(group)
-        grp=f.create_group(group)
+    if location is not None:
+        #loc_name=os.path.basename(location)
+        loc_path=os.path.dirname(location)
+        grp=f.create_group(location)
     else:
         grp=f
     
@@ -207,45 +208,15 @@ def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_onl
                 except:
                     warnings.warn(f"Can not store to HDF5: {attr}")
 
-    if group is not None:
+    if location is not None:
         grp.attrs["_save_func"] = "save_model_ddt"
-        f[groupe_path].attrs["_save_func"] = "save_multi_model"
+        f[loc_path].attrs["_save_func"] = "save_multi_model"
     else:
         grp.attrs["_save_func"] = "save_model_ddt"
-    
-
-
-# ~ elif isinstance(value, dict):
-
-# ~ for subkey,subvalue in value.items():
-    
-    # ~ if isinstance(subvalue, np.ndarray):
-        
-        # ~ if subvalue.dtype == "object" or subvalue.dtype.char == "U":
-            # ~ subvalue = subvalue.astype("S")
-        
-        # ~ try:
-            # ~ grp.create_dataset(
-                # ~ subkey,
-                # ~ shape=subvalue.shape,
-                # ~ dtype=subvalue.dtype,
-                # ~ data=subvalue,
-                # ~ compression="gzip",
-                # ~ chunks=True,
-            # ~ )
-        # ~ except:
-            # ~ warnings.warn(f"Can not store to HDF5: {subkey}")
-    
-    # ~ else:
-        
-        # ~ try:
-            # ~ grp.attrs[subkey] = subvalue
-        # ~ except:
-            # ~ warnings.warn(f"Can not store to HDF5: {subkey}")
 
 
 
-def read_multi_model(path: str, group=None) -> dict:
+def read_multi_model(path: str, location=None) -> dict:
     """
     Read derived data types of the Model object from HDF5 file.
 
@@ -253,6 +224,12 @@ def read_multi_model(path: str, group=None) -> dict:
     ----------
     path : str
         The file path.
+
+    location : str
+        location, absolute path where to read the data in the hdf5 file.
+
+        .. note::
+            If not given, the data are read from the root of the hdf5 file.
 
     Returns
     -------
@@ -274,11 +251,11 @@ def read_multi_model(path: str, group=None) -> dict:
     --------
     >>> setup, mesh = smash.load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
-    >>> smash.save_model_ddt(model, "model_ddt.hdf5")
+    >>> smash.save_multi_model(model,"multi_model_ddt.hdf5", location="rainfall", sub_data={"prcp": model.input_data.prcp})
 
     Read the derived data types from HDF5 file
 
-    >>> data = smash.read_multi_model("model_ddt.hdf5")
+    >>> data = smash.read_multi_model("multi_model_ddt.hdf5",location="forecast")
 
     Then, to see the dataset keys
 
@@ -299,52 +276,48 @@ def read_multi_model(path: str, group=None) -> dict:
     if os.path.isfile(path):
         with h5py.File(path) as f:
             
-            #recursive function to convert hdf5 to dict ?
-            #res={}
-            #res=read_hdf5(f,res)
-            
-            if group is not None:
+            if location is not None:
                 
-                if group in list(f.keys()):
-                    grp=f[group]
+                if location in list(f.keys()):
+                    loc=f[location]
                 else:
                     raise ReadHDF5MethodError(
-                        f"Unable to acces to group '{group}' in hdf5 '{path}', '{group}' group does not exist."
+                        f"Unable to acces to group '{location}' in hdf5 '{path}', '{location}' group does not exist."
                     )
             else:
-                grp=f
+                loc=f
             
-            if grp.attrs.get("_save_func") == "save_multi_model":
-                group_dict={}
+            if loc.attrs.get("_save_func") == "save_multi_model":
+                results={}
                 
-                for name,group in grp.items():
+                for name,data in loc.items():
                     
-                    keys = list(group.keys())
+                    keys = list(data.keys())
 
                     values = [
-                        group[key][:].astype("U") if group[key][:].dtype.char == "S" else group[key][:]
+                        data[key][:].astype("U") if data[key][:].dtype.char == "S" else data[key][:]
                         for key in keys
                     ]
 
-                    attr_keys = list(group.attrs.keys())
+                    attr_keys = list(data.attrs.keys())
 
                     attr_keys.remove("_save_func")
 
-                    attr_values = [group.attrs[key] for key in attr_keys]
+                    attr_values = [data.attrs[key] for key in attr_keys]
 
-                    group_dict.update({name:dict(zip(keys + attr_keys, values + attr_values))}) 
+                    results.update({name:dict(zip(keys + attr_keys, values + attr_values))}) 
                 
-                return group_dict
+                return results
             
-            elif grp.attrs.get("_save_func") == "save_model_ddt":
-                keys = list(grp.keys())
+            elif loc.attrs.get("_save_func") == "save_model_ddt":
+                keys = list(loc.keys())
 
                 values = [
-                    grp[key][:].astype("U") if grp[key][:].dtype.char == "S" else grp[key][:]
+                    loc[key][:].astype("U") if loc[key][:].dtype.char == "S" else loc[key][:]
                     for key in keys
                 ]
 
-                attr_keys = list(grp.attrs.keys())
+                attr_keys = list(loc.attrs.keys())
 
                 attr_keys.remove("_save_func")
 
@@ -360,30 +333,3 @@ def read_multi_model(path: str, group=None) -> dict:
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
 
-
-
-def read_hdf5(h,res):
-    
-    for name,group in h.items():
-        
-        if group.attrs.get("_save_func") == "save_model_ddt":
-            keys = list(group.keys())
-            
-            values = [
-                group[key][:].astype("U") if group[key][:].dtype.char == "S" else group[key][:]
-                for key in keys
-            ]
-            
-            attr_keys = list(group.attrs.keys())
-            
-            attr_keys.remove("_save_func")
-            
-            attr_values = [group.attrs[key] for key in attr_keys]
-            
-            res.update({name:dict(zip(keys + attr_keys, values + attr_values))})
-            
-            return res
-        else:
-            res.update({name:{}})
-            
-            read_hdf5(group,res)
