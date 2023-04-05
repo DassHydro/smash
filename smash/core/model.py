@@ -501,13 +501,13 @@ class Model(object):
         self,
         mapping: str = "uniform",
         algorithm: str | None = None,
-        control_vector: str | list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
         bounds: dict | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         options: dict | None = None,
         verbose: bool = True,
@@ -608,6 +608,12 @@ class Model(object):
             .. note::
                 If not given, the optimization start time will be equal to the start time.
 
+        verbose : bool, default True
+            Display information while optimizing.
+
+        inplace : bool, default False
+            If True, perform operation in-place.
+
         options : dict or None, default None
             A dictionary of algorithm options. Depending on the algorithm, different options can be pass.
 
@@ -618,11 +624,8 @@ class Model(object):
                 - 'nelder-mead' :ref:`(see here) <api_reference.optimize_nelder-mead>`
                 - 'l-bfgs-b' :ref:`(see here) <api_reference.optimize_l-bfgs-b>`
 
-        verbose : bool, default True
-            Display information while optimizing.
-
-        inplace : bool, default False
-            If True, perform operation in-place.
+        maxiter : int, default is 40
+            Maximum number of iterations for the optimization.
 
         Returns
         -------
@@ -689,14 +692,12 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
         )
 
-        options = _standardize_optimize_options(options)
+        options = _standardize_optimize_options(options, instance)
 
-        OPTIM_FUNC[algorithm](
+        res = OPTIM_FUNC[algorithm](
             instance,
             control_vector,
             mapping,
@@ -712,24 +713,32 @@ class Model(object):
 
         instance._last_update = f"{algorithm.upper()} Optimization"
 
-        if not inplace:
-            return instance
+        if res is not None:
+            if not inplace:
+                return instance, res
+
+            else:
+                return res
+
+        else:
+            if not inplace:
+                return instance
 
     def bayes_estimate(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        k: int | float | range | list | tuple | np.ndarray = 4,
         generator: str = "uniform",
         n: int = 1000,
         random_state: int | None = None,
         backg_sol: np.ndarray | None = None,
         coef_std: float | None = None,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         ncpu: int = 1,
         verbose: bool = True,
@@ -835,9 +844,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
             k,
         )
 
@@ -881,7 +888,7 @@ class Model(object):
 
     def bayes_optimize(
         self,
-        k: int | float | range | list | tuple | set | np.ndarray = 4,
+        k: int | float | range | list | tuple | np.ndarray = 4,
         density_estimate: bool = True,
         de_bw_method: str | None = None,
         de_weights: np.ndarray | None = None,
@@ -892,13 +899,13 @@ class Model(object):
         coef_std: float | None = None,
         mapping: str = "uniform",
         algorithm: str | None = None,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         options: dict | None = None,
         ncpu: int = 1,
@@ -1027,13 +1034,11 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
             k,
         )
 
-        options = _standardize_optimize_options(options)
+        options = _standardize_optimize_options(options, instance)
 
         res = _bayes_computation(
             instance,
@@ -1078,13 +1083,13 @@ class Model(object):
         net: Net | None = None,
         optimizer: str = "adam",
         learning_rate: float = 0.003,
-        control_vector: str | list | tuple | set | None = None,
-        bounds: list | tuple | set | None = None,
-        jobs_fun: str | list | tuple | set = "nse",
-        wjobs_fun: list | tuple | set | None = None,
+        control_vector: str | list | tuple | None = None,
+        bounds: list | tuple | None = None,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
         event_seg: dict | None = None,
-        gauge: str | list | tuple | set = "downstream",
-        wgauge: str | list | tuple | set = "mean",
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
         ost: str | pd.Timestamp | None = None,
         epochs: int = 400,
         early_stopping: bool = False,
@@ -1235,9 +1240,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            instance.setup,
-            instance.mesh,
-            instance.input_data,
+            instance,
         )
 
         net = _ann_optimize(

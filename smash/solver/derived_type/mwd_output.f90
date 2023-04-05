@@ -7,12 +7,16 @@
 !%      ========================== =====================================
 !%      `Variables`                Description
 !%      ========================== =====================================
-!%      ``qsim``                   Simulated discharge at gauge            [m3/s]
-!%      ``qsim_domain``            Simulated discharge whole domain        [m3/s]
-!%      ``sparse_qsim_domain``     Sparse simulated discharge whole domain [m3/s]
-!%      ``net_prcp_domain``        Net precipitaition whole domain         [mm/dt]
-!%      ``sparse_net_prcp_domain`` Sparse net precipitation whole domain   [mm/dt]
+!%      ``qsim``                   Simulated discharge at gauge               [m3/s]
+!%      ``qsim_domain``            Simulated discharge whole domain           [m3/s]
+!%      ``sparse_qsim_domain``     Sparse simulated discharge whole domain    [m3/s]
+!%      ``net_prcp_domain``        Net precipitaition whole domain            [mm/dt]
+!%      ``sparse_net_prcp_domain`` Sparse net precipitation whole domain      [mm/dt]
 !%      ``cost``                   Cost value
+!%      ``cost_jobs``              Objective function cost value
+!%      ``cost_jreg``              Regularization function cost value
+!%      ``cost_jobs_initial``      Objective function initial cost value
+!%      ``cost_jreg_initial``      Regularization function initial cost value
 !%      ``fstates``                Final states (StatesDT)
 !%      ========================== =====================================
 !%
@@ -42,7 +46,11 @@ module mwd_output
         real(sp), dimension(:, :, :), allocatable :: net_prcp_domain
         real(sp), dimension(:, :), allocatable   :: sparse_net_prcp_domain
 
-        real(sp) :: cost
+        real(sp) :: cost = 0._sp
+        real(sp) :: cost_jobs = 0._sp
+        real(sp) :: cost_jreg = 0._sp
+        real(sp) :: cost_jobs_initial = 0._sp !>f90w-private
+        real(sp) :: cost_jreg_initial = 0._sp !>f90w-private
 
         type(StatesDT) :: fstates
 

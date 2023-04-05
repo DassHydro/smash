@@ -37,12 +37,13 @@ if [ ! -d ${venv_path}/${env_name} ] ; then
     
     #install minimal python dependencies
     #here we should list and install all dependencies ?
+    pip install --upgrade pip
     pip install 'numpy>=1.13,<=1.23'
     pip install f90wrap
     pip install wheel
     
     #manually intalling gdal, because it depends on the version of the installed system library
-    pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+    pip install GDAL<=$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
     
     echo ''
     echo 'Building Smash...'
