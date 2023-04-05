@@ -448,6 +448,8 @@ def _standardize_jreg_fun(jreg_fun: str | list | tuple, setup: SetupDT) -> np.nd
         raise TypeError("jreg_fun option must str or list-like object")
 
     if list(jreg_fun) and setup._optimize.mapping.startswith("hyper"):
+        # re-check if future jreg_fun can be handled
+
         raise ValueError(
             f"Regularization function(s) can not be used with '{setup._optimize.mapping}' mapping"
         )

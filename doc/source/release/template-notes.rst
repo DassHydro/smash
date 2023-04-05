@@ -13,6 +13,10 @@ Compatibilities
 ---------------
 
 ------------
+Deprecations
+------------
+
+------------
 Improvements
 ------------
 

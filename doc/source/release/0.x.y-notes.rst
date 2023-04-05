@@ -21,6 +21,42 @@ Makefile command
 
 The ``baseline_test`` makefile command has been deprecated and replaced by ``test_baseline``.
 
+Regularization parameter name
+*****************************
+
+The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been deprecated and changed from ``k`` to ``alpha``. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(alpha=2)
+
+instead of:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(k=2)
+
+BayesResult object
+******************
+
+The attribute ``l_curve`` of :class:`smash.BayesResult` object has been deprecated and replaced by ``lcurve``. 
+The key ``Mahalanobis_distance`` has also been changed to a shortened name ``mahal_dist``.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> br = model.bayes_estimate(alpha=range(5), inplace=True, return_br=True)
+    >>> br.lcurve["mahal_dist"]
+
+instead of:
+
+.. code-block:: python
+
+    >>> br.l_curve["Mahalanobis_distance"]
+
 ------------
 Improvements
 ------------
@@ -94,7 +130,7 @@ It can be used as follows:
 Makefile command
 ****************
 
-3 news makefile commands are available:
+Three new makefile commands are available:
 
 - ``tap_cmp``: compare source tapenade file with new regenerated one,
 - ``doc``: generate sphinx documentation,
@@ -103,39 +139,3 @@ Makefile command
 -----
 Fixes
 -----
-
-Regularization parameter name
-*****************************
-
-The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been changed from ``k`` to ``alpha``. 
-
-It can be used as follows:
-
-.. code-block:: python
-
-    >>> model.bayes_optimize(alpha=2)
-
-instead of:
-
-.. code-block:: python
-
-    >>> model.bayes_optimize(k=2)
-
-BayesResult object
-******************
-
-The attribute ``l_curve`` of :class:`smash.BayesResult` object has been changed to ``lcurve``, 
-and the key ``Mahalanobis_distance`` has also been changed to a shortened name ``mahal_dist``.
-
-It can be used as follows:
-
-.. code-block:: python
-
-    >>> br = model.bayes_estimate(alpha=range(5), inplace=True, return_br=True)
-    >>> br.lcurve["mahal_dist"]
-
-instead of:
-
-.. code-block:: python
-
-    >>> br.l_curve["Mahalanobis_distance"]

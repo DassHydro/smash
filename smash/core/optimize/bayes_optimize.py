@@ -4,7 +4,6 @@ from smash.solver._mw_forward import forward
 
 from smash.core._constant import OPTIM_FUNC
 from smash.core._event_segmentation import _mask_event
-from smash.core.generate_samples import generate_samples
 
 from typing import TYPE_CHECKING
 

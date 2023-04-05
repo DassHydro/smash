@@ -168,7 +168,7 @@ def _optimize_lbfgsb(
         If True, also return the L-curve results in the form of a dictionary. Only used if jreg_fun is set and auto_wjreg='lcurve'.
 
     adjoint_test : bool, default False
-        if True, perform an adjoint test (i.e. a scalar product test). Only used if mapping='distributed'.
+        If True, perform an adjoint test (i.e. a scalar product test). Only used if mapping='distributed'.
     """
 
     _check_unknown_options(unknown_options)
