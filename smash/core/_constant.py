@@ -111,11 +111,17 @@ ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
 
+GAUGE_ALIAS = ["all", "downstream"]
+
+WGAUGE_ALIAS = ["mean", "median", "area", "minv_area"]
+
+# % TODO: Add "distance_correlation" once clearly verified
 JREG_FUN = [
     "prior",
     "smoothing",
-    "distance_correlation"
 ]
+
+AUTO_WJREG = ["fast", "lcurve"]
 
 OPTIM_FUNC = {
     "sbs": _optimize_sbs,

@@ -92,6 +92,37 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
     res["optimize.distributed_l-bfgs-b_bounds.cp"] = instance.parameters.cp.copy()
     res["optimize.distributed_l-bfgs-b_bounds.cft"] = instance.parameters.cft.copy()
 
+    # % Regularization auto_wjreg fast
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 2,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "fast",
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_fast.cost"] = output_cost(instance)
+
+    # % Regularization auto_wjreg lcurve
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 2,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "lcurve",
+            "nb_wjreg_lcurve": 8,
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_lcurve.cost"] = output_cost(instance)
+
     return res
 
 
@@ -121,7 +152,7 @@ def test_optimize():
 
 def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_estimate(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         return_br=True,
         random_state=11,
@@ -129,7 +160,7 @@ def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
     )
 
     res = {
-        "bayes_estimate.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_estimate.br_cost": np.array(br.lcurve["cost"]),
         "bayes_estimate.cost": output_cost(instance),
     }
 
@@ -140,13 +171,13 @@ def test_bayes_estimate():
     res = generic_bayes_estimate(pytest.model)
 
     for key, value in res.items():
-        # % Check br.l_curve and cost in bayes_estimate
+        # % Check br.lcurve and cost in bayes_estimate
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_optimize(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         mapping="distributed",
         algorithm="l-bfgs-b",
@@ -157,7 +188,7 @@ def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
     )
 
     res = {
-        "bayes_optimize.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_optimize.br_cost": np.array(br.lcurve["cost"]),
         "bayes_optimize.cost": output_cost(instance),
     }
 
@@ -168,7 +199,7 @@ def test_bayes_optimize():
     res = generic_bayes_optimize(pytest.model)
 
     for key, value in res.items():
-        # % Check br.l_curve and cost in bayes_optimize
+        # % Check br.lcurve and cost in bayes_optimize
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 

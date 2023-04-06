@@ -9,13 +9,18 @@ import pytest
 def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
     problem = model.get_bound_constraints()
 
-    uni = smash.generate_samples(
-        problem, generator="uniform", n=20, random_state=11
-    ).to_numpy()
+    sample = smash.generate_samples(problem, generator="uniform", n=20, random_state=11)
+    uni = sample.to_numpy(axis=-1)
 
-    nor = smash.generate_samples(
-        problem, generator="normal", n=20, random_state=11
-    ).to_numpy()
+    sample = smash.generate_samples(
+        problem,
+        generator="normal",
+        n=20,
+        mean={problem["names"][1]: 1 / 3 * np.mean(problem["bounds"][1])},
+        coef_std=2,
+        random_state=11,
+    )
+    nor = sample.to_numpy(axis=-1)
 
     res = {"gen_samples.uni": uni, "gen_samples.nor": nor}
 

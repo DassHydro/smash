@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
-
 from smash.core._constant import (
     STRUCTURE_PARAMETERS,
     STRUCTURE_STATES,
     SAMPLE_GENERATORS,
     PROBLEM_KEYS,
 )
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.solver._mwd_setup import SetupDT
 
 import warnings
 
@@ -19,7 +19,112 @@ import pandas as pd
 from scipy.stats import truncnorm
 
 
-__all__ = ["generate_samples"]
+__all__ = ["generate_samples", "SampleResult"]
+
+
+class SampleResult(dict):
+    """
+    Represents the generated samples using `smash.generate_samples` method.
+
+    Notes
+    -----
+    This class is essentially a subclass of dict with attribute accessors and two additional methods, which are
+    `SampleResult.to_numpy` and `SampleResult.to_dataframe`.
+    This also have additional attributes not listed here depending on the specific names
+    provided in the argument ``problem`` in the `smash.generate_samples` method.
+
+    Attributes
+    ----------
+    generator : str
+        The generator used to generate the samples.
+
+    n_sample : int
+        The number of generated samples.
+
+    See Also
+    --------
+    smash.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
+
+    Examples
+    --------
+    >>> problem = {"num_vars": 2, "names": ["cp", "lr"], "bounds": [[1,200], [1,500]]}
+    >>> sr = smash.generate_samples(problem, n=5, random_state=1)
+
+    Convert the result to a numpy.ndarray:
+
+    >>> sr.to_numpy(axis=-1)
+    array([[ 83.98737894,  47.07695879],
+           [144.34457419,  93.94384548],
+           [  1.02276059, 173.43480279],
+           [ 61.16418195, 198.98696964],
+           [ 30.20442227, 269.86955027]])
+
+    Convert the result to a pandas.DataFrame:
+
+    >>> sr.to_dataframe()
+               cp          lr
+    0   83.987379   47.076959
+    1  144.344574   93.943845
+    2    1.022761  173.434803
+    3   61.164182  198.986970
+    4   30.204422  269.869550
+
+    """
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __repr__(self):
+        if self.keys():
+            m = max(map(len, list(self.keys()))) + 1
+            return "\n".join(
+                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
+    def __dir__(self):
+        return list(self.keys())
+
+    def to_numpy(self, axis=0):
+        """
+        Convert the `SampleResult` object to a numpy.ndarray.
+
+        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
+        based on the names of the Model parameters/states.
+
+        Parameters
+        ----------
+        axis : int, default 0
+            The axis along which the generated samples of each Model parameter/state will be joined.
+
+        Returns
+        -------
+        res : numpy.ndarray
+            The `SampleResult` object as a numpy.ndarray.
+
+        """
+        keys = sorted(self._problem["names"])
+
+        return np.stack([self[k] for k in keys], axis=axis)
+
+    def to_dataframe(self):
+        """
+        Convert the `SampleResult` object to a pandas.DataFrame.
+
+        Returns
+        -------
+        res : pandas.DataFrame
+            The SampleResult object as a pandas.DataFrame.
+        """
+
+        return pd.DataFrame({k: self[k] for k in self._problem["names"]})
 
 
 def generate_samples(
@@ -27,7 +132,7 @@ def generate_samples(
     generator: str = "uniform",
     n: int = 1000,
     random_state: int | None = None,
-    backg_sol: np.ndarray | None = None,
+    mean: np.ndarray | None = None,
     coef_std: float | None = None,
 ):
     """
@@ -40,7 +145,7 @@ def generate_samples(
 
         - 'num_vars' : the number of Model parameters/states.
         - 'names' : the name of Model parameters/states.
-        - 'bounds' : the upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+        - 'bounds' : the upper and lower bounds of each Model parameter/state (a sequence of ``(min, max)``).
 
         .. hint::
             This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
@@ -60,13 +165,14 @@ def generate_samples(
         .. note::
             If not given, generates parameters sets with a random seed.
 
-    backg_sol : numpy.ndarray or None, default None
-        Spatially uniform prior parameters/states could be included in generated sets, and are
-        used as the mean when generating with Gaussian distribution.
-        In this case, truncated normal distribution could be used with respect to the boundary conditions defined by the above problem.
+    mean : dict or None, default None
+        If the samples are generated using a Gaussian distribution, ``mean`` is used to define the mean of the distribution for each Model parameter/state.
+        It is a dictionary where keys are the name of the parameters/states defined in the ``problem`` argument.
+        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in the ``problem`` argument.
+        None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given, the mean is the center of the parameter/state bound if in case of Gaussian generator.
+            If not given, the mean of the distribution will be set to the center of the parameter/state bounds if a Gaussian distribution is used.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -77,18 +183,19 @@ def generate_samples(
         where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
         .. note::
-            If not given, a default value for this coefficient will be assigned to define the standard deviation:
+            If not given, a default value for this coefficient will be assigned to define the standard deviation if a Gaussian distribution is used:
 
-        .. math::
+            .. math::
                 std = \\frac{u - l}{3}
 
     Returns
     -------
-    res : pandas.DataFrame
-        A dataframe with generated samples.
+    res : SampleResult
+        The generated samples result represented as a `SampleResult` object.
 
     See Also
     --------
+    SampleResult: Represents the generated samples using `smash.generate_samples` method.
     Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
@@ -101,21 +208,26 @@ def generate_samples(
     ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
     ... }
 
-    Generate samples with `uniform` generator:
+    Generate samples with the uniform generator:
 
-    >>> smash.generate_samples(problem, n=5, random_state=99)
-                    cp         cft        exc          lr
-        0  1344.884839  566.051802  -0.755174  396.058590
-        1   976.668720  298.324876  -1.330822  973.982341
-        2  1651.164853   47.649025 -10.564027  524.890301
-        3    63.861329  990.636772  -7.646314   94.519480
-        4  1616.291877    7.818907   3.223710  813.495104
+    >>> sr = smash.generate_samples(problem, n=3, random_state=99)
+    >>> sr.to_dataframe()  # convert SampleResult object to pandas.DataFrame
+                cp         cft        exc          lr
+    0  1344.884839   32.414941 -12.559438    7.818907
+    1   976.668720  808.241913 -18.832607  770.023235
+    2  1651.164853  566.051802   4.765685  747.020334
 
     """
 
-    df = pd.DataFrame(columns=problem["names"])
+    generator, mean = _standardize_generate_samples_args(problem, generator, mean)
 
-    generator = generator.lower()
+    ret_dict = {key: [] for key in problem["names"]}
+
+    ret_dict["generator"] = generator
+
+    ret_dict["n_sample"] = n
+
+    ret_dict["_problem"] = problem.copy()
 
     if random_state is not None:
         np.random.seed(random_state)
@@ -124,14 +236,10 @@ def generate_samples(
         low = problem["bounds"][i][0]
         upp = problem["bounds"][i][1]
 
-        if backg_sol is None:
-            ubi = []
-
-        else:
-            ubi = [backg_sol[i]]
-
         if generator == "uniform":
-            df[p] = np.append(ubi, np.random.uniform(low, upp, n - len(ubi)))
+            ret_dict[p] = np.random.uniform(low, upp, n)
+
+            ret_dict["_" + p] = 1 / n * np.ones(n)
 
         elif generator in ["normal", "gaussian"]:
             if coef_std is None:
@@ -140,20 +248,13 @@ def generate_samples(
             else:
                 sd = (upp - low) / coef_std
 
-            if backg_sol is None:
-                trunc_normal = _get_truncated_normal((low + upp) / 2, sd, low, upp)
+            trunc_normal = _get_truncated_normal(mean[p], sd, low, upp)
 
-            else:
-                trunc_normal = _get_truncated_normal(ubi[0], sd, low, upp)
+            ret_dict[p] = trunc_normal.rvs(size=n)
 
-            df[p] = np.append(ubi, trunc_normal.rvs(size=n - len(ubi)))
+            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
 
-        else:
-            raise ValueError(
-                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
-            )
-
-    return df
+    return SampleResult(ret_dict)
 
 
 def _get_truncated_normal(mean: float, sd: float, low: float, upp: float):
@@ -205,12 +306,61 @@ def _standardize_problem(problem: dict | None, setup: SetupDT, states: bool):
                 f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
             )
 
-        unk_keys = tuple(k for k in prl_keys if k not in PROBLEM_KEYS)
+        unk_keys = [k for k in prl_keys if k not in PROBLEM_KEYS]
 
         if unk_keys:
-            warnings.warn(f"Unknown key(s) found in the problem definition {unk_keys}")
+            warnings.warn(
+                f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}"
+            )
 
     else:
         raise TypeError("The problem definition must be a dictionary or None")
 
     return problem
+
+
+def _standardize_generate_samples_args(problem: dict, generator: str, user_mean: dict):
+    if isinstance(problem, dict):  # simple check problem
+        _standardize_problem(problem, None, None)
+
+    else:
+        raise TypeError("problem must be a dictionary")
+
+    if isinstance(generator, str):  # check generator
+        generator = generator.lower()
+
+        if generator not in SAMPLE_GENERATORS:
+            raise ValueError(
+                f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
+            )
+
+        elif generator in ["normal", "gaussian"]:
+            # check mean
+            mean = dict(zip(problem["names"], np.mean(problem["bounds"], axis=1)))
+
+            if user_mean is None:
+                pass
+
+            elif isinstance(user_mean, dict):
+                for name, um in user_mean.items():
+                    if not name in problem["names"]:
+                        warnings.warn(
+                            f"Key '{name}' does not match any existing names in the problem definition {problem['names']}"
+                        )
+
+                    if isinstance(um, (int, float)):
+                        mean.update({name: um})
+
+                    else:
+                        raise TypeError("mean value must be float or integer")
+
+            else:
+                raise TypeError("mean must be None or a dictionary")
+
+        else:
+            mean = user_mean
+
+    else:
+        raise TypeError("generator must be a string")
+
+    return generator, mean

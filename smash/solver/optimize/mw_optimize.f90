@@ -258,7 +258,7 @@ contains
             if (ddx .lt. 0.01_sp) then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    write (*, '(4x,2a)') "CONVERGENCE: DDX < 0.01", new_line("")
                 end if
 
                 call control_to_var_sbs(n, setup, mesh, parameters, states, x)
@@ -277,7 +277,7 @@ contains
             if (iter .eq. setup%optimize%maxiter*n) then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    write (*, '(4x,2a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT", new_line("")
                 end if
 
                 call control_to_var_sbs(n, setup, mesh, parameters, states, x)
@@ -573,13 +573,6 @@ contains
         output%cost_jobs_initial = output%cost_jobs
         output%cost_jreg_initial = output%cost_jreg
         
-        if (setup%optimize%verbose) then
-            write (*, '(4x,a,4x,a,f14.6,4x,a,f14.6,4x,a,f14.6,4x,a,f10.6)') &
-            & "At initial condition", &
-            &"J =", output%cost, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg
-        end if
-        
-        
         task = 'START'
         do while ((task(1:2) .eq. 'FG' .or. task .eq. 'NEW_X' .or. &
                 & task .eq. 'START'))
@@ -630,7 +623,7 @@ contains
                 if (task(4:8) .eq. 'START') then
 
                     if (setup%optimize%verbose) then
-                        write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f14.6,4x,a,f14.6,4x,a,f10.6)') &
+                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
                         & "At iterate", 0, "nfg = ", 1, &
                         &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
                         &"|proj g| =", dsave(13)
@@ -643,7 +636,7 @@ contains
             if (task(1:5) .eq. 'NEW_X') then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f14.6,4x,a,f14.6,4x,a,f10.6)') &
+                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
                         & "At iterate", isave(30), "nfg = ", isave(34), &
                         &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
                         &"|proj g| =", dsave(13)
@@ -666,7 +659,7 @@ contains
         end do
 
         if (setup%optimize%verbose) then
-            write (*, '(4x,a)') task
+            write (*, '(4x,2a)') task, new_line("")
         end if
 
         ! =========================================================================================================== !
@@ -911,8 +904,10 @@ contains
                 if (task(4:8) .eq. 'START') then
 
                     if (setup%optimize%verbose) then
-                        write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", 0, "nfg = ", 1, &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                     end if
 
                 end if
@@ -922,8 +917,10 @@ contains
             if (task(1:5) .eq. 'NEW_X') then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", isave(30), "nfg = ", isave(34), &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                 end if
 
                 if (isave(30) .ge. setup%optimize%maxiter) then
@@ -943,7 +940,7 @@ contains
         end do
 
         if (setup%optimize%verbose) then
-            write (*, '(4x,a)') task
+            write (*, '(4x,2a)') task, new_line("")
         end if
 
         ! =========================================================================================================== !
