@@ -83,7 +83,7 @@ def _parse_selected_derived_type_to_hdf5(
                     pass
 
 
-def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_only=False, replace=False):
+def save_multi_model(model: Model, path: str, location=None, sub_data=None, sub_only=False, replace=False):
     """
     Save some derived data types of the Model object.
 
@@ -160,7 +160,9 @@ def save_multi_model(model: Model, path: str, group=None, sub_data=None, sub_onl
     if location is not None:
         #loc_name=os.path.basename(location)
         loc_path=os.path.dirname(location)
-        grp=f.create_group(location)
+        if loc_path=="":
+            loc_path="./"
+        grp=f.require_group(location)
     else:
         grp=f
     
@@ -321,7 +323,7 @@ def read_multi_model(path: str, location=None) -> dict:
 
                 attr_keys.remove("_save_func")
 
-                attr_values = [grp.attrs[key] for key in attr_keys]
+                attr_values = [loc.attrs[key] for key in attr_keys]
 
                 return dict(zip(keys + attr_keys, values + attr_values))
 
