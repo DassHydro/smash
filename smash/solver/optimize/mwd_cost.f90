@@ -201,7 +201,6 @@ contains
 
             select case (setup%optimize%jreg_fun(i))
 
-                !% Normalize prior between parameters and states
             case ("prior")
 
                 parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)* &
@@ -213,10 +212,10 @@ contains
             case ("smoothing")
 
                 parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**4* &
-                & reg_smoothing(setup, setup%optimize%optim_parameters, parameters_matrix, parameters_bgd_matrix)
+                & reg_smoothing(setup, mesh, setup%optimize%optim_parameters, parameters_matrix, parameters_bgd_matrix)
 
                 states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4* &
-                & reg_smoothing(setup, setup%optimize%optim_states, states_matrix, states_bgd_matrix)
+                & reg_smoothing(setup, mesh, setup%optimize%optim_states, states_matrix, states_bgd_matrix)
 
             case ("distance_correlation")
 
@@ -1088,7 +1087,7 @@ contains
 
     end function distance_correlation_descriptors
 
-    function reg_smoothing(setup, optim_arr, matrix, matrix_bgd) result(res)
+    function reg_smoothing(setup, mesh, optim_arr, matrix, matrix_bgd) result(res)
 
         !% Notes
         !% -----
@@ -1101,6 +1100,7 @@ contains
         implicit none
 
         type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
         integer, dimension(:), intent(in) :: optim_arr
         real(sp), dimension(:, :, :), intent(in) :: matrix, matrix_bgd
         real(sp) :: res
@@ -1121,20 +1121,36 @@ contains
 
                     do row = 1, size(matrix, 1)
 
-                        min_col = col - 1
-                        max_col = col + 1
-                        min_row = row - 1
-                        max_row = row + 1
+                        if (mesh%active_cell(row, col) .eq. 1) then
 
-                        ! condition limite
-                        if (col .eq. 1) min_col = col
-                        if (col .eq. size(matrix, 2)) max_col = col
+                            ! do not point out of the domain
+                            min_col = max(1, col - 1)
+                            max_col = min(size(matrix, 2), col + 1)
+                            min_row = max(1, row - 1)
+                            max_row = min(size(matrix, 1), row + 1)
 
-                        if (row .eq. 1) min_row = row
-                        if (row .eq. size(matrix, 1)) max_row = row
+                            ! if active_cell, do not take into account the cells outside the catchment
+                            ! since only cells in active_cell are included in the control vector
+                            if (mesh%active_cell(row, min_col) .eq. 0) then
+                                min_col = col
+                            end if
 
-                        res = res + ((mat(max_row, col, i) - 2._sp*mat(row, col, i) + mat(min_row, col, i)) &
-                        & + (mat(row, max_col, i) - 2._sp*mat(row, col, i) + mat(row, min_col, i)))**2
+                            if (mesh%active_cell(row, max_col) .eq. 0) then
+                                max_col = col
+                            end if
+
+                            if (mesh%active_cell(min_row, col) .eq. 0) then
+                                min_row = row
+                            end if
+
+                            if (mesh%active_cell(max_row, col) .eq. 0) then
+                                max_row = row
+                            end if
+
+                            res = res + ((mat(max_row, col, i) - 2._sp*mat(row, col, i) + mat(min_row, col, i)) &
+                            & + (mat(row, max_col, i) - 2._sp*mat(row, col, i) + mat(row, min_col, i)))**2
+
+                        end if
 
                     end do
 
