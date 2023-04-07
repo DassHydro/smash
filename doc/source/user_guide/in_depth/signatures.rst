@@ -5,7 +5,7 @@ Signatures
 ==========
 
 This section aims to go into detail on how to compute and vizualize some hydrological signatures 
-(list of studied signatures and their formula are given in :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>`) as well as 
+(a list of studied signatures and their formula is given in :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>`) as well as 
 the sensitivity of the model parameters to these signatures.
 
 First, open a Python interface:
@@ -45,7 +45,7 @@ Signatures computation
 ----------------------
 
 To start with, we need to run a direct (or optimized) simulation. Then the signatures computation result is available using the :meth:`Model.signatures() <smash.Model.signatures>` method. 
-The argument ``event_seg`` (only related to flood event signatures) could be defined for tuning the parameters of segmentation algorithm. 
+The argument ``event_seg`` (only related to flood event signatures) could be defined for tuning the parameters of the segmentation algorithm. 
 
 .. ipython:: python
 

@@ -54,9 +54,9 @@ The result is represented by a pandas.DataFrame with 6 columns.
 - ``code`` : The catchment code,
 - ``start`` : The beginning of event under ``YYYY-MM-DD HH:MM:SS`` format,
 - ``end`` : The end of event under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``maxrainfall`` : The moment that the maximum precipation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``flood`` : The moment that the maximum discharge is observed under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``season`` : The season that event occurrs.
+- ``maxrainfall`` : The moment when the maximum precipation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
+- ``flood`` : The moment when the maximum discharge is observed under ``YYYY-MM-DD HH:MM:SS`` format,
+- ``season`` : The season in which the event occurs.
 
 Then the segmented event, for instance of catchment ``V3524010``, is shown in the hydrograph below.
 

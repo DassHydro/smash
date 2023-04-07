@@ -6,7 +6,7 @@ Model structure
 
 In this section all the hydrological model structures that can be used will be presented.
 
-There are 3 different structures available:
+There are 4 different structures available:
 
 - "gr-a"
     4 parameters and 3 states structure derived from the GR model.

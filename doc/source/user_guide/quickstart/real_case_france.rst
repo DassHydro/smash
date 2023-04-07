@@ -47,7 +47,7 @@ Compared to the :ref:`user_guide.real_case_cance`, less options have been filled
     setup
 
 The only options which had been added to the setup is ``save_qsim_domain``. By default, to avoid storing in memory the entire grid of simulated discharge (especially on non active cells) when working with catchments this option is set to False.
-But in case of simulation on a domain. We need to store the simulated discharge on the whole domain.
+But in case of simulation on a domain, we need to store the simulated discharge on the whole domain.
 
 .. note::
     We won't read any observed discharge because we are not working on catchment entities but domain.
