@@ -334,7 +334,7 @@ The mesh has been generated for two groups of catchments which are non-nested.
 
 .. note::
 
-    The flow distances are always calculated on the most downstream gauge. In case of non-nested groups of catchments. The flow distance are calculated
+    The flow distances are always calculated on the most downstream gauge. In case of non-nested groups of catchments, the flow distance are calculated
     for each group on the most downstream gauge.
 
 Finally, visualize the gauge positions for this mesh.

@@ -455,7 +455,7 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with run outputs or None if inplace.
+            Model with run outputs if not **inplace**.
 
         Examples
         --------
@@ -541,7 +541,7 @@ class Model(object):
             - 'l-bfgs-b'
 
             .. note::
-                If not given, chosen to be one of ``sbs`` or ``l-bfgs-b`` depending on the optimization mapping.
+                If not given, chosen to be one of 'sbs' or 'l-bfgs-b' depending on the optimization mapping.
 
         control_vector : str, sequence or None, default None
             Parameters and/or states to be optimized. The control vector argument
@@ -562,12 +562,9 @@ class Model(object):
         jobs_fun : str or sequence, default 'nse'
             Type of objective function(s) to be minimized. Should be one or a sequence of any
 
-            - ``Classical Objective Function``
-                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
-            - ``Continuous Signature``
-                'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90'
-            - ``Flood Event Signature``
-                'Epf', 'Elt', 'Erc'
+            - 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic' (classical objective function)
+            - 'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signature)
+            - 'Epf', 'Elt', 'Erc' (flood event signature)
 
             .. hint::
                 See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
@@ -594,14 +591,14 @@ class Model(object):
 
             1. A gauge code or any sequence of gauge codes.
                The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            2. An alias among ``all`` and ``downstream``. ``all`` is equivalent to a sequence of all gauge codes.
-               ``downstream`` is equivalent to the gauge code of the most downstream gauge.
+            2. An alias among 'all' and 'downstream'. 'all' is equivalent to a sequence of all gauge codes.
+               'downstream' is equivalent to the gauge code of the most downstream gauge.
 
         wgauge : str, sequence, default 'mean'
             Type of gauge weights. There are two ways to specify it:
 
             1. A sequence of value whose size must be equal to the number of gauges optimized.
-            2. An alias among ``mean``, ``median``, ``area`` or ``minv_area``.
+            2. An alias among 'mean', 'median', 'area' or 'minv_area'.
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
@@ -631,7 +628,7 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs or None if inplace.
+            Model with optimize outputs if not **inplace**.
 
         Examples
         --------
@@ -761,16 +758,16 @@ class Model(object):
             A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
-                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
+                If **alpha** is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
-            Number of generated samples. Only used if sample is not set.
+            Number of generated samples. Only used if **sample** is not set.
 
         random_state : int or None, default None
-            Random seed used to generate samples. Only used if sample is not set.
+            Random seed used to generate samples. Only used if **sample** is not set.
 
             .. note::
-                If not given and sample is not set, generates the parameters set with a random seed.
+                If not given and **sample** is not set, generates the parameters set with a random seed.
 
         jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
             Optimization setting to run the forward hydrological model and compute the cost values.
@@ -791,10 +788,10 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         res : BayesResult
-            The Bayesian estimation results represented as a `BayesResult` object if return_br.
+            The Bayesian estimation results represented as a `BayesResult` object if **return_br**.
 
         See Also
         --------
@@ -923,22 +920,22 @@ class Model(object):
 
             .. note::
                 If not given, the Model parameters samples will be generated automatically using the uniform generator
-                based on the control vector and bounds arguments.
+                based on both **control_vector** and **bounds** arguments.
 
         alpha : int, float or sequence, default 4
             A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
-                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
+                If **alpha** is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
-            Number of generated samples. Only used if sample is not set.
+            Number of generated samples. Only used if **sample** is not set.
 
         random_state : int or None, default None
-            Random seed used to generate samples. Only used if sample is not set.
+            Random seed used to generate samples. Only used if **sample** is not set.
 
             .. note::
-                If not given and sample is not set, generates the parameters set with a random seed.
+                If not given and **sample** is not set, generates the parameters set with a random seed.
 
         de_bw_method : str, scalar, callable or None, default None
             The method used to calculate the estimator bandwidth to estimate the density distribution.
@@ -992,10 +989,10 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         res : BayesResult
-            The Bayesian optimization results represented as a `BayesResult` object if return_br.
+            The Bayesian optimization results represented as a `BayesResult` object if **return_br**.
 
         See Also
         --------
@@ -1124,13 +1121,13 @@ class Model(object):
         Parameters
         ----------
         net : Net or None, default None
-            The neural network `Net` will be trained to learn the descriptors-to-parameters mapping.
+            The `Net` object to be trained to learn the descriptors-to-parameters mapping.
 
             .. note::
-                If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
+                If not given, a default network will be used. Otherwise, perform operation in-place on this **net**.
 
         optimizer : str, default 'adam'
-            Name of optimizer. Only used if net is not set.
+            Name of optimizer. Only used if **net** is not set.
             Should be one of
 
             - 'sgd'
@@ -1139,7 +1136,7 @@ class Model(object):
             - 'rmsprop'
 
         learning_rate : float, default 0.003
-            The learning rate used to update the weights during training. Only used if net is not set.
+            The learning rate used to update the weights during training. Only used if **net** is not set.
 
         control_vector : str, sequence or None, default None
             Parameters and/or states to be optimized. The control vector argument
@@ -1168,10 +1165,10 @@ class Model(object):
             Stop updating weights and biases when the loss function stops decreasing.
 
         random_state : int or None, default None
-            Random seed used to initialize weights. Only used if net is not set.
+            Random seed used to initialize weights. Only used if **net** is not set.
 
             .. note::
-                If not given and net is not set, the weights will be initialized with a random seed.
+                If not given and **net** is not set, the weights will be initialized with a random seed.
 
         verbose : bool, default True
             Display information while training.
@@ -1180,15 +1177,15 @@ class Model(object):
             If True, perform operation in-place.
 
         return_net : bool, default False
-            If True and the default graph is used (net is None), also return the trained neural network.
+            If True and the default graph is used (**net** is not set), also return the trained neural network.
 
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         Net : Net or None
-            `Net` with trained weights and biases if return_net and the default graph is used.
+            `Net` with trained weights and biases if **return_net** and the default graph is used.
 
         See Also
         --------
@@ -1317,7 +1314,7 @@ class Model(object):
         Parameters
         ----------
         peak_quant: float, default 0.995
-            Events will be selected if their discharge peaks exceed the ``peak_quant``-quantile of the observed discharge timeseries.
+            Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
         max_duration: float, default 240
             The expected maximum duration of an event (in hour).
@@ -1458,7 +1455,7 @@ class Model(object):
 
             - 'num_vars' : the number of Model parameters.
             - 'names' : the name of Model parameters.
-            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of (min, max)).
+            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of ``(min, max)``).
 
             .. note::
                 If not given, the problem will be set automatically using `smash.Model.get_bound_constraints` method.
@@ -1622,7 +1619,7 @@ class Model(object):
 
             - 'num_vars': The number of Model parameters/states.
             - 'names': The name of Model parameters/states.
-            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of ``(min, max)``).
 
         Examples
         --------

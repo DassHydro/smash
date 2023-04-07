@@ -242,7 +242,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Mesh
 ****
 
-The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`user_guide.practice_case.mesh_argument_creation` part given values for multiple arguments. These values can be retrieved in the following way:
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. In the :ref:`user_guide.practice_case.mesh_argument_creation` part, we have given values for multiple arguments. These values can be retrieved in the following way:
 
 .. ipython:: python
 

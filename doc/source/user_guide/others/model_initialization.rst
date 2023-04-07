@@ -12,14 +12,14 @@ Model initialization
 Setup
 -----
 
-In this section all the setup options that can be passed to the ``setup`` dictionary needed to initialize the :class:`.Model` object will be presented.
+In this section all the setup options that can be passed to the ``setup`` dictionary in order to initialize the :class:`Model` object will be presented.
 
 
 Structure options
 *****************
 
 ``structure``:bolditalic:`: str, default "gr-a"`
-    Model structure. Possible model structures are:
+    Model structure. There are 4 different structures available:
 
     - "gr-a"
         4 parameters and 3 states structure.

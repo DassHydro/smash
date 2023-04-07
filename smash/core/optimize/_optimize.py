@@ -143,31 +143,31 @@ def _optimize_lbfgsb(
             See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
 
     wjreg: float, default 0.01
-        Global regularization weight. Only used if jreg_fun is set.
+        Global regularization weight. Only used if **jreg_fun** is set.
 
     wjreg_fun : sequence or None, default None
-        Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize). Only used if jreg_fun is set.
+        Regularization function(s) weights in case of multi-regularization (i.e. a sequence of regularization functions to minimize). Only used if **jreg_fun** is set.
 
         .. note::
-            If not given and jreg_fun is set with multi-regularization, the weights are set to 1.
+            If not given and **jreg_fun** is set with multi-regularization, the weights are set to 1.
 
     auto_wjreg : str or None, default None
-        Type of method to automatically compute the regularization function weight(s) wjreg_fun. Only used if jreg_fun is set. Should be one of
+        Type of method to automatically compute the regularization function weight(s) **wjreg_fun**. Only used if **jreg_fun** is set. Should be one of
 
         - 'fast' (it consists of 2 optimization cycles)
-        - 'lcurve' (it consists of nb_wjreg_lcurve optimization cycles)
+        - 'lcurve' (it consists of **nb_wjreg_lcurve** optimization cycles)
 
         .. note::
-            If not given, the regularization weight(s) are computed using the values set in wjreg_fun.
+            If not given, the regularization weight(s) are computed using the values set in **wjreg_fun**.
 
     nb_wjreg_lcurve : int, default 6
-        Number of optimization cycles during the process of automatically computing the regularization function weight(s) using the L-curve approach. Only used if jreg_fun is set and auto_wjreg='lcurve'. The minimum value required is 6.
+        Number of optimization cycles during the process of automatically computing the regularization function weight(s) using the L-curve approach. Only used if **jreg_fun** is set and **auto_wjreg** = 'lcurve'. The minimum value required is 6.
 
     return_lcurve : bool, default False
-        If True, also return the L-curve results in the form of a dictionary. Only used if jreg_fun is set and auto_wjreg='lcurve'.
+        If True, also return the L-curve results in the form of a dictionary. Only used if **jreg_fun** is set and **auto_wjreg** = 'lcurve'.
 
     adjoint_test : bool, default False
-        If True, perform an adjoint test (i.e. a scalar product test). Only used if mapping='distributed'.
+        If True, perform an adjoint test (i.e. a scalar product test). Only used if **mapping** = 'distributed'.
     """
 
     _check_unknown_options(unknown_options)

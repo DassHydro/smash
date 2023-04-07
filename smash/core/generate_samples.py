@@ -166,13 +166,13 @@ def generate_samples(
             If not given, generates parameters sets with a random seed.
 
     mean : dict or None, default None
-        If the samples are generated using a Gaussian distribution, ``mean`` is used to define the mean of the distribution for each Model parameter/state.
-        It is a dictionary where keys are the name of the parameters/states defined in the ``problem`` argument.
-        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in the ``problem`` argument.
+        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each Model parameter/state.
+        It is a dictionary where keys are the name of the parameters/states defined in the **problem** argument.
+        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in **problem**.
         None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given, the mean of the distribution will be set to the center of the parameter/state bounds if a Gaussian distribution is used.
+            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the parameter/state bounds.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -183,7 +183,7 @@ def generate_samples(
         where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
         .. note::
-            If not given, a default value for this coefficient will be assigned to define the standard deviation if a Gaussian distribution is used:
+            If not given and Gaussian distribution is used, **coef_std** is set to 3 as default:
 
             .. math::
                 std = \\frac{u - l}{3}
