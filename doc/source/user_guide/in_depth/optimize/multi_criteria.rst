@@ -1,4 +1,4 @@
-.. _user_guide.optimize.multi_criteria:
+.. _user_guide.in_depth.optimize.multi_criteria:
 
 ===========================
 Multi-criteria optimization

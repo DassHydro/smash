@@ -1,4 +1,4 @@
-.. _user_guide.optimize:
+.. _user_guide.in_depth.optimize:
 
 ==================
 Model optimization

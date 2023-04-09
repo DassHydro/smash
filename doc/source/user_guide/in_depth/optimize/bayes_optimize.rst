@@ -1,4 +1,4 @@
-.. _user_guide.optimize.bayes_optimize:
+.. _user_guide.in_depth.optimize.bayes_optimize:
 
 ================================
 Variational Bayesian calibration

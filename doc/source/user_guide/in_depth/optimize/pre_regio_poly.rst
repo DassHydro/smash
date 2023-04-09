@@ -1,4 +1,4 @@
-.. _user_guide.optimize.pre_regio_poly:
+.. _user_guide.in_depth.optimize.pre_regio_poly:
 
 ============================================
 Pre-regionalization using polynomial mapping
@@ -64,7 +64,7 @@ We can visualize these descriptors and verify if they were successfully loaded:
         im = ax.imshow(model.input_data.descriptor[..., i]);
         cbar = fig.colorbar(im, ax=ax, orientation="horizontal");
         cbar.ax.tick_params();
-    @savefig desc_optimize_poly_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.desc.png
     fig.suptitle("Physiographic descriptors");
 
 .. ipython:: python
@@ -76,7 +76,7 @@ We can visualize these descriptors and verify if they were successfully loaded:
 Finding a uniform first guess
 -----------------------------
 
-Similar to the :ref:`fully-distributed optimization <user_guide.optimize.fully_distributed>` method, 
+Similar to the :ref:`fully-distributed optimization <user_guide.in_depth.optimize.fully_distributed>` method, 
 providing a uniform first guess is recommended for this method. 
 In this case, we use the :math:`\mathrm{SBS}` algorithm to find such a first guess:
 
@@ -86,7 +86,7 @@ In this case, we use the :math:`\mathrm{SBS}` algorithm to find such a first gue
 
 .. hint::
 
-    You may want to refer to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
+    You may want to refer to the :ref:`Bayesian estimation <user_guide.in_depth.optimize.bayes_estimate>` section 
     for information on how to improve the first guess using a Bayesian estimation approach.
 
 ----------------------------------------------------------
@@ -170,7 +170,7 @@ Now we can visualize the simulated discharge:
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model_hp.mesh.code[0]);
-    @savefig qsim_optimize_pre-regio_hp_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.qsim.png
     plt.legend();
 
 The cost value:
@@ -202,5 +202,5 @@ And finally, the spatially distributed model parameters constrained by physiogra
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig theta_sd_optimize_pre-regio_hp_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");

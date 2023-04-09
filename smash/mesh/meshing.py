@@ -351,7 +351,7 @@ def generate_mesh(
     Automatic mesh generation.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.automatic_meshing>` for more.
+        See the :ref:`User Guide <user_guide.in_depth.automatic_meshing>` for more.
 
     Parameters
     ----------

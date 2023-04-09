@@ -1,4 +1,4 @@
-.. _user_guide.optimize.bayes_estimate:
+.. _user_guide.in_depth.optimize.bayes_estimate:
 
 ===================================================
 Improving the first guess using Bayesian estimation
@@ -89,7 +89,7 @@ with the random set of parameters using the following code:
     plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Cost");
     plt.ylabel("Frequency");
-    @savefig distribution_cost_be_user_guide.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.cost_distribution.png
     plt.title("Cost value histogram for parameter set");
 
 We can also visualize the L-curve that was used to find the optimal regularization parameter:
@@ -114,7 +114,7 @@ We can also visualize the L-curve that was used to find the optimal regularizati
     plt.xlabel("Mahalanobis distance");
     plt.ylabel("Cost");
     plt.title("L-curve");
-    @savefig lcurve_estimate_be_user_guide.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.lcurve.png
     plt.legend();
 
 The spatially uniform first guess:
@@ -203,5 +203,5 @@ The spatially distributed model parameters:
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig user_guide.in_depth.optimize.bayes_estimate.theta_sd.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");

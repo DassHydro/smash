@@ -1,10 +1,10 @@
-.. _user_guide.practice_case:
+.. _user_guide.quickstart.practice_case:
 
 =============
 Practice case
 =============
 
-The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the User Guide section: :ref:`user_guide.real_case_cance`.
+The Practice case is an introduction to `smash` for new users. The objective of this section is to create the dataset to run `smash` from scratch and get an overview of what is available. More details are provided on a real case available in the User Guide section: :ref:`user_guide.quickstart.real_case_cance`.
 
 For this case, a fictitious square-shaped catchment of size 10 x 10 km² will be created with the following flow accumulation and flow directions:
 
@@ -41,7 +41,7 @@ Model object creation
 Creating a :class:`.Model` requires two input arguments: ``setup`` and ``mesh``.
 
 
-.. _user_guide.practice_case.setup_argument_creation:
+.. _user_guide.quickstart.practice_case.setup_argument_creation:
 
 Setup argument creation
 ***********************
@@ -50,7 +50,7 @@ Setup argument creation
 
 .. note::
     
-    Each key and associated values that can be passed into the ``setup`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.setup>`.
+    Each key and associated values that can be passed into the ``setup`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.others.model_initialization.setup>`.
 
 A minimal ``setup`` configuration is:
 
@@ -68,7 +68,7 @@ A minimal ``setup`` configuration is:
         "end_time": "2020-01-04 00:00",
     }
     
-.. _user_guide.practice_case.mesh_argument_creation:
+.. _user_guide.quickstart.practice_case.mesh_argument_creation:
     
 Mesh argument creation
 **********************
@@ -77,9 +77,9 @@ Mesh argument creation
 
 .. note::
     
-    - Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.model_initialization.mesh>`.
+    - Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.others.model_initialization.mesh>`.
     
-    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method :meth:`smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.automatic_meshing`.
+    - In the Practice case, because the catchment is ficticious, we create the ``mesh`` dictionary ourselves. In the case of a real catchment, the meshing generation can be done automatically via the meshing method :meth:`smash.generate_mesh`. More details can be found in the User Guide section: :ref:`user_guide.in_depth.automatic_meshing`.
 
 First part of  ``mesh`` configuration is:
 
@@ -207,7 +207,7 @@ Once the :class:`.Model` object is created, it is possible to visualize what it 
 Setup
 *****
 
-The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`user_guide.practice_case.setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
+The :attr:`.Model.setup` attribute contains a set of arguments necessary to initialize the :class:`.Model`. We have in the :ref:`user_guide.quickstart.practice_case.setup_argument_creation` part given values for the arguments ``dt``, ``start_time`` and ``end_time``. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -242,7 +242,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Mesh
 ****
 
-The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. In the :ref:`user_guide.practice_case.mesh_argument_creation` part, we have given values for multiple arguments. These values can be retrieved in the following way:
+The :attr:`.Model.mesh` attribute contains a set of arguments necessary to initialize the :class:`.Model`. In the :ref:`user_guide.quickstart.practice_case.mesh_argument_creation` part, we have given values for multiple arguments. These values can be retrieved in the following way:
 
 .. ipython:: python
 
@@ -260,7 +260,7 @@ Or plotted using Matplotlib.
     
     plt.imshow(model.mesh.flwacc, cmap="Spectral");
     plt.colorbar(label="Number of cells");
-    @savefig flwacc_pc_user_guide.png
+    @savefig user_guide.quickstart.practice_case.flwacc.png
     plt.title("Practice case - Flow accumulation");
 
 If you are using IPython, tab completion allows you to visualize all the attributes and methods:
@@ -282,7 +282,7 @@ If you are using IPython, tab completion allows you to visualize all the attribu
 Input Data
 **********
 
-The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`user_guide.practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
+The :attr:`.Model.input_data` attribute contains a set of arguments storing :class:`.Model` input data (i.e. atmospheric forcings, observed discharge ...). As we did not specify in the :ref:`user_guide.quickstart.practice_case.setup_argument_creation` part a reading of input data, all tables are empty but allocated according to the size of the grid and the simulation period. 
 
 For example, the observed discharge is a numpy array of shape (1, 72). There is 1 gauge in the grid and the simulation period is up to 72 time steps. The value -99 indicates no data.
 
@@ -413,7 +413,7 @@ Checking on any cell the precipitation values:
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Precipitation $(mm/h)$");
-    @savefig prpc_pc_user_guide.png
+    @savefig user_guide.quickstart.practice_case.prcp.png
     plt.title("Precipitation on cell (0,0)");
    
     
@@ -441,7 +441,7 @@ Once the run is done, it is possible to access the simulated discharge on the ga
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Simulated discharge $(m^3/s)$");
-    @savefig qsim_fwd_pc_user_guide.png
+    @savefig user_guide.quickstart.practice_case.qsim_forward.png
     plt.title(model.mesh.code[0]);
 
 This hydrograph is the result of a forward run of the code with the default structure, parameters and initial states.
@@ -473,7 +473,7 @@ Run again to see the differences between the hydrographs.
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.legend();
-    @savefig qsim_fwd2_pc_user_guide.png
+    @savefig user_guide.quickstart.practice_case.qsim_forward_2.png
     plt.title(model.mesh.code[0]);
     
 Finally, perform a spatially uniform calibration (which is default optimization) of the parameter :math:`\mathrm{cp}` with the :meth:`.Model.optimize` method:
@@ -494,7 +494,7 @@ Finally, perform a spatially uniform calibration (which is default optimization)
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.legend();
-    @savefig qsim_opt_pc_user_guide.png
+    @savefig user_guide.quickstart.practice_case.qsim_su.png
     plt.title(model.mesh.code[0]);
     
 .. note::
@@ -512,7 +512,7 @@ The last step is to save what we have entered in :class:`.Model` (i.e. ``setup``
 Setup argument in/out
 *********************
 
-The setup dictionary ``setup``, which was created in the section :ref:`user_guide.practice_case.setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
+The setup dictionary ``setup``, which was created in the section :ref:`user_guide.quickstart.practice_case.setup_argument_creation`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.save_setup`.
 
 .. ipython:: python
 
@@ -529,7 +529,7 @@ A file named ``setup.yaml`` has been created in the current working directory co
 Mesh argument in/out
 ********************
 
-In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D numpy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
+In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.quickstart.practice_case.mesh_argument_creation` can be saved to file via the method :meth:`smash.save_mesh`. However, 3D numpy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
 .. ipython:: python
 

@@ -1,4 +1,4 @@
-.. _release_notes:
+.. _release:
 
 *************
 Release notes

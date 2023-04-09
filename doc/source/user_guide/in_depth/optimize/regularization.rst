@@ -1,4 +1,4 @@
-.. _user_guide.optimize.regularization:
+.. _user_guide.in_depth.optimize.regularization:
 
 ========================================================
 Fully-distributed optimization with regularization terms
