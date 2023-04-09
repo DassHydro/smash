@@ -7,5 +7,5 @@ optimize(algorithm='sbs')
 
 .. smash-model-optimize:function:: Model.optimize
    :noindex:
-   :impl: smash.core.optimize._optimize._optimize_sbs
+   :impl: smash.core.simulation._optimize._optimize_sbs
    :alg: sbs

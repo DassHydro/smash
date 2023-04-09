@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core.optimize._optimize import (
+from smash.core.simulation._optimize import (
     _optimize_sbs,
     _optimize_nelder_mead,
     _optimize_lbfgsb,

@@ -19,11 +19,11 @@ from smash.core._build_model import (
     _build_parameters,
 )
 
-from smash.core.optimize._ann_optimize import _ann_optimize
+from smash.core.simulation._ann_optimize import _ann_optimize
 
-from smash.core.optimize.bayes_optimize import _bayes_computation
+from smash.core.simulation.bayes_optimize import _bayes_computation
 
-from smash.core.optimize._standardize import (
+from smash.core.simulation._standardize import (
     _standardize_optimize_args,
     _standardize_optimize_options,
     _standardize_bayes_estimate_args,
