@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.core._event_segmentation import _mask_event
 
-from smash.core.optimize._optimize import _normalize_descriptor, _denormalize_descriptor
+from smash.core.simulation._optimize import _normalize_descriptor, _denormalize_descriptor
 
 from smash.core.net import Net
 
