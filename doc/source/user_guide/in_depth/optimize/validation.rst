@@ -1,4 +1,4 @@
-.. _user_guide.optimize.validation:
+.. _user_guide.in_depth.optimize.validation:
 
 ================================
 Calibration-validation splitting

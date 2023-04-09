@@ -1,4 +1,4 @@
-.. _user_guide.prcp_indices:
+.. _user_guide.in_depth.prcp_indices:
 
 =====================
 Precipitation indices
@@ -27,7 +27,7 @@ Model object creation
 ---------------------
 
 To compute precipitation indices, you need to create a :class:`smash.Model` object. 
-For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
+For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.quickstart.real_case_cance`.
 
 Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset` method and create the :class:`smash.Model` object.
 
@@ -115,7 +115,7 @@ the flow distances of the catchment are plotted below.
     
     plt.imshow(flwdst);
     plt.colorbar(label="Flow distance (m)");
-    @savefig flwdst_prcp_user_guide.png
+    @savefig user_guide.in_depth.prcp_indices.flwdst.png
     plt.title("Cance - Flow distance");
     
 
@@ -148,7 +148,7 @@ Then, we can visualize the precipitation grids at this time steps masking the no
 
     map_max = ax[1].imshow(prcp_max);
     f.colorbar(map_max, ax=ax[1], fraction=0.05, label="Precipitation (mm)");
-    @savefig std_prcp_user_guide.png
+    @savefig user_guide.in_depth.prcp_indices.std.png
     ax[1].set_title("Maximum std");
     
 And the associated indices values
@@ -197,7 +197,7 @@ Then, we can visualize the precipitation grids at this times step masking the no
     f.colorbar(map_one, ax=ax[1,0], label="Precipitation (mm)");
     ax[1,0].set_title("Close to one d1");
     
-    @savefig d1_prcp_user_guide.png 
+    @savefig user_guide.in_depth.prcp_indices.d1.png
     ax[1,1].axis('off');
     
 And the associated indices values
@@ -244,7 +244,7 @@ Then, we can visualize the precipitation grids at this time steps masking the no
     f.colorbar(map_one, ax=ax[1,0], label="Precipitation (mm)");
     ax[1,0].set_title("Close to one d2");
     
-    @savefig d2_prcp_user_guide.png 
+    @savefig user_guide.in_depth.prcp_indices.d2.png 
     ax[1,1].axis('off');
     
 And the associated indices values
@@ -286,7 +286,7 @@ Then, we can visualize the precipitation grids at this time steps masking the no
 
     map_max = ax[1].imshow(prcp_max);
     f.colorbar(map_max, ax=ax[1], fraction=0.05, label="Precipitation (mm)");
-    @savefig vg_prcp_user_guide.png
+    @savefig user_guide.in_depth.prcp_indices.vg.png
     ax[1].set_title("Maximum vg");
     
 And the associated indices values

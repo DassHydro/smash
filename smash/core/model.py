@@ -70,10 +70,10 @@ class Model(object):
     Parameters
     ----------
     setup : dict
-        Model initialization setup dictionary (see: :ref:`setup arguments <user_guide.model_initialization.setup>`).
+        Model initialization setup dictionary (see: :ref:`setup arguments <user_guide.others.model_initialization.setup>`).
 
     mesh : dict
-        Model initialization mesh dictionary. (see: :ref:`mesh arguments <user_guide.model_initialization.mesh>`).
+        Model initialization mesh dictionary. (see: :ref:`mesh arguments <user_guide.others.model_initialization.mesh>`).
 
     See Also
     --------
@@ -567,7 +567,7 @@ class Model(object):
             - 'Epf', 'Elt', 'Erc' (flood event signature)
 
             .. hint::
-                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
@@ -1309,7 +1309,7 @@ class Model(object):
         Compute segmentation information of flood events over all catchments of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>` for more.
 
         Parameters
         ----------
@@ -1363,7 +1363,7 @@ class Model(object):
         Compute continuous or/and flood event signatures of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>` for more.
 
         Parameters
         ----------
@@ -1446,7 +1446,7 @@ class Model(object):
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>` for more.
 
         Parameters
         ----------
@@ -1558,7 +1558,7 @@ class Model(object):
         - ``vg`` : The vertical gap. :cite:p:`emmanuel_2015`
 
         .. hint::
-            See the :ref:`User Guide <user_guide.prcp_indices>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.prcp_indices>` for more.
 
         Returns
         -------

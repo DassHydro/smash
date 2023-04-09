@@ -1,4 +1,4 @@
-.. _math_num_documentation.hydrological_operators:
+.. _math_num_documentation.forward.hydrological_operators:
 
 ======================
 Hydrological operators
@@ -6,7 +6,7 @@ Hydrological operators
 
 This section details fluxes and states computation for a given cell :math:`x\in\Omega` also denoted :math:`x \in \mathcal{T}_\Omega` and for a given time step :math:`t\in[1..N_t]` considering a regular temporal grid of time step :math:`\Delta t`. For this cell at time step t, we denote by :math:`P(t)` and :math:`E(t)` the local total rainfall and evapotranspiration.
 
-.. _math_num_documentation.hydrological_operators.gr:
+.. _math_num_documentation.forward.hydrological_operators.gr:
 
 GR like
 *******
@@ -99,7 +99,7 @@ Transfer
 
 Lateral flows within pixels is represented with the following transfer formulations.
 
-.. _math_num_documentation.hydrological_operators.single_plaw_dbranch:
+.. _math_num_documentation.forward.hydrological_operators.single_plaw_dbranch:
 
 Single power law transfer storage and direct branch
 '''''''''''''''''''''''''''''''''''''''''''''''''''
@@ -169,7 +169,7 @@ With flux :math:`Q_t` inflowing the routing part equal to:
 Double power law transfer storages and direct branch
 ''''''''''''''''''''''''''''''''''''''''''''''''''''
 
-Transfer within pixels is represented similarly as in :ref:`math_num_documentation.hydrological_operators.single_plaw_dbranch` but with a second power law transfer reservoir. 
+Transfer within pixels is represented similarly as in :ref:`math_num_documentation.forward.hydrological_operators.single_plaw_dbranch` but with a second power law transfer reservoir. 
 Again, the runoff :math:`P_r` is splitted into :math:`Q9 = 0.9 P_r` and :math:`Q1 = 0.1 P_r`, the latter :math:`Q1` inflowing a direct branch - i.e. without reservoir.  In the reservoirs branch, the inflow :math:`Q9` is separated a second time into :math:`40 \%` and :math:`60 \%` respectively inflowing two transfer reservoirs  :math:`\mathcal{T} _{ft}` and  :math:`\mathcal{T} _{st}`. 
 
 Again, the exchange term :math:`F` is applied to the direct branch and to the reservoir :math:`\mathcal{T} _{ft}`

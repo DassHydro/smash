@@ -1,11 +1,11 @@
-.. _user_guide.signatures:
+.. _user_guide.in_depth.signatures:
 
 ==========
 Signatures
 ==========
 
 This section aims to go into detail on how to compute and vizualize some hydrological signatures 
-(a list of studied signatures and their formula is given in :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>`) as well as 
+(a list of studied signatures and their formula is given in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>`) as well as 
 the sensitivity of the model parameters to these signatures.
 
 First, open a Python interface:
@@ -28,7 +28,7 @@ Model object creation
 ---------------------
 
 To compute the signatures, you need to create a :class:`smash.Model` object. 
-For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
+For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.quickstart.real_case_cance`.
 
 Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset()` method and create the :class:`smash.Model` object.
 
@@ -38,7 +38,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
     
     model = smash.Model(setup, mesh)
 
-.. _user_guide.signatures.computation:
+.. _user_guide.in_depth.signatures.computation:
 
 ----------------------
 Signatures computation
@@ -55,7 +55,7 @@ The argument ``event_seg`` (only related to flood event signatures) could be def
 
 .. hint::
   
-    See the :meth:`Model.event_segmentation() <smash.Model.event_segmentation>` method, detailed in :ref:`User Guide <user_guide.event_segmentation>`, for tuning the segmentation parameters.
+    See the :meth:`Model.event_segmentation() <smash.Model.event_segmentation>` method, detailed in :ref:`User Guide <user_guide.in_depth.event_segmentation>`, for tuning the segmentation parameters.
 
 The signatures computation result is represented as a :class:`smash.SignResult` object containning 2 attributes which are 2 different dictionaries:
 
@@ -85,10 +85,10 @@ Now, we visualize, for instance, the simulated and observed flood event runoff c
     df = pd.concat([df_obs, df_sim], ignore_index=True)
     df["domain"] = ["obs"]*len(df_obs) + ["sim"]*len(df_sim)
     
-    @savefig sign_comp.png
+    @savefig user_guide.in_depth.signatures.sign_comp.png
     boxplot = df.boxplot(column=["Erc", "Erchf", "Erclf", "Erch2r"], by="domain")
 
-.. _user_guide.signatures.sensitivity:
+.. _user_guide.in_depth.signatures.sensitivity:
 
 ----------------------
 Signatures sensitivity
@@ -127,7 +127,7 @@ The estimated sensitivities of the Model parameters to the signatures are availa
 
 .. hint::
   
-    See the :meth:`Model.event_segmentation() <smash.Model.event_segmentation>` method, detailed in :ref:`User Guide <user_guide.event_segmentation>`, for tuning the segmentation parameters. 
+    See the :meth:`Model.event_segmentation() <smash.Model.event_segmentation>` method, detailed in :ref:`User Guide <user_guide.in_depth.event_segmentation>`, for tuning the segmentation parameters. 
 
 The signatures sensitivity result is represented as a :class:`smash.SignSensResult` object containning 3 attributes which are 2 different dictionaries and 1 pandas.DataFrame:
 
@@ -164,5 +164,5 @@ Finally, we visualize, for instance, the total-order sensitivities of the model 
     df_sens["parameter"] = ["cp"]*len(df_cp) + ["cft"]*len(df_cft) + ["lr"]*len(df_lr)
 
     boxplot_sens = df_sens.boxplot(column=["Elt", "Epf"], by="parameter")
-    @savefig sign_sens.png
+    @savefig user_guide.in_depth.signatures.sign_sens.png
     boxplot_sens[0].set_ylabel("Total-order sensitivity");

@@ -1,4 +1,4 @@
-.. _release_notes.0.3.1:
+.. _release.0.3.1-notes:
 
 .. currentmodule:: smash
 
@@ -61,7 +61,7 @@ instead of:
 
 .. note::
     
-    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
+    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.signal_analysis.cost_functions>`.
 
 Setting the learning rate for Net
 *********************************

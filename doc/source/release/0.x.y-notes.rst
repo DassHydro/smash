@@ -1,4 +1,4 @@
-.. _release_notes.0.x.y:
+.. _release.0.x.y-notes:
 
 .. currentmodule:: smash
 
@@ -140,7 +140,7 @@ The regularization terms have been added for the optimization with a distributed
 Two types of regularization function are considered, which are ``prior`` and ``smoothing``.
 
 .. hint::
-    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
 It can be used as follows:
 

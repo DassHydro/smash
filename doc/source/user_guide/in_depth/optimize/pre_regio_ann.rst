@@ -1,4 +1,4 @@
-.. _user_guide.optimize.pre_regio_ann:
+.. _user_guide.in_depth.optimize.pre_regio_ann:
 
 ===================================================
 Pre-regionalization using artificial neural network
@@ -65,7 +65,7 @@ We can visualize these descriptors and verify if they were successfully loaded:
         im = ax.imshow(model.input_data.descriptor[..., i]);
         cbar = fig.colorbar(im, ax=ax, orientation="horizontal");
         cbar.ax.tick_params();
-    @savefig desc_optimize_ann_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_ann.desc.png
     fig.suptitle("Physiographic descriptors");
 
 .. ipython:: python
@@ -207,7 +207,7 @@ the number of iterations. Here's an example:
     plt.xlabel("Epoch");
     plt.ylabel("$1-NSE$");
     plt.grid(alpha=.7, ls="--");
-    @savefig cost_optimize_ann_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_ann.cost.png
     plt.title("Cost funciton descent");
 
 .. note::
@@ -227,7 +227,7 @@ The simulated discharge:
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model_ann.mesh.code[0]);
-    @savefig qsim_optimize_pre-regio_ann_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_ann.qsim.png
     plt.legend();
 
 The cost value:
@@ -259,5 +259,5 @@ And finally, the spatially distributed model parameters constrained by physiogra
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig theta_sd_optimize_pre-regio_ann_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_ann.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");

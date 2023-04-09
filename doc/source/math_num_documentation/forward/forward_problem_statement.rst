@@ -1,4 +1,4 @@
-.. _math_num_documentation.forward_problem_statement:
+.. _math_num_documentation.forward.forward_problem_statement:
 
 =========================
 Forward problem statement
@@ -18,7 +18,7 @@ The **hydrological model** is a dynamic operator :math:`\mathcal{M}` mapping obs
     
 with :math:`\boldsymbol{h}(x, t)` the :math:`N_s`-dimensional vector of model states 2D fields and :math:`\boldsymbol{\theta}` the :math:`N_p`-dimensional vector of model parameters 2D fields.
 
-Note that a pre-regionalization function :math:`\mathcal{F}_{R}` can be considered in the forward model to link model parameters to physiographic descriptors :math:`\boldsymbol{D}` (see section :ref:`Regionalization operators <math_num_documentation.regionalization_operators>`) such that:
+Note that a pre-regionalization function :math:`\mathcal{F}_{R}` can be considered in the forward model to link model parameters to physiographic descriptors :math:`\boldsymbol{D}` (see section :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>`) such that:
 
 .. math::
    :name: eq:2

@@ -1,4 +1,4 @@
-.. _user_guide.model_input_data_convention:
+.. _user_guide.others.model_input_data_convention:
 
 ===========================
 Model input data convention

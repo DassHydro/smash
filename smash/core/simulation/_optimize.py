@@ -140,7 +140,7 @@ def _optimize_lbfgsb(
             If not given, the Model will be optimized without any regularization terms.
 
         .. hint::
-            See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+            See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
     wjreg: float, default 0.01
         Global regularization weight. Only used if **jreg_fun** is set.

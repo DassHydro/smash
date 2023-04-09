@@ -1,4 +1,4 @@
-.. _user_guide.optimize.multi_site:
+.. _user_guide.in_depth.optimize.multi_site:
 
 =======================
 Multi-site optimization

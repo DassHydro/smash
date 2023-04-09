@@ -1,4 +1,4 @@
-.. _release_notes.x.y.z:
+.. _release.template-notes:
 
 .. currentmodule:: smash
 

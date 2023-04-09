@@ -1,4 +1,4 @@
-.. _release_notes.0.2.4:
+.. _release.0.2.4-notes:
 
 .. currentmodule:: smash
 
