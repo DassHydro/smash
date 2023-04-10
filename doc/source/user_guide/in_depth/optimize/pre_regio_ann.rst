@@ -69,9 +69,9 @@ We can visualize these descriptors and verify if they were successfully loaded:
     fig.suptitle("Physiographic descriptors");
 
 .. ipython:: python
+    :suppress:
 
-    # Reset figsize to the Matplotlib default
-    plt.figure(figsize=plt.rcParamsDefault['figure.figsize']);
+    plt.figure(figsize=plt.rcParamsDefault['figure.figsize'])  # Reset figsize to the Matplotlib default
 
 ---------------------------
 Defining the neural network

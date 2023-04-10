@@ -3,3 +3,7 @@
 ================================
 Calibration-validation splitting
 ================================
+
+.. warning::
+
+    Section in development 

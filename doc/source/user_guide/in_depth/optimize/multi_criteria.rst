@@ -3,3 +3,7 @@
 ===========================
 Multi-criteria optimization
 ===========================
+
+.. warning::
+
+    Section in development 
