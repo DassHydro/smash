@@ -128,3 +128,8 @@ We can once again visualize, the segmented events of catchment ``V3524010`` on t
         fig.legend();
         @savefig user_guide.in_depth.event_segmentation.event_seg_2.png
         fig.suptitle("V3524010");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

@@ -160,3 +160,8 @@ And finally, the distributed model parameters in this case:
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig user_guide.in_depth.optimize.fully_distributed.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

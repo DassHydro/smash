@@ -261,3 +261,8 @@ And finally, the spatially distributed model parameters constrained by physiogra
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig user_guide.in_depth.optimize.pre_regio_ann.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

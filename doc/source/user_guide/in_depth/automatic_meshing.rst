@@ -353,4 +353,7 @@ Finally, visualize the gauge positions for this mesh.
     @savefig user_guide.in_depth.automatic_meshing.gauge_pos_non-nested_multiple_gauge.png
     plt.title("Non-nested multiple gauge - Gauges location");
     
+.. ipython:: python
+    :suppress:
 
+    plt.close('all')

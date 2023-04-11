@@ -225,3 +225,8 @@ The spatially distributed model parameters:
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig user_guide.in_depth.optimize.bayes_estimate.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')
