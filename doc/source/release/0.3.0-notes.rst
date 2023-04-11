@@ -17,6 +17,15 @@ The smash 0.3.0 release continues the ongoing work to improve the handling, fix 
 - New method to save a sample of Model object data into hdf5.
 - Major fixes in distributed optimization and uniform optimization.
 
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni
+- Ngo Nghi Truyen Huynh
+
 ---------------
 Compatibilities
 ---------------

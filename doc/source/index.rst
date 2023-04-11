@@ -92,4 +92,7 @@ smash documentation
    api_reference/index
    math_num_documentation/index
    release/index
+   contributors/index
+   developers_guide/index
+   license/index
    bibliography/index
