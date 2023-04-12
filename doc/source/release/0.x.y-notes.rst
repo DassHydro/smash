@@ -121,6 +121,7 @@ Add the user guide for advanced optimization techniques, including:
 
 .. hint::
     See the :ref:`User Guide <user_guide.in_depth.optimize.bayes_optimize>` section.
+
 ------------
 New Features
 ------------
