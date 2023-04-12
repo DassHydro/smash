@@ -48,7 +48,7 @@
   
 ## Compile Adjoint and Tangent Linear Model
 
-Make sure java is installed (already done in docker environment)
+Make sure Java is installed (already done in docker and conda environment)
 
 ```bash
 make tap
@@ -62,7 +62,7 @@ make debug
 
 ## Install `smash` Library in Editor Mode
 
-The `smash` library is automatically installed in editor mode with the debug mode. Otherwise, once can switch to editor mode after compiling:
+The `smash` library is automatically installed in editor mode with the debug mode. Otherwise, one can switch to editor mode after compiling:
 
 ```bash
 make library_edit

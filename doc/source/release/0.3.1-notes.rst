@@ -6,6 +6,16 @@
 smash 0.3.1 Release Notes
 =========================
 
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+- Maxime Jay-Allemand
+
 ---------------
 Compatibilities
 ---------------
