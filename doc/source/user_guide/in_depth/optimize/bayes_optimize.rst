@@ -53,7 +53,7 @@ the :meth:`smash.Model.get_bound_constraints` method as follows:
     problem
 
 Then, we generate samples using the :meth:`smash.generate_samples` method. For instance, we can use the Gaussian distribution with means defined by a prior uniform background solution.
-This uniform background can be obtained through a global optimization algorithm or an :ref:`LD-Bayesian Estimation <indepth.optimize.ld-estim>` approach. 
+This uniform background can be obtained through a global optimization algorithm or an :ref:`LD-Bayesian Estimation <user_guide.indepth.optimize.ld-estim>` approach. 
 In this example, we use a prior solution obtained via the LDBE approach:
 
 .. ipython:: python

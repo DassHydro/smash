@@ -37,7 +37,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
     
     model = smash.Model(setup, mesh)
 
-.. _indepth.optimize.ld-estim:
+.. _user_guide.indepth.optimize.ld-estim:
 
 ------------------------------------------
 LDBE (Low Dimensional Bayesian Estimation)
