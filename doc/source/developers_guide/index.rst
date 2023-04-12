@@ -116,18 +116,33 @@ In such cases, the testing baseline must be regenerated to reflect the changes m
     (smash-dev) make test_baseline
 
 It is advisable to verify all changes on the baseline by referencing the ``diff_baseline.csv`` file in the ``smash/tests/`` directory. 
-Once you have ensured that all tests are correctly passed, rename the ``smash/tests/new_baseline.hdf5`` file to ``smash/tests/baseline.hdf5`` and remove the previous version.
+Once you have ensured that all tests are successfully passed, rename the ``smash/tests/new_baseline.hdf5`` file to ``smash/tests/baseline.hdf5`` and remove the previous version.
 
-We also recommend that you add your contribution to the release notes of the current development version and the documentation in the ``doc/source/`` directory.
+We also recommend that you add your contribution to the release notes of the current development version and the documentation in the ``doc/source/`` directory. 
+If you intend to create new reStructuredText (``.rst``) files for the documentation in ``doc/source/``, we suggest using the following command to generate the ``.rst`` file with auto-defined label:
+
+.. code-block:: none
+
+    (smash-dev) cd doc/source/
+    (smash-dev) python gen_rst.py path-to-your-rst-file
+
+After returning to the Git repository, compile the documentation to apply your changes:
+
+.. code-block:: none
+
+    (smash-dev) make doc
+
+The initial compilation may take a while, but subsequent compilations will only require the time it takes to compile the modified files.
 
 .. note::
 
-    If you intend to create new reStructuredText (``.rst``) files for the documentation in ``doc/source/``, we suggest using the following command to generate the ``.rst`` file with auto-defined label:
+    If you encounter any issues when compiling the documentation, try cleaning the ``doc/`` directory and then recompiling the documentation. 
+    This can help eliminate any potential conflicts and bugs that may be causing the issue.
 
     .. code-block:: none
 
-        (smash-dev) cd doc/source/
-        (smash-dev) python gen_rst.py path-to-your-rst-file
+        (smash-dev) make doc_clean
+        (smash-dev) make doc
 
 Submission and review process
 *****************************
@@ -139,7 +154,18 @@ After completing the previous steps, push your new branch to Git using the follo
     git push --set-upstream origin your-development-branch
 
 Next, create a new pull request to the current development branch ``maintenance/x.y.z``. 
-Ensure that your commits have passed the CI/CD pipelines; otherwise, you will be required to fix them before reopening the pull request.
+Ensure that your commits have passed the CI/CD pipelines; otherwise, you will be required to fix them before the review process begins.
+So, it is highly recommended to run the pipelines locally before opening a pull request:
+
+.. code-block:: none
+
+        (smash-dev) make clean
+        (smash-dev) make tap
+        (smash-dev) make
+        (smash-dev) make test
+        (smash-dev) make clean_doc
+        (smash-dev) make doc
+
 Reviewers, including other developers or relevant people, will be assigned to review your work.
 At this stage, friendly discussions may occur to enhance your implementation and maintain consistency in coding style. 
 The duration of this procedure may vary depending on the nature of your contribution, such as introducing new features, addressing major bug fixes, or replacing functionalities. 
