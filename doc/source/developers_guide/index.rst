@@ -144,6 +144,15 @@ The initial compilation may take a while, but subsequent compilations will only 
         (smash-dev) make doc_clean
         (smash-dev) make doc
 
+Make sure that the Git repository is cleaned and the Python files are formatted before submitting your work:
+
+.. code-block:: none
+
+        (smash-dev) make clean
+        (smash-dev) make doc_clean
+        (smash-dev) cd smash
+        (smash-dev) black *.py
+
 Submission and review process
 *****************************
 
