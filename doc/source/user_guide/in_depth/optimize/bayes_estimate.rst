@@ -37,9 +37,11 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
     
     model = smash.Model(setup, mesh)
 
--------------------
-Bayesian estimation
--------------------
+.. _user_guide.indepth.optimize.ld-estim:
+
+------------------------------------------
+LDBE (Low Dimensional Bayesian Estimation)
+------------------------------------------
 
 Next, we find a uniform first guess using Bayesian estimation on a random set of the Model parameters using the :meth:`smash.Model.bayes_estimate` method. 
 By default, the ``sample`` argument is not required to be set, and it is automatically set based on the Model structure. 
@@ -72,6 +74,7 @@ and perform Bayesian estimation:
 .. ipython:: python
 
     model_be, br = model.bayes_estimate(sr, alpha=np.linspace(-1, 4, 50), return_br=True);
+    model_be.output.cost  # cost value with LDBE
 
 In the code above, we used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 4]`.
 
@@ -91,6 +94,12 @@ with the random set of parameters using the following code:
     plt.ylabel("Frequency");
     @savefig user_guide.in_depth.optimize.bayes_estimate.cost_distribution.png
     plt.title("Cost value histogram for parameter set");
+
+The minimal cost value through the forward runs:
+
+.. ipython:: python
+
+    np.min(br.data["cost"])
 
 We can also visualize the L-curve that was used to find the optimal regularization parameter:
 
@@ -149,7 +158,18 @@ We can see that the value of ``exc`` did not change since it is not set to be es
     :suppress:
 
     if not np.allclose(model.parameters.exc, model_be.parameters.exc, atol=1e-08):
-        raise AssertionError("Bug found in bayes_estimate")
+        raise AssertionError("Non-estimated parameter changes its values in bayes_estimate!")
+    if not np.allclose(
+            (
+                model_be.parameters.cp[ind],
+                model_be.parameters.cft[ind],
+                model_be.parameters.exc[ind],
+                model_be.parameters.lr[ind],
+            ),
+            (112.33628, 99.58623, 0.0, 518.99603),
+            atol=1e-04
+        ):  # This check is used to verify the value of unif_backg in bayes_optimize
+        raise AssertionError("Estimated parameters have been changed in bayes_estimate!")
 
 -------------------------------------------------------------
 Variational calibration using Bayesian estimation first guess
@@ -205,3 +225,8 @@ The spatially distributed model parameters:
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig user_guide.in_depth.optimize.bayes_estimate.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

@@ -298,3 +298,7 @@ And the associated indices values
     
     vg_min, vg_max
 
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

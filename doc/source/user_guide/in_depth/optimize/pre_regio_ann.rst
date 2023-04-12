@@ -69,9 +69,9 @@ We can visualize these descriptors and verify if they were successfully loaded:
     fig.suptitle("Physiographic descriptors");
 
 .. ipython:: python
+    :suppress:
 
-    # Reset figsize to the Matplotlib default
-    plt.figure(figsize=plt.rcParamsDefault['figure.figsize']);
+    plt.figure(figsize=plt.rcParamsDefault['figure.figsize'])  # Reset figsize to the Matplotlib default
 
 ---------------------------
 Defining the neural network
@@ -261,3 +261,8 @@ And finally, the spatially distributed model parameters constrained by physiogra
     map_exc = ax[1,1].imshow(ma_exc);
     @savefig user_guide.in_depth.optimize.pre_regio_ann.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

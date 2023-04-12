@@ -643,3 +643,8 @@ And reload them as follows
     model_su, model_su_reloaded
     
     model_sd, model_sd_reloaded
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

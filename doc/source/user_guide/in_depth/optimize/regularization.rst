@@ -3,3 +3,7 @@
 ========================================================
 Fully-distributed optimization with regularization terms
 ========================================================
+
+.. warning::
+
+    Section in development 

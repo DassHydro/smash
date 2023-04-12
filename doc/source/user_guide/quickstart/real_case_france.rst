@@ -154,3 +154,8 @@ We can visualize the precipitation for the same time step. In addition to maskin
     plt.colorbar(label="Precipitation (mm/h)");
     @savefig user_guide.quickstart.real_case_france.prcp.png
     plt.title("Real case - France - Precipitation");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

@@ -575,3 +575,8 @@ A file named ``model.hdf5`` has been created in the current working directory co
     model3.run(inplace=True);
 
     model3
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

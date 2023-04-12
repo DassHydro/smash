@@ -166,3 +166,8 @@ Finally, we visualize, for instance, the total-order sensitivities of the model 
     boxplot_sens = df_sens.boxplot(column=["Elt", "Epf"], by="parameter")
     @savefig user_guide.in_depth.signatures.sign_sens.png
     boxplot_sens[0].set_ylabel("Total-order sensitivity");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')
