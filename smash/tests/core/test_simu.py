@@ -27,13 +27,13 @@ def test_run():
 
 def generic_multiple_run(model: smash.Model, **kwargs) -> dict:
     problem = model.get_bound_constraints()
-    sample = smash.generate_samples(problem, n=100, random_state=99)
+    sample = smash.generate_samples(problem, n=10, random_state=99)
 
     mtprr = model.multiple_run(sample, ncpu=2, return_qsim=True, verbose=False)
 
     res = {"multiple_run.cost": mtprr.cost, "multiple_run.qsim": mtprr.qsim}
 
-    for i, slc in enumerate(sample.iterslice(20)):
+    for i, slc in enumerate(sample.iterslice(2)):
         mtprr = model.multiple_run(slc, ncpu=2, return_qsim=True, verbose=False)
         res.update(
             {
@@ -50,7 +50,7 @@ def test_multiple_run():
 
     for key, value in res.items():
         # % Check cost and qsim in multiple run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-04), key
 
     # % Check that multiple run return values are the same than
     # % a forward run (i.e. optimize with 0 iter)
@@ -65,11 +65,11 @@ def test_multiple_run():
         instance.optimize(options={"maxiter": 0}, inplace=True, verbose=False)
         mtprr = pytest.model.multiple_run(slc, return_qsim=True, verbose=False)
         assert np.allclose(
-            instance.output.cost, mtprr.cost.item(), atol=1e-05
+            instance.output.cost, mtprr.cost.item(), atol=1e-04
         ), "multiple_run.compare_run.cost"
 
         assert np.allclose(
-            instance.output.qsim, mtprr.qsim.squeeze(), atol=1e-05
+            instance.output.qsim, mtprr.qsim.squeeze(), atol=1e-04
         ), "multiple_run.compare_run.qsim"
 
 

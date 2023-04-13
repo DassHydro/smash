@@ -97,11 +97,6 @@ contains
         !$omp& private(i, parameters_thread, states_thread, output_thread, cost)
         do i = 1, niter
 
-            !$omp critical
-            iter = iter + 1
-            call wait_bar_multiple_run(iter, niter)
-            !$omp end critical
-
             parameters_thread = parameters
             states_thread = states
             output_thread = output
@@ -111,9 +106,12 @@ contains
             call forward(setup, mesh, input_data, parameters_thread, parameters_bgd, &
             & states_thread, states_bgd, output_thread, cost)
 
+            !$omp critical
+            iter = iter + 1
+            if (setup%optimize%verbose) call wait_bar_multiple_run(iter, niter)
             res_cost(i) = cost
-
             if (size(res_qsim) .gt. 0) res_qsim(:, :, i) = output_thread%qsim
+            !$omp end critical
 
         end do
         !$omp end parallel do

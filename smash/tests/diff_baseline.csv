@@ -1,13 +1,12 @@
-commit 10f9816d48930865634e4a1999cf0a4b710d15c0
-Merge: e294d48 404da70
-Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Wed Apr 12 11:17:34 2023 +0200
+commit 18cc90156ca16b257692c48b7262d927ed4a8501
+Author: inoelloc <colleoni.francois@gmail.com>
+Date:   Thu Apr 13 12:17:42 2023 +0200
 
-    Merge branch 'enc-add-developers-guide-and-contributors' into 'maintenance/0.3.x'
+    FIX: Lower the tolerance to 1e-5 in multiple_run assertion (probably parallel issue)
     
-    ENC: add developers guide, contributors list and licence for the documentation
+    - Modified
     
-    See merge request hydrology/smash!29
+            * test_simu.py: in np.allclose change atol from 1e-6 to 1e-5 in test_multiple_run
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
