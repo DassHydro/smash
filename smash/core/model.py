@@ -573,7 +573,7 @@ class Model(object):
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
 
             .. note::
-                If not given, the weights will correspond to the mean of the objective functions.
+                If not given, the cost value will be computed as the mean of the objective functions.
 
         event_seg : dict or None, default None
             A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
