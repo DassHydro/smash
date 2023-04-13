@@ -9,11 +9,27 @@ from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES
 
 from smash.io._error import ReadHDF5MethodError
 
+
+from smash.solver._mwd_setup import SetupDT
+from smash.solver._mwd_mesh import MeshDT
+from smash.solver._mwd_input_data import Input_DataDT
+from smash.solver._mwd_parameters import ParametersDT
+from smash.solver._mwd_states import StatesDT
+from smash.solver._mwd_output import OutputDT
+
+from smash.core._build_model import _build_mesh
+
+
+
 import os
 import errno
 import warnings
 import h5py
 import numpy as np
+import pandas as pd
+import smash
+
+
 
 __all__ = ["open_hdf5", "add_hdf5_sub_group", "generate_light_smash_object_structure", "generate_medium_smash_object_structure", "generate_object_structure",  "generate_smash_object_structure", "dump_object_to_hdf5_from_list_attribute", "dump_object_to_hdf5_from_dict_attribute", "dump_object_to_hdf5_from_str_attribute", "dump_object_to_hdf5_from_iteratable", "dump_object_to_hdf5", "save_smash_model_to_hdf5", "load_hdf5_file", "read_hdf5_to_dict"]
 
@@ -94,6 +110,15 @@ def generate_medium_smash_object_structure(structure: str,structure_parameters=S
     }
 
 
+def generate_full_smash_object_structure(instance):
+    
+    key_data=generate_object_structure(instance)
+    
+    key_list=list()
+    key_list.append(key_data)
+    key_list.append("_last_update")
+    
+    return key_list
 
 
 def generate_object_structure(instance):
@@ -163,7 +188,7 @@ def generate_smash_object_structure(instance,typeofstructure="medium"):
         
     elif typeofstructure=="full":
         
-        key_data=generate_object_structure(instance)
+        key_data=generate_full_smash_object_structure(instance)
     
     return key_data
 
@@ -317,7 +342,7 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
         
     elif content == "full":
         
-        keys_data=generate_object_structure(instance)
+        keys_data=generate_full_smash_object_structure(instance)
     
     if isinstance(keys_data,(dict,list)):
         
@@ -379,3 +404,128 @@ def read_hdf5_to_dict(hdf5):
                 
     return dictionary
 
+
+
+def _parse_hdf5_to_derived_type(hdf5_ins, derived_type):
+    for ds in hdf5_ins.keys():
+        if isinstance(hdf5_ins[ds], h5py.Group):
+            hdf5_ins_imd = hdf5_ins[ds]
+
+            _parse_hdf5_to_derived_type(hdf5_ins_imd, getattr(derived_type, ds))
+
+        else:
+            setattr(derived_type, ds, hdf5_ins[ds][:])
+
+    for attr in hdf5_ins.attrs.keys():
+        setattr(derived_type, attr, hdf5_ins.attrs[attr])
+
+
+
+
+def read_hdf5_to_model_object(path: str) -> Model:
+    """
+    Read Model object.
+
+    Parameters
+    ----------
+    path : str
+        The file path.
+
+    Returns
+    -------
+    Model :
+        A Model object loaded from HDF5 file.
+
+    Raises
+    ------
+    FileNotFoundError:
+        If file not found.
+    ReadHDF5MethodError:
+        If file not created with `save_model`.
+
+    See Also
+    --------
+    save_model: Save Model object.
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> model
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
+
+    Save Model
+
+    >>> smash.save_model(model, "model.hdf5")
+
+    Read Model
+
+    >>> model_rld = smash.read_model("model.hdf5")
+    >>> model_rld
+    Structure: 'gr-a'
+    Spatio-Temporal dimension: (x: 28, y: 28, time: 1440)
+    Last update: Initialization
+    """
+
+    if os.path.isfile(path):
+        with h5py.File(path, "r") as f:
+            
+            instance = smash.Model(None, None)
+
+            if "descriptor_name" in f["setup"].keys():
+                nd = f["setup"]["descriptor_name"].size
+
+            else:
+                nd = 0
+
+            instance.setup = SetupDT(nd, f["mesh"].attrs["ng"])
+
+            _parse_hdf5_to_derived_type(f["setup"], instance.setup)
+
+            st = pd.Timestamp(instance.setup.start_time)
+
+            et = pd.Timestamp(instance.setup.end_time)
+
+            instance.setup._ntime_step = (
+                et - st
+            ).total_seconds() / instance.setup.dt
+
+            instance.mesh = MeshDT(
+                instance.setup,
+                f["mesh"].attrs["nrow"],
+                f["mesh"].attrs["ncol"],
+                f["mesh"].attrs["ng"],
+            )
+
+            _parse_hdf5_to_derived_type(f["mesh"], instance.mesh)
+
+            _build_mesh(instance.setup, instance.mesh)
+
+            instance.input_data = Input_DataDT(instance.setup, instance.mesh)
+
+            instance.parameters = ParametersDT(instance.mesh)
+
+            instance.states = StatesDT(instance.mesh)
+
+            instance.output = OutputDT(instance.setup, instance.mesh)
+
+            for derived_type_key in [
+                "input_data",
+                "parameters",
+                "states",
+                "output",
+            ]:
+                _parse_hdf5_to_derived_type(
+                    f[derived_type_key], getattr(instance, derived_type_key)
+                )
+
+            instance._last_update = f.attrs["_last_update"]
+
+            return instance
+
+
+    else:
+        raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
