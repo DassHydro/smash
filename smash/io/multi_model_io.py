@@ -15,7 +15,7 @@ import warnings
 import h5py
 import numpy as np
 
-__all__ = ["open_hdf5", "add_hdf5_sub_group", "default_model_data", "light_model_data", "dump_object_to_hdf5_from_list_attribute", "dump_object_to_hdf5_from_dict_attribute", "dump_object_to_hdf5_from_str_attribute", "dump_object_to_hdf5_from_iteratable", "dump_object_to_hdf5", "save_smash_model_to_hdf5", "load_hdf5_file", "read_hdf5_to_dict"]
+__all__ = ["open_hdf5", "add_hdf5_sub_group", "generate_light_smash_object_structure", "generate_medium_smash_object_structure", "generate_object_structure",  "generate_smash_object_structure", "dump_object_to_hdf5_from_list_attribute", "dump_object_to_hdf5_from_dict_attribute", "dump_object_to_hdf5_from_str_attribute", "dump_object_to_hdf5_from_iteratable", "dump_object_to_hdf5", "save_smash_model_to_hdf5", "load_hdf5_file", "read_hdf5_to_dict"]
 
 
 
@@ -51,8 +51,26 @@ def add_hdf5_sub_group(hdf5, subgroup=None):
     return hdf5
 
 
+def generate_light_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+    
+    return {
+        "setup": ["dt", "end_time", "start_time"],
+        "mesh": ["active_cell", "area", "code", "dx", "ng", "ymax", "xmin", "nrow", "ncol", "gauge_pos", "flwacc"],
+        "input_data": ["qobs"],
+        "parameters": structure_parameters[
+            structure
+        ],  # only calibrated Model param will be stored
+        "output": [
+            {
+                "fstates": structure_states[structure]
+            },  # only final Model states will be stored
+            "qsim",
+        ],
+    }
 
-def default_model_data(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+
+
+def generate_medium_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
     
     return {
         "setup": ["dt", "end_time", "start_time", "structure", "_ntime_step"],
@@ -78,22 +96,76 @@ def default_model_data(structure: str,structure_parameters=STRUCTURE_PARAMETERS,
 
 
 
-def light_model_data(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+def generate_object_structure(instance):
     
-    return {
-        "setup": ["dt", "end_time", "start_time"],
-        "mesh": ["active_cell", "area", "code", "dx", "ng", "ymax", "xmin", "nrow", "ncol", "gauge_pos", "flwacc"],
-        "input_data": ["qobs"],
-        "parameters": structure_parameters[
-            structure
-        ],  # only calibrated Model param will be stored
-        "output": [
-            {
-                "fstates": structure_states[structure]
-            },  # only final Model states will be stored
-            "qsim",
-        ],
-    }
+    key_data={}
+    key_list=list()
+    return_list=False
+    
+    for attr in dir(instance):
+        
+        if not attr.startswith("_") and not attr in ["from_handle", "copy"]:
+            
+            try:
+                
+                value = getattr(instance, attr)
+                
+                if isinstance(value, np.ndarray):
+                    
+                    if value.dtype == "object" or value.dtype.char == "U":
+                        value = value.astype("S")
+                        
+                    #key_data.update({attr:value})
+                    key_list.append(attr)
+                    return_list=True
+                    
+                elif isinstance(value,(str,float,int)):
+                    
+                    #key_data.update({attr:value})
+                    key_list.append(attr)
+                    return_list=True
+                    
+                else: 
+                    
+                    depp_key_data=generate_object_structure(value)
+                    
+                    if (len(depp_key_data)>0):
+                        key_data.update({attr:depp_key_data})
+            
+            except:
+                
+                pass
+    
+    if return_list:
+        
+        for attr, value in key_data.items():
+            key_list.append({attr:value})
+        
+        return key_list
+        
+    else:
+        
+        return key_data
+
+
+
+def generate_smash_object_structure(instance,typeofstructure="medium"):
+    
+    structure=instance.setup.structure
+    
+    if typeofstructure=="light":
+        
+        key_data=generate_light_smash_object_structure(structure)
+        
+    elif typeofstructure=="medium":
+        
+        key_data=generate_medium_smash_object_structure(structure)
+        
+    elif typeofstructure=="full":
+        
+        key_data=generate_object_structure(instance)
+    
+    return key_data
 
 
 
@@ -132,34 +204,34 @@ def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
     
     if isinstance(dict_attr,dict):
     
-        for key, attr in dict_attr.items():
+        for attr, value in dict_attr.items():
             
-            hdf5=add_hdf5_sub_group(hdf5, subgroup=key)
+            hdf5=add_hdf5_sub_group(hdf5, subgroup=attr)
             
             try:
             
-                sub_instance=getattr(instance, key)
+                sub_instance=getattr(instance, attr)
                 
             except:
                 
                 sub_instance=instance
             
-            if isinstance(attr,dict):
+            if isinstance(value,dict):
             
-                dump_object_to_hdf5_from_dict_attribute(hdf5[key], sub_instance, attr)
+                dump_object_to_hdf5_from_dict_attribute(hdf5[attr], sub_instance, value)
             
-            if isinstance(attr,list):
+            if isinstance(value,list):
             
-                dump_object_to_hdf5_from_list_attribute(hdf5[key], sub_instance, attr)
+                dump_object_to_hdf5_from_list_attribute(hdf5[attr], sub_instance, value)
             
-            elif isinstance(attr,str):
+            elif isinstance(value,str):
                 
-                dump_object_to_hdf5_from_str_attribute(hdf5[key], sub_instance, attr)
+                dump_object_to_hdf5_from_str_attribute(hdf5[attr], sub_instance, value)
             
             else :
                 
                 raise ValueError(
-                    f"unconsistant {attr} in {dict_attr}. {attr} must be a instance of dict, list or str"
+                    f"Bad type of '{attr}' in '{dict_attr}'. Dict({attr}) must be a instance of dict, list or str"
                 )
     
     else:
@@ -233,35 +305,32 @@ def dump_object_to_hdf5(f_hdf5, instance, keys_data, location="./", replace=Fals
     hdf5.close()
 
 
-def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data="default", location="./", replace=True):
+def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", replace=True):
     
-    if isinstance(keys_data,str):
+    if content == "light":
         
-        if keys_data == "default":
-            
-            keys_data=default_model_data(instance.setup.structure)
-            
-        elif keys_data == "full":
-            
-            #to do
-            keys_data=default_model_data(instance.setup.structure)
-            
-        elif keys_data == "light":
-            
-            keys_data=light_model_data(instance.setup.structure)
+        keys_data=generate_light_smash_object_structure(instance.setup.structure)
+        
+    elif content == "medium":
+        
+        keys_data=generate_medium_smash_object_structure(instance.setup.structure)
+        
+    elif content == "full":
+        
+        keys_data=generate_object_structure(instance)
     
-    if isinstance(keys_data,dict):
+    if isinstance(keys_data,(dict,list)):
         
         dump_object_to_hdf5(path_to_hdf5, instance, keys_data, location=location, replace=replace)
         
     else: 
         
         raise ValueError(
-                    f"{keys_data} must be a instance of str or dict."
+                    f"{keys_data} must be a instance of list or dict."
                 )
     
 
-
+#Todo read_hdf5_to_model_object
 
 
 def load_hdf5_file(f_hdf5):
