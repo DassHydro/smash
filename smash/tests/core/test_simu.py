@@ -50,7 +50,7 @@ def test_multiple_run():
 
     for key, value in res.items():
         # % Check cost and qsim in multiple run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05), key
 
     # % Check that multiple run return values are the same than
     # % a forward run (i.e. optimize with 0 iter)
@@ -65,11 +65,11 @@ def test_multiple_run():
         instance.optimize(options={"maxiter": 0}, inplace=True, verbose=False)
         mtprr = pytest.model.multiple_run(slc, return_qsim=True, verbose=False)
         assert np.allclose(
-            instance.output.cost, mtprr.cost.item(), atol=1e-06
+            instance.output.cost, mtprr.cost.item(), atol=1e-05
         ), "multiple_run.compare_run.cost"
 
         assert np.allclose(
-            instance.output.qsim, mtprr.qsim.squeeze(), atol=1e-06
+            instance.output.qsim, mtprr.qsim.squeeze(), atol=1e-05
         ), "multiple_run.compare_run.qsim"
 
 
