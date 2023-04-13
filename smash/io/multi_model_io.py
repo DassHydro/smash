@@ -225,6 +225,48 @@ def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
                 )
 
 
+
+
+def dump_object_to_dictionary(instance):
+    
+    key_data={}
+    key_list=list()
+    return_list=False
+    
+    for attr in dir(instance):
+        
+        if not attr.startswith("_") and not attr in ["from_handle", "copy"]:
+            
+            try:
+                
+                value = getattr(instance, attr)
+                
+                if isinstance(value, np.ndarray):
+                    
+                    if value.dtype == "object" or value.dtype.char == "U":
+                        value = value.astype("S")
+                    
+                    key_data.update({attr:value})
+                    
+                elif isinstance(value,(str,float,int)):
+                    
+                    key_data.update({attr:value})
+                    
+                else: 
+                    
+                    depp_key_data=generate_object_structure(value)
+                    
+                    if (len(depp_key_data)>0):
+                        key_data.update({attr:depp_key_data})
+                    
+            except:
+                
+                pass
+    
+    return key_data
+
+
+
 def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
     
     if isinstance(dict_attr,dict):
@@ -389,9 +431,14 @@ def read_hdf5_to_dict(hdf5):
             
         if str(type(item)).find("dataset") != -1:
             
-            values = [
-                        item[:].astype("U") if item[:].dtype.char == "S" else item[:]
-                    ]
+            if item[:].dtype.char == "S":
+                
+                values=item[:].astype("U")
+                
+            else:
+                
+                values=item[:]
+            
             dictionary.update({key:values})
             
             list_attr=list(item.attrs.keys())
@@ -399,7 +446,6 @@ def read_hdf5_to_dict(hdf5):
             for key_attr in list_attr:
                 
                 dictionary.update({key_attr:item.attrs[key_attr]})
-    
     
     list_attr=list(hdf5.attrs.keys())
     

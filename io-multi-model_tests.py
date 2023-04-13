@@ -60,6 +60,10 @@ hdf5["model2"].keys()
 hdf5.close()
 
 
+#dump model object to a dictionnay
+dictionary=smash.io.multi_model_io.dump_object_to_dictionary(model)
+
+
 #load an hdf5 file to a dictionary
 dictionary=smash.load_hdf5_file("./multi_model.hdf5")
 dictionary["model1"].keys()
