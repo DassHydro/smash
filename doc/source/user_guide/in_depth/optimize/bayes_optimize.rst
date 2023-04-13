@@ -119,6 +119,7 @@ Once the samples are created in the ``sr`` object, we can employ an HDBC approac
 It can be implemented using the :class:`smash.Model.bayes_optimize` method as follows:
 
 .. ipython:: python
+    :suppress:
 
     model_bo, br = model.bayes_optimize(
             sr,
@@ -127,7 +128,21 @@ It can be implemented using the :class:`smash.Model.bayes_optimize` method as fo
             algorithm="l-bfgs-b",
             options={"maxiter": 4},
             return_br=True
-        );
+        )
+
+    model_bo.output.cost  # cost value with HDBC
+
+.. ipython:: python
+    :verbatim:
+
+    model_bo, br = model.bayes_optimize(
+            sr,
+            alpha=np.linspace(-1, 16, 60),
+            mapping="distributed",
+            algorithm="l-bfgs-b",
+            options={"maxiter": 4},
+            return_br=True
+        )
 
     model_bo.output.cost  # cost value with HDBC
 

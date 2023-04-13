@@ -77,7 +77,7 @@ Here are some other commands that may be necessary for your development:
 
     (smash-dev) make tap
 
-- Compile the code in debug mode. This allows you to compile the Fortran interface with warning flags (i.e. ``-Wall``, ``-Wextra``, etc.) 
+- Compile the code in debug mode. This allows you to compile the Fortran interface with warning flags (i.e. ``-Wall``, ``-Wextra``, etc.).
 
 .. code-block:: none
 
@@ -156,7 +156,7 @@ Make sure that the Git repository is cleaned and the Python files are formatted 
 Submission and review process
 *****************************
 
-After completing the previous steps, push your new branch to Git using the following command:
+After completing the previous steps and committing your new branch, push it to Git using the following command:
 
 .. code-block:: none
     
