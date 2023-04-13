@@ -108,7 +108,7 @@ def _bayes_computation(
 
     # % verbose
     if verbose:
-        _bayes_message(sample, alpha)
+        _bayes_message(sample, alpha, ncpu)
 
     # % Build data from sample
     res_simu = _multi_simu(
@@ -189,7 +189,7 @@ def _bayes_computation(
     )
 
 
-def _bayes_message(sr: SampleResult, alpha: int | float | list):
+def _bayes_message(sr: SampleResult, alpha: int | float | list, ncpu: int):
     sp4 = " " * 4
 
     lcurve = True if isinstance(alpha, list) else False
@@ -198,7 +198,7 @@ def _bayes_message(sr: SampleResult, alpha: int | float | list):
 
     ret.append(f"{sp4}Parameters/States set size: {sr.n_sample}")
     ret.append(f"Sample generator: {sr.generator}")
-
+    ret.append(f"Ncpu: {ncpu}")
     ret.append(f"L-curve approach: {lcurve}")
 
     print(f"\n{sp4}".join(ret) + "\n")

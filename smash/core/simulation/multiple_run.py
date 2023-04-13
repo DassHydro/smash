@@ -23,8 +23,8 @@ class MultipleRunResult(dict):
     Notes
     -----
     This class is essentially a subclass of dict with attribute accessors.
-    This also have additional attributes not listed here depending on the specific return values requested in
-    the :meth:`Model.multiple_run` method (i.e. ``qsim`` ...)
+    This may have an additional attribute (``qsim``), which is not listed here,
+    depending on the specific return values requested in the :meth:`Model.multiple_run` method.
 
     Attributes
     ----------
@@ -97,21 +97,21 @@ class MultipleRunResult(dict):
 
 
 def _get_ind_parameters_states(instance: Model, sample: SampleResult) -> np.ndarray:
-    ind_parameters_states = np.empty(shape=0, dtype=np.int32, order="F")
+    ind_parameters_states = np.zeros(
+        shape=sample._problem["num_vars"], dtype=np.int32, order="F"
+    )
     n_parameters = instance.setup._parameters_name.size
 
     for i, name in enumerate(sample._problem["names"]):
         if name in instance.setup._parameters_name:
             ind = np.argwhere(instance.setup._parameters_name == name)
             # % Transform Python to Fortran index
-            ind_parameters_states = np.append(ind_parameters_states, ind + 1)
+            ind_parameters_states[i] = ind + 1
         # % Already check, must be states if not parameters
         else:
             ind = np.argwhere(instance.setup._states_name == name)
             # % Transform Python to Fortran index
-            ind_parameters_states = np.append(
-                ind_parameters_states, n_parameters + ind + 1
-            )
+            ind_parameters_states[i] = n_parameters + ind + 1
 
     return ind_parameters_states
 

@@ -163,9 +163,10 @@ It can be used as follows:
 
     >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
     >>> sr = smash.generate_samples(problem)  # create a SampleResult object
-    >>> slc = sr.slice(0,10)  # slice the first 10 set
-    >>> for slc in sr.iterslice()  # iterate over the sample in increments of 100
-    >>>     slc
+    >>> slc = sr.slice(10)  # slice the first 10 sets
+    >>> slc = sr.slice(start=20, end=50)  # slice between the 20th and 50th set
+    >>> for slc_i in sr.iterslice(100):  # iterate on sub sample of 100 sets
+    >>>     slc_i
 
 Regularization with full distributed mapping
 ********************************************
@@ -198,7 +199,6 @@ It can be used as follows:
     >>> sample = smash.generate_samples(problem, n=200, random_state=99)
     >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
     >>> mtprr.cost  # access the cost values
-    >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
     >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
 
 This method also accepts the cost function arguments that are used in the :meth:`Model.optimize` method (i.e. **jobs_fun**, **wjobs_fun** etc)

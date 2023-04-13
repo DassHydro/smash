@@ -32,7 +32,6 @@ In Depth
     in_depth/signatures
     in_depth/prcp_indices
 
-
 Others
 ******
 .. toctree::
