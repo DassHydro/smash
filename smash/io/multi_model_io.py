@@ -355,15 +355,20 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
                 )
     
 
-#Todo read_hdf5_to_model_object
 
-
-def load_hdf5_file(f_hdf5):
+def load_hdf5_file(f_hdf5,as_model=False):
     
-    hdf5=open_hdf5(f_hdf5, replace=False)
-    dictionary=read_hdf5_to_dict(hdf5)
-    hdf5.close()
-    return dictionary
+    if as_model:
+        
+        instance=read_hdf5_to_model_object(f_hdf5)
+        return instance
+        
+    else:
+        
+        hdf5=open_hdf5(f_hdf5, replace=False)
+        dictionary=read_hdf5_to_dict(hdf5)
+        hdf5.close()
+        return dictionary
 
 
 def read_hdf5_to_dict(hdf5):
@@ -418,8 +423,6 @@ def _parse_hdf5_to_derived_type(hdf5_ins, derived_type):
 
     for attr in hdf5_ins.attrs.keys():
         setattr(derived_type, attr, hdf5_ins.attrs[attr])
-
-
 
 
 def read_hdf5_to_model_object(path: str) -> Model:
