@@ -18,6 +18,14 @@ smash.save_smash_model_to_hdf5("./model_medium.hdf5", model, content="medium", r
 smash.save_smash_model_to_hdf5("./model_full.hdf5", model, content="full", replace=True)
 smash.save_smash_model_to_hdf5("./model_user.hdf5", model, keys_data=keys_data, replace=True)
 
+#adding subdata
+sub_data={"sub_data1":"mydata"}
+sub_data.update({"sub_data2":2.5})
+sub_data.update({"sub_data3":{"sub_sub_data1":2.5,"sub_sub_data2":np.zeros(10)}})
+
+smash.save_smash_model_to_hdf5("./model_sub_data.hdf5", model, content="medium",sub_data=sub_data, replace=True)
+
+
 #view the hdf5 file
 hdf5=smash.io.multi_model_io.open_hdf5("./model_user.hdf5")
 hdf5.keys()
@@ -27,6 +35,12 @@ hdf5["output"].keys()
 hdf5["output"].attrs.keys()
 hdf5["output/fstates"].keys()
 hdf5["setup"].attrs.keys()
+hdf5.close()
+
+#view the hdf5 file with sub_data
+hdf5=smash.io.multi_model_io.open_hdf5("./model_sub_data.hdf5")
+hdf5.keys()
+hdf5.attrs.keys()
 hdf5.close()
 
 
@@ -63,11 +77,16 @@ hdf5.close()
 #dump model object to a dictionnay
 dictionary=smash.io.multi_model_io.dump_object_to_dictionary(model)
 
+######### Reading HDF5
 
 #load an hdf5 file to a dictionary
 dictionary=smash.load_hdf5_file("./multi_model.hdf5")
 dictionary["model1"].keys()
 dictionary["model1"]["mesh"].keys()
+
+#load a hdf5 file with any sub_data
+dictionary=smash.load_hdf5_file("./model_sub_data.hdf5")
+dictionary.keys()
 
 #read only a part of an hdf5 file
 hdf5=smash.io.multi_model_io.open_hdf5("./multi_model.hdf5")

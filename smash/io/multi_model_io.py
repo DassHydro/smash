@@ -266,6 +266,7 @@ def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
                 )
 
 
+
 def dump_object_to_hdf5_from_str_attribute(hdf5,instance,str_attr):
     
     if isinstance(str_attr, str):
@@ -305,6 +306,44 @@ def dump_object_to_hdf5_from_str_attribute(hdf5,instance,str_attr):
                 )
 
 
+
+def dump_dict_to_hdf5(hdf5,dictionary):
+    
+    if isinstance(dictionary,dict):
+    
+        for attr, value in dictionary.items():
+            
+            if isinstance(value,(dict,list)):
+                
+                hdf5=add_hdf5_sub_group(hdf5, subgroup=attr)
+                dump_dict_to_hdf5(hdf5[attr],value)
+            
+            elif isinstance(value, np.ndarray):
+            
+                if value.dtype == "object" or value.dtype.char == "U":
+                    value = value.astype("S")
+                
+                hdf5.create_dataset(
+                    attr,
+                    shape=value.shape,
+                    dtype=value.dtype,
+                    data=value,
+                    compression="gzip",
+                    chunks=True,
+                )
+            
+            else:
+                
+                hdf5.attrs[attr] = value
+    
+    else:
+        
+        raise ValueError(
+                    f"{dictionary} must be a instance of dict."
+                )
+
+
+
 def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable):
     
     if isinstance(iteratable,list):
@@ -323,11 +362,16 @@ def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable):
 
 
 
-def dump_object_to_hdf5(f_hdf5, instance, keys_data, location="./", replace=False):
+def dump_object_to_hdf5(f_hdf5, instance, keys_data, location="./", sub_data=None, replace=False):
     
     hdf5=open_hdf5(f_hdf5, replace=replace)
     hdf5=add_hdf5_sub_group(hdf5, subgroup=location)
     dump_object_to_hdf5_from_iteratable(hdf5[location], instance, keys_data)
+    
+    if isinstance(sub_data,dict):
+        
+        dump_dict_to_hdf5(hdf5[location], sub_data)
+    
     hdf5.close()
 
 
@@ -373,7 +417,7 @@ def dump_object_to_dictionary(instance):
 
 
 
-def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", replace=True):
+def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", sub_data=None, replace=True):
     
     if content == "light":
         
@@ -389,7 +433,7 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
     
     if isinstance(keys_data,(dict,list)):
         
-        dump_object_to_hdf5(path_to_hdf5, instance, keys_data, location=location, replace=replace)
+        dump_object_to_hdf5(path_to_hdf5, instance, keys_data, location=location, sub_data=sub_data,replace=replace)
         
     else: 
         
