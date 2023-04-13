@@ -57,12 +57,11 @@ def add_hdf5_sub_group(hdf5, subgroup=None):
     
     if subgroup is not None:
         
-        loc_path=os.path.dirname(subgroup)
-        
-        if loc_path=="":
+        if subgroup=="":
             
-            loc_path="./"
-            hdf5.require_group(subgroup)
+            subgroup="./"
+        
+        hdf5.require_group(subgroup)
     
     return hdf5
 
