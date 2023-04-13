@@ -226,47 +226,6 @@ def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
 
 
 
-
-def dump_object_to_dictionary(instance):
-    
-    key_data={}
-    key_list=list()
-    return_list=False
-    
-    for attr in dir(instance):
-        
-        if not attr.startswith("_") and not attr in ["from_handle", "copy"]:
-            
-            try:
-                
-                value = getattr(instance, attr)
-                
-                if isinstance(value, np.ndarray):
-                    
-                    if value.dtype == "object" or value.dtype.char == "U":
-                        value = value.astype("S")
-                    
-                    key_data.update({attr:value})
-                    
-                elif isinstance(value,(str,float,int)):
-                    
-                    key_data.update({attr:value})
-                    
-                else: 
-                    
-                    depp_key_data=generate_object_structure(value)
-                    
-                    if (len(depp_key_data)>0):
-                        key_data.update({attr:depp_key_data})
-                    
-            except:
-                
-                pass
-    
-    return key_data
-
-
-
 def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
     
     if isinstance(dict_attr,dict):
@@ -364,12 +323,55 @@ def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable):
                 )
 
 
+
 def dump_object_to_hdf5(f_hdf5, instance, keys_data, location="./", replace=False):
     
     hdf5=open_hdf5(f_hdf5, replace=replace)
     hdf5=add_hdf5_sub_group(hdf5, subgroup=location)
     dump_object_to_hdf5_from_iteratable(hdf5[location], instance, keys_data)
     hdf5.close()
+
+
+
+
+def dump_object_to_dictionary(instance):
+    
+    key_data={}
+    key_list=list()
+    return_list=False
+    
+    for attr in dir(instance):
+        
+        if not attr.startswith("_") and not attr in ["from_handle", "copy"]:
+            
+            try:
+                
+                value = getattr(instance, attr)
+                
+                if isinstance(value, np.ndarray):
+                    
+                    if value.dtype == "object" or value.dtype.char == "U":
+                        value = value.astype("S")
+                    
+                    key_data.update({attr:value})
+                    
+                elif isinstance(value,(str,float,int)):
+                    
+                    key_data.update({attr:value})
+                    
+                else: 
+                    
+                    depp_key_data=generate_object_structure(value)
+                    
+                    if (len(depp_key_data)>0):
+                        key_data.update({attr:depp_key_data})
+                    
+            except:
+                
+                pass
+    
+    return key_data
+
 
 
 def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", replace=True):
@@ -395,7 +397,8 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
         raise ValueError(
                     f"{keys_data} must be a instance of list or dict."
                 )
-    
+
+
 
 
 def load_hdf5_file(f_hdf5,as_model=False):
