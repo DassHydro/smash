@@ -149,6 +149,24 @@ It can be used as follows:
     >>> sr.to_numpy()  # convert to numpy array
     >>> sr.to_dataframe()  # convert to pandas dataframe
     
+Slice and iterate over the SampleResult object
+**********************************************
+
+We have added two additional methods to the :class:`SampleResult` object, which are:
+
+- :meth:`SampleResult.slice`
+- :meth:`SampleResult.iterslice`
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)  # create a SampleResult object
+    >>> slc = sr.slice(0,10)  # slice the first 10 set
+    >>> for slc in sr.iterslice()  # iterate over the sample in increments of 100
+    >>>     slc
+
 Regularization with full distributed mapping
 ********************************************
 
@@ -163,6 +181,34 @@ It can be used as follows:
 .. code-block:: python
 
     >>> model.optimize(mapping="distributed", options={"jreg_fun": "smoothing"})
+
+Model Multiple Run
+******************
+
+We have added a new method to the :class:`smash.Model` object :meth:`Model.multiple_run`. This method allows to compute multiple forward runs in parallel based on a sample generated
+with the :meth:`smash.generate_samples` method.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> problem = model.get_bound_constraints()
+    >>> sample = smash.generate_samples(problem, n=200, random_state=99)
+    >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
+    >>> mtprr.cost  # access the cost values
+    >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
+    >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
+
+This method also accepts the cost function arguments that are used in the :meth:`Model.optimize` method (i.e. **jobs_fun**, **wjobs_fun** etc)
+
+.. code-block:: python
+
+    >>> mtprr = model.multiple_run(sample, jobs_fun="kge", gauge="all", ncpu=4, return_qsim=True)
+
+.. hint::
+    See the specific :ref:`User Guide <user_guide.in_depth.multiple_run>` section.
 
 Makefile command
 ****************

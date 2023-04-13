@@ -19,11 +19,14 @@ from smash.core._build_model import (
     _build_parameters,
 )
 
-from smash.core.simulation._ann_optimize import _ann_optimize
+from smash.core.simulation.multiple_run import _multiple_run
 
 from smash.core.simulation.bayes_optimize import _bayes_computation
 
+from smash.core.simulation._ann_optimize import _ann_optimize
+
 from smash.core.simulation._standardize import (
+    _standardize_multiple_run_args,
     _standardize_optimize_args,
     _standardize_optimize_options,
     _standardize_bayes_estimate_args,
@@ -501,6 +504,127 @@ class Model(object):
         if not inplace:
             return instance
 
+    def multiple_run(
+        self,
+        sample: SampleResult,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
+        event_seg: dict | None = None,
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
+        ost: str | pd.Timestamp | None = None,
+        ncpu: int = 1,
+        return_qsim: bool = False,
+        verbose: bool = True,
+    ):
+        """
+        Compute Multiple Run of Model.
+
+        .. hint::
+            See the :ref:`user_guide` for more.
+
+        Parameters
+        ----------
+        sample : SampleResult
+            An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
+
+        jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
+            Optimization setting to run the forward hydrological model and compute the cost values.
+            See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
+
+        return_qsim : bool, default False
+            If True, also return the simulated discharge in the `MultipleRunResult` object.
+
+        verbose : bool, default True
+            Display information while computing.
+
+        Returns
+        -------
+        res : MultipleRunResult
+            The multiple run results represented as a `MultipleRunResult` object.
+
+        See Also
+        --------
+        MultipleRunResult: Represents the multiple run result.
+        SampleResult: Represents the generated sample result.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        Get the boundary constraints of the Model parameters/states and generate a sample
+
+        >>> problem = model.get_bound_constraints()
+        >>> sample = smash.generate_samples(problem, n=200, random_state=99)
+
+        Compute the multiple run
+
+        >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
+
+        Access the cost values of the direct simulations
+
+        >>> mtprr.cost
+        array([1.2327451e+00, 1.2367475e+00, 1.2227478e+00, 4.7788401e+00,
+        ...
+               1.2392160e+00, 1.2278881e+00, 7.5998020e-01, 1.1763511e+00],
+              dtype=float32)
+
+        Access the minimum cost value and the index
+
+        >>> min_cost = np.min(mtprr.cost)
+        >>> ind_min_cost = np.argmin(mtprr.cost)
+        >>> min_cost, ind_min_cost
+        (0.48862067, 20)
+
+        Access the set that generated the minimum cost value
+
+        >>> min_set = {key: sample[key][ind_min_cost] for key in problem["names"]}
+        >>> min_set
+        {'cp': 211.6867863776767, 'cft': 41.72451338560559, 'exc': -9.003870580641795, 'lr': 43.64397561764691}
+        """
+
+        instance = self.copy()
+
+        print("</> Multiple Run Model")
+
+        # % standardize args
+        (
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            wgauge,
+            ost,
+            ncpu,
+        ) = _standardize_multiple_run_args(
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            gauge,
+            wgauge,
+            ost,
+            ncpu,
+            instance,
+        )
+
+        return _multiple_run(
+            instance,
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            wgauge,
+            ost,
+            ncpu,
+            return_qsim,
+            verbose,
+        )
+
     def optimize(
         self,
         mapping: str = "uniform",
@@ -774,7 +898,7 @@ class Model(object):
             See `smash.Model.optimize` for more.
 
         ncpu : integer, default 1
-            If ncpu > 1, perform a parallel computation through the parameters set.
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while estimating.
@@ -796,7 +920,7 @@ class Model(object):
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
-        SampleResult: Represents the generated samples using `smash.generate_samples` method.
+        SampleResult: Represents the generated sample result.
 
         Examples
         --------
@@ -830,15 +954,17 @@ class Model(object):
 
         # % standardize args
         (
+            sample,
+            alpha,
             jobs_fun,
             wjobs_fun,
             event_seg,
             wgauge,
             ost,
-            sample,
-            alpha,
+            ncpu,
         ) = _standardize_bayes_estimate_args(
             sample,
+            alpha,
             n,
             random_state,
             jobs_fun,
@@ -847,7 +973,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            alpha,
+            ncpu,
             instance,
         )
 
@@ -975,7 +1101,7 @@ class Model(object):
                 If not given, the bounds will be filled in with default bound values.
 
         ncpu : integer, default 1
-            If ncpu > 1, perform a parallel computation through the parameters set.
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while optimizing.
@@ -997,7 +1123,7 @@ class Model(object):
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
-        SampleResult: Represents the generated samples using `smash.generate_samples` method.
+        SampleResult: Represents the generated sample result.
 
         Examples
         --------
@@ -1030,6 +1156,8 @@ class Model(object):
 
         # % standardize args
         (
+            sample,
+            alpha,
             mapping,
             algorithm,
             jobs_fun,
@@ -1038,10 +1166,10 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-            sample,
-            alpha,
+            ncpu,
         ) = _standardize_bayes_optimize_args(
             sample,
+            alpha,
             n,
             random_state,
             mapping,
@@ -1054,7 +1182,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            alpha,
+            ncpu,
             instance,
         )
 

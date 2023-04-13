@@ -26,11 +26,13 @@ In Depth
 .. toctree::
     :maxdepth: 1
 
+    in_depth/multiple_run
     in_depth/automatic_meshing
     in_depth/event_segmentation
     in_depth/signatures
     in_depth/prcp_indices
-    
+
+
 Others
 ******
 .. toctree::

@@ -40,3 +40,10 @@ Generated samples result
     :toctree: smash/
 
     SampleResult
+
+Multiple run result
+*******************
+.. autosummary::
+    :toctree: smash/
+
+    MultipleRunResult

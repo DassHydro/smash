@@ -3,10 +3,10 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC
-debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -fPIC
-CFLAGS := -g -O3 -march=native -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
+debug: F90FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+F77FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
+CFLAGS := -g -O3 -march=native -fPIC -fopenmp
 
 #% Files extension
 F90EXT := f90
@@ -89,6 +89,7 @@ f90: \
  obj/mw_sparse_storage.o \
  obj/mw_forcing_statistic.o \
  obj/mw_interception_store.o \
+ obj/mw_multiple_run.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
