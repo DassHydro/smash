@@ -11,7 +11,7 @@ The smash 0.4.0 release continues the ongoing work to improve the handling, fix 
 - Regularization with full distributed mapping
 - Multiple forward run in parallel
 - Addition of many user guides on the different optimization methods
-- Improved management of generate samples results
+- Improved handling of sample generation results
 
 ------------
 Contributors
