@@ -72,7 +72,11 @@ class SignResult(dict):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
             return "\n".join(
-                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -133,7 +137,11 @@ class SignSensResult(dict):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
             return "\n".join(
-                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
             )
         else:
             return self.__class__.__name__ + "()"

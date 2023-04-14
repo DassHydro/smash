@@ -40,6 +40,7 @@ if TYPE_CHECKING:
 
 import numpy as np
 import pandas as pd
+import os
 import warnings
 
 
@@ -426,6 +427,19 @@ def _standardize_ost(ost: str | pd.Timestamp | None, setup: SetupDT) -> pd.Times
     return ost
 
 
+def _standardize_ncpu(ncpu: int) -> int:
+    if ncpu < 1:
+        raise ValueError("ncpu argument must be greater or equal to 1")
+
+    elif ncpu > os.cpu_count():
+        warnings.warn(
+            f"ncpu argument is greater than the total number of CPUs in the system. ncpu is set to {os.cpu_count()}"
+        )
+        ncpu = os.cpu_count()
+
+    return ncpu
+
+
 def _standardize_maxiter(maxiter: int) -> int:
     if isinstance(maxiter, int):
         if maxiter < 0:
@@ -704,6 +718,28 @@ def _standardize_bayes_estimate_sample(
     return sample
 
 
+def _standardize_multiple_run_sample(
+    sample: SampleResult,
+    setup: SetupDT,
+):
+    if isinstance(sample, SampleResult):
+        param_state = (
+            STRUCTURE_PARAMETERS[setup.structure] + STRUCTURE_STATES[setup.structure]
+        )
+
+        unk_cv = [cv for cv in sample._problem["names"] if cv not in param_state]
+
+        if unk_cv:
+            warnings.warn(
+                f"Problem names ({unk_cv}) do not present for any Model parameters and/or states in the {setup.structure} structure"
+            )
+
+    else:
+        raise TypeError("sample must be a SampleResult object")
+
+    return sample
+
+
 def _standardize_bayes_optimize_sample(
     sample: SampleResult | None,
     n: int,
@@ -762,6 +798,59 @@ def _standardize_bayes_alpha(
         raise TypeError("alpha must be numerical or list-like object")
 
     return alpha
+
+
+def _standardize_multiple_run_args(
+    sample: SampleResult,
+    jobs_fun: str | list | tuple,
+    wjobs_fun: list | None,
+    event_seg: dict | None,
+    gauge: str | list | tuple,
+    wgauge: str | list | tuple,
+    ost: str | pd.Timestamp | None,
+    ncpu: int,
+    instance: Model,
+):
+    reset_optimize_setup(
+        instance.setup._optimize
+    )  # % Fortran subroutine mw_derived_type_update
+
+    sample = _standardize_multiple_run_sample(sample, instance.setup)
+
+    jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
+
+    wjobs_fun = _standardize_wjobs_fun_wo_mapping(wjobs_fun, jobs_fun)
+
+    event_seg = _standardize_event_seg_options(event_seg)
+
+    gauge = _standardize_gauge(
+        gauge, instance.setup, instance.mesh, instance.input_data
+    )
+
+    wgauge = _standardize_wgauge(wgauge, gauge, instance.mesh)
+
+    ost = _standardize_ost(ost, instance.setup)
+
+    ncpu = _standardize_ncpu(ncpu)
+
+    update_optimize_setup_optimize_args(
+        instance.setup._optimize,
+        "...",
+        instance.setup._ntime_step,
+        instance.setup._nd,
+        instance.mesh.ng,
+        jobs_fun.size,
+    )  # % Fortran subroutine mw_derived_type_update
+
+    return (
+        sample,
+        jobs_fun,
+        wjobs_fun,
+        event_seg,
+        wgauge,
+        ost,
+        ncpu,
+    )
 
 
 def _standardize_optimize_args(
@@ -832,6 +921,7 @@ def _standardize_optimize_args(
 
 def _standardize_bayes_estimate_args(
     sample: SampleResult,
+    alpha: int | float | range | list | tuple | np.ndarray,
     n: int,
     random_state: int | None,
     jobs_fun: str | list | tuple,
@@ -840,12 +930,16 @@ def _standardize_bayes_estimate_args(
     gauge: str | list | tuple,
     wgauge: str | list | tuple,
     ost: str | pd.Timestamp | None,
-    alpha: int | float | range | list | tuple | np.ndarray,
+    ncpu: int,
     instance: Model,
 ):
     reset_optimize_setup(
         instance.setup._optimize
     )  # % Fortran subroutine mw_derived_type_update
+
+    sample = _standardize_bayes_estimate_sample(sample, n, random_state, instance.setup)
+
+    alpha = _standardize_bayes_alpha(alpha)
 
     jobs_fun = _standardize_jobs_fun_wo_mapping(jobs_fun)
 
@@ -861,9 +955,7 @@ def _standardize_bayes_estimate_args(
 
     ost = _standardize_ost(ost, instance.setup)
 
-    sample = _standardize_bayes_estimate_sample(sample, n, random_state, instance.setup)
-
-    alpha = _standardize_bayes_alpha(alpha)
+    ncpu = _standardize_ncpu(ncpu)
 
     update_optimize_setup_optimize_args(
         instance.setup._optimize,
@@ -875,18 +967,20 @@ def _standardize_bayes_estimate_args(
     )  # % Fortran subroutine mw_derived_type_update
 
     return (
+        sample,
+        alpha,
         jobs_fun,
         wjobs_fun,
         event_seg,
         wgauge,
         ost,
-        sample,
-        alpha,
+        ncpu,
     )
 
 
 def _standardize_bayes_optimize_args(
     sample: SampleResult,
+    alpha: int | float | range | list | tuple | np.ndarray,
     n: int,
     random_state: int | None,
     mapping: str,
@@ -899,7 +993,7 @@ def _standardize_bayes_optimize_args(
     gauge: str | list | tuple,
     wgauge: str | list | tuple,
     ost: str | pd.Timestamp | None,
-    alpha: int | float | range | list | tuple | np.ndarray,
+    ncpu: int,
     instance: Model,
 ):
     reset_optimize_setup(
@@ -933,6 +1027,8 @@ def _standardize_bayes_optimize_args(
 
     ost = _standardize_ost(ost, instance.setup)
 
+    ncpu = _standardize_ncpu(ncpu)
+
     sample = _standardize_bayes_optimize_sample(
         sample, n, random_state, control_vector, bounds
     )
@@ -949,6 +1045,8 @@ def _standardize_bayes_optimize_args(
     )  # % Fortran subroutine mw_derived_type_update
 
     return (
+        sample,
+        alpha,
         mapping,
         algorithm,
         jobs_fun,
@@ -957,8 +1055,7 @@ def _standardize_bayes_optimize_args(
         bounds,
         wgauge,
         ost,
-        sample,
-        alpha,
+        ncpu,
     )
 
 

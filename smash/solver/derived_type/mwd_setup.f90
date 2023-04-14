@@ -146,6 +146,7 @@ module mwd_setup
 
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
+        integer :: ncpu = 1 !>f90w-private
 
         character(10), dimension(GNP) :: parameters_name = GPARAMETERS_NAME !>f90w-private f90w-char_array
 
