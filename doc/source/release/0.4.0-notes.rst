@@ -1,0 +1,245 @@
+.. _release.0.4.0-notes:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.4.0 Release Notes
+=========================
+
+The smash 0.4.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+- Regularization with full distributed mapping
+- Multiple forward run in parallel
+- Addition of many user guides on the different optimization methods
+- Improved handling of sample generation results
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+- Maxime Jay-Allemand
+
+------------
+Deprecations
+------------
+
+Makefile command
+****************
+
+The ``baseline_test`` makefile command has been deprecated and replaced by ``test_baseline``.
+
+Regularization parameter name
+*****************************
+
+The name of the regularization parameter in the :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods has been deprecated and changed from **k** to **alpha**. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(alpha=2)
+
+instead of:
+
+.. code-block:: python
+
+    >>> model.bayes_optimize(k=2)
+
+BayesResult object
+******************
+
+The attribute ``l_curve`` of :class:`smash.BayesResult` object has been deprecated and replaced by ``lcurve``. 
+The key ``Mahalanobis_distance`` has also been changed to a shortened name ``mahal_dist``.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> br = model.bayes_estimate(alpha=range(5), inplace=True, return_br=True)
+    >>> br.lcurve["mahal_dist"]
+
+instead of:
+
+.. code-block:: python
+
+    >>> br.l_curve["Mahalanobis_distance"]
+
+Sample generator
+****************
+
+The argument **backg_sol** in the :class:`smash.generate_samples` has been deprecated and replaced by **mean**. 
+Note that **mean** is now a dictionary, whereas **backg_sol** used to be a 1D array-like.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> sr = smash.generate_samples(problem, generator="normal", mean={"cp": 500, "cft": 200})
+
+instead of:
+
+.. code-block:: python
+
+    >>> sr = smash.generate_samples(problem, generator="normal", backg_sol=[500, 200])
+
+------------
+Improvements
+------------
+
+Return of generated samples
+***************************
+
+The :meth:`smash.generate_samples` method now returns an instance of the :class:`smash.SampleResult` object instead of a pandas.DataFrame. 
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)
+    >>> sr.cp
+
+Bayesian optimization
+*********************
+
+The :meth:`Model.bayes_estimate` and :meth:`Model.bayes_optimize` methods now allow you to define an instance of 
+the :class:`smash.SampleResult` object for generating samples. As a result, we have removed all arguments related to sample generation from both methods.
+
+It can be use as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)
+    >>> model.bayes_estimate(sample=sr)
+
+Pipeline stage
+**************
+
+The pipeline stage ``build-tap`` has been renamed to ``tap-cmp`` and updated allowing a comparison between the source tapenade file and the new regenerated one.
+If an error occurs during this stage, it means that the source tapenade file has not been regenerated.
+
+Documentation
+*************
+
+Add the user guide for advanced optimization techniques, including:
+
+- :ref:`Variational Bayesian calibration <user_guide.in_depth.optimize.bayes_optimize>`
+- :ref:`Multi-criteria optimization <user_guide.in_depth.optimize.multi_criteria>`
+
+Add :ref:`developers guide <developers_guide>`, :ref:`list of contributors <contributors>` and :ref:`license <license>` to the documentation.
+
+------------
+New Features
+------------
+
+Conversion of Result objects
+****************************
+
+We have added additional methods to some Result objects, which are:
+
+- :meth:`PrcpIndicesResult.to_numpy` for the :class:`PrcpIndicesResult` object.
+- :meth:`SampleResult.to_numpy` and :meth:`SampleResult.to_dataframe` for the :class:`SampleResult` object.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)  # create a SampleResult object
+    >>> sr.to_numpy()  # convert to numpy array
+    >>> sr.to_dataframe()  # convert to pandas dataframe
+    
+Slice and iterate over the SampleResult object
+**********************************************
+
+We have added two additional methods to the :class:`SampleResult` object, which are:
+
+- :meth:`SampleResult.slice`
+- :meth:`SampleResult.iterslice`
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)  # create a SampleResult object
+    >>> slc = sr.slice(10)  # slice the first 10 sets
+    >>> slc = sr.slice(start=20, end=50)  # slice between the 20th and 50th set
+    >>> for slc_i in sr.iterslice(100):  # iterate on sub sample of 100 sets
+    >>>     slc_i
+
+Regularization with full distributed mapping
+********************************************
+
+The regularization terms have been added for the optimization with a distributed mapping. 
+Two types of regularization function are considered, which are ``prior`` and ``smoothing``.
+
+.. hint::
+    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(mapping="distributed", options={"jreg_fun": "smoothing"})
+
+Model Multiple Run
+******************
+
+We have added a new method to the :class:`smash.Model` object :meth:`Model.multiple_run`. This method allows to compute multiple forward runs in parallel based on a sample generated
+with the :meth:`smash.generate_samples` method.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> problem = model.get_bound_constraints()
+    >>> sample = smash.generate_samples(problem, n=200, random_state=99)
+    >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
+    >>> mtprr.cost  # access the cost values
+    >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
+
+This method also accepts the cost function arguments that are used in the :meth:`Model.optimize` method (i.e. **jobs_fun**, **wjobs_fun** etc)
+
+.. code-block:: python
+
+    >>> mtprr = model.multiple_run(sample, jobs_fun="kge", gauge="all", ncpu=4, return_qsim=True)
+
+.. hint::
+    See the specific :ref:`User Guide <user_guide.in_depth.multiple_run>` section.
+
+Makefile command
+****************
+
+Three new makefile commands are available:
+
+- ``tap_cmp``: compare source tapenade file with new regenerated one,
+- ``doc``: generate sphinx documentation,
+- ``doc_clean``: clean sphinx documentation.
+
+-----
+Fixes
+-----
+
+Fix an issue where passing an unknown key in the **options** arguments in the :class:`Model.optimize()`, :class:`Net.add()`, 
+:class:`Net.compile()` methods, and **event_seg** argument in the :class:`Model.optimize()` method, would result in a warning. 
+The warning has been replaced with a KeyError to provide clearer feedback when typing a key that does not exist.
+
+For example:
+
+.. code-block:: python
+
+    >>> model.optimize(options={"unknown_key": 1})
+
+resulting an error:
+
+.. code-block:: python
+
+    KeyError: "Unknown algorithm options: 'unknown_key'"

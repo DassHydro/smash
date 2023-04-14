@@ -1,4 +1,4 @@
-.. _user_guide.optimize.pre_regio_poly:
+.. _user_guide.in_depth.optimize.pre_regio_poly:
 
 ============================================
 Pre-regionalization using polynomial mapping
@@ -64,7 +64,7 @@ We can visualize these descriptors and verify if they were successfully loaded:
         im = ax.imshow(model.input_data.descriptor[..., i]);
         cbar = fig.colorbar(im, ax=ax, orientation="horizontal");
         cbar.ax.tick_params();
-    @savefig desc_optimize_poly_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.desc.png
     fig.suptitle("Physiographic descriptors");
 
 .. ipython:: python
@@ -76,9 +76,9 @@ We can visualize these descriptors and verify if they were successfully loaded:
 Finding a uniform first guess
 -----------------------------
 
-Similar to the :ref:`fully-distributed optimization <user_guide.optimize.fully_distributed>` method, 
+Similar to the :ref:`fully-distributed optimization <user_guide.in_depth.optimize.fully_distributed>` method, 
 providing a uniform first guess is recommended for this method. 
-In this case, we use the SBS algorithm to find such a first guess:
+In this case, we use the :math:`\mathrm{SBS}` algorithm to find such a first guess:
 
 .. ipython:: python
 
@@ -86,7 +86,7 @@ In this case, we use the SBS algorithm to find such a first guess:
 
 .. hint::
 
-    You may want to refer to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
+    You may want to refer to the :ref:`Bayesian estimation <user_guide.in_depth.optimize.bayes_estimate>` section 
     for information on how to improve the first guess using a Bayesian estimation approach.
 
 ----------------------------------------------------------
@@ -98,7 +98,8 @@ There are two types of polynomial mapping that can be employed for pre-regionali
 - ``hyper-linear``: a linear mapping where the hyperparameters to be estimated are the coefficients.
 - ``hyper-polynomial``: a polynomial mapping where the hyperparameters to be estimated are the coefficients and the degree.
 
-As an example, the hyper-polynomial mapping can be combined with the variational calibration algorithm ``L-BFGS-B`` as shown below:
+As an example, the hyper-polynomial mapping can be combined with the variational calibration algorithm 
+:math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` as shown below:
 
 .. ipython:: python
     :suppress:
@@ -169,7 +170,7 @@ Now we can visualize the simulated discharge:
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model_hp.mesh.code[0]);
-    @savefig qsim_optimize_pre-regio_hp_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.qsim.png
     plt.legend();
 
 The cost value:
@@ -201,5 +202,10 @@ And finally, the spatially distributed model parameters constrained by physiogra
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig theta_sd_optimize_pre-regio_hp_user_guide.png
+    @savefig user_guide.in_depth.optimize.pre_regio_poly.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

@@ -11,6 +11,8 @@ if TYPE_CHECKING:
 
 import numpy as np
 
+__all__ = ["PrcpIndicesResult"]
+
 
 class PrcpIndicesResult(dict):
     """
@@ -18,22 +20,43 @@ class PrcpIndicesResult(dict):
 
     Notes
     -----
-    This class is essentially a subclass of dict with attribute accessors.
+    This class is essentially a subclass of dict with attribute accessors and an additional method `PrcpIndicesResult.to_numpy`.
 
     Attributes
     ----------
     std : numpy.ndarray
         The precipitation spatial standard deviation.
     d1 : numpy.ndarray
-        The first scaled moment, :cite:p:`zocatelli_2011`
+        The first scaled moment :cite:p:`zocatelli_2011`.
     d2 : numpy.ndarray
-        The second scaled moment, :cite:p:`zocatelli_2011`
+        The second scaled moment :cite:p:`zocatelli_2011`.
     vg : numpy.ndarray
-        The vertical gap. :cite:p:`emmanuel_2015`
+        The vertical gap :cite:p:`emmanuel_2015`.
 
     See Also
     --------
     Model.prcp_indices: Compute precipitations indices of the Model.
+
+    Examples
+    --------
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> prcpind = model.prcp_indices()
+
+    Convert the result to a numpy.ndarray:
+
+    >>> prcpind_tonumpy = prcpind.to_numpy()
+    >>> prcpind_tonumpy
+    array([[[nan, nan, nan, nan],
+            [nan, nan, nan, nan],
+            [nan, nan, nan, nan],
+            ...,
+            [nan, nan, nan, nan],
+            [nan, nan, nan, nan],
+            [nan, nan, nan, nan]]], dtype=float32)
+
+    >>> prcpind_tonumpy.shape
+    (3, 1440, 4)
 
     """
 
@@ -50,13 +73,39 @@ class PrcpIndicesResult(dict):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
             return "\n".join(
-                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
             )
         else:
             return self.__class__.__name__ + "()"
 
     def __dir__(self):
         return list(self.keys())
+
+    def to_numpy(self, axis=0):
+        """
+        Convert the `PrcpIndicesResult` object to a numpy.ndarray.
+
+        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
+        based on the names of the precipitation indices.
+
+        Parameters
+        ----------
+        axis : int, default 0
+            The axis along which the precipitation arrays will be joined.
+
+        Returns
+        -------
+        res : numpy.ndarray
+            The `PrcpIndicesResult` object as a numpy.ndarray.
+
+        """
+        keys = sorted({"std", "d1", "d2", "vg"})
+
+        return np.stack([self[k] for k in keys], axis=axis)
 
 
 def _prcp_indices(instance: Model) -> PrcpIndicesResult:

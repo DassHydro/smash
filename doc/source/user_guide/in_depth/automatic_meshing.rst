@@ -1,4 +1,4 @@
-.. _user_guide.automatic_meshing:
+.. _user_guide.in_depth.automatic_meshing:
 
 =================
 Automatic meshing
@@ -104,7 +104,7 @@ Then, we can visualize any map such as the flow distances.
 
     plt.imshow(mesh["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig flwdst_indepth_single_gauge_mesh.png
+    @savefig user_guide.in_depth.automatic_meshing.flwdst_single_gauge.png
     plt.title("Single gauge - Flow distance");
 
 Missmatching data
@@ -136,7 +136,8 @@ We will assume in the following case that we have a shift of the catchment outle
 
     plt.imshow(mesh_off["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig missmatch_flwdst_indepth_single_gauge_mesh.png
+    
+    @savefig user_guide.in_depth.automatic_meshing.missmatch_flwdst_single_gauge.png
     plt.title("Missmatch single gauge - Flow distance");
 
 As shown by the relative error on the areas (98%) and the flow distances, we did not generate the expected meshing for the catchment. 
@@ -173,7 +174,7 @@ Let's try a ``max_depth`` set to 2.
 
     plt.imshow(mesh_off["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig missmatch_maxdepth_flwdst_indepth_single_gauge_mesh.png
+    @savefig user_guide.in_depth.automatic_meshing.missmatch_maxdepth_flwdst_single_gauge.png
     plt.title("Max depth single gauge - Flow distance");
 
 We allowed the algorithm to look for an outlet further around the real outlet and we found the initial mesh.
@@ -233,7 +234,7 @@ downstream gauge in case of nested gauges.
 
     plt.imshow(mesh["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig flwdst_indepth_multiple_gauge_mesh.png
+    @savefig user_guide.in_depth.automatic_meshing.flwdst_multiple_gauge.png
     plt.title("Nested multiple gauge - Flow distance");
 
 Gauges location
@@ -251,7 +252,7 @@ One way to visualize where the 4 gauges are located.
         canvas[tuple(pos)] = 1
 
     plt.imshow(canvas, cmap="Set1_r");
-    @savefig gauge_pos_indepth_multiple_gauge_mesh.png.png
+    @savefig user_guide.in_depth.automatic_meshing.gauge_pos_multiple_gauge.png
     plt.title("Nested multiple gauge - Gauges location");
 
 Gauges code
@@ -327,14 +328,14 @@ Then call the :meth:`smash.generate_mesh` method.
 
     plt.imshow(mesh["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig flwdst_indepth_nn_multiple_gauge_mesh.png
+    @savefig user_guide.in_depth.automatic_meshing.flwdst_non-nested_multiple_gauge.png
     plt.title("Non-nested multiple gauge - Flow distance");
 
 The mesh has been generated for two groups of catchments which are non-nested.
 
 .. note::
 
-    The flow distances are always calculated on the most downstream gauge. In case of non-nested groups of catchments. The flow distance are calculated
+    The flow distances are always calculated on the most downstream gauge. In case of non-nested groups of catchments, the flow distance are calculated
     for each group on the most downstream gauge.
 
 Finally, visualize the gauge positions for this mesh.
@@ -349,7 +350,10 @@ Finally, visualize the gauge positions for this mesh.
         canvas[tuple(pos)] = 1
 
     plt.imshow(canvas, cmap="Set1_r");
-    @savefig gauge_pos_indepth_nn_multiple_gauge_mesh.png.png
+    @savefig user_guide.in_depth.automatic_meshing.gauge_pos_non-nested_multiple_gauge.png
     plt.title("Non-nested multiple gauge - Gauges location");
     
+.. ipython:: python
+    :suppress:
 
+    plt.close('all')

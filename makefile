@@ -3,10 +3,10 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC
-debug: F90FLAGS := -Wall -Wextra -fPIC -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -fPIC
-CFLAGS := -g -O3 -march=native -fPIC
+F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
+debug: F90FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+F77FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
+CFLAGS := -g -O3 -march=native -fPIC -fopenmp
 
 #% Files extension
 F90EXT := f90
@@ -89,6 +89,7 @@ f90: \
  obj/mw_sparse_storage.o \
  obj/mw_forcing_statistic.o \
  obj/mw_interception_store.o \
+ obj/mw_multiple_run.o \
  
 #% cpp compile
 $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
@@ -103,7 +104,7 @@ $(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F90EXT)
 	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
 
  
-#% Making wrappers (f90wrap)
+#% Make wrappers (f90wrap)
 wrappers:
 	@echo "********************************************"
 	@echo ""
@@ -113,7 +114,7 @@ wrappers:
 	rm -rf $(BUILDDIR)/f90wrap*
 	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k $(F90WRAPDIR)/kind_map --py-mod-names $(F90WRAPDIR)/py_mod_names --package
 	
-#% Making module extension (f2py-f90wrap)
+#% Make module extension (f2py-f90wrap)
 module:
 	@echo "********************************************"
 	@echo ""
@@ -122,7 +123,7 @@ module:
 	@echo "********************************************"
 	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
 
-#% Making meshing extension (f2py)
+#% Make meshing extension (f2py)
 meshing:
 	@echo "********************************************"
 	@echo ""
@@ -131,7 +132,7 @@ meshing:
 	@echo "********************************************"
 	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _mw_meshing mw_meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
 
-#% Making python library (pip3)
+#% Make python library (pip3)
 library:
 	@echo "********************************************"
 	@echo ""
@@ -140,7 +141,7 @@ library:
 	@echo "********************************************"
 	pip3 install --compile .
 
-#% Making python library in editable mode (pip3) [Dev]
+#% Make python library in editable mode (pip3) [Dev]
 library_edit:
 	@echo "********************************************"
 	@echo ""
@@ -148,7 +149,7 @@ library_edit:
 	@echo ""
 	@echo "********************************************"
 	pip3 install -e .
-	
+
 #% Finalize compilation with mv, rm and sed
 finalize:
 	mv f90wrap_*.f90 $(SOLVERDIR)/f90wrap/.
@@ -158,16 +159,28 @@ finalize:
 	rm -rf $(SHAREDLIB)
 	python3 $(F90WRAPDIR)/finalize_f90wrap.py
 	
-#% Generating tapenade files (adjoint and tangent linear models)
+#% Generate tapenade file (adjoint and tangent linear models)
 tap:
 	cd $(TAPENADEDIR) ; make
+
+#% Compare tapenade file
+tap_cmp:
+	cd $(TAPENADEDIR) ; make tap_cmp
+
+#% Generate sphinx documentation
+doc:
+	cd $(DOCDIR) ; make html
+
+#% Clean sphinx documentation
+doc_clean:
+	cd $(DOCDIR) ; make clean
 
 #% Testing code with pytest
 test:
 	cd $(TESTSDIR) ; pytest
 
-#% Generating baseline for test with args (see argparser in gen_baseline.py)
-baseline_test:
+#% Generate baseline for test with args (see argparser in gen_baseline.py)
+test_baseline:
 	cd $(TESTSDIR) ; python3 gen_baseline.py $(args)
 
 #% Clean
@@ -181,3 +194,5 @@ clean:
 	@$(RM) -rf $(SOLVERDIR)/f90wrap
 	@$(RM) -rf $(MESHDIR)/*.so
 	@$(RM) -rf build
+
+.PHONY: all debug directories c f77 f90 wrappers module meshing library library_edit finalize tap tap_cmp doc doc_clean test test_baseline clean

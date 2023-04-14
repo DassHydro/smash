@@ -30,7 +30,7 @@ subroutine base_forward(setup, mesh, input_data, parameters, parameters_bgd, sta
 
     type(StatesDT) :: states_imd
 
-    if (setup%optimize%normalize_forward) then
+    if (setup%optimize%denormalize_forward) then
 
         call denormalize_parameters(setup, mesh, parameters)
         call denormalize_states(setup, mesh, states)

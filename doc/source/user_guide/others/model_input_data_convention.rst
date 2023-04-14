@@ -1,4 +1,4 @@
-.. _user_guide.model_input_data_convention:
+.. _user_guide.others.model_input_data_convention:
 
 ===========================
 Model input data convention
@@ -31,7 +31,7 @@ The name of the file, for any catchment, must contains the code of the gauge whi
 Precipitation
 '''''''''''''
 
-The precipitation files must be store for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.tif``.
+The precipitation files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively search in the ``prcp_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.tif``.
 An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
 
 .. warning::
@@ -41,7 +41,7 @@ An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_2014
 Potential evapotranspiration
 ''''''''''''''''''''''''''''
 
-The potential evapotranspiration files must be store for each each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.tif``.
+The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively search in the ``pet_directory``, a file with the following name structure: ``*<%Y%m%d%H%M>*.tif``.
 An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
 
 .. warning::
@@ -54,7 +54,7 @@ An example of file name in tif format for the date 09-15: ``dia_pet_0915.tif``. 
 Catchment descriptors
 '''''''''''''''''''''
 
-The catchment descriptors files must be store in ``tif`` format. For each descriptor name filled in the setup argument ``descriptor_name``, `smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``<descriptor_name>.tif``.
+The catchment descriptors files must be stored in ``tif`` format. For each descriptor name filled in the setup argument ``descriptor_name``, `smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``<descriptor_name>.tif``.
 An example of file name in tif format for the slope descriptor: ``slope.tif``. The spatial resolution must be identical to the spatial resolution of the flow directions used for the meshing.
 
 .. warning::

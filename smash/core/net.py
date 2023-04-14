@@ -11,7 +11,6 @@ if TYPE_CHECKING:
     from smash.solver._mwd_parameters import ParametersDT
     from smash.solver._mwd_states import StatesDT
 
-import warnings
 import copy
 import numpy as np
 from terminaltables import AsciiTable
@@ -253,10 +252,10 @@ class Net(object):
         optimizer : str, default 'adam'
             Name of optimizer. Should be one of
 
-            - 'sgd' : Stochastic Gradient Descent
-            - 'adam' : Adaptive Moment Estimation
-            - 'adagrad' : Adaptive Gradient
-            - 'rmsprop' : Root Mean Square Propagation
+            - 'sgd'
+            - 'adam'
+            - 'adagrad'
+            - 'rmsprop'
 
         options : dict or None, default None
             A dictionary of optimizer options.
@@ -860,7 +859,7 @@ class MinMaxScale:
 class StochasticGradientDescent:
 
     """
-    Compile the neural network with SGD.
+    Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
 
     Options
     -------
@@ -894,7 +893,7 @@ class StochasticGradientDescent:
 class Adam:
 
     """
-    Compile the neural network with Adam optimizer.
+    Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
 
     Options
     -------
@@ -947,7 +946,7 @@ class Adam:
 class Adagrad:
 
     """
-    Compile the neural network with Adagrad optimizer.
+    Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
 
     Options
     -------
@@ -977,7 +976,7 @@ class Adagrad:
 class RMSprop:
 
     """
-    Compile the neural network with RMSprop optimizer.
+    Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
 
     Options
     -------
@@ -1126,4 +1125,4 @@ def _inf_norm(grad: np.ndarray):
 def _check_unknown_options(type_check: str, unknown_options: dict):
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
-        warnings.warn("Unknown %s options: '%s'" % (type_check, msg))
+        raise KeyError("Unknown %s options: '%s'" % (type_check, msg))

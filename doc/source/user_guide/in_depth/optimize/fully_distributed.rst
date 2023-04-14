@@ -1,4 +1,4 @@
-.. _user_guide.optimize.fully_distributed:
+.. _user_guide.in_depth.optimize.fully_distributed:
 
 ==========================================================
 Fully-distributed optimization using a uniform first guess
@@ -40,7 +40,7 @@ Spatially uniform optimization
 ------------------------------
 
 To find the uniform first guess, we can perform a spatially-uniform calibration using global optimization algorithms. 
-Here's an example how we can do it with the SBS algorithm:
+Here's an example how we can do it with the :math:`\mathrm{SBS}` algorithm:
 
 .. ipython:: python
 
@@ -58,7 +58,7 @@ Once the optimization is complete. We can visualize the simulated discharge:
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model_su.mesh.code[0]);
-    @savefig qsim_su_optimize_fd_user_guide.png
+    @savefig user_guide.in_depth.optimize.fully_distributed.qsim_su.png
     plt.legend();
     
 The cost function value :math:`J`:
@@ -84,7 +84,7 @@ And the spatially uniform first guess:
 
 .. hint::
 
-    You may want to refer to the :ref:`Bayesian estimation <user_guide.optimize.bayes_estimate>` section 
+    You may want to refer to the :ref:`Bayesian estimation <user_guide.in_depth.optimize.bayes_estimate>` section 
     for information on how to improve the first guess using a Bayesian estimation approach.
 
 ----------------------------------
@@ -92,7 +92,8 @@ Spatially distributed optimization
 ----------------------------------
 
 Next, using the first guess provided by a global calibration, which had stored the optimized parameters 
-in the previous step, we perform a spatially distributed calibration using ``L-BFGS-B`` algorithm:
+in the previous step, we perform a spatially distributed calibration using 
+the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm:
 
 .. ipython:: python
     :suppress:
@@ -125,7 +126,7 @@ We can once again visualize, the simulated discharges (``su``: spatially uniform
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model_sd.mesh.code[0]);
-    @savefig qsim_sd_optimize_fd_user_guide.png
+    @savefig user_guide.in_depth.optimize.fully_distributed.qsim_sd.png
     plt.legend();
 
 The cost value:
@@ -157,5 +158,10 @@ And finally, the distributed model parameters in this case:
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig theta_sd_optimize_fd_user_guide.png
+    @savefig user_guide.in_depth.optimize.fully_distributed.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

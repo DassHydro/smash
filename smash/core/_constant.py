@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core.optimize._optimize import (
+from smash.core.simulation._optimize import (
     _optimize_sbs,
     _optimize_nelder_mead,
     _optimize_lbfgsb,
@@ -110,6 +110,18 @@ CSIGN_OPTIM = ["Crc", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
 ESIGN_OPTIM = ["Erc", "Elt", "Epf"]
 
 MAPPING = ["uniform", "distributed", "hyper-linear", "hyper-polynomial"]
+
+GAUGE_ALIAS = ["all", "downstream"]
+
+WGAUGE_ALIAS = ["mean", "median", "area", "minv_area"]
+
+# % TODO: Add "distance_correlation" once clearly verified
+JREG_FUN = [
+    "prior",
+    "smoothing",
+]
+
+AUTO_WJREG = ["fast", "lcurve"]
 
 OPTIM_FUNC = {
     "sbs": _optimize_sbs,

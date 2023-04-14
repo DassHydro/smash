@@ -1,4 +1,4 @@
-.. _user_guide.model_structure:
+.. _user_guide.others.model_structure:
 
 ===============
 Model structure
@@ -6,7 +6,7 @@ Model structure
 
 In this section all the hydrological model structures that can be used will be presented.
 
-There are 3 different structures available:
+There are 4 different structures available:
 
 - "gr-a"
     4 parameters and 3 states structure derived from the GR model.
@@ -21,13 +21,13 @@ There are 3 different structures available:
     3 parameters and 3 states structure derived from the GR model.
     
 .. note::
-    see the :ref:`Math / Num Documentation <math_num_documentation.hydrological_operators.gr>` for more information about GR model.
+    see the :ref:`Math / Num Documentation <math_num_documentation.forward.hydrological_operators.gr>` for more information about GR model.
     
 
 Model structure description
 ---------------------------
 
-.. _user_guide.model_structure.gr_a:
+.. _user_guide.others.model_structure.gr_a:
 
 gr-a
 ''''
@@ -91,7 +91,7 @@ Operating
 - neutralization of :math:`P` by :math:`E` to determine a net rainfall :math:`P_n` and a net evapotranspiration :math:`E_n` using an interception storage,
 
 .. note::
-    In case of a daily time step simulation, the interception storage is disabled and the neutralization of :math:`P` by :math:`E` is similar to :ref:`user_guide.model_structure.gr_a`.
+    In case of a daily time step simulation, the interception storage is disabled and the neutralization of :math:`P` by :math:`E` is similar to :ref:`user_guide.others.model_structure.gr_a`.
     Otherwise (at sub-daily time step), the maximum capacity :math:`c_i` is adjusted to match fluxes between the simulation at daily time and sub-daily time step.
 
 - filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
@@ -132,7 +132,7 @@ Operating
 - neutralization of :math:`P` by :math:`E` to determine a net rainfall :math:`P_n` and a net evapotranspiration :math:`E_n` using an interception storage,
 
 .. note::
-    In case of a daily time step simulation, the interception storage is disabled and the neutralization of :math:`P` by :math:`E` is similar to :ref:`user_guide.model_structure.gr_a`.
+    In case of a daily time step simulation, the interception storage is disabled and the neutralization of :math:`P` by :math:`E` is similar to :ref:`user_guide.others.model_structure.gr_a`.
     Otherwise (at sub-daily time step), the maximum capacity :math:`c_i` is adjusted to match fluxes between the simulation at daily time and sub-daily time step.
 
 - filling (resp. emptying) the production storage by :math:`P_s` (resp. :math:`E_s`),
@@ -142,7 +142,7 @@ Operating
 - filling the routing storage by the upstream flux :math:`Q_{up}`,
 - computation of the final routed flow :math:`Q` at the output of the routing storage.
 
-.. _user_guide.model_structure.gr_d:
+.. _user_guide.others.model_structure.gr_d:
 
 gr-d
 ''''

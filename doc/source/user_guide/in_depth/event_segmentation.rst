@@ -1,11 +1,11 @@
-.. _user_guide.event_segmentation:
+.. _user_guide.in_depth.event_segmentation:
 
 ==================
 Event segmentation
 ==================
 
 This section aims to go into detail on how to use and visualize the hydrograph segmentation from 
-a proposed algorithm as depicted in section :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>`.
+a proposed algorithm as depicted in section :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>`.
 
 First, open a Python interface:
 
@@ -28,7 +28,7 @@ Model object creation
 ---------------------
 
 To obtain flood events segmentation, you need to create a :class:`smash.Model` object. 
-For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.real_case_cance`.
+For this case, we will use the ``Cance`` dataset used in the User Guide section: :ref:`user_guide.quickstart.real_case_cance`.
 
 Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset()` method and create the :class:`smash.Model` object.
 
@@ -54,9 +54,9 @@ The result is represented by a pandas.DataFrame with 6 columns.
 - ``code`` : The catchment code,
 - ``start`` : The beginning of event under ``YYYY-MM-DD HH:MM:SS`` format,
 - ``end`` : The end of event under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``maxrainfall`` : The moment that the maximum precipation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``flood`` : The moment that the maximum discharge is observed under ``YYYY-MM-DD HH:MM:SS`` format,
-- ``season`` : The season that event occurrs.
+- ``maxrainfall`` : The moment when the maximum precipation is observed under ``YYYY-MM-DD HH:MM:SS`` format,
+- ``flood`` : The moment when the maximum discharge is observed under ``YYYY-MM-DD HH:MM:SS`` format,
+- ``season`` : The season in which the event occurs.
 
 Then the segmented event, for instance of catchment ``V3524010``, is shown in the hydrograph below.
 
@@ -89,7 +89,7 @@ Then the segmented event, for instance of catchment ``V3524010``, is shown in th
         ax2.set_xlim(ax1.get_xlim());
 
         fig.legend();
-        @savefig event_seg.png
+        @savefig user_guide.in_depth.event_segmentation.event_seg.png
         fig.suptitle("V3524010");
 
 In this case, an event seems to be missing but we can always adjust some parameters of the segmentation algorithm to detect flood events, for example:
@@ -126,5 +126,10 @@ We can once again visualize, the segmented events of catchment ``V3524010`` on t
         ax2.set_xlim(ax1.get_xlim());
 
         fig.legend();
-        @savefig event_seg_2.png
+        @savefig user_guide.in_depth.event_segmentation.event_seg_2.png
         fig.suptitle("V3524010");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

@@ -63,18 +63,24 @@ module mwd_setup
 
         character(20), dimension(:), allocatable :: jobs_fun !>f90w-char_array
         real(sp), dimension(:), allocatable :: wjobs_fun
+
+        real(sp) :: wjreg = 0._sp
+        character(20), dimension(:), allocatable :: jreg_fun !>f90w-char_array
+        real(sp), dimension(:), allocatable :: wjreg_fun
+
+        integer, dimension(:, :), allocatable :: reg_descriptors_for_params
+        integer, dimension(:, :), allocatable :: reg_descriptors_for_states
+
         integer :: njf = 0
+        integer :: njr = 0
 
         logical :: verbose = .true.
 
         character(lchar) :: mapping = "..." !>f90w-char
 
-        logical :: normalize_forward = .false.
+        logical :: denormalize_forward = .false.
 
         integer :: nhyper = 0
-
-        character(lchar) :: jreg_fun = "prior" !>f90w-char
-        real(sp) :: wjreg = 0._sp
 
         integer :: optimize_start_step = 1
 
@@ -140,6 +146,7 @@ module mwd_setup
 
         integer :: ntime_step = 0 !>f90w-private
         integer :: nd = 0 !>f90w-private
+        integer :: ncpu = 1 !>f90w-private
 
         character(10), dimension(GNP) :: parameters_name = GPARAMETERS_NAME !>f90w-private f90w-char_array
 
@@ -149,7 +156,7 @@ module mwd_setup
 
 contains
 
-    subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf)
+    subroutine Optimize_SetupDT_initialise(this, ntime_step, nd, ng, mapping, njf, njr)
 
         !% Notes
         !% -----
@@ -158,7 +165,7 @@ contains
         implicit none
 
         type(Optimize_SetupDT), intent(inout) :: this
-        integer, intent(in) :: ntime_step, nd, ng, njf
+        integer, intent(in) :: ntime_step, nd, ng, njf, njr
         character(len=*), intent(in) :: mapping
 
         allocate (this%wgauge(ng))
@@ -179,6 +186,7 @@ contains
         end select
 
         this%njf = njf
+        this%njr = njr
 
         allocate (this%jobs_fun(this%njf))
         this%jobs_fun = "..."
@@ -186,8 +194,20 @@ contains
         allocate (this%wjobs_fun(this%njf))
         this%wjobs_fun = 0._sp
 
+        allocate (this%jreg_fun(this%njr))
+        this%jreg_fun = "..."
+
+        allocate (this%wjreg_fun(this%njr))
+        this%wjreg_fun = 1._sp
+
         allocate (this%mask_event(ng, ntime_step))
         this%mask_event = 0
+
+        allocate (this%reg_descriptors_for_params(GNP, nd))
+        this%reg_descriptors_for_params = 0
+
+        allocate (this%reg_descriptors_for_states(GNS, nd))
+        this%reg_descriptors_for_states = 0
 
     end subroutine Optimize_SetupDT_initialise
 
@@ -211,7 +231,7 @@ contains
 
         end if
 
-        call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0)
+        call Optimize_SetupDT_initialise(this%optimize, this%ntime_step, this%nd, ng, "...", 0, 0)
 
     end subroutine SetupDT_initialise
 

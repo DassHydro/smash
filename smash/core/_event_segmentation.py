@@ -358,7 +358,7 @@ def _event_segmentation(instance: Model, peak_quant: float, max_duration: float)
 def _check_unknown_options_event_seg(unknown_options: dict):
     if unknown_options:
         msg = ", ".join(map(str, unknown_options.keys()))
-        warnings.warn("Unknown event segmentation options: '%s'" % msg)
+        raise KeyError("Unknown event segmentation options: '%s'" % msg)
 
 
 def _standardize_event_seg_options(options: dict | None) -> dict:

@@ -1,85 +1,97 @@
-commit f9bd2a515c16b27231392cec0a475624ece0795c
-Merge: 6531240 c80772f
-Author: Ngo Nghi Truyen Huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Mon Feb 27 12:32:10 2023 +0100
+commit 18cc90156ca16b257692c48b7262d927ed4a8501
+Author: inoelloc <colleoni.francois@gmail.com>
+Date:   Thu Apr 13 12:17:42 2023 +0200
 
-    Merge branch 'fix-signatures-cost' into 'maintenance/0.3.x'
+    FIX: Lower the tolerance to 1e-5 in multiple_run assertion (probably parallel issue)
     
-    FIX/ENC: change signatures cost function
+    - Modified
     
-    See merge request hydrology/smash!3
+            * test_simu.py: in np.allclose change atol from 1e-6 to 1e-5 in test_multiple_run
 
-TEST NAME                                 |STATUS
-ann_optimize_1.cost                       |NON MODIFIED
-ann_optimize_1.loss                       |NON MODIFIED
-ann_optimize_2.cost                       |NON MODIFIED
-ann_optimize_2.loss                       |NON MODIFIED
-bayes_estimate.br_cost                    |NON MODIFIED
-bayes_estimate.cost                       |NON MODIFIED
-bayes_optimize.br_cost                    |NON MODIFIED
-bayes_optimize.cost                       |NON MODIFIED
-bbox_mesh.flwacc                          |NON MODIFIED
-bbox_mesh.flwdir                          |NON MODIFIED
-event_seg.arr                             |NON MODIFIED
-gen_samples.nor                           |NON MODIFIED
-gen_samples.uni                           |NON MODIFIED
-mesh_io.active_cell                       |NON MODIFIED
-mesh_io.area                              |NON MODIFIED
-mesh_io.code                              |NON MODIFIED
-mesh_io.dx                                |NON MODIFIED
-mesh_io.flwacc                            |NON MODIFIED
-mesh_io.flwdir                            |NON MODIFIED
-mesh_io.flwdst                            |NON MODIFIED
-mesh_io.gauge_pos                         |NON MODIFIED
-mesh_io.nac                               |NON MODIFIED
-mesh_io.ncol                              |NON MODIFIED
-mesh_io.ng                                |NON MODIFIED
-mesh_io.nrow                              |NON MODIFIED
-mesh_io.path                              |NON MODIFIED
-mesh_io.xmin                              |NON MODIFIED
-mesh_io.ymax                              |NON MODIFIED
-net_init.bias_layer_1                     |NON MODIFIED
-net_init.bias_layer_2                     |NON MODIFIED
-net_init.bias_layer_3                     |NON MODIFIED
-net_init.bias_layer_4                     |NON MODIFIED
-net_init.graph                            |NON MODIFIED
-net_init.weight_layer_1                   |NON MODIFIED
-net_init.weight_layer_2                   |NON MODIFIED
-net_init.weight_layer_3                   |NON MODIFIED
-net_init.weight_layer_4                   |NON MODIFIED
-optimize.distributed_l-bfgs-b.cost        |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cft  |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cost |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cp   |NON MODIFIED
-optimize.hyper-linear_l-bfgs-b.cost       |NON MODIFIED
-optimize.hyper-polynomial_l-bfgs-b.cost   |NON MODIFIED
-optimize.uniform_nelder-mead.cost         |NON MODIFIED
-optimize.uniform_sbs.cost                 |NON MODIFIED
-optimize.uniform_sbs_mtg.cost             |NON MODIFIED
-optimize.uniform_sbs_states.cost          |MODIFIED
-optimize.uniform_sbs_states.hlr           |ADDED
-optimize.uniform_sbs_states.hp            |DELETED
-run.cost                                  |NON MODIFIED
-signatures.cont_obs                       |NON MODIFIED
-signatures.cont_sim                       |NON MODIFIED
-signatures.event_obs                      |NON MODIFIED
-signatures.event_sim                      |NON MODIFIED
-signatures_sens.cont_first_si_cft         |NON MODIFIED
-signatures_sens.cont_first_si_cp          |NON MODIFIED
-signatures_sens.cont_first_si_exc         |NON MODIFIED
-signatures_sens.cont_first_si_lr          |NON MODIFIED
-signatures_sens.cont_total_si_cft         |NON MODIFIED
-signatures_sens.cont_total_si_cp          |NON MODIFIED
-signatures_sens.cont_total_si_exc         |NON MODIFIED
-signatures_sens.cont_total_si_lr          |NON MODIFIED
-signatures_sens.event_first_si_cft        |NON MODIFIED
-signatures_sens.event_first_si_cp         |NON MODIFIED
-signatures_sens.event_first_si_exc        |NON MODIFIED
-signatures_sens.event_first_si_lr         |NON MODIFIED
-signatures_sens.event_total_si_cft        |NON MODIFIED
-signatures_sens.event_total_si_cp         |NON MODIFIED
-signatures_sens.event_total_si_exc        |NON MODIFIED
-signatures_sens.event_total_si_lr         |NON MODIFIED
-xy_mesh.flwacc                            |NON MODIFIED
-xy_mesh.flwdir                            |NON MODIFIED
-xy_mesh.flwdst                            |NON MODIFIED
+TEST NAME                                     |STATUS
+ann_optimize_1.cost                           |NON MODIFIED
+ann_optimize_1.loss                           |NON MODIFIED
+ann_optimize_2.cost                           |NON MODIFIED
+ann_optimize_2.loss                           |NON MODIFIED
+bayes_estimate.br_cost                        |NON MODIFIED
+bayes_estimate.cost                           |NON MODIFIED
+bayes_optimize.br_cost                        |NON MODIFIED
+bayes_optimize.cost                           |NON MODIFIED
+bbox_mesh.flwacc                              |NON MODIFIED
+bbox_mesh.flwdir                              |NON MODIFIED
+event_seg.arr                                 |NON MODIFIED
+gen_samples.nor                               |MODIFIED
+gen_samples.uni                               |MODIFIED
+mesh_io.active_cell                           |NON MODIFIED
+mesh_io.area                                  |NON MODIFIED
+mesh_io.code                                  |NON MODIFIED
+mesh_io.dx                                    |NON MODIFIED
+mesh_io.flwacc                                |NON MODIFIED
+mesh_io.flwdir                                |NON MODIFIED
+mesh_io.flwdst                                |NON MODIFIED
+mesh_io.gauge_pos                             |NON MODIFIED
+mesh_io.nac                                   |NON MODIFIED
+mesh_io.ncol                                  |NON MODIFIED
+mesh_io.ng                                    |NON MODIFIED
+mesh_io.nrow                                  |NON MODIFIED
+mesh_io.path                                  |NON MODIFIED
+mesh_io.xmin                                  |NON MODIFIED
+mesh_io.ymax                                  |NON MODIFIED
+multiple_run.cost                             |ADDED
+multiple_run.qsim                             |ADDED
+mutiple_run.slc_1.cost                        |ADDED
+mutiple_run.slc_1.qsim                        |ADDED
+mutiple_run.slc_2.cost                        |ADDED
+mutiple_run.slc_2.qsim                        |ADDED
+mutiple_run.slc_3.cost                        |ADDED
+mutiple_run.slc_3.qsim                        |ADDED
+mutiple_run.slc_4.cost                        |ADDED
+mutiple_run.slc_4.qsim                        |ADDED
+mutiple_run.slc_5.cost                        |ADDED
+mutiple_run.slc_5.qsim                        |ADDED
+net_init.bias_layer_1                         |NON MODIFIED
+net_init.bias_layer_2                         |NON MODIFIED
+net_init.bias_layer_3                         |NON MODIFIED
+net_init.bias_layer_4                         |NON MODIFIED
+net_init.graph                                |NON MODIFIED
+net_init.weight_layer_1                       |NON MODIFIED
+net_init.weight_layer_2                       |NON MODIFIED
+net_init.weight_layer_3                       |NON MODIFIED
+net_init.weight_layer_4                       |NON MODIFIED
+optimize.distributed_l-bfgs-b.cost            |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cft      |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cost     |NON MODIFIED
+optimize.distributed_l-bfgs-b_bounds.cp       |NON MODIFIED
+optimize.distributed_l-bfgs-b_reg_fast.cost   |NON MODIFIED
+optimize.distributed_l-bfgs-b_reg_lcurve.cost |NON MODIFIED
+optimize.hyper-linear_l-bfgs-b.cost           |NON MODIFIED
+optimize.hyper-polynomial_l-bfgs-b.cost       |NON MODIFIED
+optimize.uniform_nelder-mead.cost             |NON MODIFIED
+optimize.uniform_sbs.cost                     |NON MODIFIED
+optimize.uniform_sbs_mtg.cost                 |NON MODIFIED
+optimize.uniform_sbs_states.cost              |NON MODIFIED
+optimize.uniform_sbs_states.hlr               |NON MODIFIED
+run.cost                                      |NON MODIFIED
+signatures.cont_obs                           |NON MODIFIED
+signatures.cont_sim                           |NON MODIFIED
+signatures.event_obs                          |NON MODIFIED
+signatures.event_sim                          |NON MODIFIED
+signatures_sens.cont_first_si_cft             |NON MODIFIED
+signatures_sens.cont_first_si_cp              |NON MODIFIED
+signatures_sens.cont_first_si_exc             |NON MODIFIED
+signatures_sens.cont_first_si_lr              |NON MODIFIED
+signatures_sens.cont_total_si_cft             |NON MODIFIED
+signatures_sens.cont_total_si_cp              |NON MODIFIED
+signatures_sens.cont_total_si_exc             |NON MODIFIED
+signatures_sens.cont_total_si_lr              |NON MODIFIED
+signatures_sens.event_first_si_cft            |NON MODIFIED
+signatures_sens.event_first_si_cp             |NON MODIFIED
+signatures_sens.event_first_si_exc            |NON MODIFIED
+signatures_sens.event_first_si_lr             |NON MODIFIED
+signatures_sens.event_total_si_cft            |NON MODIFIED
+signatures_sens.event_total_si_cp             |NON MODIFIED
+signatures_sens.event_total_si_exc            |NON MODIFIED
+signatures_sens.event_total_si_lr             |NON MODIFIED
+xy_mesh.flwacc                                |NON MODIFIED
+xy_mesh.flwdir                                |NON MODIFIED
+xy_mesh.flwdst                                |NON MODIFIED

@@ -1,4 +1,4 @@
-.. _user_guide.model_initialization:
+.. _user_guide.others.model_initialization:
 
 .. role:: bolditalic
     :class: bolditalic
@@ -7,19 +7,19 @@
 Model initialization
 ====================
 
-.. _user_guide.model_initialization.setup:
+.. _user_guide.others.model_initialization.setup:
 
 Setup
 -----
 
-In this section all the setup options that can be passed to the ``setup`` dictionary needed to initialize the :class:`.Model` object will be presented.
+In this section all the setup options that can be passed to the ``setup`` dictionary in order to initialize the :class:`Model` object will be presented.
 
 
 Structure options
 *****************
 
 ``structure``:bolditalic:`: str, default "gr-a"`
-    Model structure. Possible model structures are:
+    Model structure. There are 4 different structures available:
 
     - "gr-a"
         4 parameters and 3 states structure.
@@ -34,7 +34,7 @@ Structure options
         3 parameters and 3 states structure.
 
     .. note::
-        See the User Guide section: :ref:`user_guide.model_structure` for more.
+        See the User Guide section: :ref:`user_guide.others.model_structure` for more.
 
 
 Time options
@@ -118,7 +118,7 @@ Input data options
     List of physiographic descriptor names (the size of the list will be used to allocate the descriptor array and used to read the corresponding files).
 
     .. note::
-        See the User Guide section: :ref:`user_guide.model_input_data_convention` for more.
+        See the User Guide section: :ref:`user_guide.others.model_input_data_convention` for more.
 
 Output options
 **************
@@ -130,7 +130,7 @@ Output options
     Enables the save of simulated net precipitation on the entire domain.
 
 
-.. _user_guide.model_initialization.mesh:
+.. _user_guide.others.model_initialization.mesh:
 
 Mesh
 ----

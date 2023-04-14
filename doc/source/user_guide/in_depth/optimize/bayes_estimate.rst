@@ -1,4 +1,4 @@
-.. _user_guide.optimize.bayes_estimate:
+.. _user_guide.in_depth.optimize.bayes_estimate:
 
 ===================================================
 Improving the first guess using Bayesian estimation
@@ -37,23 +37,46 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
     
     model = smash.Model(setup, mesh)
 
--------------------
-Bayesian estimation
--------------------
+.. _user_guide.indepth.optimize.ld-estim:
 
-Next, we find a uniform first guess using Bayesian estimation on a random set of the model parameters:
+------------------------------------------
+LDBE (Low Dimensional Bayesian Estimation)
+------------------------------------------
+
+Next, we find a uniform first guess using Bayesian estimation on a random set of the Model parameters using the :meth:`smash.Model.bayes_estimate` method. 
+By default, the ``sample`` argument is not required to be set, and it is automatically set based on the Model structure. 
+This example shows how to define a custom ``sample`` using the :meth:`smash.generate_samples` method. 
+
+You may refer to the :meth:`smash.Model.get_bound_constraints` method to obtain some information about the Model parameters/states:
 
 .. ipython:: python
 
-    model_be, br = model.bayes_estimate(
-            k=np.linspace(-1, 8, 50), 
-            n=400, 
-            random_state=11, 
-            return_br=True
-        )
+    model.get_bound_constraints()
 
-In the code above, we generated a set of 400 random model parameters, and 
-used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 8]`.
+Here we define a problem that only contains three Model parameters, which means the fourth one will be fixed:
+
+.. ipython:: python
+
+    problem = {
+            "num_vars": 3,
+            "names": ["cp", "lr", "cft"],
+            "bounds": [[1, 1000], [1, 1000], [1, 1000]]
+        }
+
+We then generate a set of 400 random Model parameters:
+
+.. ipython:: python
+
+    sr = smash.generate_samples(problem, n=400, random_state=1)
+
+and perform Bayesian estimation:
+
+.. ipython:: python
+
+    model_be, br = model.bayes_estimate(sr, alpha=np.linspace(-1, 4, 50), return_br=True);
+    model_be.output.cost  # cost value with LDBE
+
+In the code above, we used the L-curve approach to find an optimal regularization parameter within a short search range of :math:`[-1, 4]`.
 
 -----------------------------------
 Visualization of estimation results
@@ -65,30 +88,42 @@ with the random set of parameters using the following code:
 
 .. ipython:: python
 
-    plt.hist(br.data["cost"], range=[0, 2], zorder=2);  # limit cost range 
+    plt.hist(br.data["cost"], bins=30, zorder=2);
     plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Cost");
     plt.ylabel("Frequency");
-    @savefig distribution_cost_be_user_guide.png
-    plt.title("Distribution of cost values on the parameters set");
+    @savefig user_guide.in_depth.optimize.bayes_estimate.cost_distribution.png
+    plt.title("Cost value histogram for parameter set");
+
+The minimal cost value through the forward runs:
+
+.. ipython:: python
+
+    np.min(br.data["cost"])
 
 We can also visualize the L-curve that was used to find the optimal regularization parameter:
 
 .. ipython:: python
 
-    opt_ind = np.where(br.l_curve["k"]==br.l_curve["k_opt"])[0][0]
-    plt.scatter(br.l_curve["Mahalanobis_distance"], br.l_curve["cost"]);
+    opt_ind = np.where(br.lcurve["alpha"]==br.lcurve["alpha_opt"])[0][0]
     plt.scatter(
-            br.l_curve["Mahalanobis_distance"][opt_ind], 
-            br.l_curve["cost"][opt_ind], 
-            color="red", 
-            label="Optimal regularization point"
+            br.lcurve["mahal_dist"], 
+            br.lcurve["cost"],
+            label="Regularization parameter",
+            zorder=2
         );
-    plt.grid(alpha=.7, ls="--");
+    plt.scatter(
+            br.lcurve["mahal_dist"][opt_ind], 
+            br.lcurve["cost"][opt_ind], 
+            color="red", 
+            label="Optimal value",
+            zorder=3
+        );
+    plt.grid(alpha=.7, ls="--", zorder=1);
     plt.xlabel("Mahalanobis distance");
     plt.ylabel("Cost");
     plt.title("L-curve");
-    @savefig lcurve_estimate_be_user_guide.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.lcurve.png
     plt.legend();
 
 The spatially uniform first guess:
@@ -106,12 +141,42 @@ The spatially uniform first guess:
      model_be.parameters.lr[ind],
     )
 
+Comparing to the initial values of the parameters:
+
+.. ipython:: python
+
+    (
+     model.parameters.cp[ind],
+     model.parameters.cft[ind],
+     model.parameters.exc[ind],
+     model.parameters.lr[ind],
+    )
+
+We can see that the value of ``exc`` did not change since it is not set to be estimated.
+
+.. ipython:: python
+    :suppress:
+
+    if not np.allclose(model.parameters.exc, model_be.parameters.exc, atol=1e-08):
+        raise AssertionError("Non-estimated parameter changes its values in bayes_estimate!")
+    if not np.allclose(
+            (
+                model_be.parameters.cp[ind],
+                model_be.parameters.cft[ind],
+                model_be.parameters.exc[ind],
+                model_be.parameters.lr[ind],
+            ),
+            (112.33628, 99.58623, 0.0, 518.99603),
+            atol=1e-04
+        ):  # This check is used to verify the value of unif_backg in bayes_optimize
+        raise AssertionError("Estimated parameters have been changed in bayes_estimate!")
+
 -------------------------------------------------------------
 Variational calibration using Bayesian estimation first guess
 -------------------------------------------------------------
 
-Finally, we perform a variational calibration on the model parameters using the ``L-BFGS-B`` algorithm with 
-the Bayesian first guess:
+Finally, we perform a variational calibration on the Model parameters using 
+the :math:`\mathrm{L}\text{-}\mathrm{BFGS}\text{-}\mathrm{B}` algorithm and the Bayesian first guess:
 
 .. ipython:: python
     :suppress:
@@ -158,5 +223,10 @@ The spatially distributed model parameters:
     f.colorbar(map_lr, ax=ax[1,0], label="lr (min)");
     
     map_exc = ax[1,1].imshow(ma_exc);
-    @savefig user_guide.in_depth.optimize.bayes_estimate.theta_sd.png
+    @savefig user_guide.in_depth.optimize.bayes_estimate.theta.png
     f.colorbar(map_exc, ax=ax[1,1], label="exc (mm/d)");
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

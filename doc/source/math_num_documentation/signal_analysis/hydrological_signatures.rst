@@ -1,4 +1,4 @@
-.. _math_num_documentation.hydrological_signature:
+.. _math_num_documentation.signal_analysis.hydrological_signatures:
 
 =======================
 Hydrological signatures
@@ -12,7 +12,7 @@ flow dynamics (based for instance on base-flow separation :cite:p:`nathan1990eva
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole study period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
-These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.hydrograph_segmentation>`.
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.signal_analysis.hydrograph_segmentation>`.
 
 Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the study period. 
 Then :math:`Qb(t)` and :math:`Qq(t)` are the baseflow and quickflow computed using a classical technique for streamflow separation 
@@ -116,22 +116,23 @@ where :math:`dt` is the timestep.
 Next we are interested in investigating the simulation uncertainty, in term
 of signatures, depending on the input parameters of the model. Let us consider
 the :math:`m`-parameters set of the model :math:`\theta=(x_{1},...,x_{m})`. 
-Then a signature type :math:`i` is represented as :math:`s_{i}=f_i(\theta)`. We are interested at
-several Sobol indices called, first-order, second-order, and so forth.
-The first- (depending on :math:`x_{1}` for example), second- (depending on :math:`x_{1}` and 
-:math:`x_{2}` for example) Sobol indices of :math:`s_{i}` are respectively defined as follows:
+Then a signature type :math:`i` is represented as :math:`S_{i}=f_i(\theta)`. We are interested at
+several variance-based sensitivity indices (Sobol indices), called first-order and total-order indices.
+The first- (depending on :math:`x_{j}`), and the total-order (depending on :math:`x_{\sim j}`, 
+i.e. all parameters except :math:`x_{j}`) Sobol indices of the simulated signature :math:`S_{i}` are 
+respectively defined as follows:
 
 .. math ::
 
-    S_{i}^{1}=\frac{\mathbb{\mathbb{V}}[\mathbb{E}[s_{i}|x_{1}]]}{\mathbb{\mathbb{V}}[s_{i}]}
+    s_{i}^{1j}=\frac{\mathbb{\mathbb{V}}[\mathbb{E}[S_{i}|x_{j}]]}{\mathbb{\mathbb{V}}[S_{i}]}
 
 and:
 
 .. math ::
 
-    S_{i}^{2}=\frac{\mathbb{\mathbb{V}}[\mathbb{E}[s_{i}|x_{1},x_{2}]]}{\mathbb{\mathbb{V}}[s_{i}]}.
+    s_{i}^{1 \sim j}=\frac{\mathbb{\mathbb{E}}[\mathbb{V}[S_{i}|x_{\sim j}]]}{\mathbb{\mathbb{V}}[S_{i}]}=1-\frac{\mathbb{\mathbb{V}}[\mathbb{E}[S_{i}|x_{\sim j}]]}{\mathbb{\mathbb{V}}[S_{i}]}.
 
 In such a way, :cite:`azzini2021comparison` proposed a method to estimate
-the first- and total-order variance-based sensitivity indices (also
-called Sobol indices) on parameter sets of Monte-Carlo simulations
-via Saltelli generator :cite:p:`saltelli2002making`.
+these indices on parameter sets of Monte-Carlo simulations
+via Saltelli generator :cite:p:`saltelli2002making`, which is implemented in the `SALib <https://salib.readthedocs.io>`__ Python library 
+:cite:p:`Iwanaga2022, Herman2017`.

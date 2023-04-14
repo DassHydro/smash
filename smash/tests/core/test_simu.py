@@ -25,6 +25,54 @@ def test_run():
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
+def generic_multiple_run(model: smash.Model, **kwargs) -> dict:
+    problem = model.get_bound_constraints()
+    sample = smash.generate_samples(problem, n=10, random_state=99)
+
+    mtprr = model.multiple_run(sample, ncpu=2, return_qsim=True, verbose=False)
+
+    res = {"multiple_run.cost": mtprr.cost, "multiple_run.qsim": mtprr.qsim}
+
+    for i, slc in enumerate(sample.iterslice(2)):
+        mtprr = model.multiple_run(slc, ncpu=2, return_qsim=True, verbose=False)
+        res.update(
+            {
+                f"mutiple_run.slc_{i+1}.cost": mtprr.cost,
+                f"mutiple_run.slc_{i+1}.qsim": mtprr.qsim,
+            }
+        )
+
+    return res
+
+
+def test_multiple_run():
+    res = generic_multiple_run(pytest.model)
+
+    for key, value in res.items():
+        # % Check cost and qsim in multiple run
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-04), key
+
+    # % Check that multiple run return values are the same than
+    # % a forward run (i.e. optimize with 0 iter)
+    problem = pytest.model.get_bound_constraints()
+    sample = smash.generate_samples(problem, n=5, random_state=99)
+    instance = pytest.model.copy()
+
+    for slc in sample.iterslice():
+        for key in problem["names"]:
+            setattr(instance.parameters, key, slc[key].item())
+
+        instance.optimize(options={"maxiter": 0}, inplace=True, verbose=False)
+        mtprr = pytest.model.multiple_run(slc, return_qsim=True, verbose=False)
+        assert np.allclose(
+            instance.output.cost, mtprr.cost.item(), atol=1e-04
+        ), "multiple_run.compare_run.cost"
+
+        assert np.allclose(
+            instance.output.qsim, mtprr.qsim.squeeze(), atol=1e-04
+        ), "multiple_run.compare_run.qsim"
+
+
 def generic_optimize(model: smash.Model, **kwargs) -> dict:
     res = {}
 
@@ -83,7 +131,7 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
         mapping="distributed",
         algorithm="l-bfgs-b",
         control_vector=["cp", "cft"],
-        bounds={"cp": [1, 50]},
+        bounds={"cp": [1, 300]},
         options={"maxiter": 1},
         verbose=False,
     )
@@ -91,6 +139,37 @@ def generic_optimize(model: smash.Model, **kwargs) -> dict:
     res["optimize.distributed_l-bfgs-b_bounds.cost"] = output_cost(instance)
     res["optimize.distributed_l-bfgs-b_bounds.cp"] = instance.parameters.cp.copy()
     res["optimize.distributed_l-bfgs-b_bounds.cft"] = instance.parameters.cft.copy()
+
+    # % Regularization auto_wjreg fast
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 2,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "fast",
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_fast.cost"] = output_cost(instance)
+
+    # % Regularization auto_wjreg lcurve
+    instance = model.optimize(
+        mapping="distributed",
+        control_vector=["cp", "cft", "lr"],
+        options={
+            "maxiter": 2,
+            "jreg_fun": ["prior", "smoothing"],
+            "wjreg_fun": [1.0, 2.0],
+            "auto_wjreg": "lcurve",
+            "nb_wjreg_lcurve": 8,
+        },
+        verbose=False,
+    )
+
+    res["optimize.distributed_l-bfgs-b_reg_lcurve.cost"] = output_cost(instance)
 
     return res
 
@@ -121,7 +200,7 @@ def test_optimize():
 
 def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_estimate(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         return_br=True,
         random_state=11,
@@ -129,7 +208,7 @@ def generic_bayes_estimate(model: smash.Model, **kwargs) -> dict:
     )
 
     res = {
-        "bayes_estimate.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_estimate.br_cost": np.array(br.lcurve["cost"]),
         "bayes_estimate.cost": output_cost(instance),
     }
 
@@ -140,13 +219,13 @@ def test_bayes_estimate():
     res = generic_bayes_estimate(pytest.model)
 
     for key, value in res.items():
-        # % Check br.l_curve and cost in bayes_estimate
+        # % Check br.lcurve and cost in bayes_estimate
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
     instance, br = model.bayes_optimize(
-        k=np.linspace(-1, 5, 10),
+        alpha=np.linspace(-1, 5, 10),
         n=5,
         mapping="distributed",
         algorithm="l-bfgs-b",
@@ -157,7 +236,7 @@ def generic_bayes_optimize(model: smash.Model, **kwargs) -> dict:
     )
 
     res = {
-        "bayes_optimize.br_cost": np.array(br.l_curve["cost"]),
+        "bayes_optimize.br_cost": np.array(br.lcurve["cost"]),
         "bayes_optimize.cost": output_cost(instance),
     }
 
@@ -168,7 +247,7 @@ def test_bayes_optimize():
     res = generic_bayes_optimize(pytest.model)
 
     for key, value in res.items():
-        # % Check br.l_curve and cost in bayes_optimize
+        # % Check br.lcurve and cost in bayes_optimize
         assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 

@@ -258,7 +258,7 @@ contains
             if (ddx .lt. 0.01_sp) then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a)') "CONVERGENCE: DDX < 0.01"
+                    write (*, '(4x,2a)') "CONVERGENCE: DDX < 0.01", new_line("")
                 end if
 
                 call control_to_var_sbs(n, setup, mesh, parameters, states, x)
@@ -277,7 +277,7 @@ contains
             if (iter .eq. setup%optimize%maxiter*n) then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+                    write (*, '(4x,2a)') "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT", new_line("")
                 end if
 
                 call control_to_var_sbs(n, setup, mesh, parameters, states, x)
@@ -479,7 +479,8 @@ contains
         end do
 
     end subroutine inv_transformation_sbs
-
+    
+    
     subroutine optimize_lbfgsb(setup, mesh, input_data, parameters, states, output)
 
         !% Notes
@@ -531,9 +532,11 @@ contains
 
         call ParametersDT_initialise(parameters_b, mesh)
         call ParametersDT_initialise(parameters_bgd_b, mesh)
+        call ParametersDT_initialise(parameters_bgd, mesh)
 
         call StatesDT_initialise(states_b, mesh)
         call StatesDT_initialise(states_bgd_b, mesh)
+        call StatesDT_initialise(states_bgd, mesh)
 
         call OutputDT_initialise(output_b, setup, mesh)
 
@@ -555,12 +558,21 @@ contains
         call var_to_control_lbfgsb(n, setup, mesh, parameters, states, x)
 
         ! Trigger the denormalization subroutine in forward
-        setup%optimize%normalize_forward = .true.
+        setup%optimize%denormalize_forward = .true.
 
         ! =========================================================================================================== !
         !   Start minimization
         ! =========================================================================================================== !
-
+        
+        call forward(setup, mesh, input_data, parameters, &
+        & parameters_bgd, states, states_bgd, output, cost)
+        
+        call normalize_parameters(setup, mesh, parameters)
+        call normalize_states(setup, mesh, states)
+                
+        output%cost_jobs_initial = output%cost_jobs
+        output%cost_jreg_initial = output%cost_jreg
+        
         task = 'START'
         do while ((task(1:2) .eq. 'FG' .or. task .eq. 'NEW_X' .or. &
                 & task .eq. 'START'))
@@ -602,7 +614,8 @@ contains
 
                 call normalize_parameters(setup, mesh, parameters)
                 call normalize_states(setup, mesh, states)
-
+                
+                
                 f = real(cost, kind(f))
 
                 call var_to_control_lbfgsb(n, setup, mesh, parameters_b, states_b, g)
@@ -610,8 +623,10 @@ contains
                 if (task(4:8) .eq. 'START') then
 
                     if (setup%optimize%verbose) then
-                        write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", 0, "nfg = ", 1, &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                     end if
 
                 end if
@@ -621,8 +636,10 @@ contains
             if (task(1:5) .eq. 'NEW_X') then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", isave(30), "nfg = ", isave(34), &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                 end if
 
                 if (isave(30) .ge. setup%optimize%maxiter) then
@@ -642,18 +659,19 @@ contains
         end do
 
         if (setup%optimize%verbose) then
-            write (*, '(4x,a)') task
+            write (*, '(4x,2a)') task, new_line("")
         end if
 
         ! =========================================================================================================== !
         !   End minimization
         ! =========================================================================================================== !
-
+        
+        
         call forward(setup, mesh, input_data, parameters, &
         & parameters_bgd, states, states_bgd, output, cost)
 
         ! Remove the denormalization subroutine in forward
-        setup%optimize%normalize_forward = .false.
+        setup%optimize%denormalize_forward = .false.
 
     end subroutine optimize_lbfgsb
 
@@ -886,8 +904,10 @@ contains
                 if (task(4:8) .eq. 'START') then
 
                     if (setup%optimize%verbose) then
-                        write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", dsave(13)
+                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", 0, "nfg = ", 1, &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                     end if
 
                 end if
@@ -897,8 +917,10 @@ contains
             if (task(1:5) .eq. 'NEW_X') then
 
                 if (setup%optimize%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f10.6)') &
-                        & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
+                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", isave(30), "nfg = ", isave(34), &
+                        &"J =", f, "Jobs =", output%cost_jobs, "Jreg =", output%cost_jreg, &
+                        &"|proj g| =", dsave(13)
                 end if
 
                 if (isave(30) .ge. setup%optimize%maxiter) then
@@ -918,7 +940,7 @@ contains
         end do
 
         if (setup%optimize%verbose) then
-            write (*, '(4x,a)') task
+            write (*, '(4x,2a)') task, new_line("")
         end if
 
         ! =========================================================================================================== !

@@ -1,4 +1,4 @@
-.. _release_notes.0.2.4:
+.. _release.0.2.4-notes:
 
 .. currentmodule:: smash
 
@@ -7,3 +7,13 @@ smash 0.2.4 Release Notes
 =========================
 
 This is the initial release.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni
+- Ngo Nghi Truyen Huynh
+- Pierre-André Garambois

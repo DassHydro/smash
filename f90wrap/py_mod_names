@@ -17,4 +17,5 @@
     "mw_interception_store": "_mw_interception_store",
     "mw_adjoint_test": "_mw_adjoint_test",
     "mw_optimize": "_mw_optimize",
+    "mw_multiple_run": "_mw_multiple_run",
 }
