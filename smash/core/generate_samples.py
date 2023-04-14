@@ -363,7 +363,7 @@ def generate_samples(
         if generator == "uniform":
             ret_dict[p] = np.random.uniform(low, upp, n)
 
-            ret_dict["_" + p] = 1 / n * np.ones(n)
+            ret_dict["_" + p] = np.ones(n) / (upp - low)
 
         elif generator in ["normal", "gaussian"]:
             if coef_std is None:
