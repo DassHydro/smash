@@ -1,12 +1,17 @@
-.. _release.0.x.y-notes:
+.. _release.0.4.0-notes:
 
 .. currentmodule:: smash
 
 =========================
-smash 0.x.y Release Notes
+smash 0.4.0 Release Notes
 =========================
 
-The smash 0.x.y release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+The smash 0.4.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+- Regularization with full distributed mapping
+- Multiple forward run in parallel
+- Addition of many user guides on the different optimization methods
+- Improved management of generate samples results
 
 ------------
 Contributors
@@ -14,9 +19,9 @@ Contributors
 
 This release was made possible thanks to the contributions of:
 
----------------
-Compatibilities
----------------
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+- Maxime Jay-Allemand
 
 ------------
 Deprecations
