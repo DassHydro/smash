@@ -39,7 +39,7 @@ Compile the code and install the Python library:
 
     (smash-dev) make
 
-Make a quick test to verify the installation:
+Make a unit test to verify the installation:
 
 .. code-block:: none
 
