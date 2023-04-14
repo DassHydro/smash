@@ -107,13 +107,13 @@ Two other methods can be used to convert this object to pandas.DataFrame or nump
 Computation of the multiple runs
 --------------------------------
 
-Once the ``sample`` is generated, the mutliple runs can simulated using the :meth:`Model.multiple_run <smash.Model.multiple_run>` method.
+Once the ``sample`` is generated, the mutliple runs can be simulated using the :meth:`Model.multiple_run <smash.Model.multiple_run>` method.
 
 ********************************
 Multiple runs with default setup
 ********************************
 
-Here we will used compute the multiple runs with the default setup. That is, returning the value of the cost function for each set using 1 CPU.
+Here we will compute the multiple runs with the default setup. That is, returning the value of the cost function for each set using 1 CPU.
 The default cost function is a ``nse`` calculated on the most downstream gauge.
 
 .. ipython:: python
@@ -167,7 +167,7 @@ Multiple runs in parallel
 *************************
 
 At the moment, all the previous runs were done sequentially. we can save computation time by parallelizing the runs on several CPUs by assigning a value to the **ncpu** argument.
-We will used the ``time`` library, previously imported, to retrieve the computation time and compare the it between a sequential and parallel run.
+We will used the ``time`` library, previously imported, to retrieve the computation time and compare it between a sequential and parallel run.
 
 .. ipython:: python
 
