@@ -1,0 +1,29 @@
+# This workflow will check tapenade file.
+name: Tapenade Comparison
+
+on:
+
+    push:
+    
+    pull_request:
+        branches:
+        - main
+        - maintenance/**
+        
+    # Allows you to run this workflow manually from the Actions tab
+    workflow_dispatch:
+        
+jobs:
+    tap-cmp:
+        runs-on: ubuntu-22.04
+
+        steps:
+        - uses: actions/checkout@v3
+        - name: Install dependencies
+          run: |
+            sudo apt-get update -y
+            sudo apt-get install build-essential make openjdk-11-jre-headless
+
+        - name: Compare
+          run: |
+            make tap_cmp
