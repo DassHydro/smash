@@ -1,4 +1,4 @@
-# Minimal makefile for Sphinx documentation
+# Makefile for Sphinx documentation
 #
 
 # You can set these variables from the command line, and also
@@ -15,12 +15,17 @@ help:
 .PHONY: help Makefile
 
 # Catch-all target: route all unknown targets to Sphinx using the new
-# "make mode" option.  $(O) is meant as a shortcut for $(SPHINXOPTS).
+# "make mode" option. $(O) is meant as a shortcut for $(SPHINXOPTS).
 %: Makefile
-	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
+	@mkdir $(BUILDDIR)_tmp 
+	@cp -r $(BUILDDIR)/* $(BUILDDIR)_tmp 2>/dev/null || true
+	@$(SPHINXBUILD) -M $@ "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O) || \
+    (echo "An error occurred while generating the documentation. Returning to previous version." && \
+	rm -rf $(BUILDDIR) && mv $(BUILDDIR)_tmp $(BUILDDIR) && false)
+	@rm -rf $(BUILDDIR)_tmp
 	
 clean:
-	@rm -rf build
-	@rm -rf source/savefig
+	@rm -rf $(BUILDDIR)
+	@rm -rf $(SOURCEDIR)/savefig
 	@rm -rf *.hdf5 *yaml
-	@rm -rf source/api_reference/smash
+	@rm -rf $(SOURCEDIR)/api_reference/smash
