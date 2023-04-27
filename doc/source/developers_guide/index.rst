@@ -13,7 +13,16 @@ Clone the Git repository:
 
 .. code-block:: none
 
-    git clone https://gitlab.irstea.fr/hydrology/smash.git
+    git clone https://github.com/DassHydro-dev/smash.git
+
+If you prefer working on the Git repository without authentication required, you can create a personal access token by following these `detailed instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`__.
+Once you have generated a token, clone the Git repository using the following command:
+
+.. code-block:: none
+
+    git clone https://username:token@github.com/DassHydro-dev/smash.git
+
+Replace ``username`` with your GitHub username and ``token`` with the personal access token you generated.
 
 Go to the smash repository:
 
