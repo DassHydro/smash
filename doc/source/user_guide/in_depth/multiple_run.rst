@@ -170,6 +170,7 @@ At the moment, all the previous runs were done sequentially. we can save computa
 We will used the ``time`` library, previously imported, to retrieve the computation time and compare it between a sequential and parallel run.
 
 .. ipython:: python
+    :okwarning:
 
     start_seq = time.time()
 
