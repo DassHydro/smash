@@ -45,7 +45,6 @@ class Net(object):
         ret = []
 
         if self._compiled and self.layers:
-
             tab = [["Layer Type", "Input/Output Shape", "Num Parameters"]]
 
             tot_params = 0
@@ -76,7 +75,9 @@ class Net(object):
             ret.append(f"Optimizer: ({self._optimizer}, lr={self._learning_rate})")
 
         else:
-            ret.append("The network does not contain layers or has not been compiled yet")
+            ret.append(
+                "The network does not contain layers or has not been compiled yet"
+            )
 
         return "\n".join(ret)
 
