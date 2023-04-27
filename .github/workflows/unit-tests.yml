@@ -1,5 +1,5 @@
-# This workflow will compare tapenade file.
-name: Tapenade Comparison
+# This workflow will perform unit tests
+name: Unit Tests
 
 on:
 
@@ -12,7 +12,7 @@ on:
         
     # Allows you to run this workflow manually from the Actions tab
     workflow_dispatch:
-        
+
 jobs:
     ubuntu:
         name: (${{ matrix.os }})
@@ -20,14 +20,20 @@ jobs:
         strategy:
           matrix:
             os: ["ubuntu-20.04", "ubuntu-22.04"]
-
         steps:
         - uses: actions/checkout@v3
+            
         - name: Install dependencies
           run: |
-            sudo apt-get update -y
-            sudo apt-get install build-essential make openjdk-11-jre-headless
-
-        - name: Compare
+            sudo apt-get update
+            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            python -m pip install --upgrade pip
+            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+        
+        - name: Build and Install
           run: |
-            make tap_cmp
+            make
+        
+        - name: Run Tests
+          run: |
+            make test
