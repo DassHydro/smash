@@ -1332,24 +1332,20 @@ class Model(object):
         Display a summary of the neural network
 
         >>> net
-        +-------------+
-        | Net summary |
-        +-------------+
-        Input Shape: (2,)
-        +----------------------+--------------+---------+
-        | Layer (type)         | Output Shape | Param # |
-        +----------------------+--------------+---------+
-        | Dense                | (18,)        | 54      |
-        | Activation (ReLU)    | (18,)        | 0       |
-        | Dense                | (9,)         | 171     |
-        | Activation (ReLU)    | (9,)         | 0       |
-        | Dense                | (4,)         | 40      |
-        | Activation (Sigmoid) | (4,)         | 0       |
-        | Scale (MinMaxScale)  | (4,)         | 0       |
-        +----------------------+--------------+---------+
-        Total params: 265
-        Trainable params: 265
-        Non-trainable params: 0
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (2,)/(18,)          54             |
+        | Activation (ReLU)     (18,)/(18,)         0              |
+        | Dense                 (18,)/(9,)          171            |
+        | Activation (ReLU)     (9,)/(9,)           0              |
+        | Dense                 (9,)/(4,)           40             |
+        | Activation (Sigmoid)  (4,)/(4,)           0              |
+        | Scale (MinMaxScale)   (4,)/(4,)           0              |
+        +----------------------------------------------------------+
+        Total parameters: 265
+        Trainable parameters: 265
+        Optimizer: (adam, lr=0.003)
 
         Access to some training information
 
