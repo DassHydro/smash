@@ -65,7 +65,7 @@ smash documentation
             To the api reference
             
     .. grid-item-card::
-        :img-top: _static/math_num.svg
+        :img-top: _static/index_math_num.svg
 
         Math / Num Documentation
         ^^^^^^^^^^^^^^^^^^^^^^^^

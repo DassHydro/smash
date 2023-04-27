@@ -8,74 +8,84 @@ Getting Started
 Installation
 ------------
 
-`smash` can be used under Linux and should work with most distributions. It has been tested for use on Ubuntu 20.04 and 22.04 LTS. The installation instructions are detailed for Ubuntu. Depending on your distribution, you will need to use the correct package manager and insert the appropriate packages.
+`smash` can be used under Linux and should work with most distributions. It has been tested for use on Ubuntu 20.04 and 22.04 LTS and Python version 3.8 to 3.11.
+The installation instructions are detailed for Ubuntu. Depending on your distribution, you will need to use the correct package manager and insert the appropriate packages.
 
 *******
 Sources
 *******
 
-Install `smash` from this gitlab repository,
+Clone the Git repository:
 
 .. code-block:: none
 
-    git clone https://gitlab.irstea.fr/hydrology/smash.git
+    git clone https://github.com/DassHydro-dev/smash.git
+
+If you prefer working on the Git repository without authentication required, you can create a personal access token by following these `detailed instructions <https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token>`__.
+Once you have generated a token, clone the Git repository using the following command:
+
+.. code-block:: none
+
+    git clone https://username:token@github.com/DassHydro-dev/smash.git
+
+Replace ``username`` with your GitHub username and ``token`` with the personal access token you generated.
     
 A ``smash`` directory should've been cloned into your current working directory.
 
-*******
-Compile
-*******
-        
-Anaconda (recommended)
-''''''''''''''''''''''
+*****
+Build
+*****
+
+.. note::
+
+    It is recommended that you install the smash enviroment using `Anaconda <https://www.anaconda.com/>`__
+
+Anaconda
+''''''''
 
 .. image:: ../_static/logo_anaconda.png
     :width: 175
     :align: center
 
-.. note::
-
-    ``conda`` can be downloaded `here <https://www.anaconda.com/>`__.
-        
 1. **Create environment**
     In the ``smash`` directory create the ``conda`` environment named **smash**,
-    
+
     .. code-block:: none
-    
+
         conda env create -f environment.yml
-        
+
 2. **Activate environment**
-    Active the environment,
-    
+    Activate the environment,
+
     .. code-block:: none
-    
+
         conda activate smash
-        
+
 3. **Build**
     Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory,
-    
+
     .. code-block:: none
-    
+
         (smash) make
-        
+
 4. **Check your installation**
-    Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface,
-    
+    Once the compilation is complete, make sure that everything went well by tring to import the `smash` package inside a Python interface,
+
     .. code-block:: none
-    
+
         (smash) python3
-        
+
     .. code-block:: python
-        
+
         import smash
-        
+
 .. hint::
-    
+
     If you'd prefer that conda's base environment not be activated on startup, 
     set the auto_activate_base parameter to false, 
-    
+
     .. code-block::
-    
+
         conda config --set auto_activate_base false
 
 On your own environment
