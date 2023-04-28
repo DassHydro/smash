@@ -85,7 +85,7 @@ html_theme = "pydata_sphinx_theme"
 html_last_updated_fmt = "%b %d, %Y"
 
 html_theme_options = {
-    "gitlab_url": "https://gitlab.irstea.fr/hydrology/smash",
+    "github_url": "https://github.com/DassHydro-dev/smash",
     "collapse_navigation": True,
     "logo": {
         "image_light": "logo_smash.svg",
