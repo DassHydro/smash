@@ -6,7 +6,7 @@
 smash 0.4.1 Release Notes
 =========================
 
-The smash 0.4.1 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+The smash 0.4.1 release continues the ongoing work to improve the handling and clarify the documentation. The highlights are:
 
 - Migration of the `smash` repository from GitLab to GitHub
 - Prevent rebuilding the entire documentation in case of errors
@@ -19,10 +19,6 @@ This release was made possible thanks to the contributions of:
 
 - Ngo Nghi Truyen Huynh
 - François Colleoni
-
----------------
-Compatibilities
----------------
 
 ------------
 Deprecations
@@ -50,11 +46,3 @@ For example, if a bug occurs when running the ``make doc`` command, it will resu
     An error occurred while generating the documentation. Returning to previous version.
 
 This ensures that developers do not need to rebuild the entire documentation during subsequent generation processes.
-
-------------
-New Features
-------------
-
------
-Fixes
------
