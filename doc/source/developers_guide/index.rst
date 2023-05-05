@@ -208,10 +208,10 @@ So, it is highly recommended to run the pipelines locally before opening a pull 
 .. code-block:: none
 
         (smash-dev) make clean
+        (smash-dev) make doc-clean
         (smash-dev) make tap
         (smash-dev) make
         (smash-dev) make test
-        (smash-dev) make clean-doc
         (smash-dev) make doc
 
 Reviewers, including other developers or relevant people, will be assigned to review your work.
