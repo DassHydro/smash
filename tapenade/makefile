@@ -1,11 +1,11 @@
-SRC=../smash/solver
-NAME=md_constant.f90 mwd_setup.f90 mwd_mesh.f90 mwd_input_data.f90 mwd_parameters.f90 mwd_states.f90 mwd_output.f90 md_gr_operator.f90 md_vic_operator.f90 md_routing_operator.f90 md_forward_structure.f90 mwd_parameters_manipulation.f90 mwd_states_manipulation.f90 mwd_cost.f90 forward.f90 
-FILES=$(addprefix $(SRC)/*/,$(NAME))
-TAPENADE=./tapenade_3.16/
+SRC := ../smash/solver
+NAME := mwd_*.f90 md_*.f90 forward.f90
+FILES := $(addprefix $(SRC)/*/,$(NAME))
+TAPENADE := ./tapenade_3.16/
 
 all: bd sed mv
 
-tap_cmp: bd sed cmp
+tap-cmp: bd sed cmp
 
 bd:
 	$(TAPENADE)/bin/tapenade \
@@ -39,5 +39,5 @@ cmp:
 	# compare old and new tap file
 	cmp forward_db.f90 $(SRC)/forward/forward_db.f90
 
-.PHONY: all tap_cmp bd sed mv cmp
+.PHONY: all tap-cmp bd sed mv cmp
 

@@ -14,5 +14,11 @@
         "16": "complex_long_double",
         "dp": "complex_double",
     },
-    "integer": {"": "int", "4": "int", "c_int": "int", "8": "long_long", "dp": "long_long"},
+    "integer": {
+        "": "int",
+        "4": "int",
+        "c_int": "int",
+        "8": "long_long",
+        "dp": "long_long",
+    },
 }
