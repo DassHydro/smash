@@ -57,6 +57,13 @@ The search is automatic by looking at the prefix of the Fortran files:
 - ``md``: differentiated module
 - ``mwd``: wrapped and differentiated module
 
+Documentation
+*************
+
+Improve the Math/Num Documentation section, including:
+
+- :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>`
+
 ------------
 New Features
 ------------
