@@ -3407,6 +3407,7 @@ CONTAINS
     jreg = 0._sp
     cost = jobs + setup%optimize%wjreg*jreg
     output%cost = cost
+    output%cost_jobs = jobs
   END SUBROUTINE HYPER_COMPUTE_COST
 
 !  Differentiation of nse in forward (tangent) mode (with options fixinterface noISIZE):

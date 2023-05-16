@@ -4,12 +4,12 @@
 Hydrological operators
 ======================
 
-This section details fluxes and states computation for a given cell :math:`x\in\Omega` also denoted :math:`x \in \mathcal{T}_\Omega` and for a given time step :math:`t\in[1..N_t]` considering a regular temporal grid of time step :math:`\Delta t`. For this cell at time step t, we denote by :math:`P(t)` and :math:`E(t)` the local total rainfall and evapotranspiration.
+This section details fluxes and states computation for a given cell :math:`x\in\Omega` also denoted :math:`x \in \mathcal{T}_\Omega` and for a given time step :math:`t\in[1..N_t]` considering a regular temporal grid of time step :math:`\Delta t`. For this cell at time step :math:`t`, we denote by :math:`P(t)` and :math:`E(t)` the local total rainfall and evapotranspiration.
 
 .. _math_num_documentation.forward.hydrological_operators.gr:
 
-GR like
-*******
+GR
+**
 
 The operators used here come from GR (Génie Rural) lumped and semi-lumped models of the literature (**TODO** ref).
 
@@ -230,49 +230,7 @@ With flux :math:`Q_t` inflowing the routing part equal to:
     
     Q_t(t) = Q_{ft}(t) + Q_{st}(t) + Q_d(t)
     
-    \end{eqnarray}        
-
-
-VIC like
-********
-
-HBV like
-********
-
-State-space models
-******************
-
-ODE formulation
----------------
-
-.. math::
-    :nowrap:
-    
-    \begin{eqnarray}
-    
-        \begin{cases}
-        \frac{\mathrm{d}}{\mathrm{dt}}\boldsymbol{h}\left(x,t'\right) & =f\left(\boldsymbol{h}\left(x,t'\right);\boldsymbol{I}\left(x,t'\right),\boldsymbol{d}\left(x,t'\right);\boldsymbol{h_{0}}\left(x\right),\boldsymbol{\theta}_{rr}\left(x\right)\right)\\
-        Q\left(x,t\right) & =g\left(\boldsymbol{h}\left(x,t'\right);\boldsymbol{I}\left(x,t'\right),\boldsymbol{d}\left(x,t'\right);\boldsymbol{h_{0}}\left(x\right),\boldsymbol{\theta}_{rr}\left(x\right)\right)\\
-        \boldsymbol{h_{0}}\left(x\right) & =\boldsymbol{h}\left(x,0\right)
-        \end{cases}\,\,\,,\forall x\in\Omega,t'\in\left]0,t\right]
-
-     \end{eqnarray}
-         
-
-Neural ODE formulation
-----------------------
-
-.. math::
-    :nowrap:
-    
-    \begin{eqnarray}
-    
-        \left(\frac{d\boldsymbol{h}}{dt}\right)=\left(\boldsymbol{S}_{det}(\boldsymbol{h},t)+\boldsymbol{S}_{NN}(\boldsymbol{h},t)\right)
-
-     \end{eqnarray}
-
-ODE Solver
-----------
+    \end{eqnarray}
 
 Generic
 *******
@@ -304,7 +262,7 @@ With for a given upstream cell :math:`k`:
     
     \begin{eqnarray}
     
-    Q(k,t) = h_r(k,t) \left[ 1 - \exp \left( - \frac{\Delta t}{60 \; lr} \right) \right] + Q_{up}(k,t) + Q_t(k,t)
+    Q(k,t) = h_{lr}(k,t) \left[ 1 - \exp \left( - \frac{\Delta t}{60 \; lr} \right) \right] + Q_{up}(k,t) + Q_t(k,t)
     
     \end{eqnarray}
     
@@ -316,18 +274,6 @@ Updating the level in the routing storage:
     
     \begin{eqnarray}
     
-    h_r(k,t) = h_r(k,t-1) - Q(k,t)
+    h_{lr}(k,t) = h_{lr}(k,t-1) - Q(k,t)
     
     \end{eqnarray}
-            
-
-Non-linear conceptual - Igamma
-------------------------------
-
-            
-Kinematic wave
---------------
-   
-
-Sub-surface routing
-*******************

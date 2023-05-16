@@ -334,6 +334,7 @@ contains
 
         cost = jobs + setup%optimize%wjreg*jreg
         output%cost = cost
+        output%cost_jobs = jobs
 
     end subroutine hyper_compute_cost
 
