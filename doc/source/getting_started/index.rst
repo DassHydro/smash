@@ -82,7 +82,7 @@ Your own environment
     :width: 75
     :align: center
 
-1. **Intall dependencies**
+1. **Install dependencies**
     In the ``smash`` directory, install development tools and Python requirements:
 
     .. code-block:: none
@@ -91,14 +91,14 @@ Your own environment
         sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev python3-pip
         pip3 install -r requirements.txt
 
-3. **Build**
+2. **Build**
     Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory:
 
     .. code-block:: none
 
         make
 
-4. **Check your installation**
+3. **Check your installation**
     Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface:
 
     .. code-block:: none
