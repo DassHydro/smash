@@ -64,6 +64,8 @@ Improve the Math/Num Documentation section, including:
 
 - :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>`
 
+Improvement of the dark theme rendering
+
 ------------
 New Features
 ------------
@@ -79,3 +81,14 @@ This command generates a new file named ``makefile.dep`` with the targets of the
 -----
 Fixes
 -----
+
+Documentation
+*************
+
+Correction of the name of the routing storage state in the Math/Num section: :math:`hr` becomes :math:`hlr`
+
+Hyper-Linear/Polynomial verbose
+*******************************
+
+There was a display problem when optimizing in hyper linear/polynomial. The ``Jobs`` value was not correctly updated at each iteration. 
+**The problem only affects the display**.
