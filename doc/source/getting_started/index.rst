@@ -82,80 +82,65 @@ Your own environment
     :width: 75
     :align: center
 
-1. **Install f90wrap**
-    Install the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package using ``pip3``:
+1. **Intall dependencies**
+    In the ``smash`` directory, install development tools and Python requirements:
 
     .. code-block:: none
-        
-        sudo pip3 install f90wrap
-        
-    .. note ::
-        
-        ``pip3`` can be installed as follows:
-        
-        .. code-block:: none
-        
-            sudo apt install python3-pip
-            
-2. **Install gdal**
-    Install the `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__ package:
 
-    .. code-block:: none
-        
-        sudo add-apt-repository ppa:ubuntugis/ppa
         sudo apt-get update
-        sudo apt-get install gdal-bin libgdal-dev
-        
+        sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev python3-pip
+        pip3 install -r requirements.txt
+
 3. **Build**
     Use the `make <https://www.gnu.org/software/make/manual/make.html>`__ command inside the ``smash`` directory:
-    
+
     .. code-block:: none
-    
+
         make
-        
+
 4. **Check your installation**
     Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface:
-    
+
     .. code-block:: none
-    
+
         python3
-        
+
     .. code-block:: python
-        
+
         import smash
-    
+
 ******
 Docker
 ******
-    
+
 .. image:: ../_static/logo_docker.png
     :width: 175
     :align: center
-    
+
 .. warning::
 
     Section in development
-        
+
     1. **Build image**
         Build `docker <https://docs.docker.com/engine/install/>`__ image:
-        
+
         .. code-block:: none
-            
+
             docker build --network=host -t smash .
-            
+
     2. **Run**
         Run image:
-        
+
         .. code-block ::
-            
+
             docker run smash
 
 ---------
 Tutorials
 ---------
 
-For a brief user guide to get started with **smash**, you can refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`. Other in-depth functionalities and advanced optimization techniques are also included in this :ref:`User Guide <user_guide>`.
+For a brief user guide to get started with `smash`, you can refer to the ``Quickstart`` section in the :ref:`User Guide <user_guide>`. Other in-depth functionalities and advanced optimization techniques are also included in this :ref:`User Guide <user_guide>`.
 
-For detailed descriptions of the **smash** API, you can visit the :ref:`API Reference <api_reference>` section.
+For detailed descriptions of the `smash` API, you can visit the :ref:`API Reference <api_reference>` section.
 
-Additionally, if you're interested in the mathematical and numerical documentation of the hydrological model operators and the optimization problems, you can refer to the :ref:`Math/Num Documentation <math_num_documentation>` section. 
+Additionally, if you're interested in the mathematical and numerical documentation of the hydrological model operators and the optimization problems, you can refer to the :ref:`Math/Num Documentation <math_num_documentation>` section.
