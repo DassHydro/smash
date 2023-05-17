@@ -18,6 +18,12 @@ This release was made possible thanks to the contributions of:
 Compatibilities
 ---------------
 
+NumPy v1.24 support
+*******************
+
+Version 1.24 of NumPy or higher was not compatible with the monkey patches made on f2py in f90wrap. 
+f90wrap has released version 0.2.13 allowing compatibility with numpy 1.24 or higher. See f90wrap `PR <https://github.com/jameskermode/f90wrap/pull/191>`__ .
+
 ------------
 Deprecations
 ------------
