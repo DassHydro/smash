@@ -135,10 +135,6 @@ Docker
 .. warning::
 
     Section in development
-    
-    .. note::
-
-        ``docker`` can be downloaded .
         
     1. **Build image**
         Build `docker <https://docs.docker.com/engine/install/>`__ image:
