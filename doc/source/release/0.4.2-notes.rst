@@ -47,11 +47,11 @@ Only the command names have been changed, their actions are identical.
 Improvements
 ------------
 
-Automatic generation of the file ``py_mod_names`` at installation.
-******************************************************************
+Automatic generation of the file ``py_mod_names`` at installation
+*****************************************************************
 
 The ``py_mod_names`` is used to rename python files from f90wrap by adding an underscore at the beginning.
-The file is automatically generated when the command ``make`` is used by running the file ``gen_py_mod_names.py``
+The file is automatically generated when the command ``make`` is used by running the file ``gen_py_mod_names.py``.
 
 Automatic search for files to wrap and differentiate 
 ****************************************************
@@ -66,11 +66,11 @@ The search is automatic by looking at the prefix of the Fortran files:
 Documentation
 *************
 
-Improve the Math/Num Documentation section, including:
+Improvement of the Math/Num Documentation section, including:
 
 - :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>`
 
-Improvement of the dark theme rendering
+Improvement of the dark theme rendering.
 
 ------------
 New Features
@@ -91,7 +91,7 @@ Fixes
 Documentation
 *************
 
-Correction of the name of the routing storage state in the Math/Num section: :math:`hr` becomes :math:`hlr`
+Correction of the name of the routing storage state in the Math/Num section: :math:`hr` becomes :math:`hlr`.
 
 Hyper-Linear/Polynomial verbose
 *******************************
