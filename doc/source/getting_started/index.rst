@@ -99,7 +99,7 @@ Your own environment
         make
 
 3. **Check your installation**
-    Once the compilation is finished, make sure that everything went well by tring to import the `smash` package inside a Python interface:
+    Once the compilation is complete, make sure that everything went well by tring to import the `smash` package inside a Python interface:
 
     .. code-block:: none
 
