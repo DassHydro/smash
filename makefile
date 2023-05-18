@@ -39,11 +39,11 @@ SHARED_LIB := solver
 
 #% Classic `make` call
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
-all: directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library
+all: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library
 
 #% Debug mode `make debug` [Dev]
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
-debug: directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library-edit
+debug: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library-edit
 
 #% Make directories
 directories:
