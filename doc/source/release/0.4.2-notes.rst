@@ -8,11 +8,21 @@ smash 0.4.2 Release Notes
 
 The smash 0.4.2 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
+- Updated make commands in the makefile for consistency
+- Automatic generation of the ``py_mod_names`` file during installation
+- Automatic search for Fortran files to wrap and differentiate, as well as generation of Fortran module dependencies
+- Updated documentation
+
 ------------
 Contributors
 ------------
 
 This release was made possible thanks to the contributions of:
+
+- François Colleoni
+- Ngo Nghi Truyen Huynh
+- Pierre-André Garambois
+- Benjamin Renard
 
 ---------------
 Compatibilities
@@ -66,9 +76,7 @@ The search is automatic by looking at the prefix of the Fortran files:
 Documentation
 *************
 
-Improvement of the Math/Num Documentation section, including:
-
-- :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>`
+Improvement of the :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>` section in the Math/Num Documentation.
 
 Improvement of the dark theme rendering.
 
@@ -91,7 +99,7 @@ Fixes
 Documentation
 *************
 
-Correction of the name of the routing storage state in the Math/Num section: :math:`hr` becomes :math:`hlr`.
+Correction of the name of the routing storage state in the Math/Num Documentation: :math:`hr` becomes :math:`hlr`.
 
 Hyper-Linear/Polynomial verbose
 *******************************
