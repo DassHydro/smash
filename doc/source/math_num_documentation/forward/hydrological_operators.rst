@@ -11,7 +11,21 @@ This section details fluxes and states computation for a given cell :math:`x\in\
 GR
 **
 
-The operators used here come from GR (Génie Rural) lumped and semi-lumped models of the literature (**TODO** ref).
+The operators used here come from GR (Génie Rural) models of the literature:
+
+- :cite:p:`edijatnoMichel1989`
+- :cite:p:`edijatno91`
+- :cite:p:`nascimento1995appreciation`
+- :cite:p:`perrin2003improvement`
+- :cite:p:`mathevet2005GR4h`
+- :cite:p:`LeMoine_2008`
+- :cite:p:`FICCHI2019`
+
+Other links about GR models:
+
+- `Brief history of GR models <https://webgr.inrae.fr/en/models/a-brief-history/>`__
+- `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
+- `GR models in a R package <https://hydrogr.github.io/airGR/>`__
 
 Interception
 ------------
