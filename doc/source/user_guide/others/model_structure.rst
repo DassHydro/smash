@@ -21,7 +21,7 @@ There are 4 different structures available:
     3 parameters and 3 states structure derived from the GR model.
     
 .. note::
-    see the :ref:`Math / Num Documentation <math_num_documentation.forward.hydrological_operators.gr>` for more information about GR model.
+    see the :ref:`Math / Num Documentation <math_num_documentation.forward.hydrological_operators.gr>` for more information about GR model and scientific references.
     
 
 Model structure description
