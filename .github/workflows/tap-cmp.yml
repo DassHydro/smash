@@ -32,4 +32,4 @@ jobs:
 
         - name: Compare
           run: |
-            make tap_cmp
+            make tap-cmp

@@ -1,0 +1,108 @@
+.. _release.0.4.2-notes:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.4.2 Release Notes
+=========================
+
+The smash 0.4.2 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+- Updated make commands in the makefile for consistency
+- Automatic generation of the ``py_mod_names`` file during installation
+- Automatic search for Fortran files to wrap and differentiate, as well as generation of Fortran module dependencies
+- Updated documentation
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni
+- Ngo Nghi Truyen Huynh
+- Pierre-André Garambois
+- Benjamin Renard
+
+---------------
+Compatibilities
+---------------
+
+NumPy v1.24 support
+*******************
+
+Version 1.24 of NumPy or higher was not compatible with the monkey patches made on f2py in f90wrap. 
+f90wrap has released version 0.2.13 allowing compatibility with NumPy 1.24 or higher. See f90wrap `PR <https://github.com/jameskermode/f90wrap/pull/191>`__ .
+
+------------
+Deprecations
+------------
+
+Makefile clean up
+*****************
+
+The makefile has been cleaned and here are the commands whose names have been changed:
+
+- ``wrappers`` becomes ``f90wrap``
+- ``module`` becomes ``f2py-f90wrap``
+- ``meshing`` becomes ``f2py-meshing``
+- ``library_edit`` becomes ``library-edit``
+- ``tap_cmp`` becomes ``tap-cmp``
+- ``doc_clean`` becomes ``doc-clean``
+- ``test_baseline`` becomes ``test-baseline``
+
+Only the command names have been changed, their actions are identical. 
+
+------------
+Improvements
+------------
+
+Automatic generation of the file ``py_mod_names`` at installation
+*****************************************************************
+
+The ``py_mod_names`` is used to rename python files from f90wrap by adding an underscore at the beginning.
+The file is automatically generated when the command ``make`` is used by running the file ``gen_py_mod_names.py``.
+
+Automatic search for files to wrap and differentiate 
+****************************************************
+
+It is no longer necessary to define which files to wrap or to differentiate in the different makefiles. 
+The search is automatic by looking at the prefix of the Fortran files:
+
+- ``mw``: wrapped module
+- ``md``: differentiated module
+- ``mwd``: wrapped and differentiated module
+
+Documentation
+*************
+
+Improvement of the :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>` section in the Math/Num Documentation.
+
+Improvement of the dark theme rendering.
+
+------------
+New Features
+------------
+
+Automatic generation of the Fortran module dependencies
+*******************************************************
+
+Currently, in the makefile, it was necessary to write by hand the Fortran files to be compiled respecting the dependencies.
+It is now no longer necessary to do this and is managed automatically during installation.
+A new makefile command, ``dependencies``, has been added, which is itself called during the ``make`` command.
+This command generates a new file named ``makefile.dep`` with the targets of the c, f77 and f90 files to compile, sorted by dependencies.
+
+-----
+Fixes
+-----
+
+Documentation
+*************
+
+Correction of the name of the routing storage state in the Math/Num Documentation: :math:`hr` becomes :math:`hlr`.
+
+Hyper-Linear/Polynomial verbose
+*******************************
+
+There was a display problem when optimizing in hyper linear/polynomial. The ``Jobs`` value was not correctly updated at each iteration. 
+**The problem only affects the display**.

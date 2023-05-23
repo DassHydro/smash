@@ -3,196 +3,139 @@ FC := gfortran
 CC := gcc
 
 #% Compiler flags
-F90FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
-debug: F90FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
-F77FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
-CFLAGS := -g -O3 -march=native -fPIC -fopenmp
+F90_FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
+debug: F90_FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+F77_FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
+C_FLAGS := -g -O3 -march=native -fPIC -fopenmp
 
 #% Files extension
-F90EXT := f90
-F77EXT := f
-CEXT := c
-OBJEXT := o
+F90_EXT := f90
+F77_EXT := f
+C_EXT := c
+OBJ_EXT := o
 
 #% Directories
-BUILDDIR := obj
-SMASHDIR := smash
-TAPENADEDIR := tapenade
-F90WRAPDIR := f90wrap
-SOLVERDIR := smash/solver
-MESHDIR := smash/mesh
-TESTSDIR := smash/tests
-DOCDIR := doc
+BUILD_DIR := obj
+SMASH_DIR := smash
+TAPENADE_DIR := tapenade
+F90WRAP_UTILS_DIR := f90wrap_utils
+SOLVER_DIR := smash/solver
+MESH_DIR := smash/mesh
+TESTS_DIR := smash/tests
+DOC_DIR := doc
 
 #% INC and MOD for obj
-INC := -I$(BUILDDIR)
-MOD := -J$(BUILDDIR)
+INC := -I$(BUILD_DIR)
+MOD := -J$(BUILD_DIR)
 
-#% f90wrap information
-SHAREDLIB := solver
-SOLVERMODWRAP := $(SOLVERDIR)/*/mw*.f90
-OBJWRAP := $(BUILDDIR)/*.o
-SOLVERWRAPPERS := f90wrap*.f90
+#% Files
+SOLVER_FILES := $(SOLVER_DIR)/*/*.$(C_EXT) $(SOLVER_DIR)/*/*.$(F77_EXT) $(SOLVER_DIR)/*/*.$(F90_EXT)
+OBJ_FILES := $(BUILD_DIR)/*.$(OBJ_EXT)
+SOLVER_WRAP_FILES := $(SOLVER_DIR)/*/mwd_*.$(F90_EXT) $(SOLVER_DIR)/*/mw_*.$(F90_EXT)
+F90WRAP_FILES := f90wrap*.$(F90_EXT)
+
+#% f90wrap shared lib name
+SHARED_LIB := solver
 
 #% Classic `make` call
-all: directories c f77 f90 wrappers module meshing finalize library
+#% 'c' 'f77' and 'f90' targets are in makefile.dep
+all: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library
 
 #% Debug mode `make debug` [Dev]
-debug: directories c f77 f90 wrappers module meshing finalize library_edit
+#% 'c' 'f77' and 'f90' targets are in makefile.dep
+debug: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library-edit
 
-#% Making directories
+#% Make directories
 directories:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making directories "
-	@echo ""
-	@echo "********************************************"
-	@mkdir -p $(BUILDDIR)
-	@mkdir -p $(SOLVERDIR)/f90wrap/
+	mkdir -p $(BUILD_DIR)
+	mkdir -p $(SOLVER_DIR)/f90wrap/
 
-#% c file(s)
-c: \
- obj/adStack.o \
- 
-#% f77 files
-f77: \
- obj/lbfgsb.o \
- 
-#% f90 files
-f90: \
- obj/md_constant.o \
- obj/mwd_setup.o \
- obj/mwd_mesh.o \
- obj/mwd_input_data.o \
- obj/mwd_parameters.o \
- obj/mwd_states.o \
- obj/mwd_output.o \
- obj/md_gr_operator.o \
- obj/md_vic_operator.o \
- obj/md_routing_operator.o \
- obj/md_forward_structure.o \
- obj/mwd_parameters_manipulation.o \
- obj/mwd_states_manipulation.o \
- obj/mwd_cost.o \
- obj/mw_forward.o \
- obj/forward.o \
- obj/forward_db.o \
- obj/mw_adjoint_test.o \
- obj/mw_optimize.o \
- obj/m_sort.o \
- obj/m_array_manipulation.o \
- obj/m_array_creation.o \
- obj/m_statistic.o \
- obj/mw_derived_type_copy.o \
- obj/mw_derived_type_update.o \
- obj/mw_mask.o \
- obj/mw_sparse_storage.o \
- obj/mw_forcing_statistic.o \
- obj/mw_interception_store.o \
- obj/mw_multiple_run.o \
- 
-#% cpp compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(CEXT)
-	$(CC) $(CFLAGS) $(MOD) $(INC) -c -o $@ $<
+#% Make dependencies
+#% Automatic generation of makefile.dep file (allows not to modify by hand the order of dependencies of the files to compile)
+dependencies:
+	python3 dependencies.py
 
-#% f77 compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F77EXT)
-	$(FC) $(F77FLAGS) $(MOD) $(INC) -c -o $@ $<
-	
-#% f90 compile
-$(BUILDDIR)/%.$(OBJEXT): $(SOLVERDIR)/*/%.$(F90EXT)
-	$(FC) $(F90FLAGS) $(MOD) $(INC) -c -o $@ $<
+#% Compile c
+$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(C_EXT)
+	$(CC) $(C_FLAGS) $(MOD) $(INC) -c -o $@ $<
 
- 
-#% Make wrappers (f90wrap)
-wrappers:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making wrappers "
-	@echo ""
-	@echo "********************************************"
-	rm -rf $(BUILDDIR)/f90wrap*
-	f90wrap -m $(SHAREDLIB) $(SOLVERMODWRAP) -k $(F90WRAPDIR)/kind_map --py-mod-names $(F90WRAPDIR)/py_mod_names --package
-	
-#% Make module extension (f2py-f90wrap)
-module:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making module extension "
-	@echo ""
-	@echo "********************************************"
-	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHAREDLIB) $(OBJWRAP) $(SOLVERWRAPPERS)
+#% Compile f77
+$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F77_EXT)
+	$(FC) $(F77_FLAGS) $(MOD) $(INC) -c -o $@ $<
 
-#% Make meshing extension (f2py)
-meshing:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making meshing extension "
-	@echo ""
-	@echo "********************************************"
-	cd $(MESHDIR) ; python3 -m numpy.f2py -c -m _mw_meshing mw_meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
+#% Compile f90
+$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F90_EXT)
+	$(FC) $(F90_FLAGS) $(MOD) $(INC) -c -o $@ $<
+
+#% Make f90wrap files
+#% Automatic generation of py_mod_names file (allow to do not modified this file each time a wrapped module is added to source)
+f90wrap:
+	rm -rf $(BUILD_DIR)/f90wrap*
+	cd $(F90WRAP_UTILS_DIR) ; python3 gen_py_mod_names.py
+	f90wrap -m $(SHARED_LIB) $(SOLVER_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
+
+#% Make f2py-f90wrap .so library
+f2py-f90wrap:
+	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHARED_LIB) $(OBJ_FILES) $(F90WRAP_FILES)
+
+#% Make f2py-meshing .so library
+f2py-meshing:
+	cd $(MESH_DIR) ; python3 -m numpy.f2py -c -m _mw_meshing mw_meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
 
 #% Make python library (pip3)
 library:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making python library "
-	@echo ""
-	@echo "********************************************"
 	pip3 install --compile .
 
 #% Make python library in editable mode (pip3) [Dev]
-library_edit:
-	@echo "********************************************"
-	@echo ""
-	@echo " Making python library (editable) "
-	@echo ""
-	@echo "********************************************"
+library-edit:
 	pip3 install -e .
 
 #% Finalize compilation with mv, rm and sed
 finalize:
-	mv f90wrap_*.f90 $(SOLVERDIR)/f90wrap/.
-	mv f90wrap_*.o $(BUILDDIR)/.
-	mv $(SHAREDLIB)/_mw* $(SOLVERDIR)/.
-	mv _$(SHAREDLIB)* $(SOLVERDIR)/.
-	rm -rf $(SHAREDLIB)
-	python3 $(F90WRAPDIR)/finalize_f90wrap.py
-	
+	mv f90wrap_*.f90 $(SOLVER_DIR)/f90wrap/.
+	mv f90wrap_*.o $(BUILD_DIR)/.
+	mv $(SHARED_LIB)/_mw* $(SOLVER_DIR)/.
+	mv _$(SHARED_LIB)* $(SOLVER_DIR)/.
+	rm -rf $(SHARED_LIB)
+	cd $(F90WRAP_UTILS_DIR) ; python3 finalize_f90wrap.py
+
 #% Generate tapenade file (adjoint and tangent linear models)
 tap:
-	cd $(TAPENADEDIR) ; make
+	cd $(TAPENADE_DIR) ; make
 
 #% Compare tapenade file
-tap_cmp:
-	cd $(TAPENADEDIR) ; make tap_cmp
+tap-cmp:
+	cd $(TAPENADE_DIR) ; make tap-cmp
 
 #% Generate sphinx documentation
 doc:
-	cd $(DOCDIR) ; make html
+	cd $(DOC_DIR) ; make html
 
 #% Clean sphinx documentation
-doc_clean:
-	cd $(DOCDIR) ; make clean
+doc-clean:
+	cd $(DOC_DIR) ; make clean
 
 #% Testing code with pytest
 test:
-	cd $(TESTSDIR) ; pytest
+	cd $(TESTS_DIR) ; pytest
 
 #% Generate baseline for test with args (see argparser in gen_baseline.py)
-test_baseline:
-	cd $(TESTSDIR) ; python3 gen_baseline.py $(args)
+test-baseline:
+	cd $(TESTS_DIR) ; python3 gen_baseline.py $(args)
 
 #% Clean
 clean:
-	@$(RM) -rf $(EXTDIR)
-	@$(RM) -rf $(BUILDDIR)
-	@$(RM) -rf src.*
-	@$(RM) -rf *egg-info
-	@$(RM) -rf $(SOLVERDIR)/_mw*
-	@$(RM) -rf $(SOLVERDIR)/_$(SHAREDLIB)*
-	@$(RM) -rf $(SOLVERDIR)/f90wrap
-	@$(RM) -rf $(MESHDIR)/*.so
-	@$(RM) -rf build
+	@rm -rf $(EXT_DIR)
+	@rm -rf $(BUILD_DIR)
+	@rm -rf src.*
+	@rm -rf *egg-info
+	@rm -rf $(SOLVER_DIR)/_mw*
+	@rm -rf $(SOLVER_DIR)/_$(SHARED_LIB)*
+	@rm -rf $(SOLVER_DIR)/f90wrap
+	@rm -rf $(MESH_DIR)/*.so
+	@rm -rf build
 
-.PHONY: all debug directories c f77 f90 wrappers module meshing library library_edit finalize tap tap_cmp doc doc_clean test test_baseline clean
+.PHONY: all debug directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-meshing library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
+
+#% Include 'c' 'f77' and 'f90' targets
+include makefile.dep

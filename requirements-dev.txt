@@ -1,6 +1,6 @@
 # required dependencies
 f90wrap
-numpy>=1.13,<1.24
+numpy>=1.13
 pandas
 matplotlib
 h5py

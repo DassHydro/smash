@@ -111,4 +111,4 @@ Then, for each signature type :math:`i`, the corresponding SOF is computed depen
 
 where :math:`S_{i,e}^{s},S_{i,e}^{o}` are the simulated and observed signature of event number :math:`e\in\left[1..N_{E}\right]`.
 
-Regularization term :math:`J_{reg}` (**TODO**: à compléter)
+.. Regularization term :math:`J_{reg}` (**TODO**: à compléter)

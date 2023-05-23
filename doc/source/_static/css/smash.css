@@ -1,3 +1,4 @@
+/* much of this file is derived from NumPy */
 @import url('https://fonts.googleapis.com/css2?family=Lato:ital,wght@0,400;0,700;0,900;1,400;1,700;1,900&family=Open+Sans:ital,wght@0,400;0,600;1,400;1,600&display=swap');
 
 .navbar-brand img {
@@ -15,9 +16,15 @@
    max-width: 20%;
 }
 
+code.literal{
+    background-color: transparent;
+    border: 0px;
+    padding: 0rem;
+}
+
 body {
   font-family: 'Open Sans', sans-serif;
-  color:#4A4A4A; /* numpy.org body color */
+  color: #1B262C;
 }
 
 pre, code {
@@ -27,29 +34,23 @@ pre, code {
 
 h1 {
   font-family: "Lato", sans-serif;
-  color: #013243; /* warm black */
+  color: #1B262C;
 }
 
 h2 {
-  color: #4d77cf; /* han blue */
+  color: #0F4C75;
   letter-spacing: -.03em;
 }
 
 h3 {
-  color: #013243; /* warm black */
+  color: #3282B8;
   letter-spacing: -.03em;
 }
 
-/* Style the active version button.
-- dev: orange
-- stable: green
-- old, PR: red
-Colors from:
-Wong, B. Points of view: Color blindness.
-Nat Methods 8, 441 (2011). https://doi.org/10.1038/nmeth.1618
-*/
-
-/* Main page overview cards */
+h4 {
+  color: #1B262C;
+  letter-spacing: -.03em;
+}
 
 .sd-card {
   background: #fff;
@@ -116,10 +117,22 @@ html[data-theme=dark] .sd-card .sd-card-footer {
   background-color: transparent;
 }
 
+html[data-theme=dark] body {
+  color: #F6F1F1;
+}
+
 html[data-theme=dark] h1 {
-  color: var(--pst-color-primary);
+  color: #F6F1F1;
+}
+
+html[data-theme=dark] h2 {
+  color: #AFD3E2;
 }
 
 html[data-theme=dark] h3 {
-  color: var(--pst-color-primary);
+  color: #146C94;
+}
+
+html[data-theme=dark] h4 {
+  color: #F6F1F1;
 }
