@@ -119,6 +119,7 @@ WGAUGE_ALIAS = ["mean", "median", "area", "minv_area"]
 JREG_FUN = [
     "prior",
     "smoothing",
+    "hard_smoothing",
 ]
 
 AUTO_WJREG = ["fast", "lcurve"]

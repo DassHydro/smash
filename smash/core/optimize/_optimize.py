@@ -382,10 +382,11 @@ def _optimize_lbfgsb(
                 wjreg_arr[i + 1] = instance.setup._optimize.wjreg
 
                 # % break if jobs does not minimize
-                if (instance.output.cost_jobs - jobs_min) / (
-                    jobs_max - jobs_min
-                ) >= 0.8:
-                    break
+                # Bug, todo: if we break, we should reshape the array
+                # ~ if (instance.output.cost_jobs - jobs_min) / (
+                    # ~ jobs_max - jobs_min
+                # ~ ) >= 0.8:
+                    # ~ break
 
             # % bounds update for jobs and jreg
             jobs_min = np.min(cost_jobs_arr)
@@ -962,7 +963,8 @@ def _compute_best_lcurve_weight(
     jreg_max: float,
 ):
     # % select the best wjreg based on the transformed lcurve and using our own method decribed in ...
-
+    wjreg_lcurve_opt=None
+    
     if (
         cost_jobs_arr.size > 2
         and (jreg_max - jreg_min) > 0.0

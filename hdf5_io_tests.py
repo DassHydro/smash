@@ -6,6 +6,9 @@ setup, mesh = smash.load_dataset("cance")
 model = smash.Model(setup, mesh)
 model.run(inplace=True)
 
+#save a single dictionary to hdf5
+smash.io.hdf5_io.save_dict_to_hdf5("saved_dictionary.hdf5",mesh)
+
 #generate the structure of the object: it is a dict of key:data to save: typeofstructure={light,medium,full}
 keys_data=smash.generate_smash_object_structure(model,typeofstructure="medium")
 print(keys_data)
@@ -27,7 +30,7 @@ smash.save_smash_model_to_hdf5("./model_sub_data.hdf5", model, content="medium",
 
 
 #view the hdf5 file
-hdf5=smash.io.multi_model_io.open_hdf5("./model_user.hdf5")
+hdf5=smash.io.hdf5_io.open_hdf5("./model_user.hdf5")
 hdf5.keys()
 hdf5["mesh"].keys()
 hdf5["parameters"].keys()
@@ -38,7 +41,7 @@ hdf5["setup"].attrs.keys()
 hdf5.close()
 
 #view the hdf5 file with sub_data
-hdf5=smash.io.multi_model_io.open_hdf5("./model_sub_data.hdf5")
+hdf5=smash.io.hdf5_io.open_hdf5("./model_sub_data.hdf5")
 hdf5.keys()
 hdf5.attrs.keys()
 hdf5.close()
@@ -49,7 +52,7 @@ smash.save_smash_model_to_hdf5("./multi_model.hdf5", model,location="model1",rep
 smash.save_smash_model_to_hdf5("./multi_model.hdf5", model,location="model2",replace=False)
 
 
-hdf5=smash.io.multi_model_io.open_hdf5("./multi_model.hdf5")
+hdf5=smash.io.hdf5_io.open_hdf5("./multi_model.hdf5")
 hdf5.keys()
 hdf5["model2"]["setup"].attrs.keys()
 hdf5["model2"]["mesh"].keys()
@@ -58,15 +61,15 @@ hdf5["model2"]["output"].attrs.keys()
 hdf5.close()
 
 #manually group different object in an hdf5
-hdf5=smash.io.multi_model_io.open_hdf5("./model_subgroup.hdf5", replace=True)
-hdf5=smash.io.multi_model_io.add_hdf5_sub_group(hdf5, subgroup="model1")
-keys_data=smash.io.multi_model_io.generate_smash_object_structure(model,typeofstructure="medium")
-smash.io.multi_model_io.dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
+hdf5=smash.io.hdf5_io.open_hdf5("./model_subgroup.hdf5", replace=True)
+hdf5=smash.io.hdf5_io.add_hdf5_sub_group(hdf5, subgroup="model1")
+keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
+smash.io.hdf5_io.dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
 
-hdf5=smash.io.multi_model_io.open_hdf5("./model_subgroup.hdf5", replace=False)
-hdf5=smash.io.multi_model_io.add_hdf5_sub_group(hdf5, subgroup="model2")
-keys_data=smash.io.multi_model_io.generate_smash_object_structure(model,typeofstructure="medium")
-smash.io.multi_model_io.dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
+hdf5=smash.io.hdf5_io.open_hdf5("./model_subgroup.hdf5", replace=False)
+hdf5=smash.io.hdf5_io.add_hdf5_sub_group(hdf5, subgroup="model2")
+keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
+smash.io.hdf5_io.dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
 
 hdf5.keys()
 hdf5["model1"].keys()
@@ -74,8 +77,10 @@ hdf5["model2"].keys()
 hdf5.close()
 
 
-#dump model object to a dictionnay
-dictionary=smash.io.multi_model_io.dump_object_to_dictionary(model)
+#read model object to a dictionnay
+dictionary=smash.io.hdf5_io.read_object_as_dict(model)
+dictionary.keys()
+dictionary["mesh"]["code"]
 
 ######### Reading HDF5
 
@@ -89,8 +94,8 @@ dictionary=smash.load_hdf5_file("./model_sub_data.hdf5")
 dictionary.keys()
 
 #read only a part of an hdf5 file
-hdf5=smash.io.multi_model_io.open_hdf5("./multi_model.hdf5")
-dictionary=smash.io.multi_model_io.read_hdf5_to_dict(hdf5["model1"])
+hdf5=smash.io.hdf5_io.open_hdf5("./multi_model.hdf5")
+dictionary=smash.io.hdf5_io.read_hdf5_to_dict(hdf5["model1"])
 dictionary.keys()
 
 #reload a full model object

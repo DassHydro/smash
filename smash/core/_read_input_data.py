@@ -62,8 +62,18 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             with open(path[0], "r") as f:
-                header = pd.Timestamp(f.readline())
-
+                
+                try:
+                    
+                    header_string=f.readline()
+                    header = pd.Timestamp(header_string)
+                    
+                except:
+                    
+                    raise ValueError(
+                        f"Bad header {header_string} string when reading file '{path[0]}'. '{header_string}' may not be a date."
+                    )
+                
                 time_diff = int((st - header).total_seconds() / setup.dt) + 1
 
                 if time_diff > 0:
