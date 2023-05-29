@@ -11,6 +11,7 @@ if TYPE_CHECKING:
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
 
+import os
 import warnings
 import glob
 from tqdm import tqdm
@@ -127,41 +128,77 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.prcp_format == "tif":
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
+    
+    if setup.prcp_fast_access==False :
+        
+        if setup.prcp_format == "tif":
+            files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
-        files = _adjust_left_files(files, date_range)
+            files = _adjust_left_files(files, date_range)
 
-    # % WIP
-    elif setup.prcp_format == "nc":
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
+        # % WIP
+        elif setup.prcp_format == "nc":
+            files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
+    
     for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
         date_strf = date.strftime("%Y%m%d%H%M")
 
-        ind = _index_containing_substring(files, date_strf)
+        if setup.prcp_fast_access==True :
+            
+            year=date_strf[0:4]
+            month=date_strf[4:6]
+            day=date_strf[6:8]
+            path = setup.prcp_directory + os.sep + year + os.sep + month + os.sep + day + os.sep
+            file_to_read = path + os.sep + setup.prcp_prefix + date_strf + "_" + date_strf + "." + setup.prcp_format
+            
+            if (os.path.exists(file_to_read)) :
+                
+                matrix = (
+                    _read_windowed_raster(file_to_read, mesh) * setup.prcp_conversion_factor
+                )
 
-        if ind == -1:
-            if setup.sparse_storage:
-                input_data.sparse_prcp[:, i] = -99.0
+                if setup.sparse_storage:
+                    input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
 
+                else:
+                    input_data.prcp[..., i] = matrix
+                
             else:
-                input_data.prcp[..., i] = -99.0
+                
+                if setup.sparse_storage:
+                    input_data.sparse_prcp[:, i] = -99.0
 
-            warnings.warn(f"Missing precipitation file for date {date}")
-
+                else:
+                    input_data.prcp[..., i] = -99.0
+                
+                warnings.warn(f"Missing precipitation file for date {date}: {file_to_read}")
+            
         else:
-            matrix = (
-                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
-            )
+            
+            ind = _index_containing_substring(files, date_strf)
+            
+            if ind == -1:
+                if setup.sparse_storage:
+                    input_data.sparse_prcp[:, i] = -99.0
 
-            if setup.sparse_storage:
-                input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
+                else:
+                    input_data.prcp[..., i] = -99.0
+
+                warnings.warn(f"Missing precipitation file for date {date}")
 
             else:
-                input_data.prcp[..., i] = matrix
+                matrix = (
+                    _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                )
 
-            files.pop(ind)
+                if setup.sparse_storage:
+                    input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
+
+                else:
+                    input_data.prcp[..., i] = matrix
+
+                files.pop(ind)
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
