@@ -1,4 +1,4 @@
-.. _release_notes.0.3.0:
+.. _release.0.3.0-notes:
 
 .. currentmodule:: smash
 
@@ -16,6 +16,15 @@ The smash 0.3.0 release continues the ongoing work to improve the handling, fix 
 - New multi-site cost function aggregation method.
 - New method to save a sample of Model object data into hdf5.
 - Major fixes in distributed optimization and uniform optimization.
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- François Colleoni
+- Ngo Nghi Truyen Huynh
 
 ---------------
 Compatibilities
@@ -64,7 +73,7 @@ A new model structure ``gr-d`` with 3 parameters (``cp``, ``cft``, ``lr``) and 3
 
 .. note::
     
-    More information can be find in the User Guide section: :ref:`Model structure <user_guide.model_structure.gr_d>`.
+    More information can be find in the User Guide section: :ref:`Model structure <user_guide.others.model_structure.gr_d>`.
 
 Flow percentiles signatures optimization 
 ****************************************
@@ -85,7 +94,7 @@ The following signatures have been added to optimization:
 
 .. note::
     
-    More information can be find in the Math / Num Documentation section :ref:`math_num_documentation.hydrological_signature`.
+    More information can be find in the Math / Num Documentation section :ref:`math_num_documentation.signal_analysis.hydrological_signatures`.
 
 It can be used as follows:
 

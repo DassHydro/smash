@@ -1,10 +1,20 @@
-.. _release_notes.0.3.1:
+.. _release.0.3.1-notes:
 
 .. currentmodule:: smash
 
 =========================
 smash 0.3.1 Release Notes
 =========================
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+- Maxime Jay-Allemand
 
 ---------------
 Compatibilities
@@ -61,7 +71,7 @@ instead of:
 
 .. note::
     
-    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.cost_functions>`.
+    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.signal_analysis.cost_functions>`.
 
 Setting the learning rate for Net
 *********************************
@@ -90,10 +100,10 @@ methods using a customize sphinx directive.
 
 Add the user guide for advanced optimization techniques, including:
 
-- Fully-distributed optimization
-- Improving the first guess using Bayesian estimation
-- Pre-regionalization using polynomial mapping
-- Pre-regionalization using ANN
+- :ref:`Fully-distributed optimization using a uniform first guess <user_guide.in_depth.optimize.fully_distributed>`
+- :ref:`Improving the first guess using Bayesian estimation <user_guide.in_depth.optimize.bayes_estimate>`
+- :ref:`Pre-regionalization using polynomial mapping <user_guide.in_depth.optimize.pre_regio_poly>`
+- :ref:`Pre-regionalization using artificial neural network <user_guide.in_depth.optimize.pre_regio_ann>`
 
 ------------
 New Features

@@ -1,4 +1,4 @@
-.. _math_num_documentation.hydrograph_segmentation:
+.. _math_num_documentation.signal_analysis.hydrograph_segmentation:
 
 =======================
 Hydrograph segmentation

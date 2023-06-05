@@ -1,16 +1,27 @@
-.. _release_notes.0.x.y:
+.. _release.0.4.0-notes:
 
 .. currentmodule:: smash
 
 =========================
-smash 0.x.y Release Notes
+smash 0.4.0 Release Notes
 =========================
 
-The smash 0.x.y release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+The smash 0.4.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
----------------
-Compatibilities
----------------
+- Regularization with full distributed mapping
+- Multiple forward run in parallel
+- Addition of many user guides on the different optimization methods
+- Improved handling of sample generation results
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+- Maxime Jay-Allemand
 
 ------------
 Deprecations
@@ -112,6 +123,16 @@ Pipeline stage
 The pipeline stage ``build-tap`` has been renamed to ``tap-cmp`` and updated allowing a comparison between the source tapenade file and the new regenerated one.
 If an error occurs during this stage, it means that the source tapenade file has not been regenerated.
 
+Documentation
+*************
+
+Add the user guide for advanced optimization techniques, including:
+
+- :ref:`Variational Bayesian calibration <user_guide.in_depth.optimize.bayes_optimize>`
+- :ref:`Multi-criteria optimization <user_guide.in_depth.optimize.multi_criteria>`
+
+Add :ref:`developers guide <developers_guide>`, :ref:`list of contributors <contributors>` and :ref:`license <license>` to the documentation.
+
 ------------
 New Features
 ------------
@@ -133,6 +154,25 @@ It can be used as follows:
     >>> sr.to_numpy()  # convert to numpy array
     >>> sr.to_dataframe()  # convert to pandas dataframe
     
+Slice and iterate over the SampleResult object
+**********************************************
+
+We have added two additional methods to the :class:`SampleResult` object, which are:
+
+- :meth:`SampleResult.slice`
+- :meth:`SampleResult.iterslice`
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> problem = {'num_vars': 1, 'names': ['cp'], 'bounds': [[1,2000]]}
+    >>> sr = smash.generate_samples(problem)  # create a SampleResult object
+    >>> slc = sr.slice(10)  # slice the first 10 sets
+    >>> slc = sr.slice(start=20, end=50)  # slice between the 20th and 50th set
+    >>> for slc_i in sr.iterslice(100):  # iterate on sub sample of 100 sets
+    >>>     slc_i
+
 Regularization with full distributed mapping
 ********************************************
 
@@ -140,13 +180,40 @@ The regularization terms have been added for the optimization with a distributed
 Two types of regularization function are considered, which are ``prior`` and ``smoothing``.
 
 .. hint::
-    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+    See a detailed explanation on the regularization function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
 It can be used as follows:
 
 .. code-block:: python
 
     >>> model.optimize(mapping="distributed", options={"jreg_fun": "smoothing"})
+
+Model Multiple Run
+******************
+
+We have added a new method to the :class:`smash.Model` object :meth:`Model.multiple_run`. This method allows to compute multiple forward runs in parallel based on a sample generated
+with the :meth:`smash.generate_samples` method.
+
+It can be used as follows:
+
+.. code-block:: python
+
+    >>> setup, mesh = smash.load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    >>> problem = model.get_bound_constraints()
+    >>> sample = smash.generate_samples(problem, n=200, random_state=99)
+    >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
+    >>> mtprr.cost  # access the cost values
+    >>> mtprr.qsim  # access the simulated discharge values if return_qsim is True
+
+This method also accepts the cost function arguments that are used in the :meth:`Model.optimize` method (i.e. **jobs_fun**, **wjobs_fun** etc)
+
+.. code-block:: python
+
+    >>> mtprr = model.multiple_run(sample, jobs_fun="kge", gauge="all", ncpu=4, return_qsim=True)
+
+.. hint::
+    See the specific :ref:`User Guide <user_guide.in_depth.multiple_run>` section.
 
 Makefile command
 ****************

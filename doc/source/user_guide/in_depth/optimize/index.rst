@@ -1,4 +1,4 @@
-.. _user_guide.optimize:
+.. _user_guide.in_depth.optimize:
 
 ==================
 Model optimization
@@ -9,10 +9,6 @@ in addition to the classical methods explained in the :ref:`Quickstart <quicksta
 
 The examples in this section use the ``Lez`` dataset, 
 which contains daily data from 3 nested gauges spanning a total area of 169km².
-
-.. warning::
-
-    Section in development 
 
 .. toctree::
     :maxdepth: 1

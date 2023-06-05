@@ -1,4 +1,4 @@
-.. _math_num_documentation.cost_functions:
+.. _math_num_documentation.signal_analysis.cost_functions:
 
 ==============
 Cost functions
@@ -94,7 +94,7 @@ COF can be one of:
 
 Now, denote :math:`S_{i}^{o}` and :math:`S_{i}^{s}`
 are observed and simulated signature type :math:`i` respectively. 
-These signatures are defined and calculated as depicted in :ref:`hydrological signatures <math_num_documentation.hydrological_signature>` section. 
+These signatures are defined and calculated as depicted in :ref:`hydrological signatures <math_num_documentation.signal_analysis.hydrological_signatures>` section. 
 Then, for each signature type :math:`i`, the corresponding SOF is computed depending on if the signature is:
 
 - continuous signature:
@@ -111,4 +111,4 @@ Then, for each signature type :math:`i`, the corresponding SOF is computed depen
 
 where :math:`S_{i,e}^{s},S_{i,e}^{o}` are the simulated and observed signature of event number :math:`e\in\left[1..N_{E}\right]`.
 
-Regularization term :math:`J_{reg}` (**TODO**: à compléter)
+.. Regularization term :math:`J_{reg}` (**TODO**: à compléter)

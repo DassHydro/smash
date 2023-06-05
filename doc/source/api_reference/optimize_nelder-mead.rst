@@ -7,5 +7,5 @@ optimize(algorithm='nelder-mead')
 
 .. smash-model-optimize:function:: Model.optimize
    :noindex:
-   :impl: smash.core.optimize._optimize._optimize_nelder_mead
+   :impl: smash.core.simulation._optimize._optimize_nelder_mead
    :alg: nelder-mead

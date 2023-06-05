@@ -1,0 +1,48 @@
+.. _release.0.4.1-notes:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.4.1 Release Notes
+=========================
+
+The smash 0.4.1 release continues the ongoing work to improve the handling and clarify the documentation. The highlights are:
+
+- Migration of the `smash` repository from GitLab to GitHub
+- Prevent rebuilding the entire documentation in case of errors
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+- Ngo Nghi Truyen Huynh
+- François Colleoni
+
+------------
+Deprecations
+------------
+
+Migration of the `smash` repository from GitLab to GitHub.
+
+- New GitHub repository: https://github.com/DassHydro-dev/smash
+- Old GitLab repository: https://gitlab.irstea.fr/hydrology/smash
+
+------------
+Improvements
+------------
+
+Generating documentation
+************************
+
+The command ``make doc`` has been updated to prevent rebuilding the entire documentation in case of errors. 
+The updated command will return to the previous version of the documentation if an error occurs, without requiring developers to rebuild the entire documentation from scratch.
+
+For example, if a bug occurs when running the ``make doc`` command, it will result in the following message:
+
+.. code-block:: bash
+
+    An error occurred while generating the documentation. Returning to previous version.
+
+This ensures that developers do not need to rebuild the entire documentation during subsequent generation processes.

@@ -31,6 +31,7 @@ Simulation
    :toctree: smash/
 
    Model.run
+   Model.multiple_run
    Model.optimize
 
 .. toctree::

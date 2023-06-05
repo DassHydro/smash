@@ -19,11 +19,14 @@ from smash.core._build_model import (
     _build_parameters,
 )
 
-from smash.core.optimize._ann_optimize import _ann_optimize
+from smash.core.simulation.multiple_run import _multiple_run
 
-from smash.core.optimize.bayes_optimize import _bayes_computation
+from smash.core.simulation.bayes_optimize import _bayes_computation
 
-from smash.core.optimize._standardize import (
+from smash.core.simulation._ann_optimize import _ann_optimize
+
+from smash.core.simulation._standardize import (
+    _standardize_multiple_run_args,
     _standardize_optimize_args,
     _standardize_optimize_options,
     _standardize_bayes_estimate_args,
@@ -70,10 +73,10 @@ class Model(object):
     Parameters
     ----------
     setup : dict
-        Model initialization setup dictionary (see: :ref:`setup arguments <user_guide.model_initialization.setup>`).
+        Model initialization setup dictionary (see: :ref:`setup arguments <user_guide.others.model_initialization.setup>`).
 
     mesh : dict
-        Model initialization mesh dictionary. (see: :ref:`mesh arguments <user_guide.model_initialization.mesh>`).
+        Model initialization mesh dictionary. (see: :ref:`mesh arguments <user_guide.others.model_initialization.mesh>`).
 
     See Also
     --------
@@ -455,7 +458,7 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with run outputs or None if inplace.
+            Model with run outputs if not **inplace**.
 
         Examples
         --------
@@ -501,6 +504,127 @@ class Model(object):
         if not inplace:
             return instance
 
+    def multiple_run(
+        self,
+        sample: SampleResult,
+        jobs_fun: str | list | tuple = "nse",
+        wjobs_fun: list | tuple | None = None,
+        event_seg: dict | None = None,
+        gauge: str | list | tuple = "downstream",
+        wgauge: str | list | tuple = "mean",
+        ost: str | pd.Timestamp | None = None,
+        ncpu: int = 1,
+        return_qsim: bool = False,
+        verbose: bool = True,
+    ):
+        """
+        Compute Multiple Run of Model.
+
+        .. hint::
+            See the :ref:`user_guide` for more.
+
+        Parameters
+        ----------
+        sample : SampleResult
+            An instance of the `SampleResult` object, which should be created using the `smash.generate_samples` method.
+
+        jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
+            Optimization setting to run the forward hydrological model and compute the cost values.
+            See `smash.Model.optimize` for more.
+
+        ncpu : integer, default 1
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
+
+        return_qsim : bool, default False
+            If True, also return the simulated discharge in the `MultipleRunResult` object.
+
+        verbose : bool, default True
+            Display information while computing.
+
+        Returns
+        -------
+        res : MultipleRunResult
+            The multiple run results represented as a `MultipleRunResult` object.
+
+        See Also
+        --------
+        MultipleRunResult: Represents the multiple run result.
+        SampleResult: Represents the generated sample result.
+
+        Examples
+        --------
+        >>> setup, mesh = smash.load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        Get the boundary constraints of the Model parameters/states and generate a sample
+
+        >>> problem = model.get_bound_constraints()
+        >>> sample = smash.generate_samples(problem, n=200, random_state=99)
+
+        Compute the multiple run
+
+        >>> mtprr = model.multiple_run(sample, ncpu=4, return_qsim=True)
+
+        Access the cost values of the direct simulations
+
+        >>> mtprr.cost
+        array([1.2327451e+00, 1.2367475e+00, 1.2227478e+00, 4.7788401e+00,
+        ...
+               1.2392160e+00, 1.2278881e+00, 7.5998020e-01, 1.1763511e+00],
+              dtype=float32)
+
+        Access the minimum cost value and the index
+
+        >>> min_cost = np.min(mtprr.cost)
+        >>> ind_min_cost = np.argmin(mtprr.cost)
+        >>> min_cost, ind_min_cost
+        (0.48862067, 20)
+
+        Access the set that generated the minimum cost value
+
+        >>> min_set = {key: sample[key][ind_min_cost] for key in problem["names"]}
+        >>> min_set
+        {'cp': 211.6867863776767, 'cft': 41.72451338560559, 'exc': -9.003870580641795, 'lr': 43.64397561764691}
+        """
+
+        instance = self.copy()
+
+        print("</> Multiple Run Model")
+
+        # % standardize args
+        (
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            wgauge,
+            ost,
+            ncpu,
+        ) = _standardize_multiple_run_args(
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            gauge,
+            wgauge,
+            ost,
+            ncpu,
+            instance,
+        )
+
+        return _multiple_run(
+            instance,
+            sample,
+            jobs_fun,
+            wjobs_fun,
+            event_seg,
+            wgauge,
+            ost,
+            ncpu,
+            return_qsim,
+            verbose,
+        )
+
     def optimize(
         self,
         mapping: str = "uniform",
@@ -541,7 +665,7 @@ class Model(object):
             - 'l-bfgs-b'
 
             .. note::
-                If not given, chosen to be one of ``sbs`` or ``l-bfgs-b`` depending on the optimization mapping.
+                If not given, chosen to be one of 'sbs' or 'l-bfgs-b' depending on the optimization mapping.
 
         control_vector : str, sequence or None, default None
             Parameters and/or states to be optimized. The control vector argument
@@ -562,21 +686,18 @@ class Model(object):
         jobs_fun : str or sequence, default 'nse'
             Type of objective function(s) to be minimized. Should be one or a sequence of any
 
-            - ``Classical Objective Function``
-                'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic'
-            - ``Continuous Signature``
-                'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90'
-            - ``Flood Event Signature``
-                'Epf', 'Elt', 'Erc'
+            - 'nse', 'kge', 'kge2', 'se', 'rmse', 'logarithmic' (classical objective function)
+            - 'Crc', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signature)
+            - 'Epf', 'Elt', 'Erc' (flood event signature)
 
             .. hint::
-                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.cost_functions>` section.
+                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
         wjobs_fun : sequence or None, default None
             Objective function(s) weights in case of multi-criteria optimization (i.e. a sequence of objective functions to minimize).
 
             .. note::
-                If not given, the weights will correspond to the mean of the objective functions.
+                If not given, the cost value will be computed as the mean of the objective functions.
 
         event_seg : dict or None, default None
             A dictionary of event segmentation options when calculating flood event signatures for cost computation. The keys are
@@ -594,14 +715,14 @@ class Model(object):
 
             1. A gauge code or any sequence of gauge codes.
                The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            2. An alias among ``all`` and ``downstream``. ``all`` is equivalent to a sequence of all gauge codes.
-               ``downstream`` is equivalent to the gauge code of the most downstream gauge.
+            2. An alias among 'all' and 'downstream'. 'all' is equivalent to a sequence of all gauge codes.
+               'downstream' is equivalent to the gauge code of the most downstream gauge.
 
         wgauge : str, sequence, default 'mean'
             Type of gauge weights. There are two ways to specify it:
 
             1. A sequence of value whose size must be equal to the number of gauges optimized.
-            2. An alias among ``mean``, ``median``, ``area`` or ``minv_area``.
+            2. An alias among 'mean', 'median', 'area' or 'minv_area'.
 
         ost : str, pandas.Timestamp or None, default None
             The optimization start time. The optimization will only be performed between the
@@ -631,7 +752,7 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs or None if inplace.
+            Model with optimize outputs if not **inplace**.
 
         Examples
         --------
@@ -761,23 +882,23 @@ class Model(object):
             A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
-                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
+                If **alpha** is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
-            Number of generated samples. Only used if sample is not set.
+            Number of generated samples. Only used if **sample** is not set.
 
         random_state : int or None, default None
-            Random seed used to generate samples. Only used if sample is not set.
+            Random seed used to generate samples. Only used if **sample** is not set.
 
             .. note::
-                If not given and sample is not set, generates the parameters set with a random seed.
+                If not given and **sample** is not set, generates the parameters set with a random seed.
 
         jobs_fun, wjobs_fun, event_seg, gauge, wgauge, ost : multiple types
             Optimization setting to run the forward hydrological model and compute the cost values.
             See `smash.Model.optimize` for more.
 
         ncpu : integer, default 1
-            If ncpu > 1, perform a parallel computation through the parameters set.
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while estimating.
@@ -791,15 +912,15 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         res : BayesResult
-            The Bayesian estimation results represented as a `BayesResult` object if return_br.
+            The Bayesian estimation results represented as a `BayesResult` object if **return_br**.
 
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
-        SampleResult: Represents the generated samples using `smash.generate_samples` method.
+        SampleResult: Represents the generated sample result.
 
         Examples
         --------
@@ -833,15 +954,17 @@ class Model(object):
 
         # % standardize args
         (
+            sample,
+            alpha,
             jobs_fun,
             wjobs_fun,
             event_seg,
             wgauge,
             ost,
-            sample,
-            alpha,
+            ncpu,
         ) = _standardize_bayes_estimate_args(
             sample,
+            alpha,
             n,
             random_state,
             jobs_fun,
@@ -850,7 +973,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            alpha,
+            ncpu,
             instance,
         )
 
@@ -923,22 +1046,22 @@ class Model(object):
 
             .. note::
                 If not given, the Model parameters samples will be generated automatically using the uniform generator
-                based on the control vector and bounds arguments.
+                based on both **control_vector** and **bounds** arguments.
 
         alpha : int, float or sequence, default 4
             A regularization parameter that controls the decay rate of the likelihood function.
 
             .. note::
-                If alpha is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
+                If **alpha** is a sequence, then the L-curve approach will be used to find an optimal value for the regularization parameter.
 
         n : int, default 1000
-            Number of generated samples. Only used if sample is not set.
+            Number of generated samples. Only used if **sample** is not set.
 
         random_state : int or None, default None
-            Random seed used to generate samples. Only used if sample is not set.
+            Random seed used to generate samples. Only used if **sample** is not set.
 
             .. note::
-                If not given and sample is not set, generates the parameters set with a random seed.
+                If not given and **sample** is not set, generates the parameters set with a random seed.
 
         de_bw_method : str, scalar, callable or None, default None
             The method used to calculate the estimator bandwidth to estimate the density distribution.
@@ -978,7 +1101,7 @@ class Model(object):
                 If not given, the bounds will be filled in with default bound values.
 
         ncpu : integer, default 1
-            If ncpu > 1, perform a parallel computation through the parameters set.
+            If **ncpu** > 1, perform a parallel computation through the parameters set.
 
         verbose : bool, default True
             Display information while optimizing.
@@ -992,15 +1115,15 @@ class Model(object):
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         res : BayesResult
-            The Bayesian optimization results represented as a `BayesResult` object if return_br.
+            The Bayesian optimization results represented as a `BayesResult` object if **return_br**.
 
         See Also
         --------
         BayesResult: Represents the Bayesian estimation or optimization result.
-        SampleResult: Represents the generated samples using `smash.generate_samples` method.
+        SampleResult: Represents the generated sample result.
 
         Examples
         --------
@@ -1033,6 +1156,8 @@ class Model(object):
 
         # % standardize args
         (
+            sample,
+            alpha,
             mapping,
             algorithm,
             jobs_fun,
@@ -1041,10 +1166,10 @@ class Model(object):
             bounds,
             wgauge,
             ost,
-            sample,
-            alpha,
+            ncpu,
         ) = _standardize_bayes_optimize_args(
             sample,
+            alpha,
             n,
             random_state,
             mapping,
@@ -1057,7 +1182,7 @@ class Model(object):
             gauge,
             wgauge,
             ost,
-            alpha,
+            ncpu,
             instance,
         )
 
@@ -1124,13 +1249,13 @@ class Model(object):
         Parameters
         ----------
         net : Net or None, default None
-            The neural network `Net` will be trained to learn the descriptors-to-parameters mapping.
+            The `Net` object to be trained to learn the descriptors-to-parameters mapping.
 
             .. note::
-                If not given, a default network will be used. Otherwise, perform operation in-place on this Net.
+                If not given, a default network will be used. Otherwise, perform operation in-place on this **net**.
 
         optimizer : str, default 'adam'
-            Name of optimizer. Only used if net is not set.
+            Name of optimizer. Only used if **net** is not set.
             Should be one of
 
             - 'sgd'
@@ -1139,7 +1264,7 @@ class Model(object):
             - 'rmsprop'
 
         learning_rate : float, default 0.003
-            The learning rate used to update the weights during training. Only used if net is not set.
+            The learning rate used to update the weights during training. Only used if **net** is not set.
 
         control_vector : str, sequence or None, default None
             Parameters and/or states to be optimized. The control vector argument
@@ -1168,10 +1293,10 @@ class Model(object):
             Stop updating weights and biases when the loss function stops decreasing.
 
         random_state : int or None, default None
-            Random seed used to initialize weights. Only used if net is not set.
+            Random seed used to initialize weights. Only used if **net** is not set.
 
             .. note::
-                If not given and net is not set, the weights will be initialized with a random seed.
+                If not given and **net** is not set, the weights will be initialized with a random seed.
 
         verbose : bool, default True
             Display information while training.
@@ -1180,15 +1305,15 @@ class Model(object):
             If True, perform operation in-place.
 
         return_net : bool, default False
-            If True and the default graph is used (net is None), also return the trained neural network.
+            If True and the default graph is used (**net** is not set), also return the trained neural network.
 
         Returns
         -------
         Model : Model or None
-            Model with optimize outputs if not inplace.
+            Model with optimize outputs if not **inplace**.
 
         Net : Net or None
-            `Net` with trained weights and biases if return_net and the default graph is used.
+            `Net` with trained weights and biases if **return_net** and the default graph is used.
 
         See Also
         --------
@@ -1207,24 +1332,20 @@ class Model(object):
         Display a summary of the neural network
 
         >>> net
-        +-------------+
-        | Net summary |
-        +-------------+
-        Input Shape: (2,)
-        +----------------------+--------------+---------+
-        | Layer (type)         | Output Shape | Param # |
-        +----------------------+--------------+---------+
-        | Dense                | (18,)        | 54      |
-        | Activation (ReLU)    | (18,)        | 0       |
-        | Dense                | (9,)         | 171     |
-        | Activation (ReLU)    | (9,)         | 0       |
-        | Dense                | (4,)         | 40      |
-        | Activation (Sigmoid) | (4,)         | 0       |
-        | Scale (MinMaxScale)  | (4,)         | 0       |
-        +----------------------+--------------+---------+
-        Total params: 265
-        Trainable params: 265
-        Non-trainable params: 0
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (2,)/(18,)          54             |
+        | Activation (ReLU)     (18,)/(18,)         0              |
+        | Dense                 (18,)/(9,)          171            |
+        | Activation (ReLU)     (9,)/(9,)           0              |
+        | Dense                 (9,)/(4,)           40             |
+        | Activation (Sigmoid)  (4,)/(4,)           0              |
+        | Scale (MinMaxScale)   (4,)/(4,)           0              |
+        +----------------------------------------------------------+
+        Total parameters: 265
+        Trainable parameters: 265
+        Optimizer: (adam, lr=0.003)
 
         Access to some training information
 
@@ -1312,12 +1433,12 @@ class Model(object):
         Compute segmentation information of flood events over all catchments of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrograph_segmentation>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>` for more.
 
         Parameters
         ----------
         peak_quant: float, default 0.995
-            Events will be selected if their discharge peaks exceed the ``peak_quant``-quantile of the observed discharge timeseries.
+            Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
         max_duration: float, default 240
             The expected maximum duration of an event (in hour).
@@ -1366,7 +1487,7 @@ class Model(object):
         Compute continuous or/and flood event signatures of the Model.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>` for more.
 
         Parameters
         ----------
@@ -1449,7 +1570,7 @@ class Model(object):
         Compute the first- and total-order variance-based sensitivity (Sobol indices) of spatially uniform hydrological model parameters on the output signatures.
 
         .. hint::
-            See the :ref:`User Guide <user_guide.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.hydrological_signature>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.signatures.sensitivity>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>` for more.
 
         Parameters
         ----------
@@ -1458,7 +1579,7 @@ class Model(object):
 
             - 'num_vars' : the number of Model parameters.
             - 'names' : the name of Model parameters.
-            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of (min, max)).
+            - 'bounds' : the upper and lower bounds of each Model parameters (a sequence of ``(min, max)``).
 
             .. note::
                 If not given, the problem will be set automatically using `smash.Model.get_bound_constraints` method.
@@ -1561,7 +1682,7 @@ class Model(object):
         - ``vg`` : The vertical gap. :cite:p:`emmanuel_2015`
 
         .. hint::
-            See the :ref:`User Guide <user_guide.prcp_indices>` for more.
+            See the :ref:`User Guide <user_guide.in_depth.prcp_indices>` for more.
 
         Returns
         -------
@@ -1622,7 +1743,7 @@ class Model(object):
 
             - 'num_vars': The number of Model parameters/states.
             - 'names': The name of Model parameters/states.
-            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of (min, max)).
+            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of ``(min, max)``).
 
         Examples
         --------

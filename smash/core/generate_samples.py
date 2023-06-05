@@ -24,13 +24,18 @@ __all__ = ["generate_samples", "SampleResult"]
 
 class SampleResult(dict):
     """
-    Represents the generated samples using `smash.generate_samples` method.
+    Represents the generated sample result.
 
     Notes
     -----
-    This class is essentially a subclass of dict with attribute accessors and two additional methods, which are
-    `SampleResult.to_numpy` and `SampleResult.to_dataframe`.
-    This also have additional attributes not listed here depending on the specific names
+    This class is essentially a subclass of dict with attribute accessors and four additional methods, which are:
+
+    - `SampleResult.to_numpy`: Convert the `SampleResult` object to a numpy.ndarray.
+    - `SampleResult.to_dataframe`: Convert the `SampleResult` object to a pandas.DataFrame.
+    - `SampleResult.slice`: Slice the `SampleResult` object.
+    - `SampleResult.iterslice`: Iterate over the `SampleResult` object by slices.
+
+    This may have additional attributes not listed here depending on the specific names
     provided in the argument ``problem`` in the `smash.generate_samples` method.
 
     Attributes
@@ -69,6 +74,39 @@ class SampleResult(dict):
     3   61.164182  198.986970
     4   30.204422  269.869550
 
+    Slice the first two sets:
+
+    >>> slc = sr.slice(2)
+    >>> slc.to_numpy(axis=-1)
+    array([[ 83.98737894,  47.07695879],
+           [144.34457419,  93.94384548]])
+
+    Slice between the start and end set:
+
+    >>> slc = sr.slice(start=3, end=5)
+    >>> slc.to_numpy(axis=-1)
+    array([[ 61.16418195, 198.98696964],
+           [ 30.20442227, 269.86955027]])
+
+    Iterate on each set:
+
+    >>> for slc_i in sr.iterslice():
+    >>>     slc_i.to_numpy(axis=-1)
+    array([[83.98737894, 47.07695879]])
+    array([[144.34457419,  93.94384548]])
+    array([[  1.02276059, 173.43480279]])
+    array([[ 61.16418195, 198.98696964]])
+    array([[ 30.20442227, 269.86955027]])
+
+    Iterate on pairs of sets:
+
+    >>> for slc_i in sr.iterslice(2):
+    >>>     slc_i.to_numpy(axis=-1)
+    array([[ 83.98737894,  47.07695879],
+           [144.34457419,  93.94384548]])
+    array([[  1.02276059, 173.43480279],
+           [ 61.16418195, 198.98696964]])
+    array([[ 30.20442227, 269.86955027]])
     """
 
     def __getattr__(self, name):
@@ -84,7 +122,11 @@ class SampleResult(dict):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
             return "\n".join(
-                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -92,12 +134,95 @@ class SampleResult(dict):
     def __dir__(self):
         return list(self.keys())
 
+    def slice(self, end: int, start: int = 0):
+        """
+        Slice the `SampleResult` object.
+
+        The attribute arrays are sliced along a user-specified start and end index.
+
+        Parameters
+        ----------
+        end : int
+            The end index of the slice.
+
+        start : int, default 0
+            The start index of the slice. Must be lower than **end**.
+
+        Returns
+        -------
+        res : SampleResult
+            The `SampleResult` object sliced according to **start** and **end** arguments.
+        """
+
+        if end < start:
+            raise ValueError(
+                f"start argument {start} must be lower than end argument {end}"
+            )
+
+        if start < 0:
+            raise ValueError(f"start argument {start} must be greater or equal to 0")
+
+        if end > self.n_sample:
+            raise ValueError(
+                f"end argument {end} must be lower or equal to the sample size {self.n_sample}"
+            )
+
+        slc_n = end - start
+
+        slc_names = [key for key in self._problem["names"]] + [
+            "_" + key for key in self._problem["names"]
+        ]
+
+        slc_dict = {key: self[key][start:end] for key in slc_names}
+
+        slc_dict["generator"] = self.generator
+
+        slc_dict["n_sample"] = slc_n
+
+        slc_dict["_problem"] = self._problem.copy()
+
+        return SampleResult(slc_dict)
+
+    def iterslice(self, by: int = 1):
+        """
+        Iterate on the `SampleResult` object by slices.
+
+        Parameters
+        ----------
+        by : int, default 1
+            The size of the `SampleResult` slice.
+            If **by** is not a multiple of the sample size :math:`n` the last slice iteration size will
+            be updated to the maximum range. It results in :math:`k=\\lfloor{\\frac{n}{by}}\\rfloor` iterations of size :math:`by` and one last iteration
+            of size :math:`n - k \\times by`.
+
+        Yields
+        ------
+        slice : SampleResult
+            The `SampleResult` object sliced according to **by** arguments.
+
+        See Also
+        --------
+        SampleResult.slice: Slice the `SampleResult` object.
+        """
+
+        if by > self.n_sample:
+            raise ValueError(
+                f"by argument {by} must be lower or equal to the sample size {self.n_sample}"
+            )
+
+        ind_start = 0
+        ind_end = by
+
+        while ind_start != ind_end:
+            yield self.slice(start=ind_start, end=ind_end)
+            ind_start = ind_end
+            ind_end = np.minimum(ind_end + by, self.n_sample)
+
     def to_numpy(self, axis=0):
         """
         Convert the `SampleResult` object to a numpy.ndarray.
 
-        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
-        based on the names of the Model parameters/states.
+        The attribute arrays are stacked along a user-specified axis of the resulting array.
 
         Parameters
         ----------
@@ -110,9 +235,8 @@ class SampleResult(dict):
             The `SampleResult` object as a numpy.ndarray.
 
         """
-        keys = sorted(self._problem["names"])
 
-        return np.stack([self[k] for k in keys], axis=axis)
+        return np.stack([self[k] for k in self._problem["names"]], axis=axis)
 
     def to_dataframe(self):
         """
@@ -166,13 +290,13 @@ def generate_samples(
             If not given, generates parameters sets with a random seed.
 
     mean : dict or None, default None
-        If the samples are generated using a Gaussian distribution, ``mean`` is used to define the mean of the distribution for each Model parameter/state.
-        It is a dictionary where keys are the name of the parameters/states defined in the ``problem`` argument.
-        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in the ``problem`` argument.
+        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each Model parameter/state.
+        It is a dictionary where keys are the name of the parameters/states defined in the **problem** argument.
+        In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in **problem**.
         None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given, the mean of the distribution will be set to the center of the parameter/state bounds if a Gaussian distribution is used.
+            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the parameter/state bounds.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -183,7 +307,7 @@ def generate_samples(
         where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
 
         .. note::
-            If not given, a default value for this coefficient will be assigned to define the standard deviation if a Gaussian distribution is used:
+            If not given and Gaussian distribution is used, **coef_std** is set to 3 as default:
 
             .. math::
                 std = \\frac{u - l}{3}
@@ -239,7 +363,7 @@ def generate_samples(
         if generator == "uniform":
             ret_dict[p] = np.random.uniform(low, upp, n)
 
-            ret_dict["_" + p] = 1 / n * np.ones(n)
+            ret_dict["_" + p] = np.ones(n) / (upp - low)
 
         elif generator in ["normal", "gaussian"]:
             if coef_std is None:

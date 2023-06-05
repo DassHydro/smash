@@ -7,5 +7,5 @@ optimize(algorithm='l-bfgs-b')
 
 .. smash-model-optimize:function:: Model.optimize
    :noindex:
-   :impl: smash.core.optimize._optimize._optimize_lbfgsb
+   :impl: smash.core.simulation._optimize._optimize_lbfgsb
    :alg: l-bfgs-b

@@ -27,9 +27,6 @@ class Net(object):
     --------
     >>> net = smash.Net()
     >>> net
-    +-------------+
-    | Net summary |
-    +-------------+
     The network does not contain layers or has not been compiled yet
     """
 
@@ -47,12 +44,8 @@ class Net(object):
     def __repr__(self):
         ret = []
 
-        ret.append(AsciiTable([["Net summary"]]).table)
-
         if self._compiled and self.layers:
-            ret.append(f"Input Shape: {self.layers[0].input_shape}")
-
-            tab = [["Layer (type)", "Output Shape", "Param #"]]
+            tab = [["Layer Type", "Input/Output Shape", "Num Parameters"]]
 
             tot_params = 0
             trainable_params = 0
@@ -62,20 +55,24 @@ class Net(object):
 
                 n_params = layer.n_params()
 
-                out_shape = layer.output_shape()
+                ioshape = f"{layer.input_shape}/{layer.output_shape()}"
 
-                tab.append([layer_name, str(out_shape), str(n_params)])
+                tab.append([layer_name, str(ioshape), str(n_params)])
 
                 tot_params += n_params
 
                 if layer.trainable:
                     trainable_params += n_params
 
-            ret.append(AsciiTable(tab).table)
+            table_instance = AsciiTable(tab)
+            table_instance.inner_column_border = False
+            table_instance.padding_left = 1
+            table_instance.padding_right = 1
 
-            ret.append(f"Total params: {tot_params}")
-            ret.append(f"Trainable params: {trainable_params}")
-            ret.append(f"Non-trainable params: {tot_params - trainable_params}")
+            ret.append(table_instance.table)
+            ret.append(f"Total parameters: {tot_params}")
+            ret.append(f"Trainable parameters: {trainable_params}")
+            ret.append(f"Optimizer: ({self._optimizer}, lr={self._learning_rate})")
 
         else:
             ret.append(
@@ -197,23 +194,19 @@ class Net(object):
 
         >>> net.compile()
         >>> net
-        +-------------+
-        | Net summary |
-        +-------------+
-        Input Shape: (8,)
-        +----------------------+--------------+---------+
-        | Layer (type)         | Output Shape | Param # |
-        +----------------------+--------------+---------+
-        | Dense                | (32,)        | 288     |
-        | Activation (ReLU)    | (32,)        | 0       |
-        | Dense                | (16,)        | 528     |
-        | Activation (ReLU)    | (16,)        | 0       |
-        | Dense                | (4,)         | 68      |
-        | Activation (Sigmoid) | (4,)         | 0       |
-        +----------------------+--------------+---------+
-        Total params: 884
-        Trainable params: 884
-        Non-trainable params: 0
+        +----------------------------------------------------------+
+        | Layer Type            Input/Output Shape  Num Parameters |
+        +----------------------------------------------------------+
+        | Dense                 (8,)/(32,)          288            |
+        | Activation (ReLU)     (32,)/(32,)         0              |
+        | Dense                 (32,)/(16,)         528            |
+        | Activation (ReLU)     (16,)/(16,)         0              |
+        | Dense                 (16,)/(4,)          68             |
+        | Activation (Sigmoid)  (4,)/(4,)           0              |
+        +----------------------------------------------------------+
+        Total parameters: 884
+        Trainable parameters: 884
+        Optimizer: (adam, lr=0.001)
         """
 
         layer = _standardize_layer(layer)
@@ -287,19 +280,15 @@ class Net(object):
 
         >>> net.compile(optimizer='sgd', options={'learning_rate': 0.009, 'momentum': 0.001})
         >>> net
-        +-------------+
-        | Net summary |
-        +-------------+
-        Input Shape: (6,)
-        +-------------------+--------------+---------+
-        | Layer (type)      | Output Shape | Param # |
-        +-------------------+--------------+---------+
-        | Dense             | (16,)        | 112     |
-        | Activation (ReLU) | (16,)        | 0       |
-        +-------------------+--------------+---------+
-        Total params: 112
-        Trainable params: 112
-        Non-trainable params: 0
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (6,)/(16,)          112            |
+        | Activation (ReLU)  (16,)/(16,)         0              |
+        +-------------------------------------------------------+
+        Total parameters: 112
+        Trainable parameters: 112
+        Optimizer: (sgd, lr=0.009)
         """
 
         if self.layers:

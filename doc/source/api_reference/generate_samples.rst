@@ -1,6 +1,4 @@
-.. _api.generate_samples:
-
-.. module:: generate_samples
+.. _api_reference.generate_samples:
 
 ================
 Sample Generator

@@ -351,7 +351,7 @@ def generate_mesh(
     Automatic mesh generation.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.automatic_meshing>` for more.
+        See the :ref:`User Guide <user_guide.in_depth.automatic_meshing>` for more.
 
     Parameters
     ----------
@@ -365,39 +365,39 @@ def generate_mesh(
         The bounding box values must respect the CRS of the flow directions file.
 
         .. note::
-            If not given, ``x``, ``y`` and ``area`` must be filled in.
+            If not given, **x**, **y** and **area** must be filled in.
 
     x : float, sequence or None, default None
-        The x coordinate(s) of the catchment outlet(s) to mesh.
-        The x value(s) must respect the CRS of the flow directions file.
-        The x size must be equal to y and area.
+        The x-coordinate(s) of the catchment outlet(s) to mesh.
+        The **x** value(s) must respect the CRS of the flow directions file.
+        The **x** size must be equal to **y** and area.
 
     y : float, sequence or None, default None
-        The y coordinate(s) of the catchment outlet(s) to mesh.
-        The y value(s) must respect the CRS of the flow directions file.
-        The y size must be equal to x and area.
+        The y-coordinate(s) of the catchment outlet(s) to mesh.
+        The **y** value(s) must respect the CRS of the flow directions file.
+        The **y** size must be equal to **x** and **area**.
 
     area : float, sequence or None, default None
-        The area of the catchment(s) to mesh in **m²**.
-        The area size must be equal to x and y.
+        The area of the catchment(s) to mesh in m².
+        The **area** size must be equal to **x** and **y**.
 
     code : str, sequence or None, default None
         The code of the catchment(s) to mesh.
-        The code size must be equal to x, y and area.
-        In case of bouding box meshing, the code argument is not used.
+        The **code** size must be equal to **x**, **y** and **area**.
+        In case of bouding box meshing, the **code** argument is not used.
 
         .. note::
             If not given, the default code is:
 
-            ``['_c0', '_c1', ..., '_cn-1']`` with ``n``, the number of gauges.
+            ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges.
 
     max_depth : int, default 1
         The maximum depth accepted by the algorithm to find the catchment outlet.
-        A ``max_depth`` of 1 means that the algorithm will search among the 2-length combinations in:
+        A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in:
 
         ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
         the given catchment area and the modeled catchment area calculated from the flow directions file.
-        This can be generalized to n.
+        This can be generalized to :math:`n`.
 
         .. image:: ../../_static/max_depth.png
             :align: center
@@ -407,7 +407,7 @@ def generate_mesh(
         The EPSG value of the flow directions file. By default, if the projection is well
         defined in the flow directions file. It is not necessary to provide the value of
         the EPSG. On the other hand, if the projection is not well defined in the flow directions file
-        (i.e. in ASCII file). The ``epsg`` argument must be filled in.
+        (i.e. in ASCII file). The **epsg** argument must be filled in.
 
     Returns
     -------

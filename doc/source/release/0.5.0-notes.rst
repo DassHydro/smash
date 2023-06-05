@@ -1,0 +1,43 @@
+.. _release.0.5.0-notes:
+
+.. currentmodule:: smash
+
+=========================
+smash 0.5.0 Release Notes
+=========================
+
+The smash 0.5.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+---------------
+Compatibilities
+---------------
+
+------------
+Deprecations
+------------
+
+------------
+Improvements
+------------
+
+------------
+New Features
+------------
+
+-----
+Fixes
+-----
+
+Boundary conditions checking
+****************************
+
+The boundary condition checking previously used a tolerance of 1e-6, which caused issues in certain cases due to machine precision when passing from Python to Fortran via the f90wrapper.
+To address this problem, the tolerance has been decreased to 1e-3.
+
+See issue `#23 <https://github.com/DassHydro-dev/smash/issues/23>`__.

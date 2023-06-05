@@ -1,69 +1,15 @@
-## <img src="doc/source/_static/logo_smash.svg" width=180 align="center" alt=""/> - Spatially distributed Modelling and ASsimilation for Hydrology
-[![Build Status](https://img.shields.io/badge/docs-public-brightgreen)](https://gitlab.irstea.fr/hydrology/smash)
-    
-## Compilation Instructions on Conda Environment
+- **Documentation:** https://smash.recover.inrae.fr
+- **Source code:** https://github.com/DassHydro-dev/smash
+- **Contributors and contact:** https://smash.recover.inrae.fr/contributors/index.html
+- **Contributing:** https://smash.recover.inrae.fr/developers_guide/index.html
+- **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
+- **Bug reports:** https://github.com/DassHydro-dev/smash/issues
 
-1.  Clone the SMASH repository from GitLab.
-    ```bash
-    git clone https://gitlab.irstea.fr/hydrology/smash.git
-    ```
-2.  Create the conda environment `(smash)`
-    ```bash
-    conda env create environment.yml
-    ```
-3.  Activate the conda environment `(smash)`
-    ```bash
-    conda activate smash
-    ```
-4.  Compile all programs, modules and libraries.
-    ```bash
-    (smash) make
-    ```
-5.  Check install
-    ```bash
-    python3
-    ```
-    ```python
-    import smash
-    ```
-    
-# Developer notes:
+**smash** is a Python library, that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran solver.
 
-## Developer Environments
+**smash** offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** Automatic Differentiation Engine.
 
-1.  The conda environment `(smash-dev)`
-    ```bash
-    conda env create environment-dev.yml
-    ```
-    
-2. The docker environment
+- **Tapenade** article: https://doi.org/10.1145/2450153.2450158
+- **Tapenade** source code: https://gitlab.inria.fr/tapenade/tapenade.git
 
-   A pre-filled in `Dockerfile` is available
-   ```bash
-   docker build --network=host -t smash-dev .
-   ```
-   ```bash
-   docker run smash-dev
-   ```
-  
-## Compile Adjoint and Tangent Linear Model
-
-Make sure java is installed (already done in docker environment)
-
-```bash
-make tap
-```
-    
-## Compile Code in Debug Mode
-    
-```bash
-make debug
-```
-
-## Install `smash` Library in Editor Mode
-
-The `smash` library is automatically installed in editor mode with the debug mode. Otherwise, once can switch to editor mode after compiling:
-
-```bash
-make library_edit
-```
+Whether you are managing water resources or conducting research on hydrological models, **smash** can provide an easy-to-use yet powerful solution for your work. See [this documentation](https://smash.recover.inrae.fr/getting_started/index.html) for the installation instructions.

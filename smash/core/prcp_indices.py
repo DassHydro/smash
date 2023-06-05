@@ -12,6 +12,8 @@ if TYPE_CHECKING:
 import numpy as np
 
 __all__ = ["PrcpIndicesResult"]
+
+
 class PrcpIndicesResult(dict):
     """
     Represents the precipitation indices result.
@@ -71,7 +73,11 @@ class PrcpIndicesResult(dict):
         if self.keys():
             m = max(map(len, list(self.keys()))) + 1
             return "\n".join(
-                [k.rjust(m) + ": " + repr(v) for k, v in sorted(self.items())]
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
             )
         else:
             return self.__class__.__name__ + "()"
