@@ -40,3 +40,4 @@ Boundary conditions checking
 The boundary condition checking previously used a tolerance of 1e-6, which caused issues in certain cases due to machine precision when passing from Python to Fortran via the f90wrapper.
 To address this problem, the tolerance has been decreased to 1e-3.
 
+See issue `#23 <https://github.com/DassHydro-dev/smash/issues/23>`__.
