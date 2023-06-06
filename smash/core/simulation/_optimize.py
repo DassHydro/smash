@@ -326,7 +326,7 @@ def _optimize_lbfgsb(
             # % bounds initialisation for jobs and jreg
             jobs_min = instance.output.cost_jobs
             jobs_max = instance.output._cost_jobs_initial
-            jreg_min = instance.output._cost_jreg_initial
+            jreg_min = 0.0 #minimum jreg value, instance.output._cost_jreg_initial > 0 if hard-smoothing
             jreg_max = instance.output.cost_jreg
 
             if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
@@ -391,7 +391,8 @@ def _optimize_lbfgsb(
             # % bounds update for jobs and jreg
             jobs_min = np.min(cost_jobs_arr)
             jreg_max = np.max(cost_jreg_arr)
-
+            jreg_min = np.min(cost_jreg_arr)
+            
             # % select the best wjreg based on the transformed lcurve and using our own method decribed in ...
             distance, wjreg_lcurve_opt = _compute_best_lcurve_weight(
                 cost_jobs_arr,
