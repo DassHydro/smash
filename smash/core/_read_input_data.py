@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.core.raster import read_windowed_raster_gdal
+
 from smash.core.utils import sparse_matrix_to_vector
 
 from smash.core._constant import RATIO_PET_HOURLY
@@ -21,25 +23,27 @@ from osgeo import gdal
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
-    ds = gdal.Open(path)
+    # ~ ds = gdal.Open(path)
 
-    transform = ds.GetGeoTransform()
+    # ~ transform = ds.GetGeoTransform()
 
-    xmin = transform[0]
-    ymax = transform[3]
-    xres = transform[1]
-    yres = -transform[5]
+    # ~ xmin = transform[0]
+    # ~ ymax = transform[3]
+    # ~ xres = transform[1]
+    # ~ yres = -transform[5]
 
-    col_off = (mesh.xmin - xmin) / xres
-    row_off = (ymax - mesh.ymax) / yres
+    # ~ col_off = (mesh.xmin - xmin) / xres
+    # ~ row_off = (ymax - mesh.ymax) / yres
 
-    band = ds.GetRasterBand(1)
+    # ~ band = ds.GetRasterBand(1)
 
-    nodata = band.GetNoDataValue()
+    # ~ nodata = band.GetNoDataValue()
 
-    arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
+    # ~ arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
 
-    arr = np.where(arr == nodata, -99, arr)
+    # ~ arr = np.where(arr == nodata, -99, arr)
+    
+    arr = read_windowed_raster_gdal(filename=path, smash_mesh=mesh, band=1, lacuna=-99.)
 
     return arr
 
