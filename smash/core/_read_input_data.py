@@ -150,7 +150,8 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             month=date_strf[4:6]
             day=date_strf[6:8]
             path = setup.prcp_directory + os.sep + year + os.sep + month + os.sep + day + os.sep
-            file_to_read = path + os.sep + setup.prcp_prefix + date_strf + "_" + date_strf + "." + setup.prcp_format
+            file_to_read=glob.glob(f'{path}*{date_strf}*.{setup.prcp_format}')[0]
+            #file_to_read = path + os.sep + setup.prcp_prefix + date_strf + "_" + date_strf + "." + setup.prcp_format
             
             if (os.path.exists(file_to_read)) :
                 
