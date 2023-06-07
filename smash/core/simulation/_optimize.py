@@ -275,10 +275,10 @@ def _optimize_lbfgsb(
                 instance.output,
             )
 
-            # % compute the best wjreg
+            # compute the best wjreg with the fast method
             instance.setup._optimize.wjreg = (
                 instance.output._cost_jobs_initial - instance.output.cost_jobs
-            ) / (instance.output.cost_jreg - instance._output._cost_jreg_initial)
+            ) / (instance.output.cost_jreg)
 
             instance.parameters = parameters_bgd.copy()
             instance.states = states_bgd.copy()
@@ -320,9 +320,9 @@ def _optimize_lbfgsb(
                 instance.states,
                 instance.output,
             )
-
+            
             n_cycle += 1
-
+            
             # % bounds initialisation for jobs and jreg
             jobs_min = instance.output.cost_jobs
             jobs_max = instance.output._cost_jobs_initial
@@ -330,17 +330,16 @@ def _optimize_lbfgsb(
             jreg_max = instance.output.cost_jreg
 
             if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
-                # % Computation of the best wjreg using the "fast" method
-                wjreg_opt = (jobs_max - jobs_min) / (jreg_max - jreg_min)
-
-                # % Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
+                # Computation of the best wjreg using the "fast" method
+                wjreg_opt = (jobs_max - jobs_min) / (jreg_max)
+                # Computation of the range of wjreg centered on wjreg_opt (4 points minimum)
                 wjreg_range = _compute_wjreg_range(wjreg_opt, nb_wjreg_lcurve)
 
             else:
                 wjreg_opt = 0.0
                 wjreg_range = np.empty(shape=0)
 
-            # % array initialisation
+            # array initialisation
             cost_arr = np.zeros(shape=wjreg_range.size + 1, dtype=np.float32)
             cost_arr[0] = instance.output.cost
 
@@ -353,7 +352,7 @@ def _optimize_lbfgsb(
             wjreg_arr = np.zeros(shape=wjreg_range.size + 1, dtype=np.float32)
             wjreg_arr[0] = instance.setup._optimize.wjreg
 
-            # % Doing the lcurve with wjreg_range for optimization
+            # Doing the lcurve with wjreg_range for optimization
             for i, wj in enumerate(wjreg_range):
                 instance.setup._optimize.wjreg = wj
 
@@ -390,6 +389,7 @@ def _optimize_lbfgsb(
 
             # % bounds update for jobs and jreg
             jobs_min = np.min(cost_jobs_arr)
+            jobs_max = np.max(cost_jobs_arr)
             jreg_max = np.max(cost_jreg_arr)
             jreg_min = np.min(cost_jreg_arr)
             
@@ -996,7 +996,7 @@ def _compute_best_lcurve_weight(
                 if distance[i] >= max_distance:
                     max_distance = distance[i]
                     wjreg_lcurve_opt = wjreg_arr[i]
-
+                
             else:
                 distance[i] = np.nan
     else:
