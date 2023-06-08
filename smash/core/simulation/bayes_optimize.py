@@ -399,16 +399,17 @@ def _compute_density(
     weights: np.ndarray | None,
 ):
     coord = np.dstack([active_mask[0], active_mask[1]])[0]
+    x, y = zip(*coord)
 
     for p in sample._problem["names"]:
         if algorithm == "l-bfgs-b":  # variational Bayes optim (HD-optim)
-            for c in coord:
+            for xi, yi in zip(x, y):
                 estimted_density = gaussian_kde(
-                    data[p][c[0], c[1]], bw_method=bw_method, weights=weights
-                )(data[p][c[0], c[1]])
+                    data[p][xi, yi], bw_method=bw_method, weights=weights
+                )(data[p][xi, yi])
 
                 density[p][
-                    c[0], c[1]
+                    xi, yi
                 ] = estimted_density  # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
 
         elif isinstance(algorithm, str):  # global Bayes optim (LD-optim)
@@ -418,11 +419,12 @@ def _compute_density(
                 u_dis, bw_method=bw_method, weights=weights
             )(u_dis)
 
-            density[p][*zip(*coord)] = estimted_density
-            # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
+            density[p][
+                x, y
+            ] = estimted_density  # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
 
         else:  # Bayes estim (LD-estim)
-            density[p][*zip(*coord)] = getattr(sample, "_" + p)
+            density[p][x, y] = getattr(sample, "_" + p)
 
 
 ### BAYES ESTIMATE AND L-CURVE
