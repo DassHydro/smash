@@ -1,12 +1,8 @@
-commit 18cc90156ca16b257692c48b7262d927ed4a8501
-Author: inoelloc <colleoni.francois@gmail.com>
-Date:   Thu Apr 13 12:17:42 2023 +0200
+commit 48a1f075653b16adfaa4fcdaa40a90ecd5271ae8
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Thu Jun 8 16:43:33 2023 +0200
 
-    FIX: Lower the tolerance to 1e-5 in multiple_run assertion (probably parallel issue)
-    
-    - Modified
-    
-            * test_simu.py: in np.allclose change atol from 1e-6 to 1e-5 in test_multiple_run
+    complete the release not
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
@@ -20,8 +16,8 @@ bayes_optimize.cost                           |NON MODIFIED
 bbox_mesh.flwacc                              |NON MODIFIED
 bbox_mesh.flwdir                              |NON MODIFIED
 event_seg.arr                                 |NON MODIFIED
-gen_samples.nor                               |MODIFIED
-gen_samples.uni                               |MODIFIED
+gen_samples.nor                               |NON MODIFIED
+gen_samples.uni                               |NON MODIFIED
 mesh_io.active_cell                           |NON MODIFIED
 mesh_io.area                                  |NON MODIFIED
 mesh_io.code                                  |NON MODIFIED
@@ -37,18 +33,18 @@ mesh_io.nrow                                  |NON MODIFIED
 mesh_io.path                                  |NON MODIFIED
 mesh_io.xmin                                  |NON MODIFIED
 mesh_io.ymax                                  |NON MODIFIED
-multiple_run.cost                             |ADDED
-multiple_run.qsim                             |ADDED
-mutiple_run.slc_1.cost                        |ADDED
-mutiple_run.slc_1.qsim                        |ADDED
-mutiple_run.slc_2.cost                        |ADDED
-mutiple_run.slc_2.qsim                        |ADDED
-mutiple_run.slc_3.cost                        |ADDED
-mutiple_run.slc_3.qsim                        |ADDED
-mutiple_run.slc_4.cost                        |ADDED
-mutiple_run.slc_4.qsim                        |ADDED
-mutiple_run.slc_5.cost                        |ADDED
-mutiple_run.slc_5.qsim                        |ADDED
+multiple_run.cost                             |NON MODIFIED
+multiple_run.qsim                             |NON MODIFIED
+mutiple_run.slc_1.cost                        |NON MODIFIED
+mutiple_run.slc_1.qsim                        |NON MODIFIED
+mutiple_run.slc_2.cost                        |NON MODIFIED
+mutiple_run.slc_2.qsim                        |NON MODIFIED
+mutiple_run.slc_3.cost                        |NON MODIFIED
+mutiple_run.slc_3.qsim                        |NON MODIFIED
+mutiple_run.slc_4.cost                        |NON MODIFIED
+mutiple_run.slc_4.qsim                        |NON MODIFIED
+mutiple_run.slc_5.cost                        |NON MODIFIED
+mutiple_run.slc_5.qsim                        |NON MODIFIED
 net_init.bias_layer_1                         |NON MODIFIED
 net_init.bias_layer_2                         |NON MODIFIED
 net_init.bias_layer_3                         |NON MODIFIED
@@ -62,8 +58,8 @@ optimize.distributed_l-bfgs-b.cost            |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cft      |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cost     |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cp       |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_fast.cost   |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_lcurve.cost |NON MODIFIED
+optimize.distributed_l-bfgs-b_reg_fast.cost   |MODIFIED
+optimize.distributed_l-bfgs-b_reg_lcurve.cost |MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost           |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost       |NON MODIFIED
 optimize.uniform_nelder-mead.cost             |NON MODIFIED
