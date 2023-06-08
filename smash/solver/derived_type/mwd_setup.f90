@@ -15,7 +15,7 @@
 !%      ``qobs_directory``         Observed discharge directory path                      (default: '...')
 !%      ``read_prcp``              Read precipitation                                     (default: .false.)
 !%      ``prcp_format``            Precipitation format                                   (default: 'tif')
-!%      ``prcp_fast_access``       Fast access with absolute path (YY/MM/dd/)             (default: .false.)
+!%      ``prcp_yymmdd_access``     Access with absolute path (YY/MM/dd/)                  (default: .false.)
 !%      ``prcp_conversion_factor`` Precipitation conversion factor                        (default: 1)
 !%      ``prcp_directory``         Precipiation directory path                            (default: '...')
 !%      ``read_pet``               Reap potential evapotranspiration                      (default: .false.)
@@ -124,7 +124,7 @@ module mwd_setup
 
         logical :: read_prcp = .false.
         character(lchar) :: prcp_format = "tif" !>f90w-char
-        logical :: prcp_fast_access = .false.
+        logical :: prcp_yymmdd_access = .false.
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..." !>f90w-char
 
