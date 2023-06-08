@@ -418,9 +418,8 @@ def _compute_density(
                 u_dis, bw_method=bw_method, weights=weights
             )(u_dis)
 
-            density[p][
-                *zip(*coord)
-            ] = estimted_density  # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
+            density[p][*zip(*coord)] = estimted_density
+            # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
 
         else:  # Bayes estim (LD-estim)
             density[p][*zip(*coord)] = getattr(sample, "_" + p)
