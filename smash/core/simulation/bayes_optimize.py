@@ -34,10 +34,6 @@ class BayesResult(dict):
         Rrepresenting the generated spatially uniform Model parameters/sates and the corresponding cost values after
         running the simulations on this dataset. The keys are 'cost' and the names of Model parameters/states considered.
 
-    density : dict
-        Representing the estimated distribution at pixel scale of the Model parameters/states after
-        running the simulations. The keys are the names of the Model parameters/states.
-
     lcurve : dict
         The optimization results on the regularization parameter if the L-curve approach is used. The keys are
 
@@ -98,12 +94,14 @@ def _bayes_computation(
     options: dict | None,
     ncpu: int,
 ) -> BayesResult:
-    # % Prior solution
+    # % prior solution
     prior_data = {}
+
+    # % density of data distribution
+    density = {}
 
     # % returns
     ret_data = {}
-    ret_density = {}
     ret_lcurve = {}
 
     # % verbose
@@ -137,7 +135,7 @@ def _bayes_computation(
 
         prior_data[p] = dat_p
 
-        ret_density[p] = np.ones(dat_p.shape)
+        density[p] = np.ones(dat_p.shape)
 
     # % Density compute
     active_mask = np.where(instance.mesh.active_cell == 1)
@@ -146,7 +144,7 @@ def _bayes_computation(
         sample,
         prior_data,
         active_mask,
-        ret_density,
+        density,
         algorithm,
         bw_method,
         weights,
@@ -164,7 +162,7 @@ def _bayes_computation(
             ost,
             active_mask,
             prior_data,
-            ret_density,
+            density,
             ret_lcurve,
             alpha,
         )
@@ -180,13 +178,11 @@ def _bayes_computation(
             ost,
             active_mask,
             prior_data,
-            ret_density,
+            density,
             alpha,
         )
 
-    return BayesResult(
-        dict(zip(["data", "density", "lcurve"], [ret_data, ret_density, ret_lcurve]))
-    )
+    return BayesResult(dict(zip(["data", "lcurve"], [ret_data, ret_lcurve])))
 
 
 def _bayes_message(sr: SampleResult, alpha: int | float | list, ncpu: int):
@@ -297,10 +293,14 @@ def _unit_simu(
 
     for name in sample._problem["names"]:
         if name in instance.setup._parameters_name:
-            res[name] = np.copy(getattr(instance.parameters, name))
+            res[name] = np.copy(
+                getattr(instance.parameters, name)
+            )  # must be copy here (TODO: change in V1.0.0)
 
         else:
-            res[name] = np.copy(getattr(instance.states, name))
+            res[name] = np.copy(
+                getattr(instance.states, name)
+            )  # must be copy here (TODO: change in V1.0.0)
 
     return res
 
@@ -401,29 +401,29 @@ def _compute_density(
     coord = np.dstack([active_mask[0], active_mask[1]])[0]
 
     for p in sample._problem["names"]:
-        dat_p = np.copy(data[p])
-
-        if algorithm == "l-bfgs-b":  # variational Bayes optim (HD)
+        if algorithm == "l-bfgs-b":  # variational Bayes optim (HD-optim)
             for c in coord:
-                density[p][c[0], c[1]] = gaussian_kde(
-                    dat_p[c[0], c[1]], bw_method=bw_method, weights=weights
-                )(dat_p[c[0], c[1]])
+                estimted_density = gaussian_kde(
+                    data[p][c[0], c[1]], bw_method=bw_method, weights=weights
+                )(data[p][c[0], c[1]])
 
-        else:
-            if isinstance(algorithm, str):
-                u_dis = np.mean(dat_p[active_mask], axis=0)
+                density[p][
+                    c[0], c[1]
+                ] = estimted_density  # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
 
-                uniform_density = gaussian_kde(
-                    u_dis, bw_method=bw_method, weights=weights
-                )(
-                    u_dis
-                )  # global Bayes optim (LD)
+        elif isinstance(algorithm, str):  # global Bayes optim (LD-optim)
+            u_dis = np.mean(data[p][active_mask], axis=0)
 
-            else:
-                uniform_density = getattr(sample, "_" + p)  # Bayes estim (LD)
+            estimted_density = gaussian_kde(
+                u_dis, bw_method=bw_method, weights=weights
+            )(u_dis)
 
-            for c in coord:
-                density[p][c[0], c[1]] = uniform_density
+            density[p][
+                *zip(*coord)
+            ] = estimted_density  # TODO: add this term in V1.0.0: * getattr(sample, "_" + p) # compute joint probability
+
+        else:  # Bayes estim (LD-estim)
+            density[p][*zip(*coord)] = getattr(sample, "_" + p)
 
 
 ### BAYES ESTIMATE AND L-CURVE
@@ -463,20 +463,17 @@ def _compute_param(
     ost: pd.Timestamp,
     active_mask: np.ndarray,
     prior_data: dict,
-    ret_density: dict,
+    density: dict,
     alpha: int | float,
 ) -> tuple:
     D_alp = []
 
-    J = np.copy(prior_data["cost"])
-
     var = {}
 
     for name in sample._problem["names"]:
-        U = np.copy(prior_data[name])
-        rho = np.copy(ret_density[name])
-
-        u, v, d = _compute_mean_U(U, J, rho, alpha, active_mask)
+        u, v, d = _compute_mean_U(
+            prior_data[name], prior_data["cost"], density[name], alpha, active_mask
+        )
 
         if name in instance.setup._parameters_name:
             setattr(instance.parameters, name, u)
@@ -510,7 +507,7 @@ def _lcurve_compute_param(
     ost: pd.Timestamp,
     active_mask: np.ndarray,
     prior_data: dict,
-    ret_density: dict,
+    density: dict,
     ret_lcurve: dict,
     alpha: list,
 ):
@@ -529,7 +526,7 @@ def _lcurve_compute_param(
             ost,
             active_mask,
             prior_data,
-            ret_density,
+            density,
             alpha_i,
         )
 
@@ -554,7 +551,7 @@ def _lcurve_compute_param(
         ost,
         active_mask,
         prior_data,
-        ret_density,
+        density,
         alpha_opt,
     )
 
