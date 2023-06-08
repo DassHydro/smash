@@ -121,7 +121,7 @@ def _index_containing_substring(the_list: list, substring: str):
     return -1
 
 
-def split_date(date_datetime):
+def _split_date(date_datetime):
     
     date_strf = date_datetime.strftime("%Y%m%d%H%M")
     
@@ -132,7 +132,7 @@ def split_date(date_datetime):
     return year,month,day
 
 
-def list_prcp_file(setup):
+def _list_prcp_file(setup):
     
     datetime_date_start=datetime.datetime.fromisoformat(setup.start_time)
     datetime_date_end=datetime.datetime.fromisoformat(setup.end_time)
@@ -144,8 +144,8 @@ def list_prcp_file(setup):
     
     list_file=list()
     
-    s_year,s_month,s_day=split_date(datetime_date_start)
-    e_year,e_month,e_day=split_date(datetime_date_end)
+    s_year,s_month,s_day=_split_date(datetime_date_start)
+    e_year,e_month,e_day=_split_date(datetime_date_end)
     
     if int(e_year)>int(s_year):
         
@@ -178,13 +178,13 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    
     if setup.prcp_fast_access==True :
         
-        files=list_prcp_file(setup)
+        files=_list_prcp_file(setup)
         
-        files = _adjust_left_files(files, date_range)
-    
+        if setup.prcp_format == "tif":
+            files = _adjust_left_files(files, date_range)
+        
     else :
         
         if setup.prcp_format == "tif":
@@ -196,42 +196,8 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         elif setup.prcp_format == "nc":
             files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
-    
     for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
         date_strf = date.strftime("%Y%m%d%H%M")
-
-        # ~ if setup.prcp_fast_access==True :
-            
-            # ~ year=date_strf[0:4]
-            # ~ month=date_strf[4:6]
-            # ~ day=date_strf[6:8]
-            # ~ path = setup.prcp_directory + os.sep + year + os.sep + month + os.sep + day + os.sep
-            # ~ file_to_read=glob.glob(f'{path}*{date_strf}*.{setup.prcp_format}')[0]
-            # ~ #file_to_read = path + os.sep + setup.prcp_prefix + date_strf + "_" + date_strf + "." + setup.prcp_format
-            
-            # ~ if (os.path.exists(file_to_read)) :
-                
-                # ~ matrix = (
-                    # ~ _read_windowed_raster(file_to_read, mesh) * setup.prcp_conversion_factor
-                # ~ )
-
-                # ~ if setup.sparse_storage:
-                    # ~ input_data.sparse_prcp[:, i] = sparse_matrix_to_vector(mesh, matrix)
-
-                # ~ else:
-                    # ~ input_data.prcp[..., i] = matrix
-                
-            # ~ else:
-                
-                # ~ if setup.sparse_storage:
-                    # ~ input_data.sparse_prcp[:, i] = -99.0
-
-                # ~ else:
-                    # ~ input_data.prcp[..., i] = -99.0
-                
-                # ~ warnings.warn(f"Missing precipitation file for date {date}: {file_to_read}")
-            
-        # ~ else:
             
         ind = _index_containing_substring(files, date_strf)
         

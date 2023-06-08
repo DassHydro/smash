@@ -380,13 +380,6 @@ def _optimize_lbfgsb(
                 cost_jreg_arr[i + 1] = instance.output.cost_jreg
                 wjreg_arr[i + 1] = instance.setup._optimize.wjreg
 
-                # % break if jobs does not minimize
-                # Bug, todo: if we break, we should reshape the array
-                # ~ if (instance.output.cost_jobs - jobs_min) / (
-                    # ~ jobs_max - jobs_min
-                # ~ ) >= 0.8:
-                    # ~ break
-
             # % bounds update for jobs and jreg
             jobs_min = np.min(cost_jobs_arr)
             jobs_max = np.max(cost_jobs_arr)
