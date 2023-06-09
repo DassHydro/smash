@@ -22,6 +22,12 @@ Compatibilities
 Deprecations
 ------------
 
+BayesResult object
+******************
+
+The ``density`` attribute of the :class:`smash.BayesResult` object has been deprecated in preparation for the upcoming release 1.0.0. 
+The other two attributes, ``data`` and ``lcurve``, are still available and can be used for further analysis. 
+
 ------------
 Improvements
 ------------
