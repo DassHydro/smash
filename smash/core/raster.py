@@ -16,72 +16,6 @@ if TYPE_CHECKING:
 
 ### GDAL RASTER FUNCTIONS
 
-def generate_polygon(bbox):
-    """
-    Generates a list of coordinates: [[x1,y1],[x2,y2],[x3,y3],[x4,y4],[x1,y1]]
-    """
-    return [[bbox[0],bbox[1]],
-             [bbox[2],bbox[1]],
-             [bbox[2],bbox[3]],
-             [bbox[0],bbox[3]],
-             [bbox[0],bbox[1]]]
-
-
-def pol_to_bounding_box(pol):
-    """
-    Receives list of coordinates: [[x1,y1],[x2,y2],...,[xN,yN]]
-    """
-    arr = pol_to_np(pol)
-    return BoundingBox(np.min(arr[:,0]),
-                       np.min(arr[:,1]),
-                       np.max(arr[:,0]),
-                       np.max(arr[:,1]))
-
-
-
-def xy_to_colrow(x, y, xmin, ymax, xres, yres):
-    
-    col = int((x - xmin) / xres)
-    row = int((ymax - y) / yres)
-    
-    return col, row
-
-
-def colrow_to_xy(col, row, xmin, ymax, xres, yres):
-    
-    x = int(col * xres + xmin)
-    y = int(ymax - row * yres)
-    
-    return x, y
-
-
-
-def trim_zeros_2D(array, shift_value=False):
-    
-    for ax in [0, 1]:
-        
-        mask = ~(array == 0).all(axis=ax)
-        
-        inv_mask = mask[::-1]
-        
-        start_ind = np.argmax(mask)
-        
-        end_ind = len(inv_mask) - np.argmax(inv_mask)
-        
-        if ax == 0:
-            scol, ecol = start_ind, end_ind
-            array = array[:, start_ind:end_ind]
-        else:
-            srow, erow = start_ind, end_ind
-            array = array[start_ind:end_ind, :]
-        
-    if shift_value:
-        return array, scol, ecol, srow, erow
-    else:
-        return array
-
-
-
 
 #just open the raster and return the dataset
 def gdal_raster_open(filename):
@@ -133,15 +67,21 @@ def read_windowed_raster_gdal(filename: str, smash_mesh: MeshDT, band=None, lacu
     geotransform=gdal_get_geotransform(dataset)
     
     if (geotransform['xres'] != smash_mesh.dx) or (geotransform['yres'] != smash_mesh.dx):
-        new_dataset=gdal_reproject_raster(dataset,smash_mesh.dx,smash_mesh.dx)
-        dataset=new_dataset
+        
+        #Attempt to generate a smaller dataset before doing the reprojection. However, it is slower..
+        # ~ window=gdal_smash_window_from_geotransform(geotransform,smash_mesh)
+        # ~ dataset=gdal.Translate('/vsimem/raster.tif', dataset, srcWin=[window['col_off'], window['row_off'], window["ncols"], window["nrows"]])
+        
+        dataset=gdal_reproject_raster(dataset,smash_mesh.dx,smash_mesh.dx)
+        geotransform=gdal_get_geotransform(dataset)
     
-    #si mesh larger than window: window=1,1,all,all
-    #compute window of smash-mesh and get xoffset and y offsets => offsets
+    #Todo:
+    #If smash mesh larger than window: window=1,1,all,all
+    #compute window of smash-mesh and get x_offset and y_offsets => offsets
     #pass this window to gdal_crop_dataset_to_ndarray(dataset=dataset,window=window,offsets=offset)
     #position the rainfall inside the mesh grid according offset !
     
-    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
+    window=gdal_smash_window_from_geotransform(geotransform,smash_mesh)
     
     if (band==None):
         array=gdal_crop_dataset_to_ndarray(dataset=dataset,window=window,lacuna=lacuna)
@@ -150,7 +90,181 @@ def read_windowed_raster_gdal(filename: str, smash_mesh: MeshDT, band=None, lacu
                 
     
     return array
+
+
+
+def gdal_reproject_raster(dataset,xres,yres):
+    """
+    Reproject the dataset raster accoding a new resolution in the x and y directions
     
+    Parameters
+    ----------
+    dataset : gdal object from gdal.Open()
+    xres: resolution in the x direction (columns) in meters
+    yres: resolution in the y direction (rows) in meters
+    
+    Returns
+    ----------
+    virtual_destination : a virtual gdal raster object at the new resolution
+    
+    Examples
+    ----------
+    new_dataset=gdal_reproject_raster(dataset,smash_mesh.cellsize,smash_mesh.cellsize)
+    """
+    
+    geotransform=gdal_get_geotransform(dataset)
+    
+    dataset_projection=dataset.GetProjection()
+    
+    new_dataset_geotranform=(geotransform['xleft'],float( xres ),0.0,geotransform['ytop'],0.0,- float( yres ))
+    
+    #Do we must distinguish cases smash_mesh.dx<=geotransform['xres','yres'] and smash_mesh.dx>geotransform['xres','yres'] ? i.e use ceiling or floor function instead of int ?
+    #At least it work for case smash_mesh.dx<=geotransform['xres','yres'] which is the moste common case for modelling.
+    New_X_Size=int(dataset.RasterXSize*geotransform['xres']/xres)
+    New_Y_Size=int(dataset.RasterYSize*geotransform['yres']/yres)
+    
+    in_memory_dataset=gdal.GetDriverByName('MEM')
+    
+    virtual_destination=in_memory_dataset.Create('',New_X_Size, New_Y_Size, dataset.RasterCount, dataset.GetRasterBand(1).DataType)
+        
+    ###########################################################
+    #Workaround for gdal bug which initialise array to 0 instead as the No_Data value
+    #Here we initialise the band manually with the nodata_value
+    band=virtual_destination.GetRasterBand(1) #Notice that band is a pointer to virtual_destination
+    band.SetNoDataValue(-9999)
+    Nodataarray = np.ndarray(shape=(New_Y_Size,New_X_Size))
+    Nodataarray.fill(-9999.0)
+    band.WriteArray(Nodataarray)
+    ###########################################################
+        
+    virtual_destination.SetGeoTransform(new_dataset_geotranform)
+    virtual_destination.SetProjection(dataset_projection)
+    gdal.ReprojectImage( dataset, virtual_destination, dataset_projection, dataset_projection, gdal.GRA_NearestNeighbour,WarpMemoryLimit=500.)
+    #WarpMemoryLimit=500. would probably increase the speed... but ... #https://gdal.org/programs/gdalwarp.html
+    #choice are : gdal.GRA_NearestNeighbour, gdal.GRA_Mode, gdal.GRA_Average ... Not tested https://gdal.org/api/gdalwarp_cpp.html#_CPPv4N15GDALResampleAlg11GRA_AverageE 
+    #Use osgeo.gdal.Warp instead of ReprojectImage offer much more option like multithreading ? https://gdal.org/api/python/osgeo.gdal.html#osgeo.gdal.Warp
+    
+    return virtual_destination
+
+
+#simply slice an array according a window
+def gdal_crop_dataset_to_array(dataset=object(),window={},band=1,lacuna=None):
+    """
+    Read the raster bands from gdal object and crop the array according the window
+    
+    Parameters
+    ----------
+    dataset : gdal object from gdal.Open()
+    window: window to crop (in grid unit)
+    band: the band number to be read. default is band number 1
+    lacuna: None or float64
+        
+    Returns
+    ----------
+    sliced_array : an array
+    
+    Examples
+    ----------
+    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
+    array=gdal_crop_dataset_to_array(dataset,window,band=1)
+    """
+    
+    dataset_band=dataset.GetRasterBand(band)
+    
+    sliced_array=dataset_band.ReadAsArray(window['col_off'], window['row_off'], window["ncols"], window["nrows"])
+    
+    array_float=sliced_array.astype('float64')
+    
+    #Lacuna treatment here
+    if (isinstance(lacuna,float)):
+        Nodata=dataset_band.GetNoDataValue()
+        mask=np.where(sliced_array==Nodata)
+        array_float[mask]=lacuna 
+    
+    return array_float
+
+
+
+#simply slice an array according a window
+def gdal_crop_dataset_to_ndarray(dataset=object(),window={},lacuna=None):
+    """
+    Read the raster bands from gdal object and crop the array according the window
+    
+    Parameters
+    ----------
+    dataset : gdal object from gdal.Open()
+    window: window to crop (in grid unit)
+    lacuna: None or float64
+    
+    Returns
+    ----------
+    dictionnary : a dictionary with ndarrays (depending the number of bands)
+    
+    Examples
+    ----------
+    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
+    array=gdal_crop_dataset_to_array(dataset,window)
+    """
+    
+    dictionnary={}
+    nb_dataset=dataset.RasterCount
+    for index in range(1,nb_dataset+1):
+        
+        dataset_band=dataset.GetRasterBand(index)
+        
+        sliced_array=dataset_band.ReadAsArray(window['col_off'], window['row_off'], window["ncols"], window["nrows"])
+        
+        array_float=sliced_array.astype('float64')
+        
+        #Lacuna treatment here
+        if (isinstance(lacuna,float)):
+            Nodata=dataset_band.GetNoDataValue()
+            mask=np.where(sliced_array==Nodata)
+            array_float[mask]=lacuna 
+        
+        dictionnary.update({index:array_float})
+    
+    return dictionnary
+
+
+#write a new data set according a name, a meta description and bands as a list of array
+def gdal_write_dataset(filename,dataset,format='Gtiff'):
+    """
+    write a gdal object to a new file
+    
+    Parameters
+    ----------
+    filename : path to the new target file
+    dataset : gdal object from gdal.Open()
+    format: optional, raster format, default is Gtiff
+            
+    Returns
+    ----------
+    none
+    
+    Examples
+    ----------
+    virtual_dataset=gdal_reproject_raster(dataset,500.,500.)
+    gdal_write_dataset('outfile',virtual_dataset)
+    """
+    width = dataset.RasterXSize
+    height = dataset.RasterYSize
+    
+    driver = gdal.GetDriverByName( format )
+    dst_ds = driver.Create(filename, xsize=width, ysize=height,bands=dataset.RasterCount, eType=dataset.GetRasterBand(1).DataType)
+    
+    dst_ds.SetGeoTransform(dataset.GetGeoTransform())
+    dst_ds.SetProjection(dataset.GetProjection())
+    
+    data = dataset.ReadAsArray(0,0,width,height)
+    
+    # ~ for index in range(1,dataset.RasterCount+1):
+        # ~ dst_ds.GetRasterBand(index).WriteArray(data[index-1])
+    
+    dst_ds.WriteRaster(0,0,width,height,data.tobytes(),width,height,band_list=list(range(1,dataset.RasterCount+1)))
+    
+    #destination=dataset.CreateCopy(filename, dataset, strict=0,options=["TILED=YES", "COMPRESS=PACKBITS"])
+    dst_ds=None
 
 
 def gdal_get_geotransform(dataset):
@@ -180,22 +294,19 @@ def gdal_get_geotransform(dataset):
     """
     
     transform = dataset.GetGeoTransform()
-    xmin = transform[0]
-    ymax = transform[3]
-    xres = transform[1]
-    yres = -transform[5]
-    geotransform={'xleft':xmin,'xres':xres, 'ytop':ymax, 'yres':yres}
+    geotransform={'xleft':transform[0],'xres':transform[1], 'ytop':transform[3], 'yres':-transform[5]}
+    
     return geotransform
 
 
 
-def gdal_smash_window_from_geotransform(dataset,smash_mesh):
+def gdal_smash_window_from_geotransform(geotransform,smash_mesh):
     """
-    Compute the dataset array window according the Smash mesh
+    Compute the dataset array window (from the geotransform) according the Smash mesh
     
     Parameters
     ----------
-    dataset : gdal object from gdal.Open()
+    geotransform : geotransform computed from a gdal dataset
     smash_mesh : Smash mesh object model.mesh
     
     Returns
@@ -204,12 +315,17 @@ def gdal_smash_window_from_geotransform(dataset,smash_mesh):
     
     Examples
     ----------
-    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
-    """
+    dataset = gdal_raster_open(filename)
     geotransform=gdal_get_geotransform(dataset)
+    window=gdal_smash_window_from_geotransform(geotransform,smash_mesh)
+    """
     
     col_off = (smash_mesh.xmin - geotransform['xleft']) / geotransform['xres']
     row_off = (geotransform['ytop'] - smash_mesh.ymax) / geotransform['yres']
+    
+    #If smash_mesh.dx==geotransform['xres','yres'] no problem !
+    #It works for case : smash_mesh.dx!=geotransform['xres','yres'] 
+    #Do we must distinguish case smash_mesh.dx<=geotransform['xres','yres'] and smash_mesh.dx>geotransform['xres','yres'] ? i.e use ceiling or floor function instead of int ?
     
     window={"row_off":row_off,'col_off':col_off,'nrows':int(smash_mesh.nrow*smash_mesh.dx/geotransform['yres']),'ncols':int(smash_mesh.ncol*smash_mesh.dx/geotransform['xres'])}
     
@@ -352,329 +468,4 @@ def crop_array(array,window):
     """
     crop_array[window['col_off']:window['col_off']+window["ncols"], window['row_off']:window['row_off']+window["nrows"]]
     return crop_array
-
-
-
-def gdal_reproject_raster(dataset,xres,yres):
-    """
-    Reproject the dataset raster accoding a new resolution in the x and y directions
-    
-    Parameters
-    ----------
-    dataset : gdal object from gdal.Open()
-    xres: resolution in the x direction (columns) in meters
-    yres: resolution in the y direction (rows) in meters
-    
-    Returns
-    ----------
-    virtual_destination : a virtual gdal raster object at the new resolution
-    
-    Examples
-    ----------
-    new_dataset=gdal_reproject_raster(dataset,smash_mesh.cellsize,smash_mesh.cellsize)
-    """
-    dataset_geotrans = dataset.GetGeoTransform()
-    dataset_projection=dataset.GetProjection()
-    
-    new_dataset_geotranform=(dataset_geotrans[0],float( xres ),0.0,dataset_geotrans[3],0.0,- float( yres ))
-    
-    in_memory_dataset=gdal.GetDriverByName('MEM')
-    
-    geotransform=gdal_get_geotransform(dataset)
-    New_X_Size=int(dataset.RasterXSize*geotransform['xres']/xres)
-    New_Y_Size=int(dataset.RasterYSize*geotransform['yres']/yres)
-    
-    virtual_destination=in_memory_dataset.Create('',New_X_Size, New_Y_Size, dataset.RasterCount, dataset.GetRasterBand(1).DataType)
-    ###########################################################
-    #Workaround for gdal bug which initialise array to 0 instead as the No_Data value
-    #Here we initialise the band manually with the nodata_value
-    band=virtual_destination.GetRasterBand(1)
-    band.SetNoDataValue(-9999)
-    Nodataarray = np.ndarray(shape=(New_Y_Size,New_X_Size))
-    Nodataarray.fill(-9999.0)
-    band.WriteArray(Nodataarray)
-    ###########################################################
-    virtual_destination.SetGeoTransform(new_dataset_geotranform)
-    virtual_destination.SetProjection(dataset_projection)
-    gdal.ReprojectImage( dataset, virtual_destination, dataset_projection, dataset_projection, gdal.GRA_NearestNeighbour)
-    
-    return virtual_destination
-
-
-
-#simply slice an array according a window
-def gdal_crop_dataset_to_array(dataset=object(),window={},band=1,lacuna=None):
-    """
-    Read the raster bands from gdal object and crop the array according the window
-    
-    Parameters
-    ----------
-    dataset : gdal object from gdal.Open()
-    window: window to crop (in grid unit)
-    band: the band number to be read. default is band number 1
-    lacuna: None or float64
-        
-    Returns
-    ----------
-    sliced_array : an array
-    
-    Examples
-    ----------
-    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
-    array=gdal_crop_dataset_to_array(dataset,window,band=1)
-    """
-        
-    sliced_array=dataset.GetRasterBand(band).ReadAsArray(window['col_off'], window['row_off'], window["ncols"], window["nrows"])
-    
-    array_float=sliced_array.astype('float64')
-    #Lacuna treatment here
-    Nodata=dataset.GetRasterBand(band).GetNoDataValue()
-    if (lacuna!=None):
-        mask=np.where(sliced_array==Nodata)
-        array_float[mask]=lacuna 
-    
-    return array_float
-
-
-
-#simply slice an array according a window
-def gdal_crop_dataset_to_ndarray(dataset=object(),window={},lacuna=None):
-    """
-    Read the raster bands from gdal object and crop the array according the window
-    
-    Parameters
-    ----------
-    dataset : gdal object from gdal.Open()
-    window: window to crop (in grid unit)
-    lacuna: None or float64
-    
-    Returns
-    ----------
-    dictionnary : a dictionary with ndarrays (depending the number of bands)
-    
-    Examples
-    ----------
-    window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
-    array=gdal_crop_dataset_to_array(dataset,window)
-    """
-    dictionnary={}
-    for index in range(1,dataset.RasterCount+1):
-        sliced_array=dataset.GetRasterBand(index).ReadAsArray(window['col_off'], window['row_off'], window["ncols"], window["nrows"])
-        
-        array_float=sliced_array.astype('float64')
-        #Lacuna treatment here
-        Nodata=dataset.GetRasterBand(index).GetNoDataValue()
-        if (lacuna!=None):
-            mask=np.where(sliced_array==Nodata)
-            array_float[mask]=lacuna 
-        
-        dictionnary.update({index:array_float})
-    
-    return dictionnary
-
-
-#write a new data set according a name, a meta description and bands as a list of array
-def gdal_write_dataset(filename,dataset,format='Gtiff'):
-    """
-    write a gdal object to a new file
-    
-    Parameters
-    ----------
-    filename : path to the new target file
-    dataset : gdal object from gdal.Open()
-    format: optional, raster format, default is Gtiff
-            
-    Returns
-    ----------
-    none
-    
-    Examples
-    ----------
-    virtual_dataset=gdal_reproject_raster(dataset,500.,500.)
-    gdal_write_dataset('outfile',virtual_dataset)
-    """
-    width = dataset.RasterXSize
-    height = dataset.RasterYSize
-    
-    driver = gdal.GetDriverByName( format )
-    dst_ds = driver.Create(filename, xsize=width, ysize=height,bands=dataset.RasterCount, eType=dataset.GetRasterBand(1).DataType)
-    
-    dst_ds.SetGeoTransform(dataset.GetGeoTransform())
-    dst_ds.SetProjection(dataset.GetProjection())
-    
-    data = dataset.ReadAsArray(0,0,width,height)
-    
-    # ~ for index in range(1,dataset.RasterCount+1):
-        # ~ dst_ds.GetRasterBand(index).WriteArray(data[index-1])
-    
-    dst_ds.WriteRaster(0,0,width,height,data.tobytes(),width,height,band_list=list(range(1,dataset.RasterCount+1)))
-    
-    #destination=dataset.CreateCopy(filename, dataset, strict=0,options=["TILED=YES", "COMPRESS=PACKBITS"])
-    dst_ds=None
-
-
-
-
-### ASCII GRID Functions
-
-
-def init_asciigrid(source={}):
-    """
-    initialise a empty asciigrid dictionnary
-    
-    Parameters
-    ----------
-    none
-            
-    Returns
-    ----------
-    dict, with default properties of a asciigrid
-    
-    """
-    if (source.__len__()==0):
-        
-        asciigrid = {}
-        asciigrid["ncols"] = 0
-        asciigrid["nrows"] = 0
-        asciigrid["xllcorner"] = 0.0
-        asciigrid["yllcorner"] = 0.0
-        asciigrid["cellsize"] = 0.0
-        asciigrid["NODATA_value"] = -99.0
-        asciigrid["data"] = np.full(shape=(0,0),fill_value=-99.0)
-        asciigrid["extend"] = [0.0, 0.0, 0.0, 0.0]
-    
-    else:
-        asciigrid=source.copy()
-        asciigrid["data"] = np.full(shape=(source['nrows'],source['ncols']),fill_value=source['NODATA_value'])
-    
-    return asciigrid
-
-
-
-def read_asciigrid(filename):
-    """
-    Read an asciigrid file
-    
-    Parameters
-    ----------
-    filename: path to the file
-            
-    Returns
-    ----------
-    dict, containing the asciigrid, data and its properties
-    
-    """
-    asciigrid = init_asciigrid()
-    if os.path.exists(filename):
-        with open(filename, 'r') as input_file:
-            header = input_file.readlines()[:6]
-            header = [item.strip().split()[1] for item in header]
-        
-        asciigrid["ncols"] = int(header[0])
-        asciigrid["nrows"] = int(header[1])
-        asciigrid["xllcorner"] = float(header[2])
-        asciigrid["yllcorner"] = float(header[3])
-        asciigrid["cellsize"] = float(header[4])
-        asciigrid["NODATA_value"] = float(header[1])
-        asciigrid["data"] = np.loadtxt(filename, dtype=float, skiprows=6)
-        asciigrid["extend"] = [
-            asciigrid["xllcorner"], asciigrid["xllcorner"] + asciigrid["ncols"] * asciigrid["cellsize"],
-            asciigrid["yllcorner"], asciigrid["yllcorner"] + asciigrid["nrows"] * asciigrid["cellsize"]]
-    else:
-        print(filename + " does not exist")
-    
-    return asciigrid
-
-
-def set_asciigrid(data, ncols, nrows, xllcorner, yllcorner, cellsize, NODATA_value):
-    """
-    Set an asciigrid with data
-    
-    Parameters
-    ----------
-    data: numpy array containing the data (a matrix)
-    ncols : integer, number of column
-    nrows : integer, number of rows
-    xllcorner : latitue coordinate of the lower left corner
-    yllcorner : longitude coordinate of the lower left corner
-    cellsize : cell resolution
-    NODATA_value : value of the non-data value
-    
-    Returns
-    ----------
-    dict, containing the asciigrid, data and its properties
-    
-    """
-    asciigrid = init_asciigrid()
-    extend = [xllcorner, xllcorner + ncols * cellsize, yllcorner, yllcorner + nrows * cellsize]
-    asciigrid = {"data": data,
-                 "ncols": ncols,
-                 "nrows": nrows,
-                 "xllcorner": xllcorner,
-                 "yllcorner": yllcorner,
-                 "cellsize": cellsize,
-                 "NODATA_value": NODATA_value,
-                 "extend": extend}
-    return asciigrid
-
-
-def diff_asciigrid(grid1, grid2):
-    """
-    Compute the difference of 2 asccii grid
-    
-    Parameters
-    ----------
-    grid1: asciigrid dict
-    grid2 : asciigrid dict
-    
-    Returns
-    ----------
-    asciigrid dict 1 - asciigrid dict 2
-    
-    """
-    asciigrid = init_asciigrid()
-    if grid1["extend"] == grid2["extend"]:
-        asciigrid = {"data": grid1["data"] - grid2["data"],
-                     "ncols": grid1["ncols"],
-                     "nrows": grid1["nrows"],
-                     "xllcorner": grid1["xllcorner"],
-                     "yllcorner": grid1["yllcorner"],
-                     "cellsize": grid1["cellsize"],
-                     "NODATA_value": grid1["NODATA_value"],
-                     "extend": grid1["extend"]}
-    else:
-        print("error: grids extend are different.")
-    
-    return asciigrid
-
-
-def write_asciigrid(filename,asciigrid):
-    """
-    Write an asciigrid dict to a file
-    
-    Parameters
-    ----------
-    filename: path to a output filename
-    asciigrid : dict containing the asciigrid
-    
-    Returns
-    ----------
-    None
-    
-    """
-    header = (
-        f"NCOLS {asciigrid['ncols']} \nNROWS {asciigrid['nrows']}"
-        f"\nXLLCENTER {asciigrid['xllcorner']} \nYLLCENTER {asciigrid['yllcorner']} \nCELLSIZE {asciigrid['cellsize']}\nNODATA_value {asciigrid['NODATA_value']}\n"
-    )
-    
-    
-    head,tail=os.path.split(filename)
-    if (len(head)!=0):
-        if not (os.path.exists(head)):
-            os.makedirs(head)
-    
-    with open(filename, "w") as f:
-        f.write(header)
-        np.savetxt(f, asciigrid['data'], "%5.2f")
-
 

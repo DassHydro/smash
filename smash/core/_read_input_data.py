@@ -22,32 +22,6 @@ import datetime
 from osgeo import gdal
 
 
-def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
-    # ~ ds = gdal.Open(path)
-
-    # ~ transform = ds.GetGeoTransform()
-
-    # ~ xmin = transform[0]
-    # ~ ymax = transform[3]
-    # ~ xres = transform[1]
-    # ~ yres = -transform[5]
-
-    # ~ col_off = (mesh.xmin - xmin) / xres
-    # ~ row_off = (ymax - mesh.ymax) / yres
-
-    # ~ band = ds.GetRasterBand(1)
-
-    # ~ nodata = band.GetNoDataValue()
-
-    # ~ arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
-
-    # ~ arr = np.where(arr == nodata, -99, arr)
-    
-    arr = read_windowed_raster_gdal(filename=path, smash_mesh=mesh, band=1, lacuna=-99.)
-
-    return arr
-
-
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     st = pd.Timestamp(setup.start_time)
 
@@ -146,7 +120,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             matrix = (
-                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.) * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -212,7 +186,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        _read_windowed_raster(files[ind], mesh)
+                        read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.)
                         * setup.pet_conversion_factor
                     )
 
@@ -257,7 +231,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             else:
                 matrix = (
-                    _read_windowed_raster(files[ind], mesh)
+                    read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.)
                     * setup.pet_conversion_factor
                 )
 
@@ -288,4 +262,4 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-            input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
+            input_data.descriptor[..., i] = read_windowed_raster_gdal(filename=path[0], smash_mesh=mesh, band=1, lacuna=-99.)
