@@ -1,4 +1,5 @@
 from smash.core.model import Model
+from smash.core.model_dev import Model_dev
 from smash.core.net import Net
 from smash.core.signatures import SignResult, SignSensResult
 from smash.core.prcp_indices import PrcpIndicesResult
@@ -25,6 +26,7 @@ def __getattr__(name):
 
 __all__ = [
     "Model",
+    "Model_dev",
     "Net",
     "SignResult",
     "SignSensResult",

@@ -3,8 +3,7 @@ from __future__ import annotations
 import numpy as np
 import pathlib
 import os
-
-NAME_DT = ["setup", "mesh", "input_data", "parameters", "states", "output"]
+import re
 
 
 def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
@@ -222,35 +221,29 @@ def sed_private_property(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/ret.append.*{attr}\\b/d" {pyf}')
 
 
-# % DEPRECATION: Copy method will be available in a future version of f90wrap
-def sed_copy_derived_type(pyf: pathlib.PosixPath):
-    name = -1
+def sed_derived_type_procedure(pyf: pathlib.PosixPath):
+    """
+    Add to class method Fortran type-bound procedure.
+    """
 
-    for n in NAME_DT:
-        if n in pyf.stem.lower():
-            name = n
+    content = open(pyf, "r").read()
+    procedure = {}
+    class_matches = re.findall(
+        '@f90wrap.runtime.register_class\("solver.(\w+)', content
+    )
 
-    if name != -1:
-        class_name = "class " + name
-        ind_cn = np.inf
+    for cm in class_matches:
+        pattern = r"def ({0}_\w+\([\w\s,]*\)):".format(cm.lower())
+        procedure[cm] = re.findall(pattern, content)
 
-        with open(pyf) as f:
-            for ind_l, l in enumerate(f):
-                if class_name in l.lower():
-                    ind_cn = ind_l
-
-                if "@property" in l:
-                    ind_p = ind_l
-
-                    if ind_p > ind_cn:
-                        os.system(
-                            f'sed -i "{ind_p}s/ /\\n\tdef copy(self):\\n\t\treturn copy_{name}(self)\\n/" {pyf}'
-                        )
-                        os.system(
-                            f'sed -i "/from __future__/a \\from smash.solver._mw_derived_type_copy import copy_{name}" {pyf}'
-                        )
-
-                        break
+    for key, value in procedure.items():
+        if value:
+            pattern = f"class {key}(f90wrap.runtime.FortranDerivedType)"
+            for vle in value:
+                nvle = re.search(r"{0}_(.*)".format(key.lower()), vle).group(1)
+                os.system(
+                    f'sed -i "/{pattern}/a \\\tdef {nvle}:\\n\\t\\treturn {vle}" {pyf}'
+                )
 
 
 def sed_finalise_method(pyf: pathlib.PosixPath):
@@ -289,7 +282,7 @@ if __name__ == "__main__":
 
         sed_private_property(pyf, flagged_attr["private"])
 
-        sed_copy_derived_type(pyf)
+        sed_derived_type_procedure(pyf)
 
         sed_finalise_method(pyf)
 

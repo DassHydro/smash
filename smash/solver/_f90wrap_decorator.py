@@ -1,8 +1,10 @@
+from __future__ import annotations
+
+from smash.solver import _solver
+
 import functools
 import numpy as np
 import f90wrap
-
-from smash.solver import _solver
 
 
 def char_getter_handler(func):
