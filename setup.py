@@ -11,7 +11,6 @@ setup(
     packages=[
         "smash",
         "smash.core",
-        "smash.core.simulation",
         "smash.solver",
         "smash.mesh",
         "smash.io",
@@ -22,7 +21,7 @@ setup(
         "smash.tests.io",
         "smash.tests.dataset",
     ],
-    package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_meshing*.so"]},
+    package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_mesh*.so"]},
     include_package_data=True,
     install_requires=[
         "f90wrap",

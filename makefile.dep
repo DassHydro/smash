@@ -7,51 +7,25 @@ f77: \
  obj/lbfgsb.o \
 
 f90: \
- obj/md_constant_dev.o \
  obj/md_constant.o \
- obj/mwd_control_dev.o \
+ obj/mwd_control.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
- obj/mwd_input_data.o \
- obj/mwd_parameters.o \
- obj/mwd_setup_dev.o \
- obj/mwd_mesh_dev.o \
- obj/mwd_response_dev.o \
- obj/mwd_physio_data_dev.o \
- obj/mwd_opr_states_dev.o \
- obj/mwd_output_dev.o \
- obj/mwd_opr_parameters_dev.o \
- obj/mwd_parameters_dev.o \
- obj/mwd_atmos_data_dev.o \
- obj/mwd_input_data_dev.o \
- obj/mwd_states.o \
+ obj/mwd_response.o \
+ obj/mwd_physio_data.o \
+ obj/mwd_opr_states.o \
  obj/mwd_output.o \
+ obj/mwd_opr_parameters.o \
+ obj/mwd_parameters.o \
+ obj/mwd_atmos_data.o \
+ obj/mwd_input_data.o \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
- obj/md_gr_operator_dev.o \
  obj/md_routing_operator.o \
- obj/md_vic_operator.o \
  obj/md_forward_structure.o \
- obj/m_array_creation.o \
- obj/m_array_creation_dev.o \
- obj/m_array_manipulation.o \
- obj/m_sort.o \
- obj/m_statistic.o \
- obj/mw_derived_type_copy.o \
- obj/mw_derived_type_update.o \
- obj/mw_mask.o \
- obj/mw_mask_dev.o \
- obj/mw_sparse_storage.o \
- obj/mw_interception_store.o \
- obj/mw_forcing_statistic.o \
- obj/mw_sparse_storage_dev.o \
- obj/mw_interception_capacity_dev.o \
- obj/mw_atmos_statistic_dev.o \
- obj/mwd_parameters_manipulation.o \
- obj/mwd_states_manipulation.o \
- obj/mwd_cost.o \
- obj/mw_multiple_run.o \
- obj/mw_optimize.o \
- obj/mw_adjoint_test.o \
- obj/forward_db.o \
  obj/forward.o \
+ obj/m_array_creation.o \
+ obj/mw_mask.o \
+ obj/mw_sparse_storage.o \
+ obj/mw_interception_capacity.o \
+ obj/mw_atmos_statistic.o \

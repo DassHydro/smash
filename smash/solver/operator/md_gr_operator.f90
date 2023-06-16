@@ -1,12 +1,12 @@
-!%      This module `md_gr_operator` encapsulates all SMASH GR operators.
-!%      This module is differentiated.
+!%      (MD) Module Differentiated.
 !%
-!%      contains
+!%      Subroutine
+!%      ----------
 !%
-!%      [1] gr_interception
-!%      [2] gr_production
-!%      [3] gr_exchange
-!%      [4] gr_transfer
+!%      - gr_interception
+!%      - gr_production
+!%      - gr_exchange
+!%      - gr_transfer
 
 module md_gr_operator
 

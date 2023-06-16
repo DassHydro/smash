@@ -29,21 +29,23 @@ INC := -I$(BUILD_DIR)
 MOD := -J$(BUILD_DIR)
 
 #% Files
-SOLVER_FILES := $(SOLVER_DIR)/*/*.$(C_EXT) $(SOLVER_DIR)/*/*.$(F77_EXT) $(SOLVER_DIR)/*/*.$(F90_EXT)
 OBJ_FILES := $(BUILD_DIR)/*.$(OBJ_EXT)
+SOLVER_FILES := $(SOLVER_DIR)/*/*.$(C_EXT) $(SOLVER_DIR)/*/*.$(F77_EXT) $(SOLVER_DIR)/*/*.$(F90_EXT)
 SOLVER_WRAP_FILES := $(SOLVER_DIR)/*/mwd_*.$(F90_EXT) $(SOLVER_DIR)/*/mw_*.$(F90_EXT)
-F90WRAP_FILES := f90wrap*.$(F90_EXT)
+SOLVER_F90WRAP_FILES := f90wrap*.$(F90_EXT)
+MESH_WRAP_FILES := $(MESH_DIR)/mw_*.$(F90_EXT)
 
-#% f90wrap shared lib name
-SHARED_LIB := solver
+#% Shared lib name
+SOLVER_SHARED_LIB := solver
+MESH_SHARED_LIB := mesh
 
 #% Classic `make` call
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
-all: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library
+all: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library
 
 #% Debug mode `make debug` [Dev]
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
-debug: directories c f77 f90 f90wrap f2py-f90wrap f2py-meshing finalize library-edit
+debug: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library-edit
 
 #% Make directories
 directories:
@@ -72,15 +74,15 @@ $(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F90_EXT)
 f90wrap:
 	rm -rf $(BUILD_DIR)/f90wrap*
 	cd $(F90WRAP_UTILS_DIR) ; python3 gen_py_mod_names.py
-	f90wrap -m $(SHARED_LIB) $(SOLVER_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
+	f90wrap -m $(SOLVER_SHARED_LIB) $(SOLVER_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
 
 #% Make f2py-f90wrap .so library
 f2py-f90wrap:
-	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops -ffast-math' --build-dir . -m _$(SHARED_LIB) $(OBJ_FILES) $(F90WRAP_FILES)
+	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops' --build-dir . -m _$(SOLVER_SHARED_LIB) $(OBJ_FILES) $(SOLVER_F90WRAP_FILES)
 
 #% Make f2py-meshing .so library
-f2py-meshing:
-	cd $(MESH_DIR) ; python3 -m numpy.f2py -c -m _mw_meshing mw_meshing.f90 skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
+f2py-mesh:
+	python3 -m numpy.f2py -c -m _$(MESH_SHARED_LIB) $(MESH_WRAP_FILES) skip: mask_upstream_cells fill_nipd downstream_cell_flwacc argsort_i argsort_r
 
 #% Make python library (pip3)
 library:
@@ -94,9 +96,10 @@ library-edit:
 finalize:
 	mv f90wrap_*.f90 $(SOLVER_DIR)/f90wrap/.
 	mv f90wrap_*.o $(BUILD_DIR)/.
-	mv $(SHARED_LIB)/_mw* $(SOLVER_DIR)/.
-	mv _$(SHARED_LIB)* $(SOLVER_DIR)/.
-	rm -rf $(SHARED_LIB)
+	mv $(SOLVER_SHARED_LIB)/_mw* $(SOLVER_DIR)/.
+	mv _$(SOLVER_SHARED_LIB)* $(SOLVER_DIR)/.
+	mv _$(MESH_SHARED_LIB)* $(MESH_DIR)/.
+	rm -rf $(SOLVER_SHARED_LIB)
 	cd $(F90WRAP_UTILS_DIR) ; python3 finalize_f90wrap.py
 
 #% Generate tapenade file (adjoint and tangent linear models)
@@ -130,12 +133,12 @@ clean:
 	@rm -rf src.*
 	@rm -rf *egg-info
 	@rm -rf $(SOLVER_DIR)/_mw*
-	@rm -rf $(SOLVER_DIR)/_$(SHARED_LIB)*
+	@rm -rf $(SOLVER_DIR)/_$(SOLVER_SHARED_LIB)*
 	@rm -rf $(SOLVER_DIR)/f90wrap
-	@rm -rf $(MESH_DIR)/*.so
+	@rm -rf $(MESH_DIR)/_$(MESH_SHARED_LIB)*.so
 	@rm -rf build
 
-.PHONY: all debug directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-meshing library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
+.PHONY: all debug directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-mesh library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
 
 #% Include 'c' 'f77' and 'f90' targets
 include makefile.dep

@@ -1,83 +1,85 @@
-!%      This module `mwd_mesh` encapsulates all SMASH mesh.
-!%      This module is wrapped and differentiated.
+!%      (MWD) Module Wrapped and Differentiated.
 !%
-!%      MeshDT type:
+!%      Type
+!%      ----
 !%
-!%      </> Public
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``dx``                   Solver spatial step                 [m]
-!%      ``nrow``                 Number of row
-!%      ``ncol``                 Number of column
-!%      ``ng``                   Number of gauge
-!%      ``nac``                  Number of active cell
-!%      ``xmin``                 CRS x mininimum value               [m]
-!%      ``ymax``                 CRS y maximum value                 [m]
-!%      ``flwdir``               Flow directions
-!%      ``flwacc``               Flow accumulation                   [nb of cell]
-!%      ``path``                 Solver path
-!%      ``active_cell``          Mask of active cell
-!%      ``flwdst``               Flow distances from main outlet(s)  [m]
-!%      ``gauge_pos``            Gauge position
-!%      ``code``                 Gauge code
-!%      ``area``                 Drained area at gauge position      [m2]
+!%      - MeshDT
 !%
-!%      </> Private
-!%      ======================== =======================================
-!%      `Variables`              Description
-!%      ======================== =======================================
-!%      ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
-!%      ``local_active_cell``    Mask of local active cell (\\in active_cell)
-!%      ======================== =======================================
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``xres``                 X cell size derived from flwdir                               [m / degree]
+!%          ``yres``                 Y cell size derived from flwdir                               [m / degree]
+!%          ``xmin``                 X mininimum value derived from flwdir                         [m / degree]
+!%          ``ymax``                 Y maximum value derived from flwdir                           [m / degree]
+!%          ``nrow``                 Number of rows
+!%          ``ncol``                 Number of columns
+!%          ``dx``                   X cells size (meter approximation)                            [m]
+!%          ``dy``                   Y cells size (meter approximation)                            [m]
+!%          ``flwdir``               Flow directions
+!%          ``flwacc``               Flow accumulation                                             [m2]
+!%          ``flwdst``               Flow distances from main outlet(s)                            [m]
+!%          ``nac``                  Number of active cell
+!%          ``active_cell``          Mask of active cell
+!%          ``path``                 Solver path
+!%          ``ng``                   Number of gauge
+!%          ``gauge_pos``            Gauge position 
+!%          ``code``                 Gauge code
+!%          ``area``                 Drained area at gauge position                                [m2]
+!%          ``area_dln``             Drained area at gauge position delineated                     [m2]
+!%          ``rowcol_to_ind_sparse`` Matrix linking (row, col) couple to sparse storage indice (k)
+!%          ``local_active_cell``    Mask of local active cells
 !%
-!%      contains
+!%      Subroutine
+!%      ----------
 !%
-!%      [1] MeshDT_initialise
+!%      - MeshDT_initialise
+!%      - MeshDT_copy
 
 module mwd_mesh
 
-    use md_constant !% only: sp
+    use md_constant !%only: sp
     use mwd_setup !% only: SetupDT
 
     implicit none
 
     type :: MeshDT
 
-        !% Notes
-        !% -----
-        !% MeshDT Derived Type.
-
-        real(sp) :: dx
+        real(sp) :: xres
+        real(sp) :: yres
+        
+        real(sp) :: xmin
+        real(sp) :: ymax
+        
         integer :: nrow
         integer :: ncol
-        integer :: ng
+        
+        real(sp), dimension(:,:), allocatable :: dx
+        real(sp), dimension(:,:), allocatable :: dy
+        
+        integer, dimension(:,:), allocatable :: flwdir
+        real(sp), dimension(:,:), allocatable :: flwacc
+        real(sp), dimension(:,:), allocatable :: flwdst
+        
+        integer, dimension(:,:), allocatable :: path !>f90w-index
+        
         integer :: nac
-        integer :: xmin
-        integer :: ymax
-
-        integer, dimension(:, :), allocatable :: flwdir
-        integer, dimension(:, :), allocatable :: flwacc
-        integer, dimension(:, :), allocatable :: path !>f90w-index
-        integer, dimension(:, :), allocatable :: active_cell
-
-        real(sp), dimension(:, :), allocatable :: flwdst
-        integer, dimension(:, :), allocatable :: gauge_pos !>f90w-index
+        integer, dimension(:,:), allocatable :: active_cell
+        
+        integer :: ng
+        integer, dimension(:,:), allocatable :: gauge_pos !>f90w-index
         character(20), dimension(:), allocatable :: code !>f90w-char_array
         real(sp), dimension(:), allocatable :: area
-
-        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse !>f90w-private
-        integer, dimension(:, :), allocatable :: local_active_cell !>f90w-private
+        real(sp), dimension(:), allocatable :: area_dln
+        
+        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse
+        integer, dimension(:,:), allocatable :: local_active_cell
 
     end type MeshDT
 
 contains
 
     subroutine MeshDT_initialise(this, setup, nrow, ncol, ng)
-
-        !% Notes
-        !% -----
-        !% MeshDT initialisation subroutine.
 
         implicit none
 
@@ -88,15 +90,27 @@ contains
         this%nrow = nrow
         this%ncol = ncol
         this%ng = ng
+        
+        this%xres = 0._sp
+        this%yres = 0._sp
 
-        this%xmin = 0
-        this%ymax = 0
+        this%xmin = 0._sp
+        this%ymax = 0._sp
 
+        allocate (this%dx(this%nrow, this%ncol))
+        this%dx = -99._sp
+        
+        allocate (this%dy(this%nrow, this%ncol))
+        this%dy = -99._sp
+        
         allocate (this%flwdir(this%nrow, this%ncol))
         this%flwdir = -99
 
         allocate (this%flwacc(this%nrow, this%ncol))
-        this%flwacc = -99
+        this%flwacc = -99._sp
+        
+        allocate (this%flwdst(this%nrow, this%ncol))
+        this%flwdst = -99._sp
 
         allocate (this%path(2, this%nrow*this%ncol))
         this%path = -99
@@ -104,23 +118,21 @@ contains
         allocate (this%active_cell(this%nrow, this%ncol))
         this%active_cell = 1
 
-        if (this%ng .gt. 0) then
+        allocate (this%gauge_pos(this%ng, 2))
 
-            allocate (this%flwdst(this%nrow, this%ncol))
-            this%flwdst = -99._sp
+        allocate (this%code(this%ng))
+        this%code = "..."
 
-            allocate (this%gauge_pos(this%ng, 2))
-
-            allocate (this%code(this%ng))
-            this%code = "..."
-
-            allocate (this%area(this%ng))
-
-        end if
+        allocate (this%area(this%ng))
+        this%area = -99._sp
+        
+        allocate (this%area_dln(this%ng))
+        this%area_dln = -99._sp
 
         if (setup%sparse_storage) then
 
             allocate (this%rowcol_to_ind_sparse(this%nrow, this%ncol))
+            this%rowcol_to_ind_sparse = -99
 
         end if
 
@@ -128,5 +140,16 @@ contains
         this%local_active_cell = 1
 
     end subroutine MeshDT_initialise
+    
+    subroutine MeshDT_copy(this, this_copy)
+    
+        implicit none
+        
+        type(MeshDT), intent(in) :: this
+        type(MeshDT), intent(out) :: this_copy
+        
+        this_copy = this
+    
+    end subroutine MeshDT_copy
 
 end module mwd_mesh

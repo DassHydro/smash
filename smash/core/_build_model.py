@@ -1,15 +1,10 @@
 from __future__ import annotations
 
-from smash.solver._mw_sparse_storage import compute_rowcol_to_ind_sparse
-
-from smash.solver._mw_forcing_statistic import (
-    compute_mean_forcing,
+from smash.core._constant import (
+    STRUCTURE_NAME,
+    STRUCTURE_COMPUTE_CI,
+    INPUT_DATA_FORMAT,
 )
-
-from smash.solver._mw_interception_store import adjust_interception_store
-
-from smash.core._constant import STRUCTURE_NAME, STRUCTURE_ADJUST_CI, INPUT_DATA_FORMAT
-
 from smash.core._read_input_data import (
     _read_qobs,
     _read_prcp,
@@ -17,41 +12,29 @@ from smash.core._read_input_data import (
     _read_descriptor,
 )
 
+from smash.solver._mw_sparse_storage import compute_rowcol_to_ind_sparse
+from smash.solver._mw_atmos_statistic import compute_mean_atmos
+from smash.solver._mw_interception_capacity import compute_interception_capacity
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
-    from smash.solver._mwd_parameters import ParametersDT
 
-import warnings
-import os
-import errno
 import pandas as pd
-import numpy as np
+import os
 
 
-def _parse_derived_type(derived_type: SetupDT | MeshDT, data: dict):
-    """
-    Derived type parser
-    """
-
-    for key, value in data.items():
-        if hasattr(derived_type, key):
-            setattr(derived_type, key, value)
-
-        else:
-            warnings.warn(
-                f"'{key}' key does not belong to the derived type '{type(derived_type)}'"
-            )
+def _map_dict_to_object(dct: dict, obj: object):
+    for key, value in dct.items():
+        if hasattr(obj, key):
+            setattr(obj, key, value)
 
 
+# % TODO: Maybe move standardize somewhere else
 def _standardize_setup(setup: SetupDT):
-    """
-    Check every SetupDT error/warning exception
-    """
-
     setup.structure = setup.structure.lower()
     if setup.structure not in STRUCTURE_NAME:
         raise ValueError(
@@ -146,7 +129,7 @@ def _standardize_setup(setup: SetupDT):
             setup.descriptor_directory,
         )
 
-    if setup.read_descriptor and setup._nd == 0:
+    if setup.read_descriptor and setup.nd == 0:
         raise ValueError(
             "argument read_descriptor is True and descriptor_name is not defined"
         )
@@ -158,62 +141,25 @@ def _standardize_setup(setup: SetupDT):
 
 
 def _build_setup(setup: SetupDT):
-    """
-    Build setup
-    """
-
     _standardize_setup(setup)
 
     st = pd.Timestamp(setup.start_time)
 
     et = pd.Timestamp(setup.end_time)
 
-    setup._ntime_step = (et - st).total_seconds() / setup.dt
-
-
-def _standardize_mesh(setup: SetupDT, mesh: MeshDT):
-    """
-    Check every MeshDT error/warning exception
-    """
-
-    if mesh.ncol < 0:
-        raise ValueError("argument ncol of MeshDT is lower than 0")
-
-    if mesh.nrow < 0:
-        raise ValueError("argument nrow of MeshDT is lower than 0")
-
-    if mesh.ng < 0:
-        raise ValueError("argument ng of MeshDT is lower than 0")
-
-    if mesh.xmin < 0:
-        raise ValueError("argument xmin of MeshDT is lower than 0")
-
-    if mesh.ymax < 0:
-        raise ValueError("argument ymax of MeshDT is lower than 0")
-
-    if np.all(mesh.flwdir == -99):
-        raise ValueError("argument flwdir of MeshDT contains only NaN value")
-
-    if np.all(mesh.flwacc == -99):
-        raise ValueError("argument flwacc of MeshDT contains only NaN value")
+    setup.ntime_step = (et - st).total_seconds() / setup.dt
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
-    """
-    Build mesh
-    """
-
-    _standardize_mesh(setup, mesh)
-
     if setup.sparse_storage:
-        compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine mw_routine
+        compute_rowcol_to_ind_sparse(
+            mesh
+        )  # % Fortran subroutine mw_sparse_storage
 
 
-def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-    """
-    Build input_data
-    """
-
+def _build_input_data(
+    setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
+):
     if setup.read_qobs:
         _read_qobs(setup, mesh, input_data)
 
@@ -223,37 +169,34 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_pet:
         _read_pet(setup, mesh, input_data)
 
-    if setup.mean_forcing:
-        compute_mean_forcing(setup, mesh, input_data)  # % Fortran subroutine mw_routine
-
     if setup.read_descriptor:
         _read_descriptor(setup, mesh, input_data)
 
+    compute_mean_atmos(
+        setup, mesh, input_data
+    )  # % Fortran subroutine mw_atmos_statistic
+
 
 def _build_parameters(
-    setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT, parameters: ParametersDT
+    setup: SetupDT,
+    mesh: MeshDT,
+    input_data: Input_DataDT,
+    parameters: ParametersDT,
 ):
-    if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400:
-        # % Handle dates with Python before calling Fortran subroutine
-        date_range = pd.date_range(
+    if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
+        # % Date
+        day_index = pd.date_range(
             start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s"
-        )[1:].strftime("%Y%m%d")
+        )[1:].to_series()
 
-        n = 1
-        day_index = np.ones(shape=len(date_range), dtype=np.int64)
-        for i in range(1, len(date_range)):
-            if date_range[i] != date_range[i - 1]:
-                n += 1
+        # % Date to proleptic Gregorian ordinal
+        day_index = day_index.apply(lambda x: x.toordinal()).to_numpy()
 
-            day_index[i] = n
+        # % Scale to 1 (Fortran indexing)
+        day_index = day_index - day_index[0] + 1
 
-        adjust_interception_store(
-            setup, mesh, input_data, parameters, n, day_index
-        )  # % Fortran subroutine _mw_interception_store
+        opr_parameters = getattr(parameters.opr_parameters, setup.structure)
 
-    # % Adjust routing parameter lr depending on the time step
-    # % We assumed that at hourly time step lr_1 = 5 and
-    # % lr_2 = dt_2 * (lr_1 / dt_1) , with lr_1 / dt_1 = 5 / 3600
-    parameters.lr = setup.dt * (5 / 3600)
-
-    # % TODO: Refactorize this with milestones on constants
+        compute_interception_capacity(
+            setup, mesh, input_data, day_index, day_index[-1], opr_parameters.ci
+        )  # % Fortran subroutine mw_interception_capacity

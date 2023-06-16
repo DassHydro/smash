@@ -1,4 +1,23 @@
-!%      This module `m_array_creation` encapsulates all SMASH array_creation.
+!%      (M) Module.
+!%
+!%      Interface
+!%      ---------
+!%
+!%      - arange
+!%          - arange_i
+!%          - arange_r
+!%
+!%      - linspace
+!%          - linspace_i
+!%          - linspace_r
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - arange_i
+!%      - arange_r
+!%      - linspace_i
+!%      - linspace_r
 
 module m_array_creation
 
