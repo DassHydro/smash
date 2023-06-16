@@ -43,26 +43,26 @@ contains
 
         daily_prcp = 0._sp
         daily_pet = 0._sp
-        
+
         do i = 1, setup%ntime_step
-            
+
             if (setup%sparse_storage) then
-            
+
                 call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_prcp(:, i), matrix_prcp)
                 call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_pet(:, i), matrix_pet)
-            
+
             else
-            
+
                 matrix_prcp = input_data%atmos_data%prcp(:, :, i)
                 matrix_pet = input_data%atmos_data%pet(:, :, i)
-            
+
             end if
-            
+
             ind = day_index(i)
-            
+
             daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + matrix_prcp
             daily_pet(:, :, ind) = daily_pet(:, :, ind) + matrix_pet
-        
+
         end do
 
         daily_cumulated = 0._sp
@@ -84,14 +84,14 @@ contains
         !% =========================================================================================================== %!
         !%   Calculate interception storage
         !% =========================================================================================================== %!
-        
+
         stt = 0.1_sp
         stp = 5._sp
         step = 0.1_sp
         n = ceiling((stp - stt)/step)
-        
+
         allocate (cmax(n), diff(mesh%nrow, mesh%ncol, n))
-        
+
         call arange(stt, stp, step, cmax)
 
         do i = 1, n
@@ -143,7 +143,7 @@ contains
                 ind = minloc(diff(row, col, :), dim=1)
 
                 ci(row, col) = cmax(ind)
-                
+
             end do
 
         end do

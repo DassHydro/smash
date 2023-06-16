@@ -152,14 +152,10 @@ def _build_setup(setup: SetupDT):
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
     if setup.sparse_storage:
-        compute_rowcol_to_ind_sparse(
-            mesh
-        )  # % Fortran subroutine mw_sparse_storage
+        compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine mw_sparse_storage
 
 
-def _build_input_data(
-    setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT
-):
+def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_qobs:
         _read_qobs(setup, mesh, input_data)
 

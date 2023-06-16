@@ -10,15 +10,15 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output)
     use md_forward_structure !% only: gr_a_forward
 
     implicit none
-    
+
     type(SetupDT), intent(in) :: setup
     type(MeshDT), intent(in) :: mesh
     type(Input_DataDT), intent(in) :: input_data
     type(ParametersDT), intent(inout) :: parameters
     type(OutputDT), intent(inout) :: output
-    
+
     type(Opr_StatesDT) :: opr_states_imd
-    
+
     opr_states_imd = parameters%opr_initial_states
 
     select case (setup%structure)

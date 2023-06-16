@@ -23,7 +23,7 @@
 !%          ``active_cell``          Mask of active cell
 !%          ``path``                 Solver path
 !%          ``ng``                   Number of gauge
-!%          ``gauge_pos``            Gauge position 
+!%          ``gauge_pos``            Gauge position
 !%          ``code``                 Gauge code
 !%          ``area``                 Drained area at gauge position                                [m2]
 !%          ``area_dln``             Drained area at gauge position delineated                     [m2]
@@ -47,33 +47,33 @@ module mwd_mesh
 
         real(sp) :: xres
         real(sp) :: yres
-        
+
         real(sp) :: xmin
         real(sp) :: ymax
-        
+
         integer :: nrow
         integer :: ncol
-        
-        real(sp), dimension(:,:), allocatable :: dx
-        real(sp), dimension(:,:), allocatable :: dy
-        
-        integer, dimension(:,:), allocatable :: flwdir
-        real(sp), dimension(:,:), allocatable :: flwacc
-        real(sp), dimension(:,:), allocatable :: flwdst
-        
-        integer, dimension(:,:), allocatable :: path !>f90w-index
-        
+
+        real(sp), dimension(:, :), allocatable :: dx
+        real(sp), dimension(:, :), allocatable :: dy
+
+        integer, dimension(:, :), allocatable :: flwdir
+        real(sp), dimension(:, :), allocatable :: flwacc
+        real(sp), dimension(:, :), allocatable :: flwdst
+
+        integer, dimension(:, :), allocatable :: path !>f90w-index
+
         integer :: nac
-        integer, dimension(:,:), allocatable :: active_cell
-        
+        integer, dimension(:, :), allocatable :: active_cell
+
         integer :: ng
-        integer, dimension(:,:), allocatable :: gauge_pos !>f90w-index
+        integer, dimension(:, :), allocatable :: gauge_pos !>f90w-index
         character(20), dimension(:), allocatable :: code !>f90w-char_array
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln
-        
-        integer, dimension(:,:), allocatable :: rowcol_to_ind_sparse
-        integer, dimension(:,:), allocatable :: local_active_cell
+
+        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse
+        integer, dimension(:, :), allocatable :: local_active_cell
 
     end type MeshDT
 
@@ -90,7 +90,7 @@ contains
         this%nrow = nrow
         this%ncol = ncol
         this%ng = ng
-        
+
         this%xres = 0._sp
         this%yres = 0._sp
 
@@ -99,16 +99,16 @@ contains
 
         allocate (this%dx(this%nrow, this%ncol))
         this%dx = -99._sp
-        
+
         allocate (this%dy(this%nrow, this%ncol))
         this%dy = -99._sp
-        
+
         allocate (this%flwdir(this%nrow, this%ncol))
         this%flwdir = -99
 
         allocate (this%flwacc(this%nrow, this%ncol))
         this%flwacc = -99._sp
-        
+
         allocate (this%flwdst(this%nrow, this%ncol))
         this%flwdst = -99._sp
 
@@ -125,7 +125,7 @@ contains
 
         allocate (this%area(this%ng))
         this%area = -99._sp
-        
+
         allocate (this%area_dln(this%ng))
         this%area_dln = -99._sp
 
@@ -140,16 +140,16 @@ contains
         this%local_active_cell = 1
 
     end subroutine MeshDT_initialise
-    
+
     subroutine MeshDT_copy(this, this_copy)
-    
+
         implicit none
-        
+
         type(MeshDT), intent(in) :: this
         type(MeshDT), intent(out) :: this_copy
-        
+
         this_copy = this
-    
+
     end subroutine MeshDT_copy
 
 end module mwd_mesh

@@ -102,9 +102,7 @@ def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
     n = 0
     ind = -1
     while ind == -1:
-        ind = _index_containing_substring(
-            files, date_range[n].strftime("%Y%m%d%H%M")
-        )
+        ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
 
         n += 1
 

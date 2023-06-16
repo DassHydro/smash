@@ -221,13 +221,11 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     flwdir = _get_array(ds_flwdir)
 
-    #% Accepting arrays for dx and dy in case of unstructured meshing
+    # % Accepting arrays for dx and dy in case of unstructured meshing
     if srs.GetAttrValue("UNIT") == "degree":
-
         dx, dy = mw_mesh.latlon_dxdy(*flwdir.shape, xres, yres, ymax)
 
     else:
-
         dx = np.zeros(shape=flwdir.shape, dtype=np.float32) + xres
         dy = np.zeros(shape=flwdir.shape, dtype=np.float32) + yres
 
@@ -249,8 +247,8 @@ def _get_mesh_from_xy(ds_flwdir, x, y, area, code, max_depth, epsg):
 
     flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
     flwdir, srow, erow, scol, ecol = _trim_zeros_2d(flwdir, shift_value=True)
-    dx = dx[srow: erow, scol: ecol]
-    dy = dy[srow: erow, scol: ecol]
+    dx = dx[srow:erow, scol:ecol]
+    dy = dy[srow:erow, scol:ecol]
 
     xmin_shifted = xmin + scol * xres
     ymax_shifted = ymax - srow * yres
@@ -308,13 +306,11 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
 
     flwdir = np.ma.masked_array(flwdir, mask=(flwdir < 1))
 
-    #% Accepting arrays for dx and dy in case of unstructured meshing
+    # % Accepting arrays for dx and dy in case of unstructured meshing
     if srs.GetAttrValue("UNIT") == "degree":
-
         dx, dy = mw_mesh.latlon_dxdy(*flwdir.shape, xres, yres, ymax)
 
     else:
-
         dx = np.zeros(shape=flwdir.shape, dtype=np.float32) + xres
         dy = np.zeros(shape=flwdir.shape, dtype=np.float32) + yres
 

@@ -40,7 +40,7 @@ contains
         !% =================================================================================================================== %!
         !%   Local Variables (private)
         !% =================================================================================================================== %!
-        
+
         real(sp), dimension(mesh%nrow, mesh%ncol) :: q
         real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
         & qr, qd, qt, qup, qrout
@@ -145,10 +145,10 @@ contains
                 & mesh%flwacc, q, qup)
 
                 call linear_routing(setup%dt, qup, opr_parameters%lr(row, col), opr_states%hlr(row, col), qrout)
-            
-                q(row, col) = ((qt * mesh%dx(row, col) * mesh%dy(row, col)) &
-                & + (qrout * (mesh%flwacc(row, col) - mesh%dx(row, col) * mesh%dy(row, col)))) &
-                & * 1e-3_sp / setup%dt
+
+                q(row, col) = ((qt*mesh%dx(row, col)*mesh%dy(row, col)) &
+                & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
+                & *1e-3_sp/setup%dt
 
             end do !% [ END DO SPACE ]
 

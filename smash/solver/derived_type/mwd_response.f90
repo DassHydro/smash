@@ -24,37 +24,37 @@ module mwd_response
     use mwd_mesh !% only: MeshDT
 
     implicit none
-    
+
     type ResponseDT
-    
+
         real(sp), dimension(:, :), allocatable :: q
-    
+
     end type ResponseDT
 
 contains
 
     subroutine ResponseDT_initialise(this, setup, mesh)
-    
+
         implicit none
-        
+
         type(ResponseDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        
+
         allocate (this%q(mesh%ng, setup%ntime_step))
         this%q = -99._sp
-    
+
     end subroutine ResponseDT_initialise
-    
+
     subroutine ResponseDT_copy(this, this_copy)
-    
+
         implicit none
-        
+
         type(ResponseDT), intent(in) :: this
         type(ResponseDT), intent(out) :: this_copy
-        
+
         this_copy = this
-    
+
     end subroutine ResponseDT_copy
 
 end module mwd_response

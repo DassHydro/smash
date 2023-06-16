@@ -1,5 +1,5 @@
 !%      (MW) Module Wrapped.
-!% 
+!%
 !%      Subroutine
 !%      ----------
 !%
@@ -31,9 +31,9 @@ contains
 
             row_imd = row + drow(i)
             col_imd = col + dcol(i)
-            
+
             if (row_imd .lt. 1 .or. row_imd .gt. mesh%nrow .or. col_imd .lt. 1 .or. col_imd .gt. mesh%ncol) cycle
-            
+
             if (mesh%flwdir(row_imd, col_imd) .eq. i) call mask_upstream_cells(mesh, row_imd, col_imd, mask)
 
         end do

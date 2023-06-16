@@ -36,9 +36,7 @@ class Model(object):
                 raise TypeError(f"setup argument must be dict")
 
             if isinstance(mesh, dict):
-                self.mesh = MeshDT(
-                    self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"]
-                )
+                self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
 
                 _map_dict_to_object(mesh, self.mesh)
 
@@ -62,9 +60,7 @@ class Model(object):
                 self._parameters.opr_initial_states, self.setup.structure
             )
 
-            _build_parameters(
-                self.setup, self.mesh, self._input_data, self._parameters
-            )
+            _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
 
             self._output = OutputDT(self.setup, self.mesh)
             self.sim_response = self._output.sim_response
@@ -156,6 +152,8 @@ class Model(object):
 
     def copy(self):
         return self.__copy__()
-        
+
     def run(self):
-        forward_run(self.setup, self.mesh, self._input_data, self._parameters, self._output)
+        forward_run(
+            self.setup, self.mesh, self._input_data, self._parameters, self._output
+        )

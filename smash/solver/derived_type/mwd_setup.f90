@@ -101,16 +101,16 @@ contains
         this%descriptor_name = "..."
 
     end subroutine SetupDT_initialise
-    
+
     subroutine SetupDT_copy(this, this_copy)
-    
+
         implicit none
-        
+
         type(SetupDT), intent(in) :: this
         type(SetupDT), intent(out) :: this_copy
-        
+
         this_copy = this
-    
+
     end subroutine SetupDT_copy
 
 end module mwd_setup

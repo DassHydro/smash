@@ -29,14 +29,13 @@ module mwd_input_data
     use mwd_atmos_data !%: only: Atmos_DataDT, Atmos_DataDT_initialise
 
     implicit none
-    
+
     type Input_DataDT
 
-        
         type(ResponseDT) :: obs_response
-        
+
         type(Physio_DataDT) :: physio_data
-        
+
         type(Atmos_DataDT) :: atmos_data
 
     end type Input_DataDT
@@ -50,24 +49,24 @@ contains
         type(Input_DataDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        
+
         call ResponseDT_initialise(this%obs_response, setup, mesh)
-        
+
         call Physio_DataDT_initialise(this%physio_data, setup, mesh)
-        
+
         call Atmos_DataDT_initialise(this%atmos_data, setup, mesh)
 
     end subroutine Input_DataDT_initialise
-    
+
     subroutine Input_DataDT_copy(this, this_copy)
-    
+
         implicit none
-        
+
         type(Input_DataDT), intent(in) :: this
         type(Input_DataDT), intent(out) :: this_copy
-        
+
         this_copy = this
-    
+
     end subroutine Input_DataDT_copy
 
 end module mwd_input_data

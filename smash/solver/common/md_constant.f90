@@ -7,7 +7,7 @@
 !%          Single precision value
 !%      - dp
 !%          Double precision value
-!%      - lchar               
+!%      - lchar
 !%          Characeter length value
 
 module md_constant
