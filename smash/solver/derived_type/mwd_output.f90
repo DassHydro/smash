@@ -5,6 +5,13 @@
 !%
 !%      - OutputDT
 !%
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``sim_response``         ResponseDT
+!%          ``opr_final_states``     Opr_StatesDT
+!%          ======================== =======================================
+!%
 !%      Subroutine
 !%      ----------
 !%
@@ -25,6 +32,7 @@ module mwd_output
 
         type(ResponseDT) :: sim_response
         type(Opr_StatesDT) :: opr_final_states
+        real(sp) :: cost
 
     end type OutputDT
 

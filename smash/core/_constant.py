@@ -6,14 +6,14 @@ import numpy as np
 ### STRUCTURE ###
 #################
 
-STRUCTURE_PARAMETERS = {
+STRUCTURE_OPR_PARAMETERS = {
     "gr_a": ["cp", "cft", "exc", "lr"],
     "gr_b": ["cp", "cft", "exc", "lr"],
     "gr_c": ["cp", "cft", "cst", "exc", "lr"],
     "gr_d": ["cp", "cft", "lr"],
 }
 
-STRUCTURE_STATES = {
+STRUCTURE_OPR_STATES = {
     "gr_a": ["hp", "hft", "hlr"],
     "gr_b": ["hi", "hp", "hft", "hlr"],
     "gr_c": ["hi", "hp", "hft", "hst", "hlr"],
@@ -27,7 +27,7 @@ STRUCTURE_COMPUTE_CI = {
     "gr_d": False,
 }
 
-STRUCTURE_NAME = list(STRUCTURE_PARAMETERS.keys())
+STRUCTURE_NAME = list(STRUCTURE_OPR_PARAMETERS.keys())
 
 
 ### READ INPUT DATA ###

@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+from smash.tools._common_function import _map_dict_to_object
+
 from smash.core._build_model import (
-    _map_dict_to_object,
     _build_setup,
     _build_mesh,
     _build_input_data,
@@ -13,7 +14,6 @@ from smash.solver._mwd_mesh import MeshDT
 from smash.solver._mwd_input_data import Input_DataDT
 from smash.solver._mwd_parameters import ParametersDT
 from smash.solver._mwd_output import OutputDT
-from smash.solver._mw_forward import forward_run
 
 import numpy as np
 
@@ -152,8 +152,3 @@ class Model(object):
 
     def copy(self):
         return self.__copy__()
-
-    def run(self):
-        forward_run(
-            self.setup, self.mesh, self._input_data, self._parameters, self._output
-        )

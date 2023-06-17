@@ -2,6 +2,8 @@ from __future__ import annotations
 
 from smash.core._constant import (
     STRUCTURE_NAME,
+    STRUCTURE_OPR_PARAMETERS,
+    STRUCTURE_OPR_STATES,
     STRUCTURE_COMPUTE_CI,
     INPUT_DATA_FORMAT,
 )
@@ -25,12 +27,6 @@ if TYPE_CHECKING:
 
 import pandas as pd
 import os
-
-
-def _map_dict_to_object(dct: dict, obj: object):
-    for key, value in dct.items():
-        if hasattr(obj, key):
-            setattr(obj, key, value)
 
 
 # % TODO: Maybe move standardize somewhere else
@@ -148,6 +144,9 @@ def _build_setup(setup: SetupDT):
     et = pd.Timestamp(setup.end_time)
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt
+
+    setup.nopr_p = len(STRUCTURE_OPR_PARAMETERS[setup.structure])
+    setup.nopr_s = len(STRUCTURE_OPR_STATES[setup.structure])
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):

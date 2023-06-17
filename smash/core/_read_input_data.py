@@ -1,5 +1,10 @@
 from __future__ import annotations
 
+from smash.tools._common_function import (
+    _index_containing_substring,
+    _adjust_left_files_by_date,
+)
+
 from smash.core._constant import RATIO_PET_HOURLY
 
 from smash.solver._mw_sparse_storage import matrix_to_sparse_vector_r
@@ -90,25 +95,6 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         warnings.warn(f"Missing {len(miss)} observed discharge file(s): {miss}")
 
 
-def _index_containing_substring(the_list: list, substring: str):
-    for i, s in enumerate(the_list):
-        if substring in s:
-            return i
-    return -1
-
-
-# % Adjust left files (sorted by date - only works if files have the same name)
-def _adjust_left_files(files: list[str], date_range: pd.Timestamp):
-    n = 0
-    ind = -1
-    while ind == -1:
-        ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
-
-        n += 1
-
-    return files[ind:]
-
-
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     date_range = pd.date_range(
         start=setup.start_time,
@@ -119,7 +105,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.prcp_format == "tif":
         files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
-        files = _adjust_left_files(files, date_range)
+        files = _adjust_left_files_by_date(files, date_range)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
             date_strf = date.strftime("%Y%m%d%H%M")
@@ -167,7 +153,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
 
         if not setup.daily_interannual_pet:
-            files = _adjust_left_files(files, date_range)
+            files = _adjust_left_files_by_date(files, date_range)
 
         if setup.daily_interannual_pet:
             leap_year_days = pd.date_range(

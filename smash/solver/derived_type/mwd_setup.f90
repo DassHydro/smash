@@ -8,7 +8,7 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Solver structure                                       (default: 'gr-a')
+!%          ``structure``              Solver structure                                       (default: 'gr_a')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
@@ -18,7 +18,7 @@
 !%          ``prcp_format``            Precipitation format                                   (default: 'tif')
 !%          ``prcp_conversion_factor`` Precipitation conversion factor                        (default: 1)
 !%          ``prcp_directory``         Precipiation directory path                            (default: '...')
-!%          ``read_pet``               Reap potential evapotranspiration                      (default: .false.)
+!%          ``read_pet``               Read potential evapotranspiration                      (default: .false.)
 !%          ``pet_format``             Potential evapotranspiration format                    (default: 'tif')
 !%          ``pet_conversion_factor``  Potential evapotranpisration conversion factor         (default: 1)
 !%          ``pet_directory``          Potential evapotranspiration directory path            (default: '...')
@@ -30,6 +30,8 @@
 !%          ``descriptor_name``        Descriptor maps names
 !%          ``ntime_step``             Number of time steps                                   (default: 0)
 !%          ``nd``                     Number of descriptor maps                              (default: 0)
+!%          ``nopr_p``                 Number of operator parameters                          (default: 0)
+!%          ``nopr_s``                 Number of operator states                              (default: 0)
 !%
 !%      Subroutine
 !%      ----------
@@ -49,7 +51,7 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr-a" !>f90w-char
+        character(lchar) :: structure = "gr_a" !>f90w-char
 
         real(sp) :: dt = 3600._sp
 
@@ -79,6 +81,8 @@ module mwd_setup
 
         integer :: ntime_step = 0
         integer :: nd = 0
+        integer :: nopr_p = 0
+        integer :: nopr_s = 0
 
     end type SetupDT
 

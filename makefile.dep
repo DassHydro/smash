@@ -8,7 +8,10 @@ f77: \
 
 f90: \
  obj/md_constant.o \
+ obj/mwd_common_options.o \
  obj/mwd_control.o \
+ obj/mwd_options.o \
+ obj/mwd_returns.o \
  obj/mwd_setup.o \
  obj/mwd_mesh.o \
  obj/mwd_response.o \
@@ -23,9 +26,12 @@ f90: \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \
  obj/md_forward_structure.o \
- obj/forward.o \
+ obj/mwd_cost.o \
  obj/m_array_creation.o \
  obj/mw_mask.o \
  obj/mw_sparse_storage.o \
  obj/mw_interception_capacity.o \
  obj/mw_atmos_statistic.o \
+ obj/mwd_parameters_manipulation.o \
+ obj/forward_db.o \
+ obj/forward.o \
