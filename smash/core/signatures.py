@@ -398,9 +398,9 @@ def _signatures_comp(
                             ts = t["start"]
                             te = t["end"]
 
-                            event_prcp = prcp_tmp[ts:te]
-                            event_qobs = qobs_tmp[ts:te]
-                            event_qsim = qsim_tmp[ts:te]
+                            event_prcp = prcp_tmp[ts : te + 1]
+                            event_qobs = qobs_tmp[ts : te + 1]
+                            event_qsim = qsim_tmp[ts : te + 1]
 
                             season = _get_season(date_range[ts].date())
 

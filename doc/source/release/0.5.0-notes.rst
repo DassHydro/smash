@@ -47,3 +47,10 @@ The boundary condition checking previously used a tolerance of 1e-6, which cause
 To address this problem, the tolerance has been decreased to 1e-3.
 
 See issue `#23 <https://github.com/DassHydro-dev/smash/issues/23>`__.
+
+Event signatures computation
+****************************
+
+The bug related to the computation of flood event signatures has been resolved for specific cases where the peak event is observed during the last time steps in the time window.
+
+See issue `#28 <https://github.com/DassHydro-dev/smash/issues/28>`__.
