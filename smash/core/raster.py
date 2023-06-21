@@ -27,14 +27,14 @@ def gdal_raster_open(filename):
     filename : string, path to a file
 
     Returns
-    ----------
+    -------
     dataset : gdal object
 
     Examples
-    ----------
+    --------
     dataset = gdal_raster_open("filename")
     """
-    dataset = object()
+    
     if os.path.isfile(filename):
         dataset = gdal.Open(filename)
     else:
@@ -57,11 +57,11 @@ def read_windowed_raster_gdal(
     lacuna: float64 replacing the Nodata value
 
     Returns
-    ----------
+    -------
     array : np.array or np.ndarray storing one or all different data, stored in filename, sliced compare to the mesh boundingbox
 
     Examples
-    ----------
+    --------
     array=read_windowed_raster_gdal("filename", model.mesh)
     """
     dataset = gdal_raster_open(filename)
@@ -109,11 +109,11 @@ def gdal_reproject_raster(dataset, xres, yres):
     yres: resolution in the y direction (rows) in meters
 
     Returns
-    ----------
+    -------
     virtual_destination : a virtual gdal raster object at the new resolution
 
     Examples
-    ----------
+    --------
     new_dataset=gdal_reproject_raster(dataset,smash_mesh.cellsize,smash_mesh.cellsize)
     """
 
@@ -187,11 +187,11 @@ def gdal_crop_dataset_to_array(dataset=object(), window={}, band=1, lacuna=None)
     lacuna: None or float64
 
     Returns
-    ----------
+    -------
     sliced_array : an array
 
     Examples
-    ----------
+    --------
     window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
     array=gdal_crop_dataset_to_array(dataset,window,band=1)
     """
@@ -225,7 +225,7 @@ def gdal_crop_dataset_to_ndarray(dataset=object(), window={}, lacuna=None):
     lacuna: None or float64
 
     Returns
-    ----------
+    -------
     dictionnary : a dictionary with ndarrays (depending the number of bands)
 
     Examples
@@ -268,11 +268,11 @@ def gdal_write_dataset(filename, dataset, format="Gtiff"):
     format: optional, raster format, default is Gtiff
 
     Returns
-    ----------
+    -------
     none
 
     Examples
-    ----------
+    --------
     virtual_dataset=gdal_reproject_raster(dataset,500.,500.)
     gdal_write_dataset('outfile',virtual_dataset)
     """
@@ -320,7 +320,7 @@ def gdal_get_geotransform(dataset):
     dataset : gdal object from gdal.Open()
 
     Returns
-    ----------
+    -------
     geotransform : Python dictionnary
 
     # ~ A GeoTransform consists in a set of 6 coefficients:
@@ -358,7 +358,7 @@ def gdal_smash_window_from_geotransform(geotransform, smash_mesh):
     smash_mesh : Smash mesh object model.mesh
 
     Returns
-    ----------
+    -------
     window : Python dictionnary with componnents: row_off (offset), col_off (offset), nrows, ncols
 
     Examples
@@ -393,12 +393,13 @@ def union_bbox(bbox1, bbox2):
     ----------
     bbox1: dict containin the first bbox informations
     bbox2 : dict containin the second bbox informations
-    ----------
+    
     returns
+    -------
     dic containing the bbox union
 
     Examples
-    ----------
+    --------
     dataset=gdal_raster_open(filename)
     possible_bbox=union_bbox(bbox,bbox_dataset)
     """
@@ -420,12 +421,13 @@ def get_bbox(dataset):
     Parameters
     ----------
     dataset: gdal object
-    ----------
+    
     returns
+    -------
     dic containing the bbox of the dataset
 
     Examples
-    ----------
+    --------
     dataset=gdal_raster_open(filename)
     bbox_dataset=get_bbox(dataset)
     """
@@ -447,12 +449,13 @@ def get_bbox_from_window(dataset, window):
     ----------
     dataset: gdal object
     window : dict with ncols, nrows, col offset and row offset
-    ----------
+    
     returns
+    -------
     dic containing the computed bbox
 
     Examples
-    ----------
+    --------
     dataset=gdal_raster_open(filename)
     bbox_dataset=get_bbox(dataset)
     window=get_window_from_bbox(dataset,bbox_dataset)
@@ -477,12 +480,13 @@ def get_window_from_bbox(dataset, bbox):
     ----------
     dataset: gdal object
     bbox : dict containing the bbox
-    ----------
+    
     returns
+    -------
     dic containing the computed windows
 
     Examples
-    ----------
+    --------
     dataset=gdal_raster_open(filename)
     bbox_dataset=get_bbox(dataset)
     window=get_window_from_bbox(dataset,bbox_dataset)
@@ -519,8 +523,9 @@ def crop_array(array, window):
     ----------
     array: numpy array
     window : dict containg the window to crop
-    ----------
+    
     returns
+    -------
     crop_array: the cropped numpy array, shape of the defined window
 
     """
