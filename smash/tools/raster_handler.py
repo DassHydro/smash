@@ -2,16 +2,13 @@ from __future__ import annotations
 
 import numpy as np
 from osgeo import gdal
-
 import os
 import errno
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
-    from smash.solver._mwd_input_data import Input_DataDT
 
 
 ### GDAL RASTER FUNCTIONS
@@ -43,7 +40,7 @@ def gdal_raster_open(filename):
     return dataset
 
 
-def read_windowed_raster_gdal(
+def gdal_read_windowed_raster(
     filename: str, smash_mesh: MeshDT, band=None, lacuna=None
 ) -> np.ndarray:
     """
@@ -62,7 +59,7 @@ def read_windowed_raster_gdal(
 
     Examples
     --------
-    array=read_windowed_raster_gdal("filename", model.mesh)
+    array=gdal_read_windowed_raster("filename", model.mesh)
     """
     dataset = gdal_raster_open(filename)
 
@@ -73,7 +70,7 @@ def read_windowed_raster_gdal(
     ):
         # Attempt to generate a smaller dataset before doing the reprojection. However, it is slower..
         # ~ window=gdal_smash_window_from_geotransform(geotransform,smash_mesh)
-        # ~ dataset=gdal.Translate('/vsimem/raster.tif', dataset, srcWin=[window['col_off'], window['row_off'], window["ncols"], window["nrows"]])
+        # ~ dataset=gdal.Translate('/vsimem/raster.tif', dataset, srcWin=[window['col_off'], window['row_off'], window["ncol"], window["nrow"]])
 
         dataset = gdal_reproject_raster(dataset, smash_mesh.dx, smash_mesh.dx)
         geotransform = gdal_get_geotransform(dataset)
@@ -86,7 +83,7 @@ def read_windowed_raster_gdal(
 
     window = gdal_smash_window_from_geotransform(geotransform, smash_mesh)
 
-    if band == None:
+    if band is None:
         array = gdal_crop_dataset_to_ndarray(
             dataset=dataset, window=window, lacuna=lacuna
         )
@@ -132,15 +129,15 @@ def gdal_reproject_raster(dataset, xres, yres):
 
     # Do we must distinguish cases smash_mesh.dx<=geotransform['xres','yres'] and smash_mesh.dx>geotransform['xres','yres'] ? i.e use ceiling or floor function instead of int ?
     # At least it work for case smash_mesh.dx<=geotransform['xres','yres'] which is the moste common case for modelling.
-    New_X_Size = int(dataset.RasterXSize * geotransform["xres"] / xres)
-    New_Y_Size = int(dataset.RasterYSize * geotransform["yres"] / yres)
+    new_x_size = int(dataset.RasterXSize * geotransform["xres"] / xres)
+    new_y_size = int(dataset.RasterYSize * geotransform["yres"] / yres)
 
     in_memory_dataset = gdal.GetDriverByName("MEM")
 
     virtual_destination = in_memory_dataset.Create(
         "",
-        New_X_Size,
-        New_Y_Size,
+        new_x_size,
+        new_y_size,
         dataset.RasterCount,
         dataset.GetRasterBand(1).DataType,
     )
@@ -148,13 +145,14 @@ def gdal_reproject_raster(dataset, xres, yres):
     ###########################################################
     # Workaround for gdal bug which initialise array to 0 instead as the No_Data value
     # Here we initialise the band manually with the nodata_value
+    nodata = dataset.GetRasterBand(1).GetNoDataValue()
     band = virtual_destination.GetRasterBand(
         1
     )  # Notice that band is a pointer to virtual_destination
-    band.SetNoDataValue(-9999)
-    Nodataarray = np.ndarray(shape=(New_Y_Size, New_X_Size))
-    Nodataarray.fill(-9999.0)
-    band.WriteArray(Nodataarray)
+    band.SetNoDataValue(nodata)
+    nodataarray = np.ndarray(shape=(new_y_size, new_x_size))
+    nodataarray.fill(nodata)
+    band.WriteArray(nodataarray)
     ###########################################################
 
     virtual_destination.SetGeoTransform(new_dataset_geotranform)
@@ -199,15 +197,15 @@ def gdal_crop_dataset_to_array(dataset=object(), window={}, band=1, lacuna=None)
     dataset_band = dataset.GetRasterBand(band)
 
     sliced_array = dataset_band.ReadAsArray(
-        window["col_off"], window["row_off"], window["ncols"], window["nrows"]
+        window["col_off"], window["row_off"], window["ncol"], window["nrow"]
     )
 
     array_float = sliced_array.astype("float64")
 
     # Lacuna treatment here
     if isinstance(lacuna, float):
-        Nodata = dataset_band.GetNoDataValue()
-        mask = np.where(sliced_array == Nodata)
+        nodata = dataset_band.GetNoDataValue()
+        mask = np.where(sliced_array == nodata)
         array_float[mask] = lacuna
 
     return array_float
@@ -229,7 +227,7 @@ def gdal_crop_dataset_to_ndarray(dataset=object(), window={}, lacuna=None):
     dictionnary : a dictionary with ndarrays (depending the number of bands)
 
     Examples
-    ----------
+    --------
     window=gdal_smash_window_from_geotransform(dataset,smash_mesh)
     array=gdal_crop_dataset_to_array(dataset,window)
     """
@@ -240,15 +238,15 @@ def gdal_crop_dataset_to_ndarray(dataset=object(), window={}, lacuna=None):
         dataset_band = dataset.GetRasterBand(index)
 
         sliced_array = dataset_band.ReadAsArray(
-            window["col_off"], window["row_off"], window["ncols"], window["nrows"]
+            window["col_off"], window["row_off"], window["ncol"], window["nrow"]
         )
 
         array_float = sliced_array.astype("float64")
 
         # Lacuna treatment here
         if isinstance(lacuna, float):
-            Nodata = dataset_band.GetNoDataValue()
-            mask = np.where(sliced_array == Nodata)
+            nodata = dataset_band.GetNoDataValue()
+            mask = np.where(sliced_array == nodata)
             array_float[mask] = lacuna
 
         dictionnary.update({index: array_float})
@@ -332,7 +330,7 @@ def gdal_get_geotransform(dataset):
     # ~ GT(5) n-s pixel resolution / pixel height (negative value for a north-up image).
 
     Examples
-    ----------
+    --------
     dataset = gdal_raster_open(filename)
     geotransform=gdal_get_geotransform(dataset)
     """
@@ -359,10 +357,10 @@ def gdal_smash_window_from_geotransform(geotransform, smash_mesh):
 
     Returns
     -------
-    window : Python dictionnary with componnents: row_off (offset), col_off (offset), nrows, ncols
+    window : Python dictionnary with componnents: row_off (offset), col_off (offset), nrow, ncol
 
     Examples
-    ----------
+    --------
     dataset = gdal_raster_open(filename)
     geotransform=gdal_get_geotransform(dataset)
     window=gdal_smash_window_from_geotransform(geotransform,smash_mesh)
@@ -378,8 +376,8 @@ def gdal_smash_window_from_geotransform(geotransform, smash_mesh):
     window = {
         "row_off": row_off,
         "col_off": col_off,
-        "nrows": int(smash_mesh.nrow * smash_mesh.dx / geotransform["yres"]),
-        "ncols": int(smash_mesh.ncol * smash_mesh.dx / geotransform["xres"]),
+        "nrow": int(smash_mesh.nrow * smash_mesh.dx / geotransform["yres"]),
+        "ncol": int(smash_mesh.ncol * smash_mesh.dx / geotransform["xres"]),
     }
 
     return window
@@ -448,7 +446,7 @@ def get_bbox_from_window(dataset, window):
     Parameters
     ----------
     dataset: gdal object
-    window : dict with ncols, nrows, col offset and row offset
+    window : dict with ncol, nrow, col offset and row offset
     
     returns
     -------
@@ -464,9 +462,9 @@ def get_bbox_from_window(dataset, window):
     """
     geotransform = gdal_get_geotransform(dataset)
     left = geotransform["xleft"] + window["col_off"] * geotransform["xres"]
-    right = left + window["ncols"] * geotransform["xres"]
+    right = left + window["ncol"] * geotransform["xres"]
     top = geotransform["ytop"] - window["row_off"] * geotransform["yres"]
-    bottom = top - window["nrows"] * geotransform["yres"]
+    bottom = top - window["nrow"] * geotransform["yres"]
     bbox = {"left": left, "bottom": bottom, "right": right, "top": top}
 
     return bbox
@@ -496,8 +494,8 @@ def get_window_from_bbox(dataset, bbox):
 
     col_off = (bbox["left"] - geotransform["xleft"]) / geotransform["xres"]
     row_off = (geotransform["ytop"] - bbox["top"]) / geotransform["yres"]
-    ncols = (bbox["right"] - bbox["left"]) / geotransform["xres"]
-    nrows = (bbox["top"] - bbox["bottom"]) / geotransform["yres"]
+    ncol = (bbox["right"] - bbox["left"]) / geotransform["xres"]
+    nrow = (bbox["top"] - bbox["bottom"]) / geotransform["yres"]
 
     if (col_off < 0) or (row_off < 0):
         raise Exception(
@@ -507,8 +505,8 @@ def get_window_from_bbox(dataset, bbox):
     window = {
         "row_off": int(row_off),
         "col_off": int(col_off),
-        "nrows": int(nrows),
-        "ncols": int(ncols),
+        "nrow": int(nrow),
+        "ncol": int(ncol),
     }
 
     return window
@@ -530,7 +528,7 @@ def crop_array(array, window):
 
     """
     crop_array[
-        window["col_off"] : window["col_off"] + window["ncols"],
-        window["row_off"] : window["row_off"] + window["nrows"],
+        window["col_off"] : window["col_off"] + window["ncol"],
+        window["row_off"] : window["row_off"] + window["nrow"],
     ]
     return crop_array

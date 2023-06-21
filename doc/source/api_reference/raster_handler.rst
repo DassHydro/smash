@@ -1,10 +1,10 @@
 .. _api_reference.io:
 
-======
-Raster
-======
+==============
+Raster handler
+==============
 
-.. currentmodule:: smash.core.raster
+.. currentmodule:: smash.tools.raster_handler
 
 Some functions to manipulate raster files
 *****************************************
@@ -12,7 +12,7 @@ Some functions to manipulate raster files
    :toctree: smash/
   
    gdal_raster_open
-   read_windowed_raster_gdal
+   gdal_read_windowed_raster
    gdal_reproject_raster
    gdal_crop_dataset_to_array
    gdal_crop_dataset_to_ndarray
