@@ -120,7 +120,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             matrix = (
-                read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.) * setup.prcp_conversion_factor
+                read_windowed_raster_gdal(
+                    filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                )
+                * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -186,7 +189,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.)
+                        read_windowed_raster_gdal(
+                            filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                        )
                         * setup.pet_conversion_factor
                     )
 
@@ -231,7 +236,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             else:
                 matrix = (
-                    read_windowed_raster_gdal(filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.)
+                    read_windowed_raster_gdal(
+                        filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                    )
                     * setup.pet_conversion_factor
                 )
 
@@ -262,4 +269,6 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-            input_data.descriptor[..., i] = read_windowed_raster_gdal(filename=path[0], smash_mesh=mesh, band=1, lacuna=-99.)
+            input_data.descriptor[..., i] = read_windowed_raster_gdal(
+                filename=path[0], smash_mesh=mesh, band=1, lacuna=-99.0
+            )
