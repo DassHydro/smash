@@ -1,4 +1,4 @@
-.. _api_reference.io:
+.. _api_reference.raster_handler:
 
 ==============
 Raster handler
