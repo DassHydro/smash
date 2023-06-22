@@ -39,8 +39,7 @@ New Features
 Spatial desagragation of the input raster
 *****************************************
 
-If the resolution of the input raster is diffrent of the resolution of the model mesh, the input raster are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be usful to preprocess the input files (precipitations). Some functions available in smash.core.raster could help for pre-processing.
-
+If the resolution of the input raster is different from the resolution of the model mesh, the input rasters are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be useful to preprocess the input files (precipitations). See the :ref:`API Reference <api_reference.raster_handler>` section. 
 -----
 Fixes
 -----
