@@ -20,6 +20,7 @@ Core Python
    io
    generate_samples
    sparse_storage
+   raster_handler
 
 
 Wrapped Fortran
