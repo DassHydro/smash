@@ -1,12 +1,11 @@
-commit 18cc90156ca16b257692c48b7262d927ed4a8501
-Author: inoelloc <colleoni.francois@gmail.com>
-Date:   Thu Apr 13 12:17:42 2023 +0200
+commit 305e8b6245551ea341c2a395bc657d5005013a6d
+Merge: f3c9235 9da4768
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Fri Jun 9 12:04:15 2023 +0200
 
-    FIX: Lower the tolerance to 1e-5 in multiple_run assertion (probably parallel issue)
+    Merge pull request #26 from DassHydro-dev/maint-bayes-optimize
     
-    - Modified
-    
-            * test_simu.py: in np.allclose change atol from 1e-6 to 1e-5 in test_multiple_run
+    MAINT/FIX: remove density attribute of BayesResult in preparation for V1.0.0
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
@@ -20,8 +19,8 @@ bayes_optimize.cost                           |NON MODIFIED
 bbox_mesh.flwacc                              |NON MODIFIED
 bbox_mesh.flwdir                              |NON MODIFIED
 event_seg.arr                                 |NON MODIFIED
-gen_samples.nor                               |MODIFIED
-gen_samples.uni                               |MODIFIED
+gen_samples.nor                               |NON MODIFIED
+gen_samples.uni                               |NON MODIFIED
 mesh_io.active_cell                           |NON MODIFIED
 mesh_io.area                                  |NON MODIFIED
 mesh_io.code                                  |NON MODIFIED
@@ -37,18 +36,18 @@ mesh_io.nrow                                  |NON MODIFIED
 mesh_io.path                                  |NON MODIFIED
 mesh_io.xmin                                  |NON MODIFIED
 mesh_io.ymax                                  |NON MODIFIED
-multiple_run.cost                             |ADDED
-multiple_run.qsim                             |ADDED
-mutiple_run.slc_1.cost                        |ADDED
-mutiple_run.slc_1.qsim                        |ADDED
-mutiple_run.slc_2.cost                        |ADDED
-mutiple_run.slc_2.qsim                        |ADDED
-mutiple_run.slc_3.cost                        |ADDED
-mutiple_run.slc_3.qsim                        |ADDED
-mutiple_run.slc_4.cost                        |ADDED
-mutiple_run.slc_4.qsim                        |ADDED
-mutiple_run.slc_5.cost                        |ADDED
-mutiple_run.slc_5.qsim                        |ADDED
+multiple_run.cost                             |NON MODIFIED
+multiple_run.qsim                             |NON MODIFIED
+mutiple_run.slc_1.cost                        |NON MODIFIED
+mutiple_run.slc_1.qsim                        |NON MODIFIED
+mutiple_run.slc_2.cost                        |NON MODIFIED
+mutiple_run.slc_2.qsim                        |NON MODIFIED
+mutiple_run.slc_3.cost                        |NON MODIFIED
+mutiple_run.slc_3.qsim                        |NON MODIFIED
+mutiple_run.slc_4.cost                        |NON MODIFIED
+mutiple_run.slc_4.qsim                        |NON MODIFIED
+mutiple_run.slc_5.cost                        |NON MODIFIED
+mutiple_run.slc_5.qsim                        |NON MODIFIED
 net_init.bias_layer_1                         |NON MODIFIED
 net_init.bias_layer_2                         |NON MODIFIED
 net_init.bias_layer_3                         |NON MODIFIED
@@ -74,8 +73,8 @@ optimize.uniform_sbs_states.hlr               |NON MODIFIED
 run.cost                                      |NON MODIFIED
 signatures.cont_obs                           |NON MODIFIED
 signatures.cont_sim                           |NON MODIFIED
-signatures.event_obs                          |NON MODIFIED
-signatures.event_sim                          |NON MODIFIED
+signatures.event_obs                          |MODIFIED
+signatures.event_sim                          |MODIFIED
 signatures_sens.cont_first_si_cft             |NON MODIFIED
 signatures_sens.cont_first_si_cp              |NON MODIFIED
 signatures_sens.cont_first_si_exc             |NON MODIFIED
@@ -84,14 +83,14 @@ signatures_sens.cont_total_si_cft             |NON MODIFIED
 signatures_sens.cont_total_si_cp              |NON MODIFIED
 signatures_sens.cont_total_si_exc             |NON MODIFIED
 signatures_sens.cont_total_si_lr              |NON MODIFIED
-signatures_sens.event_first_si_cft            |NON MODIFIED
-signatures_sens.event_first_si_cp             |NON MODIFIED
-signatures_sens.event_first_si_exc            |NON MODIFIED
-signatures_sens.event_first_si_lr             |NON MODIFIED
-signatures_sens.event_total_si_cft            |NON MODIFIED
-signatures_sens.event_total_si_cp             |NON MODIFIED
-signatures_sens.event_total_si_exc            |NON MODIFIED
-signatures_sens.event_total_si_lr             |NON MODIFIED
+signatures_sens.event_first_si_cft            |MODIFIED
+signatures_sens.event_first_si_cp             |MODIFIED
+signatures_sens.event_first_si_exc            |MODIFIED
+signatures_sens.event_first_si_lr             |MODIFIED
+signatures_sens.event_total_si_cft            |MODIFIED
+signatures_sens.event_total_si_cp             |MODIFIED
+signatures_sens.event_total_si_exc            |MODIFIED
+signatures_sens.event_total_si_lr             |MODIFIED
 xy_mesh.flwacc                                |NON MODIFIED
 xy_mesh.flwdir                                |NON MODIFIED
 xy_mesh.flwdst                                |NON MODIFIED

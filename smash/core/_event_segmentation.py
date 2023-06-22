@@ -213,8 +213,8 @@ def _events_grad(
     ind = _detect_peaks(q, mph=np.quantile(q[q > 0], peak_quant))
     list_events = []
 
-    for i in ind:
-        p_search = p[range(max(i - start_seg, 0), i)]
+    for i_peak in ind:
+        p_search = p[range(max(i_peak - start_seg, 0), i_peak)]
         p_search_grad = np.gradient(p_search)
 
         ind_start = _detect_peaks(
@@ -236,22 +236,30 @@ def _events_grad(
 
         ind_start_minq = ind_start[0]
 
-        start = ind_start_minq + max(i - start_seg, 0)
+        start = ind_start_minq + max(i_peak - start_seg, 0)
 
-        peakp = _detect_peaks(p[start:i], mpd=len(p))
+        peakp = _detect_peaks(p[start:i_peak], mpd=len(p))
 
         if peakp.size == 0:
-            peakp = np.argmax(p[start:i]) + start
+            peakp = np.argmax(p[start:i_peak]) + start
 
         else:
             peakp = peakp[0] + start
 
-        qbf = _baseflow_separation(q[i - 1 : start + max_duration + end_search - 1])[0]
+        fwindow = min(
+            start + max_duration + end_search, q.size
+        )  # index for determining the end of dflow windows
 
-        dflow = q[i - 1 : start + max_duration + end_search - 1] - qbf
-        dflow = np.array([sum(i) for i in zip(*(dflow[i:] for i in range(end_search)))])
+        if fwindow <= i_peak:  # reject peak at the last time step
+            continue
 
-        end = i + np.argmin(dflow)
+        qbf = _baseflow_separation(q[i_peak - 1 : fwindow - 1])[0]
+
+        dflow = q[i_peak - 1 : fwindow - 1] - qbf
+        dflow_windows = (dflow[i:] for i in range(min(end_search, dflow.size)))
+        dflow = np.array([sum(i) for i in zip(*dflow_windows)])
+
+        end = i_peak + np.argmin(dflow)
 
         if len(list_events) > 0:
             prev_start = list_events[-1]["start"]
@@ -263,14 +271,16 @@ def _events_grad(
             if max(end, prev_end) <= prev_start + max_duration:
                 list_events[-1]["end"] = max(end, prev_end)
 
-                if q[i] > q[prev_peakq]:
-                    list_events[-1]["peakQ"] = i
+                if q[i_peak] > q[prev_peakq]:
+                    list_events[-1]["peakQ"] = i_peak
 
                     if p[peakp] > p[prev_peakp]:
                         list_events[-1]["peakP"] = peakp
                 continue
 
-        list_events.append({"start": start, "end": end, "peakP": peakp, "peakQ": i})
+        list_events.append(
+            {"start": start, "end": end, "peakP": peakp, "peakQ": i_peak}
+        )
 
     return list_events
 
