@@ -19,7 +19,6 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import datetime
-from osgeo import gdal
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
