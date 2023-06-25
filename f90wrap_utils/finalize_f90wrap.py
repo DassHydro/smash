@@ -73,7 +73,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
     Fortran derived type character wrapped with f90wrap are retrived as bytes. It adds one
     decorator on getter to decode them and retrived a str
 
-    - char_array: Allow to manage Fortran character array.
+    - char-array: Allow to manage Fortran character array.
     Fortran derived type character array wrapped with f90wrap are retrived as array of ASCII character. It adds
     one decorator on getter to decode ASCII character to str and one decorator on setter to pass numpy character array of list of str
     instead of array of ASCII character
@@ -89,27 +89,27 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
 
     with open(f90f) as f:
         for l in f:
-            if "!>f90w" in l:
+            if "!$F90W" in l:
                 ind_double_2dots = l.find("::") + 2
 
-                subl = l[ind_double_2dots:].strip()
+                subl = l[ind_double_2dots:].strip().lower()
 
-                if "f90w-index" in subl:
+                if "index" in subl:
                     index.append(subl.split(" ")[0])
 
-                if "f90w-char_array" in subl:
+                if "char-array" in subl:
                     char_array.append(subl.split(" ")[0])
 
-                elif "f90w-char" in subl:
+                elif "char" in subl:
                     char.append(subl.split(" ")[0])
 
-                if "f90w-private" in subl:
+                if "private" in subl:
                     private.append(subl.split(" ")[0])
 
     res = {
         "index": index,
         "char": char,
-        "char_array": char_array,
+        "char-array": char_array,
         "private": private,
     }
 
@@ -278,7 +278,7 @@ if __name__ == "__main__":
 
         sed_char_handler_decorator(pyf, flagged_attr["char"])
 
-        sed_char_array_handler_decorator(pyf, flagged_attr["char_array"])
+        sed_char_array_handler_decorator(pyf, flagged_attr["char-array"])
 
         sed_private_property(pyf, flagged_attr["private"])
 

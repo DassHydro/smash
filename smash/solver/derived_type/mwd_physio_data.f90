@@ -28,6 +28,8 @@ module mwd_physio_data
     type Physio_DataDT
 
         real(sp), dimension(:, :, :), allocatable :: descriptor
+        real(sp), dimension(:), allocatable :: l_descriptor !$F90W private
+        real(sp), dimension(:), allocatable :: u_descriptor !$F90W private
 
     end type Physio_DataDT
 
@@ -43,6 +45,12 @@ contains
 
         allocate (this%descriptor(mesh%nrow, mesh%ncol, setup%nd))
         this%descriptor = -99._sp
+
+        allocate (this%l_descriptor(setup%nd))
+        this%l_descriptor = 0._sp
+
+        allocate (this%u_descriptor(setup%nd))
+        this%u_descriptor = 1._sp
 
     end subroutine Physio_DataDT_initialise
 

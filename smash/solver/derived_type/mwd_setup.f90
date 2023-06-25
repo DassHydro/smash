@@ -8,7 +8,7 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Solver structure                                       (default: 'gr_a')
+!%          ``structure``              Solver structure                                       (default: 'gr-a')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
@@ -30,8 +30,6 @@
 !%          ``descriptor_name``        Descriptor maps names
 !%          ``ntime_step``             Number of time steps                                   (default: 0)
 !%          ``nd``                     Number of descriptor maps                              (default: 0)
-!%          ``nopr_p``                 Number of operator parameters                          (default: 0)
-!%          ``nopr_s``                 Number of operator states                              (default: 0)
 !%
 !%      Subroutine
 !%      ----------
@@ -51,38 +49,36 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr_a" !>f90w-char
+        character(lchar) :: structure = "gr-a" !$F90W char
 
         real(sp) :: dt = 3600._sp
 
-        character(lchar) :: start_time = "..." !>f90w-char
-        character(lchar) :: end_time = "..." !>f90w-char
+        character(lchar) :: start_time = "..." !$F90W char
+        character(lchar) :: end_time = "..." !$F90W char
 
         logical :: read_qobs = .false.
-        character(lchar) :: qobs_directory = "..." !>f90w-char
+        character(lchar) :: qobs_directory = "..." !$F90W char
 
         logical :: read_prcp = .false.
-        character(lchar) :: prcp_format = "tif" !>f90w-char
+        character(lchar) :: prcp_format = "tif" !$F90W char
         real(sp) :: prcp_conversion_factor = 1._sp
-        character(lchar) :: prcp_directory = "..." !>f90w-char
+        character(lchar) :: prcp_directory = "..." !$F90W char
 
         logical :: read_pet = .false.
-        character(lchar) :: pet_format = "tif" !>f90w-char
+        character(lchar) :: pet_format = "tif" !$F90W char
         real(sp) :: pet_conversion_factor = 1._sp
-        character(lchar) :: pet_directory = "..." !>f90w-char
+        character(lchar) :: pet_directory = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
 
         logical :: sparse_storage = .false.
 
         logical :: read_descriptor = .false.
-        character(lchar) :: descriptor_format = "tif" !>f90w-char
-        character(lchar) :: descriptor_directory = "..." !>f90w-char
-        character(20), allocatable, dimension(:) :: descriptor_name !>f90w-char_array
+        character(lchar) :: descriptor_format = "tif" !$F90W char
+        character(lchar) :: descriptor_directory = "..." !$F90W char
+        character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
         integer :: ntime_step = 0
         integer :: nd = 0
-        integer :: nopr_p = 0
-        integer :: nopr_s = 0
 
     end type SetupDT
 

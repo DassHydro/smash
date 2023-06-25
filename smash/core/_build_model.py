@@ -145,10 +145,6 @@ def _build_setup(setup: SetupDT):
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt
 
-    setup.nopr_p = len(STRUCTURE_OPR_PARAMETERS[setup.structure])
-    setup.nopr_s = len(STRUCTURE_OPR_STATES[setup.structure])
-
-
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
     if setup.sparse_storage:
         compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine mw_sparse_storage
@@ -190,8 +186,6 @@ def _build_parameters(
         # % Scale to 1 (Fortran indexing)
         day_index = day_index - day_index[0] + 1
 
-        opr_parameters = getattr(parameters.opr_parameters, setup.structure)
-
         compute_interception_capacity(
-            setup, mesh, input_data, day_index, day_index[-1], opr_parameters.ci
+            setup, mesh, input_data, day_index, day_index[-1], parameters.opr_parameters.ci
         )  # % Fortran subroutine mw_interception_capacity

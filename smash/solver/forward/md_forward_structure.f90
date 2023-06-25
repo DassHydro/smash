@@ -7,654 +7,663 @@
 
 module md_forward_structure
 
-   use md_constant !% only: sp
-   use mwd_setup !% only: SetupDT
-   use mwd_mesh !% only: MeshDT
-   use mwd_input_data !% only: Input_DataDT
-   use mwd_opr_parameters !% only: GR_A_Opr_ParametersDT
-   use mwd_opr_states !% only: GR_A_Opr_StatesDT
-   use mwd_output !% only: OutputDT
-   use mwd_options !% only: OptionsDT
-   use mwd_returns !% only: ReturnsDT
-   use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
-   !% & gr_transfer
-   use md_routing_operator !% only: upstream_discharge, linear_routing
+    use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
+    use mwd_parameters !% only: ParametersDT
+    use mwd_output !% only: OutputDT
+    use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnsDT
+    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
+    !% & gr_transfer
+    use md_routing_operator !% only: upstream_discharge, linear_routing
 
-   implicit none
+    implicit none
 
 contains
 
-   subroutine gr_a_forward(setup, mesh, input_data, opr_parameters, opr_states, output, options, returns)
+    subroutine gr_a_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-      implicit none
+        implicit none
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(GR_A_Opr_ParametersDT), intent(in) :: opr_parameters
-      type(GR_A_Opr_StatesDT), intent(inout) :: opr_states
-      type(OutputDT), intent(inout) :: output
-      type(OptionsDT), intent(in) :: options
-      type(ReturnsDT), intent(inout) :: returns
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
 
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-      & qr, qd, qup, qrout
-      integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
+        & qr, qd, qup, qrout
+        integer :: t, i, row, col, k, g
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-         !$omp parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-         !$omp& opr_parameters, opr_states, output, qt), &
-         !$omp& private(i, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
+            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-            !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
-            !% =============================================================================================================== %!
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            qd = 0._sp
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                qd = 0._sp
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-            !% ======================================================================================================= %!
-            !%   Global/Local active cell
-            !% ======================================================================================================= %!
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-            if (setup%sparse_storage) then
+                if (setup%sparse_storage) then
 
-               prcp = input_data%atmos_data%sparse_prcp(k, t)
-               pet = input_data%atmos_data%sparse_pet(k, t)
+                    prcp = input_data%atmos_data%sparse_prcp(k, t)
+                    pet = input_data%atmos_data%sparse_pet(k, t)
 
-            else
+                else
 
-               prcp = input_data%atmos_data%prcp(row, col, t)
-               pet = input_data%atmos_data%pet(row, col, t)
+                    prcp = input_data%atmos_data%prcp(row, col, t)
+                    pet = input_data%atmos_data%pet(row, col, t)
 
-            end if
+                end if
 
-            if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-               !% =============================================================================================== %!
-               !%   Interception module
-               !% =============================================================================================== %!
+                    !% =============================================================================================== %!
+                    !%   Interception module
+                    !% =============================================================================================== %!
 
-               ei = min(pet, prcp)
+                    ei = min(pet, prcp)
 
-               pn = max(0._sp, prcp - ei)
+                    pn = max(0._sp, prcp - ei)
 
-               en = pet - ei
+                    en = pet - ei
 
-               !% =============================================================================================== %!
-               !%   Production module
-               !% =============================================================================================== %!
+                    !% =============================================================================================== %!
+                    !%   Production module
+                    !% =============================================================================================== %!
 
-               call gr_production(pn, en, opr_parameters%cp(row, col), 1000._sp, &
-               & opr_states%hp(row, col), pr, perc)
+                    call gr_production(pn, en, parameters%opr_parameters%cp(row, col), 1000._sp, &
+                    & parameters%opr_initial_states%hp(row, col), pr, perc)
 
-               !% =============================================================================================== %!
-               !%   Exchange module
-               !% =============================================================================================== %!
+                    !% =============================================================================================== %!
+                    !%   Exchange module
+                    !% =============================================================================================== %!
 
-               call gr_exchange(opr_parameters%exc(row, col), opr_states%hft(row, col), l)
+                    call gr_exchange(parameters%opr_parameters%kexc(row, col), &
+                    & parameters%opr_initial_states%hft(row, col), l)
 
-            end if !% [ END IF PRCP GAP ]
+                end if !% [ END IF PRCP GAP ]
 
-            !% =================================================================================================== %!
-            !%   Transfer module
-            !% =================================================================================================== %!
+                !% =================================================================================================== %!
+                !%   Transfer module
+                !% =================================================================================================== %!
 
-            prr = 0.9_sp*(pr + perc) + l
-            prd = 0.1_sp*(pr + perc)
+                prr = 0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
 
-            call gr_transfer(5._sp, prcp, prr, opr_parameters%cft(row, col), opr_states%hft(row, col), qr)
+                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                & parameters%opr_initial_states%hft(row, col), qr)
 
-            qd = max(0._sp, prd + l)
+                qd = max(0._sp, prd + l)
 
-            qt(row, col) = (qr + qd)
+                qt(row, col) = (qr + qd)
 
-         end do
-         !$omp end parallel do
+            end do
+            !$OMP end parallel do
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-            qup = 0._sp
-            qrout = 0._sp
+                qup = 0._sp
+                qrout = 0._sp
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-            !% =================================================================================================== %!
-            !%   Routing module
-            !% =================================================================================================== %!
+                !% =================================================================================================== %!
+                !%   Routing module
+                !% =================================================================================================== %!
 
-            call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
-            & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
-            & mesh%flwacc, q, qup)
+                call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
+                & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
+                & mesh%flwacc, q, qup)
 
-            call linear_routing(setup%dt, qup, opr_parameters%lr(row, col), opr_states%hlr(row, col), qrout)
+                call linear_routing(setup%dt, qup, parameters%opr_parameters%llr(row, col), &
+                & parameters%opr_initial_states%hlr(row, col), qrout)
 
-            q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
-            & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
-            & *1e-3_sp/setup%dt
+                q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
+                & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
+                & *1e-3_sp/setup%dt
 
-         end do !% [ END DO SPACE ]
-
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
-
-         do g = 1, mesh%ng
-
-            output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
-
-         end do
-
-      end do !% [ END DO TIME ]
-
-   end subroutine gr_a_forward
-
-   subroutine gr_b_forward(setup, mesh, input_data, opr_parameters, opr_states, output, options, returns)
-
-      implicit none
-
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
-
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(GR_B_Opr_ParametersDT), intent(in) :: opr_parameters
-      type(GR_B_Opr_StatesDT), intent(inout) :: opr_states
-      type(OutputDT), intent(inout) :: output
-      type(OptionsDT), intent(in) :: options
-      type(ReturnsDT), intent(inout) :: returns
-
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
-
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-      & qr, qd, qup, qrout
-      integer :: t, i, row, col, k, g
-
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
-
-      do t = 1, setup%ntime_step !% [ DO TIME ]
-
-         !$omp parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-         !$omp& opr_parameters, opr_states, output, qt), &
-         !$omp& private(i, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            qd = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+            end do
 
-            !% ======================================================================================================= %!
-            !%   Global/Local active cell
-            !% ======================================================================================================= %!
+        end do !% [ END DO TIME ]
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+    end subroutine gr_a_forward
 
-            if (setup%sparse_storage) then
+    subroutine gr_b_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-               prcp = input_data%atmos_data%sparse_prcp(k, t)
-               pet = input_data%atmos_data%sparse_pet(k, t)
+        implicit none
 
-            else
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-               prcp = input_data%atmos_data%prcp(row, col, t)
-               pet = input_data%atmos_data%pet(row, col, t)
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
 
-            end if
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
 
-            if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
+        & qr, qd, qup, qrout
+        integer :: t, i, row, col, k, g
 
-               !% =============================================================================================== %!
-               !%   Interception module
-               !% =============================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
+        
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-               call gr_interception(prcp, pet, opr_parameters%ci(row, col), opr_states%hi(row, col), pn, ei)
+            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
+            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-               en = pet - ei
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-               !% =============================================================================================== %!
-               !%   Production module
-               !% =============================================================================================== %!
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                qd = 0._sp
 
-               call gr_production(pn, en, opr_parameters%cp(row, col), 1000._sp, &
-               & opr_states%hp(row, col), pr, perc)
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-               !% =============================================================================================== %!
-               !%   Exchange module
-               !% =============================================================================================== %!
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-               call gr_exchange(opr_parameters%exc(row, col), opr_states%hft(row, col), l)
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
 
-            end if !% [ END IF PRCP GAP ]
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-            !% =================================================================================================== %!
-            !%   Transfer module
-            !% =================================================================================================== %!
+                if (setup%sparse_storage) then
 
-            prr = 0.9_sp*(pr + perc) + l
-            prd = 0.1_sp*(pr + perc)
+                    prcp = input_data%atmos_data%sparse_prcp(k, t)
+                    pet = input_data%atmos_data%sparse_pet(k, t)
 
-            call gr_transfer(5._sp, prcp, prr, opr_parameters%cft(row, col), opr_states%hft(row, col), qr)
+                else
 
-            qd = max(0._sp, prd + l)
+                    prcp = input_data%atmos_data%prcp(row, col, t)
+                    pet = input_data%atmos_data%pet(row, col, t)
 
-            qt(row, col) = (qr + qd)
+                end if
 
-         end do
-         !$omp end parallel do
+                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+                    !% =============================================================================================== %!
+                    !%   Interception module
+                    !% =============================================================================================== %!
 
-            qup = 0._sp
-            qrout = 0._sp
+                    call gr_interception(prcp, pet, parameters%opr_parameters%ci(row, col), &
+                    & parameters%opr_initial_states%hi(row, col), pn, ei)
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+                    en = pet - ei
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+                    !% =============================================================================================== %!
+                    !%   Production module
+                    !% =============================================================================================== %!
 
-            !% =================================================================================================== %!
-            !%   Routing module
-            !% =================================================================================================== %!
+                    call gr_production(pn, en, parameters%opr_parameters%cp(row, col), 1000._sp, &
+                    & parameters%opr_initial_states%hp(row, col), pr, perc)
 
-            call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
-            & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
-            & mesh%flwacc, q, qup)
+                    !% =============================================================================================== %!
+                    !%   Exchange module
+                    !% =============================================================================================== %!
 
-            call linear_routing(setup%dt, qup, opr_parameters%lr(row, col), opr_states%hlr(row, col), qrout)
+                    call gr_exchange(parameters%opr_parameters%kexc(row, col), &
+                    & parameters%opr_initial_states%hft(row, col), l)
 
-            q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
-            & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
-            & *1e-3_sp/setup%dt
+                end if !% [ END IF PRCP GAP ]
 
-         end do !% [ END DO SPACE ]
+                !% =================================================================================================== %!
+                !%   Transfer module
+                !% =================================================================================================== %!
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                prr = 0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
 
-         do g = 1, mesh%ng
+                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                & parameters%opr_initial_states%hft(row, col), qr)
 
-            output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                qd = max(0._sp, prd + l)
 
-         end do
+                qt(row, col) = (qr + qd)
 
-      end do !% [ END DO TIME ]
+            end do
+            !$OMP end parallel do
 
-   end subroutine gr_b_forward
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-   subroutine gr_c_forward(setup, mesh, input_data, opr_parameters, opr_states, output, options, returns)
+                qup = 0._sp
+                qrout = 0._sp
 
-      implicit none
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(GR_C_Opr_ParametersDT), intent(in) :: opr_parameters
-      type(GR_C_Opr_StatesDT), intent(inout) :: opr_states
-      type(OutputDT), intent(inout) :: output
-      type(OptionsDT), intent(in) :: options
-      type(ReturnsDT), intent(inout) :: returns
+                !% =================================================================================================== %!
+                !%   Routing module
+                !% =================================================================================================== %!
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
+                call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
+                & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
+                & mesh%flwacc, q, qup)
 
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
-      & qr, ql, qd, qup, qrout
-      integer :: t, i, row, col, k, g
+                call linear_routing(setup%dt, qup, parameters%opr_parameters%llr(row, col), &
+                & parameters%opr_initial_states%hlr(row, col), qrout)
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+                q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
+                & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
+                & *1e-3_sp/setup%dt
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
-
-         !$omp parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-         !$omp& opr_parameters, opr_states, output, qt), &
-         !$omp& private(i, ei, pn, en, pr, perc, l, prr, prl, prd, qr, qd, row, col, prcp, pet)
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            l = 0._sp
-            prr = 0._sp
-            prl = 0._sp
-            prd = 0._sp
-            qr = 0._sp
-            ql = 0._sp
-            qd = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+            end do
 
-            !% ======================================================================================================= %!
-            !%   Global/Local active cell
-            !% ======================================================================================================= %!
+        end do !% [ END DO TIME ]
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+    end subroutine gr_b_forward
 
-            if (setup%sparse_storage) then
+    subroutine gr_c_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-               prcp = input_data%atmos_data%sparse_prcp(k, t)
-               pet = input_data%atmos_data%sparse_pet(k, t)
+        implicit none
 
-            else
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-               prcp = input_data%atmos_data%prcp(row, col, t)
-               pet = input_data%atmos_data%pet(row, col, t)
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
 
-            end if
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
 
-            if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
+        & qr, ql, qd, qup, qrout
+        integer :: t, i, row, col, k, g
 
-               !% =============================================================================================== %!
-               !%   Interception module
-               !% =============================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-               call gr_interception(prcp, pet, opr_parameters%ci(row, col), opr_states%hi(row, col), pn, ei)
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-               en = pet - ei
+            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
+            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-               !% =============================================================================================== %!
-               !%   Production module
-               !% =============================================================================================== %!
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-               call gr_production(pn, en, opr_parameters%cp(row, col), 1000._sp, &
-               & opr_states%hp(row, col), pr, perc)
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                l = 0._sp
+                prr = 0._sp
+                prl = 0._sp
+                prd = 0._sp
+                qr = 0._sp
+                ql = 0._sp
+                qd = 0._sp
 
-               !% =============================================================================================== %!
-               !%   Exchange module
-               !% =============================================================================================== %!
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-               call gr_exchange(opr_parameters%exc(row, col), opr_states%hft(row, col), l)
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-            end if !% [ END IF PRCP GAP ]
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
 
-            !% =================================================================================================== %!
-            !%   Transfer module
-            !% =================================================================================================== %!
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-            prr = 0.9_sp*0.6_sp*(pr + perc) + l
-            prl = 0.9_sp*0.4_sp*(pr + perc)
-            prd = 0.1_sp*(pr + perc)
+                if (setup%sparse_storage) then
 
-            call gr_transfer(5._sp, prcp, prr, opr_parameters%cft(row, col), opr_states%hft(row, col), qr)
+                    prcp = input_data%atmos_data%sparse_prcp(k, t)
+                    pet = input_data%atmos_data%sparse_pet(k, t)
 
-            call gr_transfer(5._sp, prcp, prl, opr_parameters%cst(row, col), opr_states%hst(row, col), ql)
+                else
 
-            qd = max(0._sp, prd + l)
+                    prcp = input_data%atmos_data%prcp(row, col, t)
+                    pet = input_data%atmos_data%pet(row, col, t)
 
-            qt = (qr + ql + qd)
+                end if
 
-         end do
-         !$omp end parallel do
+                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+                    !% =============================================================================================== %!
+                    !%   Interception module
+                    !% =============================================================================================== %!
 
-            qup = 0._sp
-            qrout = 0._sp
+                    call gr_interception(prcp, pet, parameters%opr_parameters%ci(row, col), &
+                    & parameters%opr_initial_states%hi(row, col), pn, ei)
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+                    en = pet - ei
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+                    !% =============================================================================================== %!
+                    !%   Production module
+                    !% =============================================================================================== %!
 
-            !% =================================================================================================== %!
-            !%   Routing module
-            !% =================================================================================================== %!
+                    call gr_production(pn, en, parameters%opr_parameters%cp(row, col), 1000._sp, &
+                    & parameters%opr_initial_states%hp(row, col), pr, perc)
 
-            call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
-            & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
-            & mesh%flwacc, q, qup)
+                    !% =============================================================================================== %!
+                    !%   Exchange module
+                    !% =============================================================================================== %!
 
-            call linear_routing(setup%dt, qup, opr_parameters%lr(row, col), opr_states%hlr(row, col), qrout)
+                    call gr_exchange(parameters%opr_parameters%kexc(row, col), &
+                    & parameters%opr_initial_states%hft(row, col), l)
 
-            q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
-            & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
-            & *1e-3_sp/setup%dt
+                end if !% [ END IF PRCP GAP ]
 
-         end do !% [ END DO SPACE ]
+                !% =================================================================================================== %!
+                !%   Transfer module
+                !% =================================================================================================== %!
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                prr = 0.9_sp*0.6_sp*(pr + perc) + l
+                prl = 0.9_sp*0.4_sp*(pr + perc)
+                prd = 0.1_sp*(pr + perc)
 
-         do g = 1, mesh%ng
+                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                & parameters%opr_initial_states%hft(row, col), qr)
 
-            output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                call gr_transfer(5._sp, prcp, prl, parameters%opr_parameters%cst(row, col), &
+                & parameters%opr_initial_states%hst(row, col), ql)
 
-         end do
+                qd = max(0._sp, prd + l)
 
-      end do !% [ END DO TIME ]
+                qt(row, col) = (qr + ql + qd)
 
-   end subroutine gr_c_forward
+            end do
+            !$OMP end parallel do
 
-   subroutine gr_d_forward(setup, mesh, input_data, opr_parameters, opr_states, output, options, returns)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-      implicit none
+                qup = 0._sp
+                qrout = 0._sp
 
-      !% =================================================================================================================== %!
-      !%   Derived Type Variables (shared)
-      !% =================================================================================================================== %!
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
 
-      type(SetupDT), intent(in) :: setup
-      type(MeshDT), intent(in) :: mesh
-      type(Input_DataDT), intent(in) :: input_data
-      type(GR_D_Opr_ParametersDT), intent(in) :: opr_parameters
-      type(GR_D_Opr_StatesDT), intent(inout) :: opr_states
-      type(OutputDT), intent(inout) :: output
-      type(OptionsDT), intent(in) :: options
-      type(ReturnsDT), intent(inout) :: returns
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-      !% =================================================================================================================== %!
-      !%   Local Variables (private)
-      !% =================================================================================================================== %!
+                !% =================================================================================================== %!
+                !%   Routing module
+                !% =================================================================================================== %!
 
-      real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-      real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, &
-      & qr, qup, qrout
-      integer :: t, i, row, col, k, g
+                call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
+                & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
+                & mesh%flwacc, q, qup)
 
-      !% =================================================================================================================== %!
-      !%   Begin subroutine
-      !% =================================================================================================================== %!
+                call linear_routing(setup%dt, qup, parameters%opr_parameters%llr(row, col), &
+                & parameters%opr_initial_states%hlr(row, col), qrout)
 
-      do t = 1, setup%ntime_step !% [ DO TIME ]
+                q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
+                & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
+                & *1e-3_sp/setup%dt
 
-         !$omp parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-         !$omp& opr_parameters, opr_states, output, qt), &
-         !$omp& private(i, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            end do !% [ END DO SPACE ]
 
             !% =============================================================================================================== %!
-            !%   Local Variables Initialisation for time step (t) and cell (i)
+            !%   Store simulated discharge at gauge
             !% =============================================================================================================== %!
 
-            ei = 0._sp
-            pn = 0._sp
-            en = 0._sp
-            pr = 0._sp
-            perc = 0._sp
-            prr = 0._sp
-            qr = 0._sp
+            do g = 1, mesh%ng
 
-            !% =========================================================================================================== %!
-            !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-            !% =========================================================================================================== %!
+                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
+            end do
 
-            !% ======================================================================================================= %!
-            !%   Global/Local active cell
-            !% ======================================================================================================= %!
+        end do !% [ END DO TIME ]
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+    end subroutine gr_c_forward
 
-            if (setup%sparse_storage) then
+    subroutine gr_d_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-               prcp = input_data%atmos_data%sparse_prcp(k, t)
-               pet = input_data%atmos_data%sparse_pet(k, t)
+        implicit none
 
-            else
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables (shared)
+        !% =================================================================================================================== %!
 
-               prcp = input_data%atmos_data%prcp(row, col, t)
-               pet = input_data%atmos_data%pet(row, col, t)
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
 
-            end if
+        !% =================================================================================================================== %!
+        !%   Local Variables (private)
+        !% =================================================================================================================== %!
 
-            if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
+        real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, &
+        & qr, qup, qrout
+        integer :: t, i, row, col, k, g
 
-               !% =============================================================================================== %!
-               !%   Interception module
-               !% =============================================================================================== %!
+        !% =================================================================================================================== %!
+        !%   Begin subroutine
+        !% =================================================================================================================== %!
 
-               ei = min(pet, prcp)
+        do t = 1, setup%ntime_step !% [ DO TIME ]
 
-               pn = max(0._sp, prcp - ei)
+            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
+            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP& private(i, k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
-               en = pet - ei
+                !% =============================================================================================================== %!
+                !%   Local Variables Initialisation for time step (t) and cell (i)
+                !% =============================================================================================================== %!
 
-               !% =============================================================================================== %!
-               !%   Production module
-               !% =============================================================================================== %!
+                ei = 0._sp
+                pn = 0._sp
+                en = 0._sp
+                pr = 0._sp
+                perc = 0._sp
+                prr = 0._sp
+                qr = 0._sp
 
-               call gr_production(pn, en, opr_parameters%cp(row, col), 1000._sp, &
-               & opr_states%hp(row, col), pr, perc)
+                !% =========================================================================================================== %!
+                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
+                !% =========================================================================================================== %!
 
-            end if !% [ END IF PRCP GAP ]
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
-            !% =================================================================================================== %!
-            !%   Transfer module
-            !% =================================================================================================== %!
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
 
-            prr = pr + perc
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-            call gr_transfer(5._sp, prcp, prr, opr_parameters%cft(row, col), opr_states%hft(row, col), qr)
+                if (setup%sparse_storage) then
 
-            qt(row, col) = qr
+                    prcp = input_data%atmos_data%sparse_prcp(k, t)
+                    pet = input_data%atmos_data%sparse_pet(k, t)
 
-         end do
-         !$omp end parallel do
+                else
 
-         do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+                    prcp = input_data%atmos_data%prcp(row, col, t)
+                    pet = input_data%atmos_data%pet(row, col, t)
 
-            qup = 0._sp
-            qrout = 0._sp
+                end if
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+                    !% =============================================================================================== %!
+                    !%   Interception module
+                    !% =============================================================================================== %!
 
-            !% =================================================================================================== %!
-            !%   Routing module
-            !% =================================================================================================== %!
+                    ei = min(pet, prcp)
 
-            call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
-            & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
-            & mesh%flwacc, q, qup)
+                    pn = max(0._sp, prcp - ei)
 
-            call linear_routing(setup%dt, qup, opr_parameters%lr(row, col), opr_states%hlr(row, col), qrout)
+                    en = pet - ei
 
-            q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
-            & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
-            & *1e-3_sp/setup%dt
+                    !% =============================================================================================== %!
+                    !%   Production module
+                    !% =============================================================================================== %!
 
-         end do !% [ END DO SPACE ]
+                    call gr_production(pn, en, parameters%opr_parameters%cp(row, col), 1000._sp, &
+                    & parameters%opr_initial_states%hp(row, col), pr, perc)
 
-         !% =============================================================================================================== %!
-         !%   Store simulated discharge at gauge
-         !% =============================================================================================================== %!
+                end if !% [ END IF PRCP GAP ]
 
-         do g = 1, mesh%ng
+                !% =================================================================================================== %!
+                !%   Transfer module
+                !% =================================================================================================== %!
 
-            output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                prr = pr + perc
 
-         end do
+                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                & parameters%opr_initial_states%hft(row, col), qr)
 
-      end do !% [ END DO TIME ]
+                qt(row, col) = qr
 
-   end subroutine gr_d_forward
+            end do
+            !$OMP end parallel do
+
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+
+                qup = 0._sp
+                qrout = 0._sp
+
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+
+                !% =================================================================================================== %!
+                !%   Routing module
+                !% =================================================================================================== %!
+
+                call upstream_discharge(mesh%nrow, mesh%ncol, setup%dt, &
+                & mesh%dx(row, col), mesh%dy(row, col), row, col, mesh%flwdir, &
+                & mesh%flwacc, q, qup)
+
+                call linear_routing(setup%dt, qup, parameters%opr_parameters%llr(row, col), &
+                & parameters%opr_initial_states%hlr(row, col), qrout)
+
+                q(row, col) = ((qt(row, col)*mesh%dx(row, col)*mesh%dy(row, col)) &
+                & + (qrout*(mesh%flwacc(row, col) - mesh%dx(row, col)*mesh%dy(row, col)))) &
+                & *1e-3_sp/setup%dt
+
+            end do !% [ END DO SPACE ]
+
+            !% =============================================================================================================== %!
+            !%   Store simulated discharge at gauge
+            !% =============================================================================================================== %!
+
+            do g = 1, mesh%ng
+
+                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+
+            end do
+
+        end do !% [ END DO TIME ]
+
+    end subroutine gr_d_forward
 
 end module md_forward_structure

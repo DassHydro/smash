@@ -4,7 +4,7 @@ CC := gcc
 
 #% Compiler flags
 F90_FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
-debug: F90_FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
+dbg: F90_FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 F77_FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
 C_FLAGS := -g -O3 -march=native -fPIC -fopenmp
 
@@ -45,7 +45,7 @@ all: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library
 
 #% Debug mode `make debug` [Dev]
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
-debug: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library-edit
+dbg: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library-edit
 
 #% Make directories
 directories:
@@ -138,7 +138,7 @@ clean:
 	@rm -rf $(MESH_DIR)/_$(MESH_SHARED_LIB)*.so
 	@rm -rf build
 
-.PHONY: all debug directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-mesh library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
+.PHONY: all dbg directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-mesh library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
 
 #% Include 'c' 'f77' and 'f90' targets
 include makefile.dep

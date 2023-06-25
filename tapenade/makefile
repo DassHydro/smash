@@ -13,11 +13,13 @@ bd:
 	-d \
 	-fixinterface \
 	-noisize \
+	-openmp \
+	-context \
 	-msglevel 100 \
 	-adjvarname %_b \
 	-tgtvarname %_d \
 	-o forward \
-	-head "base_forward_run(parameters.control.x)\(output.cost)" \
+	-head "base_forward_run(parameters.control.x)\(output)" \
 	-O $(PWD) $(FILES)
 
 mv:
