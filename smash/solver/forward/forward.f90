@@ -24,9 +24,9 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
 
     !% Map control to parameters
     call control_to_parameters(setup, mesh, input_data, parameters, options)
-    
+
     output%opr_states_buffer = parameters%opr_initial_states
-    
+
     select case (setup%structure)
 
     case ("gr-a")
@@ -46,10 +46,10 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
         call gr_d_forward(setup, mesh, input_data, parameters, output, options, returns)
 
     end select
-    
+
     output%opr_final_states = parameters%opr_initial_states
     parameters%opr_initial_states = output%opr_states_buffer
-    
+
     call compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
 end subroutine base_forward_run

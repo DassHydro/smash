@@ -282,5 +282,9 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.descriptor[..., i] = _read_windowed_raster(
                 path[0], mesh
             )
-            input_data.physio_data._l_descriptor[i] = np.min(input_data.physio_data.descriptor[..., i])
-            input_data.physio_data._u_descriptor[i] = np.max(input_data.physio_data.descriptor[..., i])
+            input_data.physio_data._l_descriptor[i] = np.min(
+                input_data.physio_data.descriptor[..., i]
+            )
+            input_data.physio_data._u_descriptor[i] = np.max(
+                input_data.physio_data.descriptor[..., i]
+            )

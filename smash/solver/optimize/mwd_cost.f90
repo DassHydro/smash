@@ -32,17 +32,17 @@ contains
         type(OutputDT), intent(inout) :: output
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-        
+
         real(sp) :: jobs
         real(sp), dimension(setup%ntime_step) :: qo, qs
-        
+
         jobs = 0._sp
-        
+
         qo = input_data%obs_response%q(1, :)
         qs = output%sim_response%q(1, :)
 
         call nse(qo, qs, jobs)
-        
+
         output%cost = jobs
 
     end subroutine compute_cost
