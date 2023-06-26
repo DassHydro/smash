@@ -1,37 +1,37 @@
 module mw_mesh
 
     implicit none
-    
+
     real(4), parameter :: TWOPI = 6.2831853_4
-    real(4), parameter :: DEGREE_TO_RADIAN = TWOPI / 360._4
+    real(4), parameter :: DEGREE_TO_RADIAN = TWOPI/360._4
     real(4), parameter :: RADIUS_EARTH = 6371228._4
-    real(4), parameter :: DEGREE_TO_METER = RADIUS_EARTH * DEGREE_TO_RADIAN
+    real(4), parameter :: DEGREE_TO_METER = RADIUS_EARTH*DEGREE_TO_RADIAN
 
 contains
 
     subroutine latlon_dxdy(nrow, ncol, xres, yres, ymax, dx, dy)
-    
+
         implicit none
-    
+
         integer, intent(in) :: nrow, ncol
         real(4), intent(in) :: xres, yres, ymax
         real(4), dimension(nrow, ncol), intent(out) :: dx, dy
-        
+
         real(4) :: lat
         integer :: row
 
-        dy = yres * DEGREE_TO_METER
+        dy = yres*DEGREE_TO_METER
 
-        lat = ymax + (yres * 0.5_4)
+        lat = ymax + (yres*0.5_4)
 
-        do row=1, nrow
-            
+        do row = 1, nrow
+
             lat = lat - yres
-            
-            dx(row, :) = (xres * cos(lat * DEGREE_TO_RADIAN) * DEGREE_TO_METER)
-        
+
+            dx(row, :) = (xres*cos(lat*DEGREE_TO_RADIAN)*DEGREE_TO_METER)
+
         end do
-    
+
     end subroutine latlon_dxdy
 
     recursive subroutine mask_upstream_cells(nrow, ncol, flwdir, row, col, mask)
@@ -55,6 +55,8 @@ contains
             col_imd = col + dcol(i)
 
             if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
+
+            if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .eq. 4) cycle
 
             if (flwdir(row_imd, col_imd) .eq. i) call mask_upstream_cells(nrow, ncol, flwdir, row_imd, col_imd, mask)
 
@@ -93,13 +95,13 @@ contains
                 row_imd = row + j
                 col_imd = col + i
                 mask_dln_imd = 0
-                
+
                 if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
 
                 call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
                 & col_imd, mask_dln_imd)
 
-                tol = abs(area - sum(mask_dln_imd * dx * dy)) / area
+                tol = abs(area - sum(mask_dln_imd*dx*dy))/area
 
                 if (tol .ge. min_tol) cycle
 
@@ -212,7 +214,7 @@ contains
         integer, dimension(nrow, ncol) :: nipd
         integer :: row, col
 
-        flwacc = dx * dy
+        flwacc = dx*dy
 
         call fill_nipd(nrow, ncol, flwdir, nipd)
 
@@ -362,7 +364,7 @@ contains
             else
 
                 flwdst(row_imd, col_imd) = flwdst(row, col) + &
-                & sqrt(dx(row, col) * dx(row, col) + dy(row, col) * dy(row, col))
+                & sqrt(dx(row, col)*dx(row, col) + dy(row, col)*dy(row, col))
 
             end if
 
