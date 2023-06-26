@@ -192,8 +192,8 @@ class Model(object):
         # ~ optimize_func(self.setup, self.mesh, self._input_data, self._parameters, self._output, options, returns)
 
         options.optimize.optimizer = "lbfgsb"
-        options.optimize.mapping = "multi-linear"
-        options.optimize.maxiter = 50
+        options.optimize.mapping = "multi-polynomial"
+        options.optimize.maxiter = 100
         options.optimize.control_tfm = "normalize"
         opd = np.ones(
             shape=options.optimize.opr_parameters_descriptor.shape,

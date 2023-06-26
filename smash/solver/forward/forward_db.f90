@@ -612,6 +612,24 @@ CONTAINS
     END DO
   END SUBROUTINE MULTI_LINEAR_GET_CONTROL_SIZE
 
+  SUBROUTINE MULTI_POLYNOMIAL_GET_CONTROL_SIZE(setup, options, n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTEGER :: i
+    INTRINSIC SUM
+    n = 0
+    DO i=1,nopr_parameters
+      IF (options%optimize%opr_parameters(i) .EQ. 1) n = n + 1 + 2*SUM(&
+&         options%optimize%opr_parameters_descriptor(:, i))
+    END DO
+    DO i=1,nopr_states
+      IF (options%optimize%opr_initial_states(i) .EQ. 1) n = n + 1 + 2*&
+&         SUM(options%optimize%opr_initial_states_descriptor(:, i))
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_GET_CONTROL_SIZE
+
   SUBROUTINE SIGMOIDE(x, res)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: x
@@ -1747,6 +1765,9 @@ CONTAINS
         END DO
       END IF
     END DO
+!~         parameters%control%x_bkg = parameters%control%x
+    parameters%control%l_bkg = parameters%control%l
+    parameters%control%u_bkg = parameters%control%u
     parameters%control%nbd = 0
   END SUBROUTINE MULTI_LINEAR_PARAMETERS_TO_CONTROL
 
@@ -1781,7 +1802,6 @@ CONTAINS
 &   opr_initial_states_matrix_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     CALL OPR_PARAMETERS_TO_MATRIX(setup, mesh, parameters, &
 &                           opr_parameters_matrix)
     CALL OPR_INITIAL_STATES_TO_MATRIX(setup, mesh, parameters, &
@@ -1877,7 +1897,6 @@ CONTAINS
 &   opr_initial_states_matrix_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     j = 0
     DO i=1,nopr_parameters
@@ -2023,7 +2042,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
 &   opr_initial_states_matrix
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     CALL OPR_PARAMETERS_TO_MATRIX(setup, mesh, parameters, &
 &                           opr_parameters_matrix)
     CALL OPR_INITIAL_STATES_TO_MATRIX(setup, mesh, parameters, &
@@ -2076,6 +2094,437 @@ CONTAINS
     CALL MATRIX_TO_OPR_INITIAL_STATES(setup, mesh, &
 &                               opr_initial_states_matrix, parameters)
   END SUBROUTINE MULTI_LINEAR_CONTROL_TO_PARAMETERS
+
+  SUBROUTINE MULTI_POLYNOMIAL_PARAMETERS_TO_CONTROL(setup, mesh, &
+&   input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j, k
+    REAL(sp) :: y, l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    CALL OPR_PARAMETERS_TO_MATRIX(setup, mesh, parameters, &
+&                           opr_parameters_matrix)
+    CALL OPR_INITIAL_STATES_TO_MATRIX(setup, mesh, parameters, &
+&                               opr_initial_states_matrix)
+    CALL MULTI_POLYNOMIAL_GET_CONTROL_SIZE(setup, options, n)
+    CALL CONTROLDT_INITIALISE(parameters%control, n)
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+    j = 0
+    DO i=1,nopr_parameters
+      IF (options%optimize%opr_parameters(i) .EQ. 1) THEN
+        j = j + 1
+        y = SUM(opr_parameters_matrix(:, :, i), mask=ac_mask)/mesh%nac
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 1) &
+&         THEN
+            j = j + 2
+            parameters%control%x(j-1) = 0._sp
+            parameters%control%nbd(j-1) = 0
+            parameters%control%x(j) = 1._sp
+            parameters%control%l(j) = 0.5_sp
+            parameters%control%u(j) = 2._sp
+            parameters%control%nbd(j) = 2
+          END IF
+        END DO
+      END IF
+    END DO
+    DO i=1,nopr_states
+      IF (options%optimize%opr_initial_states(i) .EQ. 1) THEN
+        j = j + 1
+        y = SUM(opr_initial_states_matrix(:, :, i), mask=ac_mask)/mesh%&
+&         nac
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
+&             1) THEN
+            j = j + 2
+            parameters%control%x(j-1) = 0._sp
+            parameters%control%nbd(j-1) = 0
+            parameters%control%x(j) = 1._sp
+            parameters%control%l(j) = 0.5_sp
+            parameters%control%u(j) = 2._sp
+            parameters%control%nbd(j) = 2
+          END IF
+        END DO
+      END IF
+    END DO
+!~         parameters%control%x_bkg = parameters%control%x
+    parameters%control%l_bkg = parameters%control%l
+    parameters%control%u_bkg = parameters%control%u
+  END SUBROUTINE MULTI_POLYNOMIAL_PARAMETERS_TO_CONTROL
+
+!  Differentiation of multi_polynomial_control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP 
+!context):
+!   variations   of useful results: *(parameters.opr_parameters.ci)
+!                *(parameters.opr_parameters.cp) *(parameters.opr_parameters.cft)
+!                *(parameters.opr_parameters.cst) *(parameters.opr_parameters.kexc)
+!                *(parameters.opr_parameters.llr) *(parameters.opr_initial_states.hi)
+!                *(parameters.opr_initial_states.hp) *(parameters.opr_initial_states.hft)
+!                *(parameters.opr_initial_states.hst) *(parameters.opr_initial_states.hlr)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_D(setup, mesh, &
+&   input_data, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
+    CALL OPR_PARAMETERS_TO_MATRIX(setup, mesh, parameters, &
+&                           opr_parameters_matrix)
+    CALL OPR_INITIAL_STATES_TO_MATRIX(setup, mesh, parameters, &
+&                               opr_initial_states_matrix)
+    j = 0
+    opr_parameters_matrix_d = 0.0_4
+    DO i=1,nopr_parameters
+      IF (options%optimize%opr_parameters(i) .EQ. 1) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 1) &
+&         THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            temp = norm_desc**parameters%control%x(j)
+            WHERE (norm_desc .LE. 0.0) 
+              norm_desc_d = 0.0_4
+            ELSEWHERE
+              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
+&               )
+            END WHERE
+            norm_desc = temp
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
+&             parameters%control%x(j-1)*norm_desc_d
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, &
+&                          opr_parameters_matrix(:, :, i), &
+&                          opr_parameters_matrix_d(:, :, i))
+      END IF
+    END DO
+    opr_initial_states_matrix_d = 0.0_4
+    DO i=1,nopr_states
+      IF (options%optimize%opr_initial_states(i) .EQ. 1) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
+&             1) THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            temp = norm_desc**parameters%control%x(j)
+            WHERE (norm_desc .LE. 0.0) 
+              norm_desc_d = 0.0_4
+            ELSEWHERE
+              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
+&               )
+            END WHERE
+            norm_desc = temp
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
+&             parameters%control%x(j-1)*norm_desc_d
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, &
+&                          opr_initial_states_matrix(:, :, i), &
+&                          opr_initial_states_matrix_d(:, :, i))
+      END IF
+    END DO
+    CALL MATRIX_TO_OPR_PARAMETERS_D(setup, mesh, opr_parameters_matrix, &
+&                             opr_parameters_matrix_d, parameters, &
+&                             parameters_d)
+    CALL MATRIX_TO_OPR_INITIAL_STATES_D(setup, mesh, &
+&                                 opr_initial_states_matrix, &
+&                                 opr_initial_states_matrix_d, &
+&                                 parameters, parameters_d)
+  END SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_D
+
+!  Differentiation of multi_polynomial_control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP 
+!context):
+!   gradient     of useful results: *(parameters.opr_parameters.ci)
+!                *(parameters.opr_parameters.cp) *(parameters.opr_parameters.cft)
+!                *(parameters.opr_parameters.cst) *(parameters.opr_parameters.kexc)
+!                *(parameters.opr_parameters.llr) *(parameters.opr_initial_states.hi)
+!                *(parameters.opr_initial_states.hp) *(parameters.opr_initial_states.hft)
+!                *(parameters.opr_initial_states.hst) *(parameters.opr_initial_states.hlr)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_B(setup, mesh, &
+&   input_data, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
+    INTEGER :: branch
+    j = 0
+    DO i=1,nopr_parameters
+      IF (options%optimize%opr_parameters(i) .NE. 1) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 1) &
+&         THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 2
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, opr_parameters_matrix(:, :, i&
+&                        ))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=1,nopr_states
+      IF (options%optimize%opr_initial_states(i) .NE. 1) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             1) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 2
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, opr_initial_states_matrix(:, &
+&                        :, i))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    CALL MATRIX_TO_OPR_PARAMETERS(setup, mesh, opr_parameters_matrix, &
+&                           parameters)
+    CALL MATRIX_TO_OPR_INITIAL_STATES(setup, mesh, &
+&                               opr_initial_states_matrix, parameters)
+    CALL MATRIX_TO_OPR_INITIAL_STATES_B(setup, mesh, &
+&                                 opr_initial_states_matrix, &
+&                                 opr_initial_states_matrix_b, &
+&                                 parameters, parameters_b)
+    CALL MATRIX_TO_OPR_PARAMETERS_B(setup, mesh, opr_parameters_matrix, &
+&                             opr_parameters_matrix_b, parameters, &
+&                             parameters_b)
+    parameters_b%control%x = 0.0_4
+    DO i=nopr_states,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, &
+&                          opr_initial_states_matrix(:, :, i), &
+&                          opr_initial_states_matrix_b(:, :, i))
+        opr_initial_states_matrix_b(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc_b = 0.0_4
+            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
+&             SUM(norm_desc*wa2d_b)
+            norm_desc_b = parameters%control%x(j-1)*wa2d_b
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
+&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+    DO i=nopr_parameters,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, &
+&                          opr_parameters_matrix(:, :, i), &
+&                          opr_parameters_matrix_b(:, :, i))
+        opr_parameters_matrix_b(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc_b = 0.0_4
+            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
+&             SUM(norm_desc*wa2d_b)
+            norm_desc_b = parameters%control%x(j-1)*wa2d_b
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
+&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_B
+
+  SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS(setup, mesh, &
+&   input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_parameters) :: &
+&   opr_parameters_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, nopr_states) :: &
+&   opr_initial_states_matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    CALL OPR_PARAMETERS_TO_MATRIX(setup, mesh, parameters, &
+&                           opr_parameters_matrix)
+    CALL OPR_INITIAL_STATES_TO_MATRIX(setup, mesh, parameters, &
+&                               opr_initial_states_matrix)
+    j = 0
+    DO i=1,nopr_parameters
+      IF (options%optimize%opr_parameters(i) .EQ. 1) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 1) &
+&         THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, opr_parameters_matrix(:, :, i&
+&                        ))
+      END IF
+    END DO
+    DO i=1,nopr_states
+      IF (options%optimize%opr_initial_states(i) .EQ. 1) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
+&             1) THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, opr_initial_states_matrix(:, &
+&                        :, i))
+      END IF
+    END DO
+    CALL MATRIX_TO_OPR_PARAMETERS(setup, mesh, opr_parameters_matrix, &
+&                           parameters)
+    CALL MATRIX_TO_OPR_INITIAL_STATES(setup, mesh, &
+&                               opr_initial_states_matrix, parameters)
+  END SUBROUTINE MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS
 
   SUBROUTINE CONTROL_TFM(parameters, options)
     IMPLICIT NONE
@@ -2164,7 +2613,9 @@ CONTAINS
       CALL MULTI_LINEAR_PARAMETERS_TO_CONTROL(setup, mesh, input_data, &
 &                                       parameters, options)
     CASE ('multi-polynomial') 
-
+      CALL MULTI_POLYNOMIAL_PARAMETERS_TO_CONTROL(setup, mesh, &
+&                                           input_data, parameters, &
+&                                           options)
     END SELECT
     CALL CONTROL_TFM(parameters, options)
   END SUBROUTINE PARAMETERS_TO_CONTROL
@@ -2220,6 +2671,10 @@ CONTAINS
         CALL MULTI_LINEAR_CONTROL_TO_PARAMETERS_D(setup, mesh, &
 &                                           input_data, parameters, &
 &                                           parameters_d, options)
+      CASE ('multi-polynomial') 
+        CALL MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_D(setup, mesh, &
+&                                               input_data, parameters, &
+&                                               parameters_d, options)
       CASE DEFAULT
         parameters_d%opr_parameters%ci = 0.0_4
         parameters_d%opr_parameters%cp = 0.0_4
@@ -2285,6 +2740,13 @@ CONTAINS
         CALL MULTI_LINEAR_CONTROL_TO_PARAMETERS_B(setup, mesh, &
 &                                           input_data, parameters, &
 &                                           parameters_b, options)
+      CASE ('multi-polynomial') 
+        CALL MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS(setup, mesh, &
+&                                             input_data, parameters, &
+&                                             options)
+        CALL MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS_B(setup, mesh, &
+&                                               input_data, parameters, &
+&                                               parameters_b, options)
       CASE DEFAULT
         parameters_b%control%x = 0.0_4
       END SELECT
@@ -2317,6 +2779,10 @@ CONTAINS
       CASE ('multi-linear') 
         CALL MULTI_LINEAR_CONTROL_TO_PARAMETERS(setup, mesh, input_data&
 &                                         , parameters, options)
+      CASE ('multi-polynomial') 
+        CALL MULTI_POLYNOMIAL_CONTROL_TO_PARAMETERS(setup, mesh, &
+&                                             input_data, parameters, &
+&                                             options)
       END SELECT
     END IF
   END SUBROUTINE CONTROL_TO_PARAMETERS

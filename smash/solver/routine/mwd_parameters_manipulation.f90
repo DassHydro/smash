@@ -77,6 +77,36 @@ contains
 
     end subroutine multi_linear_get_control_size
 
+    subroutine multi_polynomial_get_control_size(setup, options, n)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(OptionsDT), intent(in) :: options
+        integer, intent(inout) :: n
+
+        integer :: i
+
+        n = 0
+
+        do i = 1, nopr_parameters
+
+            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+
+            n = n + 1 + 2*sum(options%optimize%opr_parameters_descriptor(:, i))
+
+        end do
+
+        do i = 1, nopr_states
+
+            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+
+            n = n + 1 + 2*sum(options%optimize%opr_initial_states_descriptor(:, i))
+
+        end do
+
+    end subroutine multi_polynomial_get_control_size
+
     subroutine sigmoide(x, res)
 
         implicit none
@@ -665,6 +695,9 @@ contains
 
         end do
 
+        !~         parameters%control%x_bkg = parameters%control%x
+        parameters%control%l_bkg = parameters%control%l
+        parameters%control%u_bkg = parameters%control%u
         parameters%control%nbd = 0
 
     end subroutine multi_linear_parameters_to_control
@@ -684,7 +717,6 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-        logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
         call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
         call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
@@ -751,6 +783,186 @@ contains
         call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
 
     end subroutine multi_linear_control_to_parameters
+
+    subroutine multi_polynomial_parameters_to_control(setup, mesh, input_data, parameters, options)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OptionsDT), intent(in) :: options
+
+        integer :: n, i, j, k
+        real(sp) :: y, l, u
+        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
+        logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
+
+        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
+        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
+
+        call multi_polynomial_get_control_size(setup, options, n)
+        call ControlDT_initialise(parameters%control, n)
+
+        ac_mask = (mesh%active_cell(:, :) .eq. 1)
+
+        j = 0
+
+        do i = 1, nopr_parameters
+
+            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+
+            j = j + 1
+
+            y = sum(opr_parameters_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            l = options%optimize%l_opr_parameters(i)
+            u = options%optimize%u_opr_parameters(i)
+
+            call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
+            parameters%control%nbd(j) = 0
+
+            do k = 1, setup%nd
+
+                if (options%optimize%opr_parameters_descriptor(k, i) .ne. 1) cycle
+
+                j = j + 2
+
+                parameters%control%x(j - 1) = 0._sp
+                parameters%control%nbd(j - 1) = 0
+
+                parameters%control%x(j) = 1._sp
+                parameters%control%l(j) = 0.5_sp
+                parameters%control%u(j) = 2._sp
+                parameters%control%nbd(j) = 2
+
+            end do
+
+        end do
+
+        do i = 1, nopr_states
+
+            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+
+            j = j + 1
+
+            y = sum(opr_initial_states_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            l = options%optimize%l_opr_initial_states(i)
+            u = options%optimize%u_opr_initial_states(i)
+
+            call inv_scaled_sigmoid(y, l, u, parameters%control%x(j))
+            parameters%control%nbd(j) = 0
+
+            do k = 1, setup%nd
+
+                if (options%optimize%opr_initial_states_descriptor(k, i) .ne. 1) cycle
+
+                j = j + 2
+
+                parameters%control%x(j - 1) = 0._sp
+                parameters%control%nbd(j - 1) = 0
+
+                parameters%control%x(j) = 1._sp
+                parameters%control%l(j) = 0.5_sp
+                parameters%control%u(j) = 2._sp
+                parameters%control%nbd(j) = 2
+
+            end do
+
+        end do
+
+        !~         parameters%control%x_bkg = parameters%control%x
+        parameters%control%l_bkg = parameters%control%l
+        parameters%control%u_bkg = parameters%control%u
+
+    end subroutine multi_polynomial_parameters_to_control
+
+    subroutine multi_polynomial_control_to_parameters(setup, mesh, input_data, parameters, options)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OptionsDT), intent(in) :: options
+
+        integer :: i, j, k
+        real :: l, u
+        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+
+        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
+        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
+
+        j = 0
+
+        do i = 1, nopr_parameters
+
+            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+
+            j = j + 1
+
+            wa2d = parameters%control%x(j)
+
+            do k = 1, setup%nd
+
+                if (options%optimize%opr_parameters_descriptor(k, i) .ne. 1) cycle
+
+                j = j + 2
+
+                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
+                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+
+                norm_desc = norm_desc**parameters%control%x(j)
+
+                wa2d = wa2d + parameters%control%x(j - 1)*norm_desc
+
+            end do
+
+            l = options%optimize%l_opr_parameters(i)
+            u = options%optimize%u_opr_parameters(i)
+
+            call scaled_sigmoide2d(wa2d, l, u, opr_parameters_matrix(:, :, i))
+
+        end do
+
+        do i = 1, nopr_states
+
+            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+
+            j = j + 1
+
+            wa2d = parameters%control%x(j)
+
+            do k = 1, setup%nd
+
+                if (options%optimize%opr_initial_states_descriptor(k, i) .ne. 1) cycle
+
+                j = j + 2
+
+                norm_desc = (input_data%physio_data%descriptor(:, :, k) - input_data%physio_data%l_descriptor(k))/ &
+                & (input_data%physio_data%u_descriptor(k) - input_data%physio_data%l_descriptor(k))
+
+                norm_desc = norm_desc**parameters%control%x(j)
+
+                wa2d = wa2d + parameters%control%x(j - 1)*norm_desc
+
+            end do
+
+            l = options%optimize%l_opr_parameters(i)
+            u = options%optimize%u_opr_parameters(i)
+
+            call scaled_sigmoide2d(wa2d, l, u, opr_initial_states_matrix(:, :, i))
+
+        end do
+
+        call matrix_to_opr_parameters(setup, mesh, opr_parameters_matrix, parameters)
+        call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
+
+    end subroutine multi_polynomial_control_to_parameters
 
     subroutine control_tfm(parameters, options)
 
@@ -820,6 +1032,8 @@ contains
 
         case ("multi-polynomial")
 
+            call multi_polynomial_parameters_to_control(setup, mesh, input_data, parameters, options)
+
         end select
 
         call control_tfm(parameters, options)
@@ -853,6 +1067,10 @@ contains
         case ("multi-linear")
 
             call multi_linear_control_to_parameters(setup, mesh, input_data, parameters, options)
+
+        case ("multi-polynomial")
+
+            call multi_polynomial_control_to_parameters(setup, mesh, input_data, parameters, options)
 
         end select
 
