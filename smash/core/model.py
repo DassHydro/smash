@@ -160,7 +160,7 @@ class Model(object):
 
         # ~ forward_run(self.setup, self.mesh, self._input_data, self._parameters, self._output, options, returns)
 
-        options.optimize.opr_parameters = [0, 1, 1, 0, 1, 1]
+        options.optimize.opr_parameters = [0, 1, 1, 1, 0, 1]
         options.optimize.opr_initial_states = [0, 0, 0, 0, 0]
         options.optimize.l_opr_parameters = [1e-6, 1e-6, 1e-6, 1e-6, -50, 1e-6]
         options.optimize.u_opr_parameters = [100, 1000, 1000, 10_000, 50, 1000]
@@ -184,7 +184,7 @@ class Model(object):
 
         # ~ options.optimize.optimizer = "lbfgsb"
         # ~ options.optimize.mapping = "distributed"
-        # ~ options.optimize.maxiter = 100
+        # ~ options.optimize.maxiter = 50
         # ~ options.optimize.control_tfm = "normalize"
 
         # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
