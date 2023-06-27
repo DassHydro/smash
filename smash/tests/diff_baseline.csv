@@ -1,8 +1,11 @@
-commit 48a1f075653b16adfaa4fcdaa40a90ecd5271ae8
-Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
-Date:   Thu Jun 8 16:43:33 2023 +0200
+commit eccfbc49788375c665ab3e80fa033607759151f6
+Author: inoelloc <colleoni.francois@gmail.com>
+Date:   Thu Jun 8 16:59:50 2023 +0200
 
-    complete the release not
+    FIX PR: Regenerated baseline
+    
+    - Two tests have been modified as a result of changes in optimization
+    regularizations
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
@@ -58,8 +61,8 @@ optimize.distributed_l-bfgs-b.cost            |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cft      |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cost     |NON MODIFIED
 optimize.distributed_l-bfgs-b_bounds.cp       |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_fast.cost   |MODIFIED
-optimize.distributed_l-bfgs-b_reg_lcurve.cost |MODIFIED
+optimize.distributed_l-bfgs-b_reg_fast.cost   |NON MODIFIED
+optimize.distributed_l-bfgs-b_reg_lcurve.cost |NON MODIFIED
 optimize.hyper-linear_l-bfgs-b.cost           |NON MODIFIED
 optimize.hyper-polynomial_l-bfgs-b.cost       |NON MODIFIED
 optimize.uniform_nelder-mead.cost             |NON MODIFIED
@@ -70,8 +73,8 @@ optimize.uniform_sbs_states.hlr               |NON MODIFIED
 run.cost                                      |NON MODIFIED
 signatures.cont_obs                           |NON MODIFIED
 signatures.cont_sim                           |NON MODIFIED
-signatures.event_obs                          |NON MODIFIED
-signatures.event_sim                          |NON MODIFIED
+signatures.event_obs                          |MODIFIED
+signatures.event_sim                          |MODIFIED
 signatures_sens.cont_first_si_cft             |NON MODIFIED
 signatures_sens.cont_first_si_cp              |NON MODIFIED
 signatures_sens.cont_first_si_exc             |NON MODIFIED
@@ -80,14 +83,14 @@ signatures_sens.cont_total_si_cft             |NON MODIFIED
 signatures_sens.cont_total_si_cp              |NON MODIFIED
 signatures_sens.cont_total_si_exc             |NON MODIFIED
 signatures_sens.cont_total_si_lr              |NON MODIFIED
-signatures_sens.event_first_si_cft            |NON MODIFIED
-signatures_sens.event_first_si_cp             |NON MODIFIED
-signatures_sens.event_first_si_exc            |NON MODIFIED
-signatures_sens.event_first_si_lr             |NON MODIFIED
-signatures_sens.event_total_si_cft            |NON MODIFIED
-signatures_sens.event_total_si_cp             |NON MODIFIED
-signatures_sens.event_total_si_exc            |NON MODIFIED
-signatures_sens.event_total_si_lr             |NON MODIFIED
+signatures_sens.event_first_si_cft            |MODIFIED
+signatures_sens.event_first_si_cp             |MODIFIED
+signatures_sens.event_first_si_exc            |MODIFIED
+signatures_sens.event_first_si_lr             |MODIFIED
+signatures_sens.event_total_si_cft            |MODIFIED
+signatures_sens.event_total_si_cp             |MODIFIED
+signatures_sens.event_total_si_exc            |MODIFIED
+signatures_sens.event_total_si_lr             |MODIFIED
 xy_mesh.flwacc                                |NON MODIFIED
 xy_mesh.flwdir                                |NON MODIFIED
 xy_mesh.flwdst                                |NON MODIFIED

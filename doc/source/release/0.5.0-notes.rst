@@ -22,6 +22,12 @@ Compatibilities
 Deprecations
 ------------
 
+BayesResult object
+******************
+
+The ``density`` attribute of the :class:`smash.BayesResult` object has been deprecated in preparation for the upcoming release 1.0.0. 
+The other two attributes, ``data`` and ``lcurve``, are still available and can be used for further analysis. 
+
 ------------
 Improvements
 ------------
@@ -45,6 +51,11 @@ New functions for reading and writting hdf5 files
  
 The new function are generic. You can save a dictionary to an hdf5, save an object (not only smash) to an hdf5, read an object as dictionary, read an hdf5 as a dict, read an hdf5 as a smash model object. Functions are provided by smash.io.hdf5_io.py. hdf5 can be opened in read-only to provide several simultaneous access. During the export or the reading, the structure of the dictionnary or object are preserved. When saving an object or a dictionnary in an hdf5, the location can be specified so that dictionary or object can be saved side by side at different places.
 
+Spatial disaggregation/aggregation of the input raster
+******************************************************
+
+If the resolution of the input raster is different from the resolution of the model mesh, the input rasters are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be useful to preprocess the input files (precipitations). See the :ref:`API Reference <api_reference.raster_handler>` section. 
+
 -----
 Fixes
 -----
@@ -61,3 +72,11 @@ Bug fixes when generating the l-curve.
 **************************************
 
 Issues have been solved when selecting the optimal weight for the regularization term.
+
+Event signatures computation
+****************************
+
+The bug related to the computation of flood event signatures has been resolved for specific cases where the peak event is observed during the last time steps in the time window.
+
+See issue `#28 <https://github.com/DassHydro-dev/smash/issues/28>`__.
+

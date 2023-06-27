@@ -15,6 +15,7 @@ setup(
         "smash.solver",
         "smash.mesh",
         "smash.io",
+        "smash.tools",
         "smash.dataset",
         "smash.tests",
         "smash.tests.core",

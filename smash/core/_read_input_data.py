@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.tools.raster_handler import gdal_read_windowed_raster
+
 from smash.core.utils import sparse_matrix_to_vector
 
 from smash.core._constant import RATIO_PET_HOURLY
@@ -18,31 +20,6 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import datetime
-from osgeo import gdal
-
-
-def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
-    ds = gdal.Open(path)
-
-    transform = ds.GetGeoTransform()
-
-    xmin = transform[0]
-    ymax = transform[3]
-    xres = transform[1]
-    yres = -transform[5]
-
-    col_off = (mesh.xmin - xmin) / xres
-    row_off = (ymax - mesh.ymax) / yres
-
-    band = ds.GetRasterBand(1)
-
-    nodata = band.GetNoDataValue()
-
-    arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
-
-    arr = np.where(arr == nodata, -99, arr)
-
-    return arr
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -212,7 +189,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             matrix = (
-                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                gdal_read_windowed_raster(
+                    filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                )
+                * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -278,7 +258,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        _read_windowed_raster(files[ind], mesh)
+                        gdal_read_windowed_raster(
+                            filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                        )
                         * setup.pet_conversion_factor
                     )
 
@@ -323,7 +305,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             else:
                 matrix = (
-                    _read_windowed_raster(files[ind], mesh)
+                    gdal_read_windowed_raster(
+                        filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                    )
                     * setup.pet_conversion_factor
                 )
 
@@ -354,4 +338,6 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-            input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
+            input_data.descriptor[..., i] = gdal_read_windowed_raster(
+                filename=path[0], smash_mesh=mesh, band=1, lacuna=-99.0
+            )

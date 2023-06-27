@@ -130,8 +130,6 @@ It can be implemented using the :class:`smash.Model.bayes_optimize` method as fo
             return_br=True
         )
 
-    model_bo.output.cost  # cost value with HDBC
-
 .. ipython:: python
     :verbatim:
 
@@ -143,6 +141,8 @@ It can be implemented using the :class:`smash.Model.bayes_optimize` method as fo
             options={"maxiter": 4},
             return_br=True
         )
+
+.. ipython:: python
 
     model_bo.output.cost  # cost value with HDBC
 
