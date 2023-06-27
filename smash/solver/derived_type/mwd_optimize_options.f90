@@ -38,22 +38,22 @@ module mwd_optimize_options
     implicit none
 
     type Optimize_OptionsDT
-            
+
         character(lchar) :: mapping = "..." !$F90W char
         character(lchar) :: optimizer = "..." !$F90W char
         character(lchar) :: control_tfm = "..." !$F90W char
-        
+
         integer :: maxiter = 100
-        
+
         integer, dimension(nopr_parameters) :: opr_parameters = 1
         integer, dimension(nopr_states) :: opr_initial_states = 0
-        
+
         real(sp), dimension(nopr_parameters) :: l_opr_parameters = 0._sp
         real(sp), dimension(nopr_parameters) :: u_opr_parameters = 1._sp
-        
+
         real(sp), dimension(nopr_states) :: l_opr_initial_states = 0._sp
         real(sp), dimension(nopr_states) :: u_opr_initial_states = 1._sp
-        
+
         integer, dimension(:, :), allocatable :: opr_parameters_descriptor
         integer, dimension(:, :), allocatable :: opr_initial_states_descriptor
 
@@ -67,13 +67,13 @@ contains
 
         type(Optimize_OptionsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
-        
+
         allocate (this%opr_parameters_descriptor(setup%nd, nopr_parameters))
         this%opr_parameters_descriptor = 1
-        
+
         allocate (this%opr_initial_states_descriptor(setup%nd, nopr_states))
         this%opr_initial_states_descriptor = 1
-        
+
     end subroutine Optimize_OptionsDT_initialise
 
     subroutine Optimize_OptionsDT_copy(this, this_copy)

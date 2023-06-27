@@ -27,7 +27,7 @@ def save_setup(setup: dict, path: str):
     --------
     >>> setup, mesh = smash.load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup
 
@@ -69,7 +69,7 @@ def read_setup(path: str) -> dict:
     --------
     >>> setup, mesh = smash.load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup
 

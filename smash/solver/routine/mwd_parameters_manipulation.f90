@@ -199,6 +199,8 @@ contains
         matrix(:, :, 4) = parameters%opr_parameters%cst
         matrix(:, :, 5) = parameters%opr_parameters%kexc
         matrix(:, :, 6) = parameters%opr_parameters%llr
+        matrix(:, :, 7) = parameters%opr_parameters%akw
+        matrix(:, :, 8) = parameters%opr_parameters%bkw
 
     end subroutine opr_parameters_to_matrix
 
@@ -234,6 +236,8 @@ contains
         parameters%opr_parameters%cst = matrix(:, :, 4)
         parameters%opr_parameters%kexc = matrix(:, :, 5)
         parameters%opr_parameters%llr = matrix(:, :, 6)
+        parameters%opr_parameters%akw = matrix(:, :, 7)
+        parameters%opr_parameters%bkw = matrix(:, :, 8)
 
     end subroutine matrix_to_opr_parameters
 

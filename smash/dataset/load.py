@@ -55,13 +55,13 @@ def load_dataset(name: str):
 
     >>> cance = smash.load_dataset("cance")
     >>> cance
-    ({'structure': 'gr-a', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
+    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
 
     Or each dictionary in a different variable.
 
     >>> setup, mesh = smash.load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a', 'dt': 3600, ...}
+    {'structure': 'gr-a-lr', 'dt': 3600, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 383, ...}
 
@@ -69,13 +69,13 @@ def load_dataset(name: str):
 
     >>> lez = smash.load_dataset("lez")
     >>> lez
-    ({'structure': 'gr-a', 'dt': 86400, ...}, {'dx': 1000.0, 'nac': 172, ...})
+    ({'structure': 'gr-a-lr', 'dt': 86400, ...}, {'dx': 1000.0, 'nac': 172, ...})
 
     Or each dictionary in a different variable.
 
     >>> setup, mesh = smash.load_dataset("lez")
     >>> setup
-    {'structure': 'gr-a', 'dt': 86400, ...}
+    {'structure': 'gr-a-lr', 'dt': 86400, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 172, ...}
 
@@ -83,13 +83,13 @@ def load_dataset(name: str):
 
     >>> france = smash.load_dataset("france")
     >>> france
-    ({'structure': 'gr-a', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 906044, ...})
+    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 906044, ...})
 
     Or each dictionary in a different variable.
 
     >>> setup, mesh = smash.load_dataset("france")
     >>> setup
-    {'structure': 'gr-a', 'dt': 3600, ...}
+    {'structure': 'gr-a-lr', 'dt': 3600, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 906044, ...}
 
@@ -97,13 +97,13 @@ def load_dataset(name: str):
 
     >>> dataset = smash.load_dataset("path/to/dataset")
     >>> dataset
-    ({'structure': 'gr-a', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
+    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
 
     Or each dictionary in a different variable.
 
     >>> setup, mesh = smash.load_dataset("path/to/dataset")
     >>> setup
-    {'structure': 'gr-a', 'dt': 3600, ...}
+    {'structure': 'gr-a-lr', 'dt': 3600, ...}
     >>> mesh
     {'dx': 1000.0, 'nac': 383, ...}
     """

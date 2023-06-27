@@ -15,6 +15,8 @@
 !%          ``cst``                    GR second transfer capacity
 !%          ``kexc``                   GR exchange flux
 !%          ``llr``                    Linear routing lag time
+!%          ``akw``                    Kinematic wave alpha parameter
+!%          ``bkw``                    Kinematic wave beta parameter
 !%
 !%
 !%      Subroutine
@@ -38,8 +40,11 @@ module mwd_opr_parameters
         real(sp), dimension(:, :), allocatable :: cft
         real(sp), dimension(:, :), allocatable :: cst
         real(sp), dimension(:, :), allocatable :: kexc
+
         real(sp), dimension(:, :), allocatable :: llr
-        
+        real(sp), dimension(:, :), allocatable :: akw
+        real(sp), dimension(:, :), allocatable :: bkw
+
     end type Opr_ParametersDT
 
 contains
@@ -69,6 +74,12 @@ contains
 
         allocate (this%llr(mesh%nrow, mesh%ncol))
         this%llr = setup%dt*(5._sp/3600._sp)
+
+        allocate (this%akw(mesh%nrow, mesh%ncol))
+        this%akw = 5._sp
+
+        allocate (this%bkw(mesh%nrow, mesh%ncol))
+        this%bkw = 0.6_sp
 
     end subroutine Opr_ParametersDT_initialise
 

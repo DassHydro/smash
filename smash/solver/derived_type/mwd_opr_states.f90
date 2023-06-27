@@ -41,9 +41,9 @@ module mwd_opr_states
 contains
 
     subroutine Opr_StatesDT_initialise(this, setup, mesh)
-    
+
         implicit none
-        
+
         type(Opr_StatesDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh

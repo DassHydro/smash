@@ -29,21 +29,25 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
 
     select case (setup%structure)
 
-    case ("gr-a")
+    case ("gr-a-lr")
 
-        call gr_a_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr_a_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr-b")
+    case ("gr-b-lr")
 
-        call gr_b_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr_b_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr-c")
+    case ("gr-c-lr")
 
-        call gr_c_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr_c_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr-d")
+    case ("gr-d-lr")
 
-        call gr_d_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr_d_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+
+    case ("gr-a-kw")
+
+        call gr_a_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
 
     end select
 

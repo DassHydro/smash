@@ -22,7 +22,7 @@ module md_constant
     integer, parameter :: dp = 8
     integer, parameter :: lchar = 128
 
-    integer, parameter :: nopr_parameters = 6
+    integer, parameter :: nopr_parameters = 8
     integer, parameter :: nopr_states = 5
 
 end module md_constant

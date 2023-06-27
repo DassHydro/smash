@@ -7,24 +7,27 @@ import numpy as np
 #################
 
 STRUCTURE_OPR_PARAMETERS = {
-    "gr-a": ["cp", "cft", "exc", "lr"],
-    "gr-b": ["ci", "cp", "cft", "exc", "lr"],
-    "gr-c": ["ci", "cp", "cft", "cst", "exc", "lr"],
-    "gr-d": ["cp", "cft", "lr"],
+    "gr-a-lr": ["cp", "cft", "kexc", "llr"],
+    "gr-b-lr": ["ci", "cp", "cft", "kexc", "llr"],
+    "gr-c-lr": ["ci", "cp", "cft", "cst", "kexc", "llr"],
+    "gr-d-lr": ["cp", "cft", "lr"],
+    "gr-a-kw": ["cp", "cft", "kexc", "akw", "bkw"],
 }
 
 STRUCTURE_OPR_STATES = {
-    "gr-a": ["hp", "hft", "hlr"],
-    "gr-b": ["hi", "hp", "hft", "hlr"],
-    "gr-c": ["hi", "hp", "hft", "hst", "hlr"],
-    "gr-d": ["hp", "hft", "hlr"],
+    "gr-a-lr": ["hp", "hft", "hlr"],
+    "gr-b-lr": ["hi", "hp", "hft", "hlr"],
+    "gr-c-lr": ["hi", "hp", "hft", "hst", "hlr"],
+    "gr-d-lr": ["hp", "hft", "hlr"],
+    "gr-a-kw": ["hp", "hft"],
 }
 
 STRUCTURE_COMPUTE_CI = {
-    "gr-a": False,
-    "gr-b": True,
-    "gr-c": True,
-    "gr-d": False,
+    "gr-a-lr": False,
+    "gr-b-lr": True,
+    "gr-c-lr": True,
+    "gr-d-lr": False,
+    "gr-a-kw": False,
 }
 
 STRUCTURE_NAME = list(STRUCTURE_OPR_PARAMETERS.keys())
