@@ -32,7 +32,7 @@ if [ ! -d ${venv_path}/${env_name} ] ; then
     
     #creating a python environment and activate it
     python3 -m venv "${venv_path}/.venv-${env_name}"
-    ln "${venv_path}/.venv-smash/bin/activate" "${venv_path}/${env_name}"
+    ln "${venv_path}/.venv-${env_name}/bin/activate" "${venv_path}/${env_name}"
     source ${venv_path}/${env_name}
     
     #install minimal python dependencies
@@ -43,7 +43,7 @@ if [ ! -d ${venv_path}/${env_name} ] ; then
     pip install wheel
     
     #manually intalling gdal, because it depends on the version of the installed system library
-    pip install GDAL<=$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+    pip install "GDAL<=$(gdal-config --version)" --global-option=build_ext --global-option="-I/usr/include/gdal"
     
     echo ''
     echo 'Building Smash...'
