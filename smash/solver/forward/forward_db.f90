@@ -4059,8 +4059,11 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
+    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
+    perc_d = 0.0_4
+    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4073,12 +4076,6 @@ CONTAINS
 !$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4131,10 +4128,6 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
-          ELSE
-            l_d = 0.0_4
-            perc_d = 0.0_4
-            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4266,12 +4259,6 @@ CONTAINS
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         CALL RECORDDYNAMICSCHEDULE(i, 1)
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4396,8 +4383,11 @@ CONTAINS
     parameters_b%opr_parameters%cft = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
+    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
+    perc_b = 0.0_4
+    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -4470,9 +4460,8 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               prd_b = qd_b
-              l_b = qd_b
+              l_b = l_b + qd_b
             ELSE
-              l_b = 0.0_4
               prd_b = 0.0_4
             END IF
             CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
@@ -4481,8 +4470,9 @@ CONTAINS
 &                        opr_parameters%cft(row, col), parameters%&
 &                        opr_initial_states%hft(row, col), parameters_b%&
 &                        opr_initial_states%hft(row, col), qr, qr_b)
-            pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-            perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+!$OMP       ATOMIC update
+            pr_b = pr_b + 0.1_sp*prd_b + 0.9_sp*prr_b
+            perc_b = perc_b + 0.1_sp*prd_b + 0.9_sp*prr_b
             CALL POPREAL4(prr)
             l_b = l_b + prr_b
             CALL POPCONTROL1B(branch)
@@ -4506,6 +4496,9 @@ CONTAINS
               ELSE
                 CALL POPREAL4(pn)
               END IF
+              l_b = 0.0_4
+              perc_b = 0.0_4
+              pr_b = 0.0_4
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -4553,19 +4546,6 @@ CONTAINS
 !$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        ei = 0._sp
-        pn = 0._sp
-        en = 0._sp
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
-        prr = 0._sp
-        prd = 0._sp
-        qr = 0._sp
-        qd = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4711,8 +4691,11 @@ CONTAINS
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
+    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
+    perc_d = 0.0_4
+    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4725,12 +4708,6 @@ CONTAINS
 !$OMP&en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4782,10 +4759,6 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
-          ELSE
-            l_d = 0.0_4
-            perc_d = 0.0_4
-            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4918,12 +4891,6 @@ CONTAINS
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         CALL RECORDDYNAMICSCHEDULE(i, 1)
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -5047,8 +5014,11 @@ CONTAINS
     parameters_b%opr_parameters%cft = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
+    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
+    perc_b = 0.0_4
+    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -5123,9 +5093,8 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               prd_b = qd_b
-              l_b = qd_b
+              l_b = l_b + qd_b
             ELSE
-              l_b = 0.0_4
               prd_b = 0.0_4
             END IF
             CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
@@ -5134,8 +5103,9 @@ CONTAINS
 &                        opr_parameters%cft(row, col), parameters%&
 &                        opr_initial_states%hft(row, col), parameters_b%&
 &                        opr_initial_states%hft(row, col), qr, qr_b)
-            pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
-            perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+!$OMP       ATOMIC update
+            pr_b = pr_b + 0.1_sp*prd_b + 0.9_sp*prr_b
+            perc_b = perc_b + 0.1_sp*prd_b + 0.9_sp*prr_b
             CALL POPREAL4(prr)
             l_b = l_b + prr_b
             CALL POPCONTROL1B(branch)
@@ -5162,6 +5132,9 @@ CONTAINS
 &                              opr_initial_states%hi(row, col), &
 &                              parameters_b%opr_initial_states%hi(row, &
 &                              col), pn, pn_b, ei, ei_b)
+              l_b = 0.0_4
+              perc_b = 0.0_4
+              pr_b = 0.0_4
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -5210,19 +5183,6 @@ CONTAINS
 !$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        ei = 0._sp
-        pn = 0._sp
-        en = 0._sp
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
-        prr = 0._sp
-        prd = 0._sp
-        qr = 0._sp
-        qd = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -5368,8 +5328,11 @@ CONTAINS
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
+    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
+    perc_d = 0.0_4
+    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5383,12 +5346,6 @@ CONTAINS
 !$OMP&qd_d)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -5440,10 +5397,6 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
-          ELSE
-            l_d = 0.0_4
-            perc_d = 0.0_4
-            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -5588,12 +5541,6 @@ CONTAINS
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         CALL RECORDDYNAMICSCHEDULE(i, 1)
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -5725,8 +5672,11 @@ CONTAINS
     parameters_b%opr_parameters%cst = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
+    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
+    perc_b = 0.0_4
+    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -5806,9 +5756,9 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               prd_b = qd_b
-              l_b = qd_b
+!$OMP         ATOMIC update
+              l_b = l_b + qd_b
             ELSE
-              l_b = 0.0_4
               prd_b = 0.0_4
             END IF
             CALL POPREAL4(parameters%opr_initial_states%hst(row, col))
@@ -5825,8 +5775,9 @@ CONTAINS
 &                        opr_initial_states%hft(row, col), qr, qr_b)
             CALL POPREAL4(prl)
             temp_b = 0.4_sp*0.9_sp*prl_b
-            pr_b = 0.1_sp*prd_b + temp_b
-            perc_b = 0.1_sp*prd_b + temp_b
+!$OMP       ATOMIC update
+            pr_b = pr_b + 0.1_sp*prd_b + temp_b
+            perc_b = perc_b + 0.1_sp*prd_b + temp_b
             CALL POPREAL4(prr)
             temp_b = 0.6_sp*0.9_sp*prr_b
 !$OMP       ATOMIC update
@@ -5858,6 +5809,9 @@ CONTAINS
 &                              opr_initial_states%hi(row, col), &
 &                              parameters_b%opr_initial_states%hi(row, &
 &                              col), pn, pn_b, ei, ei_b)
+              l_b = 0.0_4
+              perc_b = 0.0_4
+              pr_b = 0.0_4
             END IF
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -5907,21 +5861,6 @@ CONTAINS
 !$OMP&prcp, pet)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =============================================================================================================== %!
-!%   Local Variables Initialisation for time step (t) and cell (i)
-!% =============================================================================================================== %!
-        ei = 0._sp
-        pn = 0._sp
-        en = 0._sp
-        pr = 0._sp
-        perc = 0._sp
-        l = 0._sp
-        prr = 0._sp
-        prl = 0._sp
-        prd = 0._sp
-        qr = 0._sp
-        ql = 0._sp
-        qd = 0._sp
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!

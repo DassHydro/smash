@@ -58,25 +58,10 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
-
-                !% =============================================================================================================== %!
-                !%   Local Variables Initialisation for time step (t) and cell (i)
-                !% =============================================================================================================== %!
-
-                ei = 0._sp
-                pn = 0._sp
-                en = 0._sp
-                pr = 0._sp
-                perc = 0._sp
-                l = 0._sp
-                prr = 0._sp
-                prd = 0._sp
-                qr = 0._sp
-                qd = 0._sp
 
                 !% =========================================================================================================== %!
                 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
@@ -229,25 +214,10 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
-
-                !% =============================================================================================================== %!
-                !%   Local Variables Initialisation for time step (t) and cell (i)
-                !% =============================================================================================================== %!
-
-                ei = 0._sp
-                pn = 0._sp
-                en = 0._sp
-                pr = 0._sp
-                perc = 0._sp
-                l = 0._sp
-                prr = 0._sp
-                prd = 0._sp
-                qr = 0._sp
-                qd = 0._sp
 
                 !% =========================================================================================================== %!
                 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
@@ -399,27 +369,10 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
-
-                !% =============================================================================================================== %!
-                !%   Local Variables Initialisation for time step (t) and cell (i)
-                !% =============================================================================================================== %!
-
-                ei = 0._sp
-                pn = 0._sp
-                en = 0._sp
-                pr = 0._sp
-                perc = 0._sp
-                l = 0._sp
-                prr = 0._sp
-                prl = 0._sp
-                prd = 0._sp
-                qr = 0._sp
-                ql = 0._sp
-                qd = 0._sp
 
                 !% =========================================================================================================== %!
                 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
@@ -575,8 +528,8 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
@@ -731,8 +684,8 @@ contains
             q(:, :, zq) = 0._sp
             qt(:, :, zq) = 0._sp
 
-            !$OMP parallel do num_threads(options%comm%ncpu) shared(setup, mesh, input_data, &
-            !$OMP& parameters, output, options, returns, qt) &
+            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
