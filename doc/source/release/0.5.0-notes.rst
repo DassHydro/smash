@@ -39,7 +39,9 @@ New Features
 Spatial disaggregation/aggregation of the input raster
 ******************************************************
 
-If the resolution of the input raster is different from the resolution of the model mesh, the input rasters are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be useful to preprocess the input files (precipitations). See the :ref:`API Reference <api_reference.raster_handler>` section. 
+If the resolution of the input raster is different from the resolution of the model mesh, the input rasters are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be useful to preprocess the input files (precipitations).
+
+See API Reference section :ref:`api_reference.raster_handler`.
 
 -----
 Fixes
@@ -59,3 +61,11 @@ Event signatures computation
 The bug related to the computation of flood event signatures has been resolved for specific cases where the peak event is observed during the last time steps in the time window.
 
 See issue `#28 <https://github.com/DassHydro-dev/smash/issues/28>`__.
+
+``smash.generate_mesh`` segmentation fault
+******************************************
+
+An error occured when two neighboring cells have antagonistic flow directions ``(1, 5)``, ``(2, 6)``, ``(3, 7)``, ``(4, 8)``. This should be corrected directly in the flow direction file but to avoid 
+segmentation faults when the maximum number of recursions has been reached, a check is added to the code to exit recursion in that case.
+
+See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
