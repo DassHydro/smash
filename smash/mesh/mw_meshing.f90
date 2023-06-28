@@ -27,10 +27,14 @@ contains
             if (row_imd .gt. 0 .and. row_imd .le. nrow .and. &
                 col_imd .gt. 0 .and. col_imd .le. ncol) then
 
-                if (flwdir(row_imd, col_imd) .eq. i) then
+                if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .ne. 4) then
 
-                    call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
-                    & col_imd, mask)
+                    if (flwdir(row_imd, col_imd) .eq. i) then
+
+                        call mask_upstream_cells(nrow, ncol, flwdir, row_imd, &
+                        & col_imd, mask)
+
+                    end if
 
                 end if
 
