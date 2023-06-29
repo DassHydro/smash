@@ -159,7 +159,7 @@ class Model(object):
         options.comm.ncpu = 6
 
         # ~ forward_run(self.setup, self.mesh, self._input_data, self._parameters, self._output, options, returns)
-
+        # ci, cp, cft, cst, kexc, llr, akw, bkw
         options.optimize.opr_parameters = [0, 1, 1, 0, 1, 0, 1, 1]
         options.optimize.opr_initial_states = [0, 0, 0, 0, 0]
         options.optimize.l_opr_parameters = [
@@ -201,7 +201,7 @@ class Model(object):
 
         options.optimize.optimizer = "lbfgsb"
         options.optimize.mapping = "distributed"
-        options.optimize.maxiter = 50
+        options.optimize.maxiter = 20
         options.optimize.control_tfm = "normalize"
 
         optimize_func = eval(options.optimize.optimizer + "_optimize")

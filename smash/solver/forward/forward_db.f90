@@ -4059,11 +4059,8 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
-    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
-    perc_d = 0.0_4
-    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4073,7 +4070,7 @@ CONTAINS
 !$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
 !$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d)
+!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -4097,7 +4094,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -4128,6 +4125,13 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
+          ELSE
+            pr = 0._sp
+            l = 0._sp
+            perc = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4244,8 +4248,6 @@ CONTAINS
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
-    INTEGER :: ichunk
-    INTEGER :: numchunks
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4253,12 +4255,12 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-      CALL INITDYNAMICSCHEDULE()
-!$OMP DO 
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, PRIVATE(chunk_start, chunk_end)
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
 !% [ DO SPACE ]
-      DO i=1,mesh%nrow*mesh%ncol
-        CALL RECORDDYNAMICSCHEDULE(i, 1)
+      DO i=chunk_start,chunk_end
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4286,7 +4288,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -4318,6 +4320,9 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
+            pr = 0._sp
+            l = 0._sp
+            perc = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4340,7 +4345,6 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL FINALIZEDYNAMICSCHEDULE()
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
       CALL PUSHREAL4(en)
@@ -4383,11 +4387,8 @@ CONTAINS
     parameters_b%opr_parameters%cft = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
-    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
-    perc_b = 0.0_4
-    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -4431,7 +4432,7 @@ CONTAINS
 !$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_b, en_b, &
 !$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&numchunks, ichunk, chunk_end, chunk_start)
+!$OMP&chunk_end, chunk_start)
       CALL POPREAL4(prcp)
       CALL POPREAL4(en)
       CALL POPREAL4(prr)
@@ -4445,69 +4446,63 @@ CONTAINS
       prd_b = 0.0_4
       qr_b = 0.0_4
       qd_b = 0.0_4
-      CALL POPINTEGER4(numchunks)
-      DO ichunk=1,numchunks
-        CALL POPINTEGER4(chunk_end)
-        CALL POPINTEGER4(chunk_start)
-        DO i=chunk_end,chunk_start,-1
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
+      DO i=chunk_end,chunk_start,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          row = mesh%path(1, i)
+          col = mesh%path(2, i)
+          qr_b = qt_b(row, col)
+          qd_b = qt_b(row, col)
+          qt_b(row, col) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
+&                      opr_parameters%cft(row, col), parameters_b%&
+&                      opr_parameters%cft(row, col), parameters%&
+&                      opr_initial_states%hft(row, col), parameters_b%&
+&                      opr_initial_states%hft(row, col), qr, qr_b)
+          pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          CALL POPREAL4(prr)
+          l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            qr_b = qt_b(row, col)
-            qd_b = qt_b(row, col)
-            qt_b(row, col) = 0.0_4
+            CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col)&
+&                        , parameters_b%opr_parameters%kexc(row, col), &
+&                        parameters%opr_initial_states%hft(row, col), &
+&                        parameters_b%opr_initial_states%hft(row, col), &
+&                        l, l_b)
+            CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
+            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
+&                          opr_parameters%cp(row, col), parameters_b%&
+&                          opr_parameters%cp(row, col), 1000._sp, &
+&                          parameters%opr_initial_states%hp(row, col), &
+&                          parameters_b%opr_initial_states%hp(row, col)&
+&                          , pr, pr_b, perc, perc_b)
+            CALL POPREAL4(en)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              prd_b = qd_b
-              l_b = l_b + qd_b
+              CALL POPREAL4(pn)
             ELSE
-              prd_b = 0.0_4
-            END IF
-            CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                        opr_parameters%cft(row, col), parameters_b%&
-&                        opr_parameters%cft(row, col), parameters%&
-&                        opr_initial_states%hft(row, col), parameters_b%&
-&                        opr_initial_states%hft(row, col), qr, qr_b)
-!$OMP       ATOMIC update
-            pr_b = pr_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            perc_b = perc_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            CALL POPREAL4(prr)
-            l_b = l_b + prr_b
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col&
-&                          ), parameters_b%opr_parameters%kexc(row, col)&
-&                          , parameters%opr_initial_states%hft(row, col)&
-&                          , parameters_b%opr_initial_states%hft(row, &
-&                          col), l, l_b)
-              CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
-              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                            opr_parameters%cp(row, col), parameters_b%&
-&                            opr_parameters%cp(row, col), 1000._sp, &
-&                            parameters%opr_initial_states%hp(row, col)&
-&                            , parameters_b%opr_initial_states%hp(row, &
-&                            col), pr, pr_b, perc, perc_b)
-              CALL POPREAL4(en)
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 0) THEN
-                CALL POPREAL4(pn)
-              ELSE
-                CALL POPREAL4(pn)
-              END IF
-              l_b = 0.0_4
-              perc_b = 0.0_4
-              pr_b = 0.0_4
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL4(prcp)
-            ELSE
-              CALL POPREAL4(prcp)
+              CALL POPREAL4(pn)
             END IF
           END IF
-        END DO
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(prcp)
+          ELSE
+            CALL POPREAL4(prcp)
+          END IF
+        END IF
       END DO
 !$OMP END PARALLEL
     END DO
@@ -4543,7 +4538,8 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -4567,7 +4563,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -4590,6 +4586,10 @@ CONTAINS
 !% =============================================================================================== %!
             CALL GR_EXCHANGE(parameters%opr_parameters%kexc(row, col), &
 &                      parameters%opr_initial_states%hft(row, col), l)
+          ELSE
+            pr = 0._sp
+            l = 0._sp
+            perc = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4610,8 +4610,6 @@ CONTAINS
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-        qup = 0._sp
-        qrout = 0._sp
         row = mesh%path(1, i)
         col = mesh%path(2, i)
 !% [ CYCLE ACTIVE CELL ]
@@ -4691,11 +4689,8 @@ CONTAINS
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
-    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
-    perc_d = 0.0_4
-    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4705,7 +4700,8 @@ CONTAINS
 !$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
 !$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(ei_d, pn_d, &
-!$OMP&en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d)
+!$OMP&en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static&
+!$OMP&                                    )
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -4729,7 +4725,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -4759,6 +4755,13 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4876,8 +4879,6 @@ CONTAINS
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
-    INTEGER :: ichunk
-    INTEGER :: numchunks
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4885,12 +4886,12 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-      CALL INITDYNAMICSCHEDULE()
-!$OMP DO 
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, PRIVATE(chunk_start, chunk_end)
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
 !% [ DO SPACE ]
-      DO i=1,mesh%nrow*mesh%ncol
-        CALL RECORDDYNAMICSCHEDULE(i, 1)
+      DO i=chunk_start,chunk_end
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -4920,7 +4921,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -4947,6 +4948,9 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -4969,7 +4973,6 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL FINALIZEDYNAMICSCHEDULE()
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
       CALL PUSHREAL4(pet)
@@ -5014,11 +5017,8 @@ CONTAINS
     parameters_b%opr_parameters%cft = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
-    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
-    perc_b = 0.0_4
-    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -5062,7 +5062,7 @@ CONTAINS
 !$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(ei_b, pn_b, &
 !$OMP&en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch&
-!$OMP&, numchunks, ichunk, chunk_end, chunk_start)
+!$OMP&, chunk_end, chunk_start)
       CALL POPREAL4(prcp)
       CALL POPREAL4(en)
       CALL POPREAL4(pet)
@@ -5078,74 +5078,68 @@ CONTAINS
       prd_b = 0.0_4
       qr_b = 0.0_4
       qd_b = 0.0_4
-      CALL POPINTEGER4(numchunks)
-      DO ichunk=1,numchunks
-        CALL POPINTEGER4(chunk_end)
-        CALL POPINTEGER4(chunk_start)
-        DO i=chunk_end,chunk_start,-1
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
+      DO i=chunk_end,chunk_start,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          row = mesh%path(1, i)
+          col = mesh%path(2, i)
+          qr_b = qt_b(row, col)
+          qd_b = qt_b(row, col)
+          qt_b(row, col) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
+&                      opr_parameters%cft(row, col), parameters_b%&
+&                      opr_parameters%cft(row, col), parameters%&
+&                      opr_initial_states%hft(row, col), parameters_b%&
+&                      opr_initial_states%hft(row, col), qr, qr_b)
+          pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          CALL POPREAL4(prr)
+          l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            qr_b = qt_b(row, col)
-            qd_b = qt_b(row, col)
-            qt_b(row, col) = 0.0_4
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              prd_b = qd_b
-              l_b = l_b + qd_b
-            ELSE
-              prd_b = 0.0_4
-            END IF
-            CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                        opr_parameters%cft(row, col), parameters_b%&
-&                        opr_parameters%cft(row, col), parameters%&
-&                        opr_initial_states%hft(row, col), parameters_b%&
-&                        opr_initial_states%hft(row, col), qr, qr_b)
-!$OMP       ATOMIC update
-            pr_b = pr_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            perc_b = perc_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            CALL POPREAL4(prr)
-            l_b = l_b + prr_b
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col&
-&                          ), parameters_b%opr_parameters%kexc(row, col)&
-&                          , parameters%opr_initial_states%hft(row, col)&
-&                          , parameters_b%opr_initial_states%hft(row, &
-&                          col), l, l_b)
-              CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
-              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                            opr_parameters%cp(row, col), parameters_b%&
-&                            opr_parameters%cp(row, col), 1000._sp, &
-&                            parameters%opr_initial_states%hp(row, col)&
-&                            , parameters_b%opr_initial_states%hp(row, &
-&                            col), pr, pr_b, perc, perc_b)
-              CALL POPREAL4(en)
-              ei_b = -en_b
-              CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
-              CALL POPREAL4(pn)
-              CALL GR_INTERCEPTION_B(prcp, pet, parameters%&
-&                              opr_parameters%ci(row, col), parameters_b&
-&                              %opr_parameters%ci(row, col), parameters%&
-&                              opr_initial_states%hi(row, col), &
-&                              parameters_b%opr_initial_states%hi(row, &
-&                              col), pn, pn_b, ei, ei_b)
-              l_b = 0.0_4
-              perc_b = 0.0_4
-              pr_b = 0.0_4
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pet)
-              CALL POPREAL4(prcp)
-            ELSE
-              CALL POPREAL4(pet)
-              CALL POPREAL4(prcp)
-            END IF
+            CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col)&
+&                        , parameters_b%opr_parameters%kexc(row, col), &
+&                        parameters%opr_initial_states%hft(row, col), &
+&                        parameters_b%opr_initial_states%hft(row, col), &
+&                        l, l_b)
+            CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
+            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
+&                          opr_parameters%cp(row, col), parameters_b%&
+&                          opr_parameters%cp(row, col), 1000._sp, &
+&                          parameters%opr_initial_states%hp(row, col), &
+&                          parameters_b%opr_initial_states%hp(row, col)&
+&                          , pr, pr_b, perc, perc_b)
+            CALL POPREAL4(en)
+            ei_b = -en_b
+            CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
+            CALL POPREAL4(pn)
+            CALL GR_INTERCEPTION_B(prcp, pet, parameters%opr_parameters%&
+&                            ci(row, col), parameters_b%opr_parameters%&
+&                            ci(row, col), parameters%opr_initial_states&
+&                            %hi(row, col), parameters_b%&
+&                            opr_initial_states%hi(row, col), pn, pn_b, &
+&                            ei, ei_b)
           END IF
-        END DO
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(pet)
+            CALL POPREAL4(prcp)
+          ELSE
+            CALL POPREAL4(pet)
+            CALL POPREAL4(prcp)
+          END IF
+        END IF
       END DO
 !$OMP END PARALLEL
     END DO
@@ -5180,7 +5174,8 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -5204,7 +5199,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -5224,6 +5219,10 @@ CONTAINS
 !% =============================================================================================== %!
             CALL GR_EXCHANGE(parameters%opr_parameters%kexc(row, col), &
 &                      parameters%opr_initial_states%hft(row, col), l)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -5244,8 +5243,6 @@ CONTAINS
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-        qup = 0._sp
-        qrout = 0._sp
         row = mesh%path(1, i)
         col = mesh%path(2, i)
 !% [ CYCLE ACTIVE CELL ]
@@ -5328,11 +5325,8 @@ CONTAINS
     INTEGER :: t, i, row, col, k, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
-    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
-    perc_d = 0.0_4
-    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5343,7 +5337,7 @@ CONTAINS
 !$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet), PRIVATE(ei_d&
 !$OMP&, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, &
-!$OMP&qd_d)
+!$OMP&qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -5367,7 +5361,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -5397,6 +5391,13 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -5525,8 +5526,6 @@ CONTAINS
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
-    INTEGER :: ichunk
-    INTEGER :: numchunks
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5535,12 +5534,11 @@ CONTAINS
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
 !$OMP&k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, &
-!$OMP&prcp, pet)
-      CALL INITDYNAMICSCHEDULE()
-!$OMP DO 
+!$OMP&prcp, pet), PRIVATE(chunk_start, chunk_end)
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
 !% [ DO SPACE ]
-      DO i=1,mesh%nrow*mesh%ncol
-        CALL RECORDDYNAMICSCHEDULE(i, 1)
+      DO i=chunk_start,chunk_end
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -5570,7 +5568,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -5597,6 +5595,9 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -5625,7 +5626,6 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL FINALIZEDYNAMICSCHEDULE()
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
       CALL PUSHREAL4(pet)
@@ -5672,11 +5672,8 @@ CONTAINS
     parameters_b%opr_parameters%cst = 0.0_4
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%llr = 0.0_4
-    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
-    perc_b = 0.0_4
-    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -5720,8 +5717,7 @@ CONTAINS
 !$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet), PRIVATE(ei_b&
 !$OMP&, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, &
-!$OMP&qd_b), PRIVATE(branch, numchunks, ichunk, chunk_end, chunk_start)&
-!$OMP&, PRIVATE(temp_b)
+!$OMP&qd_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
       CALL POPREAL4(prcp)
       CALL POPREAL4(en)
       CALL POPREAL4(prl)
@@ -5740,89 +5736,82 @@ CONTAINS
       qr_b = 0.0_4
       ql_b = 0.0_4
       qd_b = 0.0_4
-      CALL POPINTEGER4(numchunks)
-      DO ichunk=1,numchunks
-        CALL POPINTEGER4(chunk_end)
-        CALL POPINTEGER4(chunk_start)
-        DO i=chunk_end,chunk_start,-1
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
+      DO i=chunk_end,chunk_start,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          row = mesh%path(1, i)
+          col = mesh%path(2, i)
+          qr_b = qt_b(row, col)
+          ql_b = qt_b(row, col)
+          qd_b = qt_b(row, col)
+          qt_b(row, col) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(parameters%opr_initial_states%hst(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%&
+&                      opr_parameters%cst(row, col), parameters_b%&
+&                      opr_parameters%cst(row, col), parameters%&
+&                      opr_initial_states%hst(row, col), parameters_b%&
+&                      opr_initial_states%hst(row, col), ql, ql_b)
+          CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
+&                      opr_parameters%cft(row, col), parameters_b%&
+&                      opr_parameters%cft(row, col), parameters%&
+&                      opr_initial_states%hft(row, col), parameters_b%&
+&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL POPREAL4(prl)
+          temp_b = 0.4_sp*0.9_sp*prl_b
+          pr_b = 0.1_sp*prd_b + temp_b
+          perc_b = 0.1_sp*prd_b + temp_b
+          CALL POPREAL4(prr)
+          temp_b = 0.6_sp*0.9_sp*prr_b
+!$OMP     ATOMIC update
+          l_b = l_b + prr_b
+!$OMP     ATOMIC update
+          pr_b = pr_b + temp_b
+          perc_b = perc_b + temp_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            qr_b = qt_b(row, col)
-            ql_b = qt_b(row, col)
-            qd_b = qt_b(row, col)
-            qt_b(row, col) = 0.0_4
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              prd_b = qd_b
-!$OMP         ATOMIC update
-              l_b = l_b + qd_b
-            ELSE
-              prd_b = 0.0_4
-            END IF
-            CALL POPREAL4(parameters%opr_initial_states%hst(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%&
-&                        opr_parameters%cst(row, col), parameters_b%&
-&                        opr_parameters%cst(row, col), parameters%&
-&                        opr_initial_states%hst(row, col), parameters_b%&
-&                        opr_initial_states%hst(row, col), ql, ql_b)
-            CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                        opr_parameters%cft(row, col), parameters_b%&
-&                        opr_parameters%cft(row, col), parameters%&
-&                        opr_initial_states%hft(row, col), parameters_b%&
-&                        opr_initial_states%hft(row, col), qr, qr_b)
-            CALL POPREAL4(prl)
-            temp_b = 0.4_sp*0.9_sp*prl_b
-!$OMP       ATOMIC update
-            pr_b = pr_b + 0.1_sp*prd_b + temp_b
-            perc_b = perc_b + 0.1_sp*prd_b + temp_b
-            CALL POPREAL4(prr)
-            temp_b = 0.6_sp*0.9_sp*prr_b
-!$OMP       ATOMIC update
-            l_b = l_b + prr_b
-!$OMP       ATOMIC update
-            pr_b = pr_b + temp_b
-            perc_b = perc_b + temp_b
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col&
-&                          ), parameters_b%opr_parameters%kexc(row, col)&
-&                          , parameters%opr_initial_states%hft(row, col)&
-&                          , parameters_b%opr_initial_states%hft(row, &
-&                          col), l, l_b)
-              CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
-              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                            opr_parameters%cp(row, col), parameters_b%&
-&                            opr_parameters%cp(row, col), 1000._sp, &
-&                            parameters%opr_initial_states%hp(row, col)&
-&                            , parameters_b%opr_initial_states%hp(row, &
-&                            col), pr, pr_b, perc, perc_b)
-              CALL POPREAL4(en)
-              ei_b = -en_b
-              CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
-              CALL POPREAL4(pn)
-              CALL GR_INTERCEPTION_B(prcp, pet, parameters%&
-&                              opr_parameters%ci(row, col), parameters_b&
-&                              %opr_parameters%ci(row, col), parameters%&
-&                              opr_initial_states%hi(row, col), &
-&                              parameters_b%opr_initial_states%hi(row, &
-&                              col), pn, pn_b, ei, ei_b)
-              l_b = 0.0_4
-              perc_b = 0.0_4
-              pr_b = 0.0_4
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL4(pet)
-              CALL POPREAL4(prcp)
-            ELSE
-              CALL POPREAL4(pet)
-              CALL POPREAL4(prcp)
-            END IF
+            CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col)&
+&                        , parameters_b%opr_parameters%kexc(row, col), &
+&                        parameters%opr_initial_states%hft(row, col), &
+&                        parameters_b%opr_initial_states%hft(row, col), &
+&                        l, l_b)
+            CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
+            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
+&                          opr_parameters%cp(row, col), parameters_b%&
+&                          opr_parameters%cp(row, col), 1000._sp, &
+&                          parameters%opr_initial_states%hp(row, col), &
+&                          parameters_b%opr_initial_states%hp(row, col)&
+&                          , pr, pr_b, perc, perc_b)
+            CALL POPREAL4(en)
+            ei_b = -en_b
+            CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
+            CALL POPREAL4(pn)
+            CALL GR_INTERCEPTION_B(prcp, pet, parameters%opr_parameters%&
+&                            ci(row, col), parameters_b%opr_parameters%&
+&                            ci(row, col), parameters%opr_initial_states&
+&                            %hi(row, col), parameters_b%&
+&                            opr_initial_states%hi(row, col), pn, pn_b, &
+&                            ei, ei_b)
           END IF
-        END DO
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(pet)
+            CALL POPREAL4(prcp)
+          ELSE
+            CALL POPREAL4(pet)
+            CALL POPREAL4(prcp)
+          END IF
+        END IF
       END DO
 !$OMP END PARALLEL
     END DO
@@ -5858,7 +5847,7 @@ CONTAINS
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
 !$OMP&k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, &
-!$OMP&prcp, pet)
+!$OMP&prcp, pet), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -5882,7 +5871,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
@@ -5902,6 +5891,10 @@ CONTAINS
 !% =============================================================================================== %!
             CALL GR_EXCHANGE(parameters%opr_parameters%kexc(row, col), &
 &                      parameters%opr_initial_states%hft(row, col), l)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6005,8 +5998,6 @@ CONTAINS
     output_d%sim_response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
-    perc_d = 0.0_4
-    pr_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -6016,7 +6007,7 @@ CONTAINS
 !$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
 !$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, prr, qr, row, col, prcp, pet), PRIVATE(pn_d, en_d, pr_d, perc_d&
-!$OMP&, prr_d, qr_d)
+!$OMP&, prr_d, qr_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -6040,7 +6031,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -6063,6 +6054,11 @@ CONTAINS
 &                          parameters%opr_initial_states%hp(row, col), &
 &                          parameters_d%opr_initial_states%hp(row, col)&
 &                          , pr, pr_d, perc, perc_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            perc_d = 0.0_4
+            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6167,8 +6163,6 @@ CONTAINS
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
-    INTEGER :: ichunk
-    INTEGER :: numchunks
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -6176,12 +6170,12 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
-      CALL INITDYNAMICSCHEDULE()
-!$OMP DO 
+!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet), PRIVATE(&
+!$OMP&chunk_start, chunk_end)
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
 !% [ DO SPACE ]
-      DO i=1,mesh%nrow*mesh%ncol
-        CALL RECORDDYNAMICSCHEDULE(i, 1)
+      DO i=chunk_start,chunk_end
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -6209,7 +6203,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -6236,6 +6230,8 @@ CONTAINS
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
+            pr = 0._sp
+            perc = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6250,7 +6246,6 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL FINALIZEDYNAMICSCHEDULE()
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
       CALL PUSHREAL4(en)
@@ -6294,8 +6289,6 @@ CONTAINS
     parameters_b%opr_parameters%llr = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
-    perc_b = 0.0_4
-    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
@@ -6338,8 +6331,7 @@ CONTAINS
 !$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
 !$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, prr, qr, row, col, prcp, pet), PRIVATE(pn_b, en_b, pr_b, perc_b&
-!$OMP&, prr_b, qr_b), PRIVATE(branch, numchunks, ichunk, chunk_end, &
-!$OMP&chunk_start)
+!$OMP&, prr_b, qr_b), PRIVATE(branch, chunk_end, chunk_start)
       CALL POPREAL4(prcp)
       CALL POPREAL4(en)
       CALL POPREAL4(prr)
@@ -6350,54 +6342,48 @@ CONTAINS
       perc_b = 0.0_4
       prr_b = 0.0_4
       qr_b = 0.0_4
-      CALL POPINTEGER4(numchunks)
-      DO ichunk=1,numchunks
-        CALL POPINTEGER4(chunk_end)
-        CALL POPINTEGER4(chunk_start)
-        DO i=chunk_end,chunk_start,-1
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
+      DO i=chunk_end,chunk_start,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          row = mesh%path(1, i)
+          col = mesh%path(2, i)
+          qr_b = qt_b(row, col)
+          qt_b(row, col) = 0.0_4
+          CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
+&                      opr_parameters%cft(row, col), parameters_b%&
+&                      opr_parameters%cft(row, col), parameters%&
+&                      opr_initial_states%hft(row, col), parameters_b%&
+&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL POPREAL4(prr)
+          pr_b = prr_b
+          perc_b = prr_b
           CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            qr_b = qt_b(row, col)
-            qt_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                        opr_parameters%cft(row, col), parameters_b%&
-&                        opr_parameters%cft(row, col), parameters%&
-&                        opr_initial_states%hft(row, col), parameters_b%&
-&                        opr_initial_states%hft(row, col), qr, qr_b)
-            CALL POPREAL4(prr)
-!$OMP       ATOMIC update
-            pr_b = pr_b + prr_b
-            perc_b = perc_b + prr_b
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
+            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
+&                          opr_parameters%cp(row, col), parameters_b%&
+&                          opr_parameters%cp(row, col), 1000._sp, &
+&                          parameters%opr_initial_states%hp(row, col), &
+&                          parameters_b%opr_initial_states%hp(row, col)&
+&                          , pr, pr_b, perc, perc_b)
+            CALL POPREAL4(en)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
-              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                            opr_parameters%cp(row, col), parameters_b%&
-&                            opr_parameters%cp(row, col), 1000._sp, &
-&                            parameters%opr_initial_states%hp(row, col)&
-&                            , parameters_b%opr_initial_states%hp(row, &
-&                            col), pr, pr_b, perc, perc_b)
-              CALL POPREAL4(en)
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 0) THEN
-                CALL POPREAL4(pn)
-              ELSE
-                CALL POPREAL4(pn)
-              END IF
-              perc_b = 0.0_4
-              pr_b = 0.0_4
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL4(prcp)
+              CALL POPREAL4(pn)
             ELSE
-              CALL POPREAL4(prcp)
+              CALL POPREAL4(pn)
             END IF
           END IF
-        END DO
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(prcp)
+          ELSE
+            CALL POPREAL4(prcp)
+          END IF
+        END IF
       END DO
 !$OMP END PARALLEL
     END DO
@@ -6432,7 +6418,8 @@ CONTAINS
     DO t=1,setup%ntime_step
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
+!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet), SCHEDULE(&
+!$OMP&                                        static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -6456,7 +6443,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -6474,6 +6461,9 @@ CONTAINS
             CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%cp(row&
 &                        , col), 1000._sp, parameters%opr_initial_states&
 &                        %hp(row, col), pr, perc)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6573,11 +6563,8 @@ CONTAINS
     q = 0._sp
     qt = 0._sp
     output_d%sim_response%q = 0.0_4
-    l_d = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
-    perc_d = 0.0_4
-    pr_d = 0.0_4
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% Swap q
@@ -6595,7 +6582,7 @@ CONTAINS
 !$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
 !$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d)
+!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -6619,7 +6606,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -6650,6 +6637,13 @@ CONTAINS
 &                        parameters%opr_initial_states%hft(row, col), &
 &                        parameters_d%opr_initial_states%hft(row, col), &
 &                        l, l_d)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
+            l_d = 0.0_4
+            perc_d = 0.0_4
+            pr_d = 0.0_4
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6774,8 +6768,6 @@ CONTAINS
     INTEGER :: branch
     INTEGER :: chunk_start
     INTEGER :: chunk_end
-    INTEGER :: ichunk
-    INTEGER :: numchunks
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -6792,12 +6784,12 @@ CONTAINS
       qt(:, :, zq) = 0._sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-      CALL INITDYNAMICSCHEDULE()
-!$OMP DO 
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, PRIVATE(chunk_start, chunk_end)
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
 !% [ DO SPACE ]
-      DO i=1,mesh%nrow*mesh%ncol
-        CALL RECORDDYNAMICSCHEDULE(i, 1)
+      DO i=chunk_start,chunk_end
 !% =========================================================================================================== %!
 !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
 !% =========================================================================================================== %!
@@ -6825,7 +6817,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -6857,6 +6849,9 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
@@ -6879,7 +6874,6 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL FINALIZEDYNAMICSCHEDULE()
       CALL PUSHREAL4(qlijm1)
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(en)
@@ -6930,11 +6924,8 @@ CONTAINS
     parameters_b%opr_parameters%kexc = 0.0_4
     parameters_b%opr_parameters%akw = 0.0_4
     parameters_b%opr_parameters%bkw = 0.0_4
-    l_b = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
-    perc_b = 0.0_4
-    pr_b = 0.0_4
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) = q_b(mesh%&
@@ -6982,7 +6973,7 @@ CONTAINS
 !$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
 !$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_b, en_b, &
 !$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&numchunks, ichunk, chunk_end, chunk_start)
+!$OMP&chunk_end, chunk_start)
       CALL POPREAL4(qim1j)
       CALL POPREAL4(prcp)
       CALL POPREAL4(qlij)
@@ -6998,69 +6989,63 @@ CONTAINS
       prd_b = 0.0_4
       qr_b = 0.0_4
       qd_b = 0.0_4
-      CALL POPINTEGER4(numchunks)
-      DO ichunk=1,numchunks
-        CALL POPINTEGER4(chunk_end)
-        CALL POPINTEGER4(chunk_start)
-        DO i=chunk_end,chunk_start,-1
+      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
+&                      chunk_end)
+      DO i=chunk_end,chunk_start,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          row = mesh%path(1, i)
+          col = mesh%path(2, i)
+          qr_b = qt_b(row, col, zq)
+          qd_b = qt_b(row, col, zq)
+          qt_b(row, col, zq) = 0.0_4
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            prd_b = qd_b
+            l_b = qd_b
+          ELSE
+            l_b = 0.0_4
+            prd_b = 0.0_4
+          END IF
+          CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
+          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
+&                      opr_parameters%cft(row, col), parameters_b%&
+&                      opr_parameters%cft(row, col), parameters%&
+&                      opr_initial_states%hft(row, col), parameters_b%&
+&                      opr_initial_states%hft(row, col), qr, qr_b)
+          pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
+          CALL POPREAL4(prr)
+          l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
-            qr_b = qt_b(row, col, zq)
-            qd_b = qt_b(row, col, zq)
-            qt_b(row, col, zq) = 0.0_4
+            CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col)&
+&                        , parameters_b%opr_parameters%kexc(row, col), &
+&                        parameters%opr_initial_states%hft(row, col), &
+&                        parameters_b%opr_initial_states%hft(row, col), &
+&                        l, l_b)
+            CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
+            CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
+&                          opr_parameters%cp(row, col), parameters_b%&
+&                          opr_parameters%cp(row, col), 1000._sp, &
+&                          parameters%opr_initial_states%hp(row, col), &
+&                          parameters_b%opr_initial_states%hp(row, col)&
+&                          , pr, pr_b, perc, perc_b)
+            CALL POPREAL4(en)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
-              prd_b = qd_b
-              l_b = l_b + qd_b
+              CALL POPREAL4(pn)
             ELSE
-              prd_b = 0.0_4
-            END IF
-            CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-            CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                        opr_parameters%cft(row, col), parameters_b%&
-&                        opr_parameters%cft(row, col), parameters%&
-&                        opr_initial_states%hft(row, col), parameters_b%&
-&                        opr_initial_states%hft(row, col), qr, qr_b)
-!$OMP       ATOMIC update
-            pr_b = pr_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            perc_b = perc_b + 0.1_sp*prd_b + 0.9_sp*prr_b
-            CALL POPREAL4(prr)
-            l_b = l_b + prr_b
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              CALL GR_EXCHANGE_B(parameters%opr_parameters%kexc(row, col&
-&                          ), parameters_b%opr_parameters%kexc(row, col)&
-&                          , parameters%opr_initial_states%hft(row, col)&
-&                          , parameters_b%opr_initial_states%hft(row, &
-&                          col), l, l_b)
-              CALL POPREAL4(parameters%opr_initial_states%hp(row, col))
-              CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                            opr_parameters%cp(row, col), parameters_b%&
-&                            opr_parameters%cp(row, col), 1000._sp, &
-&                            parameters%opr_initial_states%hp(row, col)&
-&                            , parameters_b%opr_initial_states%hp(row, &
-&                            col), pr, pr_b, perc, perc_b)
-              CALL POPREAL4(en)
-              CALL POPCONTROL1B(branch)
-              IF (branch .EQ. 0) THEN
-                CALL POPREAL4(pn)
-              ELSE
-                CALL POPREAL4(pn)
-              END IF
-              l_b = 0.0_4
-              perc_b = 0.0_4
-              pr_b = 0.0_4
-            END IF
-            CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) THEN
-              CALL POPREAL4(prcp)
-            ELSE
-              CALL POPREAL4(prcp)
+              CALL POPREAL4(pn)
             END IF
           END IF
-        END DO
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4(prcp)
+          ELSE
+            CALL POPREAL4(prcp)
+          END IF
+        END IF
       END DO
 !$OMP END PARALLEL
       qt_b(:, :, zq) = 0.0_4
@@ -7115,7 +7100,8 @@ CONTAINS
       qt(:, :, zq) = 0._sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
 !$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
+!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
+!$OMP&, SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
 !% =========================================================================================================== %!
@@ -7139,7 +7125,7 @@ CONTAINS
             pet = input_data%atmos_data%pet(row, col, t)
           END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0 .AND. pet .GE. 0) THEN
+          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
             IF (pet .GT. prcp) THEN
               ei = prcp
             ELSE
@@ -7162,6 +7148,10 @@ CONTAINS
 !% =============================================================================================== %!
             CALL GR_EXCHANGE(parameters%opr_parameters%kexc(row, col), &
 &                      parameters%opr_initial_states%hft(row, col), l)
+          ELSE
+            pr = 0._sp
+            perc = 0._sp
+            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module

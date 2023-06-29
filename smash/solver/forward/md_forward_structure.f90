@@ -58,7 +58,7 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
@@ -89,7 +89,7 @@ contains
 
                 end if
 
-                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
@@ -115,6 +115,12 @@ contains
                     call gr_exchange(parameters%opr_parameters%kexc(row, col), &
                     & parameters%opr_initial_states%hft(row, col), l)
 
+                else
+
+                    pr = 0._sp
+                    l = 0._sp
+                    perc = 0._sp
+
                 end if !% [ END IF PRCP GAP ]
 
                 !% =================================================================================================== %!
@@ -137,9 +143,6 @@ contains
             qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
-
-                qup = 0._sp
-                qrout = 0._sp
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
@@ -214,7 +217,7 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
@@ -245,7 +248,7 @@ contains
 
                 end if
 
-                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
@@ -270,6 +273,12 @@ contains
                     call gr_exchange(parameters%opr_parameters%kexc(row, col), &
                     & parameters%opr_initial_states%hft(row, col), l)
 
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
                 end if !% [ END IF PRCP GAP ]
 
                 !% =================================================================================================== %!
@@ -292,9 +301,6 @@ contains
             qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
-
-                qup = 0._sp
-                qrout = 0._sp
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
@@ -369,7 +375,7 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
@@ -400,7 +406,7 @@ contains
 
                 end if
 
-                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
@@ -424,6 +430,12 @@ contains
 
                     call gr_exchange(parameters%opr_parameters%kexc(row, col), &
                     & parameters%opr_initial_states%hft(row, col), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
 
                 end if !% [ END IF PRCP GAP ]
 
@@ -528,7 +540,7 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
@@ -559,7 +571,7 @@ contains
 
                 end if
 
-                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
@@ -577,6 +589,11 @@ contains
 
                     call gr_production(pn, en, parameters%opr_parameters%cp(row, col), 1000._sp, &
                     & parameters%opr_initial_states%hp(row, col), pr, perc)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
 
                 end if !% [ END IF PRCP GAP ]
 
@@ -684,7 +701,7 @@ contains
             q(:, :, zq) = 0._sp
             qt(:, :, zq) = 0._sp
 
-            !$OMP parallel do num_threads(options%comm%ncpu) &
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
             !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
@@ -715,7 +732,7 @@ contains
 
                 end if
 
-                if (prcp .ge. 0 .and. pet .ge. 0) then !% [ IF PRCP GAP ]
+                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
@@ -740,6 +757,12 @@ contains
 
                     call gr_exchange(parameters%opr_parameters%kexc(row, col), &
                     & parameters%opr_initial_states%hft(row, col), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
 
                 end if !% [ END IF PRCP GAP ]
 
