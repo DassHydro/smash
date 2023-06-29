@@ -11,7 +11,6 @@ setup(
     packages=[
         "smash",
         "smash.core",
-        "smash.core.standardize",
         "smash.solver",
         "smash.mesh",
         "smash.io",
