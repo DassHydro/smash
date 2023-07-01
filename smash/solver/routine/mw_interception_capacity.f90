@@ -11,7 +11,7 @@ module mw_interception_capacity
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
-    use mw_sparse_storage, only: sparse_vector_to_matrix_r
+    use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix
     use md_gr_operator, only: gr_interception
     use m_array_creation, only: arange
 
@@ -34,7 +34,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_pet, h, daily_cumulated, sub_daily_cumulated
         real(sp), dimension(:), allocatable :: cmax
         real(sp), dimension(:, :, :), allocatable :: diff
-        real(sp) :: stt, stp, step, ec, pth, prcp, pet
+        real(sp) :: stt, stp, step, ec, pth
         integer :: i, j, ind, row, col, n
 
         !% =========================================================================================================== %!
@@ -48,8 +48,8 @@ contains
 
             if (setup%sparse_storage) then
 
-                call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_prcp(:, i), matrix_prcp)
-                call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_pet(:, i), matrix_pet)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(i), matrix_prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(i), matrix_pet)
 
             else
 
@@ -101,26 +101,26 @@ contains
 
             do j = 1, setup%ntime_step
 
+                if (setup%sparse_storage) then
+
+                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(j), matrix_prcp)
+                    call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(j), matrix_pet)
+
+                else
+
+                    matrix_prcp = input_data%atmos_data%prcp(:, :, j)
+                    matrix_pet = input_data%atmos_data%pet(:, :, j)
+
+                end if
+
                 do col = 1, mesh%ncol
 
                     do row = 1, mesh%nrow
 
                         if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                        if (setup%sparse_storage) then
-
-                            ind = mesh%rowcol_to_ind_sparse(row, col)
-                            prcp = input_data%atmos_data%sparse_prcp(ind, j)
-                            pet = input_data%atmos_data%sparse_pet(ind, j)
-
-                        else
-
-                            prcp = input_data%atmos_data%prcp(row, col, j)
-                            pet = input_data%atmos_data%pet(row, col, j)
-
-                        end if
-
-                        call gr_interception(prcp, pet, cmax(i), h(row, col), pth, ec)
+                        call gr_interception(matrix_prcp(row, col), matrix_pet(row, col), cmax(i), &
+                        & h(row, col), pth, ec)
                         sub_daily_cumulated(row, col) = sub_daily_cumulated(row, col) + ec
 
                     end do

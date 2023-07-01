@@ -14,7 +14,7 @@ from smash.core._read_input_data import (
     _read_descriptor,
 )
 
-from smash.solver._mw_sparse_storage import compute_rowcol_to_ind_sparse
+from smash.solver._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_sparse
 from smash.solver._mw_atmos_statistic import compute_mean_atmos
 from smash.solver._mw_interception_capacity import compute_interception_capacity
 

@@ -27,6 +27,7 @@ module mwd_atmos_data
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_sparse_matrix !% only: Sparse_MatrixDT
 
     implicit none
 
@@ -35,8 +36,8 @@ module mwd_atmos_data
         real(sp), dimension(:, :, :), allocatable :: prcp
         real(sp), dimension(:, :, :), allocatable :: pet
 
-        real(sp), dimension(:, :), allocatable :: sparse_prcp
-        real(sp), dimension(:, :), allocatable :: sparse_pet
+        type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_prcp
+        type(Sparse_MatrixDT), dimension(:), allocatable :: sparse_pet
 
         real(sp), dimension(:, :), allocatable :: mean_prcp
         real(sp), dimension(:, :), allocatable :: mean_pet
@@ -55,10 +56,8 @@ contains
 
         if (setup%sparse_storage) then
 
-            allocate (this%sparse_prcp(mesh%nac, setup%ntime_step))
-            this%sparse_prcp = -99._sp
-            allocate (this%sparse_pet(mesh%nac, setup%ntime_step))
-            this%sparse_pet = -99._sp
+            allocate (this%sparse_prcp(setup%ntime_step))
+            allocate (this%sparse_pet(setup%ntime_step))
 
         else
 

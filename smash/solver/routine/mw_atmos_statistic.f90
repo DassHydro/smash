@@ -11,7 +11,7 @@ module mw_atmos_statistic
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
-    use mw_sparse_storage, only: sparse_vector_to_matrix_r
+    use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix
     use mw_mask, only: mask_upstream_cells
 
     implicit none
@@ -44,8 +44,8 @@ contains
 
             if (setup%sparse_storage) then
 
-                call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_prcp(:, i), matrix_prcp)
-                call sparse_vector_to_matrix_r(mesh, input_data%atmos_data%sparse_pet(:, i), matrix_pet)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(i), matrix_prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(i), matrix_pet)
 
             else
 

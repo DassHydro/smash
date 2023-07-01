@@ -19,6 +19,7 @@ module md_forward_structure
     use mwd_output !% only: OutputDT
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
+    use mwd_sparse_matrix_manipulation !% only: sparse_matrix_to_matrix
     use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
     !% & gr_transfer
     use md_routing_operator !% only: upstream_discharge, linear_routing, kinematic_wave1d
@@ -47,10 +48,9 @@ contains
         !%   Local Variables (private)
         !% =================================================================================================================== %!
 
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-        & qr, qd, qup, qrout
-        integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+        real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+        integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -58,18 +58,29 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
-            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
 
-                !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-                !% =========================================================================================================== %!
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
-                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
                 !% ======================================================================================================= %!
                 !%   Global/Local active cell
@@ -77,29 +88,17 @@ contains
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-                if (setup%sparse_storage) then
-
-                    prcp = input_data%atmos_data%sparse_prcp(k, t)
-                    pet = input_data%atmos_data%sparse_pet(k, t)
-
-                else
-
-                    prcp = input_data%atmos_data%prcp(row, col, t)
-                    pet = input_data%atmos_data%pet(row, col, t)
-
-                end if
-
-                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    ei = min(pet, prcp)
+                    ei = min(pet(row, col), prcp(row, col))
 
-                    pn = max(0._sp, prcp - ei)
+                    pn = max(0._sp, prcp(row, col) - ei)
 
-                    en = pet - ei
+                    en = pet(row, col) - ei
 
                     !% =============================================================================================== %!
                     !%   Production module
@@ -130,7 +129,7 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%cft(row, col), &
                 & parameters%opr_initial_states%hft(row, col), qr)
 
                 qd = max(0._sp, prd + l)
@@ -206,10 +205,9 @@ contains
         !%   Local Variables (private)
         !% =================================================================================================================== %!
 
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-        & qr, qd, qup, qrout
-        integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+        real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+        integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -217,18 +215,29 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
-            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
 
-                !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-                !% =========================================================================================================== %!
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
-                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
                 !% ======================================================================================================= %!
                 !%   Global/Local active cell
@@ -236,28 +245,16 @@ contains
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-                if (setup%sparse_storage) then
-
-                    prcp = input_data%atmos_data%sparse_prcp(k, t)
-                    pet = input_data%atmos_data%sparse_pet(k, t)
-
-                else
-
-                    prcp = input_data%atmos_data%prcp(row, col, t)
-                    pet = input_data%atmos_data%pet(row, col, t)
-
-                end if
-
-                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp, pet, parameters%opr_parameters%ci(row, col), &
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%ci(row, col), &
                     & parameters%opr_initial_states%hi(row, col), pn, ei)
 
-                    en = pet - ei
+                    en = pet(row, col) - ei
 
                     !% =============================================================================================== %!
                     !%   Production module
@@ -288,7 +285,7 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%cft(row, col), &
                 & parameters%opr_initial_states%hft(row, col), qr)
 
                 qd = max(0._sp, prd + l)
@@ -364,10 +361,9 @@ contains
         !%   Local Variables (private)
         !% =================================================================================================================== %!
 
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, &
-        & qr, ql, qd, qup, qrout
-        integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+        real(sp) :: ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, qup, qrout
+        integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -375,18 +371,29 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
-            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet)
-            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
 
-                !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-                !% =========================================================================================================== %!
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
-                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
                 !% ======================================================================================================= %!
                 !%   Global/Local active cell
@@ -394,28 +401,16 @@ contains
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-                if (setup%sparse_storage) then
-
-                    prcp = input_data%atmos_data%sparse_prcp(k, t)
-                    pet = input_data%atmos_data%sparse_pet(k, t)
-
-                else
-
-                    prcp = input_data%atmos_data%prcp(row, col, t)
-                    pet = input_data%atmos_data%pet(row, col, t)
-
-                end if
-
-                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp, pet, parameters%opr_parameters%ci(row, col), &
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%ci(row, col), &
                     & parameters%opr_initial_states%hi(row, col), pn, ei)
 
-                    en = pet - ei
+                    en = pet(row, col) - ei
 
                     !% =============================================================================================== %!
                     !%   Production module
@@ -447,10 +442,10 @@ contains
                 prl = 0.9_sp*0.4_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%cft(row, col), &
                 & parameters%opr_initial_states%hft(row, col), qr)
 
-                call gr_transfer(5._sp, prcp, prl, parameters%opr_parameters%cst(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prl, parameters%opr_parameters%cst(row, col), &
                 & parameters%opr_initial_states%hst(row, col), ql)
 
                 qd = max(0._sp, prd + l)
@@ -529,10 +524,9 @@ contains
         !%   Local Variables (private)
         !% =================================================================================================================== %!
 
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: q, qt
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, &
-        & qr, qup, qrout
-        integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+        real(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
+        integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -540,18 +534,29 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
-            !$OMP& private(i, k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet)
-            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
 
-                !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-                !% =========================================================================================================== %!
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+            !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
-                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
                 !% ======================================================================================================= %!
                 !%   Global/Local active cell
@@ -559,29 +564,17 @@ contains
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-                if (setup%sparse_storage) then
-
-                    prcp = input_data%atmos_data%sparse_prcp(k, t)
-                    pet = input_data%atmos_data%sparse_pet(k, t)
-
-                else
-
-                    prcp = input_data%atmos_data%prcp(row, col, t)
-                    pet = input_data%atmos_data%pet(row, col, t)
-
-                end if
-
-                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    ei = min(pet, prcp)
+                    ei = min(pet(row, col), prcp(row, col))
 
-                    pn = max(0._sp, prcp - ei)
+                    pn = max(0._sp, prcp(row, col) - ei)
 
-                    en = pet - ei
+                    en = pet(row, col) - ei
 
                     !% =============================================================================================== %!
                     !%   Production module
@@ -603,7 +596,7 @@ contains
 
                 prr = pr + perc
 
-                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%cft(row, col), &
                 & parameters%opr_initial_states%hft(row, col), qr)
 
                 qt(row, col) = qr
@@ -678,11 +671,11 @@ contains
         !% =================================================================================================================== %!
 
         integer, parameter :: zq = 2
-        real(sp), dimension(mesh%nrow, mesh%ncol, zq) :: q
-        real(sp), dimension(mesh%nrow, mesh%ncol, zq) :: qt
-        real(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, &
-        & qr, qd, qlijm1, qlij, qijm1, qim1j, qij
-        integer :: t, i, row, col, k, g
+        real(sp), dimension(mesh%nrow, mesh%ncol, zq) :: qt, q
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet
+        real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
+        & qlijm1, qlij, qijm1, qim1j, qij
+        integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -693,26 +686,43 @@ contains
 
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
-            !% Swap q
+            !% =============================================================================================================== %!
+            !%  Swapping Q Buffer
+            !% =============================================================================================================== %!
+
             do i = 1, zq - 1
+
                 q(:, :, i) = q(:, :, i + 1)
                 qt(:, :, i) = qt(:, :, i + 1)
+
             end do
+
             q(:, :, zq) = 0._sp
             qt(:, :, zq) = 0._sp
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, qt) &
-            !$OMP& private(i, k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)
-            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
 
-                !% =========================================================================================================== %!
-                !%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-                !% =========================================================================================================== %!
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
                 col = mesh%path(2, i)
-                if (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col)
 
                 !% ======================================================================================================= %!
                 !%   Global/Local active cell
@@ -720,29 +730,17 @@ contains
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
 
-                if (setup%sparse_storage) then
-
-                    prcp = input_data%atmos_data%sparse_prcp(k, t)
-                    pet = input_data%atmos_data%sparse_pet(k, t)
-
-                else
-
-                    prcp = input_data%atmos_data%prcp(row, col, t)
-                    pet = input_data%atmos_data%pet(row, col, t)
-
-                end if
-
-                if (prcp .ge. 0._sp .and. pet .ge. 0._sp) then !% [ IF PRCP GAP ]
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF PRCP GAP ]
 
                     !% =============================================================================================== %!
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    ei = min(pet, prcp)
+                    ei = min(pet(row, col), prcp(row, col))
 
-                    pn = max(0._sp, prcp - ei)
+                    pn = max(0._sp, prcp(row, col) - ei)
 
-                    en = pet - ei
+                    en = pet(row, col) - ei
 
                     !% =============================================================================================== %!
                     !%   Production module
@@ -773,7 +771,7 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp, prr, parameters%opr_parameters%cft(row, col), &
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%cft(row, col), &
                 & parameters%opr_initial_states%hft(row, col), qr)
 
                 qd = max(0._sp, prd + l)

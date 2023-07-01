@@ -7,7 +7,7 @@ from smash.tools._common_function import (
 
 from smash.core._constant import RATIO_PET_HOURLY
 
-from smash.solver._mw_sparse_storage import matrix_to_sparse_vector_r
+from smash.solver._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
 
 from typing import TYPE_CHECKING
 
@@ -114,10 +114,19 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             if ind == -1:
                 if setup.sparse_storage:
-                    input_data.atmos_data.sparse_prcp[:, i] = -99.0
+                    matrix = np.zeros(
+                        shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
+                    )
+                    matrix.fill(np.float32(-99))
+                    matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(-99),
+                        input_data.atmos_data.sparse_prcp[i],
+                    )
 
                 else:
-                    input_data.atmos_data.prcp[..., i] = -99.0
+                    input_data.atmos_data.prcp[..., i] = np.float32(-99)
 
                 warnings.warn(f"Missing precipitation file for date {date}")
 
@@ -128,8 +137,11 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 )
 
                 if setup.sparse_storage:
-                    matrix_to_sparse_vector_r(
-                        mesh, matrix, input_data.atmos_data.sparse_prcp[:, i]
+                    matrix_to_sparse_matrix(
+                        mesh,
+                        matrix,
+                        np.float32(0),
+                        input_data.atmos_data.sparse_prcp[i],
                     )
 
                 else:
@@ -159,6 +171,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             leap_year_days = pd.date_range(
                 start="202001010000", end="202012310000", freq="1D"
             )
+            step_offset = int(
+                (date_range[0] - date_range[0].floor("D")).total_seconds() / setup.dt
+            )
             nstep_per_day = int(86_400 / setup.dt)
             hourly_ratio = 3_600 / setup.dt
 
@@ -170,6 +185,11 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1
                 )
 
+            matrix_dip = np.zeros(
+                shape=(mesh.nrow, mesh.ncol, len(leap_year_days)), dtype=np.float32
+            )
+            missing_day = np.empty(shape=0, dtype=np.int32)
+
             for i, day in enumerate(
                 tqdm(leap_year_days, desc="</> Reading daily interannual pet")
             ):
@@ -178,57 +198,53 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                     ind = _index_containing_substring(files, day_strf)
 
-                    ind_day = np.where(day.day_of_year == date_range.day_of_year)
-
                     if ind == -1:
-                        if setup.sparse_storage:
-                            input_data.sparse_pet[:, ind_day] = -99.0
-
-                        else:
-                            input_data.pet[..., ind_day] = -99.0
+                        missing_day = np.append(missing_day, day.day_of_year)
 
                         warnings.warn(
                             f"Missing daily interannual pet file for date {day_strf}"
                         )
 
                     else:
-                        subset_date_range = date_range[ind_day]
-
-                        matrix = (
+                        matrix_dip[..., i] = (
                             _read_windowed_raster(files[ind], mesh)
                             * setup.pet_conversion_factor
                         )
 
-                        if setup.sparse_storage:
-                            vector = np.zeros(
-                                shape=mesh.nac, dtype=np.float32, order="F"
-                            )
-                            matrix_to_sparse_vector_r(mesh, matrix, vector)
-
-                        for j in range(nstep_per_day):
-                            step = day + j * datetime.timedelta(seconds=setup.dt)
-
-                            ind_step = subset_date_range.indexer_at_time(step)
-
-                            if setup.sparse_storage:
-                                input_data.atmos_data.sparse_pet[
-                                    :, ind_day[0][ind_step]
-                                ] = (
-                                    np.repeat(
-                                        vector[:, np.newaxis], len(ind_step), axis=1
-                                    )
-                                    * ratio[j]
-                                )
-
-                            else:
-                                input_data.atmos_data.pet[..., ind_day[0][ind_step]] = (
-                                    np.repeat(
-                                        matrix[..., np.newaxis], len(ind_step), axis=2
-                                    )
-                                    * ratio[j]
-                                )
-
                         files.pop(ind)
+
+            for i, date in enumerate(
+                tqdm(date_range, desc="</> Disaggregating daily interannual pet")
+            ):
+                day = date.day_of_year
+                ratio_ind = (i + step_offset) % nstep_per_day
+
+                if day in missing_day:
+                    if setup.sparse_storage:
+                        matrix = np.zeros(
+                            shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
+                        )
+                        matrix.fill(np.float32(-99))
+                        matrix_to_sparse_matrix(
+                            mesh,
+                            matrix,
+                            np.float32(-99),
+                            input_data.atmos_data.sparse_pet[i],
+                        )
+                    else:
+                        input_data.atmos_data.pet[..., i] = np.float32(-99)
+
+                else:
+                    matrix = matrix_dip[..., day - 1] * ratio[ratio_ind]
+                    if setup.sparse_storage:
+                        matrix_to_sparse_matrix(
+                            mesh,
+                            matrix,
+                            np.float32(0),
+                            input_data.atmos_data.sparse_pet[i],
+                        )
+                    else:
+                        input_data.atmos_data.pet[..., i] = matrix
 
         else:
             for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
@@ -238,10 +254,19 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                 if ind == -1:
                     if setup.sparse_storage:
-                        input_data.atmos_data.sparse_pet[:, i] = -99.0
+                        matrix = np.zeros(
+                            shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
+                        )
+                        matrix.fill(np.float32(-99))
+                        matrix_to_sparse_matrix(
+                            mesh,
+                            matrix,
+                            np.float32(-99),
+                            input_data.atmos_data.sparse_pet[i],
+                        )
 
                     else:
-                        input_data.atmos_data.pet[..., i] = -99.0
+                        input_data.atmos_data.pet[..., i] = np.float32(-99)
 
                     warnings.warn(f"Missing pet file for date {date}")
 
@@ -252,8 +277,11 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     )
 
                     if setup.sparse_storage:
-                        matrix_to_sparse_vector_r(
-                            mesh, matrix, input_data.atmos_data.sparse_pet[:, i]
+                        matrix_to_sparse_matrix(
+                            mesh,
+                            matrix,
+                            np.float32(0),
+                            input_data.atmos_data.sparse_pet[i],
                         )
 
                     else:

@@ -4009,6 +4009,8 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
   USE MWD_OPTIONS
 !% only: ReturnsDT
   USE MWD_RETURNS
+!% only: sparse_matrix_to_matrix
+  USE MWD_SPARSE_MATRIX_MANIPULATION
 !% only: gr_interception, gr_production, gr_exchange, &
   USE MD_GR_OPERATOR_DIFF
 !% & gr_transfer
@@ -4049,13 +4051,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , qup_d, qrout_d
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
@@ -4066,46 +4067,47 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, &
+!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -4140,11 +4142,12 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%&
-&                      opr_parameters%cft(row, col), parameters_d%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_d%&
-&                      opr_initial_states%hft(row, col), qr, qr_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_d%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_d%opr_initial_states%hft(row, col), qr&
+&                      , qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
             qd = prd + l
@@ -4236,13 +4239,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , qup_b, qrout_b
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
@@ -4253,21 +4255,32 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+        CALL PUSHCONTROL1B(0)
+      END IF
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
       CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
 &                      chunk_end)
 !% [ DO SPACE ]
       DO i=chunk_start,chunk_end
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
@@ -4276,27 +4289,17 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          IF (setup%sparse_storage) THEN
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-            CALL PUSHCONTROL1B(1)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
               CALL PUSHREAL4(pn)
-              pn = prcp - ei
+              pn = prcp(row, col) - ei
               CALL PUSHCONTROL1B(0)
             ELSE
               CALL PUSHREAL4(pn)
@@ -4304,7 +4307,7 @@ CONTAINS
               CALL PUSHCONTROL1B(1)
             END IF
             CALL PUSHREAL4(en)
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -4331,9 +4334,9 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -4348,7 +4351,7 @@ CONTAINS
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
       CALL PUSHREAL4(en)
-      CALL PUSHREAL4(prcp)
+      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
 !$OMP END PARALLEL
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -4428,12 +4431,12 @@ CONTAINS
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&chunk_end, chunk_start)
-      CALL POPREAL4(prcp)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, &
+!$OMP&perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end&
+!$OMP&, chunk_start)
+      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL POPREAL4(en)
       CALL POPREAL4(prr)
       CALL POPREAL4(pn)
@@ -4465,11 +4468,12 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                      opr_parameters%cft(row, col), parameters_b%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_b%&
-&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_b%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_b%opr_initial_states%hft(row, col), qr&
+&                      , qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           CALL POPREAL4(prr)
@@ -4496,15 +4500,15 @@ CONTAINS
               CALL POPREAL4(pn)
             END IF
           END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(prcp)
-          END IF
         END IF
       END DO
 !$OMP END PARALLEL
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      ELSE
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      END IF
     END DO
   END SUBROUTINE GR_A_LR_FORWARD_B
 
@@ -4525,10 +4529,9 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
-    INTEGER :: t, i, row, col, k, g
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
 !% =================================================================================================================== %!
@@ -4536,45 +4539,46 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&                                                 SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -4596,9 +4600,9 @@ CONTAINS
 !% =================================================================================================== %!
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -4680,13 +4684,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
 &   , qd_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
     q_d = 0.0_4
@@ -4696,48 +4699,48 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(ei_d, pn_d, &
-!$OMP&en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static&
-!$OMP&                                    )
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_d, pn_d, en_d, &
+!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
-            CALL GR_INTERCEPTION_D(prcp, pet, parameters%opr_parameters%&
-&                            ci(row, col), parameters_d%opr_parameters%&
-&                            ci(row, col), parameters%opr_initial_states&
-&                            %hi(row, col), parameters_d%&
-&                            opr_initial_states%hi(row, col), pn, pn_d, &
-&                            ei, ei_d)
+            CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
+&                            parameters%opr_parameters%ci(row, col), &
+&                            parameters_d%opr_parameters%ci(row, col), &
+&                            parameters%opr_initial_states%hi(row, col)&
+&                            , parameters_d%opr_initial_states%hi(row, &
+&                            col), pn, pn_d, ei, ei_d)
             en_d = -ei_d
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -4770,11 +4773,12 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%&
-&                      opr_parameters%cft(row, col), parameters_d%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_d%&
-&                      opr_initial_states%hft(row, col), qr, qr_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_d%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_d%opr_initial_states%hft(row, col), qr&
+&                      , qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
             qd = prd + l
@@ -4868,13 +4872,12 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
 &   , qd_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     INTEGER :: branch
     INTEGER :: chunk_start
@@ -4884,21 +4887,34 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        pet = input_data%atmos_data%pet(:, :, t)
+        CALL PUSHCONTROL1B(0)
+      END IF
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
       CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
 &                      chunk_end)
 !% [ DO SPACE ]
       DO i=chunk_start,chunk_end
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
@@ -4907,32 +4923,21 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          IF (setup%sparse_storage) THEN
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            CALL PUSHREAL4(pet)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            CALL PUSHREAL4(pet)
-            pet = input_data%atmos_data%pet(row, col, t)
-            CALL PUSHCONTROL1B(1)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
             CALL PUSHREAL4(parameters%opr_initial_states%hi(row, col))
-            CALL GR_INTERCEPTION(prcp, pet, parameters%opr_parameters%ci&
-&                          (row, col), parameters%opr_initial_states%hi(&
-&                          row, col), pn, ei)
+            CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
+&                          parameters%opr_parameters%ci(row, col), &
+&                          parameters%opr_initial_states%hi(row, col), &
+&                          pn, ei)
             CALL PUSHREAL4(en)
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -4959,9 +4964,9 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -4975,9 +4980,9 @@ CONTAINS
       END DO
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
-      CALL PUSHREAL4(pet)
+      CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
       CALL PUSHREAL4(en)
-      CALL PUSHREAL4(prcp)
+      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
 !$OMP END PARALLEL
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -5058,14 +5063,14 @@ CONTAINS
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(ei_b, pn_b, &
-!$OMP&en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch&
-!$OMP&, chunk_end, chunk_start)
-      CALL POPREAL4(prcp)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_b, pn_b, en_b, &
+!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL POPREAL4(en)
-      CALL POPREAL4(pet)
+      CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
       CALL POPREAL4(prr)
       CALL POPREAL4(pn)
       ei_b = 0.0_4
@@ -5097,11 +5102,12 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                      opr_parameters%cft(row, col), parameters_b%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_b%&
-&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_b%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_b%opr_initial_states%hft(row, col), qr&
+&                      , qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           CALL POPREAL4(prr)
@@ -5124,24 +5130,24 @@ CONTAINS
             ei_b = -en_b
             CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
             CALL POPREAL4(pn)
-            CALL GR_INTERCEPTION_B(prcp, pet, parameters%opr_parameters%&
-&                            ci(row, col), parameters_b%opr_parameters%&
-&                            ci(row, col), parameters%opr_initial_states&
-&                            %hi(row, col), parameters_b%&
-&                            opr_initial_states%hi(row, col), pn, pn_b, &
-&                            ei, ei_b)
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
+            CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
+&                            parameters%opr_parameters%ci(row, col), &
+&                            parameters_b%opr_parameters%ci(row, col), &
+&                            parameters%opr_initial_states%hi(row, col)&
+&                            , parameters_b%opr_initial_states%hi(row, &
+&                            col), pn, pn_b, ei, ei_b)
           END IF
         END IF
       END DO
 !$OMP END PARALLEL
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      ELSE
+        CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      END IF
     END DO
   END SUBROUTINE GR_B_LR_FORWARD_B
 
@@ -5162,52 +5168,53 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qup, qrout
-    INTEGER :: t, i, row, col, k, g
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&                                                 SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
-            CALL GR_INTERCEPTION(prcp, pet, parameters%opr_parameters%ci&
-&                          (row, col), parameters%opr_initial_states%hi(&
-&                          row, col), pn, ei)
-            en = pet - ei
+            CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
+&                          parameters%opr_parameters%ci(row, col), &
+&                          parameters%opr_initial_states%hi(row, col), &
+&                          pn, ei)
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -5229,9 +5236,9 @@ CONTAINS
 !% =================================================================================================== %!
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -5316,13 +5323,13 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
-&   ql, qd, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, qup&
+&   , qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d&
 &   , qr_d, ql_d, qd_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
     q_d = 0.0_4
@@ -5332,48 +5339,50 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet), PRIVATE(ei_d&
-!$OMP&, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, &
-!$OMP&qd_d), SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prl, prd, qr, ql, qd), PRIVATE(ei_d, pn_d&
+!$OMP&, en_d, pr_d, perc_d, l_d, prr_d, prl_d, prd_d, qr_d, ql_d, qd_d), &
+!$OMP&                                                   SCHEDULE(static&
+!$OMP&                                                   )
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
-            CALL GR_INTERCEPTION_D(prcp, pet, parameters%opr_parameters%&
-&                            ci(row, col), parameters_d%opr_parameters%&
-&                            ci(row, col), parameters%opr_initial_states&
-&                            %hi(row, col), parameters_d%&
-&                            opr_initial_states%hi(row, col), pn, pn_d, &
-&                            ei, ei_d)
+            CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
+&                            parameters%opr_parameters%ci(row, col), &
+&                            parameters_d%opr_parameters%ci(row, col), &
+&                            parameters%opr_initial_states%hi(row, col)&
+&                            , parameters_d%opr_initial_states%hi(row, &
+&                            col), pn, pn_d, ei, ei_d)
             en_d = -ei_d
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -5408,16 +5417,18 @@ CONTAINS
           prl = 0.9_sp*0.4_sp*(pr+perc)
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%&
-&                      opr_parameters%cft(row, col), parameters_d%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_d%&
-&                      opr_initial_states%hft(row, col), qr, qr_d)
-          CALL GR_TRANSFER_D(5._sp, prcp, prl, prl_d, parameters%&
-&                      opr_parameters%cst(row, col), parameters_d%&
-&                      opr_parameters%cst(row, col), parameters%&
-&                      opr_initial_states%hst(row, col), parameters_d%&
-&                      opr_initial_states%hst(row, col), ql, ql_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_d%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_d%opr_initial_states%hft(row, col), qr&
+&                      , qr_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prl, prl_d, &
+&                      parameters%opr_parameters%cst(row, col), &
+&                      parameters_d%opr_parameters%cst(row, col), &
+&                      parameters%opr_initial_states%hst(row, col), &
+&                      parameters_d%opr_initial_states%hst(row, col), ql&
+&                      , ql_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
             qd = prd + l
@@ -5514,13 +5525,13 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
-&   ql, qd, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, qup&
+&   , qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b&
 &   , qr_b, ql_b, qd_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
@@ -5531,21 +5542,34 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        pet = input_data%atmos_data%pet(:, :, t)
+        CALL PUSHCONTROL1B(0)
+      END IF
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, &
-!$OMP&prcp, pet), PRIVATE(chunk_start, chunk_end)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
+!$OMP&ql, qd), PRIVATE(chunk_start, chunk_end)
       CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
 &                      chunk_end)
 !% [ DO SPACE ]
       DO i=chunk_start,chunk_end
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
@@ -5554,32 +5578,21 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          IF (setup%sparse_storage) THEN
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            CALL PUSHREAL4(pet)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            CALL PUSHREAL4(pet)
-            pet = input_data%atmos_data%pet(row, col, t)
-            CALL PUSHCONTROL1B(1)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
             CALL PUSHREAL4(parameters%opr_initial_states%hi(row, col))
-            CALL GR_INTERCEPTION(prcp, pet, parameters%opr_parameters%ci&
-&                          (row, col), parameters%opr_initial_states%hi(&
-&                          row, col), pn, ei)
+            CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
+&                          parameters%opr_parameters%ci(row, col), &
+&                          parameters%opr_initial_states%hi(row, col), &
+&                          pn, ei)
             CALL PUSHREAL4(en)
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -5608,13 +5621,13 @@ CONTAINS
           prl = 0.9_sp*0.4_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           CALL PUSHREAL4(parameters%opr_initial_states%hst(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prl, parameters%opr_parameters%&
-&                    cst(row, col), parameters%opr_initial_states%hst(&
-&                    row, col), ql)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prl, parameters%&
+&                    opr_parameters%cst(row, col), parameters%&
+&                    opr_initial_states%hst(row, col), ql)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -5628,10 +5641,10 @@ CONTAINS
       END DO
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
-      CALL PUSHREAL4(pet)
+      CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
       CALL PUSHREAL4(prl)
       CALL PUSHREAL4(en)
-      CALL PUSHREAL4(prcp)
+      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
 !$OMP END PARALLEL
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -5713,15 +5726,15 @@ CONTAINS
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prl, prd, qr, ql, qd, row, col, prcp, pet), PRIVATE(ei_b&
-!$OMP&, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, &
-!$OMP&qd_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
-      CALL POPREAL4(prcp)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prl, prd, qr, ql, qd), PRIVATE(ei_b, pn_b&
+!$OMP&, en_b, pr_b, perc_b, l_b, prr_b, prl_b, prd_b, qr_b, ql_b, qd_b)&
+!$OMP&, PRIVATE(branch, chunk_end, chunk_start), PRIVATE(temp_b)
+      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL POPREAL4(en)
       CALL POPREAL4(prl)
-      CALL POPREAL4(pet)
+      CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
       CALL POPREAL4(prr)
       CALL POPREAL4(pn)
       ei_b = 0.0_4
@@ -5756,17 +5769,19 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           CALL POPREAL4(parameters%opr_initial_states%hst(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prl, prl_b, parameters%&
-&                      opr_parameters%cst(row, col), parameters_b%&
-&                      opr_parameters%cst(row, col), parameters%&
-&                      opr_initial_states%hst(row, col), parameters_b%&
-&                      opr_initial_states%hst(row, col), ql, ql_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prl, prl_b, &
+&                      parameters%opr_parameters%cst(row, col), &
+&                      parameters_b%opr_parameters%cst(row, col), &
+&                      parameters%opr_initial_states%hst(row, col), &
+&                      parameters_b%opr_initial_states%hst(row, col), ql&
+&                      , ql_b)
           CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                      opr_parameters%cft(row, col), parameters_b%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_b%&
-&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_b%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_b%opr_initial_states%hft(row, col), qr&
+&                      , qr_b)
           CALL POPREAL4(prl)
           temp_b = 0.4_sp*0.9_sp*prl_b
           pr_b = 0.1_sp*prd_b + temp_b
@@ -5796,24 +5811,24 @@ CONTAINS
             ei_b = -en_b
             CALL POPREAL4(parameters%opr_initial_states%hi(row, col))
             CALL POPREAL4(pn)
-            CALL GR_INTERCEPTION_B(prcp, pet, parameters%opr_parameters%&
-&                            ci(row, col), parameters_b%opr_parameters%&
-&                            ci(row, col), parameters%opr_initial_states&
-&                            %hi(row, col), parameters_b%&
-&                            opr_initial_states%hi(row, col), pn, pn_b, &
-&                            ei, ei_b)
-          END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(pet)
-            CALL POPREAL4(prcp)
+            CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
+&                            parameters%opr_parameters%ci(row, col), &
+&                            parameters_b%opr_parameters%ci(row, col), &
+&                            parameters%opr_initial_states%hi(row, col)&
+&                            , parameters_b%opr_initial_states%hi(row, &
+&                            col), pn, pn_b, ei, ei_b)
           END IF
         END IF
       END DO
 !$OMP END PARALLEL
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      ELSE
+        CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      END IF
     END DO
   END SUBROUTINE GR_C_LR_FORWARD_B
 
@@ -5834,52 +5849,54 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
-&   ql, qd, qup, qrout
-    INTEGER :: t, i, row, col, k, g
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, qup&
+&   , qrout
+    INTEGER :: t, i, row, col, g
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prl, prd, qr, ql, qd, row, col, &
-!$OMP&prcp, pet), SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prl, prd, qr, &
+!$OMP&ql, qd), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
 !% [ IF PRCP GAP ]
 !% =============================================================================================== %!
 !%   Interception module
 !% =============================================================================================== %!
-            CALL GR_INTERCEPTION(prcp, pet, parameters%opr_parameters%ci&
-&                          (row, col), parameters%opr_initial_states%hi(&
-&                          row, col), pn, ei)
-            en = pet - ei
+            CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
+&                          parameters%opr_parameters%ci(row, col), &
+&                          parameters%opr_initial_states%hi(row, col), &
+&                          pn, ei)
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -5902,12 +5919,12 @@ CONTAINS
           prr = 0.9_sp*0.6_sp*(pr+perc) + l
           prl = 0.9_sp*0.4_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
-          CALL GR_TRANSFER(5._sp, prcp, prl, parameters%opr_parameters%&
-&                    cst(row, col), parameters%opr_initial_states%hst(&
-&                    row, col), ql)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prl, parameters%&
+&                    opr_parameters%cst(row, col), parameters%&
+&                    opr_initial_states%hst(row, col), ql)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -5988,11 +6005,11 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, prr_d, qr_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
     output_d%sim_response%q = 0.0_4
@@ -6003,46 +6020,47 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, prr, qr, row, col, prcp, pet), PRIVATE(pn_d, en_d, pr_d, perc_d&
-!$OMP&, prr_d, qr_d), SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, prr, qr), PRIVATE(pn_d, en_d, pr_d, perc_d, prr_d&
+!$OMP&, qr_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -6065,11 +6083,12 @@ CONTAINS
 !% =================================================================================================== %!
           prr_d = pr_d + perc_d
           prr = pr + perc
-          CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%&
-&                      opr_parameters%cft(row, col), parameters_d%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_d%&
-&                      opr_initial_states%hft(row, col), qr, qr_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_d%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_d%opr_initial_states%hft(row, col), qr&
+&                      , qr_d)
           qt_d(row, col) = qr_d
           qt(row, col) = qr
         END IF
@@ -6153,11 +6172,11 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, prr_b, qr_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
@@ -6168,21 +6187,32 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+        CALL PUSHCONTROL1B(0)
+      END IF
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet), PRIVATE(&
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, prr, qr), PRIVATE(&
 !$OMP&chunk_start, chunk_end)
       CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
 &                      chunk_end)
 !% [ DO SPACE ]
       DO i=chunk_start,chunk_end
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
@@ -6191,27 +6221,17 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          IF (setup%sparse_storage) THEN
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-            CALL PUSHCONTROL1B(1)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
               CALL PUSHREAL4(pn)
-              pn = prcp - ei
+              pn = prcp(row, col) - ei
               CALL PUSHCONTROL1B(0)
             ELSE
               CALL PUSHREAL4(pn)
@@ -6219,7 +6239,7 @@ CONTAINS
               CALL PUSHCONTROL1B(1)
             END IF
             CALL PUSHREAL4(en)
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -6239,17 +6259,16 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = pr + perc
           CALL PUSHREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           qt(row, col) = qr
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(prr)
-      CALL PUSHREAL4(en)
-      CALL PUSHREAL4(prcp)
+      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
 !$OMP END PARALLEL
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -6328,12 +6347,11 @@ CONTAINS
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, prr, qr, row, col, prcp, pet), PRIVATE(pn_b, en_b, pr_b, perc_b&
-!$OMP&, prr_b, qr_b), PRIVATE(branch, chunk_end, chunk_start)
-      CALL POPREAL4(prcp)
-      CALL POPREAL4(en)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, prr, qr), PRIVATE(pn_b, en_b, pr_b, perc_b, prr_b&
+!$OMP&, qr_b), PRIVATE(branch, chunk_end, chunk_start)
+      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL POPREAL4(prr)
       CALL POPREAL4(pn)
       pn_b = 0.0_4
@@ -6352,11 +6370,12 @@ CONTAINS
           qr_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
           CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                      opr_parameters%cft(row, col), parameters_b%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_b%&
-&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_b%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_b%opr_initial_states%hft(row, col), qr&
+&                      , qr_b)
           CALL POPREAL4(prr)
           pr_b = prr_b
           perc_b = prr_b
@@ -6377,15 +6396,15 @@ CONTAINS
               CALL POPREAL4(pn)
             END IF
           END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(prcp)
-          END IF
         END IF
       END DO
 !$OMP END PARALLEL
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      ELSE
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      END IF
     END DO
   END SUBROUTINE GR_D_LR_FORWARD_B
 
@@ -6406,9 +6425,9 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Local Variables (private)
 !% =================================================================================================================== %!
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q, qt
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, prr, qr, qup, qrout
-    INTEGER :: t, i, row, col, k, g
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
 !% =================================================================================================================== %!
@@ -6416,45 +6435,46 @@ CONTAINS
 !% =================================================================================================================== %!
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, prr, qr, row, col, prcp, pet), SCHEDULE(&
-!$OMP&                                        static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, prr, qr), SCHEDULE(&
+!$OMP&                                     static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -6469,9 +6489,9 @@ CONTAINS
 !%   Transfer module
 !% =================================================================================================== %!
           prr = pr + perc
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           qt(row, col) = qr
         END IF
       END DO
@@ -6546,15 +6566,14 @@ CONTAINS
 !%   Local Variables (private)
 !% =================================================================================================================== %!
     INTEGER, PARAMETER :: zq=2
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: q
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: q_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_d
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qlijm1, qlij, qijm1, qim1j, qij
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt, q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_d, q_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qlijm1, qlij&
+&   , qijm1, qim1j, qij
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d&
 &   , qlijm1_d, qlij_d, qijm1_d, qim1j_d, qij_d
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
 !% =================================================================================================================== %!
@@ -6567,7 +6586,9 @@ CONTAINS
     qt_d = 0.0_4
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
-!% Swap q
+!% =============================================================================================================== %!
+!%  Swapping Q Buffer
+!% =============================================================================================================== %!
       DO i=1,zq-1
         q_d(:, :, i) = q_d(:, :, i+1)
         q(:, :, i) = q(:, :, i+1)
@@ -6578,46 +6599,47 @@ CONTAINS
       q(:, :, zq) = 0._sp
       qt_d(:, :, zq) = 0.0_4
       qt(:, :, zq) = 0._sp
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_d, output_d, qt_d), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, &
+!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -6652,11 +6674,12 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER_D(5._sp, prcp, prr, prr_d, parameters%&
-&                      opr_parameters%cft(row, col), parameters_d%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_d%&
-&                      opr_initial_states%hft(row, col), qr, qr_d)
+          CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_d%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_d%opr_initial_states%hft(row, col), qr&
+&                      , qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
             qd = prd + l
@@ -6754,15 +6777,14 @@ CONTAINS
 !%   Local Variables (private)
 !% =================================================================================================================== %!
     INTEGER, PARAMETER :: zq=2
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: q
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: q_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_b
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qlijm1, qlij, qijm1, qim1j, qij
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt, q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_b, q_b
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qlijm1, qlij&
+&   , qijm1, qim1j, qij
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b&
 &   , qlijm1_b, qlij_b, qijm1_b, qim1j_b, qij_b
-    INTEGER :: t, i, row, col, k, g
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
@@ -6775,28 +6797,41 @@ CONTAINS
     qt = 0._sp
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
-!% Swap q
+!% =============================================================================================================== %!
+!%  Swapping Q Buffer
+!% =============================================================================================================== %!
       DO i=1,zq-1
         q(:, :, i) = q(:, :, i+1)
         qt(:, :, i) = qt(:, :, i+1)
       END DO
       q(:, :, zq) = 0._sp
       qt(:, :, zq) = 0._sp
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+        CALL PUSHCONTROL1B(0)
+      END IF
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
       CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
 &                      chunk_end)
 !% [ DO SPACE ]
       DO i=chunk_start,chunk_end
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
@@ -6805,27 +6840,17 @@ CONTAINS
 &           local_active_cell(row, col) .EQ. 0) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
-          IF (setup%sparse_storage) THEN
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHREAL4(prcp)
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-            CALL PUSHCONTROL1B(1)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
               CALL PUSHREAL4(pn)
-              pn = prcp - ei
+              pn = prcp(row, col) - ei
               CALL PUSHCONTROL1B(0)
             ELSE
               CALL PUSHREAL4(pn)
@@ -6833,7 +6858,7 @@ CONTAINS
               CALL PUSHCONTROL1B(1)
             END IF
             CALL PUSHREAL4(en)
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -6860,9 +6885,9 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -6878,7 +6903,7 @@ CONTAINS
       CALL PUSHREAL4(pn)
       CALL PUSHREAL4(en)
       CALL PUSHREAL4(qlij)
-      CALL PUSHREAL4(prcp)
+      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL PUSHREAL4(qim1j)
 !$OMP END PARALLEL
       qt(:, :, zq) = qt(:, :, zq)*1e-3_sp*mesh%dx*mesh%dy/setup%dt
@@ -6969,13 +6994,13 @@ CONTAINS
       END DO
       qt_b(:, :, zq) = mesh%dx*1e-3_sp*mesh%dy*qt_b(:, :, zq)/setup%dt
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), SHARED(&
-!$OMP&parameters_b, output_b, qt_b), PRIVATE(i, k, ei, pn, en, pr, perc&
-!$OMP&, l, prr, prd, qr, qd, row, col, prcp, pet), PRIVATE(pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&chunk_end, chunk_start)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, &
+!$OMP&perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end&
+!$OMP&, chunk_start)
       CALL POPREAL4(qim1j)
-      CALL POPREAL4(prcp)
+      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
       CALL POPREAL4(qlij)
       CALL POPREAL4(en)
       CALL POPREAL4(pn)
@@ -7008,11 +7033,12 @@ CONTAINS
             prd_b = 0.0_4
           END IF
           CALL POPREAL4(parameters%opr_initial_states%hft(row, col))
-          CALL GR_TRANSFER_B(5._sp, prcp, prr, prr_b, parameters%&
-&                      opr_parameters%cft(row, col), parameters_b%&
-&                      opr_parameters%cft(row, col), parameters%&
-&                      opr_initial_states%hft(row, col), parameters_b%&
-&                      opr_initial_states%hft(row, col), qr, qr_b)
+          CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
+&                      parameters%opr_parameters%cft(row, col), &
+&                      parameters_b%opr_parameters%cft(row, col), &
+&                      parameters%opr_initial_states%hft(row, col), &
+&                      parameters_b%opr_initial_states%hft(row, col), qr&
+&                      , qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           CALL POPREAL4(prr)
@@ -7039,15 +7065,15 @@ CONTAINS
               CALL POPREAL4(pn)
             END IF
           END IF
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 0) THEN
-            CALL POPREAL4(prcp)
-          ELSE
-            CALL POPREAL4(prcp)
-          END IF
         END IF
       END DO
 !$OMP END PARALLEL
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      ELSE
+        CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
+      END IF
       qt_b(:, :, zq) = 0.0_4
       q_b(:, :, zq) = 0.0_4
       DO i=zq-1,1,-1
@@ -7077,11 +7103,11 @@ CONTAINS
 !%   Local Variables (private)
 !% =================================================================================================================== %!
     INTEGER, PARAMETER :: zq=2
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: q
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt
-    REAL(sp) :: prcp, pet, ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
-&   qlijm1, qlij, qijm1, qim1j, qij
-    INTEGER :: t, i, row, col, k, g
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt, q
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
+    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qlijm1, qlij&
+&   , qijm1, qim1j, qij
+    INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
 !% =================================================================================================================== %!
@@ -7091,52 +7117,55 @@ CONTAINS
     qt = 0._sp
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
-!% Swap q
+!% =============================================================================================================== %!
+!%  Swapping Q Buffer
+!% =============================================================================================================== %!
       DO i=1,zq-1
         q(:, :, i) = q(:, :, i+1)
         qt(:, :, i) = qt(:, :, i+1)
       END DO
       q(:, :, zq) = 0._sp
       qt(:, :, zq) = 0._sp
+!% =============================================================================================================== %!
+!%  Getting Precipitation and PET at time step
+!% =============================================================================================================== %!
+      IF (setup%sparse_storage) THEN
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_prcp(t), prcp)
+        CALL SPARSE_MATRIX_TO_MATRIX(mesh, input_data%atmos_data%&
+&                              sparse_pet(t), pet)
+      ELSE
+        prcp = input_data%atmos_data%prcp(:, :, t)
+        pet = input_data%atmos_data%pet(:, :, t)
+      END IF
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, qt), PRIVATE(i, &
-!$OMP&k, ei, pn, en, pr, perc, l, prr, prd, qr, qd, row, col, prcp, pet)&
-!$OMP&, SCHEDULE(static)
+!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
+!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&                                                 SCHEDULE(static)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
-!% =========================================================================================================== %!
-!%   Cell indice (i) to Cell indices (row, col) following an increasing order of flow accumulation
-!% =========================================================================================================== %!
         row = mesh%path(1, i)
         col = mesh%path(2, i)
-        IF (setup%sparse_storage) k = mesh%rowcol_to_ind_sparse(row, col&
-&           )
 !% ======================================================================================================= %!
 !%   Global/Local active cell
 !% ======================================================================================================= %!
 !% [ CYCLE ACTIVE CELL ]
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0)) THEN
-          IF (setup%sparse_storage) THEN
-            prcp = input_data%atmos_data%sparse_prcp(k, t)
-            pet = input_data%atmos_data%sparse_pet(k, t)
-          ELSE
-            prcp = input_data%atmos_data%prcp(row, col, t)
-            pet = input_data%atmos_data%pet(row, col, t)
-          END IF
 !% [ END IF PRCP GAP ]
-          IF (prcp .GE. 0._sp .AND. pet .GE. 0._sp) THEN
-            IF (pet .GT. prcp) THEN
-              ei = prcp
+          IF (prcp(row, col) .GE. 0._sp .AND. pet(row, col) .GE. 0._sp) &
+&         THEN
+            IF (pet(row, col) .GT. prcp(row, col)) THEN
+              ei = prcp(row, col)
             ELSE
-              ei = pet
+              ei = pet(row, col)
             END IF
-            IF (0._sp .LT. prcp - ei) THEN
-              pn = prcp - ei
+            IF (0._sp .LT. prcp(row, col) - ei) THEN
+              pn = prcp(row, col) - ei
             ELSE
               pn = 0._sp
             END IF
-            en = pet - ei
+            en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
@@ -7158,9 +7187,9 @@ CONTAINS
 !% =================================================================================================== %!
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL GR_TRANSFER(5._sp, prcp, prr, parameters%opr_parameters%&
-&                    cft(row, col), parameters%opr_initial_states%hft(&
-&                    row, col), qr)
+          CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
+&                    opr_parameters%cft(row, col), parameters%&
+&                    opr_initial_states%hft(row, col), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE

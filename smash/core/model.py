@@ -158,7 +158,15 @@ class Model(object):
 
         options.comm.ncpu = 6
 
-        # ~ forward_run(self.setup, self.mesh, self._input_data, self._parameters, self._output, options, returns)
+        forward_run(
+            self.setup,
+            self.mesh,
+            self._input_data,
+            self._parameters,
+            self._output,
+            options,
+            returns,
+        )
         # ci, cp, cft, cst, kexc, llr, akw, bkw
         options.optimize.opr_parameters = [0, 1, 1, 0, 1, 0, 1, 1]
         options.optimize.opr_initial_states = [0, 0, 0, 0, 0]
@@ -182,42 +190,42 @@ class Model(object):
             1000,
         ]
 
-        options.optimize.optimizer = "sbs"
-        options.optimize.mapping = "uniform"
-        options.optimize.maxiter = 1
-        options.optimize.control_tfm = "sbs"
+        # ~ options.optimize.optimizer = "sbs"
+        # ~ options.optimize.mapping = "uniform"
+        # ~ options.optimize.maxiter = 5
+        # ~ options.optimize.control_tfm = "sbs"
 
-        optimize_func = eval(options.optimize.optimizer + "_optimize")
+        # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
 
-        optimize_func(
-            self.setup,
-            self.mesh,
-            self._input_data,
-            self._parameters,
-            self._output,
-            options,
-            returns,
-        )
+        # ~ optimize_func(
+            # ~ self.setup,
+            # ~ self.mesh,
+            # ~ self._input_data,
+            # ~ self._parameters,
+            # ~ self._output,
+            # ~ options,
+            # ~ returns,
+        # ~ )
 
         options.optimize.optimizer = "lbfgsb"
         options.optimize.mapping = "distributed"
-        options.optimize.maxiter = 20
+        options.optimize.maxiter = 10
         options.optimize.control_tfm = "normalize"
 
         optimize_func = eval(options.optimize.optimizer + "_optimize")
 
         optimize_func(
-            self.setup,
-            self.mesh,
-            self._input_data,
-            self._parameters,
-            self._output,
-            options,
-            returns,
+        self.setup,
+        self.mesh,
+        self._input_data,
+        self._parameters,
+        self._output,
+        options,
+        returns,
         )
 
         # ~ options.optimize.optimizer = "lbfgsb"
-        # ~ options.optimize.mapping = "multi-polynomial"
+        # ~ options.optimize.mapping = "multi-linear"
         # ~ options.optimize.maxiter = 100
         # ~ options.optimize.control_tfm = "normalize"
         # ~ opd = np.ones(
@@ -225,7 +233,7 @@ class Model(object):
         # ~ dtype=np.int32,
         # ~ order="F",
         # ~ )
-        # ~ opd[:, 5] = 0
+        # ~ #opd[:, 5] = 0
         # ~ options.optimize.opr_parameters_descriptor = opd
         # ~ options.optimize.opr_initial_states_descriptor = 0
 
