@@ -35,7 +35,7 @@ Improvements
 Reading atmospheric data with YYYY/MM/DD access
 ******************************************
 
-This mode is triggered by the flag setup.prcp_yymmdd_access=True. The precipitation file suppose to be stored in a directory YY/MM/dd. This option is useful of the model is ran time step by time step (many incremental runs). In that case searching the precipitation files can be relatively slow (1 second multiplicate by the number of run). With this mode it is optimized and it is faster. 
+This mode is triggered by enabling the flag prcp_yyyymmdd_access in the model setup file. The atmospheric data files are supposed to be stored in a directory YYYY/MM/dd. This option is useful if the model is ran time step by time step (many incremental runs). In that case searching the atmospheric data files can be relatively slow (1 second multiplicate by the number of runs). With this mode it is optimized and it is faster. 
 
 ------------
 New Features
