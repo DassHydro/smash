@@ -77,7 +77,7 @@ def open_hdf5(path, read_only=False, replace=False):
             
     else:
     
-        if replace==True:
+        if replace:
             
             f= h5py.File(path, "w")
             
