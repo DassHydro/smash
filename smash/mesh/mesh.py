@@ -440,6 +440,7 @@ def generate_mesh(
     """
 
     if os.path.isfile(path):
+        gdal.UseExceptions()
         ds_flwdir = gdal.Open(path)
 
     else:

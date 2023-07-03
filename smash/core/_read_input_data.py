@@ -25,7 +25,9 @@ import datetime
 from osgeo import gdal
 
 
+
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
+    gdal.UseExceptions()
     ds = gdal.Open(path)
 
     transform = ds.GetGeoTransform()

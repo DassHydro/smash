@@ -231,7 +231,7 @@ contains
 
         type(MeshDT), intent(in) :: mesh
         type(Sparse_MatrixDT), intent(in) :: sparse_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: matrix
 
         integer :: row, col, i, next_ind
 
@@ -250,6 +250,8 @@ contains
 
                 matrix(row, col) = sparse_matrix%dat(next_ind)
                 next_ind = next_ind + 1
+
+                if (next_ind .gt. sparse_matrix%n) return
 
             end do
 

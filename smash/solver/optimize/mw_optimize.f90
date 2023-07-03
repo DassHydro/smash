@@ -69,6 +69,8 @@ contains
         jfaa = 0
         nfg = 1
 
+        task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+
         if (options%comm%verbose) then
             write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
