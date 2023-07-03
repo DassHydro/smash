@@ -155,7 +155,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.prcp_yymmdd_access==True :
+    if setup.prcp_yyyymmdd_access:
         
         files=_list_prcp_file(setup)
         
