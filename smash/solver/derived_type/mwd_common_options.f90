@@ -20,8 +20,6 @@
 
 module mwd_common_options
 
-    use md_constant !% only: lchar
-
     implicit none
 
     type Common_OptionsDT

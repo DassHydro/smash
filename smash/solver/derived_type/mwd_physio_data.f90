@@ -9,6 +9,8 @@
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``descriptor``           Descriptor maps field                       [(descriptor dependent)]
+!%          ``l_descriptor``         Descriptor maps field min value             [(descriptor dependent)]
+!%          ``u_descriptor``         Descriptor maps field max value             [(descriptor dependent)]
 !%          ======================== =======================================
 !%
 !%      Subroutine

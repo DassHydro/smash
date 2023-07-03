@@ -9,6 +9,7 @@
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``comm``                 Common_OptionsDT
+!%          ``optimize``             Optimize_OptionsDT
 !%          ======================== =======================================
 !%
 !%      Subroutine

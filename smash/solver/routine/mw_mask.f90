@@ -3,7 +3,7 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - compute_mean_forcing
+!%      - mask_upstream_cells
 
 module mw_mask
 

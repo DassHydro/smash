@@ -3,7 +3,35 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - map_control_to_parameters
+!%      - uniform_get_control_size
+!%      - distributed_get_control_size
+!%      - multi_linear_get_control_size
+!%      - multi_polynomial_get_control_size
+!%      - sigmoide
+!%      - inv_sigmoide
+!%      - scaled_sigmoide
+!%      - inv_scaled_sigmoid
+!%      - sigmoide2d
+!%      - scaled_sigmoide2d
+!%      - opr_parameters_to_matrix
+!%      - matrix_to_opr_parameters
+!%      - matrix_to_opr_initial_states
+!%      - sbs_control_tfm
+!%      - sbs_inv_control_tfm
+!%      - normalize_control_tfm
+!%      - normalize_inv_control_tfm
+!%      - uniform_parameters_to_control
+!%      - uniform_control_to_parameters
+!%      - distributed_parameters_to_control
+!%      - distributed_control_to_parameters
+!%      - multi_linear_parameters_to_control
+!%      - multi_linear_control_to_parameters
+!%      - multi_polynomial_parameters_to_control
+!%      - multi_polynomial_control_to_parameters
+!%      - control_tfm
+!%      - inv_control_tfm
+!%      - parameters_to_control
+!%      - control_to_parameters
 
 module mwd_parameters_manipulation
 

@@ -8,8 +8,10 @@
 !%          ======================== =======================================
 !%          `Variables`              Description
 !%          ======================== =======================================
+!%          ``cost``                 Value of cost function
 !%          ``sim_response``         ResponseDT
 !%          ``opr_final_states``     Opr_StatesDT
+!%          ``opr_states_buffer``    Opr_StatesDT used to temporary save states
 !%          ======================== =======================================
 !%
 !%      Subroutine

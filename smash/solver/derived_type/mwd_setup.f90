@@ -8,7 +8,7 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Solver structure                                       (default: 'gr-a')
+!%          ``structure``              Solver structure                                       (default: 'gr-a-lr')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
@@ -49,7 +49,7 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr-a" !$F90W char
+        character(lchar) :: structure = "gr-a-lr" !$F90W char
 
         real(sp) :: dt = 3600._sp
 

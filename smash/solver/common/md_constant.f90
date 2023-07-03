@@ -4,15 +4,10 @@
 !%      ---------
 !%
 !%      - sp
-!%          Single precision value
 !%      - dp
-!%          Double precision value
 !%      - lchar
-!%          Characeter length value
 !%      - nopr_parameters
-!%          Number of parameters in Opr_Parameters
 !%      - nopr_states
-!%          Number of states in Opr_States
 
 module md_constant
 
