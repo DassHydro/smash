@@ -49,7 +49,7 @@ hard-smoothing : the smoothing regularization function is applied on parameters 
 New functions for reading and writting hdf5 files
 *************************************************
  
-The new function are generic. You can save a dictionary to an hdf5, save an object (not only smash) to an hdf5, read an object as dictionary, read an hdf5 as a dict, read an hdf5 as a smash model object. Functions are provided by smash.io.hdf5_io.py. hdf5 can be opened in read-only to provide several simultaneous access. During the export or the reading, the structure of the dictionnary or object are preserved. When saving an object or a dictionnary in an hdf5, the location can be specified so that dictionary or object can be saved side by side at different places.
+The new functions are generic. You can save a dictionary to an hdf5, save an object (not only smash) to an hdf5, read an object as dictionary, read an hdf5 as a dict, read an hdf5 as a smash model object. Functions are provided by smash.io.hdf5_io.py. hdf5 can be opened in read-only to provide several simultaneous access. During the export or the reading, the structure of the dictionary or object is preserved. When saving an object or a dictionary in an hdf5, the location can be specified so that dictionary or object can be saved side by side at different places.
 
 Spatial disaggregation/aggregation of the input raster
 ******************************************************
