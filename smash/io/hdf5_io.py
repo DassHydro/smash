@@ -1,14 +1,8 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.core.model import Model
-
 from smash.core._constant import STRUCTURE_PARAMETERS, STRUCTURE_STATES
 
 from smash.io._error import ReadHDF5MethodError
-
 
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT
@@ -19,8 +13,6 @@ from smash.solver._mwd_output import OutputDT
 
 from smash.core._build_model import _build_mesh
 
-
-
 import os
 import errno
 import warnings
@@ -29,9 +21,12 @@ import numpy as np
 import pandas as pd
 import smash
 
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from smash.core.model import Model
 
-__all__ = ["save_object_to_hdf5", "save_dict_to_hdf5", "save_smash_model_to_hdf5", "load_hdf5_file", "read_object_as_dict"]
+__all__ = ["save_smash_model_to_hdf5", "load_hdf5_file"]
 
 
 

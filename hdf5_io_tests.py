@@ -10,7 +10,7 @@ model.run(inplace=True)
 smash.io.hdf5_io.save_dict_to_hdf5("saved_dictionary.hdf5",mesh)
 
 #generate the structure of the object: it is a dict of key:data to save: typeofstructure={light,medium,full}
-keys_data=smash.generate_smash_object_structure(model,typeofstructure="medium")
+keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
 print(keys_data)
 #add a new data to save:
 keys_data["parameters"].append('ci')
@@ -64,12 +64,12 @@ hdf5.close()
 hdf5=smash.io.hdf5_io.open_hdf5("./model_subgroup.hdf5", replace=True)
 hdf5=smash.io.hdf5_io.add_hdf5_sub_group(hdf5, subgroup="model1")
 keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
-smash.io.hdf5_io.dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
+smash.io.hdf5_io._dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
 
 hdf5=smash.io.hdf5_io.open_hdf5("./model_subgroup.hdf5", replace=False)
 hdf5=smash.io.hdf5_io.add_hdf5_sub_group(hdf5, subgroup="model2")
 keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
-smash.io.hdf5_io.dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
+smash.io.hdf5_io._dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
 
 hdf5.keys()
 hdf5["model1"].keys()
@@ -103,4 +103,8 @@ model_reloaded=smash.load_hdf5_file("./model_full.hdf5",as_model=True)
 model_reloaded
 model_reloaded.run()
 
+#TODO :
+#- model_reloaded need to be a full hdf5 !! How to test that ?
+#- rename file to hdf5_handler.py and move it to tools/
+# move save_model_to_hdf5 and load_hdf5 to an other file dan io/
 
