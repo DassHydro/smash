@@ -44,7 +44,7 @@ New Features
 New regularization function
 ****************************
 
-hard-smoothing : the smoothing regularization function is applied on parameter or states directly. This behavior differ from the "smoothing" mode where the regularization is applied on the difference between the background and the control (parameters or states)
+hard-smoothing : the smoothing regularization function is applied on parameters or states directly. This behavior differs from the ``smoothing`` mode where the regularization is applied on the difference between the background and the control (parameters or states)
 
 New functions for reading and writting hdf5 files
 *************************************************
