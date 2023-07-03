@@ -124,7 +124,7 @@ module mwd_setup
 
         logical :: read_prcp = .false.
         character(lchar) :: prcp_format = "tif" !>f90w-char
-        logical :: prcp_yymmdd_access = .false.
+        logical :: prcp_yyyymmdd_access = .false.
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..." !>f90w-char
 
