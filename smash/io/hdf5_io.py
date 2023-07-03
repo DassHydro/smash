@@ -129,7 +129,7 @@ def add_hdf5_sub_group(hdf5, subgroup=None):
     return hdf5
 
 
-def generate_light_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+def _generate_light_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
     """
     this function create a light dictionnary containing the required data-structure to save a smash model object to an hdf5 file
 
@@ -164,7 +164,7 @@ def generate_light_smash_object_structure(structure: str,structure_parameters=ST
 
 
 
-def generate_medium_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+def _generate_medium_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
     """
     this function create a medium dictionnary containing the required data-structure to save a smash model object to an hdf5 file
 
@@ -204,7 +204,7 @@ def generate_medium_smash_object_structure(structure: str,structure_parameters=S
     }
 
 
-def generate_full_smash_object_structure(instance):
+def _generate_full_smash_object_structure(instance):
     """
     this function create a full dictionnary containing all the structure of an smash model object in order to save it to an hdf5
 
@@ -225,8 +225,6 @@ def generate_full_smash_object_structure(instance):
     key_list.append("_last_update")
     
     return key_list
-
-
 
 
 def generate_object_structure(instance):
@@ -319,22 +317,22 @@ def generate_smash_object_structure(instance,typeofstructure="medium"):
     
     if typeofstructure=="light":
         
-        key_data=generate_light_smash_object_structure(structure)
+        key_data=_generate_light_smash_object_structure(structure)
         
     elif typeofstructure=="medium":
         
-        key_data=generate_medium_smash_object_structure(structure)
+        key_data=_generate_medium_smash_object_structure(structure)
         
     elif typeofstructure=="full":
         
-        key_data=generate_full_smash_object_structure(instance)
+        key_data=_generate_full_smash_object_structure(instance)
     
     return key_data
 
 
 
 
-def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
+def _dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
     """
     dump a object to a hdf5 file from a list of attributes
 
@@ -353,15 +351,15 @@ def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
             
             if isinstance(attr, str):
                 
-                dump_object_to_hdf5_from_str_attribute(hdf5, instance, attr)
+                _dump_object_to_hdf5_from_str_attribute(hdf5, instance, attr)
             
             elif isinstance(attr,list):
                 
-                dump_object_to_hdf5_from_list_attribute(hdf5, instance, attr)
+                _dump_object_to_hdf5_from_list_attribute(hdf5, instance, attr)
             
             elif isinstance(attr,dict):
                 
-                dump_object_to_hdf5_from_dict_attribute(hdf5, instance, attr)
+                _dump_object_to_hdf5_from_dict_attribute(hdf5, instance, attr)
                 
             else:
                 
@@ -377,7 +375,7 @@ def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
 
 
 
-def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
+def _dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
     """
     dump a object to a hdf5 file from a dictionary of attributes
 
@@ -406,15 +404,15 @@ def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
             
             if isinstance(value,dict):
             
-                dump_object_to_hdf5_from_dict_attribute(hdf5[attr], sub_instance, value)
+                _dump_object_to_hdf5_from_dict_attribute(hdf5[attr], sub_instance, value)
             
             if isinstance(value,list):
             
-                dump_object_to_hdf5_from_list_attribute(hdf5[attr], sub_instance, value)
+                _dump_object_to_hdf5_from_list_attribute(hdf5[attr], sub_instance, value)
             
             elif isinstance(value,str):
                 
-                dump_object_to_hdf5_from_str_attribute(hdf5[attr], sub_instance, value)
+                _dump_object_to_hdf5_from_str_attribute(hdf5[attr], sub_instance, value)
             
             else :
                 
@@ -430,7 +428,7 @@ def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
 
 
 
-def dump_object_to_hdf5_from_str_attribute(hdf5,instance,str_attr):
+def _dump_object_to_hdf5_from_str_attribute(hdf5,instance,str_attr):
     """
     dump a object to a hdf5 file from a string attribute
 
@@ -488,7 +486,7 @@ def dump_object_to_hdf5_from_str_attribute(hdf5,instance,str_attr):
 
 
 
-def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable=None):
+def _dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable=None):
     """
     dump a object to a hdf5 file from a iteratable object list or dict
 
@@ -510,20 +508,20 @@ def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable=None):
     hdf5=smash.io.multi_model_io.open_hdf5("./model.hdf5", replace=True)
     hdf5=smash.io.multi_model_io.add_hdf5_sub_group(hdf5, subgroup="model1")
     keys_data=smash.io.multi_model_io.generate_smash_object_structure(model,typeofstructure="medium")
-    smash.io.multi_model_io.dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
+    smash.io.multi_model_io._dump_object_to_hdf5_from_iteratable(hdf5["model1"], model, keys_data)
 
     hdf5=smash.io.multi_model_io.open_hdf5("./model.hdf5", replace=False)
     hdf5=smash.io.multi_model_io.add_hdf5_sub_group(hdf5, subgroup="model2")
     keys_data=smash.io.multi_model_io.generate_smash_object_structure(model,typeofstructure="light")
-    smash.io.multi_model_io.dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
+    smash.io.multi_model_io._dump_object_to_hdf5_from_iteratable(hdf5["model2"], model, keys_data)
     """
     if isinstance(iteratable,list):
         
-        dump_object_to_hdf5_from_list_attribute(hdf5,instance,iteratable)
+        _dump_object_to_hdf5_from_list_attribute(hdf5,instance,iteratable)
         
     elif isinstance(iteratable,dict):
         
-        dump_object_to_hdf5_from_dict_attribute(hdf5,instance,iteratable)
+        _dump_object_to_hdf5_from_dict_attribute(hdf5,instance,iteratable)
     
     else :
         
@@ -533,7 +531,7 @@ def dump_object_to_hdf5_from_iteratable(hdf5, instance, iteratable=None):
 
 
 
-def dump_dict_to_hdf5(hdf5,dictionary):
+def _dump_dict_to_hdf5(hdf5,dictionary):
     """
     dump a dictionary to an hdf5 file
 
@@ -553,7 +551,7 @@ def dump_dict_to_hdf5(hdf5,dictionary):
                 if isinstance(value,(dict)):
                     
                     hdf5=add_hdf5_sub_group(hdf5, subgroup=attr)
-                    dump_dict_to_hdf5(hdf5[attr],value)
+                    _dump_dict_to_hdf5(hdf5[attr],value)
                     
                 elif isinstance(value, (np.ndarray,list)):
                     
@@ -625,7 +623,7 @@ def save_dict_to_hdf5(path_to_hdf5,dictionary=None,location="./",replace=False):
         
         hdf5=open_hdf5(path_to_hdf5, replace=replace)
         hdf5=add_hdf5_sub_group(hdf5, subgroup=location)
-        dump_dict_to_hdf5(hdf5[location], dictionary)
+        _dump_dict_to_hdf5(hdf5[location], dictionary)
         
     else:
         
@@ -660,11 +658,11 @@ def save_object_to_hdf5(f_hdf5, instance, keys_data=None, location="./", sub_dat
     
     hdf5=open_hdf5(f_hdf5, replace=replace)
     hdf5=add_hdf5_sub_group(hdf5, subgroup=location)
-    dump_object_to_hdf5_from_iteratable(hdf5[location], instance, keys_data)
+    _dump_object_to_hdf5_from_iteratable(hdf5[location], instance, keys_data)
     
     if isinstance(sub_data,dict):
         
-        dump_dict_to_hdf5(hdf5[location], sub_data)
+        _dump_dict_to_hdf5(hdf5[location], sub_data)
     
     hdf5.close()
 
@@ -716,15 +714,15 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
     """
     if content == "light":
         
-        keys_data=generate_light_smash_object_structure(instance.setup.structure)
+        keys_data=_generate_light_smash_object_structure(instance.setup.structure)
         
     elif content == "medium":
         
-        keys_data=generate_medium_smash_object_structure(instance.setup.structure)
+        keys_data=_generate_medium_smash_object_structure(instance.setup.structure)
         
     elif content == "full":
         
-        keys_data=generate_full_smash_object_structure(instance)
+        keys_data=_generate_full_smash_object_structure(instance)
     
     if isinstance(keys_data,(dict,list)):
         
@@ -773,7 +771,7 @@ def load_hdf5_file(f_hdf5,as_model=False):
     else:
         
         hdf5=open_hdf5(f_hdf5, read_only=True, replace=False)
-        dictionary=read_hdf5_to_dict(hdf5)
+        dictionary=read_hdf5_as_dict(hdf5)
         hdf5.close()
         return dictionary
 
@@ -836,7 +834,7 @@ def read_object_as_dict(instance):
 
 
 
-def read_hdf5_to_dict(hdf5):
+def read_hdf5_as_dict(hdf5):
     """
     Load an hdf5 file
 
@@ -853,7 +851,7 @@ def read_hdf5_to_dict(hdf5):
     --------
     #read only a part of an hdf5 file
     hdf5=smash.io.multi_model_io.open_hdf5("./multi_model.hdf5")
-    dictionary=smash.io.multi_model_io.read_hdf5_to_dict(hdf5["model1"])
+    dictionary=smash.io.multi_model_io.read_hdf5_as_dict(hdf5["model1"])
     dictionary.keys()
     """
     dictionary={}
@@ -862,7 +860,7 @@ def read_hdf5_to_dict(hdf5):
         
         if str(type(item)).find("group") != -1:
             
-            dictionary.update({key:read_hdf5_to_dict(item)})
+            dictionary.update({key:read_hdf5_as_dict(item)})
             
             list_attr=list(item.attrs.keys())
             
