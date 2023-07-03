@@ -419,7 +419,7 @@ def dump_object_to_hdf5_from_dict_attribute(hdf5,instance,dict_attr):
             else :
                 
                 raise ValueError(
-                    f"Bad type of '{attr}' in '{dict_attr}'. Dict({attr}) must be a instance of dict, list or str"
+                    f"inconsistent '{attr}' in '{dict_attr}'. Dict({attr}) must be a instance of dict, list or str"
                 )
     
     else:
