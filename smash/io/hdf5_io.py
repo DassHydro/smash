@@ -366,7 +366,7 @@ def dump_object_to_hdf5_from_list_attribute(hdf5,instance,list_attr):
             else:
                 
                 raise ValueError(
-                    f"unconsistant {attr} in {list_attr}. {attr} must be a an instance of dict, list or str"
+                    f"inconsistent {attr} in {list_attr}. {attr} must be a an instance of dict, list or str"
                 )
     
     else:
