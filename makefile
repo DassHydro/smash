@@ -20,7 +20,7 @@ SMASH_DIR := smash
 TAPENADE_DIR := tapenade
 F90WRAP_UTILS_DIR := f90wrap_utils
 SOLVER_DIR := smash/solver
-MESH_DIR := smash/mesh
+MESH_DIR := smash/factory/mesh
 TESTS_DIR := smash/tests
 DOC_DIR := doc
 

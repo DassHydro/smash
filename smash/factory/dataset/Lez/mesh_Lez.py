@@ -1,8 +1,8 @@
 import smash
 
-flwdir = smash.load_dataset("flwdir")
+flwdir = smash.factory.dataset("flwdir")
 
-mesh = smash.generate_mesh(
+mesh = smash.factory.mesh(
     flwdir,
     x=[772_330, 772_401, 770_246],
     y=[6_274_127, 6_280_366, 6_284_038],

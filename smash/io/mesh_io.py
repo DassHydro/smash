@@ -76,7 +76,7 @@ def save_mesh(mesh: dict, path: str):
 
     Examples
     --------
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> setup, mesh = smash.factory.dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
@@ -126,7 +126,7 @@ def read_mesh(path: str) -> dict:
 
     Examples
     --------
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> setup, mesh = smash.factory.dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 

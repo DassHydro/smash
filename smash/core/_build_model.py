@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.core._constant import (
+from smash._constant import (
     STRUCTURE_NAME,
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
@@ -27,6 +27,7 @@ if TYPE_CHECKING:
 
 import pandas as pd
 import os
+import warnings
 
 
 # % TODO: Maybe move standardize somewhere else

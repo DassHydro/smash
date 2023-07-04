@@ -25,7 +25,7 @@ def save_setup(setup: dict, path: str):
 
     Examples
     --------
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> setup, mesh = smash.factory.dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
@@ -67,7 +67,7 @@ def read_setup(path: str) -> dict:
 
     Examples
     --------
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> setup, mesh = smash.factory.dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 

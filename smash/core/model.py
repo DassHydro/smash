@@ -198,13 +198,13 @@ class Model(object):
         # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
 
         # ~ optimize_func(
-            # ~ self.setup,
-            # ~ self.mesh,
-            # ~ self._input_data,
-            # ~ self._parameters,
-            # ~ self._output,
-            # ~ options,
-            # ~ returns,
+        # ~ self.setup,
+        # ~ self.mesh,
+        # ~ self._input_data,
+        # ~ self._parameters,
+        # ~ self._output,
+        # ~ options,
+        # ~ returns,
         # ~ )
 
         options.optimize.optimizer = "lbfgsb"
@@ -215,13 +215,13 @@ class Model(object):
         optimize_func = eval(options.optimize.optimizer + "_optimize")
 
         optimize_func(
-        self.setup,
-        self.mesh,
-        self._input_data,
-        self._parameters,
-        self._output,
-        options,
-        returns,
+            self.setup,
+            self.mesh,
+            self._input_data,
+            self._parameters,
+            self._output,
+            options,
+            returns,
         )
 
         # ~ options.optimize.optimizer = "lbfgsb"

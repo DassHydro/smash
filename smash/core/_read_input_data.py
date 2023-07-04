@@ -5,7 +5,7 @@ from smash.tools._common_function import (
     _adjust_left_files_by_date,
 )
 
-from smash.core._constant import RATIO_PET_HOURLY
+from smash._constant import RATIO_PET_HOURLY
 
 from smash.solver._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
 
@@ -21,9 +21,7 @@ import glob
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
-import datetime
 from osgeo import gdal
-
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
