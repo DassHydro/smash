@@ -25,17 +25,17 @@ def save_setup(setup: dict, path: str):
 
     Examples
     --------
-    >>> setup, mesh = smash.factory.dataset("cance")
+    >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup
 
-    >>> smash.save_setup(setup, "setup.yaml")
+    >>> smash.io.save_setup(setup, "setup.yaml")
 
     Read setup (the reloaded setup keys will be alphabetically sorted)
 
-    >>> setup_rld = smash.read_setup("setup.yaml")
+    >>> setup_rld = smash.io.read_setup("setup.yaml")
     setup_rld
     {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
     """
@@ -67,17 +67,17 @@ def read_setup(path: str) -> dict:
 
     Examples
     --------
-    >>> setup, mesh = smash.factory.dataset("cance")
+    >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup
 
-    >>> smash.save_setup(setup, "setup.yaml")
+    >>> smash.io.save_setup(setup, "setup.yaml")
 
     Read setup (the reloaded setup keys will be alphabetically sorted)
 
-    >>> setup_rld = smash.read_setup("setup.yaml")
+    >>> setup_rld = smash.io.read_setup("setup.yaml")
     setup_rld
     {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
     """

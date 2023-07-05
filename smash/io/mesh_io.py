@@ -76,17 +76,17 @@ def save_mesh(mesh: dict, path: str):
 
     Examples
     --------
-    >>> setup, mesh = smash.factory.dataset("cance")
+    >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh
 
-    >>> smash.save_mesh(mesh, "mesh.hdf5")
+    >>> smash.io.save_mesh(mesh, "mesh.hdf5")
 
     Read mesh
 
-    >>> mesh_rld = smash.read_mesh("mesh.hdf5")
+    >>> mesh_rld = smash.io.read_mesh("mesh.hdf5")
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """
 
@@ -126,17 +126,18 @@ def read_mesh(path: str) -> dict:
 
     Examples
     --------
-    >>> setup, mesh = smash.factory.dataset("cance")
+    >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh
 
-    >>> smash.save_mesh(mesh, "mesh.hdf5")
+    >>> smash.io.save_mesh(mesh, "mesh.hdf5")
 
     Read mesh
 
-    >>> mesh_rld = smash.read_mesh("mesh.hdf5")
+    >>> mesh_rld = smash.io.read_mesh("mesh.hdf5")
+    >>> mesh_rld
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """
 

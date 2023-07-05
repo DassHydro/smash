@@ -1,3 +1,3 @@
-from .mesh.mesh import mesh
+from smash.factory.mesh.mesh import generate_mesh
 
-from .dataset.dataset import dataset
+from smash.factory.dataset.dataset import load_dataset

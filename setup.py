@@ -13,6 +13,8 @@ setup(
         "smash.core",
         "smash.solver",
         "smash.factory",
+        "smash.factory.mesh",
+        "smash.factory.dataset",
         "smash.io",
         "smash.tests",
         "smash.tests.core",
@@ -21,7 +23,9 @@ setup(
         "smash.tests.dataset",
         "smash.tools",
     ],
-    package_data={"smash": ["smash/solver/_solver*.so", "smash/mesh/_mesh*.so"]},
+    package_data={
+        "smash": ["smash/solver/_solver*.so", "smash/factory/mesh/_mesh*.so"]
+    },
     include_package_data=True,
     install_requires=[
         "f90wrap",
@@ -33,7 +37,6 @@ setup(
         "gdal",
         "scipy",
         "pyyaml",
-        "SALib>=1.4.5",
         "terminaltables",
     ],
     zip_safe=False,

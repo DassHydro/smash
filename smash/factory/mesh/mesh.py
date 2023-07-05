@@ -10,7 +10,7 @@ from osgeo import gdal, osr
 
 D8_VALUE = np.arange(1, 9)
 
-__all__ = ["mesh"]
+__all__ = ["generate_mesh"]
 
 
 def _xy_to_rowcol(x, y, xmin, ymax, xres, yres):
@@ -342,7 +342,7 @@ def _get_mesh_from_bbox(ds_flwdir, bbox, epsg):
     return mesh
 
 
-def mesh(
+def generate_mesh(
     path: str,
     bbox: list | tuple | None = None,
     x: float | list | tuple | None = None,
@@ -425,8 +425,8 @@ def mesh(
 
     Examples
     --------
-    >>> flwdir = smash.factory.dataset("flwdir")
-    >>> mesh = smash.factory.mesh(
+    >>> flwdir = smash.factory.load_dataset("flwdir")
+    >>> mesh = smash.factory.generate_mesh(
     ... flwdir,
     ... x=[840_261, 826_553, 828_269],
     ... y=[6_457_807, 6_467_115, 6_469_198],

@@ -51,21 +51,14 @@ class Model(object):
                 raise TypeError(f"mesh argument must be dict")
 
             self._input_data = Input_DataDT(self.setup, self.mesh)
-            self.obs_response = self._input_data.obs_response
-            self.physio_data = self._input_data.physio_data
-            self.atmos_data = self._input_data.atmos_data
 
             _build_input_data(self.setup, self.mesh, self._input_data)
 
             self._parameters = ParametersDT(self.setup, self.mesh)
-            self.opr_parameters = self._parameters.opr_parameters
-            self.opr_initial_states = self._parameters.opr_initial_states
 
             _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
 
             self._output = OutputDT(self.setup, self.mesh)
-            self.sim_response = self._output.sim_response
-            self.opr_final_states = self._output.opr_final_states
 
     def __copy__(self):
         copy = Model(None, None)
@@ -95,59 +88,59 @@ class Model(object):
 
     @property
     def obs_response(self):
-        return self._obs_response
+        return self._input_data.obs_response
 
     @obs_response.setter
     def obs_response(self, value):
-        self._obs_response = value
+        self._input_data.obs_response = value
 
     @property
     def physio_data(self):
-        return self._physio_data
+        return self._input_data.physio_data
 
     @physio_data.setter
     def physio_data(self, value):
-        self._physio_data = value
+        self._input_data.physio_data = value
 
     @property
     def atmos_data(self):
-        return self._atmos_data
+        return self._input_data.atmos_data
 
     @atmos_data.setter
     def atmos_data(self, value):
-        self._atmos_data = value
+        self._input_data.atmos_data = value
 
     @property
     def opr_parameters(self):
-        return self._opr_parameters
+        return self._parameters.opr_parameters
 
     @opr_parameters.setter
     def opr_parameters(self, value):
-        self._opr_parameters = value
+        self._parameters.opr_parameters = value
 
     @property
     def opr_initial_states(self):
-        return self._opr_initial_states
+        return self._parameters.opr_initial_states
 
     @opr_initial_states.setter
     def opr_initial_states(self, value):
-        self._opr_initial_states = value
+        self._parameters.opr_initial_states = value
 
     @property
     def sim_response(self):
-        return self._sim_response
+        return self._output.sim_response
 
     @sim_response.setter
     def sim_response(self, value):
-        self._sim_response = value
+        self._output.sim_response = value
 
     @property
     def opr_final_states(self):
-        return self._opr_final_states
+        return self._output.opr_final_states
 
     @opr_final_states.setter
     def opr_final_states(self, value):
-        self._opr_final_states = value
+        self._output.opr_final_states = value
 
     def copy(self):
         return self.__copy__()
