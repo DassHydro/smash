@@ -7,6 +7,8 @@ from smash.factory.net import net
 from smash.io import setup_io
 from smash.io import mesh_io
 
+from smash.signal_analysis.segmentation import segmentation
+
 from . import _version
 
 

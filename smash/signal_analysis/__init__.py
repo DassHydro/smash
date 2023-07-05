@@ -1,0 +1,1 @@
+from smash.signal_analysis.segmentation.segmentation import event_segmentation

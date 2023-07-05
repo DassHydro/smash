@@ -243,5 +243,4 @@ class Model(object):
         # ~ )
 
     def get_bound_constraints(self):
-
         return

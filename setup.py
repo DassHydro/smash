@@ -17,6 +17,8 @@ setup(
         "smash.factory.dataset",
         "smash.factory.net",
         "smash.io",
+        "smash.signal_analysis",
+        "smash.signal_analysis.segmentation",
         "smash.tests",
         "smash.tests.core",
         "smash.tests.mesh",

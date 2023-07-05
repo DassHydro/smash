@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.tools._common_function import _check_unknown_options
+
 import numpy as np
 
 
@@ -20,7 +22,7 @@ class sgd:
     def __init__(
         self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
     ):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("optimizer", unknown_options)
 
         self.learning_rate = learning_rate
 
@@ -61,7 +63,7 @@ class adam:
         b2: float = 0.999,
         **unknown_options,
     ):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("optimizer", unknown_options)
 
         self.learning_rate = learning_rate
 
@@ -102,7 +104,7 @@ class adagrad:
     """
 
     def __init__(self, learning_rate: float = 0.01, **unknown_options):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("optimizer", unknown_options)
 
         self.learning_rate = learning_rate
 
@@ -137,7 +139,7 @@ class rmsprop:
     def __init__(
         self, learning_rate: float = 0.001, rho: float = 0.9, **unknown_options
     ):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("optimizer", unknown_options)
 
         self.learning_rate = learning_rate
 
@@ -153,9 +155,3 @@ class rmsprop:
 
         # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for that weight
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)
-
-
-def _check_unknown_options(unknown_options: dict):
-    if unknown_options:
-        msg = ", ".join(map(str, unknown_options.keys()))
-        raise KeyError("Unknown optimizer options: '%s'" % msg)

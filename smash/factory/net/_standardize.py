@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from smash._constant import NET_OPTIMIZER, LAYER_NAME
 
 

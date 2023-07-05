@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.tools._common_function import _check_unknown_options
+
 from smash._constant import WB_INITIALIZER
 
 import numpy as np
@@ -47,7 +49,7 @@ class activation(layer):
     """
 
     def __init__(self, name: str, **unknown_options):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("layer", unknown_options)
 
         self.input_shape = None
 
@@ -81,7 +83,7 @@ class scale(layer):
     """
 
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("layer", unknown_options)
 
         self.input_shape = None
 
@@ -192,7 +194,7 @@ class dense(layer):
         bias_initializer: str = "zeros",
         **unknown_options,
     ):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("layer", unknown_options)
 
         self.layer_input = None
 
@@ -271,7 +273,7 @@ class dropout(layer):
     """
 
     def __init__(self, drop_rate: float, **unknown_options):
-        _check_unknown_options(unknown_options)
+        _check_unknown_options("layer", unknown_options)
 
         self.drop_rate = drop_rate
 
@@ -391,12 +393,3 @@ class minmaxscale:
 
     def gradient(self, x: np.ndarray):
         return self.upper - self.lower
-
-
-### OTHER ###
-
-
-def _check_unknown_options(unknown_options: dict):
-    if unknown_options:
-        msg = ", ".join(map(str, unknown_options.keys()))
-        raise KeyError("Unknown layer options: '%s'" % msg)

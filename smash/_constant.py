@@ -85,3 +85,11 @@ WB_INITIALIZER = [
 NET_OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
 
 LAYER_NAME = ["dense", "activation", "scale", "dropout"]
+
+
+### EVENT SEGMENTATION ###
+##########################
+
+PEAK_QUANT: float = 0.995
+
+MAX_DURATION: float = 240
