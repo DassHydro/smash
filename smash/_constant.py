@@ -90,6 +90,6 @@ LAYER_NAME = ["dense", "activation", "scale", "dropout"]
 ### EVENT SEGMENTATION ###
 ##########################
 
-PEAK_QUANT: float = 0.995
+PEAK_QUANT = 0.995
 
-MAX_DURATION: float = 240
+MAX_DURATION = 240
