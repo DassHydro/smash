@@ -168,18 +168,18 @@ def generate_smash_object_structure(instance,typeofstructure="medium"):
 
 def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", sub_data=None, replace=True):
     """
-    dump an object to an hdf5 file
+    Save an instance of smash.Model to an hdf5 file. 
 
     Parameters
     ----------
     path_to_hdf5 : str
         path to the hdf5 file
-    instance : object
+    instance : smash.Model object
         python object
     keys_data : list | dict
         a list or a dictionary of the attribute to be saved
     content : str
-        {light,medium,full}
+        {light,medium,full} : content saved from the smash.Model object. Notice that if content=full, an instance of the smash.Model can be reloaded from the hdf5 file.
     location : str
         path location or subgroup where to write data in the hdf5 file
     sub_data : dict | None
@@ -235,7 +235,7 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
 
 def load_hdf5_file(f_hdf5,as_model=False):
     """
-    Load an hdf5 file
+    Load an hdf5 file to a dictionary or to an instance of smash.Model.
 
     Parameters
     ----------
@@ -294,17 +294,17 @@ def _parse_hdf5_to_derived_type(hdf5_ins, derived_type):
 
 def read_hdf5_to_model_object(path: str) -> Model:
     """
-    Read Model object.
+    Read an hdf5 and return an instance of smash.Model object.
 
     Parameters
     ----------
     path : str
-        The file path.
+        The hdf5 file path.
 
     Returns
     -------
     Model :
-        A Model object loaded from HDF5 file.
+        An instance of smash.Model object loaded from an HDF5 file.
 
     Raises
     ------

@@ -20,7 +20,10 @@ Core Python
    io
    generate_samples
    sparse_storage
+   hdf5_io
    raster_handler
+   hdf5_handler
+   object_handler
 
 
 Wrapped Fortran
