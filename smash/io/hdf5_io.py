@@ -193,7 +193,7 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
     model = smash.Model(setup, mesh)
     model.run(inplace=True)
     
-    keys_data=smash.generate_smash_object_structure(model,typeofstructure="medium")
+    keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
     #add a new data to save:
     keys_data["parameters"].append('ci')
     
