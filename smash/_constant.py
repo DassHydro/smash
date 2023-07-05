@@ -69,6 +69,22 @@ RATIO_PET_HOURLY = np.array(
 )
 
 
+### MESH ###
+############
+
+D8_VALUE = np.arange(1, 9)
+
+
+### SIGNATURES ###
+##################
+
+CSIGN = ["Crc", "Crchf", "Crclf", "Crch2r", "Cfp2", "Cfp10", "Cfp50", "Cfp90"]
+
+ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
+
+SIGNS = CSIGN + ESIGN
+
+
 ### NET ###
 ###########
 

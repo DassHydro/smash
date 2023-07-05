@@ -1,1 +1,3 @@
-from smash.signal_analysis.segmentation.segmentation import event_segmentation
+from smash.signal_analysis.segmentation.segmentation import hydrograph_segmentation
+
+from smash.signal_analysis.signatures.signatures import signatures
