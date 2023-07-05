@@ -976,6 +976,11 @@ def read_hdf5_to_model_object(path: str) -> Model:
     if os.path.isfile(path):
         with h5py.File(path, "r") as f:
             
+            if not f.attrs.__contains__('_last_update'):
+                raise ValueError(
+                    f'The hdf5 file {path} does not contain the full smash object structure and therefore cannot be loaded as a smash model object. The full structure of a smash model object can be saved using smash.save_smash_model_to_hdf5(filename, smash_model, content="full").'
+                )
+            
             instance = smash.Model(None, None)
 
             if "descriptor_name" in f["setup"].keys():
