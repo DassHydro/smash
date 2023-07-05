@@ -2,6 +2,7 @@ from smash.core.model import Model
 
 from smash.factory.mesh import mesh
 from smash.factory.dataset import dataset
+from smash.factory.net import net
 
 from smash.io import setup_io
 from smash.io import mesh_io

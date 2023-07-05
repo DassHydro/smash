@@ -15,6 +15,7 @@ setup(
         "smash.factory",
         "smash.factory.mesh",
         "smash.factory.dataset",
+        "smash.factory.net",
         "smash.io",
         "smash.tests",
         "smash.tests.core",

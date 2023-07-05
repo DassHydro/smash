@@ -241,3 +241,7 @@ class Model(object):
         # ~ options,
         # ~ returns,
         # ~ )
+
+    def get_bound_constraints(self):
+
+        return

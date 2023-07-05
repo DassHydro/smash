@@ -67,3 +67,21 @@ RATIO_PET_HOURLY = np.array(
     ],
     dtype=np.float32,
 )
+
+
+### NET ###
+###########
+
+WB_INITIALIZER = [
+    "uniform",
+    "glorot_uniform",
+    "he_uniform",
+    "normal",
+    "glorot_normal",
+    "he_normal",
+    "zeros",
+]
+
+NET_OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
+
+LAYER_NAME = ["dense", "activation", "scale", "dropout"]
