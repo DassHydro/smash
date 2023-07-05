@@ -32,8 +32,11 @@ if TYPE_CHECKING:
 __all__ = ["save_smash_model_to_hdf5", "load_hdf5_file"]
 
 
-
-def _generate_light_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+def _generate_light_smash_object_structure(
+    structure: str,
+    structure_parameters=STRUCTURE_PARAMETERS,
+    structure_states=STRUCTURE_STATES,
+):
     """
     this function create a light dictionnary containing the required data-structure to save a smash model object to an hdf5 file
 
@@ -42,9 +45,9 @@ def _generate_light_smash_object_structure(structure: str,structure_parameters=S
     structure : str
         the smash model structure used {gr-a, gr-b, gr-c, gr-d}
     structure_parameters: dict
-        the dict containing the parameter to be saved for each model structure 
+        the dict containing the parameter to be saved for each model structure
     structure_states: dict
-        the dict containing the states to be saved for each model structure 
+        the dict containing the states to be saved for each model structure
 
     Returns
     -------
@@ -53,7 +56,19 @@ def _generate_light_smash_object_structure(structure: str,structure_parameters=S
     """
     return {
         "setup": ["dt", "end_time", "start_time"],
-        "mesh": ["active_cell", "area", "code", "dx", "ng", "ymax", "xmin", "nrow", "ncol", "gauge_pos", "flwacc"],
+        "mesh": [
+            "active_cell",
+            "area",
+            "code",
+            "dx",
+            "ng",
+            "ymax",
+            "xmin",
+            "nrow",
+            "ncol",
+            "gauge_pos",
+            "flwacc",
+        ],
         "input_data": ["qobs"],
         "parameters": structure_parameters[
             structure
@@ -67,8 +82,11 @@ def _generate_light_smash_object_structure(structure: str,structure_parameters=S
     }
 
 
-
-def _generate_medium_smash_object_structure(structure: str,structure_parameters=STRUCTURE_PARAMETERS,structure_states=STRUCTURE_STATES):
+def _generate_medium_smash_object_structure(
+    structure: str,
+    structure_parameters=STRUCTURE_PARAMETERS,
+    structure_states=STRUCTURE_STATES,
+):
     """
     this function create a medium dictionnary containing the required data-structure to save a smash model object to an hdf5 file
 
@@ -77,9 +95,9 @@ def _generate_medium_smash_object_structure(structure: str,structure_parameters=
     structure : str
         the smash model structure used {gr-a, gr-b, gr-c, gr-d}
     structure_parameters: dict
-        the dict containing the parameter to be saved for each model structure 
+        the dict containing the parameter to be saved for each model structure
     structure_states: dict
-        the dict containing the states to be saved for each model structure 
+        the dict containing the states to be saved for each model structure
 
     Returns
     -------
@@ -88,7 +106,22 @@ def _generate_medium_smash_object_structure(structure: str,structure_parameters=
     """
     return {
         "setup": ["dt", "end_time", "start_time", "structure", "_ntime_step"],
-        "mesh": ["active_cell", "area", "code", "dx", "flwdir", "nac", "ng", "path", "ymax", "xmin", "nrow", "ncol", "gauge_pos", "flwacc"],
+        "mesh": [
+            "active_cell",
+            "area",
+            "code",
+            "dx",
+            "flwdir",
+            "nac",
+            "ng",
+            "path",
+            "ymax",
+            "xmin",
+            "nrow",
+            "ncol",
+            "gauge_pos",
+            "flwacc",
+        ],
         "input_data": ["mean_prcp", "mean_pet", "qobs"],
         "parameters": structure_parameters[
             structure
@@ -103,7 +136,7 @@ def _generate_medium_smash_object_structure(structure: str,structure_parameters=
             "qsim",
             "cost",
             "cost_jobs",
-            "cost_jreg"
+            "cost_jreg",
         ],
     }
 
@@ -116,23 +149,22 @@ def _generate_full_smash_object_structure(instance):
     ----------
     instance : object
         a custom python object.
-    
+
     Returns
     -------
     list :
         A list containing keys and dictionary matching the structure of the python object.
     """
-    key_data=smash.tools.object_handler.generate_object_structure(instance)
-    
-    key_list=list()
+    key_data = smash.tools.object_handler.generate_object_structure(instance)
+
+    key_list = list()
     key_list.append(key_data)
     key_list.append("_last_update")
-    
+
     return key_list
 
 
-
-def generate_smash_object_structure(instance,typeofstructure="medium"):
+def generate_smash_object_structure(instance, typeofstructure="medium"):
     """
     this function create a dictionnary containing a complete ar partial structure of an object in order to save it to an hdf5. This functions is a conveninet way to generate the key_data as a dictionary. Then personnal keys can be added to the key_data dict.
 
@@ -142,33 +174,37 @@ def generate_smash_object_structure(instance,typeofstructure="medium"):
         a custom python object.
     typeofstructure : str
         the structure type : light, medium, full
-    
+
     Returns
     -------
     dict :
         A list or dictionary matching the structure of the python object.
     """
-    structure=instance.setup.structure
-    
-    if typeofstructure=="light":
-        
-        key_data=_generate_light_smash_object_structure(structure)
-        
-    elif typeofstructure=="medium":
-        
-        key_data=_generate_medium_smash_object_structure(structure)
-        
-    elif typeofstructure=="full":
-        
-        key_data=_generate_full_smash_object_structure(instance)
-    
+    structure = instance.setup.structure
+
+    if typeofstructure == "light":
+        key_data = _generate_light_smash_object_structure(structure)
+
+    elif typeofstructure == "medium":
+        key_data = _generate_medium_smash_object_structure(structure)
+
+    elif typeofstructure == "full":
+        key_data = _generate_full_smash_object_structure(instance)
+
     return key_data
 
 
-
-def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="medium", location="./", sub_data=None, replace=True):
+def save_smash_model_to_hdf5(
+    path_to_hdf5,
+    instance,
+    keys_data=None,
+    content="medium",
+    location="./",
+    sub_data=None,
+    replace=True,
+):
     """
-    Save an instance of smash.Model to an hdf5 file. 
+    Save an instance of smash.Model to an hdf5 file.
 
     Parameters
     ----------
@@ -186,17 +222,17 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
         a dictionary containing extra-data to be saved
     replace : Boolean
         replace an existing hdf5 file. Default is False
-    
+
     Examples
     --------
     setup, mesh = smash.load_dataset("cance")
     model = smash.Model(setup, mesh)
     model.run(inplace=True)
-    
+
     keys_data=smash.io.hdf5_io.generate_smash_object_structure(model,typeofstructure="medium")
     #add a new data to save:
     keys_data["parameters"].append('ci')
-    
+
     #Save a single smash model
     smash.save_smash_model_to_hdf5("./model_light.hdf5", model, content="light", replace=True)
     smash.save_smash_model_to_hdf5("./model_medium.hdf5", model, content="medium", replace=True)
@@ -211,29 +247,29 @@ def save_smash_model_to_hdf5(path_to_hdf5, instance, keys_data=None, content="me
     smash.save_smash_model_to_hdf5("./model_sub_data.hdf5", model, content="medium",sub_data=sub_data, replace=True)
     """
     if content == "light":
-        
-        keys_data=_generate_light_smash_object_structure(instance.setup.structure)
-        
+        keys_data = _generate_light_smash_object_structure(instance.setup.structure)
+
     elif content == "medium":
-        
-        keys_data=_generate_medium_smash_object_structure(instance.setup.structure)
-        
+        keys_data = _generate_medium_smash_object_structure(instance.setup.structure)
+
     elif content == "full":
-        
-        keys_data=_generate_full_smash_object_structure(instance)
-    
-    if isinstance(keys_data,(dict,list)):
-        
-        smash.tools.hdf5_handler.save_object_to_hdf5(path_to_hdf5, instance, keys_data, location=location, sub_data=sub_data,replace=replace)
-        
-    else: 
-        
-        raise ValueError(
-                    f"{keys_data} must be a instance of list or dict."
-                )
+        keys_data = _generate_full_smash_object_structure(instance)
+
+    if isinstance(keys_data, (dict, list)):
+        smash.tools.hdf5_handler.save_object_to_hdf5(
+            path_to_hdf5,
+            instance,
+            keys_data,
+            location=location,
+            sub_data=sub_data,
+            replace=replace,
+        )
+
+    else:
+        raise ValueError(f"{keys_data} must be a instance of list or dict.")
 
 
-def load_hdf5_file(f_hdf5,as_model=False):
+def load_hdf5_file(f_hdf5, as_model=False):
     """
     Load an hdf5 file to a dictionary or to an instance of smash.Model.
 
@@ -243,32 +279,30 @@ def load_hdf5_file(f_hdf5,as_model=False):
         path to the hdf5 file
     as_model : Boolean
         load the hdf5 as a smash model. Default is False
-    
+
     Return
     --------
     instance : an instance of the smash model or a dictionary
-    
+
     Examples
     --------
     #load an hdf5 file to a dictionary
     dictionary=smash.load_hdf5_file("./multi_model.hdf5")
     dictionary["model1"].keys()
     dictionary["model1"]["mesh"].keys()
-    
+
     #reload a full model object
     model_reloaded=smash.load_hdf5_file("./model_full.hdf5",as_model=True)
     model_reloaded
     model_reloaded.run()
     """
     if as_model:
-        
-        instance=read_hdf5_to_model_object(f_hdf5)
+        instance = read_hdf5_to_model_object(f_hdf5)
         return instance
-        
+
     else:
-        
-        hdf5=smash.tools.hdf5_handler.open_hdf5(f_hdf5, read_only=True, replace=False)
-        dictionary=smash.tools.hdf5_handler.read_hdf5_as_dict(hdf5)
+        hdf5 = smash.tools.hdf5_handler.open_hdf5(f_hdf5, read_only=True, replace=False)
+        dictionary = smash.tools.hdf5_handler.read_hdf5_as_dict(hdf5)
         hdf5.close()
         return dictionary
 
@@ -284,7 +318,6 @@ def _parse_hdf5_to_derived_type(hdf5_ins, derived_type):
             setattr(derived_type, ds, hdf5_ins[ds][:])
 
     for attr in hdf5_ins.attrs.keys():
-        
         # check if value is equal to "_None_" (None string because hdf5 does not supported)
         if hdf5_ins.attrs[attr] == "_None_":
             setattr(derived_type, attr, None)
@@ -342,12 +375,11 @@ def read_hdf5_to_model_object(path: str) -> Model:
 
     if os.path.isfile(path):
         with h5py.File(path, "r") as f:
-            
-            if not f.attrs.__contains__('_last_update'):
+            if not f.attrs.__contains__("_last_update"):
                 raise ValueError(
                     f'The hdf5 file {path} does not contain the full smash object structure and therefore cannot be loaded as a smash model object. The full structure of a smash model object can be saved using smash.save_smash_model_to_hdf5(filename, smash_model, content="full").'
                 )
-            
+
             instance = smash.Model(None, None)
 
             if "descriptor_name" in f["setup"].keys():
@@ -364,9 +396,7 @@ def read_hdf5_to_model_object(path: str) -> Model:
 
             et = pd.Timestamp(instance.setup.end_time)
 
-            instance.setup._ntime_step = (
-                et - st
-            ).total_seconds() / instance.setup.dt
+            instance.setup._ntime_step = (et - st).total_seconds() / instance.setup.dt
 
             instance.mesh = MeshDT(
                 instance.setup,
@@ -400,7 +430,6 @@ def read_hdf5_to_model_object(path: str) -> Model:
             instance._last_update = f.attrs["_last_update"]
 
             return instance
-
 
     else:
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
