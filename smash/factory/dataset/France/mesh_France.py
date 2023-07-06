@@ -1,12 +1,15 @@
-import smash
+from smash.factory.mesh.mesh import generate_mesh
+from smash.io.mesh.mesh import save_mesh
 
-flwdir = smash.factory.load_dataset("flwdir")
+from smash.factory.dataset.dataset import load_dataset
+
+flwdir = load_dataset("flwdir")
 
 bbox_France = (100_000, 1_250_000, 6_050_000, 7_125_000)
 
-mesh = smash.factory.generate_mesh(
+mesh = generate_mesh(
     path=flwdir,
     bbox=bbox_France,
 )
 
-smash.save_mesh(mesh, "mesh_France.hdf5")
+save_mesh(mesh, "mesh_France.hdf5")

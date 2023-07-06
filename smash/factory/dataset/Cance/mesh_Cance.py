@@ -1,8 +1,11 @@
-import smash
+from smash.factory.mesh.mesh import generate_mesh
+from smash.io.mesh.mesh import save_mesh
 
-flwdir = smash.factory.load_dataset("flwdir")
+from smash.factory.dataset.dataset import load_dataset
 
-mesh = smash.factory.generate_mesh(
+flwdir = load_dataset("flwdir")
+
+mesh = generate_mesh(
     flwdir,
     x=[840_261, 826_553, 828_269],
     y=[6_457_807, 6_467_115, 6_469_198],
@@ -11,4 +14,4 @@ mesh = smash.factory.generate_mesh(
     epsg=2154,
 )
 
-smash.save_mesh(mesh, "mesh_Cance.hdf5")
+save_mesh(mesh, "mesh_Cance.hdf5")

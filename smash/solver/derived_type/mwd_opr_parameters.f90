@@ -28,7 +28,6 @@
 module mwd_opr_parameters
 
     use md_constant !% only: sp
-    use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
 
     implicit none
@@ -49,37 +48,37 @@ module mwd_opr_parameters
 
 contains
 
-    subroutine Opr_ParametersDT_initialise(this, setup, mesh)
+    subroutine Opr_ParametersDT_initialise(this, mesh)
+    !% Default parameters value will be handled in Python
 
         implicit none
 
         type(Opr_ParametersDT), intent(inout) :: this
-        type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
         allocate (this%ci(mesh%nrow, mesh%ncol))
-        this%ci = 1e-6_sp
+        this%ci = 0._sp
 
         allocate (this%cp(mesh%nrow, mesh%ncol))
-        this%cp = 200._sp
+        this%cp = 0._sp
 
         allocate (this%cft(mesh%nrow, mesh%ncol))
-        this%cft = 500._sp
+        this%cft = 0._sp
 
         allocate (this%cst(mesh%nrow, mesh%ncol))
-        this%cst = 500._sp
+        this%cst = 0._sp
 
         allocate (this%kexc(mesh%nrow, mesh%ncol))
         this%kexc = 0._sp
 
         allocate (this%llr(mesh%nrow, mesh%ncol))
-        this%llr = setup%dt*(5._sp/3600._sp)
+        this%llr = 0._sp
 
         allocate (this%akw(mesh%nrow, mesh%ncol))
-        this%akw = 5._sp
+        this%akw = 0._sp
 
         allocate (this%bkw(mesh%nrow, mesh%ncol))
-        this%bkw = 0.6_sp
+        this%bkw = 0._sp
 
     end subroutine Opr_ParametersDT_initialise
 

@@ -50,8 +50,8 @@ contains
         type(MeshDT), intent(in) :: mesh
 
         call ResponseDT_initialise(this%sim_response, setup, mesh)
-        call Opr_StatesDT_initialise(this%opr_final_states, setup, mesh)
-        call Opr_StatesDT_initialise(this%opr_states_buffer, setup, mesh)
+        call Opr_StatesDT_initialise(this%opr_final_states, mesh)
+        call Opr_StatesDT_initialise(this%opr_states_buffer, mesh)
 
     end subroutine OutputDT_initialise
 

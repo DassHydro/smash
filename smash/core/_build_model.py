@@ -1,18 +1,15 @@
 from __future__ import annotations
 
-from smash._constant import (
-    STRUCTURE_NAME,
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
-    STRUCTURE_COMPUTE_CI,
-    INPUT_DATA_FORMAT,
-)
+from smash._constant import STRUCTURE_COMPUTE_CI, OPR_PARAMETERS, OPR_STATES
+
 from smash.core._read_input_data import (
     _read_qobs,
     _read_prcp,
     _read_pet,
     _read_descriptor,
 )
+
+from smash.core._standardize import _standardize_setup
 
 from smash.solver._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_sparse
 from smash.solver._mw_atmos_statistic import compute_mean_atmos
@@ -24,117 +21,9 @@ if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
+    from smash.solver._mwd_parameters import ParametersDT
 
 import pandas as pd
-import os
-import warnings
-
-
-# % TODO: Maybe move standardize somewhere else
-def _standardize_setup(setup: SetupDT):
-    setup.structure = setup.structure.lower()
-    if setup.structure not in STRUCTURE_NAME:
-        raise ValueError(
-            f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
-        )
-
-    if setup.dt < 0:
-        raise ValueError("argument dt is lower than 0")
-
-    if not setup.dt in [900, 3_600, 86_400]:
-        warnings.warn(
-            "argument dt is not set to a classical value (900, 3600, 86400 seconds)",
-            UserWarning,
-        )
-
-    if setup.start_time == "...":
-        raise ValueError("argument start_time is not defined")
-
-    if setup.end_time == "...":
-        raise ValueError("argument end_time is not defined")
-
-    try:
-        st = pd.Timestamp(setup.start_time)
-    except:
-        raise ValueError("argument start_time is not a valid date")
-
-    try:
-        et = pd.Timestamp(setup.end_time)
-    except:
-        raise ValueError("argument end_time is not a valid date")
-
-    if (et - st).total_seconds() < 0:
-        raise ValueError(
-            "argument end_time corresponds to an earlier date than start_time"
-        )
-
-    if setup.read_qobs and setup.qobs_directory == "...":
-        raise ValueError("argument read_qobs is True and qobs_directory is not defined")
-
-    if setup.read_qobs and not os.path.exists(setup.qobs_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.qobs_directory,
-        )
-
-    if setup.read_prcp and setup.prcp_directory == "...":
-        raise ValueError("argument read_prcp is True and prcp_directory is not defined")
-
-    if setup.read_prcp and not os.path.exists(setup.prcp_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.prcp_directory,
-        )
-
-    if setup.prcp_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
-
-    if setup.prcp_conversion_factor < 0:
-        raise ValueError("argument prcp_conversion_factor is lower than 0")
-
-    if setup.read_pet and setup.pet_directory == "...":
-        raise ValueError("argument read_pet is True and pet_directory is not defined")
-
-    if setup.read_pet and not os.path.exists(setup.pet_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.pet_directory,
-        )
-
-    if setup.pet_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown pet_format '{setup.pet_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
-
-    if setup.pet_conversion_factor < 0:
-        raise ValueError("argument pet_conversion_factor is lower than 0")
-
-    if setup.read_descriptor and setup.descriptor_directory == "...":
-        raise ValueError(
-            "argument read_descriptor is True and descriptor_directory is not defined"
-        )
-
-    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.descriptor_directory,
-        )
-
-    if setup.read_descriptor and setup.nd == 0:
-        raise ValueError(
-            "argument read_descriptor is True and descriptor_name is not defined"
-        )
-
-    if setup.descriptor_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
 
 
 def _build_setup(setup: SetupDT):
@@ -170,12 +59,23 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     )  # % Fortran subroutine mw_atmos_statistic
 
 
-def _build_parameters(
+def _build_paramstates(
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
-    parameters: ParametersDT,
+    paramstates: ParametersDT,
 ):
+    # % Build states
+    for state_name, state_value in OPR_STATES.items():
+        setattr(paramstates.opr_initial_states, state_name, state_value)
+    
+    # % Build parameters
+    for param_name, param_value in OPR_PARAMETERS.items():
+        if param_name == "llr":
+            setattr(paramstates.opr_parameters, param_name, setup.dt*(param_value/3600))
+        else:
+            setattr(paramstates.opr_parameters, param_name, param_value)
+
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date
         day_index = pd.date_range(
@@ -194,5 +94,5 @@ def _build_parameters(
             input_data,
             day_index,
             day_index[-1],
-            parameters.opr_parameters.ci,
+            paramstates.opr_parameters.ci,
         )  # % Fortran subroutine mw_interception_capacity

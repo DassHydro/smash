@@ -23,7 +23,6 @@
 module mwd_opr_states
 
     use md_constant !% only: sp
-    use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
 
     implicit none
@@ -40,28 +39,28 @@ module mwd_opr_states
 
 contains
 
-    subroutine Opr_StatesDT_initialise(this, setup, mesh)
+    subroutine Opr_StatesDT_initialise(this, mesh)
+    !% Default states value will be handled in Python
 
         implicit none
 
         type(Opr_StatesDT), intent(inout) :: this
-        type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
         allocate (this%hi(mesh%nrow, mesh%ncol))
-        this%hi = 1e-2_sp
+        this%hi = 0._sp
 
         allocate (this%hp(mesh%nrow, mesh%ncol))
-        this%hp = 1e-2_sp
+        this%hp = 0._sp
 
         allocate (this%hft(mesh%nrow, mesh%ncol))
-        this%hft = 1e-2_sp
+        this%hft = 0._sp
 
         allocate (this%hst(mesh%nrow, mesh%ncol))
-        this%hst = 1e-2_sp
+        this%hst = 0._sp
 
         allocate (this%hlr(mesh%nrow, mesh%ncol))
-        this%hlr = 1e-6_sp
+        this%hlr = 0._sp
 
     end subroutine Opr_StatesDT_initialise
 

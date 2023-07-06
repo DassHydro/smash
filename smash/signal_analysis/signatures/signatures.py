@@ -116,12 +116,12 @@ def signatures(
 
     Returns
     -------
-    res : SignResult
-        The signatures computation results represented as a `SignResult` object.
+    res : Signatures
+        The signatures computation results represented as a `Signatures` object.
 
     See Also
     --------
-    SignResult: Represents signatures computation result.
+    Signatures: Represents signatures computation result.
 
     Examples
     --------

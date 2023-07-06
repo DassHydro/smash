@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-import smash
+from smash.io.mesh.mesh import read_mesh
+from smash.io.setup.setup import read_setup
+
 import os
 
 
@@ -114,10 +116,10 @@ def load_dataset(name: str):
     elif name.lower() in ["cance", "lez", "france"]:
         cptl_name = name.capitalize()
 
-        setup = smash.io.read_setup(
+        setup = read_setup(
             os.path.join(DATASET_PATH, cptl_name, f"setup_{cptl_name}.yaml")
         )
-        mesh = smash.io.read_mesh(
+        mesh = read_mesh(
             os.path.join(DATASET_PATH, cptl_name, f"mesh_{cptl_name}.hdf5")
         )
 
@@ -151,10 +153,10 @@ def load_dataset(name: str):
         ):
             raise ValueError(f"Missing mesh file '{mesh_file}'")
 
-        setup = smash.io.read_setup(
+        setup = read_setup(
             os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
         )
-        mesh = smash.io.read_mesh(
+        mesh = read_mesh(
             os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
         )
 

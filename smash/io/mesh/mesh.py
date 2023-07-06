@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash.io._error import ReadHDF5MethodError
 
-from smash.io.meshio._parse import _parse_hdf5_to_mesh_dict, _parse_mesh_dict_to_hdf5
+from smash.io.mesh._parse import _parse_hdf5_to_mesh_dict, _parse_mesh_dict_to_hdf5
 
 import os
 import errno

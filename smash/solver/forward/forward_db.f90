@@ -25,8 +25,6 @@
 MODULE MWD_OPR_STATES_DIFF
 !% only: sp
   USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
   IMPLICIT NONE
@@ -39,21 +37,20 @@ MODULE MWD_OPR_STATES_DIFF
   END TYPE OPR_STATESDT
 
 CONTAINS
-  SUBROUTINE OPR_STATESDT_INITIALISE(this, setup, mesh)
+  SUBROUTINE OPR_STATESDT_INITIALISE(this, mesh)
     IMPLICIT NONE
     TYPE(OPR_STATESDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     ALLOCATE(this%hi(mesh%nrow, mesh%ncol))
-    this%hi = 1e-2_sp
+    this%hi = 0._sp
     ALLOCATE(this%hp(mesh%nrow, mesh%ncol))
-    this%hp = 1e-2_sp
+    this%hp = 0._sp
     ALLOCATE(this%hft(mesh%nrow, mesh%ncol))
-    this%hft = 1e-2_sp
+    this%hft = 0._sp
     ALLOCATE(this%hst(mesh%nrow, mesh%ncol))
-    this%hst = 1e-2_sp
+    this%hst = 0._sp
     ALLOCATE(this%hlr(mesh%nrow, mesh%ncol))
-    this%hlr = 1e-6_sp
+    this%hlr = 0._sp
   END SUBROUTINE OPR_STATESDT_INITIALISE
 
   SUBROUTINE OPR_STATESDT_COPY(this, this_copy)
@@ -112,8 +109,8 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     CALL RESPONSEDT_INITIALISE(this%sim_response, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_final_states, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_states_buffer, setup, mesh)
+    CALL OPR_STATESDT_INITIALISE(this%opr_final_states, mesh)
+    CALL OPR_STATESDT_INITIALISE(this%opr_states_buffer, mesh)
   END SUBROUTINE OUTPUTDT_INITIALISE
 
   SUBROUTINE OUTPUTDT_COPY(this, this_copy)
@@ -236,8 +233,6 @@ END MODULE MWD_CONTROL_DIFF
 MODULE MWD_OPR_PARAMETERS_DIFF
 !% only: sp
   USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
   IMPLICIT NONE
@@ -253,27 +248,26 @@ MODULE MWD_OPR_PARAMETERS_DIFF
   END TYPE OPR_PARAMETERSDT
 
 CONTAINS
-  SUBROUTINE OPR_PARAMETERSDT_INITIALISE(this, setup, mesh)
+  SUBROUTINE OPR_PARAMETERSDT_INITIALISE(this, mesh)
     IMPLICIT NONE
     TYPE(OPR_PARAMETERSDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     ALLOCATE(this%ci(mesh%nrow, mesh%ncol))
-    this%ci = 1e-6_sp
+    this%ci = 0._sp
     ALLOCATE(this%cp(mesh%nrow, mesh%ncol))
-    this%cp = 200._sp
+    this%cp = 0._sp
     ALLOCATE(this%cft(mesh%nrow, mesh%ncol))
-    this%cft = 500._sp
+    this%cft = 0._sp
     ALLOCATE(this%cst(mesh%nrow, mesh%ncol))
-    this%cst = 500._sp
+    this%cst = 0._sp
     ALLOCATE(this%kexc(mesh%nrow, mesh%ncol))
     this%kexc = 0._sp
     ALLOCATE(this%llr(mesh%nrow, mesh%ncol))
-    this%llr = setup%dt*(5._sp/3600._sp)
+    this%llr = 0._sp
     ALLOCATE(this%akw(mesh%nrow, mesh%ncol))
-    this%akw = 5._sp
+    this%akw = 0._sp
     ALLOCATE(this%bkw(mesh%nrow, mesh%ncol))
-    this%bkw = 0.6_sp
+    this%bkw = 0._sp
   END SUBROUTINE OPR_PARAMETERSDT_INITIALISE
 
   SUBROUTINE OPR_PARAMETERSDT_COPY(this, this_copy)
@@ -307,8 +301,6 @@ END MODULE MWD_OPR_PARAMETERS_DIFF
 MODULE MWD_PARAMETERS_DIFF
 !% only: sp
   USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
 !% only: ControlDT
@@ -325,13 +317,12 @@ MODULE MWD_PARAMETERS_DIFF
   END TYPE PARAMETERSDT
 
 CONTAINS
-  SUBROUTINE PARAMETERSDT_INITIALISE(this, setup, mesh)
+  SUBROUTINE PARAMETERSDT_INITIALISE(this, mesh)
     IMPLICIT NONE
     TYPE(PARAMETERSDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
-    CALL OPR_PARAMETERSDT_INITIALISE(this%opr_parameters, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_initial_states, setup, mesh)
+    CALL OPR_PARAMETERSDT_INITIALISE(this%opr_parameters, mesh)
+    CALL OPR_STATESDT_INITIALISE(this%opr_initial_states, mesh)
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
   SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
