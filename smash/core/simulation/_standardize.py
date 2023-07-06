@@ -342,7 +342,7 @@ def _standardize_gauge(
             raise ValueError(f"Unknown gauge code '{name}'. Choices: {mesh.code}")
 
     if gauge_check.size == 0:
-        warnings.warn(
+        raise ValueError(
             f"No available observed discharge for optimization at gauge(s) {gauge}"
         )
 
