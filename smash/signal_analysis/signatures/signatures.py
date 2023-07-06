@@ -74,6 +74,7 @@ def signatures(
     model: Model,
     sign: str | list | None = None,
     obs_comp: bool = True,
+    sim_comp: bool = True,
     event_seg: dict | None = None,
 ):
     """
@@ -97,7 +98,10 @@ def signatures(
             If not given, all of continuous and flood event signatures will be computed.
 
     obs_comp : bool, default True
-        If True, compute also the signatures from observed discharge in addition to simulated discharge.
+        If True, compute the signatures from observed discharges.
+
+    sim_comp : bool, default True
+        If True, compute the signatures from simulated discharges.
 
     event_seg : dict or None, default None
         A dictionary of event segmentation options when calculating flood event signatures. The keys are
@@ -151,6 +155,6 @@ def signatures(
     if event_seg is None:
         event_seg = {}
 
-    res = _sign_computation(model, cs, es, obs_comp, **event_seg)
+    res = _sign_computation(model, cs, es, obs_comp, sim_comp, **event_seg)
 
     return Signatures(res)

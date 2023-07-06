@@ -150,6 +150,7 @@ def _sign_computation(
     cs: list[str],
     es: list[str],
     obs_comp: bool,
+    sim_comp: bool,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,
     **unknown_options,
@@ -207,15 +208,16 @@ def _sign_computation(
                 qsim_tmp = instance.sim_response.q[i, :].copy()
 
                 if len(cs) > 0:
-                    csignatures_sim = _continuous_signatures(
-                        prcp_tmp, qsim_tmp, list_signatures=cs
-                    )
+                    if sim_comp:
+                        csignatures_sim = _continuous_signatures(
+                            prcp_tmp, qsim_tmp, list_signatures=cs
+                        )
 
-                    rowsim_cs = pd.DataFrame(
-                        [[catchment] + csignatures_sim], columns=col_cs
-                    )
+                        rowsim_cs = pd.DataFrame(
+                            [[catchment] + csignatures_sim], columns=col_cs
+                        )
 
-                    dfsim_cs = pd.concat([dfsim_cs, rowsim_cs], ignore_index=True)
+                        dfsim_cs = pd.concat([dfsim_cs, rowsim_cs], ignore_index=True)
 
                     if obs_comp:
                         csignatures_obs = _continuous_signatures(
@@ -253,26 +255,32 @@ def _sign_computation(
 
                             season = _get_season(date_range[ts].date())
 
-                            esignatures_sim = _event_signatures(
-                                event_prcp,
-                                event_qsim,
-                                ts,
-                                t["peakP"],
-                                None,
-                                list_signatures=es,
-                            )
+                            if sim_comp:
+                                esignatures_sim = _event_signatures(
+                                    event_prcp,
+                                    event_qsim,
+                                    ts,
+                                    t["peakP"],
+                                    None,
+                                    list_signatures=es,
+                                )
 
-                            rowsim_es = pd.DataFrame(
-                                [
-                                    [catchment, season, date_range[ts], date_range[te]]
-                                    + esignatures_sim
-                                ],
-                                columns=col_es,
-                            )
+                                rowsim_es = pd.DataFrame(
+                                    [
+                                        [
+                                            catchment,
+                                            season,
+                                            date_range[ts],
+                                            date_range[te],
+                                        ]
+                                        + esignatures_sim
+                                    ],
+                                    columns=col_es,
+                                )
 
-                            dfsim_es = pd.concat(
-                                [dfsim_es, rowsim_es], ignore_index=True
-                            )
+                                dfsim_es = pd.concat(
+                                    [dfsim_es, rowsim_es], ignore_index=True
+                                )
 
                             if obs_comp:
                                 esignatures_obs = _event_signatures(
