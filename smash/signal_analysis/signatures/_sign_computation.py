@@ -35,43 +35,43 @@ def _continuous_signatures(p: np.ndarray, q: np.ndarray, list_signatures: list[s
             except:
                 res.append(np.nan)
 
-        if signature == "Crchf":
+        elif signature == "Crchf":
             try:
                 res.append(np.sum(qq) / np.sum(p))
             except:
                 res.append(np.nan)
 
-        if signature == "Crclf":
+        elif signature == "Crclf":
             try:
                 res.append(np.sum(qb) / np.sum(p))
             except:
                 res.append(np.nan)
 
-        if signature == "Crch2r":
+        elif signature == "Crch2r":
             try:
                 res.append(np.sum(qq) / np.sum(q))
             except:
                 res.append(np.nan)
 
-        if signature == "Cfp2":
+        elif signature == "Cfp2":
             try:
                 res.append(np.quantile(qp, 0.02))
             except:
                 res.append(np.nan)
 
-        if signature == "Cfp10":
+        elif signature == "Cfp10":
             try:
                 res.append(np.quantile(qp, 0.1))
             except:
                 res.append(np.nan)
 
-        if signature == "Cfp50":
+        elif signature == "Cfp50":
             try:
                 res.append(np.quantile(qp, 0.5))
             except:
                 res.append(np.nan)
 
-        if signature == "Cfp90":
+        elif signature == "Cfp90":
             try:
                 res.append(np.quantile(qp, 0.9))
             except:
@@ -96,50 +96,51 @@ def _event_signatures(
         if signature == "Eff":
             res.append(np.mean(qq))
 
-        if signature == "Ebf":
+        elif signature == "Ebf":
             res.append(np.mean(qb))
 
-        if signature == "Erc":
+        elif signature == "Erc":
             try:
                 res.append(np.sum(q) / np.sum(p))
             except:
                 res.append(np.nan)
 
-        if signature == "Erchf":
+        elif signature == "Erchf":
             try:
                 res.append(np.sum(qq) / np.sum(p))
             except:
                 res.append(np.nan)
 
-        if signature == "Erclf":
+        elif signature == "Erclf":
             try:
                 res.append(np.sum(qb) / np.sum(p))
             except:
                 res.append(np.nan)
 
-        if signature == "Erch2r":
+        elif signature == "Erch2r":
             try:
                 res.append(np.sum(qq) / np.sum(q))
             except:
                 res.append(np.nan)
 
-        if (signature == "Elt" or signature == "Epf") and deteq:
-            deteq = False
+        elif signature == "Elt" or signature == "Epf":
+            if deteq:
+                deteq = False
 
-            if peakq is None:
-                try:
-                    peakq = (
-                        _detect_peaks(q, mpd=len(q))[0] + start
-                    )  # detect only 1 peak
+                if peakq is None:
+                    try:
+                        peakq = (
+                            _detect_peaks(q, mpd=len(q))[0] + start
+                        )  # detect only 1 peak
 
-                except:
-                    peakq = start + len(q) - 1
+                    except:
+                        peakq = start + len(q) - 1
 
-        if signature == "Elt":
-            res.append(peakq - peakp)
+            if signature == "Elt":
+                res.append(peakq - peakp)
 
-        if signature == "Epf":
-            res.append(q[peakq - start])
+            elif signature == "Epf":
+                res.append(q[peakq - start])
 
     return res
 
@@ -159,7 +160,7 @@ def _sign_computation(
     prcp_cvt = (
         instance.atmos_data.mean_prcp
         * 0.001
-        * instance.mesh.area[..., np.newaxis]
+        * instance.mesh.area_dln[..., np.newaxis]
         / instance.setup.dt
     )  # convert precip from mm to m3/s
 
