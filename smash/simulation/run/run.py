@@ -14,8 +14,9 @@ if TYPE_CHECKING:
     from smash.solver._mwd_returns import ReturnsDT
 
 
-def forward_run(model: Model, options: OptionsDT | None = None, returns: ReturnsDT | None = None):
-
+def forward_run(
+    model: Model, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+):
     new_model = model.copy()
 
     _forward_run(new_model, options, returns)
@@ -24,7 +25,6 @@ def forward_run(model: Model, options: OptionsDT | None = None, returns: Returns
 
 
 def _forward_run(instance: Model, options: OptionsDT, returns: ReturnsDT):
-
     options = _standardize_options(options, instance.setup)
 
     returns = _standardize_returns(returns)
@@ -32,11 +32,11 @@ def _forward_run(instance: Model, options: OptionsDT, returns: ReturnsDT):
     _standardize_paramstates(instance._parameters)
 
     fw_run(
-            instance.setup,
-            instance.mesh,
-            instance._input_data,
-            instance._parameters,
-            instance._output,
-            options,
-            returns,
-        )
+        instance.setup,
+        instance.mesh,
+        instance._input_data,
+        instance._parameters,
+        instance._output,
+        options,
+        returns,
+    )

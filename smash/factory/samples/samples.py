@@ -361,7 +361,9 @@ def generate_samples(
             else:
                 sd = (upp - low) / coef_std
 
-            trunc_normal = truncnorm((low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd)
+            trunc_normal = truncnorm(
+                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
+            )
 
             ret_dict[p] = trunc_normal.rvs(size=n)
 

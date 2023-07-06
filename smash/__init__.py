@@ -13,7 +13,15 @@ def __getattr__(name):
     raise AttributeError(f"module 'smash' has no attribute '{name}'")
 
 
-__all__ = ["Model", "Signatures", "Samples", "io", "factory", "signal_analysis", "simulation"]
+__all__ = [
+    "Model",
+    "Signatures",
+    "Samples",
+    "io",
+    "factory",
+    "signal_analysis",
+    "simulation",
+]
 
 __version__ = _version.get_versions()["version"]
 

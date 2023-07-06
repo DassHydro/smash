@@ -68,11 +68,13 @@ def _build_paramstates(
     # % Build states
     for state_name, state_value in OPR_STATES.items():
         setattr(paramstates.opr_initial_states, state_name, state_value)
-    
+
     # % Build parameters
     for param_name, param_value in OPR_PARAMETERS.items():
         if param_name == "llr":
-            setattr(paramstates.opr_parameters, param_name, setup.dt*(param_value/3600))
+            setattr(
+                paramstates.opr_parameters, param_name, setup.dt * (param_value / 3600)
+            )
         else:
             setattr(paramstates.opr_parameters, param_name, param_value)
 

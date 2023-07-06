@@ -60,7 +60,9 @@ class Model(object):
 
             self._parameters = ParametersDT(self.mesh)
 
-            _build_paramstates(self.setup, self.mesh, self._input_data, self._parameters)
+            _build_paramstates(
+                self.setup, self.mesh, self._input_data, self._parameters
+            )
 
             self._output = OutputDT(self.setup, self.mesh)
 
@@ -148,9 +150,10 @@ class Model(object):
 
     def copy(self):
         return self.__copy__()
-    
-    def forward_run(self, options: OptionsDT | None = None, returns: ReturnsDT | None = None):
 
+    def forward_run(
+        self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+    ):
         _forward_run(self, options, returns)
 
     def optimize(self):

@@ -27,70 +27,70 @@
 
 module mwd_opr_parameters
 
-    use md_constant !% only: sp
-    use mwd_mesh !% only: MeshDT
+   use md_constant !% only: sp
+   use mwd_mesh !% only: MeshDT
 
-    implicit none
+   implicit none
 
-    type Opr_ParametersDT
+   type Opr_ParametersDT
 
-        real(sp), dimension(:, :), allocatable :: ci
-        real(sp), dimension(:, :), allocatable :: cp
-        real(sp), dimension(:, :), allocatable :: cft
-        real(sp), dimension(:, :), allocatable :: cst
-        real(sp), dimension(:, :), allocatable :: kexc
+      real(sp), dimension(:, :), allocatable :: ci
+      real(sp), dimension(:, :), allocatable :: cp
+      real(sp), dimension(:, :), allocatable :: cft
+      real(sp), dimension(:, :), allocatable :: cst
+      real(sp), dimension(:, :), allocatable :: kexc
 
-        real(sp), dimension(:, :), allocatable :: llr
-        real(sp), dimension(:, :), allocatable :: akw
-        real(sp), dimension(:, :), allocatable :: bkw
+      real(sp), dimension(:, :), allocatable :: llr
+      real(sp), dimension(:, :), allocatable :: akw
+      real(sp), dimension(:, :), allocatable :: bkw
 
-    end type Opr_ParametersDT
+   end type Opr_ParametersDT
 
 contains
 
-    subroutine Opr_ParametersDT_initialise(this, mesh)
-    !% Default parameters value will be handled in Python
+   subroutine Opr_ParametersDT_initialise(this, mesh)
+      !% Default parameters value will be handled in Python
 
-        implicit none
+      implicit none
 
-        type(Opr_ParametersDT), intent(inout) :: this
-        type(MeshDT), intent(in) :: mesh
+      type(Opr_ParametersDT), intent(inout) :: this
+      type(MeshDT), intent(in) :: mesh
 
-        allocate (this%ci(mesh%nrow, mesh%ncol))
-        this%ci = 0._sp
+      allocate (this%ci(mesh%nrow, mesh%ncol))
+      this%ci = 0._sp
 
-        allocate (this%cp(mesh%nrow, mesh%ncol))
-        this%cp = 0._sp
+      allocate (this%cp(mesh%nrow, mesh%ncol))
+      this%cp = 0._sp
 
-        allocate (this%cft(mesh%nrow, mesh%ncol))
-        this%cft = 0._sp
+      allocate (this%cft(mesh%nrow, mesh%ncol))
+      this%cft = 0._sp
 
-        allocate (this%cst(mesh%nrow, mesh%ncol))
-        this%cst = 0._sp
+      allocate (this%cst(mesh%nrow, mesh%ncol))
+      this%cst = 0._sp
 
-        allocate (this%kexc(mesh%nrow, mesh%ncol))
-        this%kexc = 0._sp
+      allocate (this%kexc(mesh%nrow, mesh%ncol))
+      this%kexc = 0._sp
 
-        allocate (this%llr(mesh%nrow, mesh%ncol))
-        this%llr = 0._sp
+      allocate (this%llr(mesh%nrow, mesh%ncol))
+      this%llr = 0._sp
 
-        allocate (this%akw(mesh%nrow, mesh%ncol))
-        this%akw = 0._sp
+      allocate (this%akw(mesh%nrow, mesh%ncol))
+      this%akw = 0._sp
 
-        allocate (this%bkw(mesh%nrow, mesh%ncol))
-        this%bkw = 0._sp
+      allocate (this%bkw(mesh%nrow, mesh%ncol))
+      this%bkw = 0._sp
 
-    end subroutine Opr_ParametersDT_initialise
+   end subroutine Opr_ParametersDT_initialise
 
-    subroutine Opr_ParametersDT_copy(this, this_copy)
+   subroutine Opr_ParametersDT_copy(this, this_copy)
 
-        implicit none
+      implicit none
 
-        type(Opr_ParametersDT), intent(in) :: this
-        type(Opr_ParametersDT), intent(out) :: this_copy
+      type(Opr_ParametersDT), intent(in) :: this
+      type(Opr_ParametersDT), intent(out) :: this_copy
 
-        this_copy = this
+      this_copy = this
 
-    end subroutine Opr_ParametersDT_copy
+   end subroutine Opr_ParametersDT_copy
 
 end module mwd_opr_parameters

@@ -11,16 +11,16 @@ if TYPE_CHECKING:
 
 def _standardize_options(options: OptionsDT | None, setup: SetupDT):
     if options is None:
-        
         options = OptionsDT(setup)
-    
-    elif isinstance(options, OptionsDT):    
+
+    elif isinstance(options, OptionsDT):
         ...
-    
+
     else:
         raise TypeError(f"options argument must be None or of type OptionsDT")
 
     return options
+
 
 def _standardize_returns(returns: ReturnsDT):
     if returns is None:

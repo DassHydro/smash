@@ -14,7 +14,6 @@ import errno
 
 
 def _standardize_setup(setup: SetupDT):
-    
     setup.structure = setup.structure.lower()
 
     if setup.structure not in STRUCTURE_NAME:
