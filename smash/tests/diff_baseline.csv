@@ -1,11 +1,9 @@
-commit eccfbc49788375c665ab3e80fa033607759151f6
-Author: inoelloc <colleoni.francois@gmail.com>
-Date:   Thu Jun 8 16:59:50 2023 +0200
+commit 99249b2069dd4c5ecebe2fbd3b7760004d782153
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Wed Jul 5 13:33:08 2023 +0200
 
-    FIX PR: Regenerated baseline
-    
-    - Two tests have been modified as a result of changes in optimization
-    regularizations
+    Reformat files
+    remove io_test.hdf5
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED
