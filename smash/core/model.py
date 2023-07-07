@@ -19,10 +19,8 @@ from smash.solver._mwd_output import OutputDT
 from smash.solver._mwd_options import OptionsDT
 from smash.solver._mwd_returns import ReturnsDT
 
-from smash.solver._mw_optimize import sbs_optimize, lbfgsb_optimize
-from smash.solver._mw_forward import forward_run as fw_run
-
 from smash.simulation.run.run import _forward_run
+from smash.simulation.optimize.optimize import _optimize
 
 import numpy as np
 
@@ -156,102 +154,10 @@ class Model(object):
     ):
         _forward_run(self, options, returns)
 
-    def optimize(self):
-        options = OptionsDT(self.setup)
-        returns = ReturnsDT()
-
-        options.comm.ncpu = 6
-
-        fw_run(
-            self.setup,
-            self.mesh,
-            self._input_data,
-            self._parameters,
-            self._output,
-            options,
-            returns,
-        )
-        # ci, cp, cft, cst, kexc, llr, akw, bkw
-        options.optimize.opr_parameters = [0, 1, 1, 0, 1, 0, 1, 1]
-        options.optimize.opr_initial_states = [0, 0, 0, 0, 0]
-        options.optimize.l_opr_parameters = [
-            1e-6,
-            1e-6,
-            1e-6,
-            1e-6,
-            -50,
-            1e-6,
-            1e-3,
-            1e-3,
-        ]
-        options.optimize.u_opr_parameters = [100, 1000, 1000, 10_000, 50, 1000, 50, 1]
-        options.optimize.l_opr_initial_states = [1e-6, 1e-6, 1e-6, 1e-6, 1e-6]
-        options.optimize.u_opr_initial_states = [
-            0.999999,
-            0.999999,
-            0.999999,
-            0.999999,
-            1000,
-        ]
-
-        # ~ options.optimize.optimizer = "sbs"
-        # ~ options.optimize.mapping = "uniform"
-        # ~ options.optimize.maxiter = 5
-        # ~ options.optimize.control_tfm = "sbs"
-
-        # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
-
-        # ~ optimize_func(
-        # ~ self.setup,
-        # ~ self.mesh,
-        # ~ self._input_data,
-        # ~ self._parameters,
-        # ~ self._output,
-        # ~ options,
-        # ~ returns,
-        # ~ )
-
-        options.optimize.optimizer = "lbfgsb"
-        options.optimize.mapping = "distributed"
-        options.optimize.maxiter = 10
-        options.optimize.control_tfm = "normalize"
-
-        optimize_func = eval(options.optimize.optimizer + "_optimize")
-
-        optimize_func(
-            self.setup,
-            self.mesh,
-            self._input_data,
-            self._parameters,
-            self._output,
-            options,
-            returns,
-        )
-
-        # ~ options.optimize.optimizer = "lbfgsb"
-        # ~ options.optimize.mapping = "multi-linear"
-        # ~ options.optimize.maxiter = 100
-        # ~ options.optimize.control_tfm = "normalize"
-        # ~ opd = np.ones(
-        # ~ shape=options.optimize.opr_parameters_descriptor.shape,
-        # ~ dtype=np.int32,
-        # ~ order="F",
-        # ~ )
-        # ~ #opd[:, 5] = 0
-        # ~ options.optimize.opr_parameters_descriptor = opd
-        # ~ options.optimize.opr_initial_states_descriptor = 0
-
-        # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
-
-        # ~ optimize_func(
-        # ~ self.setup,
-        # ~ self.mesh,
-        # ~ self._input_data,
-        # ~ self._parameters,
-        # ~ self._output,
-        # ~ options,
-        # ~ returns,
-        # ~ )
+    def optimize(
+        self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+    ):
+        _optimize(self, options, returns)
 
     def default_bound_constraints(self, states: bool = False):
         """
