@@ -339,11 +339,246 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - compute_cost
 !%      - nse
+!%      - kge_components
+!%      - kge
+!%      - se
+!%      - rmse
+!%      - logarithmic
+MODULE MWD_EFFICIENCY_METRIC_DIFF
+!% only: sp
+  USE MD_CONSTANT
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of nse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION NSE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
+    REAL(sp) :: sum_yy_d, sum_xy_d, num_d
+    INTEGER :: i, n
+    INTRINSIC SIZE
+!% Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_xx = 0._sp
+    sum_yy_d = 0.0_4
+    sum_xy_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy_d = sum_yy_d + 2*y(i)*y_d(i)
+        sum_xy_d = sum_xy_d + x(i)*y_d(i)
+      END IF
+    END DO
+    mean_x = sum_x/n
+!% NSE numerator / denominator
+    num_d = sum_yy_d - 2*sum_xy_d
+    den = sum_xx - n*mean_x*mean_x
+!% NSE criterion
+    res_d = num_d/den
+  END FUNCTION NSE_D
+
+!  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: y
+  SUBROUTINE NSE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
+    REAL(sp) :: sum_yy_b, sum_xy_b, num_b
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTEGER :: ad_to
+    INTEGER :: branch
+!% Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_xx = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    mean_x = sum_x/n
+!% NSE numerator / denominator
+    den = sum_xx - n*mean_x*mean_x
+!% NSE criterion
+    num_b = res_b/den
+    sum_yy_b = num_b
+    sum_xy_b = -(2*num_b)
+    y_b = 0.0_4
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) y_b(i) = y_b(i) + x(i)*sum_xy_b + 2*y(i)*&
+&         sum_yy_b
+    END DO
+  END SUBROUTINE NSE_B
+
+  FUNCTION NSE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
+    INTEGER :: i, n
+    INTRINSIC SIZE
+!% Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy = sum_xy + x(i)*y(i)
+      END IF
+    END DO
+    mean_x = sum_x/n
+!% NSE numerator / denominator
+    num = sum_xx - 2*sum_xy + sum_yy
+    den = sum_xx - n*mean_x*mean_x
+!% NSE criterion
+    res = num/den
+  END FUNCTION NSE
+
+  SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result2
+! Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_y = sum_y + y(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy = sum_xy + x(i)*y(i)
+      END IF
+    END DO
+    mean_x = sum_x/n
+    mean_y = sum_y/n
+    var_x = sum_xx/n - mean_x*mean_x
+    var_y = sum_yy/n - mean_y*mean_y
+    cov = sum_xy/n - mean_x*mean_y
+! KGE components (r, alpha, beta)
+    result1 = SQRT(var_x)
+    result2 = SQRT(var_y)
+    r = cov/result1/result2
+    result1 = SQRT(var_y)
+    result2 = SQRT(var_x)
+    a = result1/result2
+    b = mean_y/mean_x
+  END SUBROUTINE KGE_COMPONENTS
+
+  FUNCTION KGE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    REAL(sp) :: r, a, b
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    CALL KGE_COMPONENTS(x, y, r, a, b)
+! KGE criterion
+    arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
+    res = SQRT(arg1)
+  END FUNCTION KGE
+
+  FUNCTION SE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    res = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) res = res + (x(i)-y(i))*(x(i)-y(i))
+    END DO
+  END FUNCTION SE
+
+  FUNCTION RMSE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) n = n + 1
+    END DO
+    result1 = SE(x, y)
+    res = SQRT(result1/n)
+  END FUNCTION RMSE
+
+  FUNCTION LOGARITHMIC(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC LOG
+    REAL(sp) :: arg1
+    REAL(sp) :: arg2
+    res = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GT. 0._sp .AND. y(i) .GT. 0._sp) THEN
+        arg1 = y(i)/x(i)
+        arg2 = y(i)/x(i)
+        res = res + x(i)*LOG(arg1)*LOG(arg2)
+      END IF
+    END DO
+  END FUNCTION LOGARITHMIC
+
+END MODULE MWD_EFFICIENCY_METRIC_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - compute_cost
 MODULE MWD_COST_DIFF
 !% only: sp
   USE MD_CONSTANT
+!% any type
+  USE MWD_EFFICIENCY_METRIC_DIFF
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -383,7 +618,7 @@ CONTAINS
     qo = input_data%obs_response%q(1, :)
     qs_d = output_d%sim_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    CALL NSE_D(qo, qs, qs_d, jobs, jobs_d)
+    jobs_d = NSE_D(qo, qs, qs_d, jobs)
     output_d%cost = jobs_d
   END SUBROUTINE COMPUTE_COST_D
 
@@ -406,13 +641,17 @@ CONTAINS
     REAL(sp) :: jobs_b
     REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
     REAL(sp), DIMENSION(setup%ntime_step) :: qs_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    CALL NSE(qo, qs, jobs)
+    res = NSE(qo, qs)
     jobs_b = output_b%cost
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    CALL NSE_B(qo, qs, qs_b, jobs, jobs_b)
+    qs_b = 0.0_4
+    res_b = jobs_b
+    CALL NSE_B(qo, qs, qs_b, res_b)
     output_b%sim_response%q(1, :) = output_b%sim_response%q(1, :) + qs_b
   END SUBROUTINE COMPUTE_COST_B
 
@@ -431,121 +670,9 @@ CONTAINS
     jobs = 0._sp
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    CALL NSE(qo, qs, jobs)
+    jobs = NSE(qo, qs)
     output%cost = jobs
   END SUBROUTINE COMPUTE_COST
-
-!  Differentiation of nse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: res
-!   with respect to varying inputs: y
-  SUBROUTINE NSE_D(x, y, y_d, res, res_d)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
-    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
-    REAL(sp), INTENT(INOUT) :: res
-    REAL(sp), INTENT(INOUT) :: res_d
-    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
-    REAL(sp) :: sum_yy_d, sum_xy_d, num_d
-    INTEGER :: i, n
-    INTRINSIC SIZE
-!% Metric computation
-    n = 0
-    sum_x = 0._sp
-    sum_xx = 0._sp
-    sum_yy_d = 0.0_4
-    sum_xy_d = 0.0_4
-    DO i=1,SIZE(x)
-      IF (x(i) .GE. 0._sp) THEN
-        n = n + 1
-        sum_x = sum_x + x(i)
-        sum_xx = sum_xx + x(i)*x(i)
-        sum_yy_d = sum_yy_d + 2*y(i)*y_d(i)
-        sum_xy_d = sum_xy_d + x(i)*y_d(i)
-      END IF
-    END DO
-    mean_x = sum_x/n
-!% NSE numerator / denominator
-    num_d = sum_yy_d - 2*sum_xy_d
-    den = sum_xx - n*mean_x*mean_x
-!% NSE criterion
-    res_d = num_d/den
-  END SUBROUTINE NSE_D
-
-!  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: res
-!   with respect to varying inputs: y
-  SUBROUTINE NSE_B(x, y, y_b, res, res_b)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
-    REAL(sp), DIMENSION(:) :: y_b
-    REAL(sp), INTENT(INOUT) :: res
-    REAL(sp), INTENT(INOUT) :: res_b
-    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
-    REAL(sp) :: sum_yy_b, sum_xy_b, num_b
-    INTEGER :: i, n
-    INTRINSIC SIZE
-    INTEGER :: ad_to
-    INTEGER :: branch
-!% Metric computation
-    n = 0
-    sum_x = 0._sp
-    sum_xx = 0._sp
-    DO i=1,SIZE(x)
-      IF (x(i) .GE. 0._sp) THEN
-        n = n + 1
-        sum_x = sum_x + x(i)
-        sum_xx = sum_xx + x(i)*x(i)
-        CALL PUSHCONTROL1B(1)
-      ELSE
-        CALL PUSHCONTROL1B(0)
-      END IF
-    END DO
-    CALL PUSHINTEGER4(i - 1)
-    mean_x = sum_x/n
-!% NSE numerator / denominator
-    den = sum_xx - n*mean_x*mean_x
-!% NSE criterion
-    num_b = res_b/den
-    sum_yy_b = num_b
-    sum_xy_b = -(2*num_b)
-    y_b = 0.0_4
-    CALL POPINTEGER4(ad_to)
-    DO i=ad_to,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) y_b(i) = y_b(i) + x(i)*sum_xy_b + 2*y(i)*&
-&         sum_yy_b
-    END DO
-  END SUBROUTINE NSE_B
-
-  SUBROUTINE NSE(x, y, res)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
-    REAL(sp), INTENT(INOUT) :: res
-    REAL(sp) :: sum_x, sum_xx, sum_yy, sum_xy, mean_x, num, den
-    INTEGER :: i, n
-    INTRINSIC SIZE
-!% Metric computation
-    n = 0
-    sum_x = 0._sp
-    sum_xx = 0._sp
-    sum_yy = 0._sp
-    sum_xy = 0._sp
-    DO i=1,SIZE(x)
-      IF (x(i) .GE. 0._sp) THEN
-        n = n + 1
-        sum_x = sum_x + x(i)
-        sum_xx = sum_xx + x(i)*x(i)
-        sum_yy = sum_yy + y(i)*y(i)
-        sum_xy = sum_xy + x(i)*y(i)
-      END IF
-    END DO
-    mean_x = sum_x/n
-!% NSE numerator / denominator
-    num = sum_xx - 2*sum_xy + sum_yy
-    den = sum_xx - n*mean_x*mean_x
-!% NSE criterion
-    res = num/den
-  END SUBROUTINE NSE
 
 END MODULE MWD_COST_DIFF
 

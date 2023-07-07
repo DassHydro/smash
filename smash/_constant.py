@@ -127,6 +127,12 @@ ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 SIGNS = CSIGN + ESIGN
 
 
+### EFFICIENCY METRICS ###
+##########################
+
+EFFICIENCY_METRICS = ["nse", "kge", "se", "rmse", "logarithmic"]
+
+
 ### NET ###
 ###########
 

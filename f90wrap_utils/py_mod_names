@@ -17,6 +17,7 @@
 	"mwd_returns": "_mwd_returns",
 	"mwd_setup": "_mwd_setup",
 	"mwd_sparse_matrix": "_mwd_sparse_matrix",
+	"mwd_efficiency_metric": "_mwd_efficiency_metric",
 	"mw_forward": "_mw_forward",
 	"mw_optimize": "_mw_optimize",
 	"mwd_cost": "_mwd_cost",

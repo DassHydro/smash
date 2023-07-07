@@ -9,8 +9,8 @@ f77: \
  obj/lbfgsb.o \
 
 f90: \
- obj/md_constant.o \
  obj/mwd_common_options.o \
+ obj/md_constant.o \
  obj/mwd_control.o \
  obj/mwd_returns.o \
  obj/mwd_setup.o \
@@ -26,6 +26,7 @@ f90: \
  obj/mwd_sparse_matrix.o \
  obj/mwd_atmos_data.o \
  obj/mwd_input_data.o \
+ obj/mwd_efficiency_metric.o \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \
