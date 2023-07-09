@@ -269,9 +269,10 @@ def _events_grad(
             prev_peakq = list_events[-1]["peakQ"]
             prev_peakp = list_events[-1]["peakP"]
 
-            # % merge two events respecting to max duration:
-            if max(end, prev_end) <= prev_start + max_duration:
+            # % detect double events:
+            if prev_end >= start:
                 list_events[-1]["end"] = max(end, prev_end)
+                list_events[-1]["start"] = min(start, prev_start)
 
                 if q[i_peak] > q[prev_peakq]:
                     list_events[-1]["peakQ"] = i_peak

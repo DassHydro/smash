@@ -25,7 +25,7 @@ def hydrograph_segmentation(
     Compute segmentation information of flood events over all catchments of the Model.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.in_depth.event_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>` for more.
+        See the :ref:`User Guide <user_guide.in_depth.hydrograph_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>` for more.
 
     Parameters
     ----------
@@ -36,7 +36,7 @@ def hydrograph_segmentation(
         Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
     max_duration: float, default 240
-        The expected maximum duration of an event (in hour).
+        The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
 
     Returns
     -------
@@ -55,13 +55,13 @@ def hydrograph_segmentation(
     --------
     >>> import smash
     >>> from smash.factory import load_dataset
-    >>> from smash.signal_analysis import event_segmentation
+    >>> from smash.signal_analysis import hydrograph_segmentation
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
     Perform segmentation algorithm and display flood events infomation:
 
-    >>> res = event_segmentation(model)
+    >>> res = hydrograph_segmentation(model)
     >>> res
             code               start                   flood  season
     0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
