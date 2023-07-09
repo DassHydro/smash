@@ -8,15 +8,20 @@ smash 0.5.0 Release Notes
 
 The smash 0.5.0 release continues the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
+- Reading atmospheric data with YYYY/MM/DD access
+- New regularization function
+- Spatial disaggregation/aggregation of the input raster
+- Fix bugs in mesh creation, signature calculation and regularization l-curve
+
 ------------
 Contributors
 ------------
 
 This release was made possible thanks to the contributions of:
 
----------------
-Compatibilities
----------------
+- Maxime Jay-Allemand
+- Ngo Nghi Truyen Huynh
+- François Colleoni
 
 ------------
 Deprecations
@@ -42,7 +47,7 @@ New Features
 ------------
 
 New regularization function
-****************************
+***************************
 
 hard-smoothing : the smoothing regularization function is applied on parameters or states directly. This behavior differs from the ``smoothing`` mode where the regularization is applied on the difference between the background and the control (parameters or states)
 
