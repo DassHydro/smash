@@ -1441,7 +1441,7 @@ class Model(object):
             Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
         max_duration: float, default 240
-            The expected maximum duration of an event (in hour).
+            The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
 
         Returns
         -------
