@@ -1,11 +1,9 @@
-commit 305e8b6245551ea341c2a395bc657d5005013a6d
-Merge: f3c9235 9da4768
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Fri Jun 9 12:04:15 2023 +0200
+commit 99249b2069dd4c5ecebe2fbd3b7760004d782153
+Author: Jay-Allemand Maxime <maxime.jay.allemand@hydris-hydrologie.fr>
+Date:   Wed Jul 5 13:33:08 2023 +0200
 
-    Merge pull request #26 from DassHydro-dev/maint-bayes-optimize
-    
-    MAINT/FIX: remove density attribute of BayesResult in preparation for V1.0.0
+    Reformat files
+    remove io_test.hdf5
 
 TEST NAME                                     |STATUS
 ann_optimize_1.cost                           |NON MODIFIED

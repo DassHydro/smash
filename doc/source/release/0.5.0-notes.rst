@@ -32,9 +32,24 @@ The other two attributes, ``data`` and ``lcurve``, are still available and can b
 Improvements
 ------------
 
+Reading atmospheric data with YYYY/MM/DD access
+***********************************************
+
+This mode is triggered by enabling the flag prcp_yyyymmdd_access in the model setup file. The atmospheric data files are supposed to be stored in a directory YYYY/MM/dd. This option is useful if the model is ran time step by time step (many incremental runs). In that case searching the atmospheric data files can be relatively slow (1 second multiplicate by the number of runs). With this mode it is optimized and it is faster. 
+
 ------------
 New Features
 ------------
+
+New regularization function
+****************************
+
+hard-smoothing : the smoothing regularization function is applied on parameters or states directly. This behavior differs from the ``smoothing`` mode where the regularization is applied on the difference between the background and the control (parameters or states)
+
+New functions for reading and writting hdf5 files
+*************************************************
+ 
+The new functions are generic. You can save a dictionary to an hdf5, save an object (not only smash) to an hdf5, read an object as dictionary, read an hdf5 as a dict, read an hdf5 as a smash model object. Functions are provided by smash.io.hdf5_io.py. hdf5 can be opened in read-only to provide several simultaneous access. During the export or the reading, the structure of the dictionary or object is preserved. When saving an object or a dictionary in an hdf5, the location can be specified so that dictionary or object can be saved side by side at different places.
 
 Spatial disaggregation/aggregation of the input raster
 ******************************************************
@@ -54,6 +69,11 @@ The boundary condition checking previously used a tolerance of 1e-6, which cause
 To address this problem, the tolerance has been decreased to 1e-3.
 
 See issue `#23 <https://github.com/DassHydro-dev/smash/issues/23>`__.
+
+Bug fixes when generating the l-curve.
+**************************************
+
+Issues have been solved when selecting the optimal weight for the regularization term.
 
 Event signatures computation
 ****************************
