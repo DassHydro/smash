@@ -87,6 +87,11 @@ The bug related to the computation of flood event signatures has been resolved f
 
 See issue `#28 <https://github.com/DassHydro-dev/smash/issues/28>`__.
 
+Segmentation algorithm
+**********************
+
+If multiple events are detected, the duration of the merged event is no longer constrained by the max duration parameter. Instead, its duration may exceed this value.
+
 ``smash.generate_mesh`` segmentation fault
 ******************************************
 
