@@ -60,6 +60,14 @@ FEASIBLE_OPR_PARAMETERS = {
     "bkw": (0, np.inf),
 }
 
+FEASIBLE_OPR_STATES = {
+    "hi": (0, 1),
+    "hp": (0, 1),
+    "hft": (0, 1),
+    "hst": (0, 1),
+    "hlr": (0, np.inf),
+}
+
 BOUNDS_OPR_PARAMETERS = {
     "ci": (1e-6, 100),
     "cp": (1e-6, 1000),

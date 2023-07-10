@@ -55,11 +55,11 @@ def _default_bound_constraints(setup: SetupDT, states: bool):
     bounds = []
 
     for name in control_vector:
-        if name in BOUNDS_OPR_STATES:
-            l, u = BOUNDS_OPR_STATES[name]
+        if name in BOUNDS_OPR_PARAMETERS:
+            l, u = BOUNDS_OPR_PARAMETERS[name]
 
         else:
-            l, u = BOUNDS_OPR_PARAMETERS[name]
+            l, u = BOUNDS_OPR_STATES[name]
 
         bounds += [[l, u]]
 

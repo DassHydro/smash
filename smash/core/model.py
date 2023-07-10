@@ -9,10 +9,10 @@ from smash.core._build_model import (
     _build_parameters,
 )
 from smash.core._standardize import (
-    _standardize_parameters,
-    _standardize_states,
-    _standardize_parameter_name,
-    _standardize_state_name,
+    _standardize_opr_parameter_name,
+    _standardize_opr_state,
+    _standardize_opr_state_name,
+    _standardize_opr_parameter,
 )
 
 from smash.solver._mwd_setup import SetupDT
@@ -25,6 +25,11 @@ from smash.solver._mwd_returns import ReturnsDT
 
 from smash.simulation.run.run import _forward_run
 from smash.simulation.optimize.optimize import _optimize
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash._typing import numeric
 
 import numpy as np
 
@@ -161,36 +166,34 @@ class Model(object):
     ):
         _optimize(self, options, returns)
 
-    def set_parameters(self, parameters: dict):
-        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
-
-        parameters = _standardize_parameters(parameters, mesh_shape)
-
-        for key, value in parameters.items():
-            setattr(self._parameters.opr_parameters, key, value)
-
-    def set_initial_states(self, states: dict):
-        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
-
-        states = _standardize_states(states, mesh_shape)
-
-        for key, value in states.items():
-            setattr(self._parameters.opr_initial_states, key, value)
-
     def get_parameter(self, parameter: str):
-        parameter = _standardize_parameter_name(parameter)
+        parameter = _standardize_opr_parameter_name(parameter)
 
         return getattr(self._parameters.opr_parameters, parameter)
 
     def get_initial_state(self, state: str):
-        state = _standardize_state_name(state)
+        state = _standardize_opr_state_name(state)
 
         return getattr(self._parameters.opr_initial_states, state)
 
     def get_final_state(self, state: str):
-        state = _standardize_state_name(state)
+        state = _standardize_opr_state_name(state)
 
         return getattr(self._output.opr_final_states, state)
+
+    def set_parameter(self, parameter: str, value: numeric | np.ndarray):
+        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
+
+        parameter = _standardize_opr_parameter(parameter, value, mesh_shape)
+
+        setattr(self._parameters.opr_parameters, parameter, value)
+
+    def set_initial_state(self, state: str, value: numeric | np.ndarray):
+        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
+
+        state = _standardize_opr_state(state, value, mesh_shape)
+
+        setattr(self._parameters.opr_initial_states, state, value)
 
     def default_bound_constraints(self, states: bool = False):
         """

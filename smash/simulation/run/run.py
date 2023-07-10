@@ -4,7 +4,7 @@ from smash.solver._mw_forward import forward_run as fw_run
 
 from smash.simulation._standardize import _standardize_options, _standardize_returns
 
-from smash.simulation.run._standardize import _standardize_parameter
+from smash.simulation.run._standardize import _standardize_opr_parameter_state
 
 from typing import TYPE_CHECKING
 
@@ -31,7 +31,7 @@ def _forward_run(instance: Model, options: OptionsDT, returns: ReturnsDT):
 
     returns = _standardize_returns(returns)
 
-    _standardize_parameter(instance._parameters)
+    _standardize_opr_parameter_state(instance._parameters)
 
     fw_run(
         instance.setup,
