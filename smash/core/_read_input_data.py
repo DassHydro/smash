@@ -9,19 +9,19 @@ from smash._constant import RATIO_PET_HOURLY
 
 from smash.solver._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
 
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
-    from smash.solver._mwd_mesh import MeshDT
-    from smash.solver._mwd_input_data import Input_DataDT
-
 import warnings
 import glob
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from osgeo import gdal
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.solver._mwd_setup import SetupDT
+    from smash.solver._mwd_mesh import MeshDT
+    from smash.solver._mwd_input_data import Input_DataDT
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:

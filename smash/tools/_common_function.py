@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from smash._constant import (
+    OPR_PARAMETERS,
+    OPR_STATES,
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
-    BOUNDS_OPR_PARAMETERS,
-    BOUNDS_OPR_STATES,
+    DEFAULT_BOUNDS_OPR_PARAMETERS,
+    DEFAULT_BOUNDS_OPR_INITIAL_STATES,
 )
 
 from typing import TYPE_CHECKING
@@ -45,6 +47,7 @@ def _check_unknown_options(type_check: str, unknown_options: dict):
         raise KeyError(f"Unknown {type_check} options: '{msg}'")
 
 
+# TODO: Change state to something generic
 def _default_bound_constraints(setup: SetupDT, states: bool):
     if states:
         control_vector = STRUCTURE_OPR_STATES[setup.structure]
@@ -55,11 +58,11 @@ def _default_bound_constraints(setup: SetupDT, states: bool):
     bounds = []
 
     for name in control_vector:
-        if name in BOUNDS_OPR_PARAMETERS:
-            l, u = BOUNDS_OPR_PARAMETERS[name]
+        if name in OPR_PARAMETERS:
+            l, u = DEFAULT_BOUNDS_OPR_PARAMETERS[name]
 
-        else:
-            l, u = BOUNDS_OPR_STATES[name]
+        elif name in OPR_STATES:
+            l, u = DEFAULT_BOUNDS_OPR_INITIAL_STATES[name]
 
         bounds += [[l, u]]
 

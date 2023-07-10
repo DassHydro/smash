@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.solver import _solver
+from smash.solver import _flib_solver
 
 import functools
 import numpy as np
@@ -32,7 +32,7 @@ def char_array_setter_handler(func):
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 
-        getter = eval(f"_solver.f90wrap_{class_name}__array__{func_name}")
+        getter = eval(f"_flib_solver.f90wrap_{class_name}__array__{func_name}")
 
         array_ndim, arra_type, array_shape, array_handle = getter(self._handle)
 
@@ -89,7 +89,7 @@ def setter_index_handler(func):
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 
-        getter = eval(f"_solver.f90wrap_{class_name}__array__{func_name}")
+        getter = eval(f"_flib_solver.f90wrap_{class_name}__array__{func_name}")
 
         array_ndim, arra_type, array_shape, array_handle = getter(self._handle)
 

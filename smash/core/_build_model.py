@@ -1,6 +1,10 @@
 from __future__ import annotations
 
-from smash._constant import STRUCTURE_COMPUTE_CI, OPR_PARAMETERS, OPR_STATES
+from smash._constant import (
+    STRUCTURE_COMPUTE_CI,
+    DEFAULT_OPR_PARAMETERS,
+    DEFAULT_OPR_INITIAL_STATES,
+)
 
 from smash.core._read_input_data import (
     _read_qobs,
@@ -15,6 +19,8 @@ from smash.solver._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_s
 from smash.solver._mw_atmos_statistic import compute_mean_atmos
 from smash.solver._mw_interception_capacity import compute_interception_capacity
 
+import pandas as pd
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -22,8 +28,6 @@ if TYPE_CHECKING:
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
     from smash.solver._mwd_parameters import ParametersDT
-
-import pandas as pd
 
 
 def _build_setup(setup: SetupDT):
@@ -65,18 +69,18 @@ def _build_parameters(
     input_data: Input_DataDT,
     parameters: ParametersDT,
 ):
-    # % Build states
-    for state_name, state_value in OPR_STATES.items():
-        setattr(parameters.opr_initial_states, state_name, state_value)
-
     # % Build parameters
-    for param_name, param_value in OPR_PARAMETERS.items():
+    for param_name, param_value in DEFAULT_OPR_PARAMETERS.items():
         if param_name == "llr":
             setattr(
                 parameters.opr_parameters, param_name, setup.dt * (param_value / 3600)
             )
         else:
             setattr(parameters.opr_parameters, param_name, param_value)
+
+    # % Build initial states
+    for state_name, state_value in DEFAULT_OPR_INITIAL_STATES.items():
+        setattr(parameters.opr_initial_states, state_name, state_value)
 
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date

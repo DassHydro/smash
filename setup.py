@@ -34,9 +34,7 @@ setup(
         "smash.tests.dataset",
         "smash.tools",
     ],
-    package_data={
-        "smash": ["smash/solver/_solver*.so", "smash/factory/mesh/_mesh*.so"]
-    },
+    package_data={"smash": ["smash/solver/*.so", "smash/factory/mesh/*.so"]},
     include_package_data=True,
     install_requires=[
         "f90wrap",

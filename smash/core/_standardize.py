@@ -3,22 +3,25 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_NAME,
     INPUT_DATA_FORMAT,
+    STRUCTURE_OPR_PARAMETERS,
+    STRUCTURE_OPR_STATES,
     FEASIBLE_OPR_PARAMETERS,
-    FEASIBLE_OPR_STATES,
+    FEASIBLE_OPR_INITIAL_STATES,
 )
-
-from smash._typing import numeric
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
 
 import pandas as pd
 import numpy as np
 import os
 import warnings
 import errno
+
+from typing import TYPE_CHECKING
+from smash._typing import Numeric
+
+if TYPE_CHECKING:
+    from smash.core.model import Model
+    from smash.solver._mwd_setup import SetupDT
+    from smash._typing import AnyTuple
 
 
 def _standardize_setup(setup: SetupDT):
@@ -128,83 +131,121 @@ def _standardize_setup(setup: SetupDT):
         )
 
 
-def _standardize_opr_parameter_name(parameter: str):
-    if isinstance(parameter, str):
-        parameter = parameter.lower()
+def _standardize_opr_parameters_key(model: Model, key: str) -> str:
+    if not isinstance(key, str):
+        raise TypeError(f"key argument must be a str")
 
-        if parameter in FEASIBLE_OPR_PARAMETERS:
-            return parameter
+    key = key.lower()
 
-        else:
-            raise ValueError(
-                f"Unknown model parameter {parameter}. Choice: {list(FEASIBLE_OPR_PARAMETERS)}"
-            )
-
-    else:
-        raise TypeError(f"parameter must be a str")
-
-
-def _standardize_opr_state_name(state: str):
-    if isinstance(state, str):
-        state = state.lower()
-
-        if state in FEASIBLE_OPR_STATES:
-            return state
-
-        else:
-            raise ValueError(
-                f"Unknown model state {state}. Choice: {list(FEASIBLE_OPR_STATES)}"
-            )
-
-    else:
-        raise TypeError(f"state must be a str")
-
-
-def _standardize_opr_parameter(
-    parameter: str, value: numeric | np.ndarray, mesh_shape: tuple
-):
-    parameter = _standardize_opr_parameter_name(parameter)
-
-    if isinstance(value, (numeric, np.ndarray)):
-        if isinstance(value, np.ndarray) and value.shape != mesh_shape:
-            raise ValueError(
-                f"Model parameter {parameter} must be of the same shape as the mesh ({value.shape} != {mesh_shape})"
-            )
-
-        low, upp = FEASIBLE_OPR_PARAMETERS[parameter]
-
-        if np.logical_or(value <= low, value >= upp).any():
-            raise ValueError(
-                f"Invalid value for model parameter {parameter}. Feasible domain: ({low}, {upp})"
-            )
-
-        return parameter
-
-    else:
-        raise TypeError(
-            f"The value of model parameter {parameter} must be of numeric type or np.ndarray"
+    if key not in STRUCTURE_OPR_PARAMETERS[model.setup.structure]:
+        raise ValueError(
+            f"Unknown model opr_parameter '{key}'. Choices: {STRUCTURE_OPR_PARAMETERS[model.setup.structure]}"
         )
 
+    return key
 
-def _standardize_opr_state(state: str, value: numeric | np.ndarray, mesh_shape: tuple):
-    state = _standardize_opr_state_name(state)
 
-    if isinstance(value, (numeric, np.ndarray)):
-        if isinstance(value, np.ndarray) and value.shape != mesh_shape:
-            raise ValueError(
-                f"Model state {state} must be of the same shape as the mesh ({value.shape} != {mesh_shape})"
-            )
+def _standardize_opr_states_key(model: Model, key: str) -> str:
+    if not isinstance(key, str):
+        raise TypeError(f"key argument must be a str")
 
-        low, upp = FEASIBLE_OPR_STATES[state]
+    key = key.lower()
 
-        if np.logical_or(value <= low, value >= upp).any():
-            raise ValueError(
-                f"Invalid value for model state {state}. Feasible domain: ({low}, {upp})"
-            )
-
-        return state
-
-    else:
-        raise TypeError(
-            f"The value of model state {state} must be of numeric type or np.ndarray"
+    if key not in STRUCTURE_OPR_STATES[model.setup.structure]:
+        raise ValueError(
+            f"Unknown model opr_states '{key}'. Choices: {STRUCTURE_OPR_STATES[model.setup.structure]}"
         )
+
+    return key
+
+
+def _standardize_opr_initial_states_key(model: Model, key: str) -> str:
+    return _standardize_opr_states_key(model, key)
+
+
+def _standardize_opr_final_states_key(model: Model, key: str) -> str:
+    return _standardize_opr_states_key(model, key)
+
+
+def _standardize_opr_parameters_value(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> Numeric | np.ndarray:
+    if not isinstance(value, (Numeric, np.ndarray)):
+        raise TypeError(
+            f"value argument must be of Numeric type (int, float) or np.ndarray"
+        )
+
+    l, u = FEASIBLE_OPR_PARAMETERS[key]
+
+    if np.logical_or(value <= l, value >= u).any():
+        raise ValueError(
+            f"Invalid value for model opr_parameter '{key}'. Feasible domain: ({l}, {u})"
+        )
+
+    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:
+        raise ValueError(
+            f"Invalid shape for model opr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+        )
+
+    return value
+
+
+def _standardize_opr_states_value(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> Numeric | np.ndarray:
+    if not isinstance(value, (Numeric, np.ndarray)):
+        raise TypeError(
+            f"value argument must be of Numeric type (int, float) or np.ndarray"
+        )
+
+    l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+
+    if np.logical_or(value <= l, value >= u).any():
+        raise ValueError(
+            f"Invalid value for model opr_states '{key}'. Feasible domain: ({l}, {u})"
+        )
+
+    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:
+        raise ValueError(
+            f"Invalid shape for model opr_states '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+        )
+
+    return value
+
+
+def _standardize_get_opr_parameters_args(model: Model, key: str) -> AnyTuple:
+    key = _standardize_opr_parameters_key(model, key)
+
+    return (key,)
+
+
+def _standardize_get_opr_initial_states_args(model: Model, key: str) -> AnyTuple:
+    key = _standardize_opr_generic_states_key(model, key)
+
+    return (key,)
+
+
+def _standardize_get_opr_final_states_args(model: Model, key: str) -> AnyTuple:
+    key = _standardize_opr_final_states_key(model, key)
+
+    return (key,)
+
+
+def _standardize_set_opr_parameters_args(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> AnyTuple:
+    key = _standardize_opr_parameters_key(model, key)
+
+    value = _standardize_opr_parameters_value(model, key, value)
+
+    return (key, value)
+
+
+def _standardize_set_opr_initial_states_args(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> AnyTuple:
+    key = _standardize_opr_states_key(model, key)
+
+    value = _standardize_opr_states_value(model, key, value)
+
+    return (key, value)

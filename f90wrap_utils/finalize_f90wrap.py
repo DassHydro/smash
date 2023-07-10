@@ -31,7 +31,7 @@ def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
 
 def sed_internal_import(pyf: pathlib.PosixPath):
     """
-    Modify internal relative import of the _solver library (.so file)
+    Modify internal relative import of the _flib_solver library (.so file)
     to match the package structure. Done by using the unix command sed
     in place
 
@@ -41,8 +41,8 @@ def sed_internal_import(pyf: pathlib.PosixPath):
         The Python file to sed
     """
 
-    os.system(f'sed -i "0,/import _solver/s//from smash.solver import _solver/" {pyf}')
-    os.system(f'sed -i "s/from solver/from smash.solver/g" {pyf}')
+    os.system(f'sed -i "0,/import _flib_solver/s//from smash.solver import _flib_solver/" {pyf}')
+    os.system(f'sed -i "s/from flib_solver/from smash.solver/g" {pyf}')
 
 
 def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
@@ -229,7 +229,7 @@ def sed_derived_type_procedure(pyf: pathlib.PosixPath):
     content = open(pyf, "r").read()
     procedure = {}
     class_matches = re.findall(
-        '@f90wrap.runtime.register_class\("solver.(\w+)', content
+        '@f90wrap.runtime.register_class\("flib_solver.(\w+)', content
     )
 
     for cm in class_matches:

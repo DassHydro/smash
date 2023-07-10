@@ -22,57 +22,57 @@
 
 module mwd_opr_states
 
-   use md_constant !% only: sp
-   use mwd_mesh !% only: MeshDT
+    use md_constant !% only: sp
+    use mwd_mesh !% only: MeshDT
 
-   implicit none
+    implicit none
 
-   type Opr_StatesDT
+    type Opr_StatesDT
 
-      real(sp), dimension(:, :), allocatable :: hi
-      real(sp), dimension(:, :), allocatable :: hp
-      real(sp), dimension(:, :), allocatable :: hft
-      real(sp), dimension(:, :), allocatable :: hst
-      real(sp), dimension(:, :), allocatable :: hlr
+        real(sp), dimension(:, :), allocatable :: hi
+        real(sp), dimension(:, :), allocatable :: hp
+        real(sp), dimension(:, :), allocatable :: hft
+        real(sp), dimension(:, :), allocatable :: hst
+        real(sp), dimension(:, :), allocatable :: hlr
 
-   end type Opr_StatesDT
+    end type Opr_StatesDT
 
 contains
 
-   subroutine Opr_StatesDT_initialise(this, mesh)
-      !% Default states value will be handled in Python
+    subroutine Opr_StatesDT_initialise(this, mesh)
+        !% Default states value will be handled in Python
 
-      implicit none
+        implicit none
 
-      type(Opr_StatesDT), intent(inout) :: this
-      type(MeshDT), intent(in) :: mesh
+        type(Opr_StatesDT), intent(inout) :: this
+        type(MeshDT), intent(in) :: mesh
 
-      allocate (this%hi(mesh%nrow, mesh%ncol))
-      this%hi = 0._sp
+        allocate (this%hi(mesh%nrow, mesh%ncol))
+        this%hi = 0._sp
 
-      allocate (this%hp(mesh%nrow, mesh%ncol))
-      this%hp = 0._sp
+        allocate (this%hp(mesh%nrow, mesh%ncol))
+        this%hp = 0._sp
 
-      allocate (this%hft(mesh%nrow, mesh%ncol))
-      this%hft = 0._sp
+        allocate (this%hft(mesh%nrow, mesh%ncol))
+        this%hft = 0._sp
 
-      allocate (this%hst(mesh%nrow, mesh%ncol))
-      this%hst = 0._sp
+        allocate (this%hst(mesh%nrow, mesh%ncol))
+        this%hst = 0._sp
 
-      allocate (this%hlr(mesh%nrow, mesh%ncol))
-      this%hlr = 0._sp
+        allocate (this%hlr(mesh%nrow, mesh%ncol))
+        this%hlr = 0._sp
 
-   end subroutine Opr_StatesDT_initialise
+    end subroutine Opr_StatesDT_initialise
 
-   subroutine Opr_StatesDT_copy(this, this_copy)
+    subroutine Opr_StatesDT_copy(this, this_copy)
 
-      implicit none
+        implicit none
 
-      type(Opr_StatesDT), intent(in) :: this
-      type(Opr_StatesDT), intent(out) :: this_copy
+        type(Opr_StatesDT), intent(in) :: this
+        type(Opr_StatesDT), intent(out) :: this_copy
 
-      this_copy = this
+        this_copy = this
 
-   end subroutine Opr_StatesDT_copy
+    end subroutine Opr_StatesDT_copy
 
 end module mwd_opr_states

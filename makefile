@@ -36,8 +36,8 @@ SOLVER_F90WRAP_FILES := f90wrap*.$(F90_EXT)
 MESH_WRAP_FILES := $(MESH_DIR)/mw_*.$(F90_EXT)
 
 #% Shared lib name
-SOLVER_SHARED_LIB := solver
-MESH_SHARED_LIB := mesh
+SOLVER_SHARED_LIB := flib_solver
+MESH_SHARED_LIB := flib_mesh
 
 #% Classic `make` call
 #% 'c' 'f77' and 'f90' targets are in makefile.dep

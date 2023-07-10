@@ -6,6 +6,12 @@ import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterator, Dict
+    from smash._typing import Numeric
+
 
 __all__ = ["generate_samples", "Samples"]
 
@@ -40,7 +46,7 @@ class Samples(dict):
 
     Examples
     --------
-    >>> problem = {"num_vars": 2, "names": ["cp", "lr"], "bounds": [[1,200], [1,500]]}
+    >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
     >>> sr = smash.generate_samples(problem, n=5, random_state=1)
 
     Convert the result to a numpy.ndarray:
@@ -55,7 +61,7 @@ class Samples(dict):
     Convert the result to a pandas.DataFrame:
 
     >>> sr.to_dataframe()
-               cp          lr
+               cp         llr
     0   83.987379   47.076959
     1  144.344574   93.943845
     2    1.022761  173.434803
@@ -122,7 +128,7 @@ class Samples(dict):
     def __dir__(self):
         return list(self.keys())
 
-    def slice(self, end: int, start: int = 0):
+    def slice(self, end: int, start: int = 0) -> Samples:
         """
         Slice the `Samples` object.
 
@@ -171,7 +177,7 @@ class Samples(dict):
 
         return Samples(slc_dict)
 
-    def iterslice(self, by: int = 1):
+    def iterslice(self, by: int = 1) -> Iterator[Samples]:
         """
         Iterate on the `Samples` object by slices.
 
@@ -206,7 +212,7 @@ class Samples(dict):
             ind_start = ind_end
             ind_end = np.minimum(ind_end + by, self.n_sample)
 
-    def to_numpy(self, axis=0):
+    def to_numpy(self, axis: int = 0) -> np.ndarray:
         """
         Convert the `Samples` object to a numpy.ndarray.
 
@@ -226,7 +232,7 @@ class Samples(dict):
 
         return np.stack([self[k] for k in self._problem["names"]], axis=axis)
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Convert the `Samples` object to a pandas.DataFrame.
 
@@ -239,14 +245,56 @@ class Samples(dict):
         return pd.DataFrame({k: self[k] for k in self._problem["names"]})
 
 
+def _generate_samples(
+    problem: Dict,
+    generator: str,
+    n: int,
+    random_state: int | None,
+    mean: Dict | None,
+    coef_std: Numeric | None,
+) -> Samples:
+    ret_dict = {key: [] for key in problem["names"]}
+
+    ret_dict["generator"] = generator
+
+    ret_dict["n_sample"] = n
+
+    ret_dict["_problem"] = problem.copy()
+
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    for i, p in enumerate(problem["names"]):
+        l = problem["bounds"][i][0]
+        u = problem["bounds"][i][1]
+
+        if generator == "uniform":
+            ret_dict[p] = np.random.uniform(l, u, n)
+
+            ret_dict["_" + p] = np.ones(n) / (u - l)
+
+        elif generator in ["normal", "gaussian"]:
+            sd = (upp - low) / coef_std
+
+            trunc_normal = truncnorm(
+                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
+            )
+
+            ret_dict[p] = trunc_normal.rvs(size=n)
+
+            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
+
+    return Samples(ret_dict)
+
+
 def generate_samples(
-    problem: dict,
+    problem: Dict | None,
     generator: str = "uniform",
-    n: int = 1000,
-    random_state: int | None = None,
-    mean: np.ndarray | None = None,
-    coef_std: float | None = None,
-):
+    n: Numeric = 1000,
+    random_state: Numeric | None = None,
+    mean: Dict | None = None,
+    coef_std: Numeric | None = None,
+) -> Samples:
     """
     Generate a multiple set of spatially uniform Model parameters/states.
 
@@ -316,7 +364,7 @@ def generate_samples(
 
     >>> problem = {
     ...             'num_vars': 4,
-    ...             'names': ['cp', 'cft', 'exc', 'lr'],
+    ...             'names': ['cp', 'cft', 'kexc', 'llr'],
     ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
     ... }
 
@@ -325,48 +373,14 @@ def generate_samples(
     >>> from smash.factory import generate_samples
     >>> sr = generate_samples(problem, n=3, random_state=99)
     >>> sr.to_dataframe()  # convert Samples object to pandas.DataFrame
-                cp         cft        exc          lr
+                cp         cft       kexc         llr
     0  1344.884839   32.414941 -12.559438    7.818907
     1   976.668720  808.241913 -18.832607  770.023235
     2  1651.164853  566.051802   4.765685  747.020334
 
     """
+    args = _standardize_generate_samples_args(
+        problem, generator, n, random_state, mean, coef_std
+    )
 
-    generator, mean = _standardize_generate_samples_args(problem, generator, mean)
-
-    ret_dict = {key: [] for key in problem["names"]}
-
-    ret_dict["generator"] = generator
-
-    ret_dict["n_sample"] = n
-
-    ret_dict["_problem"] = problem.copy()
-
-    if random_state is not None:
-        np.random.seed(random_state)
-
-    for i, p in enumerate(problem["names"]):
-        low = problem["bounds"][i][0]
-        upp = problem["bounds"][i][1]
-
-        if generator == "uniform":
-            ret_dict[p] = np.random.uniform(low, upp, n)
-
-            ret_dict["_" + p] = np.ones(n) / (upp - low)
-
-        elif generator in ["normal", "gaussian"]:
-            if coef_std is None:
-                sd = (upp - low) / 3
-
-            else:
-                sd = (upp - low) / coef_std
-
-            trunc_normal = truncnorm(
-                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
-            )
-
-            ret_dict[p] = trunc_normal.rvs(size=n)
-
-            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
-
-    return Samples(ret_dict)
+    return _generate_samples(*args)

@@ -3,89 +3,124 @@ from __future__ import annotations
 import numpy as np
 
 
-### STRUCTURE ###
-#################
+### MODEL ###
+#############
 
-STRUCTURE_OPR_PARAMETERS = {
-    "gr-a-lr": ["cp", "cft", "kexc", "llr"],
-    "gr-b-lr": ["ci", "cp", "cft", "kexc", "llr"],
-    "gr-c-lr": ["ci", "cp", "cft", "cst", "kexc", "llr"],
-    "gr-d-lr": ["cp", "cft", "lr"],
-    "gr-a-kw": ["cp", "cft", "kexc", "akw", "bkw"],
-}
+STRUCTURE_NAME = ["gr-a-lr", "gr-b-lr", "gr-c-lr", "gr-d-lr", "gr-a-kw"]
 
-STRUCTURE_OPR_STATES = {
-    "gr-a-lr": ["hp", "hft", "hlr"],
-    "gr-b-lr": ["hi", "hp", "hft", "hlr"],
-    "gr-c-lr": ["hi", "hp", "hft", "hst", "hlr"],
-    "gr-d-lr": ["hp", "hft", "hlr"],
-    "gr-a-kw": ["hp", "hft"],
-}
+OPR_PARAMETERS = ["ci", "cp", "cft", "cst", "kexc", "llr", "akw", "bkw"]
 
-STRUCTURE_COMPUTE_CI = {
-    "gr-a-lr": False,
-    "gr-b-lr": True,
-    "gr-c-lr": True,
-    "gr-d-lr": False,
-    "gr-a-kw": False,
-}
+OPR_STATES = ["hi", "hp", "hft", "hst", "hlr"]
 
-STRUCTURE_NAME = list(STRUCTURE_OPR_PARAMETERS.keys())
+# % Following STRUCTURE_NAME order
+STRUCTURE_OPR_PARAMETERS = dict(
+    zip(
+        STRUCTURE_NAME,
+        [
+            ["cp", "cft", "kexc", "llr"],
+            ["ci", "cp", "cft", "kexc", "llr"],
+            ["ci", "cp", "cft", "cst", "kexc", "llr"],
+            ["cp", "cft", "llr"],
+            ["cp", "cft", "kexc", "akw", "bkw"],
+        ],
+    )
+)
 
+# % Following STRUCTURE_NAME order
+STRUCTURE_OPR_STATES = dict(
+    zip(
+        STRUCTURE_NAME,
+        [
+            ["hp", "hft", "hlr"],
+            ["hi", "hp", "hft", "hlr"],
+            ["hi", "hp", "hft", "hst", "hlr"],
+            ["hp", "hft", "hlr"],
+            ["hp", "hft"],
+        ],
+    )
+)
 
-### DEFAULT PARAMETERS/STATES ###
+# % Following STRUCTURE_NAME order
+STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [False, True, True, False, False]))
+
+### FEASIBLE PARAMETERS ###
+###########################
+
+# % Following OPR_PARAMETERS order
+FEASIBLE_OPR_PARAMETERS = dict(
+    zip(
+        OPR_PARAMETERS,
+        [
+            (0, np.inf),
+            (0, np.inf),
+            (0, np.inf),
+            (0, np.inf),
+            (-np.inf, np.inf),
+            (0, np.inf),
+            (0, np.inf),
+            (0, np.inf),
+        ],
+    )
+)
+
+# % Following OPR_STATES order
+FEASIBLE_OPR_INITIAL_STATES = dict(
+    zip(
+        OPR_STATES,
+        [
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, 1),
+            (0, np.inf),
+        ],
+    )
+)
+
+### DEFAULT PARAMETERS ###
+##########################
+
+# % Following OPR_PARAMETERS order
+# % if ci is used (depending on model structure), it will be recomputed automatically by a fortran routine;
+# % while llr is conversed by a factor depending on the timestep.
+DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 500, 0, 5, 5, 0.6]))
+
+# % Following OPR_STATES order
+DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-2, 1e-6]))
+
+### DEFAULT BOUNDS PARAMETERS ###
 #################################
 
-OPR_PARAMETERS = {
-    "ci": 1e-6,
-    "cp": 200,
-    "cft": 500,
-    "cst": 500,
-    "kexc": 0,
-    "llr": 5,
-    "akw": 5,
-    "bkw": 0.6,
-}  # if ci is used (depending on model structure), it will be recomputed automatically by a fortran routine; while llr is conversed by a factor depending on the timestep.
+# % Following OPR_PARAMETERS order
+DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
+    zip(
+        OPR_PARAMETERS,
+        [
+            (1e-6, 1e2),
+            (1e-6, 1e3),
+            (1e-6, 1e3),
+            (1e-6, 1e4),
+            (-50, 50),
+            (1e-6, 1e3),
+            (1e-3, 50),
+            (1e-3, 1),
+        ],
+    )
+)
 
-OPR_STATES = {"hi": 1e-2, "hp": 1e-2, "hft": 1e-2, "hst": 1e-2, "hlr": 1e-6}
-
-FEASIBLE_OPR_PARAMETERS = {
-    "ci": (0, np.inf),
-    "cp": (0, np.inf),
-    "cft": (0, np.inf),
-    "cst": (0, np.inf),
-    "kexc": (-np.inf, np.inf),
-    "llr": (0, np.inf),
-    "akw": (0, np.inf),
-    "bkw": (0, np.inf),
-}
-
-FEASIBLE_OPR_STATES = {
-    "hi": (0, 1),
-    "hp": (0, 1),
-    "hft": (0, 1),
-    "hst": (0, 1),
-    "hlr": (0, np.inf),
-}
-
-BOUNDS_OPR_PARAMETERS = {
-    "ci": (1e-6, 100),
-    "cp": (1e-6, 1000),
-    "cft": (1e-6, 1000),
-    "cst": (1e-6, 10_000),
-    "kexc": (-50, 50),
-    "llr": (1e-6, 1000),
-    "akw": (1e-3, 50),
-    "bkw": (1e-3, 1),
-}
-
-BOUNDS_OPR_STATES = {
-    "hi": (1e-6, 0.999999),
-    "hp": (1e-6, 0.999999),
-    "hft": (1e-6, 0.999999),
-    "hst": (1e-6, 0.999999),
-    "hlr": (1e-6, 1000),
-}
+# % Following OPR_STATES order
+DEFAULT_BOUNDS_OPR_INITIAL_STATES = dict(
+    zip(
+        OPR_STATES,
+        [
+            (1e-6, 0.999999),
+            (1e-6, 0.999999),
+            (1e-6, 0.999999),
+            (1e-6, 0.999999),
+            (1e-6, 1e3),
+        ],
+    )
+)
 
 TOL_BOUNDS = 1e-9
 
@@ -177,6 +212,6 @@ MAX_DURATION = 240
 ### GENERATE SAMPLES ###
 ########################
 
-SAMPLE_GENERATORS = ["uniform", "normal", "gaussian"]
+SAMPLES_GENERATORS = ["uniform", "normal", "gaussian"]
 
 PROBLEM_KEYS = ["num_vars", "names", "bounds"]

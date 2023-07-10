@@ -9,10 +9,10 @@ from smash.core._build_model import (
     _build_parameters,
 )
 from smash.core._standardize import (
-    _standardize_opr_parameter_name,
-    _standardize_opr_state,
-    _standardize_opr_state_name,
-    _standardize_opr_parameter,
+    _standardize_get_opr_parameters_args,
+    _standardize_get_opr_initial_states_args,
+    _standardize_set_opr_parameters_args,
+    _standardize_set_opr_initial_states_args,
 )
 
 from smash.solver._mwd_setup import SetupDT
@@ -26,12 +26,12 @@ from smash.solver._mwd_returns import ReturnsDT
 from smash.simulation.run.run import _forward_run
 from smash.simulation.optimize.optimize import _optimize
 
+import numpy as np
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import numeric
-
-import numpy as np
+    from smash._typing import Numeric
 
 __all__ = ["Model"]
 
@@ -49,7 +49,7 @@ class Model(object):
                 _build_setup(self.setup)
 
             else:
-                raise TypeError(f"setup argument must be dict")
+                raise TypeError(f"setup argument must be Dict")
 
             if isinstance(mesh, dict):
                 self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
@@ -59,7 +59,7 @@ class Model(object):
                 _build_mesh(self.setup, self.mesh)
 
             else:
-                raise TypeError(f"mesh argument must be dict")
+                raise TypeError(f"mesh argument must be Dict")
 
             self._input_data = Input_DataDT(self.setup, self.mesh)
 
@@ -156,6 +156,31 @@ class Model(object):
     def copy(self):
         return self.__copy__()
 
+    def get_opr_parameters(self, key: str):
+        args = _standardize_get_opr_parameters_args(self, key)
+
+        return getattr(self._parameters.opr_parameters, *args)
+
+    def set_opr_parameter(self, key: str, value: Numeric | np.ndarray):
+        args = _standardize_set_opr_parameters_args(self, key, value)
+
+        setattr(self._parameters.opr_parameters, *args)
+
+    def get_opr_initial_states(self, key: str):
+        args = _standardize_get_opr_initial_states_args(self, key)
+
+        return getattr(self._parameters.opr_initial_states, *args)
+
+    def set_opr_initial_states(self, key: str, value: Numeric | np.ndarray):
+        args = _standardize_set_opr_initial_states_args(self, key, value)
+
+        setattr(self._parameters.opr_parameters, *args)
+
+    def get_opr_final_states(self, key: str):
+        args = _standardize_get_opr_final_states_args(self, key)
+
+        return getattr(self._output.opr_final_states, *args)
+
     def forward_run(
         self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
     ):
@@ -166,35 +191,7 @@ class Model(object):
     ):
         _optimize(self, options, returns)
 
-    def get_opr_parameter(self, parameter: str):
-        parameter = _standardize_opr_parameter_name(parameter)
-
-        return getattr(self._parameters.opr_parameters, parameter)
-
-    def get_opr_initial_state(self, state: str):
-        state = _standardize_opr_state_name(state)
-
-        return getattr(self._parameters.opr_initial_states, state)
-
-    def get_opr_final_state(self, state: str):
-        state = _standardize_opr_state_name(state)
-
-        return getattr(self._output.opr_final_states, state)
-
-    def set_opr_parameter(self, parameter: str, value: numeric | np.ndarray):
-        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
-
-        parameter = _standardize_opr_parameter(parameter, value, mesh_shape)
-
-        setattr(self._parameters.opr_parameters, parameter, value)
-
-    def set_opr_initial_state(self, state: str, value: numeric | np.ndarray):
-        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
-
-        state = _standardize_opr_state(state, value, mesh_shape)
-
-        setattr(self._parameters.opr_initial_states, state, value)
-
+    # TODO: A voir si on garde ca comme ca
     def default_bound_constraints(self, states: bool = False):
         """
         Get the boundary default constraints of the Model parameters/states.

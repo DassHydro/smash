@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash._constant import FEASIBLE_OPR_PARAMETERS, FEASIBLE_OPR_STATES
+from smash._constant import FEASIBLE_OPR_PARAMETERS, FEASIBLE_OPR_INITIAL_STATES
 
 from typing import TYPE_CHECKING
 
