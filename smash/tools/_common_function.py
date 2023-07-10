@@ -5,10 +5,8 @@ from smash._constant import (
     STRUCTURE_OPR_STATES,
     OPR_PARAMETERS,
     OPR_STATES,
-    LOW_OPTIM_OPR_PARAMETERS,
-    UPP_OPTIM_OPR_PARAMETERS,
-    LOW_OPR_INITIAL_STATES,
-    UPP_OPR_INITIAL_STATES,
+    BOUNDS_OPR_PARAMETERS,
+    BOUNDS_OPR_INITIAL_STATES,
 )
 
 from typing import TYPE_CHECKING
@@ -60,16 +58,10 @@ def _default_bound_constraints(setup: SetupDT, states: bool):
 
     for name in control_vector:
         if name in OPR_STATES:
-            ind = list(OPR_STATES).index(name)
-
-            l = LOW_OPR_INITIAL_STATES[ind]
-            u = UPP_OPR_INITIAL_STATES[ind]
+            l, u = BOUNDS_OPR_INITIAL_STATES[name]
 
         else:
-            ind = list(OPR_PARAMETERS).index(name)
-
-            l = LOW_OPTIM_OPR_PARAMETERS[ind]
-            u = UPP_OPTIM_OPR_PARAMETERS[ind]
+            l, u = BOUNDS_OPR_PARAMETERS[name]
 
         bounds += [[l, u]]
 

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.tools._common_function import _map_dict_to_object
+from smash.tools._common_function import _map_dict_to_object, _default_bound_constraints
 
 from smash.core._build_model import (
     _build_setup,
@@ -8,8 +8,6 @@ from smash.core._build_model import (
     _build_input_data,
     _build_paramstates,
 )
-
-from smash.tools._common_function import _default_bound_constraints
 
 from smash.solver._mwd_setup import SetupDT
 from smash.solver._mwd_mesh import MeshDT

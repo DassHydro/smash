@@ -1,6 +1,9 @@
 from __future__ import annotations
 
-from smash._constant import STRUCTURE_NAME, INPUT_DATA_FORMAT
+from smash._constant import (
+    STRUCTURE_NAME, 
+    INPUT_DATA_FORMAT,
+)
 
 from typing import TYPE_CHECKING
 

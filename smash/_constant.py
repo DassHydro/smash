@@ -49,30 +49,37 @@ OPR_PARAMETERS = {
 
 OPR_STATES = {"hi": 1e-2, "hp": 1e-2, "hft": 1e-2, "hst": 1e-2, "hlr": 1e-6}
 
-LOW_FEASIBLE_OPR_PARAMETERS = [0, 0, 0, 0, -np.inf, 0, 0, 0]
+LOW_FEASIBLE_OPR_PARAMETERS = {
+    "ci": 0,
+    "cp": 0,
+    "cft": 0,
+    "cst": 0,
+    "kexc": -np.inf,
+    "llr": 0,
+    "akw": 0,
+    "bkw": 0,
+}
 
-LOW_OPTIM_OPR_PARAMETERS = [
-    1e-6,
-    1e-6,
-    1e-6,
-    1e-6,
-    -50,
-    1e-6,
-    1e-3,
-    1e-3,
-]
+BOUNDS_OPR_PARAMETERS = {
+    "ci": (1e-6, 100),
+    "cp": (1e-6, 1000),
+    "cft": (1e-6, 1000),
+    "cst": (1e-6, 10_000),
+    "kexc": (-50, 50),
+    "llr": (1e-6, 1000),
+    "akw": (1e-3, 50),
+    "bkw": (1e-3, 1),
+}
 
-UPP_OPTIM_OPR_PARAMETERS = [100, 1000, 1000, 10_000, 50, 1000, 50, 1]
+BOUNDS_OPR_INITIAL_STATES = {
+    "hi": (1e-6, 0.999999),
+    "hp": (1e-6, 0.999999), 
+    "hft": (1e-6, 0.999999), 
+    "hst": (1e-6, 0.999999), 
+    "hlr": (1e-6, 1000),
+}
 
-LOW_OPR_INITIAL_STATES = [1e-6, 1e-6, 1e-6, 1e-6, 1e-6]
-
-UPP_OPR_INITIAL_STATES = [
-    0.999999,
-    0.999999,
-    0.999999,
-    0.999999,
-    1000,
-]
+TOL_PARAMSTATES = 1e-9
 
 
 ### READ INPUT DATA ###
