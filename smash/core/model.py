@@ -166,29 +166,29 @@ class Model(object):
     ):
         _optimize(self, options, returns)
 
-    def get_parameter(self, parameter: str):
+    def get_opr_parameter(self, parameter: str):
         parameter = _standardize_opr_parameter_name(parameter)
 
         return getattr(self._parameters.opr_parameters, parameter)
 
-    def get_initial_state(self, state: str):
+    def get_opr_initial_state(self, state: str):
         state = _standardize_opr_state_name(state)
 
         return getattr(self._parameters.opr_initial_states, state)
 
-    def get_final_state(self, state: str):
+    def get_opr_final_state(self, state: str):
         state = _standardize_opr_state_name(state)
 
         return getattr(self._output.opr_final_states, state)
 
-    def set_parameter(self, parameter: str, value: numeric | np.ndarray):
+    def set_opr_parameter(self, parameter: str, value: numeric | np.ndarray):
         mesh_shape = (self.mesh.nrow, self.mesh.ncol)
 
         parameter = _standardize_opr_parameter(parameter, value, mesh_shape)
 
         setattr(self._parameters.opr_parameters, parameter, value)
 
-    def set_initial_state(self, state: str, value: numeric | np.ndarray):
+    def set_opr_initial_state(self, state: str, value: numeric | np.ndarray):
         mesh_shape = (self.mesh.nrow, self.mesh.ncol)
 
         state = _standardize_opr_state(state, value, mesh_shape)
