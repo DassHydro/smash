@@ -1,9 +1,15 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_NAME, 
+    STRUCTURE_NAME,
     INPUT_DATA_FORMAT,
+    FEASIBLE_OPR_PARAMETERS,
+    BOUNDS_OPR_STATES,
+    BOUNDS_OPR_PARAMETERS,
+    TOL_BOUNDS,
 )
+
+from smash._typing import numeric
 
 from typing import TYPE_CHECKING
 
@@ -11,6 +17,7 @@ if TYPE_CHECKING:
     from smash.solver._mwd_setup import SetupDT
 
 import pandas as pd
+import numpy as np
 import os
 import warnings
 import errno
@@ -121,3 +128,125 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError(
             f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
+
+
+def _standardize_parameters(parameters: dict, mesh_shape: tuple):
+    if isinstance(parameters, dict):
+        ret_param = {}
+
+        for key, value in parameters.items():
+            key = key.lower()
+
+            if key in BOUNDS_OPR_PARAMETERS:
+                if isinstance(value, (numeric, np.ndarray)):
+                    if isinstance(value, np.ndarray) and value.shape != mesh_shape:
+                        raise ValueError(
+                            f"Model parameter {key} must be of the same shape as the mesh ({value.shape} != {mesh_shape})"
+                        )
+
+                    low, upp = BOUNDS_OPR_PARAMETERS[key]
+
+                    low_feas, upp_feas = FEASIBLE_OPR_PARAMETERS[key]
+
+                    if np.logical_or(value <= low_feas, value >= upp_feas).any():
+                        raise ValueError(
+                            f"Invalid value for Model parameter {key}. Feasible domain: ({low_feas}, {upp_feas})"
+                        )
+
+                    else:
+                        if np.logical_or(
+                            value < (low - TOL_BOUNDS), value > (upp + TOL_BOUNDS)
+                        ).any():
+                            warnings.warn(
+                                f"Model parameter {key} is out of default boundary condition [{low}, {upp}]"
+                            )
+
+                    ret_param[key] = value
+
+                else:
+                    raise TypeError(
+                        f"The value of model parameter {key} must be of numeric type or np.ndarray"
+                    )
+
+            else:
+                warnings.warn(
+                    f"Unknown model parameter {key}. Choice: {list(BOUNDS_OPR_PARAMETERS)}"
+                )
+
+        return ret_param
+
+    else:
+        raise TypeError("param_states argument must be a dictionary")
+
+
+def _standardize_states(states: dict, mesh_shape: tuple):
+    if isinstance(states, dict):
+        ret_states = {}
+
+        for key, value in states.items():
+            key = key.lower()
+
+            if key in BOUNDS_OPR_STATES:
+                if isinstance(value, (numeric, np.ndarray)):
+                    if isinstance(value, np.ndarray) and value.shape != mesh_shape:
+                        raise ValueError(
+                            f"Initial state {key} must be of the same shape as the mesh ({value.shape} != {mesh_shape})"
+                        )
+
+                    low, upp = BOUNDS_OPR_STATES[key]
+
+                    if np.logical_or(
+                        value < (low - TOL_BOUNDS), value > (upp + TOL_BOUNDS)
+                    ).any():
+                        warnings.warn(
+                            f"Initial state {key} is out of default range [{low}, {upp}]"
+                        )
+
+                    ret_states[key] = value
+
+                else:
+                    raise TypeError(
+                        f"The value of initial state {key} must be of numeric type or np.ndarray"
+                    )
+
+            else:
+                warnings.warn(
+                    f"Unknown model state {key}. Choice: {list(BOUNDS_OPR_STATES)}"
+                )
+
+        return ret_states
+
+    else:
+        raise TypeError("param_states argument must be a dictionary")
+
+
+def _standardize_parameter_name(parameter: str):
+    if isinstance(parameter, str):
+        parameter = parameter.lower()
+
+        if parameter in BOUNDS_OPR_PARAMETERS:
+            return parameter
+
+        else:
+            raise ValueError(
+                f"Unknown model parameter {parameter}. Choice: {list(BOUNDS_OPR_PARAMETERS)}"
+            )
+
+    else:
+        raise TypeError(f"parameter must be a str")
+
+
+def _standardize_state_name(state: str):
+    if isinstance(state, str):
+        state = state.lower()
+
+        if state in BOUNDS_OPR_STATES:
+            return state
+
+        else:
+            raise ValueError(
+                f"Unknown model state {state}. Choice: {list(BOUNDS_OPR_STATES)}"
+            )
+
+    else:
+        raise TypeError(f"state must be a str")

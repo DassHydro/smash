@@ -12,6 +12,8 @@ if TYPE_CHECKING:
     from smash.solver._mwd_options import OptionsDT
     from smash.solver._mwd_returns import ReturnsDT
 
+__all__ = ["optimize"]
+
 
 def optimize(
     model: Model, options: OptionsDT | None = None, returns: ReturnsDT | None = None

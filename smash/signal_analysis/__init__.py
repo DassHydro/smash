@@ -2,4 +2,4 @@ from smash.signal_analysis.segmentation.segmentation import hydrograph_segmentat
 
 from smash.signal_analysis.signatures.signatures import signatures
 
-from smash.signal_analysis.metrics.metrics import efficiency_score
+from smash.signal_analysis.scores.scores import efficiency_score

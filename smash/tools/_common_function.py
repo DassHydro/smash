@@ -3,10 +3,8 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
-    OPR_PARAMETERS,
-    OPR_STATES,
     BOUNDS_OPR_PARAMETERS,
-    BOUNDS_OPR_INITIAL_STATES,
+    BOUNDS_OPR_STATES,
 )
 
 from typing import TYPE_CHECKING
@@ -57,8 +55,8 @@ def _default_bound_constraints(setup: SetupDT, states: bool):
     bounds = []
 
     for name in control_vector:
-        if name in OPR_STATES:
-            l, u = BOUNDS_OPR_INITIAL_STATES[name]
+        if name in BOUNDS_OPR_STATES:
+            l, u = BOUNDS_OPR_STATES[name]
 
         else:
             l, u = BOUNDS_OPR_PARAMETERS[name]

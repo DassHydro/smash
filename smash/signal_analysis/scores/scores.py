@@ -2,12 +2,14 @@ from __future__ import annotations
 
 from smash.solver._mwd_efficiency_metric import nse, kge, se, rmse, logarithmic
 
-from smash.signal_analysis.metrics._standardize import (
+from smash.signal_analysis.scores._standardize import (
     _standardize_arrays,
     _standardize_metric,
 )
 
 import numpy as np
+
+__all__ = ["efficiency_score"]
 
 
 def efficiency_score(obs: np.ndarray, sim: np.ndarray, metric: str = "nse"):

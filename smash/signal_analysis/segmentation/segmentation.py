@@ -17,6 +17,8 @@ import numpy as np
 import pandas as pd
 import warnings
 
+__all__ = ["hydrograph_segmentation"]
+
 
 def hydrograph_segmentation(
     model: Model, peak_quant: float = PEAK_QUANT, max_duration: float = MAX_DURATION

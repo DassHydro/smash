@@ -6,7 +6,13 @@ from smash.core._build_model import (
     _build_setup,
     _build_mesh,
     _build_input_data,
-    _build_paramstates,
+    _build_parameters,
+)
+from smash.core._standardize import (
+    _standardize_parameters,
+    _standardize_states,
+    _standardize_parameter_name,
+    _standardize_state_name,
 )
 
 from smash.solver._mwd_setup import SetupDT
@@ -56,9 +62,7 @@ class Model(object):
 
             self._parameters = ParametersDT(self.mesh)
 
-            _build_paramstates(
-                self.setup, self.mesh, self._input_data, self._parameters
-            )
+            _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
 
             self._output = OutputDT(self.setup, self.mesh)
 
@@ -156,6 +160,37 @@ class Model(object):
         self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
     ):
         _optimize(self, options, returns)
+
+    def set_parameters(self, parameters: dict):
+        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
+
+        parameters = _standardize_parameters(parameters, mesh_shape)
+
+        for key, value in parameters.items():
+            setattr(self._parameters.opr_parameters, key, value)
+
+    def set_initial_states(self, states: dict):
+        mesh_shape = (self.mesh.nrow, self.mesh.ncol)
+
+        states = _standardize_states(states, mesh_shape)
+
+        for key, value in states.items():
+            setattr(self._parameters.opr_initial_states, key, value)
+
+    def get_parameter(self, parameter: str):
+        parameter = _standardize_parameter_name(parameter)
+
+        return getattr(self._parameters.opr_parameters, parameter)
+
+    def get_initial_state(self, state: str):
+        state = _standardize_state_name(state)
+
+        return getattr(self._parameters.opr_initial_states, state)
+
+    def get_final_state(self, state: str):
+        state = _standardize_state_name(state)
+
+        return getattr(self._output.opr_final_states, state)
 
     def default_bound_constraints(self, states: bool = False):
         """

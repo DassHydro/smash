@@ -59,24 +59,24 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     )  # % Fortran subroutine mw_atmos_statistic
 
 
-def _build_paramstates(
+def _build_parameters(
     setup: SetupDT,
     mesh: MeshDT,
     input_data: Input_DataDT,
-    paramstates: ParametersDT,
+    parameters: ParametersDT,
 ):
     # % Build states
     for state_name, state_value in OPR_STATES.items():
-        setattr(paramstates.opr_initial_states, state_name, state_value)
+        setattr(parameters.opr_initial_states, state_name, state_value)
 
     # % Build parameters
     for param_name, param_value in OPR_PARAMETERS.items():
         if param_name == "llr":
             setattr(
-                paramstates.opr_parameters, param_name, setup.dt * (param_value / 3600)
+                parameters.opr_parameters, param_name, setup.dt * (param_value / 3600)
             )
         else:
-            setattr(paramstates.opr_parameters, param_name, param_value)
+            setattr(parameters.opr_parameters, param_name, param_value)
 
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date
@@ -96,5 +96,5 @@ def _build_paramstates(
             input_data,
             day_index,
             day_index[-1],
-            paramstates.opr_parameters.ci,
+            parameters.opr_parameters.ci,
         )  # % Fortran subroutine mw_interception_capacity

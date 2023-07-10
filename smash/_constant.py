@@ -49,15 +49,15 @@ OPR_PARAMETERS = {
 
 OPR_STATES = {"hi": 1e-2, "hp": 1e-2, "hft": 1e-2, "hst": 1e-2, "hlr": 1e-6}
 
-LOW_FEASIBLE_OPR_PARAMETERS = {
-    "ci": 0,
-    "cp": 0,
-    "cft": 0,
-    "cst": 0,
-    "kexc": -np.inf,
-    "llr": 0,
-    "akw": 0,
-    "bkw": 0,
+FEASIBLE_OPR_PARAMETERS = {
+    "ci": (0, np.inf),
+    "cp": (0, np.inf),
+    "cft": (0, np.inf),
+    "cst": (0, np.inf),
+    "kexc": (-np.inf, np.inf),
+    "llr": (0, np.inf),
+    "akw": (0, np.inf),
+    "bkw": (0, np.inf),
 }
 
 BOUNDS_OPR_PARAMETERS = {
@@ -71,15 +71,15 @@ BOUNDS_OPR_PARAMETERS = {
     "bkw": (1e-3, 1),
 }
 
-BOUNDS_OPR_INITIAL_STATES = {
+BOUNDS_OPR_STATES = {
     "hi": (1e-6, 0.999999),
-    "hp": (1e-6, 0.999999), 
-    "hft": (1e-6, 0.999999), 
-    "hst": (1e-6, 0.999999), 
+    "hp": (1e-6, 0.999999),
+    "hft": (1e-6, 0.999999),
+    "hst": (1e-6, 0.999999),
     "hlr": (1e-6, 1000),
 }
 
-TOL_PARAMSTATES = 1e-9
+TOL_BOUNDS = 1e-9
 
 
 ### READ INPUT DATA ###
