@@ -1,36 +1,29 @@
 from __future__ import annotations
 
-from smash.core.signal_analysis.scores._standardize import (
-    _standardize_arrays,
-    _standardize_metric,
-)
+from smash.core.signal_analysis.scores._standardize import _standardize_metric
 
 from smash.fcore._mwd_efficiency_metric import nse, kge, se, rmse, logarithmic
 
 import numpy as np
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.core.model.model import Model
+
+
 __all__ = ["efficiency_score"]
 
 
-def efficiency_score(obs: np.ndarray, sim: np.ndarray, metric: str = "nse"):
+def efficiency_score(model: Model, metric: str = "nse"):
     """
-    Compute the efficiency score for each gauge in a multi-catchment hydrological model evaluation.
-
-    The function takes two 1D- or 2D-arrays, **obs** and **sim**, representing observed and simulated discharges
-    respectively, for multiple catchments. Each row in the arrays corresponds to a different
-    catchment, and each column represents a time step.
-
-    .. note::
-        For single catchment evaluations, **obs** and **sim** can be provided as 1D-arrays.
+    Compute the efficiency score of the Model based on observed and simulated discharges for each gauge in a multi-catchment hydrological model evaluation.
 
     Parameters
     ----------
-    obs : np.ndarray
-        A 1D-array of shape (n,) or 2D-array of shape (g, n) representing observed time series data for **g** catchments and **n** time steps.
-
-    sim : np.ndarray
-        A 1D-array of shape (n,) or 2D-array of shape (g, n) representing simulated time series data for **g** catchments and **n** time steps.
-
+    model : Model
+        Model object
+        
     metric : str, default 'nse'
         The efficiency metric criterion. Should be one of
 
@@ -43,7 +36,7 @@ def efficiency_score(obs: np.ndarray, sim: np.ndarray, metric: str = "nse"):
     Returns
     -------
     res : np.ndarray
-        A 1D-array of shape (g,) containing the computed efficiency score for each catchment.
+        A 1D-array of shape (n,) representing the computed efficiency score(s) for **n** catchment(s).
 
     Examples
     --------
@@ -51,7 +44,9 @@ def efficiency_score(obs: np.ndarray, sim: np.ndarray, metric: str = "nse"):
     """
     metric = _standardize_metric(metric)
 
-    obs, sim = _standardize_arrays(obs, sim)
+    obs = model.obs_response.q
+
+    sim = model.sim_response.q
 
     ng = obs.shape[0]
 
