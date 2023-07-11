@@ -9,7 +9,7 @@ import pytest
 def generic_net_init(**kwargs):
     res = {}
 
-    net = smash.Net()
+    net = smash.factory.Net()
 
     n_hidden_layers = 4
     n_neurons = 16

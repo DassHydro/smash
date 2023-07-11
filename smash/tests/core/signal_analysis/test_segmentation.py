@@ -7,7 +7,7 @@ import pytest
 
 
 def generic_event_seg(model: smash.Model, **kwargs) -> dict:
-    arr = model.event_segmentation().to_numpy()
+    arr = smash.hydrograph_segmentation(model).to_numpy()
 
     res = {"event_seg.arr": arr.astype("S")}
 

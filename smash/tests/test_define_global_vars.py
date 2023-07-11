@@ -6,7 +6,7 @@ import os
 
 ### GLOBAL VARIABLES ###
 
-setup, mesh = smash.load_dataset("Cance")
+setup, mesh = smash.factory.load_dataset("Cance")
 
 pytest.model = smash.Model(setup, mesh)
 

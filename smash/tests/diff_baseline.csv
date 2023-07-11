@@ -1,27 +1,26 @@
-commit 18cc90156ca16b257692c48b7262d927ed4a8501
-Author: inoelloc <colleoni.francois@gmail.com>
-Date:   Thu Apr 13 12:17:42 2023 +0200
+commit 1ab786c0c66461e95f35ea9389940619fd2b094e
+Merge: e9ca55a 4d1e0b9
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Sun Jul 9 20:45:57 2023 +0200
 
-    FIX: Lower the tolerance to 1e-5 in multiple_run assertion (probably parallel issue)
+    Merge pull request #34 from DassHydro-dev/fix-event-seg-algo
     
-    - Modified
-    
-            * test_simu.py: in np.allclose change atol from 1e-6 to 1e-5 in test_multiple_run
+    FIX: max_duration event segmentation algorithm
 
 TEST NAME                                     |STATUS
-ann_optimize_1.cost                           |NON MODIFIED
-ann_optimize_1.loss                           |NON MODIFIED
-ann_optimize_2.cost                           |NON MODIFIED
-ann_optimize_2.loss                           |NON MODIFIED
-bayes_estimate.br_cost                        |NON MODIFIED
-bayes_estimate.cost                           |NON MODIFIED
-bayes_optimize.br_cost                        |NON MODIFIED
-bayes_optimize.cost                           |NON MODIFIED
+ann_optimize_1.cost                           |DELETED
+ann_optimize_1.loss                           |DELETED
+ann_optimize_2.cost                           |DELETED
+ann_optimize_2.loss                           |DELETED
+bayes_estimate.br_cost                        |DELETED
+bayes_estimate.cost                           |DELETED
+bayes_optimize.br_cost                        |DELETED
+bayes_optimize.cost                           |DELETED
 bbox_mesh.flwacc                              |NON MODIFIED
 bbox_mesh.flwdir                              |NON MODIFIED
 event_seg.arr                                 |NON MODIFIED
-gen_samples.nor                               |MODIFIED
-gen_samples.uni                               |MODIFIED
+gen_samples.nor                               |NON MODIFIED
+gen_samples.uni                               |NON MODIFIED
 mesh_io.active_cell                           |NON MODIFIED
 mesh_io.area                                  |NON MODIFIED
 mesh_io.code                                  |NON MODIFIED
@@ -37,18 +36,18 @@ mesh_io.nrow                                  |NON MODIFIED
 mesh_io.path                                  |NON MODIFIED
 mesh_io.xmin                                  |NON MODIFIED
 mesh_io.ymax                                  |NON MODIFIED
-multiple_run.cost                             |ADDED
-multiple_run.qsim                             |ADDED
-mutiple_run.slc_1.cost                        |ADDED
-mutiple_run.slc_1.qsim                        |ADDED
-mutiple_run.slc_2.cost                        |ADDED
-mutiple_run.slc_2.qsim                        |ADDED
-mutiple_run.slc_3.cost                        |ADDED
-mutiple_run.slc_3.qsim                        |ADDED
-mutiple_run.slc_4.cost                        |ADDED
-mutiple_run.slc_4.qsim                        |ADDED
-mutiple_run.slc_5.cost                        |ADDED
-mutiple_run.slc_5.qsim                        |ADDED
+multiple_run.cost                             |DELETED
+multiple_run.qsim                             |DELETED
+mutiple_run.slc_1.cost                        |DELETED
+mutiple_run.slc_1.qsim                        |DELETED
+mutiple_run.slc_2.cost                        |DELETED
+mutiple_run.slc_2.qsim                        |DELETED
+mutiple_run.slc_3.cost                        |DELETED
+mutiple_run.slc_3.qsim                        |DELETED
+mutiple_run.slc_4.cost                        |DELETED
+mutiple_run.slc_4.qsim                        |DELETED
+mutiple_run.slc_5.cost                        |DELETED
+mutiple_run.slc_5.qsim                        |DELETED
 net_init.bias_layer_1                         |NON MODIFIED
 net_init.bias_layer_2                         |NON MODIFIED
 net_init.bias_layer_3                         |NON MODIFIED
@@ -58,40 +57,40 @@ net_init.weight_layer_1                       |NON MODIFIED
 net_init.weight_layer_2                       |NON MODIFIED
 net_init.weight_layer_3                       |NON MODIFIED
 net_init.weight_layer_4                       |NON MODIFIED
-optimize.distributed_l-bfgs-b.cost            |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cft      |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cost     |NON MODIFIED
-optimize.distributed_l-bfgs-b_bounds.cp       |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_fast.cost   |NON MODIFIED
-optimize.distributed_l-bfgs-b_reg_lcurve.cost |NON MODIFIED
-optimize.hyper-linear_l-bfgs-b.cost           |NON MODIFIED
-optimize.hyper-polynomial_l-bfgs-b.cost       |NON MODIFIED
-optimize.uniform_nelder-mead.cost             |NON MODIFIED
-optimize.uniform_sbs.cost                     |NON MODIFIED
-optimize.uniform_sbs_mtg.cost                 |NON MODIFIED
-optimize.uniform_sbs_states.cost              |NON MODIFIED
-optimize.uniform_sbs_states.hlr               |NON MODIFIED
+optimize.distributed_l-bfgs-b.cost            |DELETED
+optimize.distributed_l-bfgs-b_bounds.cft      |DELETED
+optimize.distributed_l-bfgs-b_bounds.cost     |DELETED
+optimize.distributed_l-bfgs-b_bounds.cp       |DELETED
+optimize.distributed_l-bfgs-b_reg_fast.cost   |DELETED
+optimize.distributed_l-bfgs-b_reg_lcurve.cost |DELETED
+optimize.hyper-linear_l-bfgs-b.cost           |DELETED
+optimize.hyper-polynomial_l-bfgs-b.cost       |DELETED
+optimize.uniform_nelder-mead.cost             |DELETED
+optimize.uniform_sbs.cost                     |DELETED
+optimize.uniform_sbs_mtg.cost                 |DELETED
+optimize.uniform_sbs_states.cost              |DELETED
+optimize.uniform_sbs_states.hlr               |DELETED
 run.cost                                      |NON MODIFIED
 signatures.cont_obs                           |NON MODIFIED
 signatures.cont_sim                           |NON MODIFIED
 signatures.event_obs                          |NON MODIFIED
 signatures.event_sim                          |NON MODIFIED
-signatures_sens.cont_first_si_cft             |NON MODIFIED
-signatures_sens.cont_first_si_cp              |NON MODIFIED
-signatures_sens.cont_first_si_exc             |NON MODIFIED
-signatures_sens.cont_first_si_lr              |NON MODIFIED
-signatures_sens.cont_total_si_cft             |NON MODIFIED
-signatures_sens.cont_total_si_cp              |NON MODIFIED
-signatures_sens.cont_total_si_exc             |NON MODIFIED
-signatures_sens.cont_total_si_lr              |NON MODIFIED
-signatures_sens.event_first_si_cft            |NON MODIFIED
-signatures_sens.event_first_si_cp             |NON MODIFIED
-signatures_sens.event_first_si_exc            |NON MODIFIED
-signatures_sens.event_first_si_lr             |NON MODIFIED
-signatures_sens.event_total_si_cft            |NON MODIFIED
-signatures_sens.event_total_si_cp             |NON MODIFIED
-signatures_sens.event_total_si_exc            |NON MODIFIED
-signatures_sens.event_total_si_lr             |NON MODIFIED
+signatures_sens.cont_first_si_cft             |DELETED
+signatures_sens.cont_first_si_cp              |DELETED
+signatures_sens.cont_first_si_exc             |DELETED
+signatures_sens.cont_first_si_lr              |DELETED
+signatures_sens.cont_total_si_cft             |DELETED
+signatures_sens.cont_total_si_cp              |DELETED
+signatures_sens.cont_total_si_exc             |DELETED
+signatures_sens.cont_total_si_lr              |DELETED
+signatures_sens.event_first_si_cft            |DELETED
+signatures_sens.event_first_si_cp             |DELETED
+signatures_sens.event_first_si_exc            |DELETED
+signatures_sens.event_first_si_lr             |DELETED
+signatures_sens.event_total_si_cft            |DELETED
+signatures_sens.event_total_si_cp             |DELETED
+signatures_sens.event_total_si_exc            |DELETED
+signatures_sens.event_total_si_lr             |DELETED
 xy_mesh.flwacc                                |NON MODIFIED
 xy_mesh.flwdir                                |NON MODIFIED
 xy_mesh.flwdst                                |NON MODIFIED

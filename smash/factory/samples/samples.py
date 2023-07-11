@@ -266,13 +266,13 @@ def _generate_samples(
         np.random.seed(random_state)
 
     for i, p in enumerate(problem["names"]):
-        l = problem["bounds"][i][0]
-        u = problem["bounds"][i][1]
+        low = problem["bounds"][i][0]
+        upp = problem["bounds"][i][1]
 
         if generator == "uniform":
-            ret_dict[p] = np.random.uniform(l, u, n)
+            ret_dict[p] = np.random.uniform(low, upp, n)
 
-            ret_dict["_" + p] = np.ones(n) / (u - l)
+            ret_dict["_" + p] = np.ones(n) / (upp - low)
 
         elif generator in ["normal", "gaussian"]:
             sd = (upp - low) / coef_std

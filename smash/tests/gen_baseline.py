@@ -134,7 +134,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 if __name__ == "__main__":
     args = parser()
 
-    setup, mesh = smash.load_dataset("Cance")
+    setup, mesh = smash.factory.load_dataset("Cance")
     model = smash.Model(setup, mesh)
 
     module_names = sorted(glob.glob("**/test_*.py", recursive=True))

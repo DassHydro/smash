@@ -137,8 +137,8 @@ def _standardize_generate_samples_args(
     random_state = _standardize_generate_samples_random_state(random_state)
 
     if generator in ["normal", "gaussian"]:
-        mean = _standardize_generate_samples_mean(problem, generator, mean)
+        mean = _standardize_generate_samples_mean(problem, mean)
 
-        coef_stf = _standardize_generate_samples_coef_std(coef_std)
+        coef_std = _standardize_generate_samples_coef_std(coef_std)
 
     return (problem, generator, n, random_state, mean, coef_std)

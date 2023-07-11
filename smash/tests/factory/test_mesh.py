@@ -7,9 +7,9 @@ import pytest
 
 
 def generic_xy_mesh(**kwargs) -> dict:
-    flwdir = smash.load_dataset("flwdir")
+    flwdir = smash.factory.load_dataset("flwdir")
 
-    mesh = smash.generate_mesh(
+    mesh = smash.factory.generate_mesh(
         flwdir,
         x=[840_261, 826_553, 828_269],
         y=[6_457_807, 6_467_115, 6_469_198],
@@ -36,9 +36,9 @@ def test_xy_mesh():
 
 
 def generic_bbox_mesh(**kwargs) -> dict:
-    flwdir = smash.load_dataset("flwdir")
+    flwdir = smash.factory.load_dataset("flwdir")
 
-    mesh = smash.generate_mesh(
+    mesh = smash.factory.generate_mesh(
         flwdir,
         bbox=(100_000, 1_250_000, 6_050_000, 7_125_000),
         epsg=2154,

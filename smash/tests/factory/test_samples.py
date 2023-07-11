@@ -2,17 +2,21 @@ from __future__ import annotations
 
 import smash
 
+from smash._constant import PROBLEM_KEYS
+
 import numpy as np
 import pytest
 
 
 def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
-    problem = model.get_bound_constraints()
+    bounds = model.get_opr_parameters_bounds()
+    
+    problem = dict(zip(PROBLEM_KEYS, [len(bounds), list(bounds.keys()), list(bounds.values())]))
 
-    sample = smash.generate_samples(problem, generator="uniform", n=20, random_state=11)
+    sample = smash.factory.generate_samples(problem, generator="uniform", n=20, random_state=11)
     uni = sample.to_numpy(axis=-1)
 
-    sample = smash.generate_samples(
+    sample = smash.factory.generate_samples(
         problem,
         generator="normal",
         n=20,
