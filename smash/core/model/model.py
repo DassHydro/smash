@@ -17,6 +17,7 @@ from smash.core.model._build_model import (
 from smash.core.model._standardize import (
     _standardize_get_opr_parameters_args,
     _standardize_get_opr_initial_states_args,
+    _standardize_get_opr_final_states_args,
     _standardize_set_opr_parameters_args,
     _standardize_set_opr_initial_states_args,
 )
