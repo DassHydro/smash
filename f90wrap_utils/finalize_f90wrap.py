@@ -16,13 +16,13 @@ def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
         The dictionary where each key, value are the names of the Python
         / Fortran file pairs
     """
-    solver_path = pathlib.Path("../smash/fcore/")
+    fcore_path = pathlib.Path("../smash/fcore/")
 
     res = []
 
     for f90_name, py_name in py_mod_names.items():
-        f90_file = list(solver_path.glob(f"*/{f90_name}.f90"))[0]
-        py_file = list(solver_path.glob(f"{py_name}.py"))[0]
+        f90_file = list(fcore_path.glob(f"*/{f90_name}.f90"))[0]
+        py_file = list(fcore_path.glob(f"{py_name}.py"))[0]
 
         res.append((py_file, f90_file))
 
@@ -64,7 +64,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
     -----
     Currently, there are 4 flags on Fortran derived type attributers
     which allow to add specific decorators on f90wrap generated Python files.
-    The decorators are coded in the file smash/solver/_f90wrap_decorator.py
+    The decorators are coded in the file smash/fcore/_f90wrap_decorator.py
 
     - index: Allow to switch between 0-based indexing (Python) and 1-based indexing (Fortran).
     It adds one decorator on getter to substract 1 and one decorator on setter to add 1
@@ -131,7 +131,7 @@ def sed_index_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
 
     Notes
     -----
-    First, we import the decorator from smash.solver._f90_decorator, then we add
+    First, we import the decorator from smash.fcore._f90_decorator, then we add
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
@@ -158,7 +158,7 @@ def sed_char_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
 
     Notes
     -----
-    First, we import the decorator from smash.solver._f90_decorator, then we add
+    First, we import the decorator from smash.fcore._f90_decorator, then we add
     decorator on top of the getter for each attribute flagged
     """
     os.system(
@@ -184,7 +184,7 @@ def sed_char_array_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str
 
     Notes
     -----
-    First, we import the decorator from smash.solver._f90_decorator, then we add
+    First, we import the decorator from smash.fcore._f90_decorator, then we add
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
