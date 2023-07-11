@@ -71,7 +71,7 @@ def test_net_init():
     for key, value in res.items():
         if key in ["net_init.graph"]:
             # % Check net init graph
-            assert np.array_equal(value, pytest.baseline[key]), key
+            assert np.array_equal(value, pytest.baseline[key][:]), key
 
         else:
             # % Check net init layer weight and bias

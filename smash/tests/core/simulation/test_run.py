@@ -34,7 +34,7 @@ def output_cost(instance: smash.Model):
 
     for i in range(instance.mesh.ng):
         ret[n_jtest * i : n_jtest * (i + 1)] = (
-            instance._output.cost,
+            0,
             nse(qo[i], qs[i]),
             kge(qo[i], qs[i]),
         )

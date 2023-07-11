@@ -1,96 +1,50 @@
-commit 1ab786c0c66461e95f35ea9389940619fd2b094e
-Merge: e9ca55a 4d1e0b9
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Sun Jul 9 20:45:57 2023 +0200
+commit 1b625c82aa88b99f6603e4cb198ab502178f4449
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Tue Jul 11 18:58:46 2023 +0200
 
-    Merge pull request #34 from DassHydro-dev/fix-event-seg-algo
-    
-    FIX: max_duration event segmentation algorithm
+    FIX/ENC: testing baseline and minor fixes:
+    - Re-add the baseline from maintenance/0.5.0 (remove test constant, test simu and test signatures sensitivity
+    - Fix generate_samples function
 
-TEST NAME                                     |STATUS
-ann_optimize_1.cost                           |DELETED
-ann_optimize_1.loss                           |DELETED
-ann_optimize_2.cost                           |DELETED
-ann_optimize_2.loss                           |DELETED
-bayes_estimate.br_cost                        |DELETED
-bayes_estimate.cost                           |DELETED
-bayes_optimize.br_cost                        |DELETED
-bayes_optimize.cost                           |DELETED
-bbox_mesh.flwacc                              |NON MODIFIED
-bbox_mesh.flwdir                              |NON MODIFIED
-event_seg.arr                                 |NON MODIFIED
-gen_samples.nor                               |NON MODIFIED
-gen_samples.uni                               |NON MODIFIED
-mesh_io.active_cell                           |NON MODIFIED
-mesh_io.area                                  |NON MODIFIED
-mesh_io.code                                  |NON MODIFIED
-mesh_io.dx                                    |NON MODIFIED
-mesh_io.flwacc                                |NON MODIFIED
-mesh_io.flwdir                                |NON MODIFIED
-mesh_io.flwdst                                |NON MODIFIED
-mesh_io.gauge_pos                             |NON MODIFIED
-mesh_io.nac                                   |NON MODIFIED
-mesh_io.ncol                                  |NON MODIFIED
-mesh_io.ng                                    |NON MODIFIED
-mesh_io.nrow                                  |NON MODIFIED
-mesh_io.path                                  |NON MODIFIED
-mesh_io.xmin                                  |NON MODIFIED
-mesh_io.ymax                                  |NON MODIFIED
-multiple_run.cost                             |DELETED
-multiple_run.qsim                             |DELETED
-mutiple_run.slc_1.cost                        |DELETED
-mutiple_run.slc_1.qsim                        |DELETED
-mutiple_run.slc_2.cost                        |DELETED
-mutiple_run.slc_2.qsim                        |DELETED
-mutiple_run.slc_3.cost                        |DELETED
-mutiple_run.slc_3.qsim                        |DELETED
-mutiple_run.slc_4.cost                        |DELETED
-mutiple_run.slc_4.qsim                        |DELETED
-mutiple_run.slc_5.cost                        |DELETED
-mutiple_run.slc_5.qsim                        |DELETED
-net_init.bias_layer_1                         |NON MODIFIED
-net_init.bias_layer_2                         |NON MODIFIED
-net_init.bias_layer_3                         |NON MODIFIED
-net_init.bias_layer_4                         |NON MODIFIED
-net_init.graph                                |NON MODIFIED
-net_init.weight_layer_1                       |NON MODIFIED
-net_init.weight_layer_2                       |NON MODIFIED
-net_init.weight_layer_3                       |NON MODIFIED
-net_init.weight_layer_4                       |NON MODIFIED
-optimize.distributed_l-bfgs-b.cost            |DELETED
-optimize.distributed_l-bfgs-b_bounds.cft      |DELETED
-optimize.distributed_l-bfgs-b_bounds.cost     |DELETED
-optimize.distributed_l-bfgs-b_bounds.cp       |DELETED
-optimize.distributed_l-bfgs-b_reg_fast.cost   |DELETED
-optimize.distributed_l-bfgs-b_reg_lcurve.cost |DELETED
-optimize.hyper-linear_l-bfgs-b.cost           |DELETED
-optimize.hyper-polynomial_l-bfgs-b.cost       |DELETED
-optimize.uniform_nelder-mead.cost             |DELETED
-optimize.uniform_sbs.cost                     |DELETED
-optimize.uniform_sbs_mtg.cost                 |DELETED
-optimize.uniform_sbs_states.cost              |DELETED
-optimize.uniform_sbs_states.hlr               |DELETED
-run.cost                                      |NON MODIFIED
-signatures.cont_obs                           |NON MODIFIED
-signatures.cont_sim                           |NON MODIFIED
-signatures.event_obs                          |NON MODIFIED
-signatures.event_sim                          |NON MODIFIED
-signatures_sens.cont_first_si_cft             |DELETED
-signatures_sens.cont_first_si_cp              |DELETED
-signatures_sens.cont_first_si_exc             |DELETED
-signatures_sens.cont_first_si_lr              |DELETED
-signatures_sens.cont_total_si_cft             |DELETED
-signatures_sens.cont_total_si_cp              |DELETED
-signatures_sens.cont_total_si_exc             |DELETED
-signatures_sens.cont_total_si_lr              |DELETED
-signatures_sens.event_first_si_cft            |DELETED
-signatures_sens.event_first_si_cp             |DELETED
-signatures_sens.event_first_si_exc            |DELETED
-signatures_sens.event_first_si_lr             |DELETED
-signatures_sens.event_total_si_cft            |DELETED
-signatures_sens.event_total_si_cp             |DELETED
-signatures_sens.event_total_si_exc            |DELETED
-signatures_sens.event_total_si_lr             |DELETED
-xy_mesh.flwacc                                |NON MODIFIED
-xy_mesh.flwdir                                |NON MODIFIED
-xy_mesh.flwdst                                |NON MODIFIED
+TEST NAME               |STATUS
+bbox_mesh.flwacc        |MODIFIED
+bbox_mesh.flwdir        |NON MODIFIED
+event_seg.arr           |NON MODIFIED
+gen_samples.nor         |NON MODIFIED
+gen_samples.uni         |NON MODIFIED
+mesh_io.active_cell     |NON MODIFIED
+mesh_io.area            |MODIFIED
+mesh_io.area_dln        |ADDED
+mesh_io.code            |NON MODIFIED
+mesh_io.dx              |NON MODIFIED
+mesh_io.dy              |ADDED
+mesh_io.flwacc          |MODIFIED
+mesh_io.flwdir          |NON MODIFIED
+mesh_io.flwdst          |NON MODIFIED
+mesh_io.gauge_pos       |NON MODIFIED
+mesh_io.nac             |NON MODIFIED
+mesh_io.ncol            |NON MODIFIED
+mesh_io.ng              |NON MODIFIED
+mesh_io.nrow            |NON MODIFIED
+mesh_io.path            |NON MODIFIED
+mesh_io.xmin            |NON MODIFIED
+mesh_io.xres            |ADDED
+mesh_io.ymax            |NON MODIFIED
+mesh_io.yres            |ADDED
+net_init.bias_layer_1   |NON MODIFIED
+net_init.bias_layer_2   |NON MODIFIED
+net_init.bias_layer_3   |NON MODIFIED
+net_init.bias_layer_4   |NON MODIFIED
+net_init.graph          |MODIFIED
+net_init.weight_layer_1 |NON MODIFIED
+net_init.weight_layer_2 |NON MODIFIED
+net_init.weight_layer_3 |NON MODIFIED
+net_init.weight_layer_4 |NON MODIFIED
+run.cost                |NON MODIFIED
+signatures.cont_obs     |NON MODIFIED
+signatures.cont_sim     |NON MODIFIED
+signatures.event_obs    |NON MODIFIED
+signatures.event_sim    |NON MODIFIED
+xy_mesh.flwacc          |MODIFIED
+xy_mesh.flwdir          |NON MODIFIED
+xy_mesh.flwdst          |NON MODIFIED
