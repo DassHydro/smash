@@ -2,45 +2,38 @@ from __future__ import annotations
 
 from smash._constant import SAMPLES_GENERATORS, PROBLEM_KEYS
 
-from smash.tools._common_function import _default_bound_constraints
-
 import warnings
 
 import numpy as np
 
-from typing import TYPE_CHECKING, Dict
+from typing import TYPE_CHECKING
 from smash._typing import Numeric
 
 if TYPE_CHECKING:
     from smash._typing import AnyTuple
-    from smash.solver._mwd_setup import SetupDT
 
 
 # TODO: Check bounds, parameters name
-def _standardize_generate_samples_problem(problem: Dict | None) -> Dict:
-    if problem is None:
-        problem = _default_bound_constraints(setup, states)
+def _standardize_generate_samples_problem(problem: dict) -> dict:
+    if not isinstance(problem, dict):
+        raise TypeError("problem argument must be a dictionary")
 
-    else:
-        if not isinstance(problem, Dict):
-            raise TypeError("problem argument must be a dictionary")
+    if not all(k in problem.keys() for k in PROBLEM_KEYS):
+        raise KeyError(
+            f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
+        )
 
-        if not all(k in problem.keys() for k in PROBLEM_KEYS):
-            raise KeyError(
-                f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
-            )
+    unk_keys = [k for k in problem.keys() if k not in PROBLEM_KEYS]
 
-        unk_keys = [k for k in problem.keys() if k not in PROBLEM_KEYS]
-
-        if unk_keys:
-            warnings.warn(
-                f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}"
-            )
+    if unk_keys:
+        warnings.warn(
+            f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}"
+        )
 
     return problem
 
 
-def _standardize_generate_samples_generator(problem: Dict, generator: str) -> str:
+def _standardize_generate_samples_generator(problem: dict, generator: str) -> str:
     if not isinstance(generator, str):
         raise TypeError("generator argument must be a str")
     generator = generator.lower()
@@ -77,14 +70,14 @@ def _standardize_generate_samples_random_state(random_state: Numeric | None) -> 
     return random_state
 
 
-def _standardize_generate_samples_mean(problem: Dict, mean: Dict | None) -> Dict:
+def _standardize_generate_samples_mean(problem: dict, mean: dict | None) -> dict:
     default_mean = dict(zip(problem["names"], np.mean(problem["bounds"], axis=1)))
 
     if mean is None:
         mean = default_mean
 
     else:
-        if not isinstance(mean, Dict):
+        if not isinstance(mean, dict):
             raise TypeError("mean argument must be a dictionary")
 
         for name, um in mean.items():
@@ -118,11 +111,11 @@ def _standardize_generate_samples_coef_std(coef_std: Numeric | None) -> float:
 
 
 def _standardize_generate_samples_args(
-    problem: Dict | None,
+    problem: dict,
     generator: str,
     n: Numeric,
     random_state: Numeric | None,
-    mean: Dict | None,
+    mean: dict | None,
     coef_std: Numeric | None,
 ) -> AnyTuple:
     problem = _standardize_generate_samples_problem(problem)

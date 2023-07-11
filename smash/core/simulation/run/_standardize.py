@@ -23,10 +23,10 @@ def _standardize_opr_parameter_state(parameter: ParametersDT):
             )
 
     # % standardize states
-    for state_name in FEASIBLE_OPR_STATES:
+    for state_name in FEASIBLE_OPR_INITIAL_STATES:
         state_array = getattr(parameter.opr_initial_states, state_name)
 
-        low, upp = FEASIBLE_OPR_STATES[state_name]
+        low, upp = FEASIBLE_OPR_INITIAL_STATES[state_name]
 
         if np.logical_or(state_array <= low, state_array >= upp).any():
             raise ValueError(

@@ -1,12 +1,12 @@
 from __future__ import annotations
 
-from smash.solver._mwd_options import OptionsDT
-from smash.solver._mwd_returns import ReturnsDT
+from smash.fcore._mwd_options import OptionsDT
+from smash.fcore._mwd_returns import ReturnsDT
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
+    from smash.fcore._mwd_setup import SetupDT
 
 
 def _standardize_options(options: OptionsDT | None, setup: SetupDT):

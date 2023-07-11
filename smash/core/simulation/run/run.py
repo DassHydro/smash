@@ -1,19 +1,22 @@
 from __future__ import annotations
 
-from smash.solver._mw_forward import forward_run as fw_run
+from smash.core.simulation._standardize import (
+    _standardize_options,
+    _standardize_returns,
+)
 
-from smash.simulation._standardize import _standardize_options, _standardize_returns
+from smash.core.simulation.run._standardize import _standardize_opr_parameter_state
 
-from smash.simulation.run._standardize import _standardize_opr_parameter_state
+from smash.fcore._mw_forward import forward_run as fw_run
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.core.model import Model
-    from smash.solver._mwd_options import OptionsDT
-    from smash.solver._mwd_returns import ReturnsDT
+    from smash.core.model.model import Model
+    from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_returns import ReturnsDT
 
-__al__ = ["forward_run"]
+__all__ = ["forward_run"]
 
 
 def forward_run(

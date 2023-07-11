@@ -1,16 +1,19 @@
 from __future__ import annotations
 
-from smash.solver._mw_forward import forward_run
-from smash.solver._mw_optimize import sbs_optimize, lbfgsb_optimize
+from smash.core.simulation._standardize import (
+    _standardize_options,
+    _standardize_returns,
+)
 
-from smash.simulation._standardize import _standardize_options, _standardize_returns
+from smash.fcore._mw_forward import forward_run
+from smash.fcore._mw_optimize import sbs_optimize, lbfgsb_optimize
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.core.model import Model
-    from smash.solver._mwd_options import OptionsDT
-    from smash.solver._mwd_returns import ReturnsDT
+    from smash.core.model.model import Model
+    from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_returns import ReturnsDT
 
 __all__ = ["optimize"]
 

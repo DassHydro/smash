@@ -1,13 +1,8 @@
 from __future__ import annotations
 
-from smash.tools._common_function import (
-    _index_containing_substring,
-    _adjust_left_files_by_date,
-)
-
 from smash._constant import RATIO_PET_HOURLY
 
-from smash.solver._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
+from smash.fcore._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
 
 import warnings
 import glob
@@ -19,9 +14,28 @@ from osgeo import gdal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
-    from smash.solver._mwd_mesh import MeshDT
-    from smash.solver._mwd_input_data import Input_DataDT
+    from smash._typing import ListLike
+    from smash.fcore._mwd_setup import SetupDT
+    from smash.fcore._mwd_mesh import MeshDT
+    from smash.fcore._mwd_input_data import Input_DataDT
+
+
+def _index_containing_substring(l: ListLike, subs: str):
+    for i, s in enumerate(l):
+        if subs in s:
+            return i
+    return -1
+
+
+def _adjust_left_files_by_date(files: ListLike, date_range: Timestamp):
+    n = 0
+    ind = -1
+    while ind == -1:
+        ind = _index_containing_substring(files, date_range[n].strftime("%Y%m%d%H%M"))
+
+        n += 1
+
+    return files[ind:]
 
 
 def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:

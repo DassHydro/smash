@@ -2,17 +2,15 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.tools._common_function import _check_unknown_options
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.core.model import Model
-
 import numpy as np
 import pandas as pd
 from datetime import date, datetime
 import warnings
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.core.model.model import Model
 
 
 def _missing_values(
@@ -288,14 +286,13 @@ def _events_grad(
     return list_events
 
 
+# TODO: Add function check_unknown_options
 def _mask_event(
     model: Model,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,  # in hour
     **unknown_options,
 ):
-    _check_unknown_options("event segmentation", unknown_options)
-
     mask = np.zeros(model.obs_response.q.shape)
 
     for i, catchment in enumerate(model.mesh.code):

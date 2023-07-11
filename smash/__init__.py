@@ -1,10 +1,13 @@
 # smash objects
-from smash.core.model import Model
-from smash.signal_analysis.signatures.signatures import Signatures
+from smash.core.model.model import Model
+from smash.core.signal_analysis.signatures.signatures import Signatures
+
 from smash.factory.samples.samples import Samples
 
 # smash sub-packages
-from smash import io, factory, signal_analysis, simulation
+from smash import io, factory
+
+from smash.core import signal_analysis, simulation
 
 from . import _version
 

@@ -7,6 +7,7 @@ import os
 ### GLOBAL VARIABLES ###
 
 setup, mesh = smash.load_dataset("Cance")
+
 pytest.model = smash.Model(setup, mesh)
 
 pytest.baseline = h5py.File(

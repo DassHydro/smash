@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash.tools._common_function import _check_unknown_options
-
 from smash._constant import WB_INITIALIZER
 
 import numpy as np
@@ -48,9 +46,8 @@ class activation(layer):
         - 'softplus' : Softplus
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, name: str, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.input_shape = None
 
         self.activation_name = name
@@ -82,9 +79,8 @@ class scale(layer):
         A sequence of ``(min, max)`` values that the outputs will be scaled to.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.input_shape = None
 
         self.scale_name = "minmaxscale"
@@ -186,6 +182,7 @@ class dense(layer):
         - 'zeros'
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(
         self,
         neurons: int,
@@ -194,8 +191,6 @@ class dense(layer):
         bias_initializer: str = "zeros",
         **unknown_options,
     ):
-        _check_unknown_options("layer", unknown_options)
-
         self.layer_input = None
 
         self.input_shape = input_shape
@@ -272,9 +267,8 @@ class dropout(layer):
         The probability of setting a given output value to zero.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, drop_rate: float, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.drop_rate = drop_rate
 
         self._mask = None

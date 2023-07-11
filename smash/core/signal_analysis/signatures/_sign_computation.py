@@ -1,6 +1,8 @@
 from __future__ import annotations
 
-from smash.signal_analysis.segmentation._tools import (
+from smash._constant import PEAK_QUANT, MAX_DURATION
+
+from smash.core.signal_analysis.segmentation._tools import (
     _detect_peaks,
     _missing_values,
     _baseflow_separation,
@@ -8,19 +10,14 @@ from smash.signal_analysis.segmentation._tools import (
     _events_grad,
 )
 
-from smash.tools._common_function import _check_unknown_options
-
-from smash._constant import PEAK_QUANT, MAX_DURATION
+import numpy as np
+import pandas as pd
+import warnings
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.core.model import Model
-
-import numpy as np
-import pandas as pd
-
-import warnings
+    from smash.core.model.model import Model
 
 
 def _continuous_signatures(p: np.ndarray, q: np.ndarray, list_signatures: list[str]):
@@ -145,6 +142,7 @@ def _event_signatures(
     return res
 
 
+# TODO: Add function check_unknown_options
 def _sign_computation(
     instance: Model,
     cs: list[str],
@@ -155,9 +153,6 @@ def _sign_computation(
     max_duration: float = MAX_DURATION,
     **unknown_options,
 ):
-    if es:
-        _check_unknown_options("event segmentation", unknown_options)
-
     prcp_cvt = (
         instance.atmos_data.mean_prcp
         * 0.001

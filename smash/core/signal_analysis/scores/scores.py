@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from smash.solver._mwd_efficiency_metric import nse, kge, se, rmse, logarithmic
-
-from smash.signal_analysis.scores._standardize import (
+from smash.core.signal_analysis.scores._standardize import (
     _standardize_arrays,
     _standardize_metric,
 )
+
+from smash.fcore._mwd_efficiency_metric import nse, kge, se, rmse, logarithmic
 
 import numpy as np
 

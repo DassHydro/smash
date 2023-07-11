@@ -16,7 +16,7 @@ def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
         The dictionary where each key, value are the names of the Python
         / Fortran file pairs
     """
-    solver_path = pathlib.Path("../smash/solver/")
+    solver_path = pathlib.Path("../smash/fcore/")
 
     res = []
 
@@ -31,7 +31,7 @@ def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
 
 def sed_internal_import(pyf: pathlib.PosixPath):
     """
-    Modify internal relative import of the _flib_solver library (.so file)
+    Modify internal relative import of the _flib_fcore library (.so file)
     to match the package structure. Done by using the unix command sed
     in place
 
@@ -41,8 +41,8 @@ def sed_internal_import(pyf: pathlib.PosixPath):
         The Python file to sed
     """
 
-    os.system(f'sed -i "0,/import _flib_solver/s//from smash.solver import _flib_solver/" {pyf}')
-    os.system(f'sed -i "s/from flib_solver/from smash.solver/g" {pyf}')
+    os.system(f'sed -i "0,/import _flib_fcore/s//from smash.fcore import _flib_fcore/" {pyf}')
+    os.system(f'sed -i "s/from flib_fcore/from smash.fcore/g" {pyf}')
 
 
 def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
@@ -135,7 +135,7 @@ def sed_index_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import getter_index_handler, setter_index_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import getter_index_handler, setter_index_handler" {pyf}'
     )
 
     for attr in attribute:
@@ -162,7 +162,7 @@ def sed_char_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import char_getter_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import char_getter_handler" {pyf}'
     )
 
     for attr in attribute:
@@ -188,7 +188,7 @@ def sed_char_array_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.solver._f90wrap_decorator import char_array_getter_handler, char_array_setter_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import char_array_getter_handler, char_array_setter_handler" {pyf}'
     )
 
     for attr in attribute:
@@ -229,7 +229,7 @@ def sed_derived_type_procedure(pyf: pathlib.PosixPath):
     content = open(pyf, "r").read()
     procedure = {}
     class_matches = re.findall(
-        '@f90wrap.runtime.register_class\("flib_solver.(\w+)', content
+        '@f90wrap.runtime.register_class\("flib_fcore.(\w+)', content
     )
 
     for cm in class_matches:

@@ -1,7 +1,7 @@
 import pathlib
 
 if __name__ == "__main__":
-    solver_path = pathlib.Path("../smash/solver/")
+    solver_path = pathlib.Path("../smash/fcore/")
 
     solver_wrap_files = sorted(
         list(solver_path.glob("*/mwd_*.f90")) + list(solver_path.glob("*/mw_*.f90"))

@@ -1,4 +1,4 @@
-SRC := ../smash/solver
+SRC := ../smash/fcore
 NAME := mwd_*.f90 md_*.f90 forward.f90
 FILES := $(addprefix $(SRC)/*/,$(NAME))
 TAPENADE := ./tapenade_3.16

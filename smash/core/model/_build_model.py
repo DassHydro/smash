@@ -6,28 +6,33 @@ from smash._constant import (
     DEFAULT_OPR_INITIAL_STATES,
 )
 
-from smash.core._read_input_data import (
+from smash.core.model._read_input_data import (
     _read_qobs,
     _read_prcp,
     _read_pet,
     _read_descriptor,
 )
+from smash.core.model._standardize import _standardize_setup
 
-from smash.core._standardize import _standardize_setup
-
-from smash.solver._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_sparse
-from smash.solver._mw_atmos_statistic import compute_mean_atmos
-from smash.solver._mw_interception_capacity import compute_interception_capacity
+from smash.fcore._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_sparse
+from smash.fcore._mw_atmos_statistic import compute_mean_atmos
+from smash.fcore._mw_interception_capacity import compute_interception_capacity
 
 import pandas as pd
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_setup import SetupDT
-    from smash.solver._mwd_mesh import MeshDT
-    from smash.solver._mwd_input_data import Input_DataDT
-    from smash.solver._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_setup import SetupDT
+    from smash.fcore._mwd_mesh import MeshDT
+    from smash.fcore._mwd_input_data import Input_DataDT
+    from smash.fcore._mwd_parameters import ParametersDT
+
+
+def _map_dict_to_object(dct: dict, obj: object):
+    for key, value in dct.items():
+        if hasattr(obj, key):
+            setattr(obj, key, value)
 
 
 def _build_setup(setup: SetupDT):

@@ -19,9 +19,9 @@ from typing import TYPE_CHECKING
 from smash._typing import Numeric
 
 if TYPE_CHECKING:
-    from smash.core.model import Model
-    from smash.solver._mwd_setup import SetupDT
     from smash._typing import AnyTuple
+    from smash.core.model.model import Model
+    from smash.fcore._mwd_setup import SetupDT
 
 
 def _standardize_setup(setup: SetupDT):

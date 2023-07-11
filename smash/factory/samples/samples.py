@@ -9,7 +9,7 @@ from scipy.stats import truncnorm
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Iterator, Dict
+    from typing import Iterator
     from smash._typing import Numeric
 
 
@@ -46,8 +46,9 @@ class Samples(dict):
 
     Examples
     --------
+    >>> from smash.factory import generate_samples
     >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
-    >>> sr = smash.generate_samples(problem, n=5, random_state=1)
+    >>> sr = generate_samples(problem, n=5, random_state=1)
 
     Convert the result to a numpy.ndarray:
 
@@ -246,11 +247,11 @@ class Samples(dict):
 
 
 def _generate_samples(
-    problem: Dict,
+    problem: dict,
     generator: str,
     n: int,
     random_state: int | None,
-    mean: Dict | None,
+    mean: dict | None,
     coef_std: Numeric | None,
 ) -> Samples:
     ret_dict = {key: [] for key in problem["names"]}
@@ -288,27 +289,24 @@ def _generate_samples(
 
 
 def generate_samples(
-    problem: Dict | None,
+    problem: dict,
     generator: str = "uniform",
     n: Numeric = 1000,
     random_state: Numeric | None = None,
-    mean: Dict | None = None,
+    mean: dict | None = None,
     coef_std: Numeric | None = None,
 ) -> Samples:
     """
-    Generate a multiple set of spatially uniform Model parameters/states.
+    Generate a multiple set of variables.
 
     Parameters
     ----------
     problem : dict
         Problem definition. The keys are
 
-        - 'num_vars' : the number of Model parameters/states.
-        - 'names' : the name of Model parameters/states.
-        - 'bounds' : the upper and lower bounds of each Model parameter/state (a sequence of ``(min, max)``).
-
-        .. hint::
-            This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
+        - 'num_vars' : the number of variables.
+        - 'names' : the name of the variables.
+        - 'bounds' : the upper and lower bounds of each variable (a sequence of ``(min, max)``).
 
     generator : str, default 'uniform'
         Samples generator. Should be one of
@@ -326,13 +324,13 @@ def generate_samples(
             If not given, generates parameters sets with a random seed.
 
     mean : dict or None, default None
-        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each Model parameter/state.
+        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each variable.
         It is a dictionary where keys are the name of the parameters/states defined in the **problem** argument.
         In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in **problem**.
         None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the parameter/state bounds.
+            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the variable bounds.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -340,7 +338,7 @@ def generate_samples(
         .. math::
                 std = \\frac{u - l}{coef\\_std}
 
-        where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
+        where :math:`u` and :math:`l` are the upper and lower bounds of variables.
 
         .. note::
             If not given and Gaussian distribution is used, **coef_std** is set to 3 as default:
@@ -356,7 +354,6 @@ def generate_samples(
     See Also
     --------
     Samples: Represents the generated samples using `smash.generate_samples` method.
-    Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
     --------

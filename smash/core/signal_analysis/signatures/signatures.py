@@ -1,12 +1,12 @@
 from __future__ import annotations
 
+from smash.core.signal_analysis.signatures._sign_computation import _sign_computation
+from smash.core.signal_analysis.signatures._standardize import _standardize_signatures
+
 from typing import TYPE_CHECKING
 
-from smash.signal_analysis.signatures._sign_computation import _sign_computation
-from smash.signal_analysis.signatures._standardize import _standardize_signatures
-
 if TYPE_CHECKING:
-    from smash.core.model import Model
+    from smash.core.model.model import Model
 
 
 __all__ = ["Signatures", "signatures"]

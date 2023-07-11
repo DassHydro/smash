@@ -1,30 +1,29 @@
 from __future__ import annotations
 
-from smash.tools._common_function import _map_dict_to_object, _default_bound_constraints
-
-from smash.core._build_model import (
+from smash.core.model._build_model import (
+    _map_dict_to_object,
     _build_setup,
     _build_mesh,
     _build_input_data,
     _build_parameters,
 )
-from smash.core._standardize import (
+from smash.core.model._standardize import (
     _standardize_get_opr_parameters_args,
     _standardize_get_opr_initial_states_args,
     _standardize_set_opr_parameters_args,
     _standardize_set_opr_initial_states_args,
 )
 
-from smash.solver._mwd_setup import SetupDT
-from smash.solver._mwd_mesh import MeshDT
-from smash.solver._mwd_input_data import Input_DataDT
-from smash.solver._mwd_parameters import ParametersDT
-from smash.solver._mwd_output import OutputDT
-from smash.solver._mwd_options import OptionsDT
-from smash.solver._mwd_returns import ReturnsDT
+from smash.core.simulation.run.run import _forward_run
+from smash.core.simulation.optimize.optimize import _optimize
 
-from smash.simulation.run.run import _forward_run
-from smash.simulation.optimize.optimize import _optimize
+from smash.fcore._mwd_setup import SetupDT
+from smash.fcore._mwd_mesh import MeshDT
+from smash.fcore._mwd_input_data import Input_DataDT
+from smash.fcore._mwd_parameters import ParametersDT
+from smash.fcore._mwd_output import OutputDT
+from smash.fcore._mwd_options import OptionsDT
+from smash.fcore._mwd_returns import ReturnsDT
 
 import numpy as np
 
@@ -190,38 +189,3 @@ class Model(object):
         self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
     ):
         _optimize(self, options, returns)
-
-    # TODO: A voir si on garde ca comme ca
-    def default_bound_constraints(self, states: bool = False):
-        """
-        Get the boundary default constraints of the Model parameters/states.
-
-        Parameters
-        ----------
-        states : bool, default True
-            If True, return boundary constraints of the Model states instead of Model parameters.
-
-        Returns
-        -------
-        problem : dict
-            The boundary constraint problem of the Model parameters/states. The keys are
-
-            - 'num_vars': The number of Model parameters/states.
-            - 'names': The name of Model parameters/states.
-            - 'bounds': The upper and lower bounds of each Model parameters/states (a sequence of ``(min, max)``).
-
-        Examples
-        --------
-        >>> setup, mesh = smash.factory.load_dataset("cance")
-        >>> model = smash.Model(setup, mesh)
-        >>> problem = model.default_bound_constraints()
-        >>> problem
-        {
-            'num_vars': 4,
-            'names': ['cp', 'cft', 'exc', 'lr'],
-            'bounds': [[1e-06, 1000], [1e-06, 1000], [-50, 50], [1e-06, 1000]]
-        }
-
-        """
-
-        return _default_bound_constraints(self.setup, states)

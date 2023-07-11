@@ -1,21 +1,21 @@
 from __future__ import annotations
 
-from smash.signal_analysis.segmentation._tools import (
+from smash._constant import PEAK_QUANT, MAX_DURATION
+
+from smash.core.signal_analysis.segmentation._tools import (
     _get_season,
     _missing_values,
     _events_grad,
 )
 
-from smash._constant import PEAK_QUANT, MAX_DURATION
+import numpy as np
+import pandas as pd
+import warnings
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.core.model import Model
-
-import numpy as np
-import pandas as pd
-import warnings
+    from smash.core.model.model import Model
 
 __all__ = ["hydrograph_segmentation"]
 
