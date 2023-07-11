@@ -182,7 +182,7 @@ def _standardize_opr_parameters_value(
             f"Invalid value for model opr_parameter '{key}'. Feasible domain: ({l}, {u})"
         )
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:
+    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
         raise ValueError(
             f"Invalid shape for model opr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
         )
@@ -220,7 +220,7 @@ def _standardize_get_opr_parameters_args(model: Model, key: str) -> AnyTuple:
 
 
 def _standardize_get_opr_initial_states_args(model: Model, key: str) -> AnyTuple:
-    key = _standardize_opr_generic_states_key(model, key)
+    key = _standardize_opr_initial_states_key(model, key)
 
     return (key,)
 

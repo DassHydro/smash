@@ -18,7 +18,7 @@ __all__ = ["generate_samples", "Samples"]
 
 class Samples(dict):
     """
-    Represents the generated sample result.
+    Represents the generated samples result.
 
     Notes
     -----

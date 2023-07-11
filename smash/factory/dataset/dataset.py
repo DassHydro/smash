@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash._constant import DATASET_NAME
+
 from smash.io.mesh.mesh import read_mesh
 from smash.io.setup.setup import read_setup
 
@@ -9,8 +11,6 @@ import os
 __all__ = ["load_dataset"]
 
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
-
-DATASET_NAME = ["flwdir", "cance", "lez", "france"]
 
 
 def load_dataset(name: str):

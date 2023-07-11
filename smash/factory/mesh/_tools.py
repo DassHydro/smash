@@ -6,13 +6,12 @@ from osgeo import osr
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Tuple
     from osgeo import gdal
 
 
 def _xy_to_rowcol(
     x: float, y: float, xmin: float, ymax: float, xres: float, yres: float
-) -> Tuple[int]:
+) -> tuple:
     row = int((ymax - y) / yres)
     col = int((x - xmin) / xres)
 
@@ -21,7 +20,7 @@ def _xy_to_rowcol(
 
 def _rowcol_to_xy(
     row: int, col: int, xmin: float, ymax: float, xres: float, yres: float
-) -> Tuple[int]:
+) -> tuple:
     x = int(col * xres + xmin)
     y = int(ymax - row * yres)
 
@@ -74,7 +73,7 @@ def _get_array(
     return flwdir
 
 
-def _get_transform(flwdir_dataset: gdal.Dataset) -> Tuple[float]:
+def _get_transform(flwdir_dataset: gdal.Dataset) -> tuple:
     nrow = flwdir_dataset.RasterYSize
     ncol = flwdir_dataset.RasterXSize
 

@@ -75,17 +75,17 @@ def _build_parameters(
     parameters: ParametersDT,
 ):
     # % Build parameters
-    for param_name, param_value in DEFAULT_OPR_PARAMETERS.items():
-        if param_name == "llr":
+    for key, value in DEFAULT_OPR_PARAMETERS.items():
+        if key == "llr":
             setattr(
-                parameters.opr_parameters, param_name, setup.dt * (param_value / 3600)
+                parameters.opr_parameters, key, setup.dt * (value / 3600)
             )
         else:
-            setattr(parameters.opr_parameters, param_name, param_value)
+            setattr(parameters.opr_parameters, key, value)
 
     # % Build initial states
-    for state_name, state_value in DEFAULT_OPR_INITIAL_STATES.items():
-        setattr(parameters.opr_initial_states, state_name, state_value)
+    for key, value in DEFAULT_OPR_INITIAL_STATES.items():
+        setattr(parameters.opr_initial_states, key, value)
 
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date

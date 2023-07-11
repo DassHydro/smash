@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from smash._constant import (
+    STRUCTURE_OPR_PARAMETERS,
+    STRUCTURE_OPR_STATES,
+    DEFAULT_BOUNDS_OPR_PARAMETERS,
+    DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+)
+
 from smash.core.model._build_model import (
     _map_dict_to_object,
     _build_setup,
@@ -13,7 +20,6 @@ from smash.core.model._standardize import (
     _standardize_set_opr_parameters_args,
     _standardize_set_opr_initial_states_args,
 )
-
 from smash.core.simulation.run.run import _forward_run
 from smash.core.simulation.optimize.optimize import _optimize
 
@@ -48,7 +54,7 @@ class Model(object):
                 _build_setup(self.setup)
 
             else:
-                raise TypeError(f"setup argument must be Dict")
+                raise TypeError(f"setup argument must be dict")
 
             if isinstance(mesh, dict):
                 self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
@@ -58,7 +64,7 @@ class Model(object):
                 _build_mesh(self.setup, self.mesh)
 
             else:
-                raise TypeError(f"mesh argument must be Dict")
+                raise TypeError(f"mesh argument must be dict")
 
             self._input_data = Input_DataDT(self.setup, self.mesh)
 
@@ -160,7 +166,7 @@ class Model(object):
 
         return getattr(self._parameters.opr_parameters, *args)
 
-    def set_opr_parameter(self, key: str, value: Numeric | np.ndarray):
+    def set_opr_parameters(self, key: str, value: Numeric | np.ndarray):
         args = _standardize_set_opr_parameters_args(self, key, value)
 
         setattr(self._parameters.opr_parameters, *args)
@@ -179,6 +185,20 @@ class Model(object):
         args = _standardize_get_opr_final_states_args(self, key)
 
         return getattr(self._output.opr_final_states, *args)
+
+    def get_opr_parameters_bounds(self):
+        return {
+            key: value
+            for key, value in DEFAULT_BOUNDS_OPR_PARAMETERS.items()
+            if key in STRUCTURE_OPR_PARAMETERS[self.setup.structure]
+        }
+
+    def get_opr_initial_states_bounds(self):
+        return {
+            key: value
+            for key, value in DEFAULT_BOUNDS_OPR_INITIAL_STATES.items()
+            if key in STRUCTURE_OPR_STATES[self.setup.structure]
+        }
 
     def forward_run(
         self, options: OptionsDT | None = None, returns: ReturnsDT | None = None

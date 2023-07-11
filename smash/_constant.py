@@ -160,6 +160,9 @@ RATIO_PET_HOURLY = np.array(
     dtype=np.float32,
 )
 
+### DATASET ###
+###############
+DATASET_NAME = ["flwdir", "cance", "lez", "france"]
 
 ### MESH ###
 ############

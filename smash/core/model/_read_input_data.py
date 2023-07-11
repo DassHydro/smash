@@ -14,7 +14,7 @@ from osgeo import gdal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import ListLike
+    from smash._typing import ListLike, FilePath
     from smash.fcore._mwd_setup import SetupDT
     from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_input_data import Input_DataDT
@@ -27,7 +27,7 @@ def _index_containing_substring(l: ListLike, subs: str):
     return -1
 
 
-def _adjust_left_files_by_date(files: ListLike, date_range: Timestamp):
+def _adjust_left_files_by_date(files: ListLike, date_range: pd.Timestamp):
     n = 0
     ind = -1
     while ind == -1:
@@ -38,7 +38,7 @@ def _adjust_left_files_by_date(files: ListLike, date_range: Timestamp):
     return files[ind:]
 
 
-def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
+def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> np.ndarray:
     gdal.UseExceptions()
     ds = gdal.Open(path)
 

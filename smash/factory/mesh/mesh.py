@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash._constant import D8_VALUE
+
 from smash.factory.mesh._standardize import _standardize_generate_mesh_args
 from smash.factory.mesh._tools import (
     _get_transform,
@@ -10,8 +12,6 @@ from smash.factory.mesh._tools import (
     _trim_zeros_2d,
 )
 from smash.factory.mesh._flib_mesh import mw_mesh
-
-from smash._constant import D8_VALUE
 
 import numpy as np
 
@@ -24,7 +24,7 @@ if TYPE_CHECKING:
 __all__ = ["generate_mesh"]
 
 
-def _get_mesh_from_xy(
+def _generate_mesh_from_xy(
     flwdir_dataset: gdal.Dataset,
     x: np.ndarray,
     y: np.ndarray,
@@ -113,7 +113,7 @@ def _get_mesh_from_xy(
     return mesh
 
 
-def _get_mesh_from_bbox(
+def _generate_mesh_from_bbox(
     flwdir_dataset: gdal.Dataset, bbox: np.ndarray, epsg: int
 ) -> dict:
     (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(flwdir_dataset)
@@ -174,9 +174,9 @@ def _generate_mesh(
     epsg: int | None,
 ) -> dict:
     if bbox is not None:
-        return _get_mesh_from_bbox(flwdir_dataset, bbox, epsg)
+        return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
-        return _get_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
+        return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
 
 
 def generate_mesh(
