@@ -5,7 +5,7 @@ from smash._constant import FEASIBLE_OPR_PARAMETERS, FEASIBLE_OPR_INITIAL_STATES
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.solver._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_parameters import ParametersDT
 
 import numpy as np
 

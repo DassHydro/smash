@@ -40,7 +40,7 @@ def _standardize_generate_samples_generator(problem: dict, generator: str) -> st
 
     if generator not in SAMPLES_GENERATORS:
         raise ValueError(
-            f"Unknown generator '{generator}': Choices: {SAMPLE_GENERATORS}"
+            f"Unknown generator '{generator}': Choices: {SAMPLES_GENERATORS}"
         )
 
     return generator
