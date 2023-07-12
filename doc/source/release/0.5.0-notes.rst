@@ -106,3 +106,10 @@ Correctly handle Nodata value during the spatial disaggregation of the rainfall
 A crash occured during the disaggregation of the rainfall. The creation of a GDAL virtual-destination failed when the parent geotiff file has its Nodata value unset (None type). When this is the case, the Nodata value of the disaggregation rainfall is automatically set to -99.
 
 See issue `#40 <https://github.com/DassHydro-dev/smash/issues/40>`__.
+
+Stop the execution of smash when ``start_time`` is equal to ``end_time``
+************************************************************************
+
+When ``start_time`` is equal to ``end_time``, the code crashes during the data reading with no obvious reason. Now just stop the code execution and return an error when this case occurs.
+
+See issue `#41 <https://github.com/DassHydro-dev/smash/issues/41>`__.
