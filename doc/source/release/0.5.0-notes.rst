@@ -99,3 +99,11 @@ An error occured when two neighboring cells have antagonistic flow directions ``
 segmentation faults when the maximum number of recursions has been reached, a check is added to the code to exit recursion in that case.
 
 See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
+
+Correctly handle Nodata value during the spatial desagregation of the rainfall
+******************************************************************************
+
+A crash occured during the desagregation of th rainfall. The creation of a GDAL virtual-destination failed when the parent geotiff file has its Nodata value unset (None type). When this is the case, the Nodata value of the desagregated rainfall is automatically set to -99.
+
+see issue `#36 https://github.com/DassHydro-dev/smash/pull/36/commits/9c760201ff0590f0e8ef38314b16b0b0932366f1>`__.
+
