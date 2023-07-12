@@ -31,7 +31,7 @@ def gdal_raster_open(filename):
     --------
     dataset = gdal_raster_open("filename")
     """
-    
+
     if os.path.isfile(filename):
         dataset = gdal.Open(filename)
     else:
@@ -146,10 +146,14 @@ def gdal_reproject_raster(dataset, xres, yres):
     # Workaround for gdal bug which initialise array to 0 instead as the No_Data value
     # Here we initialise the band manually with the nodata_value
     nodata = dataset.GetRasterBand(1).GetNoDataValue()
+    if not isinstance(nodata, float):
+        nodata = -99.0
+
     band = virtual_destination.GetRasterBand(
         1
     )  # Notice that band is a pointer to virtual_destination
-    band.SetNoDataValue(nodata)
+    band.SetNoDataValue(nodata)  # nodata argument of type 'double'
+
     nodataarray = np.ndarray(shape=(new_y_size, new_x_size))
     nodataarray.fill(nodata)
     band.WriteArray(nodataarray)
@@ -391,7 +395,7 @@ def union_bbox(bbox1, bbox2):
     ----------
     bbox1: dict containin the first bbox informations
     bbox2 : dict containin the second bbox informations
-    
+
     returns
     -------
     dic containing the bbox union
@@ -419,7 +423,7 @@ def get_bbox(dataset):
     Parameters
     ----------
     dataset: gdal object
-    
+
     returns
     -------
     dic containing the bbox of the dataset
@@ -447,7 +451,7 @@ def get_bbox_from_window(dataset, window):
     ----------
     dataset: gdal object
     window : dict with ncol, nrow, col offset and row offset
-    
+
     returns
     -------
     dic containing the computed bbox
@@ -478,7 +482,7 @@ def get_window_from_bbox(dataset, bbox):
     ----------
     dataset: gdal object
     bbox : dict containing the bbox
-    
+
     returns
     -------
     dic containing the computed windows
@@ -521,7 +525,7 @@ def crop_array(array, window):
     ----------
     array: numpy array
     window : dict containg the window to crop
-    
+
     returns
     -------
     crop_array: the cropped numpy array, shape of the defined window
