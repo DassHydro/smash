@@ -246,48 +246,6 @@ class Samples(dict):
         return pd.DataFrame({k: self[k] for k in self._problem["names"]})
 
 
-def _generate_samples(
-    problem: dict,
-    generator: str,
-    n: int,
-    random_state: int | None,
-    mean: dict | None,
-    coef_std: Numeric | None,
-) -> Samples:
-    ret_dict = {key: [] for key in problem["names"]}
-
-    ret_dict["generator"] = generator
-
-    ret_dict["n_sample"] = n
-
-    ret_dict["_problem"] = problem.copy()
-
-    if random_state is not None:
-        np.random.seed(random_state)
-
-    for i, p in enumerate(problem["names"]):
-        low = problem["bounds"][i][0]
-        upp = problem["bounds"][i][1]
-
-        if generator == "uniform":
-            ret_dict[p] = np.random.uniform(low, upp, n)
-
-            ret_dict["_" + p] = np.ones(n) / (upp - low)
-
-        elif generator in ["normal", "gaussian"]:
-            sd = (upp - low) / coef_std
-
-            trunc_normal = truncnorm(
-                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
-            )
-
-            ret_dict[p] = trunc_normal.rvs(size=n)
-
-            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
-
-    return Samples(ret_dict)
-
-
 def generate_samples(
     problem: dict,
     generator: str = "uniform",
@@ -381,3 +339,45 @@ def generate_samples(
     )
 
     return _generate_samples(*args)
+
+
+def _generate_samples(
+    problem: dict,
+    generator: str,
+    n: int,
+    random_state: int | None,
+    mean: dict | None,
+    coef_std: Numeric | None,
+) -> Samples:
+    ret_dict = {key: [] for key in problem["names"]}
+
+    ret_dict["generator"] = generator
+
+    ret_dict["n_sample"] = n
+
+    ret_dict["_problem"] = problem.copy()
+
+    if random_state is not None:
+        np.random.seed(random_state)
+
+    for i, p in enumerate(problem["names"]):
+        low = problem["bounds"][i][0]
+        upp = problem["bounds"][i][1]
+
+        if generator == "uniform":
+            ret_dict[p] = np.random.uniform(low, upp, n)
+
+            ret_dict["_" + p] = np.ones(n) / (upp - low)
+
+        elif generator in ["normal", "gaussian"]:
+            sd = (upp - low) / coef_std
+
+            trunc_normal = truncnorm(
+                (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd
+            )
+
+            ret_dict[p] = trunc_normal.rvs(size=n)
+
+            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
+
+    return Samples(ret_dict)

@@ -3,7 +3,7 @@ from __future__ import annotations
 import numpy as np
 
 
-class sgd:
+class SGD:
 
     """
     Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
@@ -35,7 +35,7 @@ class sgd:
         return w - self.learning_rate * self.w_updt
 
 
-class adam:
+class Adam:
 
     """
     Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
@@ -86,7 +86,7 @@ class adam:
         return w - self.w_updt
 
 
-class adagrad:
+class Adagrad:
 
     """
     Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
@@ -116,7 +116,7 @@ class adagrad:
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.G + self.eps)
 
 
-class rmsprop:
+class RMSprop:
 
     """
     Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.

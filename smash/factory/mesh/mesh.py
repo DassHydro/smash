@@ -24,6 +24,111 @@ if TYPE_CHECKING:
 __all__ = ["generate_mesh"]
 
 
+def generate_mesh(
+    flwdir_path: FilePath,
+    bbox: ListLike | None = None,
+    x: Numeric | ListLike | None = None,
+    y: Numeric | ListLike | None = None,
+    area: Numeric | ListLike | None = None,
+    code: str | ListLike | None = None,
+    max_depth: Numeric = 1,
+    epsg: AlphaNumeric | None = None,
+) -> dict:
+    """
+    Automatic mesh generation.
+
+    .. hint::
+        See the :ref:`User Guide <user_guide.in_depth.automatic_meshing>` for more.
+
+    Parameters
+    ----------
+    flwdir_path : str
+        Path to the flow directions file. The file will be opened with `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__.
+
+    bbox : sequence or None, default None
+        Bounding box with the following convention:
+
+        ``(xmin, xmax, ymin, ymax)``.
+        The bounding box values must respect the CRS of the flow directions file.
+
+        .. note::
+            If not given, **x**, **y** and **area** must be filled in.
+
+    x : float, sequence or None, default None
+        The x-coordinate(s) of the catchment outlet(s) to mesh.
+        The **x** value(s) must respect the CRS of the flow directions file.
+        The **x** size must be equal to **y** and area.
+
+    y : float, sequence or None, default None
+        The y-coordinate(s) of the catchment outlet(s) to mesh.
+        The **y** value(s) must respect the CRS of the flow directions file.
+        The **y** size must be equal to **x** and **area**.
+
+    area : float, sequence or None, default None
+        The area of the catchment(s) to mesh in m².
+        The **area** size must be equal to **x** and **y**.
+
+    code : str, sequence or None, default None
+        The code of the catchment(s) to mesh.
+        The **code** size must be equal to **x**, **y** and **area**.
+        In case of bouding box meshing, the **code** argument is not used.
+
+        .. note::
+            If not given, the default code is:
+
+            ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges.
+
+    max_depth : int, default 1
+        The maximum depth accepted by the algorithm to find the catchment outlet.
+        A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in:
+
+        ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
+        the given catchment area and the modeled catchment area calculated from the flow directions file.
+        This can be generalized to :math:`n`.
+
+        .. image:: ../../_static/max_depth.png
+            :align: center
+            :width: 350
+
+    epsg : str, int or None, default None
+        The EPSG value of the flow directions file. By default, if the projection is well
+        defined in the flow directions file. It is not necessary to provide the value of
+        the EPSG. On the other hand, if the projection is not well defined in the flow directions file
+        (i.e. in ASCII file). The **epsg** argument must be filled in.
+
+    Returns
+    -------
+    dict
+        A mesh dictionary that can be used to initialize the `Model` object.
+
+    See Also
+    --------
+    Model: Primary data structure of the hydrological model `smash`.
+
+    Examples
+    --------
+    >>> flwdir = smash.factory.load_dataset("flwdir")
+    >>> mesh = smash.factory.generate_mesh(
+    ... flwdir,
+    ... x=[840_261, 826_553, 828_269],
+    ... y=[6_457_807, 6_467_115, 6_469_198],
+    ... area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
+    ... code=["V3524010", "V3515010", "V3517010"],
+    ... )
+    >>> mesh.keys()
+    dict_keys(['xres', 'yres', 'xmin', 'ymax', 'nrow', 'ncol',
+               'dx', 'dy', 'flwdir', 'flwdst', 'flwacc', 'nac',
+               'active_cell', 'path', 'ng', 'gauge_pos', 'code',
+               'area', 'area_dln'])
+    """
+
+    args = _standardize_generate_mesh_args(
+        flwdir_path, bbox, x, y, area, code, max_depth, epsg
+    )
+
+    return _generate_mesh(*args)
+
+
 def _generate_mesh_from_xy(
     flwdir_dataset: gdal.Dataset,
     x: np.ndarray,
@@ -177,108 +282,3 @@ def _generate_mesh(
         return _generate_mesh_from_bbox(flwdir_dataset, bbox, epsg)
     else:
         return _generate_mesh_from_xy(flwdir_dataset, x, y, area, code, max_depth, epsg)
-
-
-def generate_mesh(
-    flwdir_path: FilePath,
-    bbox: ListLike | None = None,
-    x: Numeric | ListLike | None = None,
-    y: Numeric | ListLike | None = None,
-    area: Numeric | ListLike | None = None,
-    code: str | ListLike | None = None,
-    max_depth: Numeric = 1,
-    epsg: AlphaNumeric | None = None,
-) -> dict:
-    """
-    Automatic mesh generation.
-
-    .. hint::
-        See the :ref:`User Guide <user_guide.in_depth.automatic_meshing>` for more.
-
-    Parameters
-    ----------
-    flwdir_path : str
-        Path to the flow directions file. The file will be opened with `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__.
-
-    bbox : sequence or None, default None
-        Bounding box with the following convention:
-
-        ``(xmin, xmax, ymin, ymax)``.
-        The bounding box values must respect the CRS of the flow directions file.
-
-        .. note::
-            If not given, **x**, **y** and **area** must be filled in.
-
-    x : float, sequence or None, default None
-        The x-coordinate(s) of the catchment outlet(s) to mesh.
-        The **x** value(s) must respect the CRS of the flow directions file.
-        The **x** size must be equal to **y** and area.
-
-    y : float, sequence or None, default None
-        The y-coordinate(s) of the catchment outlet(s) to mesh.
-        The **y** value(s) must respect the CRS of the flow directions file.
-        The **y** size must be equal to **x** and **area**.
-
-    area : float, sequence or None, default None
-        The area of the catchment(s) to mesh in m².
-        The **area** size must be equal to **x** and **y**.
-
-    code : str, sequence or None, default None
-        The code of the catchment(s) to mesh.
-        The **code** size must be equal to **x**, **y** and **area**.
-        In case of bouding box meshing, the **code** argument is not used.
-
-        .. note::
-            If not given, the default code is:
-
-            ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges.
-
-    max_depth : int, default 1
-        The maximum depth accepted by the algorithm to find the catchment outlet.
-        A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in:
-
-        ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
-        the given catchment area and the modeled catchment area calculated from the flow directions file.
-        This can be generalized to :math:`n`.
-
-        .. image:: ../../_static/max_depth.png
-            :align: center
-            :width: 350
-
-    epsg : str, int or None, default None
-        The EPSG value of the flow directions file. By default, if the projection is well
-        defined in the flow directions file. It is not necessary to provide the value of
-        the EPSG. On the other hand, if the projection is not well defined in the flow directions file
-        (i.e. in ASCII file). The **epsg** argument must be filled in.
-
-    Returns
-    -------
-    dict
-        A mesh dictionary that can be used to initialize the `Model` object.
-
-    See Also
-    --------
-    Model: Primary data structure of the hydrological model `smash`.
-
-    Examples
-    --------
-    >>> flwdir = smash.factory.load_dataset("flwdir")
-    >>> mesh = smash.factory.generate_mesh(
-    ... flwdir,
-    ... x=[840_261, 826_553, 828_269],
-    ... y=[6_457_807, 6_467_115, 6_469_198],
-    ... area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
-    ... code=["V3524010", "V3515010", "V3517010"],
-    ... )
-    >>> mesh.keys()
-    dict_keys(['xres', 'yres', 'xmin', 'ymax', 'nrow', 'ncol',
-               'dx', 'dy', 'flwdir', 'flwdst', 'flwacc', 'nac',
-               'active_cell', 'path', 'ng', 'gauge_pos', 'code',
-               'area', 'area_dln'])
-    """
-
-    args = _standardize_generate_mesh_args(
-        flwdir_path, bbox, x, y, area, code, max_depth, epsg
-    )
-
-    return _generate_mesh(*args)

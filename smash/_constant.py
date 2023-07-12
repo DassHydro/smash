@@ -199,9 +199,20 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-NET_OPTIMIZER = ["sgd", "adam", "adagrad", "rmsprop"]
+LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
 
-LAYER_NAME = ["dense", "activation", "scale", "dropout"]
+NET_OPTIMIZER = ["SGD", "Adam", "Adagrad", "RMSprop"]
+
+ACTIVATION_FUNCTION = [
+    "Sigmoid",
+    "Softmax",
+    "TanH",
+    "ReLU",
+    "LeakyReLU",
+    "ELU",
+    "SELU",
+    "SoftPlus",
+]
 
 
 ### EVENT SEGMENTATION ###

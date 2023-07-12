@@ -1,50 +1,80 @@
-commit 1b625c82aa88b99f6603e4cb198ab502178f4449
+commit 6cc45e496acdba20b71778d9b779dad9e731c47f
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Tue Jul 11 18:58:46 2023 +0200
+Date:   Tue Jul 11 21:55:54 2023 +0200
 
-    FIX/ENC: testing baseline and minor fixes:
-    - Re-add the baseline from maintenance/0.5.0 (remove test constant, test simu and test signatures sensitivity
-    - Fix generate_samples function
+    FIX baseline testing:
+    - rename tests/io/test_mesh to test_mseh_io since pytest does not accept two files with the same name
+    - fix test on forward_run (model.output.cost in the previous version returns 0 while the current version returns a cost value)
+    - re-generate baseline:
+      - test graph net (modified): due to the name of class in Net (e.g., dense vs Dense, actiavtion vs Activation)
+      - bbox_mesh.flwacc, mesh_io.area, mesh_io.flwacc, xy_mesh.flwacc: modified
+      - mesh_io.area_dln, mesh_io.dy, mesh_io.xres, mesh_io.yres: added
+    TODO:
+    - clean/enhance pytest: add constant test, setup test, handle with cost for simulation tests
+    - clean Net (class name)
+    - clean signatures
 
-TEST NAME               |STATUS
-bbox_mesh.flwacc        |MODIFIED
-bbox_mesh.flwdir        |NON MODIFIED
-event_seg.arr           |NON MODIFIED
-gen_samples.nor         |NON MODIFIED
-gen_samples.uni         |NON MODIFIED
-mesh_io.active_cell     |NON MODIFIED
-mesh_io.area            |MODIFIED
-mesh_io.area_dln        |ADDED
-mesh_io.code            |NON MODIFIED
-mesh_io.dx              |NON MODIFIED
-mesh_io.dy              |ADDED
-mesh_io.flwacc          |MODIFIED
-mesh_io.flwdir          |NON MODIFIED
-mesh_io.flwdst          |NON MODIFIED
-mesh_io.gauge_pos       |NON MODIFIED
-mesh_io.nac             |NON MODIFIED
-mesh_io.ncol            |NON MODIFIED
-mesh_io.ng              |NON MODIFIED
-mesh_io.nrow            |NON MODIFIED
-mesh_io.path            |NON MODIFIED
-mesh_io.xmin            |NON MODIFIED
-mesh_io.xres            |ADDED
-mesh_io.ymax            |NON MODIFIED
-mesh_io.yres            |ADDED
-net_init.bias_layer_1   |NON MODIFIED
-net_init.bias_layer_2   |NON MODIFIED
-net_init.bias_layer_3   |NON MODIFIED
-net_init.bias_layer_4   |NON MODIFIED
-net_init.graph          |MODIFIED
-net_init.weight_layer_1 |NON MODIFIED
-net_init.weight_layer_2 |NON MODIFIED
-net_init.weight_layer_3 |NON MODIFIED
-net_init.weight_layer_4 |NON MODIFIED
-run.cost                |NON MODIFIED
-signatures.cont_obs     |NON MODIFIED
-signatures.cont_sim     |NON MODIFIED
-signatures.event_obs    |NON MODIFIED
-signatures.event_sim    |NON MODIFIED
-xy_mesh.flwacc          |MODIFIED
-xy_mesh.flwdir          |NON MODIFIED
-xy_mesh.flwdst          |NON MODIFIED
+TEST NAME                       |STATUS
+bbox_mesh.flwacc                |NON MODIFIED
+bbox_mesh.flwdir                |NON MODIFIED
+event_seg.arr                   |DELETED
+forward_run.qsim                |ADDED
+gen_samples.nor                 |DELETED
+gen_samples.uni                 |DELETED
+generate_samples.normal         |ADDED
+generate_samples.uniform        |ADDED
+hydrograph_segmentation.arr     |ADDED
+mesh_io.active_cell             |NON MODIFIED
+mesh_io.area                    |NON MODIFIED
+mesh_io.area_dln                |NON MODIFIED
+mesh_io.code                    |NON MODIFIED
+mesh_io.dx                      |NON MODIFIED
+mesh_io.dy                      |NON MODIFIED
+mesh_io.flwacc                  |NON MODIFIED
+mesh_io.flwdir                  |NON MODIFIED
+mesh_io.flwdst                  |NON MODIFIED
+mesh_io.gauge_pos               |NON MODIFIED
+mesh_io.nac                     |NON MODIFIED
+mesh_io.ncol                    |NON MODIFIED
+mesh_io.ng                      |NON MODIFIED
+mesh_io.nrow                    |NON MODIFIED
+mesh_io.path                    |NON MODIFIED
+mesh_io.xmin                    |NON MODIFIED
+mesh_io.xres                    |NON MODIFIED
+mesh_io.ymax                    |NON MODIFIED
+mesh_io.yres                    |NON MODIFIED
+net_init.bias_layer_1           |NON MODIFIED
+net_init.bias_layer_2           |NON MODIFIED
+net_init.bias_layer_3           |NON MODIFIED
+net_init.bias_layer_4           |NON MODIFIED
+net_init.graph                  |MODIFIED
+net_init.weight_layer_1         |NON MODIFIED
+net_init.weight_layer_2         |NON MODIFIED
+net_init.weight_layer_3         |NON MODIFIED
+net_init.weight_layer_4         |NON MODIFIED
+run.cost                        |DELETED
+setup_io.daily_interannual_pet  |ADDED
+setup_io.descriptor_directory   |ADDED
+setup_io.descriptor_name        |ADDED
+setup_io.dt                     |ADDED
+setup_io.end_time               |ADDED
+setup_io.pet_conversion_factor  |ADDED
+setup_io.pet_directory          |ADDED
+setup_io.pet_format             |ADDED
+setup_io.prcp_conversion_factor |ADDED
+setup_io.prcp_directory         |ADDED
+setup_io.prcp_format            |ADDED
+setup_io.qobs_directory         |ADDED
+setup_io.read_descriptor        |ADDED
+setup_io.read_pet               |ADDED
+setup_io.read_prcp              |ADDED
+setup_io.read_qobs              |ADDED
+setup_io.start_time             |ADDED
+setup_io.structure              |ADDED
+signatures.cont_obs             |NON MODIFIED
+signatures.cont_sim             |NON MODIFIED
+signatures.event_obs            |NON MODIFIED
+signatures.event_sim            |NON MODIFIED
+xy_mesh.flwacc                  |NON MODIFIED
+xy_mesh.flwdir                  |NON MODIFIED
+xy_mesh.flwdst                  |NON MODIFIED

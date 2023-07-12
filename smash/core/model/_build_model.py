@@ -77,9 +77,7 @@ def _build_parameters(
     # % Build parameters
     for key, value in DEFAULT_OPR_PARAMETERS.items():
         if key == "llr":
-            setattr(
-                parameters.opr_parameters, key, setup.dt * (value / 3600)
-            )
+            setattr(parameters.opr_parameters, key, setup.dt * (value / 3600))
         else:
             setattr(parameters.opr_parameters, key, value)
 

@@ -23,7 +23,7 @@ def efficiency_score(model: Model, metric: str = "nse"):
     ----------
     model : Model
         Model object
-        
+
     metric : str, default 'nse'
         The efficiency metric criterion. Should be one of
 

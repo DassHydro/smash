@@ -40,7 +40,9 @@ def sed_internal_import(pyf: pathlib.PosixPath):
         The Python file to sed
     """
 
-    os.system(f'sed -i "0,/import _flib_fcore/s//from smash.fcore import _flib_fcore/" {pyf}')
+    os.system(
+        f'sed -i "0,/import _flib_fcore/s//from smash.fcore import _flib_fcore/" {pyf}'
+    )
     os.system(f'sed -i "s/from flib_fcore/from smash.fcore/g" {pyf}')
 
 

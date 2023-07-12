@@ -182,7 +182,11 @@ def _standardize_opr_parameters_value(
             f"Invalid value for model opr_parameter '{key}'. Feasible domain: ({l}, {u})"
         )
 
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
+    if (
+        isinstance(value, np.ndarray)
+        and value.shape != model.mesh.flwdir.shape
+        and value.size != 1
+    ):
         raise ValueError(
             f"Invalid shape for model opr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
         )

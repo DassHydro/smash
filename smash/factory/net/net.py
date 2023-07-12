@@ -1,10 +1,15 @@
 from __future__ import annotations
 
+from smash._typing import Numeric
+
 # from smash.solver._mw_forward import forward_b
 
-from smash.factory.net._standardize import _standardize_layer, _standardize_optimizer
-from smash.factory.net._layers import dense, activation, scale, dropout
-from smash.factory.net._optimizers import sgd, adam, adagrad, rmsprop
+from smash.factory.net._standardize import (
+    _standardize_add_args,
+    _standardize_compile_args,
+)
+from smash.factory.net._layers import Dense, Activation, Scale, Dropout
+from smash.factory.net._optimizers import SGD, Adam, Adagrad, RMSprop
 
 
 # from typing import TYPE_CHECKING
@@ -215,7 +220,7 @@ class Net(object):
         Optimizer: (adam, lr=0.001)
         """
 
-        layer = _standardize_layer(layer)
+        layer, options = _standardize_add_args(layer, options)
 
         lay = eval(layer)(**options)
 
@@ -239,9 +244,9 @@ class Net(object):
 
     def compile(
         self,
-        optimizer: str = "adam",
+        optimizer: str = "Adam",
         options: dict | None = None,
-        random_state: int | None = None,
+        random_state: Numeric | None = None,
     ):
         """
         Compile the network and set optimizer.
@@ -299,15 +304,14 @@ class Net(object):
         """
 
         if self.layers:
-            if options is None:
-                options = {}
+            optimizer, random_state, options = _standardize_compile_args(
+                optimizer, random_state, options
+            )
 
-            optimizer = _standardize_optimizer(optimizer)
+            opt = eval(optimizer)(**options)
 
             if random_state is not None:
                 np.random.seed(random_state)
-
-            opt = eval(optimizer)(**options)
 
             for layer in self.layers:
                 if hasattr(layer, "_initialize"):

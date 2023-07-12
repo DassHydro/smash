@@ -6,8 +6,9 @@ import warnings
 
 import numpy as np
 
-from typing import TYPE_CHECKING
 from smash._typing import Numeric
+
+from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import AnyTuple
@@ -53,9 +54,7 @@ def _standardize_generate_samples_n(n: Numeric) -> int:
     n = int(n)
 
     if n <= 0:
-        raise ValueError(
-            "n argument must be greater than 0"
-        )
+        raise ValueError("n argument must be greater than 0")
 
     return n
 
@@ -73,9 +72,7 @@ def _standardize_generate_samples_random_state(random_state: Numeric | None) -> 
         random_state = int(random_state)
 
         if random_state < 0 or random_state > 4_294_967_295:
-            raise ValueError(
-                "random_state argument must be between 0 and 2**32 - 1"
-            )
+            raise ValueError("random_state argument must be between 0 and 2**32 - 1")
 
     return random_state
 

@@ -8,12 +8,16 @@ import numpy as np
 import pytest
 
 
-def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
+def generic_generate_samples(model: smash.Model, **kwargs) -> dict:
     bounds = model.get_opr_parameters_bounds()
-    
-    problem = dict(zip(PROBLEM_KEYS, [len(bounds), list(bounds.keys()), list(bounds.values())]))
 
-    sample = smash.factory.generate_samples(problem, generator="uniform", n=20, random_state=11)
+    problem = dict(
+        zip(PROBLEM_KEYS, [len(bounds), list(bounds.keys()), list(bounds.values())])
+    )
+
+    sample = smash.factory.generate_samples(
+        problem, generator="uniform", n=20, random_state=11
+    )
     uni = sample.to_numpy(axis=-1)
 
     sample = smash.factory.generate_samples(
@@ -26,13 +30,13 @@ def generic_gen_samples(model: smash.Model, **kwargs) -> dict:
     )
     nor = sample.to_numpy(axis=-1)
 
-    res = {"gen_samples.uni": uni, "gen_samples.nor": nor}
+    res = {"generate_samples.uniform": uni, "generate_samples.normal": nor}
 
     return res
 
 
-def test_gen_samples():
-    res = generic_gen_samples(pytest.model)
+def test_generate_samples():
+    res = generic_generate_samples(pytest.model)
 
     for key, value in res.items():
         # % Check generate samples uniform/normal
