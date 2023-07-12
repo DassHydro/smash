@@ -99,3 +99,9 @@ An error occured when two neighboring cells have antagonistic flow directions ``
 segmentation faults when the maximum number of recursions has been reached, a check is added to the code to exit recursion in that case.
 
 See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
+
+Stop the execution of smash when start_time equal to end_time
+
+In that circonstance, the code crashed during the data reading with no obvious reason. Now just stop the code execution and return an error when this case occurs.
+
+See commit `<https://github.com/DassHydro-dev/smash/commit/d6cd7e2261971d3549b555661805fa6abcb994fe>`__.
