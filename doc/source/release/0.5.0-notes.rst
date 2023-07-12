@@ -100,8 +100,9 @@ segmentation faults when the maximum number of recursions has been reached, a ch
 
 See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
 
-Stop the execution of smash when start_time equal to end_time
+Stop the execution of smash when ``start_time`` is equal to ``end_time``
+************************************************************************
 
-In that circonstance, the code crashed during the data reading with no obvious reason. Now just stop the code execution and return an error when this case occurs.
+When ``start_time`` is equal to ``end_time``, the code crashes during the data reading with no obvious reason. Now just stop the code execution and return an error when this case occurs.
 
-See commit `<https://github.com/DassHydro-dev/smash/commit/d6cd7e2261971d3549b555661805fa6abcb994fe>`__.
+See issue `#41 <https://github.com/DassHydro-dev/smash/issues/41>`__.
