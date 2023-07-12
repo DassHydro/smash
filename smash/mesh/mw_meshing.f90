@@ -345,17 +345,17 @@ contains
             row_imd = row + drow(i)
             col_imd = col + dcol(i)
 
-            do j = 1, ng
-
-                if (row_imd .eq. row_dln(j) .and. &
-                & col_imd .eq. col_dln(j)) flag(j) = 1
-
-            end do
-
             if (row_imd .gt. 0 .and. row_imd .le. nrow .and. &
             &   col_imd .gt. 0 .and. col_imd .le. ncol) then
 
                 if (flwdir(row_imd, col_imd) .eq. i) then
+
+                    do j = 1, ng
+
+                        if (row_imd .eq. row_dln(j) .and. &
+                        & col_imd .eq. col_dln(j)) flag(j) = 1
+
+                    end do
 
                     !% Avoid to compute square root if not diagonal
                     if (dcol(i) .eq. 0) then

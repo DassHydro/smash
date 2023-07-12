@@ -92,10 +92,17 @@ Segmentation algorithm
 
 If multiple events are detected, the duration of the merged event is no longer constrained by the max duration parameter. Instead, its duration may exceed this value.
 
-``smash.generate_mesh`` segmentation fault
-******************************************
+Catchment delineation segmentation fault
+****************************************
 
 An error occured when two neighboring cells have antagonistic flow directions ``(1, 5)``, ``(2, 6)``, ``(3, 7)``, ``(4, 8)``. This should be corrected directly in the flow direction file but to avoid 
 segmentation faults when the maximum number of recursions has been reached, a check is added to the code to exit recursion in that case.
 
 See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
+
+Catchment flow distances on adjacent non-nested catchments
+**********************************************************
+
+There is a bug when calculating flow distances when two adjacent catchments are considered in the mesh but non-nested. During calculation, a flag is set around the 8 adjacent cells of each upstream cell and not on the upstream cell in particular. As a result, a gauge stuck to a cell of another catchment will not be considered as a non-nested gauge and will be filled with -99. The bug has been solved by flagging only the upstream cell and not the 8 adjacent cells.
+
+See issue `#38 <https://github.com/DassHydro-dev/smash/issues/38>`__.
