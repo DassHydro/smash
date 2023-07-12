@@ -19,7 +19,7 @@ BUILD_DIR := obj
 SMASH_DIR := smash
 TAPENADE_DIR := tapenade
 F90WRAP_UTILS_DIR := f90wrap_utils
-SOLVER_DIR := smash/solver
+FCORE_DIR := smash/fcore
 MESH_DIR := smash/factory/mesh
 TESTS_DIR := smash/tests
 DOC_DIR := doc
@@ -30,14 +30,14 @@ MOD := -J$(BUILD_DIR)
 
 #% Files
 OBJ_FILES := $(BUILD_DIR)/*.$(OBJ_EXT)
-SOLVER_FILES := $(SOLVER_DIR)/*/*.$(C_EXT) $(SOLVER_DIR)/*/*.$(F77_EXT) $(SOLVER_DIR)/*/*.$(F90_EXT)
-SOLVER_WRAP_FILES := $(SOLVER_DIR)/*/mwd_*.$(F90_EXT) $(SOLVER_DIR)/*/mw_*.$(F90_EXT)
-SOLVER_F90WRAP_FILES := f90wrap*.$(F90_EXT)
+FCORE_FILES := $(FCORE_DIR)/*/*.$(C_EXT) $(FCORE_DIR)/*/*.$(F77_EXT) $(FCORE_DIR)/*/*.$(F90_EXT)
+FCORE_WRAP_FILES := $(FCORE_DIR)/*/mwd_*.$(F90_EXT) $(FCORE_DIR)/*/mw_*.$(F90_EXT)
+FCORE_F90WRAP_FILES := f90wrap*.$(F90_EXT)
 MESH_WRAP_FILES := $(MESH_DIR)/mw_*.$(F90_EXT)
 
 #% Shared lib name
-SOLVER_SHARED_LIB := solver
-MESH_SHARED_LIB := mesh
+FCORE_SHARED_LIB := flib_fcore
+MESH_SHARED_LIB := flib_mesh
 
 #% Classic `make` call
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
@@ -50,7 +50,7 @@ dbg: directories c f77 f90 f90wrap f2py-f90wrap f2py-mesh finalize library-edit
 #% Make directories
 directories:
 	mkdir -p $(BUILD_DIR)
-	mkdir -p $(SOLVER_DIR)/f90wrap/
+	mkdir -p $(FCORE_DIR)/f90wrap/
 
 #% Make dependencies
 #% Automatic generation of makefile.dep file (allows not to modify by hand the order of dependencies of the files to compile)
@@ -58,15 +58,15 @@ dependencies:
 	python3 dependencies.py
 
 #% Compile c
-$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(C_EXT)
+$(BUILD_DIR)/%.$(OBJ_EXT): $(FCORE_DIR)/*/%.$(C_EXT)
 	$(CC) $(C_FLAGS) $(MOD) $(INC) -c -o $@ $<
 
 #% Compile f77
-$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F77_EXT)
+$(BUILD_DIR)/%.$(OBJ_EXT): $(FCORE_DIR)/*/%.$(F77_EXT)
 	$(FC) $(F77_FLAGS) $(MOD) $(INC) -c -o $@ $<
 
 #% Compile f90
-$(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F90_EXT)
+$(BUILD_DIR)/%.$(OBJ_EXT): $(FCORE_DIR)/*/%.$(F90_EXT)
 	$(FC) $(F90_FLAGS) $(MOD) $(INC) -c -o $@ $<
 
 #% Make f90wrap files
@@ -74,11 +74,11 @@ $(BUILD_DIR)/%.$(OBJ_EXT): $(SOLVER_DIR)/*/%.$(F90_EXT)
 f90wrap:
 	rm -rf $(BUILD_DIR)/f90wrap*
 	cd $(F90WRAP_UTILS_DIR) ; python3 gen_py_mod_names.py
-	f90wrap -m $(SOLVER_SHARED_LIB) $(SOLVER_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
+	f90wrap -m $(FCORE_SHARED_LIB) $(FCORE_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
 
 #% Make f2py-f90wrap .so library
 f2py-f90wrap:
-	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops' --build-dir . -m _$(SOLVER_SHARED_LIB) $(OBJ_FILES) $(SOLVER_F90WRAP_FILES)
+	f2py-f90wrap -c --fcompiler=gfortran --f90flags='-cpp -fopenmp -fPIC -fmax-errors=1 -Iobj -Jobj' -lgomp --arch='-march=native' --opt='-O3 -funroll-loops' --build-dir . -m _$(FCORE_SHARED_LIB) $(OBJ_FILES) $(FCORE_F90WRAP_FILES)
 
 #% Make f2py-meshing .so library
 f2py-mesh:
@@ -94,12 +94,12 @@ library-edit:
 
 #% Finalize compilation with mv, rm and sed
 finalize:
-	mv f90wrap_*.f90 $(SOLVER_DIR)/f90wrap/.
+	mv f90wrap_*.f90 $(FCORE_DIR)/f90wrap/.
 	mv f90wrap_*.o $(BUILD_DIR)/.
-	mv $(SOLVER_SHARED_LIB)/_mw* $(SOLVER_DIR)/.
-	mv _$(SOLVER_SHARED_LIB)* $(SOLVER_DIR)/.
+	mv $(FCORE_SHARED_LIB)/_mw* $(FCORE_DIR)/.
+	mv _$(FCORE_SHARED_LIB)* $(FCORE_DIR)/.
 	mv _$(MESH_SHARED_LIB)* $(MESH_DIR)/.
-	rm -rf $(SOLVER_SHARED_LIB)
+	rm -rf $(FCORE_SHARED_LIB)
 	cd $(F90WRAP_UTILS_DIR) ; python3 finalize_f90wrap.py
 
 #% Generate tapenade file (adjoint and tangent linear models)
@@ -132,9 +132,9 @@ clean:
 	@rm -rf $(BUILD_DIR)
 	@rm -rf src.*
 	@rm -rf *egg-info
-	@rm -rf $(SOLVER_DIR)/_mw*
-	@rm -rf $(SOLVER_DIR)/_$(SOLVER_SHARED_LIB)*
-	@rm -rf $(SOLVER_DIR)/f90wrap
+	@rm -rf $(FCORE_DIR)/_mw*
+	@rm -rf $(FCORE_DIR)/_$(FCORE_SHARED_LIB)*
+	@rm -rf $(FCORE_DIR)/f90wrap
 	@rm -rf $(MESH_DIR)/_$(MESH_SHARED_LIB)*.so
 	@rm -rf build
 

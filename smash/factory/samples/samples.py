@@ -6,13 +6,19 @@ import numpy as np
 import pandas as pd
 from scipy.stats import truncnorm
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Iterator
+    from smash._typing import Numeric
+
 
 __all__ = ["generate_samples", "Samples"]
 
 
 class Samples(dict):
     """
-    Represents the generated sample result.
+    Represents the generated samples result.
 
     Notes
     -----
@@ -40,8 +46,9 @@ class Samples(dict):
 
     Examples
     --------
-    >>> problem = {"num_vars": 2, "names": ["cp", "lr"], "bounds": [[1,200], [1,500]]}
-    >>> sr = smash.generate_samples(problem, n=5, random_state=1)
+    >>> from smash.factory import generate_samples
+    >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+    >>> sr = generate_samples(problem, n=5, random_state=1)
 
     Convert the result to a numpy.ndarray:
 
@@ -55,7 +62,7 @@ class Samples(dict):
     Convert the result to a pandas.DataFrame:
 
     >>> sr.to_dataframe()
-               cp          lr
+               cp         llr
     0   83.987379   47.076959
     1  144.344574   93.943845
     2    1.022761  173.434803
@@ -122,7 +129,7 @@ class Samples(dict):
     def __dir__(self):
         return list(self.keys())
 
-    def slice(self, end: int, start: int = 0):
+    def slice(self, end: int, start: int = 0) -> Samples:
         """
         Slice the `Samples` object.
 
@@ -171,7 +178,7 @@ class Samples(dict):
 
         return Samples(slc_dict)
 
-    def iterslice(self, by: int = 1):
+    def iterslice(self, by: int = 1) -> Iterator[Samples]:
         """
         Iterate on the `Samples` object by slices.
 
@@ -206,7 +213,7 @@ class Samples(dict):
             ind_start = ind_end
             ind_end = np.minimum(ind_end + by, self.n_sample)
 
-    def to_numpy(self, axis=0):
+    def to_numpy(self, axis: int = 0) -> np.ndarray:
         """
         Convert the `Samples` object to a numpy.ndarray.
 
@@ -226,7 +233,7 @@ class Samples(dict):
 
         return np.stack([self[k] for k in self._problem["names"]], axis=axis)
 
-    def to_dataframe(self):
+    def to_dataframe(self) -> pd.DataFrame:
         """
         Convert the `Samples` object to a pandas.DataFrame.
 
@@ -242,25 +249,22 @@ class Samples(dict):
 def generate_samples(
     problem: dict,
     generator: str = "uniform",
-    n: int = 1000,
-    random_state: int | None = None,
-    mean: np.ndarray | None = None,
-    coef_std: float | None = None,
-):
+    n: Numeric = 1000,
+    random_state: Numeric | None = None,
+    mean: dict | None = None,
+    coef_std: Numeric | None = None,
+) -> Samples:
     """
-    Generate a multiple set of spatially uniform Model parameters/states.
+    Generate a multiple set of variables.
 
     Parameters
     ----------
     problem : dict
         Problem definition. The keys are
 
-        - 'num_vars' : the number of Model parameters/states.
-        - 'names' : the name of Model parameters/states.
-        - 'bounds' : the upper and lower bounds of each Model parameter/state (a sequence of ``(min, max)``).
-
-        .. hint::
-            This problem can be created using the Model object. See `smash.Model.get_bound_constraints` for more.
+        - 'num_vars' : the number of variables.
+        - 'names' : the name of the variables.
+        - 'bounds' : the upper and lower bounds of each variable (a sequence of ``(min, max)``).
 
     generator : str, default 'uniform'
         Samples generator. Should be one of
@@ -278,13 +282,13 @@ def generate_samples(
             If not given, generates parameters sets with a random seed.
 
     mean : dict or None, default None
-        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each Model parameter/state.
+        If the samples are generated using a Gaussian distribution, **mean** is used to define the mean of the distribution for each variable.
         It is a dictionary where keys are the name of the parameters/states defined in the **problem** argument.
         In this case, the truncated normal distribution may be used with respect to the boundary conditions defined in **problem**.
         None value inside the dictionary will be filled in with the center of the parameter/state bounds.
 
         .. note::
-            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the parameter/state bounds.
+            If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the variable bounds.
 
     coef_std : float or None
         A coefficient related to the standard deviation in case of Gaussian generator:
@@ -292,7 +296,7 @@ def generate_samples(
         .. math::
                 std = \\frac{u - l}{coef\\_std}
 
-        where :math:`u` and :math:`l` are the upper and lower bounds of Model parameters/states.
+        where :math:`u` and :math:`l` are the upper and lower bounds of variables.
 
         .. note::
             If not given and Gaussian distribution is used, **coef_std** is set to 3 as default:
@@ -308,7 +312,6 @@ def generate_samples(
     See Also
     --------
     Samples: Represents the generated samples using `smash.generate_samples` method.
-    Model.get_bound_constraints: Get the boundary constraints of the Model parameters/states.
 
     Examples
     --------
@@ -316,7 +319,7 @@ def generate_samples(
 
     >>> problem = {
     ...             'num_vars': 4,
-    ...             'names': ['cp', 'cft', 'exc', 'lr'],
+    ...             'names': ['cp', 'cft', 'kexc', 'llr'],
     ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
     ... }
 
@@ -325,15 +328,27 @@ def generate_samples(
     >>> from smash.factory import generate_samples
     >>> sr = generate_samples(problem, n=3, random_state=99)
     >>> sr.to_dataframe()  # convert Samples object to pandas.DataFrame
-                cp         cft        exc          lr
+                cp         cft       kexc         llr
     0  1344.884839   32.414941 -12.559438    7.818907
     1   976.668720  808.241913 -18.832607  770.023235
     2  1651.164853  566.051802   4.765685  747.020334
 
     """
+    args = _standardize_generate_samples_args(
+        problem, generator, n, random_state, mean, coef_std
+    )
 
-    generator, mean = _standardize_generate_samples_args(problem, generator, mean)
+    return _generate_samples(*args)
 
+
+def _generate_samples(
+    problem: dict,
+    generator: str,
+    n: int,
+    random_state: int | None,
+    mean: dict | None,
+    coef_std: Numeric | None,
+) -> Samples:
     ret_dict = {key: [] for key in problem["names"]}
 
     ret_dict["generator"] = generator
@@ -355,11 +370,7 @@ def generate_samples(
             ret_dict["_" + p] = np.ones(n) / (upp - low)
 
         elif generator in ["normal", "gaussian"]:
-            if coef_std is None:
-                sd = (upp - low) / 3
-
-            else:
-                sd = (upp - low) / coef_std
+            sd = (upp - low) / coef_std
 
             trunc_normal = truncnorm(
                 (low - mean[p]) / sd, (upp - mean[p]) / sd, loc=mean[p], scale=sd

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash._constant import DATASET_NAME
+
 from smash.io.mesh.mesh import read_mesh
 from smash.io.setup.setup import read_setup
 
@@ -9,8 +11,6 @@ import os
 __all__ = ["load_dataset"]
 
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
-
-DATASET_NAME = ["flwdir", "cance", "lez", "france"]
 
 
 def load_dataset(name: str):
@@ -31,7 +31,6 @@ def load_dataset(name: str):
         - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment at **hourly** timestep.
         - 'lez' : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at **daily** timestep.
         - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France at **hourly** timestep.
-        - 'path/to/dataset' : Path to an external and complete dataset.
 
     Returns
     -------
@@ -42,7 +41,6 @@ def load_dataset(name: str):
         - 'cance' : Returns a tuple of dictionaries (setup and mesh).
         - 'lez' : Returns a tuple of dictionaries (setup and mesh).
         - 'france' : Returns a tuple of dictionaries (setup and mesh).
-        - 'path/to/dataset' : Returns a tuple of dictionaries (setup and mesh).
 
     Examples
     --------
@@ -51,13 +49,13 @@ def load_dataset(name: str):
 
     >>> flwdir = smash.factory.load_dataset("flwdir")
     >>> flwdir
-    '/home/francois/anaconda3/envs/smash-dev/lib/python3.8/site-packages/smash/dataset/France_flwdir.tif'
+    '/home/fcolleoni/anaconda3/envs/smash-dev/lib/python3.8/site-packages/smash/dataset/France_flwdir.tif'
 
     Load ``cance`` dataset as a tuple of dictionaries.
 
     >>> cance = smash.factory.load_dataset("cance")
     >>> cance
-    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
+    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'nac': 383, 'ncol': 28, ...})
 
     Or each dictionary in a different variable.
 
@@ -65,13 +63,13 @@ def load_dataset(name: str):
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, ...}
     >>> mesh
-    {'dx': 1000.0, 'nac': 383, ...}
+    {'nac': 383, 'ncol': 28, ...}
 
     Load ``lez`` dataset as a tuple of dictionaries.
 
     >>> lez = smash.factory.load_dataset("lez")
     >>> lez
-    ({'structure': 'gr-a-lr', 'dt': 86400, ...}, {'dx': 1000.0, 'nac': 172, ...})
+    ({'structure': 'gr-a-lr', 'dt': 86400, ...}, {'nac': 172, 'ncol': 14, ...})
 
     Or each dictionary in a different variable.
 
@@ -79,13 +77,13 @@ def load_dataset(name: str):
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 86400, ...}
     >>> mesh
-    {'dx': 1000.0, 'nac': 172, ...}
+    {'nac': 172, 'ncol': 14, ...}
 
     Load ``france`` dataset as a tuple of dictionaries.
 
     >>> france = smash.factory.load_dataset("france")
     >>> france
-    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 906044, ...})
+    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'nac': 906044, 'ncol': 1150, ...})
 
     Or each dictionary in a different variable.
 
@@ -93,21 +91,7 @@ def load_dataset(name: str):
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, ...}
     >>> mesh
-    {'dx': 1000.0, 'nac': 906044, ...}
-
-    Load ``path/to/dataset`` as a tuple of dictionaries.
-
-    >>> dataset = smash.factory.load_dataset("path/to/dataset")
-    >>> dataset
-    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'dx': 1000.0, 'nac': 383, ...})
-
-    Or each dictionary in a different variable.
-
-    >>> setup, mesh = smash.factory.load_dataset("path/to/dataset")
-    >>> setup
-    {'structure': 'gr-a-lr', 'dt': 3600, ...}
-    >>> mesh
-    {'dx': 1000.0, 'nac': 383, ...}
+    {'nac': 906044, 'ncol': 1150, ...}
     """
 
     if name.lower() == "flwdir":
@@ -136,50 +120,5 @@ def load_dataset(name: str):
 
         return setup, mesh
 
-    # load an external dataset
-    elif os.path.exists(name):
-        local_dataset_path = os.path.dirname(os.path.realpath(name))
-        local_dataset_dir_name = os.path.basename(os.path.realpath(name))
-        setup_file = "setup_" + local_dataset_dir_name + ".yaml"
-        mesh_file = "mesh_" + local_dataset_dir_name + ".hdf5"
-
-        if not os.path.exists(
-            os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
-        ):
-            raise ValueError(f"Missing setup file '{setup_file}'")
-
-        if not os.path.exists(
-            os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
-        ):
-            raise ValueError(f"Missing mesh file '{mesh_file}'")
-
-        setup = read_setup(
-            os.path.join(local_dataset_path, local_dataset_dir_name, setup_file)
-        )
-        mesh = read_mesh(
-            os.path.join(local_dataset_path, local_dataset_dir_name, mesh_file)
-        )
-
-        setup.update(
-            {
-                "qobs_directory": os.path.join(
-                    local_dataset_path, local_dataset_dir_name, "qobs"
-                ),
-                "prcp_directory": os.path.join(
-                    local_dataset_path, local_dataset_dir_name, "prcp"
-                ),
-                "pet_directory": os.path.join(
-                    local_dataset_path, local_dataset_dir_name, "pet"
-                ),
-                "descriptor_directory": os.path.join(
-                    local_dataset_path, local_dataset_dir_name, "descriptor"
-                ),
-            }
-        )
-
-        return setup, mesh
-
     else:
-        raise ValueError(
-            f"Unknown dataset '{name}'. Choices: {DATASET_NAME}. Or non existing external dataset"
-        )
+        raise ValueError(f"Unknown dataset '{name}'. Choices: {DATASET_NAME}")

@@ -1,12 +1,14 @@
 from __future__ import annotations
 
 import smash
+from smash._constant import STRUCTURE_NAME
 
 import argparse
 import glob
 import importlib
 import re
 import os
+import sys
 import inspect
 import h5py
 import pandas as pd
@@ -95,15 +97,19 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
         test_name.append(key)
 
         if key in new_f_keys and key in f_keys:
-            if f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
-                is_equal = np.array_equal(f[key][:], new_f[key][:])
-            else:
-                is_equal = np.allclose(f[key][:], new_f[key][:], atol=1e-6)
+            # % If an error occurs during check (inconsistent shapes ...)
+            try:
+                if f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
+                    is_equal = np.array_equal(f[key][:], new_f[key][:])
+                else:
+                    is_equal = np.allclose(f[key][:], new_f[key][:], atol=1e-6)
 
-            if is_equal:
-                status.append("NON MODIFIED")
+                if is_equal:
+                    status.append("NON MODIFIED")
 
-            else:
+                else:
+                    status.append("MODIFIED")
+            except:
                 status.append("MODIFIED")
 
             new_f_keys.remove(key)
@@ -134,8 +140,21 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 if __name__ == "__main__":
     args = parser()
 
-    setup, mesh = smash.load_dataset("Cance")
+    setup, mesh = smash.factory.load_dataset("Cance")
+
+    # % Disable stderr
+    sys.stderr = open("/dev/null", "w")
+
     model = smash.Model(setup, mesh)
+
+    model_structure = []
+
+    for structure in STRUCTURE_NAME:
+        setup["structure"] = structure
+        model_structure.append(smash.Model(setup, mesh))
+
+    # % Enable stderr
+    sys.stderr = sys.__stderr__
 
     module_names = sorted(glob.glob("**/test_*.py", recursive=True))
 
@@ -146,6 +165,7 @@ if __name__ == "__main__":
 
     with h5py.File("new_baseline.hdf5", "w") as f:
         for mn in module_names:
+            print(mn, end=" ")
             module = importlib.import_module(mn)
 
             generic_functions = [
@@ -169,8 +189,12 @@ if __name__ == "__main__":
                 ]
 
             for name, func in generic_functions:
-                for key, value in func(model=model).items():
+                print(".", end="")
+                for key, value in func(
+                    model=model, model_structure=model_structure
+                ).items():
                     dump_to_baseline(f, key, value)
+            print("")
 
     baseline = h5py.File("baseline.hdf5")
     new_baseline = h5py.File("new_baseline.hdf5")

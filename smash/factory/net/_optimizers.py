@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-from smash.tools._common_function import _check_unknown_options
-
 import numpy as np
 
 
-class sgd:
+class SGD:
 
     """
     Compile the neural network with Stochastic Gradient Descent (SGD) optimizer.
@@ -22,8 +20,6 @@ class sgd:
     def __init__(
         self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
     ):
-        _check_unknown_options("optimizer", unknown_options)
-
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -39,7 +35,7 @@ class sgd:
         return w - self.learning_rate * self.w_updt
 
 
-class adam:
+class Adam:
 
     """
     Compile the neural network with Adaptive Moment Estimation (Adam) optimizer.
@@ -56,6 +52,7 @@ class adam:
         Exponential decay rate for the second moment estimate.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(
         self,
         learning_rate: float = 0.001,
@@ -63,8 +60,6 @@ class adam:
         b2: float = 0.999,
         **unknown_options,
     ):
-        _check_unknown_options("optimizer", unknown_options)
-
         self.learning_rate = learning_rate
 
         self.eps = 1e-8
@@ -91,7 +86,7 @@ class adam:
         return w - self.w_updt
 
 
-class adagrad:
+class Adagrad:
 
     """
     Compile the neural network with Adaptive Gradient (Adagrad) optimizer.
@@ -103,9 +98,8 @@ class adagrad:
 
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, learning_rate: float = 0.01, **unknown_options):
-        _check_unknown_options("optimizer", unknown_options)
-
         self.learning_rate = learning_rate
 
         self.G = None  # Sum of squares of the gradients
@@ -122,7 +116,7 @@ class adagrad:
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.G + self.eps)
 
 
-class rmsprop:
+class RMSprop:
 
     """
     Compile the neural network with Root Mean Square Propagation (RMSprop) optimizer.
@@ -136,11 +130,10 @@ class rmsprop:
         The decay rate for the running average of the squared gradients.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(
         self, learning_rate: float = 0.001, rho: float = 0.9, **unknown_options
     ):
-        _check_unknown_options("optimizer", unknown_options)
-
         self.learning_rate = learning_rate
 
         self.Eg = None  # Running average of the square gradients at w

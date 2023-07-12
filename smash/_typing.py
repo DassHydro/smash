@@ -1,11 +1,17 @@
 from __future__ import annotations
 
-from typing import Union
+from typing import Union, List, Tuple, Any
 
 import numpy as np
-import pandas as pd
+from os import PathLike
 
 
-numeric = Union[float, int]
+Numeric = Union[float, int]
 
-list_like = Union[list, tuple, np.ndarray, pd.Series]
+AlphaNumeric = Union[str, Numeric]
+
+ListLike = Union[List, Tuple]
+
+FilePath = Union[str, "PathLike[str]"]
+
+AnyTuple = Tuple[Any]

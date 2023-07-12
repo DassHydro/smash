@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-from smash.tools._common_function import _check_unknown_options
-
 from smash._constant import WB_INITIALIZER
 
 import numpy as np
 import copy
 
 
-class layer(object):
+class Layer(object):
     def _set_input_shape(self, shape: tuple):
         self.input_shape = shape
 
@@ -28,7 +26,7 @@ class layer(object):
         raise NotImplementedError()
 
 
-class activation(layer):
+class Activation(Layer):
 
     """
     Activation layer that applies a specified activation function to the input.
@@ -48,17 +46,16 @@ class activation(layer):
         - 'softplus' : Softplus
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, name: str, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.input_shape = None
 
-        self.activation_name = name
-        self._activation_func = eval(name.lower())()
+        self._activation_func = eval(name)()
+        self.activation_name = self._activation_func.__class__.__name__
         self.trainable = True
 
     def layer_name(self):
-        return "activation (%s)" % (self._activation_func.__class__.__name__)
+        return f"Activation ({self.activation_name})"
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
         self.layer_input = x
@@ -71,7 +68,7 @@ class activation(layer):
         return self.input_shape
 
 
-class scale(layer):
+class Scale(Layer):
 
     """
     Scale layer that applies the min-max scaling function to the outputs.
@@ -82,19 +79,18 @@ class scale(layer):
         A sequence of ``(min, max)`` values that the outputs will be scaled to.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.input_shape = None
 
-        self.scale_name = "minmaxscale"
+        self._scale_func = MinMaxScale(np.array(bounds))
 
-        self._scale_func = minmaxscale(np.array(bounds))
+        self.scale_name = self._scale_func.__class__.__name__
 
         self.trainable = True
 
     def layer_name(self):
-        return "scale (%s)" % (self._scale_func.__class__.__name__)
+        return f"Scale ({self.scale_name})"
 
     def _forward_pass(self, x, training=True):
         self.layer_input = x
@@ -107,7 +103,7 @@ class scale(layer):
         return self.input_shape
 
 
-def _wb_initialization(layer: layer, attr: str):
+def _wb_initialization(layer: Layer, attr: str):
     fin = layer.input_shape[0]
     fout = layer.neurons
 
@@ -149,7 +145,7 @@ def _wb_initialization(layer: layer, attr: str):
         setattr(layer, attr, np.zeros(shape))
 
 
-class dense(layer):
+class Dense(Layer):
 
     """
     Fully-connected (dense) layer.
@@ -186,6 +182,7 @@ class dense(layer):
         - 'zeros'
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(
         self,
         neurons: int,
@@ -194,8 +191,6 @@ class dense(layer):
         bias_initializer: str = "zeros",
         **unknown_options,
     ):
-        _check_unknown_options("layer", unknown_options)
-
         self.layer_input = None
 
         self.input_shape = input_shape
@@ -261,7 +256,7 @@ class dense(layer):
         return (self.neurons,)
 
 
-class dropout(layer):
+class Dropout(Layer):
 
     """
     Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
@@ -272,9 +267,8 @@ class dropout(layer):
         The probability of setting a given output value to zero.
     """
 
+    # TODO: Add function check_unknown_options
     def __init__(self, drop_rate: float, **unknown_options):
-        _check_unknown_options("layer", unknown_options)
-
         self.drop_rate = drop_rate
 
         self._mask = None
@@ -302,7 +296,7 @@ class dropout(layer):
 ### ACTIVATION FUNCTIONS ###
 
 
-class sigmoid:
+class Sigmoid:
     def __call__(self, x):
         return 1 / (1 + np.exp(-x))
 
@@ -310,7 +304,7 @@ class sigmoid:
         return self.__call__(x) * (1 - self.__call__(x))
 
 
-class softmax:
+class Softmax:
     def __call__(self, x):
         e_x = np.exp(x - np.max(x, axis=-1, keepdims=True))
         return e_x / np.sum(e_x, axis=-1, keepdims=True)
@@ -320,7 +314,7 @@ class softmax:
         return p * (1 - p)
 
 
-class tanh:
+class TanH:
     def __call__(self, x):
         return 2 / (1 + np.exp(-2 * x)) - 1
 
@@ -328,7 +322,7 @@ class tanh:
         return 1 - np.power(self.__call__(x), 2)
 
 
-class relu:
+class ReLU:
     def __call__(self, x):
         return np.where(x >= 0, x, 0)
 
@@ -336,7 +330,7 @@ class relu:
         return np.where(x >= 0, 1, 0)
 
 
-class leakyrelu:
+class LeakyReLU:
     def __init__(self, alpha=0.2):
         self.alpha = alpha
 
@@ -347,7 +341,7 @@ class leakyrelu:
         return np.where(x >= 0, 1, self.alpha)
 
 
-class elu:
+class ELU:
     def __init__(self, alpha=0.1):
         self.alpha = alpha
 
@@ -358,7 +352,7 @@ class elu:
         return np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
 
 
-class selu:
+class SELU:
     def __init__(self):
         self.alpha = 1.6732632423543772848170429916717
         self.scale = 1.0507009873554804934193349852946
@@ -370,7 +364,7 @@ class selu:
         return self.scale * np.where(x >= 0.0, 1, self.alpha * np.exp(x))
 
 
-class softplus:
+class SoftPlus:
     def __call__(self, x):
         return np.log(1 + np.exp(x))
 
@@ -381,7 +375,7 @@ class softplus:
 ### SCALING FUNCTION ###
 
 
-class minmaxscale:
+class MinMaxScale:
     def __init__(self, bounds: np.ndarray):
         self._bounds = bounds
 

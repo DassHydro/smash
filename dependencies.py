@@ -176,15 +176,15 @@ def sort_by_dependencies(files: list[pathlib.PosixPath]):
 
 
 if __name__ == "__main__":
-    solver_path = pathlib.Path("smash/solver/")
+    fcore_path = pathlib.Path("smash/fcore/")
 
     # % The files are presorted to avoid the randomness that makes the order of dependencies change even if there are no new files.
     # % There can be several ways to sort files by dependencies
-    c_files = sorted(list(solver_path.glob("*/*.c")))
-    f77_files = sorted(list(solver_path.glob("*/*.f")))
+    c_files = sorted(list(fcore_path.glob("*/*.c")))
+    f77_files = sorted(list(fcore_path.glob("*/*.f")))
     # % In case we have generated f90wrap files we must remove them
     f90_files = sorted(
-        list(set(solver_path.glob("*/*.f90")) - set(solver_path.glob("f90wrap/*.f90")))
+        list(set(fcore_path.glob("*/*.f90")) - set(fcore_path.glob("f90wrap/*.f90")))
     )
 
     sort_by_dependencies(f90_files)
