@@ -12,16 +12,18 @@ if TYPE_CHECKING:
 
 def _standardize_add_layer(layer: str) -> str:
     if isinstance(layer, str):
-        layer = layer.lower().capitalize()
+        layer_standardized = layer.lower().capitalize()
 
-        if layer in LAYER_NAME:
-            return layer
+        if layer_standardized in LAYER_NAME:
+            layer = layer_standardized
 
         else:
             raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_NAME}")
 
     else:
         raise TypeError(f"layer argument must be str")
+    
+    return layer
 
 
 def _standardize_add_options(layer: str, options: dict) -> dict:
