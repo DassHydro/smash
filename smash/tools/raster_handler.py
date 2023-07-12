@@ -146,10 +146,14 @@ def gdal_reproject_raster(dataset, xres, yres):
     # Workaround for gdal bug which initialise array to 0 instead as the No_Data value
     # Here we initialise the band manually with the nodata_value
     nodata = dataset.GetRasterBand(1).GetNoDataValue()
+    if not isinstance(nodata,float):
+        nodata=-99.
+
     band = virtual_destination.GetRasterBand(
         1
     )  # Notice that band is a pointer to virtual_destination
-    band.SetNoDataValue(nodata)
+    band.SetNoDataValue(nodata) #nodata argument of type 'double'
+
     nodataarray = np.ndarray(shape=(new_y_size, new_x_size))
     nodataarray.fill(nodata)
     band.WriteArray(nodataarray)
