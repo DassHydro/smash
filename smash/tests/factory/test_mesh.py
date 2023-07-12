@@ -18,11 +18,7 @@ def generic_xy_mesh(**kwargs) -> dict:
         epsg=2154,
     )
 
-    res = {
-        "xy_mesh.flwdir": mesh["flwdir"],
-        "xy_mesh.flwdst": mesh["flwdst"],
-        "xy_mesh.flwacc": mesh["flwacc"],
-    }
+    res = {"xy_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items()}
 
     return res
 
@@ -31,8 +27,13 @@ def test_xy_mesh():
     res = generic_xy_mesh()
 
     for key, value in res.items():
-        # % Check xy_mesh flwdir, flwdst and flwacc
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        if value.dtype.char == "U":
+            value = value.astype("S")
+            # % Check xy_mesh
+            assert np.array_equal(value, pytest.baseline[key][:]), key
+        else:
+            # % Check xy_mesh
+            assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
 
 
 def generic_bbox_mesh(**kwargs) -> dict:
@@ -40,14 +41,11 @@ def generic_bbox_mesh(**kwargs) -> dict:
 
     mesh = smash.factory.generate_mesh(
         flwdir,
-        bbox=(100_000, 1_250_000, 6_050_000, 7_125_000),
+        bbox=(100_000, 200_000, 6_050_000, 6_150_000),
         epsg=2154,
     )
 
-    res = {
-        "bbox_mesh.flwdir": mesh["flwdir"],
-        "bbox_mesh.flwacc": mesh["flwacc"],
-    }
+    res = {"bbox_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items()}
 
     return res
 
@@ -56,5 +54,10 @@ def test_bbox_mesh():
     res = generic_bbox_mesh()
 
     for key, value in res.items():
-        # % Check bbox_mesh flwdir, flwdst and flwacc
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        if value.dtype.char == "U":
+            value = value.astype("S")
+            # % Check bbox_mesh
+            assert np.array_equal(value, pytest.baseline[key][:]), key
+        else:
+            # % Check bbox_mesh
+            assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key

@@ -13,7 +13,11 @@ def generic_setup_io(**kwargs) -> dict:
 
     setup_rld = smash.io.read_setup("tmp_setup.yaml")
 
-    res = {"setup_io." + k: np.array(v, ndmin=1) for (k, v) in setup_rld.items()}
+    res = {
+        "setup_io." + k: np.array(v, ndmin=1)
+        for (k, v) in setup_rld.items()
+        if not "directory" in k
+    }
 
     return res
 

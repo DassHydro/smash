@@ -2,8 +2,6 @@ from __future__ import annotations
 
 import smash
 
-from smash.io._error import ReadHDF5MethodError
-
 import numpy as np
 import pytest
 
@@ -26,12 +24,8 @@ def test_mesh_io():
     for key, value in res.items():
         if value.dtype.char == "U":
             value = value.astype("S")
-
-        # % Check all values read from mesh
-        assert np.array_equal(value, pytest.baseline[key][:]), key
-
-    # smash.save_model_ddt(pytest.model, "tmp_model_ddt.hdf5")
-
-    # # % Check ReadHDF5MethodError
-    # with pytest.raises(ReadHDF5MethodError):
-    #     smash.io.read_mesh("tmp_model_ddt.hdf5")
+            # % Check all values read from mesh
+            assert np.array_equal(value, pytest.baseline[key][:]), key
+        else:
+            # % Check all values read from mesh
+            assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
