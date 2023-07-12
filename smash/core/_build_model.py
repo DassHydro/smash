@@ -83,9 +83,9 @@ def _standardize_setup(setup: SetupDT):
     except:
         raise ValueError("argument end_time is not a valid date")
 
-    if (et - st).total_seconds() < 0:
+    if (et - st).total_seconds() <= 0:
         raise ValueError(
-            "argument end_time corresponds to an earlier date than start_time"
+            "argument end_time is date earlier or equal to argument start_time"
         )
 
     if setup.read_qobs and setup.qobs_directory == "...":
