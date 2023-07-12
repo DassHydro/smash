@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.tools.raster_handler import gdal_read_windowed_raster
+
 from smash.core.utils import sparse_matrix_to_vector
 
 from smash.core._constant import RATIO_PET_HOURLY
@@ -11,37 +13,13 @@ if TYPE_CHECKING:
     from smash.solver._mwd_mesh import MeshDT
     from smash.solver._mwd_input_data import Input_DataDT
 
+import os
 import warnings
 import glob
 from tqdm import tqdm
 import pandas as pd
 import numpy as np
 import datetime
-from osgeo import gdal
-
-
-def _read_windowed_raster(path: str, mesh: MeshDT) -> np.ndarray:
-    ds = gdal.Open(path)
-
-    transform = ds.GetGeoTransform()
-
-    xmin = transform[0]
-    ymax = transform[3]
-    xres = transform[1]
-    yres = -transform[5]
-
-    col_off = (mesh.xmin - xmin) / xres
-    row_off = (ymax - mesh.ymax) / yres
-
-    band = ds.GetRasterBand(1)
-
-    nodata = band.GetNoDataValue()
-
-    arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
-
-    arr = np.where(arr == nodata, -99, arr)
-
-    return arr
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -62,8 +40,18 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             with open(path[0], "r") as f:
-                header = pd.Timestamp(f.readline())
-
+                
+                try:
+                    
+                    header_string=f.readline()
+                    header = pd.Timestamp(header_string)
+                    
+                except:
+                    
+                    raise ValueError(
+                        f"Bad header {header_string} string when reading file '{path[0]}'. '{header_string}' may not be a date."
+                    )
+                
                 time_diff = int((st - header).total_seconds() / setup.dt) + 1
 
                 if time_diff > 0:
@@ -110,27 +98,86 @@ def _index_containing_substring(the_list: list, substring: str):
     return -1
 
 
+def _split_date(date_datetime):
+    
+    date_strf = date_datetime.strftime("%Y%m%d%H%M")
+    
+    year=date_strf[0:4]
+    month=date_strf[4:6]
+    day=date_strf[6:8]
+    
+    return year,month,day
+
+
+def _list_prcp_file(setup):
+    
+    datetime_date_start=datetime.datetime.fromisoformat(setup.start_time)
+    datetime_date_end=datetime.datetime.fromisoformat(setup.end_time)
+    
+    if datetime_date_end<datetime_date_start:
+        raise ValueError(
+            f"Cannot list precipitation file because date_end<date_start."
+        )
+    
+    list_file=list()
+    
+    s_year,s_month,s_day=_split_date(datetime_date_start)
+    e_year,e_month,e_day=_split_date(datetime_date_end)
+    
+    if int(e_year)>int(s_year):
+        
+        for yy in range(int(s_year),int(e_year)+1):
+            list_file=list_file+(glob.glob(f"{setup.prcp_directory}/{yy:04n}/**/*{setup.prcp_format}*", recursive=True))
+    
+    elif int(e_month)>int(s_month):
+        
+        for mm in range(int(s_month),int(e_month)+1):
+            
+            list_file=list_file+(glob.glob(f"{setup.prcp_directory}/{s_year}/{mm:02n}/**/*{setup.prcp_format}*", recursive=True))
+        
+    elif int(e_day)>int(s_day):
+        
+        for dd in range(int(s_day),int(e_day)+1):
+            list_file=list_file+(glob.glob(f"{setup.prcp_directory}/{s_year}/{s_month}/{dd:02n}/*{setup.prcp_format}*", recursive=True))
+    
+    else:
+        
+        list_file=list_file+(glob.glob(f"{setup.prcp_directory}/{s_year}/{s_month}/{s_day}/*{setup.prcp_format}*", recursive=True))
+    
+    return sorted(list_file)
+
+
 def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    
     date_range = pd.date_range(
         start=setup.start_time,
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
 
-    if setup.prcp_format == "tif":
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
+    if setup.prcp_yyyymmdd_access:
+        
+        files=_list_prcp_file(setup)
+        
+        if setup.prcp_format == "tif":
+            files = _adjust_left_files(files, date_range)
+        
+    else :
+        
+        if setup.prcp_format == "tif":
+            files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
 
-        files = _adjust_left_files(files, date_range)
+            files = _adjust_left_files(files, date_range)
 
-    # % WIP
-    elif setup.prcp_format == "nc":
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
+        # % WIP
+        elif setup.prcp_format == "nc":
+            files = sorted(glob.glob(f"{setup.prcp_directory}/**/*nc", recursive=True))
 
     for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
         date_strf = date.strftime("%Y%m%d%H%M")
-
+            
         ind = _index_containing_substring(files, date_strf)
-
+        
         if ind == -1:
             if setup.sparse_storage:
                 input_data.sparse_prcp[:, i] = -99.0
@@ -142,7 +189,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             matrix = (
-                _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                gdal_read_windowed_raster(
+                    filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                )
+                * setup.prcp_conversion_factor
             )
 
             if setup.sparse_storage:
@@ -208,7 +258,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     subset_date_range = date_range[ind_day]
 
                     matrix = (
-                        _read_windowed_raster(files[ind], mesh)
+                        gdal_read_windowed_raster(
+                            filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                        )
                         * setup.pet_conversion_factor
                     )
 
@@ -253,7 +305,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             else:
                 matrix = (
-                    _read_windowed_raster(files[ind], mesh)
+                    gdal_read_windowed_raster(
+                        filename=files[ind], smash_mesh=mesh, band=1, lacuna=-99.0
+                    )
                     * setup.pet_conversion_factor
                 )
 
@@ -284,4 +338,6 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             )
 
         else:
-            input_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
+            input_data.descriptor[..., i] = gdal_read_windowed_raster(
+                filename=path[0], smash_mesh=mesh, band=1, lacuna=-99.0
+            )

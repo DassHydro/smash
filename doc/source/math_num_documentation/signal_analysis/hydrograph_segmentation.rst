@@ -59,6 +59,5 @@ For :math:`t_{j}\in E`:
 .. note::
  
     If there exists :math:`m+1` :math:`(m>0)` consecutive events :math:`(sd_{u},ed_{u}),...,(sd_{u+m},ed_{u+m})` 
-    occurring "nearly simultaneously", that means all of these events 
-    occur in no more than ``max_duration`` hours: :math:`ed_{u+m}<sd_{u}+` ``max_duration``, then we 
-    merge these :math:`m+1` events into a single event :math:`(sd_{u},ed_{u+m})`.
+    occurring "nearly simultaneously", then we merge these :math:`m+1` events into a single event :math:`(sd_{u},ed_{u+m})`. 
+    Note that the duration of the merged event may exceed the specified maximum duration of ``max_duration`` hours.

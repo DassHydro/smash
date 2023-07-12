@@ -519,7 +519,7 @@ contains
         n = mesh%nac*(count(setup%optimize%optim_parameters .gt. 0) + &
         & count(setup%optimize%optim_states .gt. 0))
         m = 10
-        factr = 1.e6_dp
+        factr = 1.e1_dp
         pgtol = 1.e-12_dp
 
         allocate (nbd(n), x(n), l(n), u(n), g(n))

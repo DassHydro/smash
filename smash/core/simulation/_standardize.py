@@ -270,8 +270,8 @@ def _standardize_bounds(
                 ind = np.argwhere(setup._parameters_name == name)
 
                 parameters_attr = getattr(parameters, name)
-                if np.any(parameters_attr + 1e-6 < bounds[i, 0]) or np.any(
-                    parameters_attr - 1e-6 > bounds[i, 1]
+                if np.any(parameters_attr + 1e-3 < bounds[i, 0]) or np.any(
+                    parameters_attr - 1e-3 > bounds[i, 1]
                 ):
                     raise ValueError(
                         f"bounds values for '{name}' are invalid, background parameters [{np.min(parameters_attr)} {np.max(parameters_attr)}] is outside the bounds {bounds[i,:]}"
@@ -282,8 +282,8 @@ def _standardize_bounds(
                 ind = np.argwhere(setup._states_name == name)
 
                 states_attr = getattr(states, name)
-                if np.any(states_attr + 1e-6 < bounds[i, 0]) or np.any(
-                    states_attr - 1e-6 > bounds[i, 1]
+                if np.any(states_attr + 1e-3 < bounds[i, 0]) or np.any(
+                    states_attr - 1e-3 > bounds[i, 1]
                 ):
                     raise ValueError(
                         f"bounds values for '{name}' are invalid, background states [{np.min(states_attr)} {np.max(states_attr)}] is outside the bounds {bounds[i,:]}"

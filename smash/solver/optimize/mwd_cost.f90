@@ -211,11 +211,20 @@ contains
 
             case ("smoothing")
 
-                parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**4* &
-                & reg_smoothing(setup, mesh, setup%optimize%optim_parameters, parameters_matrix, parameters_bgd_matrix)
+                parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**2._sp* &
+                & reg_smoothing(setup, mesh, setup%optimize%optim_parameters, parameters_matrix, parameters_bgd_matrix,.true.)
 
-                states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**4* &
-                & reg_smoothing(setup, mesh, setup%optimize%optim_states, states_matrix, states_bgd_matrix)
+                states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**2._sp* &
+                & reg_smoothing(setup, mesh, setup%optimize%optim_states, states_matrix, states_bgd_matrix,.true.)
+
+            case ("hard_smoothing")
+
+                parameters_jreg = parameters_jreg + setup%optimize%wjreg_fun(i)**2._sp* &
+                & reg_smoothing(setup, mesh, setup%optimize%optim_parameters, parameters_matrix, parameters_bgd_matrix,.false.)
+
+                states_jreg = states_jreg + setup%optimize%wjreg_fun(i)**2._sp* &
+                & reg_smoothing(setup, mesh, setup%optimize%optim_states, states_matrix, states_bgd_matrix,.false.)
+
 
             case ("distance_correlation")
 
@@ -1088,7 +1097,7 @@ contains
 
     end function distance_correlation_descriptors
 
-    function reg_smoothing(setup, mesh, optim_arr, matrix, matrix_bgd) result(res)
+    function reg_smoothing(setup, mesh, optim_arr, matrix, matrix_bgd, rel_to_bgd) result(res)
 
         !% Notes
         !% -----
@@ -1104,6 +1113,7 @@ contains
         type(MeshDT), intent(in) :: mesh
         integer, dimension(:), intent(in) :: optim_arr
         real(sp), dimension(:, :, :), intent(in) :: matrix, matrix_bgd
+        logical, intent(in):: rel_to_bgd
         real(sp) :: res
 
         real(sp), dimension(size(matrix, 1), size(matrix, 2), size(matrix, 3)) :: mat
@@ -1112,7 +1122,11 @@ contains
         res = 0._sp
 
         ! matrix relative to the bgd. We don't want to penalize initial spatial variation.
-        mat = matrix - matrix_bgd
+        if (rel_to_bgd) then
+            mat = matrix - matrix_bgd
+        else
+            mat = matrix
+        end if
 
         do i = 1, size(matrix, 3)
 
@@ -1148,8 +1162,8 @@ contains
                                 max_row = row
                             end if
 
-                            res = res + ((mat(max_row, col, i) - 2._sp*mat(row, col, i) + mat(min_row, col, i)) &
-                            & + (mat(row, max_col, i) - 2._sp*mat(row, col, i) + mat(row, min_col, i)))**2
+                            res = res + ((mat(max_row, col, i) - 2._sp*mat(row, col, i) + mat(min_row, col, i))**2._sp &
+                            & + (mat(row, max_col, i) - 2._sp*mat(row, col, i) + mat(row, min_col, i))**2._sp)
 
                         end if
 
@@ -1182,7 +1196,7 @@ contains
         real(sp), dimension(:, :, :), intent(in) :: matrix, matrix_bgd
         real(sp) :: res
 
-        integer :: i
+        integer :: i, col, row
 
         res = 0._sp
 
@@ -1190,7 +1204,15 @@ contains
 
             if (optim_arr(i) .gt. 0) then
 
-                res = res + sum((matrix(:, :, i) - matrix_bgd(:, :, i))*(matrix(:, :, i) - matrix_bgd(:, :, i)))
+                do col = 1, size(matrix, 2)
+
+                    do row = 1, size(matrix, 1)
+
+                        res = res + (matrix(row, col, i) - matrix_bgd(row, col, i))**2._sp
+                
+                    end do
+                
+                end do
 
             end if
 
