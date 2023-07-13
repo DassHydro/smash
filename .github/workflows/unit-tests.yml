@@ -32,11 +32,9 @@ jobs:
           with:
             conda-channels: conda-forge
         
-        - name: Install env
+        - name: Install Conda Env
           shell: bash
           run: |
-            conda config --prepend channels conda-forge
-            conda config --set channel_priority strict
             conda env create -f environment-dev.yml
             source activate smash-dev
             conda install python=${{ matrix.python-version }}
