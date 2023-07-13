@@ -37,7 +37,7 @@ jobs:
           run: |
             sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
             sudo apt-get update
-            sudo apt-get install -y build-essential make gcc gfortran gdal-bon libgdal-dev python3-gdal python3-venv python3-dev
+            sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev python3-gdal python3-venv python3-dev
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
