@@ -19,9 +19,6 @@ jobs:
     ubuntu:
         name: (${{ matrix.os }} - py-${{ matrix.python-version }})
         runs-on: ${{ matrix.os }}
-        container: ghcr.io/osgeo/gdal:ubuntu-small-latest
-        env:
-            DEBIAN_FRONTEND: noninteractive
         strategy:
           matrix:
             os: ["ubuntu-22.04"]
@@ -30,28 +27,18 @@ jobs:
         steps:
         - uses: actions/checkout@v3
         
-        - name: Update
+        - name: Conda Setup
+          uses: s-weigand/setup-conda@v1
+          with:
+            conda-channels: conda-forge
+        
+        - name: Install env
+          shell: bash
           run: |
-            apt-get update
-            apt-get -y install software-properties-common
-            add-apt-repository -y ppa:deadsnakes/ppa
-            apt-get update
-
-        - name: Set up Python ${{ matrix.python-version }}
-          run: |
-            apt-get install -y --no-install-recommends \
-            python${{ matrix.python-version }} \
-            python${{ matrix.python-version }}-dev \
-            python${{ matrix.python-version }}-venv \
-            python3-pip
-            
-        - name: Install dependencies
-          run: |
-            apt-get install -y build-essential make gcc gfortran
-            python${{ matrix.python-version }} -m venv testenv
-            . testenv/bin/activate
-            python -m pip install --upgrade pip
-            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+            conda config --prepend channels conda-forge
+            conda config --set channel_priority strict
+            conda env create python=${{ matrix.python-version }} -f environment-dev.yml
+            source activate smash-dev
         
         - name: Build and Install
           run: |
