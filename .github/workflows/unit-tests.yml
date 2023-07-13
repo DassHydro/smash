@@ -33,23 +33,32 @@ jobs:
         - name: Update
           run: |
             apt-get update
-        
+            apt-get -y install software-properties-common
+            add-apt-repository -y ppa:deadsnakes/ppa
+            apt-get update
+
         - name: Set up Python ${{ matrix.python-version }}
-          uses: actions/setup-python@v4
-          with:
-            python-version: ${{ matrix.python-version }}
+          run: |
+            apt-get install -y --no-install-recommends \
+            python${{ matrix.python-version }} \
+            python${{ matrix.python-version }}-dev \
+            python${{ matrix.python-version }}-venv \
+            python3-pip
             
         - name: Install dependencies
           run: |
-            apt-get update
             apt-get install -y build-essential make gcc gfortran
-            python3 -m pip install --upgrade pip
+            python${{ matrix.python-version }} -m venv testenv
+            . testenv/bin/activate
+            python -m pip install --upgrade pip
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
         - name: Build and Install
           run: |
+            . testenv/bin/activate
             make
         
         - name: Run Tests
           run: |
+            . testenv/bin/activate
             make test
