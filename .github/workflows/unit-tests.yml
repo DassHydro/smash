@@ -42,8 +42,7 @@ jobs:
             python --version
             gdal-config --version
             python -m pip install --upgrade pip
-            pip install GDAL==3.4.1 --global-option=build_ext --global-option="-I/usr/include/gdal"
-            python -c 'import gdal'
+            pip install GDAL==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
             python -c 'from osgeo import gdal'
         
         - name: Build and Install
