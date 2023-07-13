@@ -39,10 +39,10 @@ setup(
     include_package_data=True,
     install_requires=[
         "f90wrap",
-        "numpy>=1.13",
+        "numpy>=1.25",
         "pandas",
         "matplotlib",
-        "h5py",
+        "h5py>=3.9",
         "tqdm",
         "gdal",
         "scipy",
