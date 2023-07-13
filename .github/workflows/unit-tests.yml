@@ -26,29 +26,18 @@ jobs:
             
         steps:
         - uses: actions/checkout@v3
-        
-        - name: Update
-          run: |
-            sudo apt-get update
-            sudo apt-get -y install software-properties-common
-            sudo add-apt-repository ppa:deadsnakes/ppa
-            sudo apt-get update
-        
         - name: Set up Python ${{ matrix.python-version }}
-          run: |
-            sudo apt-get install -y --no-install-recommends \
-            python${{ matrix.python-version }} \
-            python${{ matrix.python-version }}-dev \
-            python${{ matrix.python-version }}-venv
-            
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+        
         - name: Install dependencies
           run: |
             sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
             sudo apt-get update
             sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
-            python${{ matrix.python-version }} -m venv test
+            python -m venv test
             . test/bin/activate
-            python --version
             python -m pip install --upgrade pip
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
             pip install wheel
