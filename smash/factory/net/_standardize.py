@@ -2,10 +2,12 @@ from __future__ import annotations
 
 from smash._constant import NET_OPTIMIZER, LAYER_NAME, ACTIVATION_FUNCTION
 
+from smash._typing import Numeric
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, Numeric
+    from smash._typing import AnyTuple
 
 
 def _standardize_add_layer(layer: str) -> str:
@@ -20,7 +22,7 @@ def _standardize_add_layer(layer: str) -> str:
 
     else:
         raise TypeError(f"layer argument must be str")
-
+    
     return layer
 
 
@@ -93,7 +95,7 @@ def _standardize_compile_random_state(random_state: Numeric | None) -> int:
         pass
 
     else:
-        if not isinstance(random_state, (int, float)):
+        if not isinstance(random_state, Numeric):
             raise TypeError(
                 "random_state argument must be of Numeric type (int, float)"
             )
