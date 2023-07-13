@@ -35,10 +35,10 @@ jobs:
         - name: Install dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install -y build-essential make gcc gfortran python3-dev libgdal-dev
+            sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev
             python --version
             python -m pip install --upgrade pip
-            pip install gdal
+            pip install GDAL==3.5.3
             python -c 'import gdal'
             python -c 'from osgeo import gdal'
         
