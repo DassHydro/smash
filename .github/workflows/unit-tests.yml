@@ -19,17 +19,20 @@ jobs:
     ubuntu:
         name: (${{ matrix.os }} - py-${{ matrix.python-version }})
         runs-on: ${{ matrix.os }}
+        container: ghcr.io/osgeo/gdal:ubuntu-small-latest
+        env:
+            DEBIAN_FRONTEND: noninteractive
         strategy:
           matrix:
             os: ["ubuntu-22.04"]
             python-version: ['3.9']
+            
         steps:
         - uses: actions/checkout@v3
         
-        - name: Instal gdal dependencies
+        - name: Update
           run: |
             sudo apt-get update
-            sudo apt-get install -y gdal-bin libgdal-dev
         
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v4
