@@ -25,16 +25,21 @@ jobs:
             python-version: ['3.9']
         steps:
         - uses: actions/checkout@v3
-        - name: Install dependencies
+        
+        - name: Instal gdal dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            sudo apt-get install -y gdal-bin libgdal-dev
+        
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v4
           with:
             python-version: ${{ matrix.python-version }}
-        - name: Install Python dependencies
+            
+        - name: Install dependencies
           run: |
+            sudo apt-get update
+            sudo apt-get install -y build-essential make gcc gfortran
             python3 -m pip install --upgrade pip
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
