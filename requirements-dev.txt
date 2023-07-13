@@ -5,6 +5,7 @@ pandas
 matplotlib  # (optional: only used for plotting and visualization)
 h5py>=3.9
 tqdm
+gdal
 scipy
 pyyaml
 terminaltables
