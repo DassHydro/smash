@@ -38,10 +38,9 @@ jobs:
         - name: Install dependencies
           run: |
             apt-get update
-            apt-get -y install software-properties-common
-            add-apt-repository -y ppa:deadsnakes/ppa
             apt-get install -y build-essential make gcc gfortran
             python -m pip install --upgrade pip
+            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
         - name: Build and Install
           run: |
