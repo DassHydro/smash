@@ -37,7 +37,9 @@ jobs:
           run: |
             sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
             sudo apt-get update
-            sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev
+            sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev python3-venv
+            python -m venv test
+            . test/bin/activate
             python -m pip install --upgrade pip
             pip install numpy
             pip install gdal==$(gdal-config --version)
@@ -45,8 +47,10 @@ jobs:
         
         - name: Build and Install
           run: |
+            . test/bin/activate
             make
         
         - name: Run Tests
           run: |
+            . test/bin/activate
             make test
