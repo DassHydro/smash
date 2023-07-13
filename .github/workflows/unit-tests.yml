@@ -50,6 +50,7 @@ jobs:
             . test/bin/activate
             python --version
             python -m pip install --upgrade pip
+            pip install numpy
             pip install gdal==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
