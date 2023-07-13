@@ -28,14 +28,13 @@ jobs:
         - name: Install dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install python${{ matrix.python-version }}
-            python --version
-            which python
-            python3 --version
-            which python3
-            sudo update-alternatives --install /usr/bin/python3 python3 /usr/bin/python${{ matrix.python-version }} 1
-            python3 --version
             sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v4
+          with:
+            python-version: ${{ matrix.python-version }}
+        - name: Install Python dependencies
+          run: |
             python3 -m pip install --upgrade pip
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
