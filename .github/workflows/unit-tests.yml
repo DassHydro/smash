@@ -53,7 +53,8 @@ jobs:
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
             pip uninstall gdal
             pip install numpy
-            pip install --no-cache-dir --force-reinstall gdal==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+            pip install wheel
+            pip install -vvv --no-cache-dir --force-reinstall gdal==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
             
         - name: Build and Install
           run: |
