@@ -41,8 +41,7 @@ jobs:
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
-            pip install numpy
-            pip install gdal==$(gdal-config --version)
+            pip install --no-cache gdal[numpy]==$(gdal-config --version)
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
         
         - name: Build and Install
