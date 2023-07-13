@@ -42,8 +42,6 @@ jobs:
             add-apt-repository -y ppa:deadsnakes/ppa
             apt-get install -y build-essential make gcc gfortran
             python -m pip install --upgrade pip
-            python -m pip wheel -r requirements-dev.txt
-            python -m pip install -r requirements-dev.txt
         
         - name: Build and Install
           run: |
