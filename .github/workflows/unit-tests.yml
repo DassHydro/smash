@@ -21,11 +21,12 @@ jobs:
         runs-on: ${{ matrix.os }}
         strategy:
           matrix:
-            os: ["ubuntu-22.04"]
-            python-version: ['3.9']
+            os: ['ubuntu-22.04']
+            python-version: ['3.9', '3.10', '3.11']
             
         steps:
         - uses: actions/checkout@v3
+        
         - name: Set up Python ${{ matrix.python-version }}
           uses: actions/setup-python@v4
           with:
@@ -39,8 +40,7 @@ jobs:
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
-            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-            pip install wheel
+            pip install -r requirements-dev.txt wheel
             pip install gdal==$(gdal-config --version)
             
         - name: Build and Install
