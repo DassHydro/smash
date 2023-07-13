@@ -52,7 +52,9 @@ jobs:
             python -m pip install --upgrade pip
             pip install numpy
             pip install gdal==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
+            if [ -f requirements-dev.txt ]; then pip wheel -r requirements-dev.txt; fi
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
+            python -m pip install --no-deps --force-reinstall --no-use-pep517 -e .[test]
         
         - name: Build and Install
           run: |
