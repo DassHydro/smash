@@ -37,7 +37,7 @@ jobs:
           run: |
             conda config --prepend channels conda-forge
             conda config --set channel_priority strict
-            conda env create python=${{ matrix.python-version }} -f environment-dev.yml
+            conda create python=${{ matrix.python-version }} -f environment-dev.yml
             source activate smash-dev
         
         - name: Build and Install
