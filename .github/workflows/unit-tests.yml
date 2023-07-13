@@ -45,8 +45,10 @@ jobs:
           run: |
             sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
             sudo apt-get update
+            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
             python${{ matrix.python-version }} -m venv test
             . test/bin/activate
+            python --version
             python -m pip install --upgrade pip
             pip install gdal==$(gdal-config --version) --global-option=build_ext --global-option="-I/usr/include/gdal"
             if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
