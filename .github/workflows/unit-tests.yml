@@ -29,12 +29,21 @@ jobs:
             
         steps:
         - uses: actions/checkout@v3
+        
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v2
+          with:
+            python-version: ${{ matrix.python-version }}
             
         - name: Install dependencies
           run: |
-            python3 --version
-            python3 -c 'import gdal'
-            python3 -c 'from osgeo import gdal'
+            apt-get update
+            apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            python --version
+            python -m pip install --upgrade pip
+            pip install gdal
+            python -c 'import gdal'
+            python -c 'from osgeo import gdal'
         
         - name: Build and Install
           run: |
