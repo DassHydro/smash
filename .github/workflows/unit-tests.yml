@@ -39,8 +39,9 @@ jobs:
             sudo apt-get update
             sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev libshp-dev python3-gdal python3-venv python3-dev
             python --version
+            gdal-config --version
             python -m pip install --upgrade pip
-            pip install gdal<=gdal-config --version --global-option=build_ext --global-option="-I/usr/include/gdal"
+            pip install gdal --global-option=build_ext --global-option="-I/usr/include/gdal"
             python -c 'import gdal'
             python -c 'from osgeo import gdal'
         
