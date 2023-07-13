@@ -26,21 +26,25 @@ jobs:
             
         steps:
         - uses: actions/checkout@v3
-            
-        - name: Install dependencies
-          shell: bash
+        
+        - name: Update
           run: |
             sudo apt-get update
             sudo apt-get -y install software-properties-common
             sudo add-apt-repository ppa:deadsnakes/ppa
             sudo apt-get update
-            sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
-            sudo apt-get update
-            sudo apt-get install -y build-essential make gcc gfortran gdal-bin libgdal-dev
+        
+        - name: Set up Python ${{ matrix.python-version }}
+          run: |
             sudo apt-get install -y --no-install-recommends \
             python${{ matrix.python-version }} \
             python${{ matrix.python-version }}-dev \
-            python${{ matrix.python-version }}-venv \
+            python${{ matrix.python-version }}-venv
+            
+        - name: Install dependencies
+          run: |
+            sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
+            sudo apt-get update
             python${{ matrix.python-version }} -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
