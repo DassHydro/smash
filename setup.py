@@ -44,7 +44,6 @@ setup(
         "matplotlib",
         "h5py>=3.9",
         "tqdm",
-        "gdal",
         "scipy",
         "pyyaml",
         "terminaltables",
