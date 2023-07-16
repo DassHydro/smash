@@ -341,16 +341,16 @@ contains
             row_imd = row + drow(i)
             col_imd = col + dcol(i)
 
+            if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
+
+            if (flwdir(row_imd, col_imd) .ne. i) cycle
+
             do j = 1, ng
 
                 if (row_imd .eq. row_dln(j) .and. &
                 & col_imd .eq. col_dln(j)) flag(j) = 1
 
             end do
-
-            if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
-
-            if (flwdir(row_imd, col_imd) .ne. i) cycle
 
             !% Avoid to compute square root if not diagonal
             if (dcol(i) .eq. 0) then
