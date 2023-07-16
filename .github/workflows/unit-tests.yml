@@ -39,7 +39,7 @@ jobs:
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
-            pip install wheel, numpy
+            pip install wheel numpy
             pip install gdal==$(gdal-config --version)
             pip install -r requirements-dev.txt
 
