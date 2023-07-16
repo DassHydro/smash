@@ -1,12 +1,12 @@
 # required dependencies
-f90wrap
+wheel
 numpy>=1.13
+f90wrap
+gdal
 pandas
-matplotlib
 h5py
 tqdm
-gdal
 scipy
 pyyaml
-SALib>=1.4.5
 terminaltables
+matplotlib  # (optional: only used for plotting and visualization)
