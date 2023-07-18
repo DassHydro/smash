@@ -16,7 +16,9 @@ if TYPE_CHECKING:
 __all__ = ["metrics"]
 
 
-def metrics(model: Model, metric: str = "nse", cst: str | Timestamp | None = None):
+def metrics(
+    model: Model, metric: str = "nse", end_warmup: str | Timestamp | None = None
+):
     """
     Compute the efficiency/error metrics of the Model based on observed and simulated discharges for each gauge in a multi-catchment hydrological model evaluation.
 
@@ -37,14 +39,14 @@ def metrics(model: Model, metric: str = "nse", cst: str | Timestamp | None = Non
         - 'RMSE': Root Mean Square Error
         - 'LGRM': Logarithmic
 
-    cst : str, pandas.Timestamp or None, default None
-        The computation start time. The values of evaluation metrics will only be calculated between the
-        computation start time and the end time. The value can be a str which can be interpreted by
+    end_warmup : str, pandas.Timestamp or None, default None
+        The end of the warm-up period. Evaluation metrics will only be calculated between the end of the warm-up period
+        and the end time. The value can be a string that can be interpreted as
         pandas.Timestamp `(see here) <https://pandas.pydata.org/docs/reference/api/pandas.Timestamp.html>`__.
-        The **cst** date value must be between the start time and the end time defined in the Model setup.
+        The **end_warmup** date value must be between the start time and the end time defined in the Model setup.
 
         .. note::
-            If not given, the computation start time will be equal to the start time.
+            If not given, the metrics will be computed for the entire period.
 
     Returns
     -------
@@ -55,11 +57,11 @@ def metrics(model: Model, metric: str = "nse", cst: str | Timestamp | None = Non
     --------
 
     """
-    metric, cst = _standardize_metrics_args(metric, cst, model.setup)
+    metric, end_warmup = _standardize_metrics_args(metric, end_warmup, model.setup)
 
-    obs = model.obs_response.q[..., cst:]
+    obs = model.obs_response.q[..., end_warmup:]
 
-    sim = model.sim_response.q[..., cst:]
+    sim = model.sim_response.q[..., end_warmup:]
 
     ng = obs.shape[0]
 

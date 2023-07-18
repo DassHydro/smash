@@ -137,7 +137,9 @@ def _events_grad(
         if ind_start.size > 1:
             power = np.array(
                 [
-                    np.linalg.norm(np.nan_to_num(p_search[j - 1 : j + st_power - 1], nan=0), ord=2)  # remove power computation at nan values (replace nan by 0)
+                    np.linalg.norm(
+                        np.nan_to_num(p_search[j - 1 : j + st_power - 1], nan=0), ord=2
+                    )  # remove power computation at nan values (replace nan by 0)
                     for j in ind_start
                 ]
             )
@@ -173,7 +175,7 @@ def _events_grad(
 
         bf = np.zeros(mask.sum(), dtype=np.float32)
         qf = bf.copy()
-        
+
         baseflow_separation(q_end[mask], bf, qf, filter_parameter=0.925, passes=3)
 
         qbf[mask] = bf
@@ -200,7 +202,7 @@ def _events_grad(
 
                 if p[peakp] > p[prev_peakp]:
                     list_events[-1]["peakP"] = peakp
-                    
+
                 continue
 
         list_events.append(
@@ -221,10 +223,12 @@ def _mask_event(
 
     for i, catchment in enumerate(model.mesh.code):
         prcp = model.atmos_data.mean_prcp[i, :].copy()
-        qobs =  model.obs_response.q[i, :].copy()
+        qobs = model.obs_response.q[i, :].copy()
 
         if (prcp < 0).all() or (qobs < 0).all():
-            warnings.warn(f"Catchment {catchment} has no observed precipitation or/and discharge data")
+            warnings.warn(
+                f"Catchment {catchment} has no observed precipitation or/and discharge data"
+            )
 
         else:
             list_events = _events_grad(

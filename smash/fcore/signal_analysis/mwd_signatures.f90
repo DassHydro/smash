@@ -36,7 +36,7 @@ contains
 
         real(sp), dimension(size(streamflow)) :: btp
 
-        integer, dimension(passes+1) :: ends
+        integer, dimension(passes + 1) :: ends
         integer, dimension(passes) :: addtostart
 
         integer :: i, j
@@ -141,8 +141,8 @@ contains
 
         select case (stype)
 
-        ! runoff coefs: only based on p and q
-        case ("Crc", "Erc") 
+            ! runoff coefs: only based on p and q
+        case ("Crc", "Erc")
 
             numer = 0._sp
             denom = 0._sp
@@ -160,12 +160,12 @@ contains
 
             if (denom .gt. 0._sp) then
 
-                res = numer / denom 
+                res = numer/denom
 
             end if
 
-        ! runoff coefs based on baseflow and/or quickflow
-        case ("Crchf", "Crclf", "Crch2r", "Erchf", "Erclf", "Erch2r", "Eff", "Ebf") 
+            ! runoff coefs based on baseflow and/or quickflow
+        case ("Crchf", "Crclf", "Crch2r", "Erchf", "Erclf", "Erch2r", "Eff", "Ebf")
             nonnegative_p = 0._sp
             nonnegative_q = 0._sp
 
@@ -204,13 +204,13 @@ contains
                         numer = numer + qf(i)
                         denom = denom + nonnegative_q(i)
 
-                    end select                    
+                    end select
 
                 end do
 
                 if (denom .gt. 0._sp) then
 
-                    res = numer / denom
+                    res = numer/denom
 
                 end if
 
@@ -218,15 +218,15 @@ contains
 
                 case ("Eff")
                     res = mean1d_r(qf(1:j))
-                
+
                 case ("Ebf")
                     res = mean1d_r(bf(1:j))
 
-                end select 
+                end select
 
             end if
 
-        ! flow percentiles
+            ! flow percentiles
         case ("Cfp2", "Cfp10", "Cfp50", "Cfp90")
 
             j = 0
@@ -236,7 +236,7 @@ contains
 
                     j = j + 1
                     nonnegative_q(j) = q(i)
-                
+
                 end if
 
             end do
@@ -265,22 +265,22 @@ contains
 
             end if
 
-        ! peak flow
+            ! peak flow
         case ("Epf")
             max_q = -99._sp
 
             do i = 1, n
                 if (q(i) .gt. max_q) then
-                    
+
                     max_q = q(i)
-                
+
                 end if
 
             end do
 
             res = max_q
 
-        ! lag time
+            ! lag time
         case ("Elt")
             max_p = -99._sp
             max_q = -99._sp

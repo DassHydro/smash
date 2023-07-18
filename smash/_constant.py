@@ -179,6 +179,8 @@ ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
 SIGNS = CSIGN + ESIGN
 
+COMPUTE_BY = ["obs", "observed", "observation", "sim", "simulated", "simulation"]
+
 
 ### EFFICIENCY/ERROR METRICS ###
 ################################

@@ -12,13 +12,16 @@ def generic_signatures(model: smash.Model, **kwargs) -> dict:
 
     instance = smash.forward_run(model)
 
-    signresult = smash.compute_signatures(instance)
+    signresult = {}
+
+    signresult["obs"] = smash.compute_signatures(instance, by="obs")
+    signresult["sim"] = smash.compute_signatures(instance, by="sim")
 
     for typ, sign in zip(
         ["cont", "event"], [CSIGN[:4], ESIGN]
     ):  # % remove percentile signatures calculation
         for dom in ["obs", "sim"]:
-            res[f"signatures.{typ}_{dom}"] = signresult[typ][dom][sign].to_numpy(
+            res[f"signatures.{typ}_{dom}"] = signresult[dom][typ][sign].to_numpy(
                 dtype=np.float32
             )
 

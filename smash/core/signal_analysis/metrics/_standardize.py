@@ -14,50 +14,56 @@ if TYPE_CHECKING:
 def _standardize_metrics_metric(metric: str) -> str:
     if isinstance(metric, str):
         if metric.lower() not in METRICS:
-
-            raise ValueError(
-                f"Unknown efficiency metric {metric}. Choices: {METRICS}"
-            )
+            raise ValueError(f"Unknown efficiency metric {metric}. Choices: {METRICS}")
     else:
         raise TypeError(f"metric must be str")
-    
-    return metric.lower()
-    
 
-def _standardize_metrics_cst(cst: str | pd.Timestamp | None, setup: SetupDT) -> int:
+    return metric.lower()
+
+
+def _standardize_metrics_end_warmup(
+    end_warmup: str | pd.Timestamp | None, setup: SetupDT
+) -> int:
     st = pd.Timestamp(setup.start_time)
     et = pd.Timestamp(setup.end_time)
-    
-    if cst is None:
-        cst = pd.Timestamp(st)
+
+    if end_warmup is None:
+        end_warmup = pd.Timestamp(st)
 
     else:
-
-        if isinstance(cst, str):
+        if isinstance(end_warmup, str):
             try:
-                cst = pd.Timestamp(cst)
+                end_warmup = pd.Timestamp(end_warmup)
 
             except:
-                raise ValueError(f"cst '{cst}' argument is an invalid date")
+                raise ValueError(
+                    f"end_warmup '{end_warmup}' argument is an invalid date"
+                )
 
-        elif isinstance(cst, pd.Timestamp):
+        elif isinstance(end_warmup, pd.Timestamp):
             pass
 
         else:
-            raise TypeError(f"cst argument must be str or pandas.Timestamp object")
-
-        if (cst - st).total_seconds() < 0 or (et - cst).total_seconds() < 0:
-            raise ValueError(
-                f"cst '{cst}' argument must be between start time '{st}' and end time '{et}'"
+            raise TypeError(
+                f"end_warmup argument must be str or pandas.Timestamp object"
             )
-        
-    cst = int((cst - st).total_seconds() / setup.dt)
 
-    return cst
+        if (end_warmup - st).total_seconds() < 0 or (
+            et - end_warmup
+        ).total_seconds() < 0:
+            raise ValueError(
+                f"end_warmup '{end_warmup}' argument must be between start time '{st}' and end time '{et}'"
+            )
+
+    end_warmup = int((end_warmup - st).total_seconds() / setup.dt)
+
+    return end_warmup
 
 
-def _standardize_metrics_args(metric: str, cst: str | pd.Timestamp | None, setup: SetupDT) -> AnyTuple:
+def _standardize_metrics_args(
+    metric: str, end_warmup: str | pd.Timestamp | None, setup: SetupDT
+) -> AnyTuple:
     metric = _standardize_metrics_metric(metric)
-    cst = _standardize_metrics_cst(cst, setup)
+    end_warmup = _standardize_metrics_end_warmup(end_warmup, setup)
 
-    return (metric, cst)
+    return (metric, end_warmup)

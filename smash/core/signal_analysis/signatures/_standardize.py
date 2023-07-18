@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash._constant import SIGNS, CSIGN, ESIGN
+from smash._constant import SIGNS, CSIGN, ESIGN, COMPUTE_BY
 
 from typing import TYPE_CHECKING
 
@@ -10,7 +10,9 @@ if TYPE_CHECKING:
 import warnings
 
 
-def _standardize_signatures_sign(sign: str | list[str] | None) -> tuple[list[str]]:
+def _standardize_compute_signatures_sign(
+    sign: str | list[str] | None,
+) -> tuple[list[str]]:
     if sign is None:
         sign = SIGNS
 
@@ -47,18 +49,37 @@ def _standardize_signatures_sign(sign: str | list[str] | None) -> tuple[list[str
     return (cs, es)
 
 
-def _standardize_signatures_event_seg(event_seg: dict | None) -> dict:
+def _standardize_compute_signatures_event_seg(event_seg: dict | None) -> dict:
     if event_seg is None:
         event_seg = {}
 
     return event_seg
 
 
-def _standardize_signatures_args(
-    sign: str | list[str] | None, event_seg: dict | None
+def _standardize_compute_signatures_by(by: str) -> str:
+    if isinstance(by, str):
+        by_standardized = by.lower()
+
+        if by_standardized in COMPUTE_BY:
+            by_standardized = by_standardized[:3]
+
+        else:
+            raise ValueError(f"Unknown by argument {by}. Choices: {COMPUTE_BY}")
+    else:
+        raise TypeError(f"by argument must be str")
+
+    return by_standardized
+
+
+def _standardize_compute_signatures_args(
+    sign: str | list[str] | None,
+    event_seg: dict | None,
+    by: str,
 ) -> AnyTuple:
-    cs, es = _standardize_signatures_sign(sign)
+    cs, es = _standardize_compute_signatures_sign(sign)
 
-    event_seg = _standardize_signatures_event_seg(event_seg)
+    event_seg = _standardize_compute_signatures_event_seg(event_seg)
 
-    return (cs, es, event_seg)
+    by = _standardize_compute_signatures_by(by)
+
+    return (cs, es, event_seg, by)

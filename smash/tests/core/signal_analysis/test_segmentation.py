@@ -7,9 +7,15 @@ import pytest
 
 
 def generic_hydrograph_segmentation(model: smash.Model, **kwargs) -> dict:
-    arr = smash.hydrograph_segmentation(model).to_numpy()
+    instance = smash.forward_run(model)
 
-    res = {"hydrograph_segmentation.arr": arr.astype("S")}
+    by_obs = smash.hydrograph_segmentation(instance, by="obs").to_numpy()
+    by_sim = smash.hydrograph_segmentation(instance, by="sim").to_numpy()
+
+    res = {
+        "hydrograph_segmentation.by_obs": by_obs.astype("S"),
+        "hydrograph_segmentation.by_sim": by_sim.astype("S"),
+    }
 
     return res
 

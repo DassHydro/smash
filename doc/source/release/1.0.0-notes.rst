@@ -1,0 +1,39 @@
+.. _release.1.0.0-notes:
+
+.. currentmodule:: smash
+
+=========================
+smash 1.0.0 Release Notes
+=========================
+
+The smash 1.0.0 release brings major updates aimed at simplifying the user experience while continuing the ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are: 
+
+------------
+Contributors
+------------
+
+This release was made possible thanks to the contributions of:
+
+---------------
+Compatibilities
+---------------
+
+A new package wheel has been added to the list of dependencies.
+
+The SALib package has been removed from the list of dependencies.
+
+------------
+Deprecations
+------------
+
+------------
+Improvements
+------------
+
+------------
+New Features
+------------
+
+-----
+Fixes
+-----

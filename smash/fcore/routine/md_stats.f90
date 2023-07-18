@@ -3,7 +3,7 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - 
+!%      -
 
 module md_stats
 
@@ -13,12 +13,12 @@ module md_stats
 
 contains
 
-function mean1d_r(dat) result(res)
+    function mean1d_r(dat) result(res)
 
         !% Notes
         !% -----
         !%
-        !% Mean function
+        !% Mean function for real 1d array
 
         implicit none
 
@@ -39,7 +39,7 @@ function mean1d_r(dat) result(res)
                 res = res + dat(i)
             end do
 
-            res = res / n
+            res = res/n
 
         end if
 
@@ -131,7 +131,7 @@ function mean1d_r(dat) result(res)
         !% Notes
         !% -----
         !%
-        !% Quantile function using linear interpolation
+        !% Quantile function for real 1d array using linear interpolation
         !%
         !% Similar to numpy.quantile
 

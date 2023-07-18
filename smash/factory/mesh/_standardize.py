@@ -11,6 +11,7 @@ from osgeo import gdal
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Tuple
     from smash._typing import AnyTuple, FilePath, ListLike, Numeric, AlphaNumeric
 
 
