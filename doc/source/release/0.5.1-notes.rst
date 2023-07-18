@@ -26,10 +26,10 @@ Deprecations
 Improvements
 ------------
 
-Missing documentation API for functions hdf5_handler, hdf5_io and object_handler #46
-************************************************************************************
+Missing documentation API for functions hdf5_handler, hdf5_io and object_handler
+********************************************************************************
 
-The documentation API was missing for the new functions for reading and writting hdf5 files added in release 0.5.0. This has been corrected.
+The documentation API was missing for the new functions for reading and writting hdf5 files added in release 0.5.0. This has been corrected. `#46 <https://github.com/DassHydro-dev/smash/issues/46`
 
 ------------
 New Features
@@ -39,9 +39,9 @@ New Features
 Fixes
 -----
 
-Missing interception parameters ci in constant parameters #45
-*************************************************************
+Missing interception parameters ci in constant parameters
+*********************************************************
 
-Ci was missing in the parameter constant list and can't be saved and post processed or retrieved at all. This is fixed now.
+Ci was missing in the parameter constant list and can't be saved and post processed or retrieved at all. This is fixed now. `#46 <https://github.com/DassHydro-dev/smash/issues/45`
 
 
