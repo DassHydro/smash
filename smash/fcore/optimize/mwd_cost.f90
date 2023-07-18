@@ -8,7 +8,7 @@
 module mwd_cost
 
     use md_constant !% only: sp
-    use mwd_efficiency_metric !% any type
+    use mwd_metrics !% any type
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -41,7 +41,7 @@ contains
         qo = input_data%obs_response%q(1, :)
         qs = output%sim_response%q(1, :)
 
-        jobs = nse(qo, qs)
+        jobs = 1 - nse(qo, qs)
 
         output%cost = jobs
 

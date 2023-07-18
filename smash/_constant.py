@@ -180,10 +180,10 @@ ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 SIGNS = CSIGN + ESIGN
 
 
-### EFFICIENCY METRICS ###
-##########################
+### EFFICIENCY/ERROR METRICS ###
+################################
 
-EFFICIENCY_METRICS = ["nse", "kge", "se", "rmse", "logarithmic"]
+METRICS = ["nse", "nnse", "kge", "mae", "mape", "mse", "rmse", "lgrm"]
 
 
 ### NET ###

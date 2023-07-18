@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
+from smash.fcore._mwd_signatures import baseflow_separation
+
 import numpy as np
-import pandas as pd
 from datetime import date, datetime
 import warnings
 
@@ -11,85 +12,6 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-
-
-def _missing_values(
-    p: np.ndarray, q: np.ndarray, keep: float = 0.2, method: str = "nearest"
-):
-    df = pd.DataFrame({"p": p, "q": q})
-    df.p = np.where(df.p < 0, np.nan, df.p)
-    df.q = np.where(df.q < 0, np.nan, df.q)
-
-    mvrat = max(df.p.isna().sum() / len(p), df.q.isna().sum() / len(q))
-
-    if mvrat <= keep:
-        indp = np.where(df.p.to_numpy() >= 0)
-        indq = np.where(df.q.to_numpy() >= 0)
-
-        df.p[0] = df.p[indp[0][0]]
-        df.p[len(df) - 1] = df.p[indp[0][-1]]
-
-        df.q[0] = df.q[indq[0][0]]
-        df.q[len(df) - 1] = df.q[indq[0][-1]]
-
-        df.interpolate(method=method, inplace=True)
-
-        return df.p.to_numpy(), df.q.to_numpy(), mvrat
-
-    else:
-        return None, None, mvrat
-
-
-def _baseflow_separation(
-    streamflow: np.ndarray, filter_parameter: float = 0.925, passes: int = 3
-):
-    n = len(streamflow)
-    ends = np.array([n - 1 if i % 2 == 1 else 0 for i in range(passes + 1)])
-    addtostart = np.array([-1 if i % 2 == 1 else 1 for i in range(passes)])
-
-    btp = np.copy(streamflow)  # % Previous pass's baseflow approximation
-    qft = np.zeros(n)
-    bt = np.zeros(n)
-
-    if streamflow[0] < np.quantile(streamflow, 0.25):
-        bt[0] = streamflow[0]
-
-    else:
-        bt[0] = np.mean(streamflow) / 1.5
-
-    # % Guess baseflow value in first time step.
-    for j in range(passes):
-        rang = np.linspace(
-            ends[j] + addtostart[j],
-            ends[j + 1],
-            np.abs(ends[j] + addtostart[j] - ends[j + 1]) + 1,
-        )
-        for ii in rang:
-            i = int(ii)
-
-            if (
-                filter_parameter * bt[i - addtostart[j]]
-                + ((1 - filter_parameter) / 2) * (btp[i] + btp[i - addtostart[j]])
-                > btp[i]
-            ):
-                bt[i] = btp[i]
-
-            else:
-                bt[i] = filter_parameter * bt[i - addtostart[j]] + (
-                    (1 - filter_parameter) / 2
-                ) * (btp[i] + btp[i - addtostart[j]])
-            qft[i] = streamflow[i] - bt[i]
-
-        if j < passes - 1:
-            btp = np.copy(bt)
-
-            if streamflow[ends[j + 1]] < np.mean(btp):
-                bt[ends[j + 1]] = streamflow[ends[j + 1]] / 1.2
-
-            else:
-                bt[ends[j + 1]] = np.mean(btp)
-
-    return bt, qft
 
 
 def _get_season(now: datetime):
@@ -115,16 +37,11 @@ def _detect_peaks(
     mph: float | None = None,
     mpd: int = 1,
     threshold: int = 0,
-    edge: str = "rising",
     kpsh: bool = False,
-    valley: bool = False,
 ):
     x = np.atleast_1d(x).astype("float64")
     if x.size < 3:
         return np.array([], dtype=int)
-
-    if valley:
-        x = -x
 
     # % find indices of all peaks
     dx = x[1:] - x[:-1]
@@ -136,15 +53,7 @@ def _detect_peaks(
         dx[np.where(np.isnan(dx))[0]] = np.inf
     ine, ire, ife = np.array([[], [], []], dtype=int)
 
-    if not edge:
-        ine = np.where((np.hstack((dx, 0)) < 0) & (np.hstack((0, dx)) > 0))[0]
-
-    else:
-        if edge.lower() in ["rising", "both"]:
-            ire = np.where((np.hstack((dx, 0)) <= 0) & (np.hstack((0, dx)) > 0))[0]
-
-        if edge.lower() in ["falling", "both"]:
-            ife = np.where((np.hstack((dx, 0)) < 0) & (np.hstack((0, dx)) >= 0))[0]
+    ire = np.where((np.hstack((dx, 0)) <= 0) & (np.hstack((0, dx)) > 0))[0]
 
     ind = np.unique(np.hstack((ine, ire, ife)))
 
@@ -210,6 +119,10 @@ def _events_grad(
     st_power = round(st_power * 3600 / dt)
     end_search = round(end_search * 3600 / dt)
 
+    # % handle with missing values
+    p = np.where(p < 0, np.nan, p)
+    q = np.where(q < 0, np.nan, q)
+
     ind = _detect_peaks(q, mph=np.quantile(q[q > 0], peak_quant))
     list_events = []
 
@@ -218,13 +131,13 @@ def _events_grad(
         p_search_grad = np.gradient(p_search)
 
         ind_start = _detect_peaks(
-            p_search_grad, mph=np.quantile(p_search_grad, rg_quant)
+            p_search_grad, mph=np.nanquantile(p_search_grad, rg_quant)
         )
 
         if ind_start.size > 1:
             power = np.array(
                 [
-                    np.linalg.norm(p_search[j - 1 : j + st_power - 1], ord=2)
+                    np.linalg.norm(np.nan_to_num(p_search[j - 1 : j + st_power - 1], nan=0), ord=2)  # remove power computation at nan values (replace nan by 0)
                     for j in ind_start
                 ]
             )
@@ -232,7 +145,7 @@ def _events_grad(
             ind_start = ind_start[np.where(power > coef_re * max(power))[0]]
 
         elif ind_start.size == 0:
-            ind_start = np.append(ind_start, np.argmax(p_search_grad))
+            ind_start = np.append(ind_start, np.nanargmax(p_search_grad))
 
         ind_start_minq = ind_start[0]
 
@@ -253,13 +166,23 @@ def _events_grad(
         if fwindow <= i_peak:  # reject peak at the last time step
             continue
 
-        qbf = _baseflow_separation(q[i_peak - 1 : fwindow - 1])[0]
+        q_end = q[i_peak - 1 : fwindow - 1]
+        mask = ~np.isnan(q_end)
 
-        dflow = q[i_peak - 1 : fwindow - 1] - qbf
+        qbf = np.zeros(q_end.shape)
+
+        bf = np.zeros(mask.sum(), dtype=np.float32)
+        qf = bf.copy()
+        
+        baseflow_separation(q_end[mask], bf, qf, filter_parameter=0.925, passes=3)
+
+        qbf[mask] = bf
+
+        dflow = q_end - qbf
         dflow_windows = (dflow[i:] for i in range(min(end_search, dflow.size)))
         dflow = np.array([sum(i) for i in zip(*dflow_windows)])
 
-        end = i_peak + np.argmin(dflow)
+        end = i_peak + np.nanargmin(dflow)
 
         if len(list_events) > 0:
             prev_start = list_events[-1]["start"]
@@ -275,8 +198,9 @@ def _events_grad(
                 if q[i_peak] > q[prev_peakq]:
                     list_events[-1]["peakQ"] = i_peak
 
-                    if p[peakp] > p[prev_peakp]:
-                        list_events[-1]["peakP"] = peakp
+                if p[peakp] > p[prev_peakp]:
+                    list_events[-1]["peakP"] = peakp
+                    
                 continue
 
         list_events.append(
@@ -296,18 +220,15 @@ def _mask_event(
     mask = np.zeros(model.obs_response.q.shape)
 
     for i, catchment in enumerate(model.mesh.code):
-        prcp_tmp, qobs_tmp, ratio = _missing_values(
-            model.atmos_data.mean_prcp[i, :], model.obs_response.q.shape[i, :]
-        )
+        prcp = model.atmos_data.mean_prcp[i, :].copy()
+        qobs =  model.obs_response.q[i, :].copy()
 
-        if prcp_tmp is None:
-            warnings.warn(
-                f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
-            )
+        if (prcp < 0).all() or (qobs < 0).all():
+            warnings.warn(f"Catchment {catchment} has no observed precipitation or/and discharge data")
 
         else:
             list_events = _events_grad(
-                prcp_tmp, qobs_tmp, peak_quant, max_duration, model.setup.dt
+                prcp, qobs, peak_quant, max_duration, model.setup.dt
             )
 
             for event_number, t in enumerate(list_events):

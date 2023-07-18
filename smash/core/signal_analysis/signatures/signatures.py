@@ -2,19 +2,11 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.core.signal_analysis.signatures._computation import (
-    _continuous_signatures,
-    _event_signatures,
-)
-from smash.core.signal_analysis.signatures._standardize import (
-    _standardize_signatures_args,
-)
+from smash.fcore._mwd_signatures import signature_computation
 
-from smash.core.signal_analysis.segmentation._tools import (
-    _events_grad,
-    _get_season,
-    _missing_values,
-)
+from smash.core.signal_analysis.signatures._standardize import _standardize_signatures_args
+
+from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
 
 from typing import TYPE_CHECKING
 
@@ -26,7 +18,7 @@ import pandas as pd
 import warnings
 
 
-__all__ = ["Signatures", "signatures"]
+__all__ = ["Signatures", "compute_signatures"]
 
 
 class Signatures(dict):
@@ -40,20 +32,12 @@ class Signatures(dict):
     Attributes
     ----------
     cont : dict
-        Continuous signatures. The keys are
-
-        - 'obs': a dataframe representing observation results.
-        - 'sim': a dataframe representing simulation results.
-
-        The column names of both dataframes consist of the catchment code and studied signature names.
+        A dataframe representing observed or simulated continuous signatures. 
+        The column names consist of the catchment code and studied signature names.
 
     event : dict
-        Flood event signatures. The keys are
-
-        - 'obs': a dataframe representing observation results.
-        - 'sim': a dataframe representing simulation results.
-
-        The column names of both dataframes consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
+        A dataframe representing observed or simulated flood event signatures. 
+        The column names consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
 
     See Also
     --------
@@ -87,7 +71,7 @@ class Signatures(dict):
         return list(self.keys())
 
 
-def signatures(
+def compute_signatures(
     model: Model,
     sign: str | list | None = None,
     obs_comp: bool = True,
@@ -169,13 +153,13 @@ def signatures(
 
     cs, es, event_seg = _standardize_signatures_args(sign, event_seg)
 
-    res = _signatures(model, cs, es, obs_comp, sim_comp, **event_seg)
+    res = _compute_signatures(model, cs, es, obs_comp, sim_comp, **event_seg)
 
     return Signatures(res)
 
 
 # TODO: Add function check_unknown_options
-def _signatures(
+def _compute_signatures(
     instance: Model,
     cs: list[str],
     es: list[str],
@@ -209,14 +193,11 @@ def _signatures(
 
     if len(cs) + len(es) > 0:
         for i, catchment in enumerate(instance.mesh.code):
-            prcp_tmp, qobs_tmp, ratio = _missing_values(
-                prcp_cvt[i, :], instance.obs_response.q[i, :]
-            )
-
-            if prcp_tmp is None:
-                warnings.warn(
-                    f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
-                )
+            prcp = prcp_cvt[i, :]  # already conversion of instance.atmos_data.mean_prcp[i, :]
+            qobs =  instance.obs_response.q[i, :].copy()
+            
+            if (prcp < 0).all() or (qobs < 0).all():
+                warnings.warn(f"Catchment {catchment} has no observed precipitation or/and discharge data")
 
                 row_cs = pd.DataFrame(
                     [[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs
@@ -232,13 +213,11 @@ def _signatures(
                 dfobs_es = pd.concat([dfobs_es, row_es], ignore_index=True)
 
             else:
-                qsim_tmp = instance.sim_response.q[i, :].copy()
+                qsim = instance.sim_response.q[i, :].copy()
 
                 if len(cs) > 0:
                     if sim_comp:
-                        csignatures_sim = _continuous_signatures(
-                            prcp_tmp, qsim_tmp, list_signatures=cs
-                        )
+                        csignatures_sim = [signature_computation(prcp, qsim, signature) for signature in cs]
 
                         rowsim_cs = pd.DataFrame(
                             [[catchment] + csignatures_sim], columns=col_cs
@@ -247,9 +226,7 @@ def _signatures(
                         dfsim_cs = pd.concat([dfsim_cs, rowsim_cs], ignore_index=True)
 
                     if obs_comp:
-                        csignatures_obs = _continuous_signatures(
-                            prcp_tmp, qobs_tmp, list_signatures=cs
-                        )
+                        csignatures_obs = [signature_computation(prcp, qobs, signature) for signature in cs]
 
                         rowobs_cs = pd.DataFrame(
                             [[catchment] + csignatures_obs], columns=col_cs
@@ -259,7 +236,7 @@ def _signatures(
 
                 if len(es) > 0:
                     list_events = _events_grad(
-                        prcp_tmp, qobs_tmp, peak_quant, max_duration, instance.setup.dt
+                        prcp, qobs, peak_quant, max_duration, instance.setup.dt
                     )
 
                     if len(list_events) == 0:
@@ -276,21 +253,14 @@ def _signatures(
                             ts = t["start"]
                             te = t["end"]
 
-                            event_prcp = prcp_tmp[ts : te + 1]
-                            event_qobs = qobs_tmp[ts : te + 1]
-                            event_qsim = qsim_tmp[ts : te + 1]
+                            event_prcp = prcp[ts : te + 1]
+                            event_qobs = qobs[ts : te + 1]
+                            event_qsim = qsim[ts : te + 1]
 
                             season = _get_season(date_range[ts].date())
 
                             if sim_comp:
-                                esignatures_sim = _event_signatures(
-                                    event_prcp,
-                                    event_qsim,
-                                    ts,
-                                    t["peakP"],
-                                    None,
-                                    list_signatures=es,
-                                )
+                                esignatures_sim = [signature_computation(event_prcp, event_qsim, signature) for signature in es]
 
                                 rowsim_es = pd.DataFrame(
                                     [
@@ -310,14 +280,7 @@ def _signatures(
                                 )
 
                             if obs_comp:
-                                esignatures_obs = _event_signatures(
-                                    event_prcp,
-                                    event_qobs,
-                                    ts,
-                                    t["peakP"],
-                                    t["peakQ"],
-                                    list_signatures=es,
-                                )
+                                esignatures_obs = [signature_computation(event_prcp, event_qobs, signature) for signature in es]
 
                                 rowobs_es = pd.DataFrame(
                                     [

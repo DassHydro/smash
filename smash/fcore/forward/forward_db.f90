@@ -340,12 +340,16 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ----------
 !%
 !%      - nse
+!%      - nnse
 !%      - kge_components
 !%      - kge
+!%      - mae
+!%      - mape
 !%      - se
+!%      - mse
 !%      - rmse
-!%      - logarithmic
-MODULE MWD_EFFICIENCY_METRIC_DIFF
+!%      - lgrm
+MODULE MWD_METRICS_DIFF
 !% only: sp
   USE MD_CONSTANT
   IMPLICIT NONE
@@ -384,7 +388,7 @@ CONTAINS
     num_d = sum_yy_d - 2*sum_xy_d
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
-    res_d = num_d/den
+    res_d = -(num_d/den)
   END FUNCTION NSE_D
 
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -421,7 +425,7 @@ CONTAINS
 !% NSE numerator / denominator
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
-    num_b = res_b/den
+    num_b = -(res_b/den)
     sum_yy_b = num_b
     sum_xy_b = -(2*num_b)
     y_b = 0.0_4
@@ -460,8 +464,17 @@ CONTAINS
     num = sum_xx - 2*sum_xy + sum_yy
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
-    res = num/den
+    res = 1 - num/den
   END FUNCTION NSE
+
+  FUNCTION NNSE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    REAL(sp) :: result1
+    result1 = NSE(x, y)
+    res = 1/(2-result1)
+  END FUNCTION NNSE
 
   SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
     IMPLICIT NONE
@@ -513,11 +526,61 @@ CONTAINS
     REAL(sp) :: r, a, b
     INTRINSIC SQRT
     REAL(sp) :: arg1
+    REAL(sp) :: result1
     CALL KGE_COMPONENTS(x, y, r, a, b)
 ! KGE criterion
     arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
-    res = SQRT(arg1)
+    result1 = SQRT(arg1)
+    res = 1 - result1
   END FUNCTION KGE
+
+  FUNCTION MAE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    n = 0
+    res = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        IF (x(i) - y(i) .GE. 0.) THEN
+          abs0 = x(i) - y(i)
+        ELSE
+          abs0 = -(x(i)-y(i))
+        END IF
+        res = res + abs0
+      END IF
+    END DO
+    res = res/n
+  END FUNCTION MAE
+
+  FUNCTION MAPE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    n = 0
+    res = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        IF ((x(i)-y(i))/x(i) .GE. 0.) THEN
+          abs0 = (x(i)-y(i))/x(i)
+        ELSE
+          abs0 = -((x(i)-y(i))/x(i))
+        END IF
+        res = res + abs0
+      END IF
+    END DO
+    res = res/n
+  END FUNCTION MAPE
 
   FUNCTION SE(x, y) RESULT (RES)
     IMPLICIT NONE
@@ -531,23 +594,32 @@ CONTAINS
     END DO
   END FUNCTION SE
 
-  FUNCTION RMSE(x, y) RESULT (RES)
+  FUNCTION MSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
     REAL(sp) :: res
     INTEGER :: i, n
     INTRINSIC SIZE
-    INTRINSIC SQRT
     REAL(sp) :: result1
     n = 0
     DO i=1,SIZE(x)
       IF (x(i) .GE. 0._sp) n = n + 1
     END DO
     result1 = SE(x, y)
-    res = SQRT(result1/n)
+    res = result1/n
+  END FUNCTION MSE
+
+  FUNCTION RMSE(x, y) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp) :: res
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    result1 = MSE(x, y)
+    res = SQRT(result1)
   END FUNCTION RMSE
 
-  FUNCTION LOGARITHMIC(x, y) RESULT (RES)
+  FUNCTION LGRM(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
     REAL(sp) :: res
@@ -564,9 +636,9 @@ CONTAINS
         res = res + x(i)*LOG(arg1)*LOG(arg2)
       END IF
     END DO
-  END FUNCTION LOGARITHMIC
+  END FUNCTION LGRM
 
-END MODULE MWD_EFFICIENCY_METRIC_DIFF
+END MODULE MWD_METRICS_DIFF
 
 !%      (MWD) Module Wrapped and Differentiated.
 !%
@@ -578,7 +650,7 @@ MODULE MWD_COST_DIFF
 !% only: sp
   USE MD_CONSTANT
 !% any type
-  USE MWD_EFFICIENCY_METRIC_DIFF
+  USE MWD_METRICS_DIFF
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -615,10 +687,13 @@ CONTAINS
     REAL(sp) :: jobs_d
     REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
     REAL(sp), DIMENSION(setup%ntime_step) :: qs_d
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
     qo = input_data%obs_response%q(1, :)
     qs_d = output_d%sim_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    jobs_d = NSE_D(qo, qs, qs_d, jobs)
+    result1_d = NSE_D(qo, qs, qs_d, result1)
+    jobs_d = -result1_d
     output_d%cost = jobs_d
   END SUBROUTINE COMPUTE_COST_D
 
@@ -641,16 +716,19 @@ CONTAINS
     REAL(sp) :: jobs_b
     REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
     REAL(sp), DIMENSION(setup%ntime_step) :: qs_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
     REAL(sp) :: res
     REAL(sp) :: res_b
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
     res = NSE(qo, qs)
     jobs_b = output_b%cost
+    result1_b = -jobs_b
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
     qs_b = 0.0_4
-    res_b = jobs_b
+    res_b = result1_b
     CALL NSE_B(qo, qs, qs_b, res_b)
     output_b%sim_response%q(1, :) = output_b%sim_response%q(1, :) + qs_b
   END SUBROUTINE COMPUTE_COST_B
@@ -667,10 +745,12 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs
     REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
+    REAL(sp) :: result1
     jobs = 0._sp
     qo = input_data%obs_response%q(1, :)
     qs = output%sim_response%q(1, :)
-    jobs = NSE(qo, qs)
+    result1 = NSE(qo, qs)
+    jobs = 1 - result1
     output%cost = jobs
   END SUBROUTINE COMPUTE_COST
 

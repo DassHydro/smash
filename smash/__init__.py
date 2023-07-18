@@ -1,9 +1,9 @@
 # smash main-package
 from smash.core.model.model import Model
 
-from smash.core.signal_analysis.scores.scores import efficiency_score
+from smash.core.signal_analysis.metrics.metrics import metrics
 from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segmentation
-from smash.core.signal_analysis.signatures.signatures import signatures
+from smash.core.signal_analysis.signatures.signatures import compute_signatures
 
 from smash.core.simulation import forward_run, optimize
 
@@ -24,9 +24,9 @@ def __getattr__(name):
 
 __all__ = [
     "Model",
-    "efficiency_score",
+    "metrics",
     "hydrograph_segmentation",
-    "signatures",
+    "compute_signatures",
     "forward_run",
     "optimize",
     "io",

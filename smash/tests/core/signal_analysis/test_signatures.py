@@ -12,7 +12,7 @@ def generic_signatures(model: smash.Model, **kwargs) -> dict:
 
     instance = smash.forward_run(model)
 
-    signresult = smash.signatures(instance)
+    signresult = smash.compute_signatures(instance)
 
     for typ, sign in zip(
         ["cont", "event"], [CSIGN[:4], ESIGN]
