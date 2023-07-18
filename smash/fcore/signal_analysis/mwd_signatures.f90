@@ -3,7 +3,12 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      -
+!%      - baseflow_separation
+!%
+!%      Function
+!%      --------
+!%
+!%      - signature_computation
 
 module mwd_signatures
 

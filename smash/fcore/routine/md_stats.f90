@@ -3,7 +3,13 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      -
+!%      - heap_sort
+!%
+!%      Function
+!%      --------
+!%
+!%      - mean1d_r
+!%      - quantile1d_r
 
 module md_stats
 

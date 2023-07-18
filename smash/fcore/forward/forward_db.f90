@@ -339,9 +339,13 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      Subroutine
 !%      ----------
 !%
+!%      - kge_components
+!%
+!%      Function
+!%      --------
+!%
 !%      - nse
 !%      - nnse
-!%      - kge_components
 !%      - kge
 !%      - mae
 !%      - mape

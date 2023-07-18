@@ -14,7 +14,7 @@ if TYPE_CHECKING:
 def _standardize_metrics_metric(metric: str) -> str:
     if isinstance(metric, str):
         if metric.lower() not in METRICS:
-            raise ValueError(f"Unknown efficiency metric {metric}. Choices: {METRICS}")
+            raise ValueError(f"Unknown evaluation metric {metric}. Choices: {METRICS}")
     else:
         raise TypeError(f"metric must be str")
 
