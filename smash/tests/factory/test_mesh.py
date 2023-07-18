@@ -17,8 +17,13 @@ def generic_xy_mesh(**kwargs) -> dict:
         code=["V3524010", "V3515010", "V3517010"],
         epsg=2154,
     )
-
-    res = {"xy_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items()}
+    # % Remove 'path' check because of updated numpy argsort method
+    skip_keys = ["path"]
+    res = {
+        "xy_mesh." + k: np.array(v, ndmin=1)
+        for (k, v) in mesh.items()
+        if k not in skip_keys
+    }
 
     return res
 
@@ -44,8 +49,13 @@ def generic_bbox_mesh(**kwargs) -> dict:
         bbox=(100_000, 200_000, 6_050_000, 6_150_000),
         epsg=2154,
     )
-
-    res = {"bbox_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items()}
+    # % Remove 'path' check because of updated numpy argsort method
+    skip_keys = ["path"]
+    res = {
+        "bbox_mesh." + k: np.array(v, ndmin=1)
+        for (k, v) in mesh.items()
+        if k not in skip_keys
+    }
 
     return res
 

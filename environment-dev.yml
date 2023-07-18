@@ -11,16 +11,17 @@ dependencies:
     - gfortran
 
     # required dependencies
-    - f90wrap
+    - wheel
     - numpy>=1.13
+    - f90wrap
+    - gdal
     - pandas
-    - matplotlib
     - h5py
     - tqdm
-    - gdal
     - scipy
     - pyyaml
     - terminaltables
+    - matplotlib  # (optional: only used for plotting and visualization)
 
     # documentation
     - sphinx

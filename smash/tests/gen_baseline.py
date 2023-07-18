@@ -142,6 +142,7 @@ if __name__ == "__main__":
 
     setup, mesh = smash.factory.load_dataset("Cance")
 
+    print("collecting ...")
     # % Disable stderr
     sys.stderr = open("/dev/null", "w")
 

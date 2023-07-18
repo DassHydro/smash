@@ -10,7 +10,7 @@ Numeric = Union[float, int]
 
 AlphaNumeric = Union[str, Numeric]
 
-ListLike = Union[List, Tuple]
+ListLike = Union[List, Tuple, np.ndarray]
 
 FilePath = Union[str, "PathLike[str]"]
 
