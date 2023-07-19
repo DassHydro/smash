@@ -267,6 +267,9 @@ def _compute_signatures(
 
                             df_es = pd.concat([df_es, row_es], ignore_index=True)
 
+    df_cs.replace(-99, np.nan, inplace=True)
+    df_es.replace(-99, np.nan, inplace=True)
+
     return dict(
         zip(
             ["cont", "event"],

@@ -104,12 +104,7 @@ def _hydrograph_segmentation(
 
     for i, catchment in enumerate(instance.mesh.code):
         prcp = instance.atmos_data.mean_prcp[i, :].copy()
-
-        if by == "obs":
-            q = instance.obs_response.q[i, :].copy()
-
-        else:
-            q = instance.sim_response.q[i, :].copy()
+        q = getattr(instance, f"{by}_response").q[i, :].copy()
 
         if (prcp < 0).all() or (q < 0).all():
             warnings.warn(
