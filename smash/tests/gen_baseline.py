@@ -146,6 +146,10 @@ if __name__ == "__main__":
     # % Disable stderr
     sys.stderr = open("/dev/null", "w")
 
+    qs = h5py.File(
+        os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r"
+    )["sim_q"][:]
+
     model = smash.Model(setup, mesh)
 
     model_structure = []
@@ -192,7 +196,9 @@ if __name__ == "__main__":
             for name, func in generic_functions:
                 print(".", end="")
                 for key, value in func(
-                    model=model, model_structure=model_structure
+                    model=model,
+                    model_structure=model_structure,
+                    qs=qs,
                 ).items():
                     dump_to_baseline(f, key, value)
             print("")

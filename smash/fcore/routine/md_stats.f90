@@ -8,7 +8,6 @@
 !%      Function
 !%      --------
 !%
-!%      - mean1d_r
 !%      - quantile1d_r
 
 module md_stats
@@ -18,38 +17,6 @@ module md_stats
     implicit none
 
 contains
-
-    function mean1d_r(dat) result(res)
-
-        !% Notes
-        !% -----
-        !%
-        !% Mean function for real 1d array
-
-        implicit none
-
-        real(sp), dimension(:), intent(in) :: dat
-
-        integer :: n, i
-        real(sp) :: res
-
-        res = dat(1)
-
-        n = size(dat)
-
-        if (n .gt. 1) then
-
-            res = 0
-
-            do i = 1, n
-                res = res + dat(i)
-            end do
-
-            res = res/n
-
-        end if
-
-    end function mean1d_r
 
     subroutine heap_sort(n, arr)
 

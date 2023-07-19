@@ -7,20 +7,29 @@ import numpy as np
 import pytest
 
 
-def generic_signatures(model: smash.Model, **kwargs) -> dict:
+def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     res = {}
 
-    instance = smash.forward_run(model)
+    instance = model.copy()
+
+    instance.sim_response.q = qs
 
     signresult = {}
 
-    signresult["obs"] = smash.compute_signatures(instance, by="obs")
-    signresult["sim"] = smash.compute_signatures(instance, by="sim")
+    signresult["obs_by_obs"] = smash.compute_signatures(
+        instance, domain="obs", event_seg={"by": "obs"}
+    )
+    signresult["sim_by_obs"] = smash.compute_signatures(
+        instance, domain="sim", event_seg={"by": "obs"}
+    )
+    signresult["sim_by_sim"] = smash.compute_signatures(
+        instance, domain="sim", event_seg={"by": "sim"}
+    )
 
     for typ, sign in zip(
         ["cont", "event"], [CSIGN[:4], ESIGN]
     ):  # % remove percentile signatures calculation
-        for dom in ["obs", "sim"]:
+        for dom in signresult.keys():
             res[f"signatures.{typ}_{dom}"] = signresult[dom][typ][sign].to_numpy(
                 dtype=np.float32
             )
@@ -29,7 +38,7 @@ def generic_signatures(model: smash.Model, **kwargs) -> dict:
 
 
 def test_signatures():
-    res = generic_signatures(pytest.model)
+    res = generic_signatures(pytest.model, pytest.simulated_discharges["sim_q"][:])
 
     for key, value in res.items():
         # % Check signatures for cont/event and obs/sim

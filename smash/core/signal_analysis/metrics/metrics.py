@@ -51,7 +51,7 @@ def metrics(
     Returns
     -------
     res : np.ndarray
-        A 1D-array of shape (n,) representing the computed efficiency score(s) for **n** catchment(s).
+        A 1D-array of shape (n,) representing the computed evaluation metric for **n** catchment(s).
 
     Examples
     --------
@@ -65,9 +65,9 @@ def metrics(
 
     ng = obs.shape[0]
 
-    metric_scores = np.zeros(ng)
+    evaluation_metric = np.zeros(ng)
 
     for i in range(ng):
-        metric_scores[i] = eval(metric)(obs[i], sim[i])
+        evaluation_metric[i] = eval(metric)(obs[i], sim[i])
 
-    return metric_scores
+    return evaluation_metric

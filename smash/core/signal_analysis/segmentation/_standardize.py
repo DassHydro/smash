@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash._constant import COMPUTE_BY
+from smash._constant import DOMAIN
 
 from typing import TYPE_CHECKING
 
@@ -36,11 +36,11 @@ def _standardize_hydrograph_segmentation_by(by: str) -> str:
     if isinstance(by, str):
         by_standardized = by.lower()
 
-        if by_standardized in COMPUTE_BY:
+        if by_standardized in DOMAIN:
             by_standardized = by_standardized[:3]
 
         else:
-            raise ValueError(f"Unknown by argument {by}. Choices: {COMPUTE_BY}")
+            raise ValueError(f"Unknown by argument {by}. Choices: {DOMAIN}")
     else:
         raise TypeError(f"by argument must be str")
 

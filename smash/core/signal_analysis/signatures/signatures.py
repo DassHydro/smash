@@ -77,7 +77,7 @@ def compute_signatures(
     model: Model,
     sign: str | list | None = None,
     event_seg: dict | None = None,
-    by: str = "sim",
+    domain: str = "obs",
 ):
     """
     Compute continuous or/and flood event signatures of the Model.
@@ -99,19 +99,20 @@ def compute_signatures(
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
 
+    domain: str, default 'obs'
+        Compute observed (obs) or simulated (sim) signatures.
+
     event_seg : dict or None, default None
         A dictionary of event segmentation options when calculating flood event signatures. The keys are
 
         - 'peak_quant'
         - 'max_duration'
+        - 'by'
 
         See `smash.Model.event_segmentation` for more.
 
         .. note::
             If not given in case flood signatures are computed, the default values will be set for these parameters.
-
-    by: str, default 'obs'
-        Compute signatures based on observed discharges (obs) or simulated discharges (sim).
 
     Returns
     -------
@@ -149,9 +150,11 @@ def compute_signatures(
 
     """
 
-    cs, es, event_seg, by = _standardize_compute_signatures_args(sign, event_seg, by)
+    cs, es, domain, event_seg = _standardize_compute_signatures_args(
+        sign, domain, event_seg
+    )
 
-    res = _compute_signatures(model, cs, es, by, **event_seg)
+    res = _compute_signatures(model, cs, es, domain, **event_seg)
 
     return Signatures(res)
 
@@ -161,9 +164,10 @@ def _compute_signatures(
     instance: Model,
     cs: list[str],
     es: list[str],
-    by: str,
+    domain: str,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,
+    by: str = "obs",
     **unknown_options,
 ):
     prcp_cvt = (
@@ -191,11 +195,7 @@ def _compute_signatures(
                 i, :
             ]  # already conversion of instance.atmos_data.mean_prcp[i, :]
 
-            if by == "obs":
-                q = instance.obs_response.q[i, :].copy()
-
-            else:
-                q = instance.sim_response.q[i, :].copy()
+            q = getattr(instance, f"{domain}_response").q[i, :].copy()
 
             if (prcp < 0).all() or (q < 0).all():
                 warnings.warn(
@@ -223,8 +223,10 @@ def _compute_signatures(
                     df_cs = pd.concat([df_cs, row_cs], ignore_index=True)
 
                 if len(es) > 0:
+                    q_seg = getattr(instance, f"{by}_response").q[i, :].copy()
+
                     list_events = _events_grad(
-                        prcp, q, peak_quant, max_duration, instance.setup.dt
+                        prcp, q_seg, peak_quant, max_duration, instance.setup.dt
                     )
 
                     if len(list_events) == 0:

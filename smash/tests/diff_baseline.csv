@@ -1,12 +1,8 @@
-commit d36a15e684c2cae0c4374d518eabe9828d2058e8
+commit 17c015a54d83945e58d8623e095035a394d1efc3
 Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Tue Jul 18 20:26:04 2023 +0200
+Date:   Tue Jul 18 22:28:53 2023 +0200
 
-    ENC/FIX: enhance signal analysis in Fortran routines and Python functions:
-    - clean metrics calculation
-    - first implementation of signatures computation in Fortran
-    - ALL tests have been passed and are not modified
-    TODO: clean metrics.py and signatures.py
+    FIX: minor correction of metrics message and comment for Fortran files
 
 TEST NAME                       |STATUS
 bbox_mesh.active_cell           |NON MODIFIED
@@ -29,9 +25,8 @@ forward_run.gr-c-lr.sim_q       |NON MODIFIED
 forward_run.gr-d-lr.sim_q       |NON MODIFIED
 generate_samples.normal         |NON MODIFIED
 generate_samples.uniform        |NON MODIFIED
-hydrograph_segmentation.arr     |DELETED
-hydrograph_segmentation.by_obs  |ADDED
-hydrograph_segmentation.by_sim  |ADDED
+hydrograph_segmentation.by_obs  |NON MODIFIED
+hydrograph_segmentation.by_sim  |NON MODIFIED
 mesh_io.active_cell             |NON MODIFIED
 mesh_io.area                    |NON MODIFIED
 mesh_io.area_dln                |NON MODIFIED
@@ -51,14 +46,14 @@ mesh_io.xmin                    |NON MODIFIED
 mesh_io.xres                    |NON MODIFIED
 mesh_io.ymax                    |NON MODIFIED
 mesh_io.yres                    |NON MODIFIED
-metrics.kge                     |ADDED
-metrics.lgrm                    |ADDED
-metrics.mae                     |ADDED
-metrics.mape                    |ADDED
-metrics.mse                     |ADDED
-metrics.nnse                    |ADDED
-metrics.nse                     |ADDED
-metrics.rmse                    |ADDED
+metrics.kge                     |NON MODIFIED
+metrics.lgrm                    |NON MODIFIED
+metrics.mae                     |NON MODIFIED
+metrics.mape                    |NON MODIFIED
+metrics.mse                     |NON MODIFIED
+metrics.nnse                    |NON MODIFIED
+metrics.nse                     |NON MODIFIED
+metrics.rmse                    |NON MODIFIED
 net_init.bias_layer_1           |NON MODIFIED
 net_init.bias_layer_2           |NON MODIFIED
 net_init.bias_layer_3           |NON MODIFIED
@@ -82,10 +77,16 @@ setup_io.read_prcp              |NON MODIFIED
 setup_io.read_qobs              |NON MODIFIED
 setup_io.start_time             |NON MODIFIED
 setup_io.structure              |NON MODIFIED
-signatures.cont_obs             |NON MODIFIED
-signatures.cont_sim             |NON MODIFIED
-signatures.event_obs            |NON MODIFIED
-signatures.event_sim            |MODIFIED
+signatures.cont_obs             |DELETED
+signatures.cont_obs_by_obs      |ADDED
+signatures.cont_sim             |DELETED
+signatures.cont_sim_by_obs      |ADDED
+signatures.cont_sim_by_sim      |ADDED
+signatures.event_obs            |DELETED
+signatures.event_obs_by_obs     |ADDED
+signatures.event_sim            |DELETED
+signatures.event_sim_by_obs     |ADDED
+signatures.event_sim_by_sim     |ADDED
 xy_mesh.active_cell             |NON MODIFIED
 xy_mesh.area                    |NON MODIFIED
 xy_mesh.area_dln                |NON MODIFIED

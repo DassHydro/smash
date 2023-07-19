@@ -1,6 +1,12 @@
 from __future__ import annotations
 
-from smash._constant import SIGNS, CSIGN, ESIGN, COMPUTE_BY
+from smash._constant import SIGNS, CSIGN, ESIGN, DOMAIN
+
+from smash.core.signal_analysis.segmentation._standardize import (
+    _standardize_hydrograph_segmentation_peak_quant,
+    _standardize_hydrograph_segmentation_max_duration,
+    _standardize_hydrograph_segmentation_by,
+)
 
 from typing import TYPE_CHECKING
 
@@ -49,37 +55,56 @@ def _standardize_compute_signatures_sign(
     return (cs, es)
 
 
+def _standardize_compute_signatures_domain(domain: str) -> str:
+    if isinstance(domain, str):
+        domain_standardized = domain.lower()
+
+        if domain_standardized in DOMAIN:
+            domain_standardized = domain_standardized[:3]
+
+        else:
+            raise ValueError(f"Unknown domain argument {domain}. Choices: {DOMAIN}")
+    else:
+        raise TypeError(f"domain argument must be str")
+
+    return domain_standardized
+
+
 def _standardize_compute_signatures_event_seg(event_seg: dict | None) -> dict:
     if event_seg is None:
         event_seg = {}
 
-    return event_seg
+    elif isinstance(event_seg, dict):
+        if "peak_quant" in event_seg:
+            event_seg["peak_quant"] = _standardize_hydrograph_segmentation_peak_quant(
+                event_seg["peak_quant"]
+            )
 
+        if "max_duration" in event_seg:
+            event_seg[
+                "max_duration"
+            ] = _standardize_hydrograph_segmentation_max_duration(
+                event_seg["max_duration"]
+            )
 
-def _standardize_compute_signatures_by(by: str) -> str:
-    if isinstance(by, str):
-        by_standardized = by.lower()
+        if "by" in event_seg:
+            event_seg["by"] = _standardize_hydrograph_segmentation_by(event_seg["by"])
 
-        if by_standardized in COMPUTE_BY:
-            by_standardized = by_standardized[:3]
-
-        else:
-            raise ValueError(f"Unknown by argument {by}. Choices: {COMPUTE_BY}")
     else:
-        raise TypeError(f"by argument must be str")
+        raise TypeError(f"event_seg argument must be None or a dictionary")
 
-    return by_standardized
+    return event_seg
 
 
 def _standardize_compute_signatures_args(
     sign: str | list[str] | None,
+    domain: str,
     event_seg: dict | None,
-    by: str,
 ) -> AnyTuple:
     cs, es = _standardize_compute_signatures_sign(sign)
 
+    domain = _standardize_compute_signatures_domain(domain)
+
     event_seg = _standardize_compute_signatures_event_seg(event_seg)
 
-    by = _standardize_compute_signatures_by(by)
-
-    return (cs, es, event_seg, by)
+    return (cs, es, domain, event_seg)

@@ -45,7 +45,8 @@ def hydrograph_segmentation(
         The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
 
     by: str, default 'obs'
-        Compute segmentation information based on observed discharges (obs) or simulated discharges (sim).
+        Compute segmentation information based on observed (obs) or simulated (sim) discharges.
+        If **by** = 'sim', you need to run a simulation (forward run or optimization) to obtain the simulated discharge.
 
     Returns
     -------

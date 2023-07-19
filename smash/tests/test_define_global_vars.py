@@ -26,3 +26,7 @@ for structure in STRUCTURE_NAME:
 pytest.baseline = h5py.File(
     os.path.join(os.path.dirname(__file__), "baseline.hdf5"), "r"
 )
+
+pytest.simulated_discharges = h5py.File(
+    os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r"
+)

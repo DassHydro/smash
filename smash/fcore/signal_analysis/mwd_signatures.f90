@@ -77,7 +77,7 @@ contains
             bt(1) = streamflow(1)
 
         else
-            bt(1) = mean1d_r(streamflow)/1.5_sp
+            bt(1) = (sum(streamflow)/size(streamflow))/1.5_sp
 
         end if
 
@@ -101,11 +101,11 @@ contains
             if (j .lt. passes) then
                 btp = bt
 
-                if (streamflow(ends(j + 1)) .lt. mean1d_r(btp)) then
+                if (streamflow(ends(j + 1)) .lt. sum(btp)/size(btp)) then
                     bt(ends(j + 1)) = streamflow(ends(j + 1))/1.2_sp
 
                 else
-                    bt(ends(j + 1)) = mean1d_r(btp)
+                    bt(ends(j + 1)) = sum(btp)/size(btp)
 
                 end if
 
@@ -222,10 +222,10 @@ contains
                 select case (stype)
 
                 case ("Eff")
-                    res = mean1d_r(qf(1:j))
+                    res = sum(qf(1:j))/j
 
                 case ("Ebf")
-                    res = mean1d_r(bf(1:j))
+                    res = sum(bf(1:j))/j
 
                 end select
 
