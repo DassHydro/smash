@@ -113,8 +113,10 @@ contains
         real(sp), intent(in) :: p
         real(sp), dimension(:), intent(in) :: dat
         real(sp), dimension(size(dat)) :: sorted_dat
+        real(sp) :: res
+        
         integer :: n
-        real(sp) :: res, q1, q2, frac
+        real(sp) :: q1, q2, frac
 
         res = dat(1)
 

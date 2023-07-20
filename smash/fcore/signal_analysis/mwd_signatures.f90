@@ -13,7 +13,7 @@
 module mwd_signatures
 
     use md_constant !% only: sp
-    use md_stats !% any type
+    use md_stats !% only: quantile1d_r
 
     implicit none
 
@@ -32,20 +32,14 @@ contains
         implicit none
 
         real(sp), dimension(:), intent(in) :: streamflow
-
         real(sp), dimension(size(streamflow)), intent(inout) :: bt, qft
-
         real(sp), intent(in) :: filter_parameter
-
         integer, intent(in) :: passes
-
+        
         real(sp), dimension(size(streamflow)) :: btp
-
         integer, dimension(passes + 1) :: ends
         integer, dimension(passes) :: addtostart
-
         integer :: i, j
-
         logical :: odd
 
         odd = .true.
@@ -131,12 +125,10 @@ contains
 
         real(sp), dimension(:), intent(in) :: p, q
         character(len=*), intent(in) :: stype
+        real(sp) :: res
 
         real(sp), dimension(size(p)) :: nonnegative_p, nonnegative_q
         real(sp), dimension(size(p)) :: bf, qf
-
-        real(sp) :: res
-
         integer :: i, j, n, imax_p, imax_q
         real(sp) :: quant, numer, denom, max_p, max_q
 

@@ -75,7 +75,7 @@ contains
         den = sum_xx - n*mean_x*mean_x
 
         !% NSE criterion
-        res = 1 - num/den
+        res = 1._sp - num/den
 
     end function nse
 
@@ -95,7 +95,7 @@ contains
         real(sp), dimension(:), intent(in) :: x, y
         real(sp) :: res
 
-        res = 1/(2 - nse(x, y))
+        res = 1._sp/(2._sp - nse(x, y))
 
     end function nnse
 
@@ -202,16 +202,16 @@ contains
 
         real(sp), dimension(:), intent(in) :: x, y
         real(sp) :: res
+        
         integer :: i, n
 
         n = 0
         res = 0._sp
 
         do i = 1, size(x)
-            if (x(i) .ge. 0._sp) then
-                n = n + 1
-                res = res + abs(x(i) - y(i))
-            end if
+            if (x(i) .lt. 0._sp) cycle
+            n = n + 1
+            res = res + abs(x(i) - y(i))
         end do
 
         res = res/n
@@ -232,16 +232,16 @@ contains
 
         real(sp), dimension(:), intent(in) :: x, y
         real(sp) :: res
+        
         integer :: i, n
 
         n = 0
         res = 0._sp
 
         do i = 1, size(x)
-            if (x(i) .ge. 0._sp) then
-                n = n + 1
-                res = res + abs((x(i) - y(i))/x(i))
-            end if
+            if (x(i) .lt. 0._sp) cycle
+            n = n + 1
+            res = res + abs((x(i) - y(i))/x(i))
         end do
 
         res = res/n
