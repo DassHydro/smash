@@ -6,16 +6,28 @@ import numpy as np
 import pytest
 
 
-def generic_hydrograph_segmentation(model: smash.Model, **kwargs) -> dict:
-    arr = smash.hydrograph_segmentation(model).to_numpy()
+def generic_hydrograph_segmentation(
+    model: smash.Model, qs: np.ndarray, **kwargs
+) -> dict:
+    instance = model.copy()
 
-    res = {"hydrograph_segmentation.arr": arr.astype("S")}
+    instance.sim_response.q = qs
+
+    by_obs = smash.hydrograph_segmentation(instance, by="obs").to_numpy()
+    by_sim = smash.hydrograph_segmentation(instance, by="sim").to_numpy()
+
+    res = {
+        "hydrograph_segmentation.by_obs": by_obs.astype("S"),
+        "hydrograph_segmentation.by_sim": by_sim.astype("S"),
+    }
 
     return res
 
 
 def test_hydrograph_segmentation():
-    res = generic_hydrograph_segmentation(pytest.model)
+    res = generic_hydrograph_segmentation(
+        pytest.model, pytest.simulated_discharges["sim_q"][:]
+    )
 
     for key, value in res.items():
         # % Check hydrograph segmentation res

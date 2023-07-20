@@ -179,11 +179,13 @@ ESIGN = ["Eff", "Ebf", "Erc", "Erchf", "Erclf", "Erch2r", "Elt", "Epf"]
 
 SIGNS = CSIGN + ESIGN
 
+DOMAIN = ["obs", "observed", "observation", "sim", "simulated", "simulation"]
 
-### EFFICIENCY METRICS ###
-##########################
 
-EFFICIENCY_METRICS = ["nse", "kge", "se", "rmse", "logarithmic"]
+### EFFICIENCY/ERROR METRICS ###
+################################
+
+METRICS = ["nse", "nnse", "kge", "mae", "mape", "mse", "rmse", "lgrm"]
 
 
 ### NET ###

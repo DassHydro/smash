@@ -2,10 +2,10 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.core.signal_analysis.segmentation._tools import (
-    _get_season,
-    _missing_values,
-    _events_grad,
+from smash.core.signal_analysis.segmentation._tools import _get_season, _events_grad
+
+from smash.core.signal_analysis.segmentation._standardize import (
+    _standardize_hydrograph_segmentation_args,
 )
 
 import numpy as np
@@ -16,12 +16,16 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash._typing import Numeric
 
 __all__ = ["hydrograph_segmentation"]
 
 
 def hydrograph_segmentation(
-    model: Model, peak_quant: float = PEAK_QUANT, max_duration: float = MAX_DURATION
+    model: Model,
+    peak_quant: float = PEAK_QUANT,
+    max_duration: Numeric = MAX_DURATION,
+    by: str = "obs",
 ):
     """
     Compute segmentation information of flood events over all catchments of the Model.
@@ -37,8 +41,12 @@ def hydrograph_segmentation(
     peak_quant: float, default 0.995
         Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
-    max_duration: float, default 240
+    max_duration: int or float, default 240
         The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
+
+    by: str, default 'obs'
+        Compute segmentation information based on observed (obs) or simulated (sim) discharges.
+        If **by** = 'sim', you need to run a simulation (forward run or optimization) to obtain the simulated discharge.
 
     Returns
     -------
@@ -74,24 +82,33 @@ def hydrograph_segmentation(
 
     """
 
+    peak_quant, max_duration, by = _standardize_hydrograph_segmentation_args(
+        peak_quant, max_duration, by
+    )
+
+    return _hydrograph_segmentation(model, peak_quant, max_duration, by)
+
+
+def _hydrograph_segmentation(
+    instance: Model, peak_quant: float, max_duration: Numeric, by: str
+):
     date_range = pd.date_range(
-        start=model.setup.start_time,
-        periods=model.obs_response.q.shape[1],
-        freq=f"{int(model.setup.dt)}s",
+        start=instance.setup.start_time,
+        periods=instance.atmos_data.mean_prcp.shape[1],
+        freq=f"{int(instance.setup.dt)}s",
     )
 
     col_name = ["code", "start", "end", "maxrainfall", "flood", "season"]
 
     df = pd.DataFrame(columns=col_name)
 
-    for i, catchment in enumerate(model.mesh.code):
-        prcp_tmp, qobs_tmp, ratio = _missing_values(
-            model.atmos_data.mean_prcp[i, :], model.obs_response.q[i, :]
-        )
+    for i, catchment in enumerate(instance.mesh.code):
+        prcp = instance.atmos_data.mean_prcp[i, :].copy()
+        q = getattr(instance, f"{by}_response").q[i, :].copy()
 
-        if prcp_tmp is None:
+        if (prcp < 0).all() or (q < 0).all():
             warnings.warn(
-                f"Reject data at catchment {catchment} ({round(ratio * 100, 2)}% of missing values)"
+                f"Catchment {catchment} has no precipitation or/and discharge data"
             )
 
             pdrow = pd.DataFrame(
@@ -101,7 +118,7 @@ def hydrograph_segmentation(
 
         else:
             list_events = _events_grad(
-                prcp_tmp, qobs_tmp, peak_quant, max_duration, model.setup.dt
+                prcp, q, peak_quant, max_duration, instance.setup.dt
             )
 
             for t in list_events:

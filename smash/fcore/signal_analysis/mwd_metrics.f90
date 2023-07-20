@@ -3,14 +3,22 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - nse
 !%      - kge_components
+!%
+!%      Function
+!%      --------
+!%
+!%      - nse
+!%      - nnse
 !%      - kge
+!%      - mae
+!%      - mape
 !%      - se
+!%      - mse
 !%      - rmse
-!%      - logarithmic
+!%      - lgrm
 
-module mwd_efficiency_metric
+module mwd_metrics
 
     use md_constant !% only: sp
 
@@ -29,7 +37,7 @@ contains
         !% it returns the result of NSE computation
         !% num = sum(x**2) - 2 * sum(x*y) + sum(y**2)
         !% den = sum(x**2) - n * mean(x) ** 2
-        !% NSE = num / den
+        !% NSE = 1 - num / den
 
         implicit none
 
@@ -48,15 +56,13 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-                sum_x = sum_x + x(i)
-                sum_xx = sum_xx + (x(i)*x(i))
-                sum_yy = sum_yy + (y(i)*y(i))
-                sum_xy = sum_xy + (x(i)*y(i))
-
-            end if
+            n = n + 1
+            sum_x = sum_x + x(i)
+            sum_xx = sum_xx + (x(i)*x(i))
+            sum_yy = sum_yy + (y(i)*y(i))
+            sum_xy = sum_xy + (x(i)*y(i))
 
         end do
 
@@ -67,9 +73,29 @@ contains
         den = sum_xx - n*mean_x*mean_x
 
         !% NSE criterion
-        res = num/den
+        res = 1._sp - num/den
 
     end function nse
+
+    function nnse(x, y) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Normalized NSE (NNSE) computation function
+        !%
+        !% Given two single precision array (x, y) of dim(1) and size(n),
+        !% it returns the result of NSE computation
+        !% NSE = 1 / (2 - NSE)
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: x, y
+        real(sp) :: res
+
+        res = 1._sp/(2._sp - nse(x, y))
+
+    end function nnse
 
     subroutine kge_components(x, y, r, a, b)
 
@@ -103,16 +129,14 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-                sum_x = sum_x + x(i)
-                sum_y = sum_y + y(i)
-                sum_xx = sum_xx + (x(i)*x(i))
-                sum_yy = sum_yy + (y(i)*y(i))
-                sum_xy = sum_xy + (x(i)*y(i))
-
-            end if
+            n = n + 1
+            sum_x = sum_x + x(i)
+            sum_y = sum_y + y(i)
+            sum_xx = sum_xx + (x(i)*x(i))
+            sum_yy = sum_yy + (y(i)*y(i))
+            sum_xy = sum_xy + (x(i)*y(i))
 
         end do
 
@@ -138,7 +162,7 @@ contains
         !%
         !% Given two single precision array (x, y) of dim(1) and size(n),
         !% it returns the result of KGE computation
-        !% KGE = sqrt((1 - r) ** 2 + (1 - a) ** 2 + (1 - b) ** 2)
+        !% KGE = 1 - sqrt((1 - r) ** 2 + (1 - a) ** 2 + (1 - b) ** 2)
         !%
         !% See Also
         !% --------
@@ -154,11 +178,77 @@ contains
         call kge_components(x, y, r, a, b)
 
         ! KGE criterion
-        res = sqrt(&
-        & (r - 1)*(r - 1) + (b - 1)*(b - 1) + (a - 1)*(a - 1) &
+        res = 1._sp - sqrt(&
+        & (r - 1._sp)*(r - 1._sp) + &
+        & (b - 1._sp)*(b - 1._sp) + &
+        & (a - 1._sp)*(a - 1._sp) &
         & )
 
     end function kge
+
+    function mae(x, y) result(res)
+        !% Notes
+        !% -----
+        !%
+        !% Mean Absolute Error (MAE) computation function
+        !%
+        !% Given two single precision arrays (x, y) of size n,
+        !% it returns the result of MAE computation
+        !% MAE = sum(abs(x - y)) / n
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: x, y
+        real(sp) :: res
+
+        integer :: i, n
+
+        n = 0
+        res = 0._sp
+
+        do i = 1, size(x)
+            if (x(i) .lt. 0._sp) cycle
+
+            n = n + 1
+            res = res + abs(x(i) - y(i))
+        end do
+
+        res = res/n
+
+    end function mae
+
+    function mape(x, y) result(res)
+        !% Notes
+        !% -----
+        !%
+        !% Mean Absolute Percentage Error (MAPE) computation function
+        !%
+        !% Given two single precision arrays (x, y) of size n,
+        !% it returns the result of MAPE computation
+        !% MAPE = sum(abs((x - y) / x)) / n
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: x, y
+        real(sp) :: res
+
+        integer :: i, n
+
+        n = 0
+        res = 0._sp
+
+        do i = 1, size(x)
+
+            if (x(i) .lt. 0._sp) cycle
+
+            n = n + 1
+            res = res + abs((x(i) - y(i))/x(i))
+
+        end do
+
+        res = res/n
+
+    end function mape
 
     function se(x, y) result(res)
 
@@ -182,26 +272,23 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                res = res + (x(i) - y(i))*(x(i) - y(i))
-
-            end if
+            res = res + (x(i) - y(i))*(x(i) - y(i))
 
         end do
 
     end function se
 
-    function rmse(x, y) result(res)
-
+    function mse(x, y) result(res)
         !% Notes
         !% -----
         !%
-        !% Root Mean Square Error (RMSE) computation function
+        !% Mean Squared Error (MSE) computation function
         !%
-        !% Given two single precision array (x, y) of dim(1) and size(n),
-        !% it returns the result of SE computation
-        !% RMSE = sqrt(SE / n)
+        !% Given two single precision arrays (x, y) of size n,
+        !% it returns the result of MSE computation
+        !% MSE = SE / n
         !%
         !% See Also
         !% --------
@@ -218,19 +305,41 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-
-            end if
+            n = n + 1
 
         end do
 
-        res = sqrt(se(x, y)/n)
+        res = se(x, y)/n
+
+    end function mse
+
+    function rmse(x, y) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Root Mean Square Error (RMSE) computation function
+        !%
+        !% Given two single precision array (x, y) of dim(1) and size(n),
+        !% it returns the result of SE computation
+        !% RMSE = sqrt(MSE)
+        !%
+        !% See Also
+        !% --------
+        !% mse
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: x, y
+        real(sp) :: res
+
+        res = sqrt(mse(x, y))
 
     end function rmse
 
-    function logarithmic(x, y) result(res)
+    function lgrm(x, y) result(res)
 
         !% Notes
         !% -----
@@ -252,14 +361,12 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .gt. 0._sp .and. y(i) .gt. 0._sp) then
+            if (x(i) .le. 0._sp .or. y(i) .le. 0._sp) cycle
 
-                res = res + x(i)*log(y(i)/x(i))*log(y(i)/x(i))
-
-            end if
+            res = res + x(i)*log(y(i)/x(i))*log(y(i)/x(i))
 
         end do
 
-    end function logarithmic
+    end function lgrm
 
-end module mwd_efficiency_metric
+end module mwd_metrics
