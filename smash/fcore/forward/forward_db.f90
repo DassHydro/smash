@@ -415,13 +415,13 @@ CONTAINS
     sum_x = 0._sp
     sum_xx = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GE. 0._sp) THEN
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
         n = n + 1
         sum_x = sum_x + x(i)
         sum_xx = sum_xx + x(i)*x(i)
         CALL PUSHCONTROL1B(1)
-      ELSE
-        CALL PUSHCONTROL1B(0)
       END IF
     END DO
     CALL PUSHINTEGER4(i - 1)
@@ -468,7 +468,7 @@ CONTAINS
     num = sum_xx - 2*sum_xy + sum_yy
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
-    res = 1 - num/den
+    res = 1._sp - num/den
   END FUNCTION NSE
 
   FUNCTION NNSE(x, y) RESULT (RES)
@@ -477,7 +477,7 @@ CONTAINS
     REAL(sp) :: res
     REAL(sp) :: result1
     result1 = NSE(x, y)
-    res = 1/(2-result1)
+    res = 1._sp/(2._sp-result1)
   END FUNCTION NNSE
 
   SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
@@ -533,9 +533,10 @@ CONTAINS
     REAL(sp) :: result1
     CALL KGE_COMPONENTS(x, y, r, a, b)
 ! KGE criterion
-    arg1 = (r-1)*(r-1) + (b-1)*(b-1) + (a-1)*(a-1)
+    arg1 = (r-1._sp)*(r-1._sp) + (b-1._sp)*(b-1._sp) + (a-1._sp)*(a-&
+&     1._sp)
     result1 = SQRT(arg1)
-    res = 1 - result1
+    res = 1._sp - result1
   END FUNCTION KGE
 
   FUNCTION MAE(x, y) RESULT (RES)
@@ -634,7 +635,7 @@ CONTAINS
     REAL(sp) :: arg2
     res = 0._sp
     DO i=1,SIZE(x)
-      IF (x(i) .GT. 0._sp .AND. y(i) .GT. 0._sp) THEN
+      IF (.NOT.(x(i) .LE. 0._sp .OR. y(i) .LE. 0._sp)) THEN
         arg1 = y(i)/x(i)
         arg2 = y(i)/x(i)
         res = res + x(i)*LOG(arg1)*LOG(arg2)

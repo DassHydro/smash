@@ -35,7 +35,7 @@ contains
         real(sp), dimension(size(streamflow)), intent(inout) :: bt, qft
         real(sp), intent(in) :: filter_parameter
         integer, intent(in) :: passes
-        
+
         real(sp), dimension(size(streamflow)) :: btp
         integer, dimension(passes + 1) :: ends
         integer, dimension(passes) :: addtostart
@@ -146,12 +146,10 @@ contains
 
             do i = 1, n
 
-                if (p(i) .ge. 0._sp .and. q(i) .ge. 0._sp) then
+                if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
 
-                    numer = numer + q(i)
-                    denom = denom + p(i)
-
-                end if
+                numer = numer + q(i)
+                denom = denom + p(i)
 
             end do
 
@@ -169,13 +167,12 @@ contains
             j = 0
 
             do i = 1, n
-                if (p(i) .ge. 0._sp .and. q(i) .ge. 0._sp) then
-                    j = j + 1
 
-                    nonnegative_p(j) = p(i)
-                    nonnegative_q(j) = q(i)
+                if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
 
-                end if
+                j = j + 1
+                nonnegative_p(j) = p(i)
+                nonnegative_q(j) = q(i)
 
             end do
 
@@ -229,12 +226,11 @@ contains
             j = 0
 
             do i = 1, n
-                if (q(i) .ge. 0._sp) then
 
-                    j = j + 1
-                    nonnegative_q(j) = q(i)
+                if (q(i) .lt. 0._sp) cycle
 
-                end if
+                j = j + 1
+                nonnegative_q(j) = q(i)
 
             end do
 
@@ -267,11 +263,10 @@ contains
             max_q = -99._sp
 
             do i = 1, n
-                if (q(i) .gt. max_q) then
 
-                    max_q = q(i)
+                if (q(i) .le. max_q) cycle
 
-                end if
+                max_q = q(i)
 
             end do
 

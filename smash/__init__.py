@@ -3,7 +3,7 @@ from smash.core.model.model import Model
 
 from smash.core.signal_analysis.metrics.metrics import metrics
 from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segmentation
-from smash.core.signal_analysis.signatures.signatures import compute_signatures
+from smash.core.signal_analysis.signatures.signatures import signatures
 
 from smash.core.simulation import forward_run, optimize
 
@@ -26,7 +26,7 @@ __all__ = [
     "Model",
     "metrics",
     "hydrograph_segmentation",
-    "compute_signatures",
+    "signatures",
     "forward_run",
     "optimize",
     "io",

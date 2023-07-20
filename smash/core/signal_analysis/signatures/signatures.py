@@ -5,7 +5,7 @@ from smash._constant import PEAK_QUANT, MAX_DURATION
 from smash.fcore._mwd_signatures import signature_computation
 
 from smash.core.signal_analysis.signatures._standardize import (
-    _standardize_compute_signatures_args,
+    _standardize_signatures_args,
 )
 
 from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
@@ -14,13 +14,14 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash._typing import ListLike
 
 import numpy as np
 import pandas as pd
 import warnings
 
 
-__all__ = ["Signatures", "compute_signatures"]
+__all__ = ["Signatures", "signatures"]
 
 
 class Signatures(dict):
@@ -73,9 +74,9 @@ class Signatures(dict):
         return list(self.keys())
 
 
-def compute_signatures(
+def signatures(
     model: Model,
-    sign: str | list | None = None,
+    sign: str | ListLike | None = None,
     event_seg: dict | None = None,
     domain: str = "obs",
 ):
@@ -150,20 +151,18 @@ def compute_signatures(
 
     """
 
-    cs, es, domain, event_seg = _standardize_compute_signatures_args(
-        sign, domain, event_seg
-    )
+    cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)
 
-    res = _compute_signatures(model, cs, es, domain, **event_seg)
+    res = _signatures(model, cs, es, domain, **event_seg)
 
     return Signatures(res)
 
 
 # TODO: Add function check_unknown_options
-def _compute_signatures(
+def _signatures(
     instance: Model,
-    cs: list[str],
-    es: list[str],
+    cs: ListLike,
+    es: ListLike,
     domain: str,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,

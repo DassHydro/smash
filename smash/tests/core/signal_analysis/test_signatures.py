@@ -16,13 +16,13 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
 
     signresult = {}
 
-    signresult["obs_by_obs"] = smash.compute_signatures(
+    signresult["obs_by_obs"] = smash.signatures(
         instance, domain="obs", event_seg={"by": "obs"}
     )
-    signresult["sim_by_obs"] = smash.compute_signatures(
+    signresult["sim_by_obs"] = smash.signatures(
         instance, domain="sim", event_seg={"by": "obs"}
     )
-    signresult["sim_by_sim"] = smash.compute_signatures(
+    signresult["sim_by_sim"] = smash.signatures(
         instance, domain="sim", event_seg={"by": "sim"}
     )
 

@@ -56,15 +56,13 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-                sum_x = sum_x + x(i)
-                sum_xx = sum_xx + (x(i)*x(i))
-                sum_yy = sum_yy + (y(i)*y(i))
-                sum_xy = sum_xy + (x(i)*y(i))
-
-            end if
+            n = n + 1
+            sum_x = sum_x + x(i)
+            sum_xx = sum_xx + (x(i)*x(i))
+            sum_yy = sum_yy + (y(i)*y(i))
+            sum_xy = sum_xy + (x(i)*y(i))
 
         end do
 
@@ -131,16 +129,14 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-                sum_x = sum_x + x(i)
-                sum_y = sum_y + y(i)
-                sum_xx = sum_xx + (x(i)*x(i))
-                sum_yy = sum_yy + (y(i)*y(i))
-                sum_xy = sum_xy + (x(i)*y(i))
-
-            end if
+            n = n + 1
+            sum_x = sum_x + x(i)
+            sum_y = sum_y + y(i)
+            sum_xx = sum_xx + (x(i)*x(i))
+            sum_yy = sum_yy + (y(i)*y(i))
+            sum_xy = sum_xy + (x(i)*y(i))
 
         end do
 
@@ -182,8 +178,10 @@ contains
         call kge_components(x, y, r, a, b)
 
         ! KGE criterion
-        res = 1 - sqrt(&
-        & (r - 1)*(r - 1) + (b - 1)*(b - 1) + (a - 1)*(a - 1) &
+        res = 1._sp - sqrt(&
+        & (r - 1._sp)*(r - 1._sp) + &
+        & (b - 1._sp)*(b - 1._sp) + &
+        & (a - 1._sp)*(a - 1._sp) &
         & )
 
     end function kge
@@ -202,7 +200,7 @@ contains
 
         real(sp), dimension(:), intent(in) :: x, y
         real(sp) :: res
-        
+
         integer :: i, n
 
         n = 0
@@ -210,6 +208,7 @@ contains
 
         do i = 1, size(x)
             if (x(i) .lt. 0._sp) cycle
+
             n = n + 1
             res = res + abs(x(i) - y(i))
         end do
@@ -232,16 +231,19 @@ contains
 
         real(sp), dimension(:), intent(in) :: x, y
         real(sp) :: res
-        
+
         integer :: i, n
 
         n = 0
         res = 0._sp
 
         do i = 1, size(x)
+
             if (x(i) .lt. 0._sp) cycle
+
             n = n + 1
             res = res + abs((x(i) - y(i))/x(i))
+
         end do
 
         res = res/n
@@ -270,11 +272,9 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                res = res + (x(i) - y(i))*(x(i) - y(i))
-
-            end if
+            res = res + (x(i) - y(i))*(x(i) - y(i))
 
         end do
 
@@ -305,11 +305,9 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .ge. 0._sp) then
+            if (x(i) .lt. 0._sp) cycle
 
-                n = n + 1
-
-            end if
+            n = n + 1
 
         end do
 
@@ -363,11 +361,9 @@ contains
 
         do i = 1, size(x)
 
-            if (x(i) .gt. 0._sp .and. y(i) .gt. 0._sp) then
+            if (x(i) .le. 0._sp .or. y(i) .le. 0._sp) cycle
 
-                res = res + x(i)*log(y(i)/x(i))*log(y(i)/x(i))
-
-            end if
+            res = res + x(i)*log(y(i)/x(i))*log(y(i)/x(i))
 
         end do
 

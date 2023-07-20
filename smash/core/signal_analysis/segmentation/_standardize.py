@@ -5,7 +5,7 @@ from smash._constant import DOMAIN
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple
+    from smash._typing import AnyTuple, Numeric
 
 
 def _standardize_hydrograph_segmentation_peak_quant(peak_quant: float) -> float:
@@ -19,7 +19,7 @@ def _standardize_hydrograph_segmentation_peak_quant(peak_quant: float) -> float:
 
 
 def _standardize_hydrograph_segmentation_max_duration(
-    max_duration: int | float,
+    max_duration: Numeric,
 ) -> float:
     if not isinstance(max_duration, (int, float)):
         raise TypeError("max_duration argument must be of Numeric type (int, float)")
@@ -48,7 +48,7 @@ def _standardize_hydrograph_segmentation_by(by: str) -> str:
 
 
 def _standardize_hydrograph_segmentation_args(
-    peak_quant: float, max_duration: int | float, by: str
+    peak_quant: float, max_duration: Numeric, by: str
 ) -> AnyTuple:
     peak_quant = _standardize_hydrograph_segmentation_peak_quant(peak_quant)
 

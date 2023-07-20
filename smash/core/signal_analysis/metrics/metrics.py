@@ -30,14 +30,14 @@ def metrics(
     metric : str, default 'nse'
         The efficiency or error criterion. Should be one of
 
-        - 'NSE': Nash-Sutcliffe Efficiency
-        - 'NNSE': Normalized Nash-Sutcliffe Efficiency
-        - 'KGE': Kling-Gupta Efficiency
-        - 'MAE': Mean Absolute Error
-        - 'MAPE': Mean Absolute Percentage Error
-        - 'MSE': Mean Squared Error
-        - 'RMSE': Root Mean Square Error
-        - 'LGRM': Logarithmic
+        - 'nse': Nash-Sutcliffe Efficiency
+        - 'nnse': Normalized Nash-Sutcliffe Efficiency
+        - 'kge': Kling-Gupta Efficiency
+        - 'mae': Mean Absolute Error
+        - 'mape': Mean Absolute Percentage Error
+        - 'mse': Mean Squared Error
+        - 'rmse': Root Mean Square Error
+        - 'lgrm': Logarithmic
 
     end_warmup : str, pandas.Timestamp or None, default None
         The end of the warm-up period. Evaluation metrics will only be calculated between the end of the warm-up period
