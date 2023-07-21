@@ -10,9 +10,9 @@
 !%          ======================== =======================================
 !%          ``n``                    Number of data stored
 !%          ``coo_fmt``              Sparse Matrix in COO format       (default: .true.)
-!%          ``zvle``                 Non stored value                  (default: 0)
-!%          ``ind``                  Indices of the sparse matrix
-!%          ``dat``                  Data of the sparse matrix
+!%          ``zvalue``               Non stored value                  (default: 0)
+!%          ``indices``              Indices of the sparse matrix
+!%          ``values``               Values of the sparse matrix
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -31,34 +31,34 @@ module mwd_sparse_matrix
 
         integer :: n
         logical :: coo_fmt = .true.
-        real(sp) :: zvle = 0._sp
-        integer, dimension(:), allocatable :: ind
-        real(sp), dimension(:), allocatable :: dat
+        real(sp) :: zvalue = 0._sp
+        integer, dimension(:), allocatable :: indices
+        real(sp), dimension(:), allocatable :: values
 
     end type Sparse_MatrixDT
 
 contains
 
-    subroutine Sparse_MatrixDT_initialise(this, n, coo_fmt, zvle)
+    subroutine Sparse_MatrixDT_initialise(this, n, coo_fmt, zvalue)
 
         implicit none
 
         type(Sparse_MatrixDT), intent(inout) :: this
         integer, intent(in) :: n
         logical, intent(in) :: coo_fmt
-        real(sp), intent(in) :: zvle
+        real(sp), intent(in) :: zvalue
 
         this%n = n
         this%coo_fmt = coo_fmt
-        this%zvle = zvle
+        this%zvalue = zvalue
 
-        allocate (this%dat(this%n))
-        this%dat = 0._sp
+        allocate (this%values(this%n))
+        this%values = 0._sp
 
         if (coo_fmt) then
 
-            allocate (this%ind(this%n))
-            this%ind = 0
+            allocate (this%indices(this%n))
+            this%indices = 0
 
         end if
 

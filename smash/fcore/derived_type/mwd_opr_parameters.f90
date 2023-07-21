@@ -9,14 +9,8 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``ci``                     GR interception capacity
-!%          ``cp``                     GR production capacity
-!%          ``cft``                    GR first transfer capacity
-!%          ``cst``                    GR second transfer capacity
-!%          ``kexc``                   GR exchange flux
-!%          ``llr``                    Linear routing lag time
-!%          ``akw``                    Kinematic wave alpha parameter
-!%          ``bkw``                    Kinematic wave beta parameter
+!%          ``keys``                   Operator parameters keys
+!%          ``values``                 Operator parameters values
 !%
 !%
 !%      Subroutine
@@ -27,58 +21,35 @@
 
 module mwd_opr_parameters
 
-    use md_constant !% only: sp
+    use md_constant !% only: sp, lchar
+    use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
 
     implicit none
 
     type Opr_ParametersDT
 
-        real(sp), dimension(:, :), allocatable :: ci
-        real(sp), dimension(:, :), allocatable :: cp
-        real(sp), dimension(:, :), allocatable :: cft
-        real(sp), dimension(:, :), allocatable :: cst
-        real(sp), dimension(:, :), allocatable :: kexc
-
-        real(sp), dimension(:, :), allocatable :: llr
-        real(sp), dimension(:, :), allocatable :: akw
-        real(sp), dimension(:, :), allocatable :: bkw
+        character(lchar), dimension(:), allocatable :: keys !$F90W char-array
+        real(sp), dimension(:, :, :), allocatable :: values
 
     end type Opr_ParametersDT
 
 contains
 
-    subroutine Opr_ParametersDT_initialise(this, mesh)
+    subroutine Opr_ParametersDT_initialise(this, setup, mesh)
         !% Default parameters value will be handled in Python
 
         implicit none
 
         type(Opr_ParametersDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
-        allocate (this%ci(mesh%nrow, mesh%ncol))
-        this%ci = 0._sp
+        allocate (this%keys(setup%nop))
+        this%keys = "..."
 
-        allocate (this%cp(mesh%nrow, mesh%ncol))
-        this%cp = 0._sp
-
-        allocate (this%cft(mesh%nrow, mesh%ncol))
-        this%cft = 0._sp
-
-        allocate (this%cst(mesh%nrow, mesh%ncol))
-        this%cst = 0._sp
-
-        allocate (this%kexc(mesh%nrow, mesh%ncol))
-        this%kexc = 0._sp
-
-        allocate (this%llr(mesh%nrow, mesh%ncol))
-        this%llr = 0._sp
-
-        allocate (this%akw(mesh%nrow, mesh%ncol))
-        this%akw = 0._sp
-
-        allocate (this%bkw(mesh%nrow, mesh%ncol))
-        this%bkw = 0._sp
+        allocate (this%values(mesh%nrow, mesh%ncol, setup%nop))
+        this%values = 0._sp
 
     end subroutine Opr_ParametersDT_initialise
 

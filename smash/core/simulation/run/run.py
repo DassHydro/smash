@@ -34,7 +34,8 @@ def _forward_run(instance: Model, options: OptionsDT, returns: ReturnsDT):
 
     returns = _standardize_returns(returns)
 
-    _standardize_opr_parameter_state(instance._parameters)
+    # % TODO: Commented atm, refactorize later
+    # ~ _standardize_opr_parameter_state(instance._parameters)
 
     fw_run(
         instance.setup,

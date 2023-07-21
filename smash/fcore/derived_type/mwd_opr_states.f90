@@ -8,11 +8,8 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``hi``                     GR interception state
-!%          ``hp``                     GR production state
-!%          ``hft``                    GR first transfer state
-!%          ``hst``                    GR second transfer state
-!%          ``hlr``                    Linear routing state
+!%          ``keys``                   Operator states keys
+!%          ``values``                 Operator states values
 !%
 !§      Subroutine
 !%      ----------
@@ -22,45 +19,35 @@
 
 module mwd_opr_states
 
-    use md_constant !% only: sp
+    use md_constant !% only: sp, lchar
+    use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
 
     implicit none
 
     type Opr_StatesDT
 
-        real(sp), dimension(:, :), allocatable :: hi
-        real(sp), dimension(:, :), allocatable :: hp
-        real(sp), dimension(:, :), allocatable :: hft
-        real(sp), dimension(:, :), allocatable :: hst
-        real(sp), dimension(:, :), allocatable :: hlr
+        character(lchar), dimension(:), allocatable :: keys !$F90W char-array
+        real(sp), dimension(:, :, :), allocatable :: values
 
     end type Opr_StatesDT
 
 contains
 
-    subroutine Opr_StatesDT_initialise(this, mesh)
+    subroutine Opr_StatesDT_initialise(this, setup, mesh)
         !% Default states value will be handled in Python
 
         implicit none
 
         type(Opr_StatesDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
-        allocate (this%hi(mesh%nrow, mesh%ncol))
-        this%hi = 0._sp
+        allocate (this%keys(setup%nos))
+        this%keys = "..."
 
-        allocate (this%hp(mesh%nrow, mesh%ncol))
-        this%hp = 0._sp
-
-        allocate (this%hft(mesh%nrow, mesh%ncol))
-        this%hft = 0._sp
-
-        allocate (this%hst(mesh%nrow, mesh%ncol))
-        this%hst = 0._sp
-
-        allocate (this%hlr(mesh%nrow, mesh%ncol))
-        this%hlr = 0._sp
+        allocate (this%values(mesh%nrow, mesh%ncol, setup%nos))
+        this%values = 0._sp
 
     end subroutine Opr_StatesDT_initialise
 

@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from smash._constant import (
+    STRUCTURE_OPR_PARAMETERS,
+    STRUCTURE_OPR_STATES,
     STRUCTURE_COMPUTE_CI,
     DEFAULT_OPR_PARAMETERS,
     DEFAULT_OPR_INITIAL_STATES,
@@ -19,6 +21,7 @@ from smash.fcore._mw_atmos_statistic import compute_mean_atmos
 from smash.fcore._mw_interception_capacity import compute_interception_capacity
 
 import pandas as pd
+import numpy as np
 
 from typing import TYPE_CHECKING
 
@@ -27,6 +30,7 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_input_data import Input_DataDT
     from smash.fcore._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_output import OutputDT
 
 
 def _map_dict_to_object(dct: dict, obj: object):
@@ -43,6 +47,9 @@ def _build_setup(setup: SetupDT):
     et = pd.Timestamp(setup.end_time)
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt
+
+    setup.nop = len(STRUCTURE_OPR_PARAMETERS[setup.structure])
+    setup.nos = len(STRUCTURE_OPR_STATES[setup.structure])
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
@@ -75,15 +82,20 @@ def _build_parameters(
     parameters: ParametersDT,
 ):
     # % Build parameters
-    for key, value in DEFAULT_OPR_PARAMETERS.items():
+    parameters.opr_parameters.keys = STRUCTURE_OPR_PARAMETERS[setup.structure]
+
+    for i, key in enumerate(parameters.opr_parameters.keys):
+        value = DEFAULT_OPR_PARAMETERS[key]
         if key == "llr":
-            setattr(parameters.opr_parameters, key, setup.dt * (value / 3600))
-        else:
-            setattr(parameters.opr_parameters, key, value)
+            value *= setup.dt / 3_600
+        parameters.opr_parameters.values[..., i] = value
 
     # % Build initial states
-    for key, value in DEFAULT_OPR_INITIAL_STATES.items():
-        setattr(parameters.opr_initial_states, key, value)
+    parameters.opr_initial_states.keys = STRUCTURE_OPR_STATES[setup.structure]
+
+    for i, key in enumerate(parameters.opr_initial_states.keys):
+        value = DEFAULT_OPR_INITIAL_STATES[key]
+        parameters.opr_initial_states.values[..., i] = value
 
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date
@@ -97,11 +109,21 @@ def _build_parameters(
         # % Scale to 1 (Fortran indexing)
         day_index = day_index - day_index[0] + 1
 
+        ind = np.argwhere(parameters.opr_parameters.keys == "ci").item()
+
         compute_interception_capacity(
             setup,
             mesh,
             input_data,
             day_index,
             day_index[-1],
-            parameters.opr_parameters.ci,
+            parameters.opr_parameters.values[..., ind],
         )  # % Fortran subroutine mw_interception_capacity
+
+
+def _build_output(
+    setup: SetupDT,
+    output: OutputDT,
+):
+    # % Build final states
+    output.opr_final_states.keys = STRUCTURE_OPR_STATES[setup.structure]

@@ -13,6 +13,8 @@ from smash._constant import (
     DEFAULT_OPR_INITIAL_STATES,
     DEFAULT_BOUNDS_OPR_PARAMETERS,
     DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+    OPTIMIZABLE_OPR_PARAMETERS,
+    OPTIMIZABLE_OPR_INITIAL_STATES,
     INPUT_DATA_FORMAT,
     RATIO_PET_HOURLY,
     DATASET_NAME,
@@ -25,40 +27,35 @@ import numpy as np
 
 def test_structure_model():
     # % Check structure name
-    assert STRUCTURE_NAME == ["gr-a-lr", "gr-b-lr", "gr-c-lr", "gr-d-lr", "gr-a-kw"]
+    assert STRUCTURE_NAME == ["gr4-lr", "gr4-kw", "grd-lr"]
 
     # % Check opr parameters
-    assert OPR_PARAMETERS == ["ci", "cp", "cft", "cst", "kexc", "llr", "akw", "bkw"]
+    assert OPR_PARAMETERS == ["ci", "cp", "ct", "kexc", "llr", "akw", "bkw"]
 
     # % Check opr states
-    assert OPR_STATES == ["hi", "hp", "hft", "hst", "hlr"]
+    assert OPR_STATES == ["hi", "hp", "ht", "hlr"]
 
     # % Check structure opr parameter
     assert list(STRUCTURE_OPR_PARAMETERS.values()) == [
-        ["cp", "cft", "kexc", "llr"],
-        ["ci", "cp", "cft", "kexc", "llr"],
-        ["ci", "cp", "cft", "cst", "kexc", "llr"],
-        ["cp", "cft", "llr"],
-        ["cp", "cft", "kexc", "akw", "bkw"],
+        ["ci", "cp", "ct", "kexc", "llr"],
+        ["ci", "cp", "ct", "kexc", "akw", "bkw"],
+        ["cp", "ct", "llr"],
     ]
 
     # % Check structure opr state
     assert list(STRUCTURE_OPR_STATES.values()) == [
-        ["hp", "hft", "hlr"],
-        ["hi", "hp", "hft", "hlr"],
-        ["hi", "hp", "hft", "hst", "hlr"],
-        ["hp", "hft", "hlr"],
-        ["hp", "hft"],
+        ["hi", "hp", "ht", "hlr"],
+        ["hi", "hp", "ht"],
+        ["hp", "ht", "hlr"],
     ]
 
     # % Check compute ci structure
-    assert list(STRUCTURE_COMPUTE_CI.values()) == [False, True, True, False, False]
+    assert list(STRUCTURE_COMPUTE_CI.values()) == [True, True, False]
 
 
 def test_feasible_domain():
     # % Feasible opr parameters
     assert list(FEASIBLE_OPR_PARAMETERS.values()) == [
-        (0, np.inf),
         (0, np.inf),
         (0, np.inf),
         (0, np.inf),
@@ -73,17 +70,16 @@ def test_feasible_domain():
         (0, 1),
         (0, 1),
         (0, 1),
-        (0, 1),
         (0, np.inf),
     ]
 
 
 def test_default_parameters():
     # % Check default opr parameters
-    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 500, 0, 5, 5, 0.6]
+    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 0, 5, 5, 0.6]
 
     # % Check default opr states
-    assert list(DEFAULT_OPR_INITIAL_STATES.values()) == [1e-2, 1e-2, 1e-2, 1e-2, 1e-6]
+    assert list(DEFAULT_OPR_INITIAL_STATES.values()) == [1e-2, 1e-2, 1e-2, 1e-6]
 
 
 def test_default_bounds_parameters():
@@ -92,7 +88,6 @@ def test_default_bounds_parameters():
         (1e-6, 1e2),
         (1e-6, 1e3),
         (1e-6, 1e3),
-        (1e-6, 1e4),
         (-50, 50),
         (1e-6, 1e3),
         (1e-3, 50),
@@ -104,9 +99,24 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),
         (1e-6, 0.999999),
         (1e-6, 0.999999),
-        (1e-6, 0.999999),
         (1e-6, 1e3),
     ]
+
+
+def test_optimizable_parameters():
+    # % Check optimizable opr parameters
+    assert list(OPTIMIZABLE_OPR_PARAMETERS.values()) == [
+        False,
+        True,
+        True,
+        True,
+        True,
+        True,
+        True,
+    ]
+
+    # % Check optimizable opr initial states
+    assert list(OPTIMIZABLE_OPR_INITIAL_STATES.values()) == [True, True, True, True]
 
 
 def test_read_input_data():

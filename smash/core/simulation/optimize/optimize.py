@@ -1,5 +1,12 @@
 from __future__ import annotations
 
+from smash._constant import (
+    DEFAULT_BOUNDS_OPR_PARAMETERS,
+    DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+    OPTIMIZABLE_OPR_PARAMETERS,
+    OPTIMIZABLE_OPR_INITIAL_STATES,
+)
+
 from smash.core.simulation._standardize import (
     _standardize_options,
     _standardize_returns,
@@ -35,41 +42,32 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
 
     options.comm.ncpu = 6
 
-    forward_run(
-        instance.setup,
-        instance.mesh,
-        instance._input_data,
-        instance._parameters,
-        instance._output,
-        options,
-        returns,
-    )
-    # ci, cp, cft, cst, kexc, llr, akw, bkw
-    options.optimize.opr_parameters = [0, 1, 1, 0, 1, 0, 1, 1]
-    options.optimize.opr_initial_states = [0, 0, 0, 0, 0]
-    options.optimize.l_opr_parameters = [
-        1e-6,
-        1e-6,
-        1e-6,
-        1e-6,
-        -50,
-        1e-6,
-        1e-3,
-        1e-3,
-    ]
-    options.optimize.u_opr_parameters = [100, 1000, 1000, 10_000, 50, 1000, 50, 1]
-    options.optimize.l_opr_initial_states = [1e-6, 1e-6, 1e-6, 1e-6, 1e-6]
-    options.optimize.u_opr_initial_states = [
-        0.999999,
-        0.999999,
-        0.999999,
-        0.999999,
-        1000,
-    ]
+    # ~ forward_run(
+    # ~ instance.setup,
+    # ~ instance.mesh,
+    # ~ instance._input_data,
+    # ~ instance._parameters,
+    # ~ instance._output,
+    # ~ options,
+    # ~ returns,
+    # ~ )
+
+    for i, key in enumerate(instance.opr_parameters.keys):
+        options.optimize.opr_parameters[i] = OPTIMIZABLE_OPR_PARAMETERS[key]
+        options.optimize.l_opr_parameters[i] = DEFAULT_BOUNDS_OPR_PARAMETERS[key][0]
+        options.optimize.u_opr_parameters[i] = DEFAULT_BOUNDS_OPR_PARAMETERS[key][1]
+
+    for i, key in enumerate(instance.opr_initial_states.keys):
+        options.optimize.l_opr_initial_states[i] = DEFAULT_BOUNDS_OPR_INITIAL_STATES[
+            key
+        ][0]
+        options.optimize.u_opr_initial_states[i] = DEFAULT_BOUNDS_OPR_INITIAL_STATES[
+            key
+        ][1]
 
     # ~ options.optimize.optimizer = "sbs"
     # ~ options.optimize.mapping = "uniform"
-    # ~ options.optimize.maxiter = 5
+    # ~ options.optimize.maxiter = 10
     # ~ options.optimize.control_tfm = "sbs"
 
     # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
@@ -84,35 +82,10 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
     # ~ returns,
     # ~ )
 
-    options.optimize.optimizer = "lbfgsb"
-    options.optimize.mapping = "distributed"
-    options.optimize.maxiter = 10
-    options.optimize.control_tfm = "normalize"
-
-    optimize_func = eval(options.optimize.optimizer + "_optimize")
-
-    optimize_func(
-        instance.setup,
-        instance.mesh,
-        instance._input_data,
-        instance._parameters,
-        instance._output,
-        options,
-        returns,
-    )
-
     # ~ options.optimize.optimizer = "lbfgsb"
-    # ~ options.optimize.mapping = "multi-linear"
+    # ~ options.optimize.mapping = "distributed"
     # ~ options.optimize.maxiter = 100
     # ~ options.optimize.control_tfm = "normalize"
-    # ~ opd = np.ones(
-    # ~ shape=options.optimize.opr_parameters_descriptor.shape,
-    # ~ dtype=np.int32,
-    # ~ order="F",
-    # ~ )
-    # ~ #opd[:, 5] = 0
-    # ~ options.optimize.opr_parameters_descriptor = opd
-    # ~ options.optimize.opr_initial_states_descriptor = 0
 
     # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
 
@@ -125,3 +98,28 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
     # ~ options,
     # ~ returns,
     # ~ )
+
+    options.optimize.optimizer = "lbfgsb"
+    options.optimize.mapping = "multi-linear"
+    options.optimize.maxiter = 100
+    options.optimize.control_tfm = "normalize"
+    # ~ opd = np.ones(
+    # ~ shape=options.optimize.opr_parameters_descriptor.shape,
+    # ~ dtype=np.int32,
+    # ~ order="F",
+    # ~ )
+    # ~ opd[:, 1:3] = 0
+    # ~ options.optimize.opr_parameters_descriptor = opd
+    # ~ options.optimize.opr_initial_states_descriptor = 0
+
+    optimize_func = eval(options.optimize.optimizer + "_optimize")
+
+    optimize_func(
+        instance.setup,
+        instance.mesh,
+        instance._input_data,
+        instance._parameters,
+        instance._output,
+        options,
+        returns,
+    )

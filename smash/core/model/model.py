@@ -13,6 +13,7 @@ from smash.core.model._build_model import (
     _build_mesh,
     _build_input_data,
     _build_parameters,
+    _build_output,
 )
 from smash.core.model._standardize import (
     _standardize_get_opr_parameters_args,
@@ -71,11 +72,13 @@ class Model(object):
 
             _build_input_data(self.setup, self.mesh, self._input_data)
 
-            self._parameters = ParametersDT(self.mesh)
+            self._parameters = ParametersDT(self.setup, self.mesh)
 
             _build_parameters(self.setup, self.mesh, self._input_data, self._parameters)
 
             self._output = OutputDT(self.setup, self.mesh)
+
+            _build_output(self.setup, self._output)
 
     def __copy__(self):
         copy = Model(None, None)
@@ -163,29 +166,34 @@ class Model(object):
         return self.__copy__()
 
     def get_opr_parameters(self, key: str):
-        args = _standardize_get_opr_parameters_args(self, key)
+        key = _standardize_get_opr_parameters_args(self, key)
+        ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
 
-        return getattr(self._parameters.opr_parameters, *args)
+        return self._parameters.opr_parameters.values[..., ind]
 
     def set_opr_parameters(self, key: str, value: Numeric | np.ndarray):
-        args = _standardize_set_opr_parameters_args(self, key, value)
+        key, value = _standardize_set_opr_parameters_args(self, key, value)
+        ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
 
-        setattr(self._parameters.opr_parameters, *args)
+        self._parameters.opr_parameters.values[..., ind] = value
 
     def get_opr_initial_states(self, key: str):
-        args = _standardize_get_opr_initial_states_args(self, key)
+        key = _standardize_get_opr_initial_states_args(self, key)
+        ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
 
-        return getattr(self._parameters.opr_initial_states, *args)
+        return self._parameters.opr_initial_states.values[..., ind]
 
     def set_opr_initial_states(self, key: str, value: Numeric | np.ndarray):
-        args = _standardize_set_opr_initial_states_args(self, key, value)
+        key, value = _standardize_set_opr_initial_states_args(self, key, value)
+        ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
 
-        setattr(self._parameters.opr_parameters, *args)
+        self._parameters.opr_initial_states.values[..., ind] = value
 
     def get_opr_final_states(self, key: str):
-        args = _standardize_get_opr_final_states_args(self, key)
+        key = _standardize_get_opr_final_states_args(self, key)
+        ind = np.argwhere(self._output.opr_final_states.keys == key).item()
 
-        return getattr(self._output.opr_final_states, *args)
+        return self._output.opr_final_states.values[..., ind]
 
     def get_opr_parameters_bounds(self):
         return {

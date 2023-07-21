@@ -11,7 +11,6 @@
 !%          ``cost``                 Value of cost function
 !%          ``sim_response``         ResponseDT
 !%          ``opr_final_states``     Opr_StatesDT
-!%          ``opr_states_buffer``    Opr_StatesDT used to temporary save states
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -34,7 +33,6 @@ module mwd_output
 
         type(ResponseDT) :: sim_response
         type(Opr_StatesDT) :: opr_final_states
-        type(Opr_StatesDT) :: opr_states_buffer
         real(sp) :: cost
 
     end type OutputDT
@@ -50,8 +48,7 @@ contains
         type(MeshDT), intent(in) :: mesh
 
         call ResponseDT_initialise(this%sim_response, setup, mesh)
-        call Opr_StatesDT_initialise(this%opr_final_states, mesh)
-        call Opr_StatesDT_initialise(this%opr_states_buffer, mesh)
+        call Opr_StatesDT_initialise(this%opr_final_states, setup, mesh)
 
     end subroutine OutputDT_initialise
 

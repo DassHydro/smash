@@ -1,8 +1,11 @@
-commit 17c015a54d83945e58d8623e095035a394d1efc3
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Tue Jul 18 22:28:53 2023 +0200
+commit c7c9760d0aedcff5212bab1e8b481107f22d16c1
+Merge: 3038196 a2fd1a3
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Thu Jul 20 16:08:01 2023 +0200
 
-    FIX: minor correction of metrics message and comment for Fortran files
+    Merge pull request #50 from DassHydro-dev/enc-signal-analysis
+    
+    ENC: enhancing and cleaning signal analysis for Python functions and Fortran routines
 
 TEST NAME                       |STATUS
 bbox_mesh.active_cell           |NON MODIFIED
@@ -18,13 +21,16 @@ bbox_mesh.xmin                  |NON MODIFIED
 bbox_mesh.xres                  |NON MODIFIED
 bbox_mesh.ymax                  |NON MODIFIED
 bbox_mesh.yres                  |NON MODIFIED
-forward_run.gr-a-kw.sim_q       |NON MODIFIED
-forward_run.gr-a-lr.sim_q       |NON MODIFIED
-forward_run.gr-b-lr.sim_q       |NON MODIFIED
-forward_run.gr-c-lr.sim_q       |NON MODIFIED
-forward_run.gr-d-lr.sim_q       |NON MODIFIED
-generate_samples.normal         |NON MODIFIED
-generate_samples.uniform        |NON MODIFIED
+forward_run.gr-a-kw.sim_q       |DELETED
+forward_run.gr-a-lr.sim_q       |DELETED
+forward_run.gr-b-lr.sim_q       |DELETED
+forward_run.gr-c-lr.sim_q       |DELETED
+forward_run.gr-d-lr.sim_q       |DELETED
+forward_run.gr4-kw.sim_q        |ADDED
+forward_run.gr4-lr.sim_q        |ADDED
+forward_run.grd-lr.sim_q        |ADDED
+generate_samples.normal         |MODIFIED
+generate_samples.uniform        |MODIFIED
 hydrograph_segmentation.by_obs  |NON MODIFIED
 hydrograph_segmentation.by_sim  |NON MODIFIED
 mesh_io.active_cell             |NON MODIFIED
@@ -76,17 +82,13 @@ setup_io.read_pet               |NON MODIFIED
 setup_io.read_prcp              |NON MODIFIED
 setup_io.read_qobs              |NON MODIFIED
 setup_io.start_time             |NON MODIFIED
-setup_io.structure              |NON MODIFIED
-signatures.cont_obs             |DELETED
-signatures.cont_obs_by_obs      |ADDED
-signatures.cont_sim             |DELETED
-signatures.cont_sim_by_obs      |ADDED
-signatures.cont_sim_by_sim      |ADDED
-signatures.event_obs            |DELETED
-signatures.event_obs_by_obs     |ADDED
-signatures.event_sim            |DELETED
-signatures.event_sim_by_obs     |ADDED
-signatures.event_sim_by_sim     |ADDED
+setup_io.structure              |MODIFIED
+signatures.cont_obs_by_obs      |NON MODIFIED
+signatures.cont_sim_by_obs      |NON MODIFIED
+signatures.cont_sim_by_sim      |NON MODIFIED
+signatures.event_obs_by_obs     |NON MODIFIED
+signatures.event_sim_by_obs     |NON MODIFIED
+signatures.event_sim_by_sim     |NON MODIFIED
 xy_mesh.active_cell             |NON MODIFIED
 xy_mesh.area                    |NON MODIFIED
 xy_mesh.area_dln                |NON MODIFIED

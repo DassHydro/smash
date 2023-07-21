@@ -30,6 +30,8 @@
 !%          ``descriptor_name``        Descriptor maps names
 !%          ``ntime_step``             Number of time steps                                   (default: 0)
 !%          ``nd``                     Number of descriptor maps                              (default: 0)
+!%          ``nop``                    Number of operator parameters                          (default: 0)
+!%          ``nos``                    Number of operator states                              (default: 0)
 !%
 !%      Subroutine
 !%      ----------
@@ -49,7 +51,7 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr-a-lr" !$F90W char
+        character(lchar) :: structure = "gr4-lr" !$F90W char
 
         real(sp) :: dt = 3600._sp
 
@@ -79,6 +81,8 @@ module mwd_setup
 
         integer :: ntime_step = 0
         integer :: nd = 0
+        integer :: nop = 0
+        integer :: nos = 0
 
     end type SetupDT
 
