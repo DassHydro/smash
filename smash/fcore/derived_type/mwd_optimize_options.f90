@@ -67,28 +67,28 @@ contains
         type(SetupDT), intent(in) :: setup
 
         allocate (this%opr_parameters(setup%nop))
-        this%opr_parameters = 1
+        this%opr_parameters = -99
 
         allocate (this%l_opr_parameters(setup%nop))
-        this%l_opr_parameters = 0._sp
+        this%l_opr_parameters = -99._sp
 
         allocate (this%u_opr_parameters(setup%nop))
-        this%u_opr_parameters = 1._sp
+        this%u_opr_parameters = -99._sp
 
         allocate (this%opr_parameters_descriptor(setup%nd, setup%nop))
-        this%opr_parameters_descriptor = 1
+        this%opr_parameters_descriptor = -99
 
         allocate (this%opr_initial_states(setup%nos))
-        this%opr_initial_states = 0
+        this%opr_initial_states = -99
 
         allocate (this%l_opr_initial_states(setup%nos))
-        this%l_opr_initial_states = 0._sp
+        this%l_opr_initial_states = -99._sp
 
         allocate (this%u_opr_initial_states(setup%nos))
-        this%u_opr_initial_states = 1._sp
+        this%u_opr_initial_states = -99._sp
 
         allocate (this%opr_initial_states_descriptor(setup%nd, setup%nos))
-        this%opr_initial_states_descriptor = 1
+        this%opr_initial_states_descriptor = -99
 
     end subroutine Optimize_OptionsDT_initialise
 

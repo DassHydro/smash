@@ -49,10 +49,10 @@ contains
         this%descriptor = -99._sp
 
         allocate (this%l_descriptor(setup%nd))
-        this%l_descriptor = 0._sp
+        this%l_descriptor = -99._sp
 
         allocate (this%u_descriptor(setup%nd))
-        this%u_descriptor = 1._sp
+        this%u_descriptor = -99._sp
 
     end subroutine Physio_DataDT_initialise
 

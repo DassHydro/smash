@@ -52,25 +52,25 @@ contains
         integer, intent(in) :: n
 
         allocate (this%x(n))
-        this%x = 0._sp
+        this%x = -99._sp
 
 !~         allocate (this%x_bkg(n))
 !~         this%x_bkg = 0._sp
 
         allocate (this%l(n))
-        this%l = 0._sp
+        this%l = -99._sp
 
         allocate (this%l_bkg(n))
-        this%l_bkg = 0._sp
+        this%l_bkg = -99._sp
 
         allocate (this%u(n))
-        this%u = 0._sp
+        this%u = -99._sp
 
         allocate (this%u_bkg(n))
-        this%u_bkg = 0._sp
+        this%u_bkg = -99._sp
 
         allocate (this%nbd(n))
-        this%nbd = 0
+        this%nbd = -99
 
     end subroutine ControlDT_initialise
 

@@ -57,7 +57,10 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
         options.optimize.l_opr_parameters[i] = DEFAULT_BOUNDS_OPR_PARAMETERS[key][0]
         options.optimize.u_opr_parameters[i] = DEFAULT_BOUNDS_OPR_PARAMETERS[key][1]
 
+    options.optimize.opr_parameters_descriptor = 1
+
     for i, key in enumerate(instance.opr_initial_states.keys):
+        options.optimize.opr_initial_states[i] = 0
         options.optimize.l_opr_initial_states[i] = DEFAULT_BOUNDS_OPR_INITIAL_STATES[
             key
         ][0]
@@ -65,22 +68,24 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
             key
         ][1]
 
-    # ~ options.optimize.optimizer = "sbs"
-    # ~ options.optimize.mapping = "uniform"
-    # ~ options.optimize.maxiter = 10
-    # ~ options.optimize.control_tfm = "sbs"
+    options.optimize.opr_initial_states_descriptor = 1
 
-    # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
+    options.optimize.optimizer = "sbs"
+    options.optimize.mapping = "uniform"
+    options.optimize.maxiter = 10
+    options.optimize.control_tfm = "sbs"
 
-    # ~ optimize_func(
-    # ~ instance.setup,
-    # ~ instance.mesh,
-    # ~ instance._input_data,
-    # ~ instance._parameters,
-    # ~ instance._output,
-    # ~ options,
-    # ~ returns,
-    # ~ )
+    optimize_func = eval(options.optimize.optimizer + "_optimize")
+
+    optimize_func(
+        instance.setup,
+        instance.mesh,
+        instance._input_data,
+        instance._parameters,
+        instance._output,
+        options,
+        returns,
+    )
 
     # ~ options.optimize.optimizer = "lbfgsb"
     # ~ options.optimize.mapping = "distributed"
@@ -99,27 +104,19 @@ def _optimize(instance: Model, options: OptionsDT, returns: ReturnsDT):
     # ~ returns,
     # ~ )
 
-    options.optimize.optimizer = "lbfgsb"
-    options.optimize.mapping = "multi-linear"
-    options.optimize.maxiter = 100
-    options.optimize.control_tfm = "normalize"
-    # ~ opd = np.ones(
-    # ~ shape=options.optimize.opr_parameters_descriptor.shape,
-    # ~ dtype=np.int32,
-    # ~ order="F",
+    # ~ options.optimize.optimizer = "lbfgsb"
+    # ~ options.optimize.mapping = "multi-polynomial"
+    # ~ options.optimize.maxiter = 100
+    # ~ options.optimize.control_tfm = "normalize"
+
+    # ~ optimize_func = eval(options.optimize.optimizer + "_optimize")
+
+    # ~ optimize_func(
+    # ~ instance.setup,
+    # ~ instance.mesh,
+    # ~ instance._input_data,
+    # ~ instance._parameters,
+    # ~ instance._output,
+    # ~ options,
+    # ~ returns,
     # ~ )
-    # ~ opd[:, 1:3] = 0
-    # ~ options.optimize.opr_parameters_descriptor = opd
-    # ~ options.optimize.opr_initial_states_descriptor = 0
-
-    optimize_func = eval(options.optimize.optimizer + "_optimize")
-
-    optimize_func(
-        instance.setup,
-        instance.mesh,
-        instance._input_data,
-        instance._parameters,
-        instance._output,
-        options,
-        returns,
-    )

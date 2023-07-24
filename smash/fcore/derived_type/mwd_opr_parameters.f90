@@ -49,7 +49,7 @@ contains
         this%keys = "..."
 
         allocate (this%values(mesh%nrow, mesh%ncol, setup%nop))
-        this%values = 0._sp
+        this%values = -99._sp
 
     end subroutine Opr_ParametersDT_initialise
 

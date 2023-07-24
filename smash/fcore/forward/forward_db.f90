@@ -45,7 +45,7 @@ CONTAINS
     ALLOCATE(this%keys(setup%nos))
     this%keys = '...'
     ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nos))
-    this%values = 0._sp
+    this%values = -99._sp
   END SUBROUTINE OPR_STATESDT_INITIALISE
 
   SUBROUTINE OPR_STATESDT_COPY(this, this_copy)
@@ -161,19 +161,19 @@ CONTAINS
     TYPE(CONTROLDT), INTENT(INOUT) :: this
     INTEGER, INTENT(IN) :: n
     ALLOCATE(this%x(n))
-    this%x = 0._sp
+    this%x = -99._sp
 !~         allocate (this%x_bkg(n))
 !~         this%x_bkg = 0._sp
     ALLOCATE(this%l(n))
-    this%l = 0._sp
+    this%l = -99._sp
     ALLOCATE(this%l_bkg(n))
-    this%l_bkg = 0._sp
+    this%l_bkg = -99._sp
     ALLOCATE(this%u(n))
-    this%u = 0._sp
+    this%u = -99._sp
     ALLOCATE(this%u_bkg(n))
-    this%u_bkg = 0._sp
+    this%u_bkg = -99._sp
     ALLOCATE(this%nbd(n))
-    this%nbd = 0
+    this%nbd = -99
   END SUBROUTINE CONTROLDT_INITIALISE
 
   SUBROUTINE CONTROLDT_FINALISE(this)
@@ -246,7 +246,7 @@ CONTAINS
     ALLOCATE(this%keys(setup%nop))
     this%keys = '...'
     ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nop))
-    this%values = 0._sp
+    this%values = -99._sp
   END SUBROUTINE OPR_PARAMETERSDT_INITIALISE
 
   SUBROUTINE OPR_PARAMETERSDT_COPY(this, this_copy)
