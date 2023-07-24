@@ -229,7 +229,7 @@ contains
         real(dp), dimension(29) :: dsave
         integer, dimension(:), allocatable :: iwa
         real(dp), dimension(:), allocatable :: g, wa, x_wa, l_wa, u_wa
-        type(ParametersDT) :: parameters_b, parameters_bak
+        type(ParametersDT) :: parameters_b
         type(OutputDT) :: output_b
 
         call forward_run(setup, mesh, input_data, parameters, output, options, returns)
@@ -246,11 +246,9 @@ contains
         allocate (iwa(3*n))
         allocate (wa(2*m*n + 5*n + 11*m*m + 8*m))
 
-        parameters_bak = parameters
         parameters_b = parameters
         output_b = output
         output_b%cost = 1._sp
-        output_b%sim_response%q = 0._sp
 
         task = "START"
 
@@ -271,10 +269,6 @@ contains
 
                 call forward_run_b(setup, mesh, input_data, parameters, &
                 & parameters_b, output, output_b, options, returns)
-
-                !% It's a Tapenade security, depending on the differentiation graph,
-                !% some non-optimized parameters may be modified.
-                parameters = parameters_bak
 
                 f = real(output%cost, dp)
                 g = real(parameters_b%control%x, dp)

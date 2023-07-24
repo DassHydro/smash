@@ -9,11 +9,11 @@ import pytest
 
 
 def generic_generate_samples(model: smash.Model, **kwargs) -> dict:
-    bounds = model.get_opr_parameters_bounds()
-
-    problem = dict(
-        zip(PROBLEM_KEYS, [len(bounds), list(bounds.keys()), list(bounds.values())])
-    )
+    # % Fix problem
+    num_vars = 4
+    names = ["x1", "x2", "x3", "x4"]
+    bounds = [(0, 77), (-940, 832), (23, 543), (-4, 681)]
+    problem = {"num_vars": num_vars, "names": names, "bounds": bounds}
 
     sample = smash.factory.generate_samples(
         problem, generator="uniform", n=20, random_state=11

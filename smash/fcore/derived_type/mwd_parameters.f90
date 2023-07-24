@@ -21,6 +21,7 @@
 module mwd_parameters
 
     use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_control !% only: ControlDT
     use mwd_opr_parameters !% only: Opr_ParametersDT, Opr_ParametersDT_initialise
@@ -38,15 +39,16 @@ module mwd_parameters
 
 contains
 
-    subroutine ParametersDT_initialise(this, mesh)
+    subroutine ParametersDT_initialise(this, setup, mesh)
 
         implicit none
 
         type(ParametersDT), intent(inout) :: this
+        type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
-        call Opr_ParametersDT_initialise(this%opr_parameters, mesh)
-        call Opr_StatesDT_initialise(this%opr_initial_states, mesh)
+        call Opr_ParametersDT_initialise(this%opr_parameters, setup, mesh)
+        call Opr_StatesDT_initialise(this%opr_initial_states, setup, mesh)
 
     end subroutine ParametersDT_initialise
 

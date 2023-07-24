@@ -9,7 +9,7 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_parameters_manipulation !% only: control_to_parameters
-    use md_forward_structure !% only: gr_a_forward, gr_b_forward, gr_c_forward, gr_d_forward
+    use md_forward_structure !% only: gr4_lr_forward, gr4_kw_forward, grd_lr_forward
     use mwd_cost !% only: compute_cost
 
     implicit none
@@ -22,38 +22,36 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     type(OptionsDT), intent(in) :: options
     type(ReturnsDT), intent(inout) :: returns
 
+    real(sp), dimension(mesh%nrow, mesh%ncol, setup%nos) :: opr_states_buffer_values
+
     !% Map control to parameters
     call control_to_parameters(setup, mesh, input_data, parameters, options)
 
-    output%opr_states_buffer = parameters%opr_initial_states
+    !% Save initial states
+    opr_states_buffer_values = parameters%opr_initial_states%values
 
+    !% Simulation
     select case (setup%structure)
 
-    case ("gr-a-lr")
+    case ("gr4-lr")
 
-        call gr_a_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr4_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr-b-lr")
+    case ("gr4-kw")
 
-        call gr_b_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr-c-lr")
+    case ("grd-lr")
 
-        call gr_c_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("gr-d-lr")
-
-        call gr_d_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("gr-a-kw")
-
-        call gr_a_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call grd_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
     end select
 
-    output%opr_final_states = parameters%opr_initial_states
-    parameters%opr_initial_states = output%opr_states_buffer
+    !% Assign final states and reset initial states
+    output%opr_final_states%values = parameters%opr_initial_states%values
+    parameters%opr_initial_states%values = opr_states_buffer_values
 
+    !% Compute cost
     call compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
 end subroutine base_forward_run

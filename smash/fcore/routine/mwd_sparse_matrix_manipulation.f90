@@ -94,13 +94,13 @@ contains
 
     end subroutine compute_rowcol_to_ind_sparse
 
-    subroutine get_matrix_nnz(mesh, matrix, zvle, nnz)
+    subroutine get_matrix_nnz(mesh, matrix, zvalue, nnz)
 
         implicit none
 
         type(MeshDT), intent(in) :: mesh
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: matrix
-        real(sp), intent(in) :: zvle
+        real(sp), intent(in) :: zvalue
         integer, intent(inout) :: nnz
 
         integer :: row, col
@@ -111,7 +111,7 @@ contains
 
             do row = 1, mesh%nrow
 
-                if (mesh%active_cell(row, col) .eq. 0 .or. abs(matrix(row, col) - zvle) .le. 0._sp) cycle
+                if (mesh%active_cell(row, col) .eq. 0 .or. abs(matrix(row, col) - zvalue) .le. 0._sp) cycle
 
                 nnz = nnz + 1
 
@@ -136,12 +136,12 @@ contains
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. &
-                & abs(matrix(row, col) - sparse_matrix%zvle) .le. 0._sp) cycle
+                & abs(matrix(row, col) - sparse_matrix%zvalue) .le. 0._sp) cycle
 
                 i = i + 1
 
-                sparse_matrix%ind(i) = mesh%rowcol_to_ind_sparse(row, col)
-                sparse_matrix%dat(i) = matrix(row, col)
+                sparse_matrix%indices(i) = mesh%rowcol_to_ind_sparse(row, col)
+                sparse_matrix%values(i) = matrix(row, col)
 
             end do
 
@@ -166,7 +166,7 @@ contains
                 if (mesh%active_cell(row, col) .eq. 0) cycle
 
                 i = i + 1
-                sparse_matrix%dat(i) = matrix(row, col)
+                sparse_matrix%values(i) = matrix(row, col)
 
             end do
 
@@ -192,19 +192,19 @@ contains
 
     end subroutine fill_sparse_matrix
 
-    subroutine matrix_to_sparse_matrix(mesh, matrix, zvle, sparse_matrix)
+    subroutine matrix_to_sparse_matrix(mesh, matrix, zvalue, sparse_matrix)
 
         implicit none
 
         type(MeshDT), intent(in) :: mesh
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: matrix
-        real(sp), intent(in) :: zvle
+        real(sp), intent(in) :: zvalue
         type(Sparse_MatrixDT), intent(inout) :: sparse_matrix
 
         integer :: nnz, n
         logical :: coo_fmt
 
-        call get_matrix_nnz(mesh, matrix, zvle, nnz)
+        call get_matrix_nnz(mesh, matrix, zvalue, nnz)
 
         !% Do not need to cast to real
         if (nnz .le. mesh%nac/2) then
@@ -219,7 +219,7 @@ contains
 
         end if
 
-        call Sparse_MatrixDT_initialise(sparse_matrix, n, coo_fmt, zvle)
+        call Sparse_MatrixDT_initialise(sparse_matrix, n, coo_fmt, zvalue)
 
         call fill_sparse_matrix(mesh, matrix, sparse_matrix)
 
@@ -246,9 +246,9 @@ contains
 
                 i = i + 1
 
-                if (i .ne. sparse_matrix%ind(next_ind)) cycle
+                if (i .ne. sparse_matrix%indices(next_ind)) cycle
 
-                matrix(row, col) = sparse_matrix%dat(next_ind)
+                matrix(row, col) = sparse_matrix%values(next_ind)
                 next_ind = next_ind + 1
 
                 if (next_ind .gt. sparse_matrix%n) return
@@ -278,7 +278,7 @@ contains
                 if (mesh%active_cell(row, col) .eq. 0) cycle
 
                 i = i + 1
-                matrix(row, col) = sparse_matrix%dat(i)
+                matrix(row, col) = sparse_matrix%values(i)
 
             end do
 
@@ -294,7 +294,7 @@ contains
         type(Sparse_MatrixDT), intent(in) :: sparse_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: matrix
 
-        matrix = sparse_matrix%zvle
+        matrix = sparse_matrix%zvalue
 
         if (sparse_matrix%n .eq. 0) return
 
@@ -323,9 +323,9 @@ contains
 
         k = mesh%rowcol_to_ind_sparse(row, col)
 
-        call binary_search(sparse_matrix%n, sparse_matrix%ind, k, ind)
+        call binary_search(sparse_matrix%n, sparse_matrix%indices, k, ind)
 
-        if (ind .ne. -1) res = sparse_matrix%dat(ind)
+        if (ind .ne. -1) res = sparse_matrix%values(ind)
 
     end subroutine coo_get_sparse_matrix_dat
 
@@ -342,7 +342,7 @@ contains
 
         k = mesh%rowcol_to_ind_sparse(row, col)
 
-        res = sparse_matrix%dat(k)
+        res = sparse_matrix%values(k)
 
     end subroutine ac_get_sparse_matrix_dat
 
@@ -355,7 +355,7 @@ contains
         type(Sparse_MatrixDT), intent(in) :: sparse_matrix
         real(sp), intent(inout) :: res
 
-        res = sparse_matrix%zvle
+        res = sparse_matrix%zvalue
 
         if (sparse_matrix%n .eq. 0) return
 

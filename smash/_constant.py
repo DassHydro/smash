@@ -6,22 +6,20 @@ import numpy as np
 ### MODEL ###
 #############
 
-STRUCTURE_NAME = ["gr-a-lr", "gr-b-lr", "gr-c-lr", "gr-d-lr", "gr-a-kw"]
+STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "grd-lr"]
 
-OPR_PARAMETERS = ["ci", "cp", "cft", "cst", "kexc", "llr", "akw", "bkw"]
+OPR_PARAMETERS = ["ci", "cp", "ct", "kexc", "llr", "akw", "bkw"]
 
-OPR_STATES = ["hi", "hp", "hft", "hst", "hlr"]
+OPR_STATES = ["hi", "hp", "ht", "hlr"]
 
 # % Following STRUCTURE_NAME order
 STRUCTURE_OPR_PARAMETERS = dict(
     zip(
         STRUCTURE_NAME,
         [
-            ["cp", "cft", "kexc", "llr"],
-            ["ci", "cp", "cft", "kexc", "llr"],
-            ["ci", "cp", "cft", "cst", "kexc", "llr"],
-            ["cp", "cft", "llr"],
-            ["cp", "cft", "kexc", "akw", "bkw"],
+            ["ci", "cp", "ct", "kexc", "llr"],
+            ["ci", "cp", "ct", "kexc", "akw", "bkw"],
+            ["cp", "ct", "llr"],
         ],
     )
 )
@@ -31,17 +29,15 @@ STRUCTURE_OPR_STATES = dict(
     zip(
         STRUCTURE_NAME,
         [
-            ["hp", "hft", "hlr"],
-            ["hi", "hp", "hft", "hlr"],
-            ["hi", "hp", "hft", "hst", "hlr"],
-            ["hp", "hft", "hlr"],
-            ["hp", "hft"],
+            ["hi", "hp", "ht", "hlr"],
+            ["hi", "hp", "ht"],
+            ["hp", "ht", "hlr"],
         ],
     )
 )
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [False, True, True, False, False]))
+STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [True, True, False]))
 
 ### FEASIBLE PARAMETERS ###
 ###########################
@@ -51,7 +47,6 @@ FEASIBLE_OPR_PARAMETERS = dict(
     zip(
         OPR_PARAMETERS,
         [
-            (0, np.inf),
             (0, np.inf),
             (0, np.inf),
             (0, np.inf),
@@ -71,7 +66,6 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
             (0, 1),
             (0, 1),
             (0, 1),
-            (0, 1),
             (0, np.inf),
         ],
     )
@@ -83,10 +77,10 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 # % Following OPR_PARAMETERS order
 # % if ci is used (depending on model structure), it will be recomputed automatically by a fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
-DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 500, 0, 5, 5, 0.6]))
+DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 5, 5, 0.6]))
 
 # % Following OPR_STATES order
-DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-2, 1e-6]))
+DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-6]))
 
 ### DEFAULT BOUNDS PARAMETERS ###
 #################################
@@ -99,7 +93,6 @@ DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
             (1e-6, 1e2),
             (1e-6, 1e3),
             (1e-6, 1e3),
-            (1e-6, 1e4),
             (-50, 50),
             (1e-6, 1e3),
             (1e-3, 50),
@@ -116,7 +109,6 @@ DEFAULT_BOUNDS_OPR_INITIAL_STATES = dict(
             (1e-6, 0.999999),
             (1e-6, 0.999999),
             (1e-6, 0.999999),
-            (1e-6, 0.999999),
             (1e-6, 1e3),
         ],
     )
@@ -124,6 +116,24 @@ DEFAULT_BOUNDS_OPR_INITIAL_STATES = dict(
 
 TOL_BOUNDS = 1e-9
 
+### OPTIMIZABLE PARAMETERS ###
+##############################
+
+# % Following OPR_PARAMETERS order
+OPTIMIZABLE_OPR_PARAMETERS = dict(
+    zip(
+        OPR_PARAMETERS,
+        [False, True, True, True, True, True, True],
+    )
+)
+
+# % Following OPR_STATES order
+OPTIMIZABLE_OPR_INITIAL_STATES = dict(
+    zip(
+        OPR_STATES,
+        [True, True, True, True],
+    )
+)
 
 ### READ INPUT DATA ###
 #######################
@@ -162,6 +172,7 @@ RATIO_PET_HOURLY = np.array(
 
 ### DATASET ###
 ###############
+
 DATASET_NAME = ["flwdir", "cance", "lez", "france"]
 
 ### MESH ###

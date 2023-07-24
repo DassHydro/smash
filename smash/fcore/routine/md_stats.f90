@@ -114,7 +114,7 @@ contains
         real(sp), dimension(:), intent(in) :: dat
         real(sp), dimension(size(dat)) :: sorted_dat
         real(sp) :: res
-        
+
         integer :: n
         real(sp) :: q1, q2, frac
 

@@ -216,22 +216,22 @@ def _standardize_opr_states_value(
     return value
 
 
-def _standardize_get_opr_parameters_args(model: Model, key: str) -> AnyTuple:
+def _standardize_get_opr_parameters_args(model: Model, key: str) -> str:
     key = _standardize_opr_parameters_key(model, key)
 
-    return (key,)
+    return key
 
 
-def _standardize_get_opr_initial_states_args(model: Model, key: str) -> AnyTuple:
+def _standardize_get_opr_initial_states_args(model: Model, key: str) -> str:
     key = _standardize_opr_initial_states_key(model, key)
 
-    return (key,)
+    return key
 
 
-def _standardize_get_opr_final_states_args(model: Model, key: str) -> AnyTuple:
+def _standardize_get_opr_final_states_args(model: Model, key: str) -> str:
     key = _standardize_opr_final_states_key(model, key)
 
-    return (key,)
+    return key
 
 
 def _standardize_set_opr_parameters_args(

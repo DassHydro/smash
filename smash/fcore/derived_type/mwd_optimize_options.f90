@@ -32,7 +32,7 @@
 
 module mwd_optimize_options
 
-    use md_constant !% only: sp, lchar, nopr_parameters, nopr_states
+    use md_constant !% only: sp, lchar
     use mwd_setup !% only: SetupDT
 
     implicit none
@@ -45,16 +45,14 @@ module mwd_optimize_options
 
         integer :: maxiter = 100
 
-        integer, dimension(nopr_parameters) :: opr_parameters = 1
-        integer, dimension(nopr_states) :: opr_initial_states = 0
-
-        real(sp), dimension(nopr_parameters) :: l_opr_parameters = 0._sp
-        real(sp), dimension(nopr_parameters) :: u_opr_parameters = 1._sp
-
-        real(sp), dimension(nopr_states) :: l_opr_initial_states = 0._sp
-        real(sp), dimension(nopr_states) :: u_opr_initial_states = 1._sp
-
+        integer, dimension(:), allocatable :: opr_parameters
+        real(sp), dimension(:), allocatable :: l_opr_parameters
+        real(sp), dimension(:), allocatable :: u_opr_parameters
         integer, dimension(:, :), allocatable :: opr_parameters_descriptor
+
+        integer, dimension(:), allocatable :: opr_initial_states
+        real(sp), dimension(:), allocatable :: l_opr_initial_states
+        real(sp), dimension(:), allocatable :: u_opr_initial_states
         integer, dimension(:, :), allocatable :: opr_initial_states_descriptor
 
     end type Optimize_OptionsDT
@@ -68,11 +66,29 @@ contains
         type(Optimize_OptionsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
 
-        allocate (this%opr_parameters_descriptor(setup%nd, nopr_parameters))
-        this%opr_parameters_descriptor = 1
+        allocate (this%opr_parameters(setup%nop))
+        this%opr_parameters = -99
 
-        allocate (this%opr_initial_states_descriptor(setup%nd, nopr_states))
-        this%opr_initial_states_descriptor = 1
+        allocate (this%l_opr_parameters(setup%nop))
+        this%l_opr_parameters = -99._sp
+
+        allocate (this%u_opr_parameters(setup%nop))
+        this%u_opr_parameters = -99._sp
+
+        allocate (this%opr_parameters_descriptor(setup%nd, setup%nop))
+        this%opr_parameters_descriptor = -99
+
+        allocate (this%opr_initial_states(setup%nos))
+        this%opr_initial_states = -99
+
+        allocate (this%l_opr_initial_states(setup%nos))
+        this%l_opr_initial_states = -99._sp
+
+        allocate (this%u_opr_initial_states(setup%nos))
+        this%u_opr_initial_states = -99._sp
+
+        allocate (this%opr_initial_states_descriptor(setup%nd, setup%nos))
+        this%opr_initial_states_descriptor = -99
 
     end subroutine Optimize_OptionsDT_initialise
 

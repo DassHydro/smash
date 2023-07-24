@@ -91,11 +91,11 @@ contains
         this%ncol = ncol
         this%ng = ng
 
-        this%xres = 0._sp
-        this%yres = 0._sp
+        this%xres = -99._sp
+        this%yres = -99._sp
 
-        this%xmin = 0._sp
-        this%ymax = 0._sp
+        this%xmin = -99._sp
+        this%ymax = -99._sp
 
         allocate (this%dx(this%nrow, this%ncol))
         this%dx = -99._sp
@@ -116,9 +116,10 @@ contains
         this%path = -99
 
         allocate (this%active_cell(this%nrow, this%ncol))
-        this%active_cell = 1
+        this%active_cell = -99
 
         allocate (this%gauge_pos(this%ng, 2))
+        this%gauge_pos = -99
 
         allocate (this%code(this%ng))
         this%code = "..."
@@ -137,7 +138,7 @@ contains
         end if
 
         allocate (this%local_active_cell(this%nrow, this%ncol))
-        this%local_active_cell = 1
+        this%local_active_cell = -99
 
     end subroutine MeshDT_initialise
 

@@ -28,8 +28,10 @@
 !%          ``descriptor_format``      Descriptor maps format                                 (default: .false.)
 !%          ``descriptor_directory``   Descriptor maps directory                              (default: "...")
 !%          ``descriptor_name``        Descriptor maps names
-!%          ``ntime_step``             Number of time steps                                   (default: 0)
-!%          ``nd``                     Number of descriptor maps                              (default: 0)
+!%          ``ntime_step``             Number of time steps                                   (default: -99)
+!%          ``nd``                     Number of descriptor maps                              (default: -99)
+!%          ``nop``                    Number of operator parameters                          (default: -99)
+!%          ``nos``                    Number of operator states                              (default: -99)
 !%
 !%      Subroutine
 !%      ----------
@@ -49,7 +51,7 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr-a-lr" !$F90W char
+        character(lchar) :: structure = "gr4-lr" !$F90W char
 
         real(sp) :: dt = 3600._sp
 
@@ -77,8 +79,10 @@ module mwd_setup
         character(lchar) :: descriptor_directory = "..." !$F90W char
         character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
-        integer :: ntime_step = 0
-        integer :: nd = 0
+        integer :: ntime_step = -99
+        integer :: nd = -99
+        integer :: nop = -99
+        integer :: nos = -99
 
     end type SetupDT
 

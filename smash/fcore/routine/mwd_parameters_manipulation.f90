@@ -13,9 +13,6 @@
 !%      - inv_scaled_sigmoid
 !%      - sigmoide2d
 !%      - scaled_sigmoide2d
-!%      - opr_parameters_to_matrix
-!%      - matrix_to_opr_parameters
-!%      - matrix_to_opr_initial_states
 !%      - sbs_control_tfm
 !%      - sbs_inv_control_tfm
 !%      - normalize_control_tfm
@@ -35,7 +32,7 @@
 
 module mwd_parameters_manipulation
 
-    use md_constant !% only: sp, nopr_parameters, nopr_states
+    use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -87,7 +84,7 @@ contains
 
         n = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -95,7 +92,7 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -117,7 +114,7 @@ contains
 
         n = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -125,7 +122,7 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -211,80 +208,6 @@ contains
         res = res*(u - l) + l
 
     end subroutine scaled_sigmoide2d
-
-    subroutine opr_parameters_to_matrix(setup, mesh, parameters, matrix)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(ParametersDT), intent(in) :: parameters
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters), intent(inout) :: matrix
-
-        matrix(:, :, 1) = parameters%opr_parameters%ci
-        matrix(:, :, 2) = parameters%opr_parameters%cp
-        matrix(:, :, 3) = parameters%opr_parameters%cft
-        matrix(:, :, 4) = parameters%opr_parameters%cst
-        matrix(:, :, 5) = parameters%opr_parameters%kexc
-        matrix(:, :, 6) = parameters%opr_parameters%llr
-        matrix(:, :, 7) = parameters%opr_parameters%akw
-        matrix(:, :, 8) = parameters%opr_parameters%bkw
-
-    end subroutine opr_parameters_to_matrix
-
-    subroutine opr_initial_states_to_matrix(setup, mesh, parameters, matrix)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(ParametersDT), intent(in) :: parameters
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states), intent(inout) :: matrix
-
-        matrix(:, :, 1) = parameters%opr_initial_states%hi
-        matrix(:, :, 2) = parameters%opr_initial_states%hp
-        matrix(:, :, 3) = parameters%opr_initial_states%hft
-        matrix(:, :, 4) = parameters%opr_initial_states%hst
-        matrix(:, :, 5) = parameters%opr_initial_states%hlr
-
-    end subroutine opr_initial_states_to_matrix
-
-    subroutine matrix_to_opr_parameters(setup, mesh, matrix, parameters)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters), intent(in) :: matrix
-        type(ParametersDT), intent(inout) :: parameters
-
-        parameters%opr_parameters%ci = matrix(:, :, 1)
-        parameters%opr_parameters%cp = matrix(:, :, 2)
-        parameters%opr_parameters%cft = matrix(:, :, 3)
-        parameters%opr_parameters%cst = matrix(:, :, 4)
-        parameters%opr_parameters%kexc = matrix(:, :, 5)
-        parameters%opr_parameters%llr = matrix(:, :, 6)
-        parameters%opr_parameters%akw = matrix(:, :, 7)
-        parameters%opr_parameters%bkw = matrix(:, :, 8)
-
-    end subroutine matrix_to_opr_parameters
-
-    subroutine matrix_to_opr_initial_states(setup, mesh, matrix, parameters)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states), intent(in) :: matrix
-        type(ParametersDT), intent(inout) :: parameters
-
-        parameters%opr_initial_states%hi = matrix(:, :, 1)
-        parameters%opr_initial_states%hp = matrix(:, :, 2)
-        parameters%opr_initial_states%hft = matrix(:, :, 3)
-        parameters%opr_initial_states%hst = matrix(:, :, 4)
-        parameters%opr_initial_states%hlr = matrix(:, :, 5)
-
-    end subroutine matrix_to_opr_initial_states
 
     subroutine sbs_control_tfm(parameters)
 
@@ -417,12 +340,7 @@ contains
         type(OptionsDT), intent(in) :: options
 
         integer :: n, i, j
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         call uniform_get_control_size(setup, options, n)
 
@@ -432,25 +350,25 @@ contains
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
             j = j + 1
 
-            parameters%control%x(j) = sum(opr_parameters_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            parameters%control%x(j) = sum(parameters%opr_parameters%values(:, :, i), mask=ac_mask)/mesh%nac
             parameters%control%l(j) = options%optimize%l_opr_parameters(i)
             parameters%control%u(j) = options%optimize%u_opr_parameters(i)
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
             j = j + 1
 
-            parameters%control%x(j) = sum(opr_initial_states_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            parameters%control%x(j) = sum(parameters%opr_initial_states%values(:, :, i), mask=ac_mask)/mesh%nac
             parameters%control%l(j) = options%optimize%l_opr_initial_states(i)
             parameters%control%u(j) = options%optimize%u_opr_initial_states(i)
 
@@ -473,18 +391,13 @@ contains
         type(OptionsDT), intent(in) :: options
 
         integer :: i, j
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -492,13 +405,13 @@ contains
 
             where (ac_mask)
 
-                opr_parameters_matrix(:, :, i) = parameters%control%x(j)
+                parameters%opr_parameters%values(:, :, i) = parameters%control%x(j)
 
             end where
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -506,14 +419,11 @@ contains
 
             where (ac_mask)
 
-                opr_initial_states_matrix(:, :, i) = parameters%control%x(j)
+                parameters%opr_initial_states%values(:, :, i) = parameters%control%x(j)
 
             end where
 
         end do
-
-        call matrix_to_opr_parameters(setup, mesh, opr_parameters_matrix, parameters)
-        call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
 
     end subroutine uniform_control_to_parameters
 
@@ -527,11 +437,6 @@ contains
         type(OptionsDT), intent(in) :: options
 
         integer :: n, i, j, row, col
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         call distributed_get_control_size(setup, mesh, options, n)
 
@@ -539,7 +444,7 @@ contains
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -551,7 +456,7 @@ contains
 
                     j = j + 1
 
-                    parameters%control%x(j) = opr_parameters_matrix(row, col, i)
+                    parameters%control%x(j) = parameters%opr_parameters%values(row, col, i)
                     parameters%control%l(j) = options%optimize%l_opr_parameters(i)
                     parameters%control%u(j) = options%optimize%u_opr_parameters(i)
 
@@ -561,7 +466,7 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -573,7 +478,7 @@ contains
 
                     j = j + 1
 
-                    parameters%control%x(j) = opr_initial_states_matrix(row, col, i)
+                    parameters%control%x(j) = parameters%opr_initial_states%values(row, col, i)
                     parameters%control%l(j) = options%optimize%l_opr_initial_states(i)
                     parameters%control%u(j) = options%optimize%u_opr_initial_states(i)
 
@@ -600,15 +505,10 @@ contains
         type(OptionsDT), intent(in) :: options
 
         integer :: i, j, row, col
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -620,7 +520,7 @@ contains
 
                     j = j + 1
 
-                    opr_parameters_matrix(row, col, i) = parameters%control%x(j)
+                    parameters%opr_parameters%values(row, col, i) = parameters%control%x(j)
 
                 end do
 
@@ -628,7 +528,7 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -640,16 +540,13 @@ contains
 
                     j = j + 1
 
-                    opr_initial_states_matrix(row, col, i) = parameters%control%x(j)
+                    parameters%opr_initial_states%values(row, col, i) = parameters%control%x(j)
 
                 end do
 
             end do
 
         end do
-
-        call matrix_to_opr_parameters(setup, mesh, opr_parameters_matrix, parameters)
-        call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
 
     end subroutine distributed_control_to_parameters
 
@@ -665,12 +562,7 @@ contains
 
         integer :: n, i, j, k
         real(sp) :: y, l, u
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         call multi_linear_get_control_size(setup, options, n)
         call ControlDT_initialise(parameters%control, n)
@@ -679,13 +571,13 @@ contains
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
             j = j + 1
 
-            y = sum(opr_parameters_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            y = sum(parameters%opr_parameters%values(:, :, i), mask=ac_mask)/mesh%nac
             l = options%optimize%l_opr_parameters(i)
             u = options%optimize%u_opr_parameters(i)
 
@@ -703,13 +595,13 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
             j = j + 1
 
-            y = sum(opr_initial_states_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            y = sum(parameters%opr_initial_states%values(:, :, i), mask=ac_mask)/mesh%nac
             l = options%optimize%l_opr_initial_states(i)
             u = options%optimize%u_opr_initial_states(i)
 
@@ -746,16 +638,11 @@ contains
 
         integer :: i, j, k
         real(sp) :: l, u
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -779,11 +666,11 @@ contains
             l = options%optimize%l_opr_parameters(i)
             u = options%optimize%u_opr_parameters(i)
 
-            call scaled_sigmoide2d(wa2d, l, u, opr_parameters_matrix(:, :, i))
+            call scaled_sigmoide2d(wa2d, l, u, parameters%opr_parameters%values(:, :, i))
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -807,12 +694,9 @@ contains
             l = options%optimize%l_opr_initial_states(i)
             u = options%optimize%u_opr_initial_states(i)
 
-            call scaled_sigmoide2d(wa2d, l, u, opr_initial_states_matrix(:, :, i))
+            call scaled_sigmoide2d(wa2d, l, u, parameters%opr_initial_states%values(:, :, i))
 
         end do
-
-        call matrix_to_opr_parameters(setup, mesh, opr_parameters_matrix, parameters)
-        call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
 
     end subroutine multi_linear_control_to_parameters
 
@@ -828,12 +712,7 @@ contains
 
         integer :: n, i, j, k
         real(sp) :: y, l, u
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         call multi_polynomial_get_control_size(setup, options, n)
         call ControlDT_initialise(parameters%control, n)
@@ -842,13 +721,13 @@ contains
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
             j = j + 1
 
-            y = sum(opr_parameters_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            y = sum(parameters%opr_parameters%values(:, :, i), mask=ac_mask)/mesh%nac
             l = options%optimize%l_opr_parameters(i)
             u = options%optimize%u_opr_parameters(i)
 
@@ -873,13 +752,13 @@ contains
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
             j = j + 1
 
-            y = sum(opr_initial_states_matrix(:, :, i), mask=ac_mask)/mesh%nac
+            y = sum(parameters%opr_initial_states%values(:, :, i), mask=ac_mask)/mesh%nac
             l = options%optimize%l_opr_initial_states(i)
             u = options%optimize%u_opr_initial_states(i)
 
@@ -922,16 +801,11 @@ contains
 
         integer :: i, j, k
         real :: l, u
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_parameters) :: opr_parameters_matrix
-        real(sp), dimension(mesh%nrow, mesh%ncol, nopr_states) :: opr_initial_states_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-
-        call opr_parameters_to_matrix(setup, mesh, parameters, opr_parameters_matrix)
-        call opr_initial_states_to_matrix(setup, mesh, parameters, opr_initial_states_matrix)
 
         j = 0
 
-        do i = 1, nopr_parameters
+        do i = 1, setup%nop
 
             if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
@@ -957,11 +831,11 @@ contains
             l = options%optimize%l_opr_parameters(i)
             u = options%optimize%u_opr_parameters(i)
 
-            call scaled_sigmoide2d(wa2d, l, u, opr_parameters_matrix(:, :, i))
+            call scaled_sigmoide2d(wa2d, l, u, parameters%opr_parameters%values(:, :, i))
 
         end do
 
-        do i = 1, nopr_states
+        do i = 1, setup%nos
 
             if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
@@ -987,12 +861,9 @@ contains
             l = options%optimize%l_opr_parameters(i)
             u = options%optimize%u_opr_parameters(i)
 
-            call scaled_sigmoide2d(wa2d, l, u, opr_initial_states_matrix(:, :, i))
+            call scaled_sigmoide2d(wa2d, l, u, parameters%opr_initial_states%values(:, :, i))
 
         end do
-
-        call matrix_to_opr_parameters(setup, mesh, opr_parameters_matrix, parameters)
-        call matrix_to_opr_initial_states(setup, mesh, opr_initial_states_matrix, parameters)
 
     end subroutine multi_polynomial_control_to_parameters
 
