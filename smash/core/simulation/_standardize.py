@@ -146,8 +146,8 @@ def _standardize_simulation_optimize_options_bounds(
         else:
             TypeError("bounds optimize_options must be a dictionary")
 
-    parameters_bounds = (
-        model.get_opr_parameters_bounds() | model.get_opr_initial_states_bounds()
+    parameters_bounds = dict(
+        **model.get_opr_parameters_bounds(), **model.get_opr_initial_states_bounds()
     )
     for key, value in parameters_bounds.items():
         if key in parameters:
