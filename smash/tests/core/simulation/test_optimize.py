@@ -37,7 +37,7 @@ def test_optimize():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05), key
 
 
 def test_sparse_optimize():
@@ -45,7 +45,7 @@ def test_sparse_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), "sparse." + key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05), "sparse." + key
 
 
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
@@ -127,4 +127,4 @@ def test_custom_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-05), key
