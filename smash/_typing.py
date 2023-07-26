@@ -6,7 +6,7 @@ import numpy as np
 from os import PathLike
 
 
-Numeric = Union[float, int]
+Numeric = Union[float, int, np.number]
 
 AlphaNumeric = Union[str, Numeric]
 

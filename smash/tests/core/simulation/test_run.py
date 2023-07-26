@@ -4,13 +4,16 @@ import smash
 
 import numpy as np
 import pytest
+import os
 
 
 def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
     res = {}
 
+    ncpu = max(1, os.cpu_count() - 1)
+
     for model in model_structure:
-        instance = smash.forward_run(model)
+        instance = smash.forward_run(model, common_options={"ncpu": ncpu})
 
         qsim = instance.sim_response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position

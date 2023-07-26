@@ -7,7 +7,7 @@ import numpy as np
 import f90wrap
 
 
-def char_getter_handler(func):
+def f90wrap_getter_char(func):
     @functools.wraps(func)
     def wrapper(self):
         value = func(self)
@@ -16,7 +16,7 @@ def char_getter_handler(func):
     return wrapper
 
 
-def char_array_getter_handler(func):
+def f90wrap_getter_char_array(func):
     @functools.wraps(func)
     def wrapper(self):
         value = func(self)
@@ -26,7 +26,7 @@ def char_array_getter_handler(func):
 
 
 #! setter completly rewrite (func is not called)
-def char_array_setter_handler(func):
+def f90wrap_setter_char_array(func):
     @functools.wraps(func)
     def wrapper(self, value):
         func_name = func.__name__
@@ -73,7 +73,7 @@ def char_array_setter_handler(func):
     return wrapper
 
 
-def getter_index_handler(func):
+def f90wrap_getter_index(func):
     @functools.wraps(func)
     def wrapper(self):
         value = func(self)
@@ -82,8 +82,17 @@ def getter_index_handler(func):
     return wrapper
 
 
+def f90wrap_setter_index(func):
+    @functools.wraps(func)
+    def wrapper(self, value):
+        value = np.add(value, 1)
+        func(self, value)
+
+    return wrapper
+
+
 #! setter completly rewrite (func is not called)
-def setter_index_handler(func):
+def f90wrap_setter_index_array(func):
     @functools.wraps(func)
     def wrapper(self, value):
         func_name = func.__name__
@@ -106,3 +115,7 @@ def setter_index_handler(func):
         ptr[...] = arr
 
     return wrapper
+
+
+def f90wrap_getter_index_array(func):
+    return f90wrap_getter_index(func)

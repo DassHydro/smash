@@ -4,6 +4,7 @@
 	"mwd_atmos_data": "_mwd_atmos_data",
 	"mwd_common_options": "_mwd_common_options",
 	"mwd_control": "_mwd_control",
+	"mwd_cost_options": "_mwd_cost_options",
 	"mwd_input_data": "_mwd_input_data",
 	"mwd_mesh": "_mwd_mesh",
 	"mwd_opr_parameters": "_mwd_opr_parameters",

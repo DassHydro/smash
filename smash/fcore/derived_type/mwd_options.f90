@@ -8,8 +8,9 @@
 !%          ======================== =======================================
 !%          `Variables`              Description
 !%          ======================== =======================================
-!%          ``comm``                 Common_OptionsDT
 !%          ``optimize``             Optimize_OptionsDT
+!%          ``cost``                 Cost_OptionsDT
+!%          ``comm``                 Common_OptionsDT
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -21,29 +22,35 @@
 module mwd_options
 
     use mwd_setup !% only: SetupDT
-    use mwd_common_options !% only: Common_OptionsDT, Common_OptionsDT_initialise
+    use mwd_mesh !% only: MeshDT
+    use mwd_cost_options !% only: Cost_OptionsDT, Cost_OptionsDT_initialise
     use mwd_optimize_options !% only: Optimize_OptionsDT, Optimize_OptionsDT_initialise
+    use mwd_common_options !% only: Common_OptionsDT, Common_OptionsDT_initialise
 
     implicit none
 
     type OptionsDT
 
-        type(Common_OptionsDT) :: comm
         type(Optimize_OptionsDT) :: optimize
+        type(Cost_OptionsDT) :: cost
+        type(Common_OptionsDT) :: comm
 
     end type OptionsDT
 
 contains
 
-    subroutine OptionsDT_initialise(this, setup)
+    subroutine OptionsDT_initialise(this, setup, mesh, njoc, njrc)
 
         implicit none
 
         type(OptionsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: njoc, njrc
 
-        call Common_OptionsDT_initialise(this%comm)
+        call Cost_OptionsDT_initialise(this%cost, setup, mesh, njoc, njrc)
         call Optimize_OptionsDT_initialise(this%optimize, setup)
+        call Common_OptionsDT_initialise(this%comm)
 
     end subroutine OptionsDT_initialise
 

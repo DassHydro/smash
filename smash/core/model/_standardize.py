@@ -178,7 +178,7 @@ def _standardize_opr_parameters_value(
 
     if np.logical_or(value <= l, value >= u).any():
         raise ValueError(
-            f"Invalid value for model opr_parameter '{key}'. Feasible domain: ({l}, {u})"
+            f"Invalid value for model opr_parameter '{key}'. Value {value} is outside of feasible domain ]{l}, {u}["
         )
 
     if (
@@ -205,7 +205,7 @@ def _standardize_opr_states_value(
 
     if np.logical_or(value <= l, value >= u).any():
         raise ValueError(
-            f"Invalid value for model opr_states '{key}'. Feasible domain: ({l}, {u})"
+            f"Invalid value for model opr_states '{key}'. Value {value} is outside of feasible domain ]{l}, {u}["
         )
 
     if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:

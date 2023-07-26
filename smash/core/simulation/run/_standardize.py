@@ -1,34 +1,39 @@
 from __future__ import annotations
 
-from smash._constant import FEASIBLE_OPR_PARAMETERS, FEASIBLE_OPR_INITIAL_STATES
+from smash.core.simulation._standardize import (
+    _standardize_simulation_cost_variant,
+    _standardize_simulation_cost_options,
+    _standardize_simulation_common_options,
+    _standardize_simulation_parameters_feasibility,
+    _standardize_simulation_cost_options_finalize,
+)
+
+import numpy as np
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.fcore._mwd_parameters import ParametersDT
-
-import numpy as np
+    from smash._typing import AnyTuple
 
 
-def _standardize_opr_parameter_state(parameter: ParametersDT):
-    # % standardize parameters
-    for param_name in FEASIBLE_OPR_PARAMETERS:
-        param_array = getattr(parameter.opr_parameters, param_name)
+def _standardize_forward_run_args(
+    model: Model,
+    cost_variant: str,
+    cost_options: dict | None,
+    common_options: dict | None,
+) -> AnyTuple:
+    cost_variant = _standardize_simulation_cost_variant(cost_variant)
 
-        low, upp = FEASIBLE_OPR_PARAMETERS[param_name]
+    cost_options = _standardize_simulation_cost_options(
+        model, cost_variant, cost_options
+    )
 
-        if np.logical_or(param_array <= low, param_array >= upp).any():
-            raise ValueError(
-                f"Invalid value for model parameter {param_name}. Feasible domain: ({low}, {upp})"
-            )
+    common_options = _standardize_simulation_common_options(common_options)
 
-    # % standardize states
-    for state_name in FEASIBLE_OPR_INITIAL_STATES:
-        state_array = getattr(parameter.opr_initial_states, state_name)
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
 
-        low, upp = FEASIBLE_OPR_INITIAL_STATES[state_name]
+    # % Finalize cost_options
+    _standardize_simulation_cost_options_finalize(model, cost_variant, cost_options)
 
-        if np.logical_or(state_array <= low, state_array >= upp).any():
-            raise ValueError(
-                f"Invalid value for model state {state_name}. Feasible domain: ({low}, {upp})"
-            )
+    return (cost_variant, cost_options, common_options)

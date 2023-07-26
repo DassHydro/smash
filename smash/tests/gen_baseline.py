@@ -194,13 +194,13 @@ if __name__ == "__main__":
                 ]
 
             for name, func in generic_functions:
-                print(".", end="")
                 for key, value in func(
                     model=model,
                     model_structure=model_structure,
                     qs=qs,
                 ).items():
                     dump_to_baseline(f, key, value)
+                print(".", end="", flush=True)
             print("")
 
     baseline = h5py.File("baseline.hdf5")
