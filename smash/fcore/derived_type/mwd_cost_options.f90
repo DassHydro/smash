@@ -8,15 +8,15 @@
 !%          ======================== =======================================
 !%          `Variables`              Description
 !%          ======================== =======================================
-!%          variant                  Cost variant ("cls" or "bys")
-!%          jobs_cmpt                  Cost variant ("cls" or "bys")
-!%          wjobs_cmpt                  Cost variant ("cls" or "bys")
+!%          variant                  Cost variant
+!%          jobs_cmpt                Jobs components
+!%          wjobs_cmpt               Weight jobs components
 !%          wjreg                    Base weight for regularization
-!%          jreg_cmpt                  Cost variant ("cls" or "bys")
-!%          wjreg_cmpt                  Cost variant ("cls" or "bys")
-!%          gauge                  Cost variant ("cls" or "bys")
-!%          wgauge                  Cost variant ("cls" or "bys")
-!%          end_warmup                  Cost variant ("cls" or "bys")
+!%          jreg_cmpt                Jreg components
+!%          wjreg_cmpt               Weight jreg components
+!%          gauge                    Optimized gauges
+!%          wgauge                   Weight optimized gauges
+!%          end_warmup               End Warmup index
 !%          ======================== =======================================
 !%
 !%      Subroutine
