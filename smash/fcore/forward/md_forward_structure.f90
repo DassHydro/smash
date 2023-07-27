@@ -75,9 +75,9 @@ contains
 
             end if
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
@@ -137,7 +137,7 @@ contains
                 qt(row, col) = (qr + qd)
 
             end do
-            !$OMP end parallel do
+!~             !$OMP end parallel do
 
             qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 
@@ -254,9 +254,9 @@ contains
 
             end if
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-            !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
@@ -316,7 +316,7 @@ contains
                 qt(row, col, zq) = (qr + qd)
 
             end do
-            !$OMP end parallel do
+!~             !$OMP end parallel do
 
             qt(:, :, zq) = qt(:, :, zq)*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 
@@ -416,9 +416,9 @@ contains
 
             end if
 
-            !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-            !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-            !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
@@ -468,7 +468,7 @@ contains
                 qt(row, col) = qr
 
             end do
-            !$OMP end parallel do
+!~             !$OMP end parallel do
 
             qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 

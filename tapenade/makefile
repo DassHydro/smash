@@ -28,8 +28,6 @@ sed:
 	# Therefore, just seding the two derived type affected.
 	sed -i 's/TYPE(PARAMETERSDT_DIFF)/TYPE(PARAMETERSDT)/g' forward_db.f90
 	sed -i 's/TYPE(OUTPUTDT_DIFF)/TYPE(OUTPUTDT)/g' forward_db.f90
-	# Temporary remove of OMP directive
-	sed -i '/OMP\b/s/^/!/g' forward_db.f90
 mv:
 	# mv
 	mv forward_db.f90 $(SRC)/forward/.
