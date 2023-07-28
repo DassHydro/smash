@@ -20,6 +20,9 @@ def _standardize_forward_run_args(
     cost_options: dict | None,
     common_options: dict | None,
 ) -> AnyTuple:
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
+
     cost_variant = _standardize_simulation_cost_variant(cost_variant)
 
     cost_options = _standardize_simulation_cost_options(

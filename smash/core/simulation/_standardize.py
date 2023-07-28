@@ -167,12 +167,12 @@ def _standardize_simulation_optimize_options_bounds(
 
         l_arr = np.min(arr)
         u_arr = np.max(arr)
-        if np.logical_or(l_arr + 1e-3 < value[0], u_arr - 1e-3 > value[1]):
+        if (l_arr + 1e-3) < value[0] or (u_arr - 1e-3) > value[1]:
             raise ValueError(
                 f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] does not include parameter domain [{l_arr}, {u_arr}] in bounds optimize_options"
             )
 
-        if np.logical_or(value[0] <= l, value[1] >= u):
+        if value[0] <= l or value[1] >= u:
             raise ValueError(
                 f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] is not included in the feasible domain ]{l}, {u}[ in bounds optimize_options"
             )
@@ -748,7 +748,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
-        if np.logical_or(l_arr <= l, u_arr >= u):
+        if l_arr <= l or u_arr >= u:
             raise ValueError(
                 f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
@@ -759,7 +759,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
-        if np.logical_or(l_arr <= l, u_arr >= u):
+        if l_arr <= l or u_arr >= u:
             raise ValueError(
                 f"Invalid value for model opr_initial_states '{key}'. Opr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )

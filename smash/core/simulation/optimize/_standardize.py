@@ -27,6 +27,9 @@ def _standardize_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
 ) -> AnyTuple:
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
+
     mapping = _standardize_simulation_mapping(mapping)
 
     cost_variant = _standardize_simulation_cost_variant(cost_variant)
@@ -42,9 +45,6 @@ def _standardize_optimize_args(
     )
 
     common_options = _standardize_simulation_common_options(common_options)
-
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
-    _standardize_simulation_parameters_feasibility(model)
 
     # % Finalize optimize options
     _standardize_simulation_optimize_options_finalize(

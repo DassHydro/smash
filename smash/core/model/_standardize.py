@@ -171,11 +171,6 @@ def _standardize_opr_parameters_value(
     l_arr = np.min(arr)
     u_arr = np.max(arr)
 
-    if np.logical_or(l_arr <= l, u_arr >= u):
-        raise ValueError(
-            f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
-        )
-
     if (
         isinstance(value, np.ndarray)
         and value.shape != model.mesh.flwdir.shape
@@ -183,6 +178,11 @@ def _standardize_opr_parameters_value(
     ):
         raise ValueError(
             f"Invalid shape for model opr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+        )
+
+    if l_arr <= l or u_arr >= u:
+        raise ValueError(
+            f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
@@ -201,14 +201,18 @@ def _standardize_opr_states_value(
     l_arr = np.min(arr)
     u_arr = np.max(arr)
 
-    if np.logical_or(l_arr <= l, u_arr >= u):
-        raise ValueError(
-            f"Invalid value for model {state_kind} '{key}'. {state_kind.capitalize()} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
-        )
-
-    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:
+    if (
+        isinstance(value, np.ndarray)
+        and value.shape != model.mesh.flwdir.shape
+        and value.size != 1
+    ):
         raise ValueError(
             f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+        )
+
+    if l_arr <= l or u_arr >= u:
+        raise ValueError(
+            f"Invalid value for model {state_kind} '{key}'. {state_kind.capitalize()} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
