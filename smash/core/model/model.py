@@ -23,7 +23,9 @@ from smash.core.model._standardize import (
     _standardize_set_opr_initial_states_args,
 )
 from smash.core.simulation.run.run import _forward_run
+from smash.core.simulation.run._standardize import _standardize_forward_run_args
 from smash.core.simulation.optimize.optimize import _optimize
+from smash.core.simulation.optimize._standardize import _standardize_optimize_args
 
 from smash.fcore._mwd_setup import SetupDT
 from smash.fcore._mwd_mesh import MeshDT
@@ -210,11 +212,34 @@ class Model(object):
         }
 
     def forward_run(
-        self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+        self,
+        cost_variant: str = "cls",
+        cost_options: dict | None = None,
+        common_options: dict | None = None,
     ):
-        _forward_run(self, options, returns)
+        args = _standardize_forward_run_args(
+            self, cost_variant, cost_options, common_options
+        )
+
+        _forward_run(self, *args)
 
     def optimize(
-        self, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+        self,
+        mapping: str = "uniform",
+        cost_variant: str = "cls",
+        optimizer: str | None = None,
+        optimize_options: dict | None = None,
+        cost_options: dict | None = None,
+        common_options: dict | None = None,
     ):
-        _optimize(self, options, returns)
+        args = _standardize_optimize_args(
+            self,
+            mapping,
+            cost_variant,
+            optimizer,
+            optimize_options,
+            cost_options,
+            common_options,
+        )
+
+        _optimize(self, *args)

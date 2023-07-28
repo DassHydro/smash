@@ -1,48 +1,59 @@
 from __future__ import annotations
 
-from smash.core.simulation._standardize import (
-    _standardize_options,
-    _standardize_returns,
-)
-
-from smash.core.simulation.run._standardize import _standardize_opr_parameter_state
-
-from smash.fcore._mw_forward import forward_run as fw_run
+from smash.fcore._mw_forward import forward_run as wrap_forward_run
+from smash.fcore._mwd_options import OptionsDT
+from smash.fcore._mwd_returns import ReturnsDT
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-    from smash.fcore._mwd_options import OptionsDT
-    from smash.fcore._mwd_returns import ReturnsDT
 
 __all__ = ["forward_run"]
 
 
 def forward_run(
-    model: Model, options: OptionsDT | None = None, returns: ReturnsDT | None = None
+    model: Model,
+    cost_variant: str = "cls",
+    cost_options: dict | None = None,
+    common_options: dict | None = None,
+) -> Model:
+    wmodel = model.copy()
+
+    wmodel.forward_run(cost_variant, cost_options, common_options)
+
+    return wmodel
+
+
+def _forward_run(
+    model: Model, cost_variant: str, cost_options: dict, common_options: dict
 ):
-    new_model = model.copy()
+    wrap_options = OptionsDT(
+        model.setup,
+        model.mesh,
+        cost_options["njoc"],
+        cost_options["njrc"],
+    )
 
-    _forward_run(new_model, options, returns)
+    # % Map cost_options dict to derived type
+    for key, value in cost_options.items():
+        if hasattr(wrap_options.cost, key):
+            setattr(wrap_options.cost, key, value)
 
-    return new_model
+    # % Map common_options dict to derived type
+    for key, value in common_options.items():
+        if hasattr(wrap_options.comm, key):
+            setattr(wrap_options.comm, key, value)
 
+    # % TODO: Implement return options
+    wrap_returns = ReturnsDT()
 
-def _forward_run(instance: Model, options: OptionsDT, returns: ReturnsDT):
-    options = _standardize_options(options, instance.setup)
-
-    returns = _standardize_returns(returns)
-
-    # % TODO: Commented atm, refactorize later
-    # ~ _standardize_opr_parameter_state(instance._parameters)
-
-    fw_run(
-        instance.setup,
-        instance.mesh,
-        instance._input_data,
-        instance._parameters,
-        instance._output,
-        options,
-        returns,
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
     )

@@ -75,7 +75,7 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 ##########################
 
 # % Following OPR_PARAMETERS order
-# % if ci is used (depending on model structure), it will be recomputed automatically by a fortran routine;
+# % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
 DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 5, 5, 0.6]))
 
@@ -214,7 +214,8 @@ WB_INITIALIZER = [
 
 LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
 
-NET_OPTIMIZER = ["SGD", "Adam", "Adagrad", "RMSprop"]
+# % TODO: TH maybe rename this to NET_OPTIMIZER_CLASS_NAME
+NET_OPTIMIZER = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
 ACTIVATION_FUNCTION = [
     "Sigmoid",
@@ -235,6 +236,8 @@ PEAK_QUANT = 0.995
 
 MAX_DURATION = 240
 
+EVENT_SEG_KEYS = ["peak_quant", "max_duration", "by"]
+
 
 ### GENERATE SAMPLES ###
 ########################
@@ -242,3 +245,162 @@ MAX_DURATION = 240
 SAMPLES_GENERATORS = ["uniform", "normal", "gaussian"]
 
 PROBLEM_KEYS = ["num_vars", "names", "bounds"]
+
+### SIMULATION ###
+##################
+
+MAPPING = ["uniform", "distributed", "multi-linear", "multi-polynomial", "ann"]
+
+COST_VARIANT = ["cls", "bys"]
+
+OPTIMIZER = ["sbs", "lbfgsb", "adam", "sgd", "adagrad", "rmsprop"]
+
+# % Following MAPPING order
+# % The first optimizer for each mapping is used as default optimizer
+MAPPING_OPTIMIZER = dict(
+    zip(
+        MAPPING,
+        [
+            ["sbs", "lbfgsb"],
+            ["lbfgsb"],
+            ["lbfgsb"],
+            ["lbfgsb"],
+            ["adam", "sgd", "adagrad", "rmsprop"],
+        ],
+    )
+)
+
+OPTIMIZER_CONTROL_TFM = dict(
+    zip(
+        OPTIMIZER,
+        [
+            ["sbs", "normalize", None],
+            ["normalize"],
+            [None],
+            [None],
+            [None],
+            [None],
+            [None],
+        ],
+    )
+)
+
+JOBS_CMPT = METRICS + SIGNS
+
+JREG_CMPT = ["prior", "smoothing", "hard-smoothing"]
+
+WEIGHT_ALIAS = ["mean", "median"]
+
+GAUGE_ALIAS = ["dws", "all"]
+
+# % TODO: TH Complete ANN optimizer
+DEFAULT_SIMULATION_OPTIMIZE_OPTIONS = {
+    ("uniform", "sbs"): {
+        "parameters": None,
+        "bounds": None,
+        "control_tfm": "sbs",
+        "maxiter": 50,
+    },
+    ("uniform", "lbfgsb"): {
+        "parameters": None,
+        "bounds": None,
+        "control_tfm": "normalize",
+        "maxiter": 100,
+        "factr": 1e6,
+        "pgtol": 1e-12,
+    },
+    ("distributed", "lbfgsb"): {
+        "parameters": None,
+        "bounds": None,
+        "control_tfm": "normalize",
+        "maxiter": 100,
+        "factr": 1e6,
+        "pgtol": 1e-12,
+    },
+    ("multi-linear", "lbfgsb"): {
+        "parameters": None,
+        "bounds": None,
+        "control_tfm": "normalize",
+        "descriptor": None,
+        "maxiter": 100,
+        "factr": 1e6,
+        "pgtol": 1e-12,
+    },
+    ("multi-polynomial", "lbfgsb"): {
+        "parameters": None,
+        "bounds": None,
+        "control_tfm": "normalize",
+        "descriptor": None,
+        "maxiter": 100,
+        "factr": 1e6,
+        "pgtol": 1e-12,
+    },
+    ("ann", "adam"): {
+        "parameters": None,
+        "bounds": None,
+        "descriptor": None,
+        "net": None,
+        "epochs": 400,
+        "lerning_rate": 0.003,
+        "early_stopping": False,
+    },
+    ("ann", "sgd"): {
+        "parameters": None,
+        "bounds": None,
+        "descriptor": None,
+        "net": None,
+        "epochs": 400,
+        "lerning_rate": 0.003,
+        "early_stopping": False,
+    },
+    ("ann", "adagrad"): {
+        "parameters": None,
+        "bounds": None,
+        "descriptor": None,
+        "net": None,
+        "epochs": 400,
+        "lerning_rate": 0.003,
+        "early_stopping": False,
+    },
+    ("ann", "rmsprop"): {
+        "parameters": None,
+        "bounds": None,
+        "descriptor": None,
+        "net": None,
+        "epochs": 400,
+        "lerning_rate": 0.003,
+        "early_stopping": False,
+    },
+}
+
+# % Following COST_VARIANT order
+DEFAULT_SIMULATION_COST_OPTIONS = dict(
+    zip(
+        COST_VARIANT,
+        [
+            {
+                "jobs_cmpt": "nse",
+                "wjobs_cmpt": "mean",
+                "wjreg": 0,
+                "jreg_cmpt": None,
+                "wjreg_cmpt": "mean",
+                "gauge": "dws",
+                "wgauge": "mean",
+                "event_seg": None,
+                "end_warmup": None,
+            },
+            {
+                "jobs_cmpt": "lklhd",
+                "wjobs_cmpt": "mean",
+                "wjreg": 0,
+                "jreg_cmpt": None,
+                "wjreg_cmpt": "mean",
+                "gauge": "dws",
+                "event_seg": None,
+                "end_warmup": None,
+            },
+        ],
+    )
+)
+
+DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}

@@ -8,10 +8,9 @@
 !%          ================================== =======================================
 !%          `Variables`                        Description
 !%          ================================== =======================================
-!%          ``mapping``                       Control mapping name                       (default: "...")
-!%          ``optimizer``                     Optimizer name                             (default: "...")
-!%          ``control_tfm``                   Type of transformation applied to control  (default: "...")
-!%          ``maxiter``                       Maximum number of iterations               (default: 100)
+!%          ``mapping``                       Control mapping name
+!%          ``optimizer``                     Optimizer name
+!%          ``control_tfm``                   Type of transformation applied to control
 !%          ``opr_parameters``                Opr parameters to optimize
 !%          ``opr_initial_states``            Opr initial states to optimize
 !%          ``l_opr_parameters``              Opr parameters lower bound
@@ -20,8 +19,9 @@
 !%          ``u_opr_initial_states``          Opr initial states upper bound
 !%          ``opr_parameters_descriptor``     Opr parameters descriptor to use
 !%          ``opr_initial_states_descriptor`` Opr initial states descriptor use
-!%          ``opr_parameters_tfunc``          Opr parameters transformation function
-!%          ``opr_initial_states_tfunc``      Opr initial states transformation function
+!%          ``maxiter``                       Maximum number of iterations
+!%          ``factr``                         LBFGSB cost function criterion
+!%          ``pgtol``                         LBFGSB gradient criterion
 !%          ================================== =======================================
 !%
 !%      Subroutine
@@ -43,8 +43,6 @@ module mwd_optimize_options
         character(lchar) :: optimizer = "..." !$F90W char
         character(lchar) :: control_tfm = "..." !$F90W char
 
-        integer :: maxiter = 100
-
         integer, dimension(:), allocatable :: opr_parameters
         real(sp), dimension(:), allocatable :: l_opr_parameters
         real(sp), dimension(:), allocatable :: u_opr_parameters
@@ -54,6 +52,10 @@ module mwd_optimize_options
         real(sp), dimension(:), allocatable :: l_opr_initial_states
         real(sp), dimension(:), allocatable :: u_opr_initial_states
         integer, dimension(:, :), allocatable :: opr_initial_states_descriptor
+
+        integer :: maxiter = -99
+        real(sp) :: factr = -99._sp
+        real(sp) :: pgtol = -99._sp
 
     end type Optimize_OptionsDT
 

@@ -96,7 +96,7 @@ def _standardize_signatures_event_seg(event_seg: dict | None) -> dict:
                 )
 
         else:
-            raise TypeError(f"event_seg argument must be None or a dictionary")
+            raise TypeError(f"event_seg argument must be a dictionary")
 
     return event_seg
 

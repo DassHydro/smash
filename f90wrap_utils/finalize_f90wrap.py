@@ -70,6 +70,9 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
     - index: Allow to switch between 0-based indexing (Python) and 1-based indexing (Fortran).
     It adds one decorator on getter to substract 1 and one decorator on setter to add 1
 
+    - index-array: Allow to switch between 0-based indexing (Python) and 1-based indexing (Fortran).
+    Same as **index** but for arrays
+
     - char: Allow to manage Fortran character.
     Fortran derived type character wrapped with f90wrap are retrived as bytes. It adds one
     decorator on getter to decode them and retrived a str
@@ -84,6 +87,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
     """
 
     index = []
+    index_array = []
     char = []
     char_array = []
     private = []
@@ -95,7 +99,10 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
 
                 subl = l[ind_double_2dots:].strip().lower()
 
-                if "index" in subl:
+                if "index-array" in subl:
+                    index_array.append(subl.split(" ")[0])
+
+                elif "index" in subl:
                     index.append(subl.split(" ")[0])
 
                 if "char-array" in subl:
@@ -109,6 +116,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
 
     res = {
         "index": index,
+        "index-array": index_array,
         "char": char,
         "char-array": char_array,
         "private": private,
@@ -117,7 +125,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
     return res
 
 
-def sed_index_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_index_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     """
     Modify Python script to handle index decorator for specific attributes.
     Done by using the unix command sed in place
@@ -136,15 +144,41 @@ def sed_index_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import getter_index_handler, setter_index_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_index, f90wrap_setter_index" {pyf}'
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@getter_index_handler" {pyf}')
-        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@setter_index_handler" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index" {pyf}')
+
+def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+    """
+    Modify Python script to handle index array decorator for specific attributes.
+    Done by using the unix command sed in place
+
+    Parameters
+    ----------
+    pyf : pathlib.PosixPath
+        The Python file to sed
+
+    attribute: list
+        The list of attributes to sed
+
+    Notes
+    -----
+    First, we import the decorator from smash.fcore._f90_decorator, then we add
+    decorator on top of the getter and setter for each attribute flagged
+    """
+    os.system(
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_index_array, f90wrap_setter_index_array" {pyf}'
+    )
+
+    for attr in attribute:
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index_array" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index_array" {pyf}')
 
 
-def sed_char_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     """
     Modify Python script to handle character decorator for specific attributes.
     Done by using the unix command sed in place
@@ -163,14 +197,14 @@ def sed_char_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import char_getter_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_char" {pyf}'
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_getter_handler" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_char" {pyf}')
 
 
-def sed_char_array_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     """
     Modify Python script to handle character array decorator for specific attributes.
     Done by using the unix command sed in place
@@ -189,12 +223,12 @@ def sed_char_array_handler_decorator(pyf: pathlib.PosixPath, attribute: list[str
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import char_array_getter_handler, char_array_setter_handler" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_char_array, f90wrap_setter_char_array" {pyf}'
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@char_array_getter_handler" {pyf}')
-        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@char_array_setter_handler" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_char_array" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_char_array" {pyf}')
 
 
 def sed_private_property(pyf: pathlib.PosixPath, attribute: list[str]):
@@ -275,11 +309,13 @@ if __name__ == "__main__":
 
         flagged_attr = get_flagged_attr(f90f)
 
-        sed_index_handler_decorator(pyf, flagged_attr["index"])
+        sed_index_decorator(pyf, flagged_attr["index"])
 
-        sed_char_handler_decorator(pyf, flagged_attr["char"])
+        sed_index_array_decorator(pyf, flagged_attr["index-array"])
 
-        sed_char_array_handler_decorator(pyf, flagged_attr["char-array"])
+        sed_char_decorator(pyf, flagged_attr["char"])
+
+        sed_char_array_decorator(pyf, flagged_attr["char-array"])
 
         sed_private_property(pyf, flagged_attr["private"])
 

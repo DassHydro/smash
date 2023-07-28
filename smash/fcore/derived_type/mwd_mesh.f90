@@ -61,13 +61,13 @@ module mwd_mesh
         real(sp), dimension(:, :), allocatable :: flwacc
         real(sp), dimension(:, :), allocatable :: flwdst
 
-        integer, dimension(:, :), allocatable :: path !$F90W index
+        integer, dimension(:, :), allocatable :: path !$F90W index-array
 
         integer :: nac
         integer, dimension(:, :), allocatable :: active_cell
 
         integer :: ng
-        integer, dimension(:, :), allocatable :: gauge_pos !$F90W index
+        integer, dimension(:, :), allocatable :: gauge_pos !$F90W index-array
         character(20), dimension(:), allocatable :: code !$F90W char-array
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln

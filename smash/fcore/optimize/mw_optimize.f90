@@ -22,9 +22,35 @@ module mw_optimize
 
     implicit none
 
-    public :: sbs_optimize, lbfgsb_optimize
+    public :: optimize
 
 contains
+
+    subroutine optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+
+        select case (options%optimize%optimizer)
+
+        case ("sbs")
+
+            call sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        case ("lbfgsb")
+
+            call lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        end select
+
+    end subroutine optimize
 
     subroutine sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
@@ -239,8 +265,8 @@ contains
         iprint = -1
         n = size(parameters%control%x)
         m = 10
-        factr = 1e6_dp
-        pgtol = 1e-12_dp
+        factr = real(options%optimize%factr, dp)
+        pgtol = real(options%optimize%pgtol, dp)
 
         allocate (g(n), x_wa(n), l_wa(n), u_wa(n))
         allocate (iwa(3*n))

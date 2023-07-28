@@ -2617,28 +2617,21 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     temp_b = hi_b/ci
-!$OMP ATOMIC update
     ei_b = ei_b - temp_b
     pn_b = pn_b - temp_b
-!$OMP ATOMIC update
     ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(pn)
-!$OMP ATOMIC update
       ci_b = ci_b - (1._sp-hi)*pn_b
-!$OMP ATOMIC update
       hi_b = hi_b + ci*pn_b
-!$OMP ATOMIC update
       ei_b = ei_b - pn_b
     ELSE
       CALL POPREAL4(pn)
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-!$OMP ATOMIC update
       hi_b = hi_b + ci*ei_b
-!$OMP ATOMIC update
       ci_b = ci_b + hi*ei_b
     END IF
   END SUBROUTINE GR_INTERCEPTION_B
@@ -2776,7 +2769,6 @@ CONTAINS
     inv_cp = 1._sp/cp
     perc_b = perc_b - inv_cp*hp_b
     inv_cp_b = -(perc*hp_b)
-!$OMP ATOMIC update
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
@@ -2787,7 +2779,6 @@ CONTAINS
       pn_b = pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
-!$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
@@ -2801,14 +2792,12 @@ CONTAINS
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
     temp_b0 = -(temp0*temp1*temp_b3/temp3)
-!$OMP ATOMIC update
     hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
 &     temp_b0
     ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
     en_b = inv_cp*temp_b5 + inv_cp*temp_b4
-!$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
@@ -2817,12 +2806,10 @@ CONTAINS
     temp_b = ps_b/temp0
     temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
     temp_b1 = -(temp2*temp1*temp_b/temp0)
-!$OMP ATOMIC update
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
 &     pn*temp_b2 + pn*temp_b0
-!$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
@@ -2877,9 +2864,7 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: hft_b
     REAL(sp) :: l
     REAL(sp) :: l_b
-!$OMP ATOMIC update
     exc_b = exc_b + hft**3.5_sp*l_b
-!$OMP ATOMIC update
     hft_b = hft_b + 3.5_sp*hft**2.5*exc*l_b
   END SUBROUTINE GR_EXCHANGE_B
 
@@ -3070,7 +3055,6 @@ CONTAINS
     pwy2 = -nm1
     d1pnm1 = 1._sp/nm1
     pwy3 = -d1pnm1
-!$OMP ATOMIC update
     ht_b = ht_b - ct*q_b
     pwr3_b = ht_b/ct
     IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
@@ -3089,10 +3073,8 @@ CONTAINS
     END IF
     ht_imd_b = ct*q_b + ct*pwx1_b
     IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
     ELSE
-!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*&
 &       ht_b/ct**2 + ht_imd*pwx1_b
     END IF
@@ -3106,7 +3088,6 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ht_b = ht_imd_b
       pr_imd_b = ht_imd_b/ct
-!$OMP ATOMIC update
       ct_b = ct_b - pr_imd*ht_imd_b/ct**2
     ELSE
       ht_b = 0.0_4
@@ -3131,14 +3112,11 @@ CONTAINS
       ELSE
         pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
       END IF
-!$OMP ATOMIC update
       ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
       IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
 &     THEN
-!$OMP   ATOMIC update
         ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
       ELSE
-!$OMP   ATOMIC update
         ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
       END IF
       pr_b = 0.0_4
@@ -3771,11 +3749,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_d, pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -3852,6 +3828,7 @@ CONTAINS
           qt(row, col) = qr + qd
         END IF
       END DO
+!~             !$OMP end parallel do
       qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -3934,8 +3911,6 @@ CONTAINS
     INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -3959,14 +3934,11 @@ CONTAINS
         pet = input_data%atmos_data%pet(:, :, t)
         CALL PUSHCONTROL1B(0)
       END IF
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
-!$OMP&PRIVATE(chunk_start, chunk_end)
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
-      DO i=chunk_start,chunk_end
+      DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
         col = mesh%path(2, i)
 !% ======================================================================================================= %!
@@ -4037,12 +4009,7 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL PUSHREAL4(pn)
-      CALL PUSHREAL4(prr)
-      CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL PUSHREAL4(en)
-      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-!$OMP END PARALLEL
+!~             !$OMP end parallel do
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
@@ -4122,30 +4089,7 @@ CONTAINS
         END IF
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_b, pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&chunk_end, chunk_start)
-      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL POPREAL4(en)
-      CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL POPREAL4(prr)
-      CALL POPREAL4(pn)
-      ei_b = 0.0_4
-      pn_b = 0.0_4
-      en_b = 0.0_4
-      pr_b = 0.0_4
-      perc_b = 0.0_4
-      l_b = 0.0_4
-      prr_b = 0.0_4
-      prd_b = 0.0_4
-      qr_b = 0.0_4
-      qd_b = 0.0_4
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
-      DO i=chunk_end,chunk_start,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
           row = mesh%path(1, i)
@@ -4204,7 +4148,6 @@ CONTAINS
           END IF
         END IF
       END DO
-!$OMP END PARALLEL
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
@@ -4254,10 +4197,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
-!$OMP&                                                 SCHEDULE(static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -4314,6 +4256,7 @@ CONTAINS
           qt(row, col) = qr + qd
         END IF
       END DO
+!~             !$OMP end parallel do
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
@@ -4424,11 +4367,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_d, pn_d, en_d, &
-!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), SCHEDULE(static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -4505,6 +4446,7 @@ CONTAINS
           qt(row, col, zq) = qr + qd
         END IF
       END DO
+!~             !$OMP end parallel do
       qt_d(:, :, zq) = mesh%dx*1e-3_sp*mesh%dy*qt_d(:, :, zq)/setup%dt
       qt(:, :, zq) = qt(:, :, zq)*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -4596,8 +4538,6 @@ CONTAINS
     INTEGER :: t, i, row, col, g
     INTRINSIC MAX
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -4632,14 +4572,11 @@ CONTAINS
         pet = input_data%atmos_data%pet(:, :, t)
         CALL PUSHCONTROL1B(0)
       END IF
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
-!$OMP&PRIVATE(chunk_start, chunk_end)
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
-      DO i=chunk_start,chunk_end
+      DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
         col = mesh%path(2, i)
 !% ======================================================================================================= %!
@@ -4710,14 +4647,7 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL PUSHREAL4(qlijm1)
-      CALL PUSHREAL4(pn)
-      CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL PUSHREAL4(en)
-      CALL PUSHREAL4(qlij)
-      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL PUSHREAL4(qim1j)
-!$OMP END PARALLEL
+!~             !$OMP end parallel do
       qt(:, :, zq) = qt(:, :, zq)*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
@@ -4803,32 +4733,7 @@ CONTAINS
         END IF
       END DO
       qt_b(:, :, zq) = mesh%dx*1e-3_sp*mesh%dy*qt_b(:, :, zq)/setup%dt
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(ei_b, pn_b, en_b, &
-!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
-!$OMP&chunk_end, chunk_start)
-      CALL POPREAL4(qim1j)
-      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL POPREAL4(qlij)
-      CALL POPREAL4(en)
-      CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL POPREAL4(pn)
-      CALL POPREAL4(qlijm1)
-      ei_b = 0.0_4
-      pn_b = 0.0_4
-      en_b = 0.0_4
-      pr_b = 0.0_4
-      perc_b = 0.0_4
-      l_b = 0.0_4
-      prr_b = 0.0_4
-      prd_b = 0.0_4
-      qr_b = 0.0_4
-      qd_b = 0.0_4
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
-      DO i=chunk_end,chunk_start,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
           row = mesh%path(1, i)
@@ -4887,7 +4792,6 @@ CONTAINS
           END IF
         END IF
       END DO
-!$OMP END PARALLEL
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
@@ -4959,10 +4863,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd), &
-!$OMP&                                                 SCHEDULE(static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -5019,6 +4922,7 @@ CONTAINS
           qt(row, col, zq) = qr + qd
         END IF
       END DO
+!~             !$OMP end parallel do
       qt(:, :, zq) = qt(:, :, zq)*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
@@ -5114,11 +5018,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_d, output_d, qt_d), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, prr, qr), PRIVATE(pn_d, en_d, pr_d, perc_d, prr_d&
-!$OMP&, qr_d), SCHEDULE(static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -5176,6 +5078,7 @@ CONTAINS
           qt(row, col) = qr
         END IF
       END DO
+!~             !$OMP end parallel do
       qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
@@ -5258,8 +5161,6 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
@@ -5281,14 +5182,11 @@ CONTAINS
         pet = input_data%atmos_data%pet(:, :, t)
         CALL PUSHCONTROL1B(0)
       END IF
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, prr, qr), PRIVATE(&
-!$OMP&chunk_start, chunk_end)
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
 !% [ DO SPACE ]
-      DO i=chunk_start,chunk_end
+      DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
         col = mesh%path(2, i)
 !% ======================================================================================================= %!
@@ -5347,10 +5245,7 @@ CONTAINS
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
-      CALL PUSHREAL4(pn)
-      CALL PUSHREAL4(prr)
-      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-!$OMP END PARALLEL
+!~             !$OMP end parallel do
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
@@ -5430,23 +5325,7 @@ CONTAINS
         END IF
       END DO
       qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&SHARED(parameters_b, output_b, qt_b), PRIVATE(i, row, col, ei, pn&
-!$OMP&, en, pr, perc, prr, qr), PRIVATE(pn_b, en_b, pr_b, perc_b, prr_b&
-!$OMP&, qr_b), PRIVATE(branch, chunk_end, chunk_start)
-      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL POPREAL4(prr)
-      CALL POPREAL4(pn)
-      pn_b = 0.0_4
-      en_b = 0.0_4
-      pr_b = 0.0_4
-      perc_b = 0.0_4
-      prr_b = 0.0_4
-      qr_b = 0.0_4
-      CALL GETSTATICSCHEDULE(1, mesh%nrow*mesh%ncol, 1, chunk_start, &
-&                      chunk_end)
-      DO i=chunk_end,chunk_start,-1
+      DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
           row = mesh%path(1, i)
@@ -5485,7 +5364,6 @@ CONTAINS
           END IF
         END IF
       END DO
-!$OMP END PARALLEL
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) THEN
         CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
@@ -5534,10 +5412,9 @@ CONTAINS
         prcp = input_data%atmos_data%prcp(:, :, t)
         pet = input_data%atmos_data%pet(:, :, t)
       END IF
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&input_data, parameters, output, options, returns, prcp, pet, qt), &
-!$OMP&PRIVATE(i, row, col, ei, pn, en, pr, perc, prr, qr), SCHEDULE(&
-!$OMP&                                     static)
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, qr)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -5583,6 +5460,7 @@ CONTAINS
           qt(row, col) = qr
         END IF
       END DO
+!~             !$OMP end parallel do
       qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
