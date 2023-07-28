@@ -144,7 +144,7 @@ def _standardize_opr_parameters_key(model: Model, key: str) -> str:
     return key
 
 
-def _standardize_opr_states_key(model: Model, key: str) -> str:
+def _standardize_opr_states_key(model: Model, state_kind: str, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
@@ -152,18 +152,10 @@ def _standardize_opr_states_key(model: Model, key: str) -> str:
 
     if key not in STRUCTURE_OPR_STATES[model.setup.structure]:
         raise ValueError(
-            f"Unknown model opr_states '{key}'. Choices: {STRUCTURE_OPR_STATES[model.setup.structure]}"
+            f"Unknown model {state_kind} '{key}'. Choices: {STRUCTURE_OPR_STATES[model.setup.structure]}"
         )
 
     return key
-
-
-def _standardize_opr_initial_states_key(model: Model, key: str) -> str:
-    return _standardize_opr_states_key(model, key)
-
-
-def _standardize_opr_final_states_key(model: Model, key: str) -> str:
-    return _standardize_opr_states_key(model, key)
 
 
 def _standardize_opr_parameters_value(
@@ -174,11 +166,14 @@ def _standardize_opr_parameters_value(
             f"value argument must be of Numeric type (int, float) or np.ndarray"
         )
 
+    arr = np.array(value, ndmin=1)
     l, u = FEASIBLE_OPR_PARAMETERS[key]
+    l_arr = np.min(arr)
+    u_arr = np.max(arr)
 
-    if np.logical_or(value <= l, value >= u).any():
+    if np.logical_or(l_arr <= l, u_arr >= u):
         raise ValueError(
-            f"Invalid value for model opr_parameter '{key}'. Value {value} is outside of feasible domain ]{l}, {u}["
+            f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     if (
@@ -194,23 +189,26 @@ def _standardize_opr_parameters_value(
 
 
 def _standardize_opr_states_value(
-    model: Model, key: str, value: Numeric | np.ndarray
+    model: Model, state_kind: str, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
         raise TypeError(
             f"value argument must be of Numeric type (int, float) or np.ndarray"
         )
 
+    arr = np.array(value, ndmin=1)
     l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+    l_arr = np.min(arr)
+    u_arr = np.max(arr)
 
-    if np.logical_or(value <= l, value >= u).any():
+    if np.logical_or(l_arr <= l, u_arr >= u):
         raise ValueError(
-            f"Invalid value for model opr_states '{key}'. Value {value} is outside of feasible domain ]{l}, {u}["
+            f"Invalid value for model {state_kind} '{key}'. {state_kind.capitalize()} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape:
         raise ValueError(
-            f"Invalid shape for model opr_states '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+            f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
     return value
@@ -223,13 +221,13 @@ def _standardize_get_opr_parameters_args(model: Model, key: str) -> str:
 
 
 def _standardize_get_opr_initial_states_args(model: Model, key: str) -> str:
-    key = _standardize_opr_initial_states_key(model, key)
+    key = _standardize_opr_states_key(model, "opr_initial_state", key)
 
     return key
 
 
 def _standardize_get_opr_final_states_args(model: Model, key: str) -> str:
-    key = _standardize_opr_final_states_key(model, key)
+    key = _standardize_opr_states_key(model, "opr_final_state", key)
 
     return key
 
@@ -247,8 +245,9 @@ def _standardize_set_opr_parameters_args(
 def _standardize_set_opr_initial_states_args(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> AnyTuple:
-    key = _standardize_opr_states_key(model, key)
+    state_kind = "opr_initial_state"
+    key = _standardize_opr_states_key(model, state_kind, key)
 
-    value = _standardize_opr_states_value(model, key, value)
+    value = _standardize_opr_states_value(model, state_kind, key, value)
 
     return (key, value)

@@ -8,8 +8,6 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_cost_options_finalize,
 )
 
-import numpy as np
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:

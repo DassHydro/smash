@@ -169,12 +169,12 @@ def _standardize_simulation_optimize_options_bounds(
         u_arr = np.max(arr)
         if np.logical_or(l_arr + 1e-3 < value[0], u_arr - 1e-3 > value[1]):
             raise ValueError(
-                f"Bounds values {value} for parameter '{key}' does not include prior parameter domain [{l_arr}, {u_arr}] in bounds optimize_options"
+                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] does not include parameter domain [{l_arr}, {u_arr}] in bounds optimize_options"
             )
 
         if np.logical_or(value[0] <= l, value[1] >= u):
             raise ValueError(
-                f"Bounds values {value} for parameter '{key}' are outside of feasible domain ]{l}, {u}[ in bounds optimize_options"
+                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] is not included in the feasible domain ]{l}, {u}[ in bounds optimize_options"
             )
 
     return bounds
@@ -190,7 +190,7 @@ def _standardize_simulation_optimize_options_control_tfm(
         if isinstance(control_tfm, str):
             if control_tfm.lower() not in OPTIMIZER_CONTROL_TFM[optimizer]:
                 raise ValueError(
-                    f"Unknown transformation '{tfm}' in control_tfm optimize_options. Choices: {OPTIMIZER_CONTROL_TFM[optimizer]}"
+                    f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. Choices: {OPTIMIZER_CONTROL_TFM[optimizer]}"
                 )
         else:
             TypeError("control_tfm optimize_options must be a str")
@@ -478,7 +478,7 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
                 np.ones(shape=jreg_cmpt.size, dtype=np.float32) / jreg_cmpt.size
             )
 
-        elif wjobs_cmpt == "median":
+        elif wjreg_cmpt == "median":
             wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float(
                 -0.5
             )
@@ -611,7 +611,7 @@ def _standardize_simulation_cost_options_event_seg(
                     event_seg[key] = func(value)
                 else:
                     raise ValueError(
-                        f"Unknown event_seg key '{key}' in cost_options. Choices: s{imulation_event_seg_keys}"
+                        f"Unknown event_seg key '{key}' in cost_options. Choices: {simulation_event_seg_keys}"
                     )
 
         else:
@@ -745,19 +745,23 @@ def _standardize_simulation_parameters_feasibility(model: Model):
     for key in model.opr_parameters.keys:
         arr = model.get_opr_parameters(key)
         l, u = FEASIBLE_OPR_PARAMETERS[key]
+        l_arr = np.min(arr)
+        u_arr = np.max(arr)
 
-        if np.logical_or(arr <= l, arr >= u).any():
+        if np.logical_or(l_arr <= l, u_arr >= u):
             raise ValueError(
-                f"Invalid value for model opr_parameter '{key}'. Value {value} is oustide of feasible domain ]{l}, {u}["
+                f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.opr_initial_states.keys:
         arr = model.get_opr_initial_states(key)
         l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+        l_arr = np.min(arr)
+        u_arr = np.max(arr)
 
-        if np.logical_or(arr <= l, arr >= u).any():
+        if np.logical_or(l_arr <= l, u_arr >= u):
             raise ValueError(
-                f"Invalid value for model opr_initial_states '{key}'. Value {value} is outside of feasible domain ]{l}, {u}["
+                f"Invalid value for model opr_initial_states '{key}'. Opr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
 
