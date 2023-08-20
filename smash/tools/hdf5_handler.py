@@ -4,7 +4,7 @@ import os
 import h5py
 import numpy as np
 
-from smash.tools import object_handler
+from smash.tools.object_handler import generate_object_structure
 
 
 def open_hdf5(path, read_only=False, replace=False):
@@ -358,7 +358,7 @@ def save_object_to_hdf5(
     """
 
     if keys_data is None:
-        keys_data = object_handler.generate_object_structure(instance)
+        keys_data = generate_object_structure(instance)
 
     hdf5 = open_hdf5(f_hdf5, replace=replace)
     hdf5 = add_hdf5_sub_group(hdf5, subgroup=location)
