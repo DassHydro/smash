@@ -358,7 +358,7 @@ def save_object_to_hdf5(
     """
 
     if keys_data is None:
-        keys_data = smash.tools.object_handler.generate_object_structure(instance)
+        keys_data = object_handler.generate_object_structure(instance)
 
     hdf5 = open_hdf5(f_hdf5, replace=replace)
     hdf5 = add_hdf5_sub_group(hdf5, subgroup=location)
