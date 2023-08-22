@@ -15,19 +15,27 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
 
     for model in model_structure:
         for mp in MAPPING:
-            # % TODO: Temporary condition until ANN optimization is implemented
-            if mp != "ann":
-                instance = smash.optimize(
-                    model,
-                    mapping=mp,
-                    optimize_options={"maxiter": 1},
-                    common_options={"ncpu": ncpu, "verbose": False},
-                )
+            if mp == "ann":
+                optimize_options = {
+                    "learning_rate": 0.01,
+                    "random_state": 11,
+                    "termination_crit": {"epochs": 3},
+                }
 
-                qsim = instance.sim_response.q[:].flatten()
-                qsim = qsim[::10]  # extract values at every 10th position
+            else:
+                optimize_options = {"termination_crit": {"maxiter": 1}}
 
-                res[f"optimize.{model.setup.structure}.{mp}.sim_q"] = qsim
+            instance = smash.optimize(
+                model,
+                mapping=mp,
+                optimize_options=optimize_options,
+                common_options={"ncpu": ncpu, "verbose": False},
+            )
+
+            qsim = instance.sim_response.q[:].flatten()
+            qsim = qsim[::10]  # extract values at every 10th position
+
+            res[f"optimize.{model.setup.structure}.{mp}.sim_q"] = qsim
 
     return res
 
@@ -61,7 +69,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             "optimize_options": {
                 "parameters": ["cp", "ct", "kexc", "llr", "hp"],
                 "bounds": {"cp": (10, 500), "llr": (1, 500), "hp": (1e-6, 0.8)},
-                "maxiter": 1,
+                "termination_crit": {"maxiter": 1},
             },
             "common_options": {
                 "ncpu": ncpu,
@@ -74,7 +82,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             "optimize_options": {
                 "parameters": ["cp", "ct", "llr"],
                 "bounds": {"cp": (10, 500), "llr": (1, 500)},
-                "maxiter": 1,
+                "termination_crit": {"maxiter": 1},
             },
             "common_options": {
                 "ncpu": ncpu,
@@ -89,7 +97,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
                 "bounds": {"cp": (10, 2000)},
                 "control_tfm": None,
                 "descriptor": {"cp": "slope", "ct": "dd"},
-                "maxiter": 1,
+                "termination_crit": {"maxiter": 1},
             },
             "common_options": {
                 "ncpu": ncpu,
@@ -102,7 +110,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             "optimize_options": {
                 "parameters": ["cp", "kexc"],
                 "bounds": {"cp": (10, 2000), "kexc": (-50, 20)},
-                "maxiter": 1,
+                "termination_crit": {"maxiter": 1},
             },
             "common_options": {
                 "ncpu": ncpu,

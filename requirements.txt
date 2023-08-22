@@ -1,6 +1,6 @@
 # required dependencies
 wheel
-numpy>=1.13
+numpy >= 1.13
 f90wrap
 gdal
 pandas

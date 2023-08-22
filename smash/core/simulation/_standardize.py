@@ -10,8 +10,11 @@ from smash._constant import (
     MAPPING,
     COST_VARIANT,
     MAPPING_OPTIMIZER,
-    OPTIMIZER_CONTROL_TFM,
-    DEFAULT_SIMULATION_OPTIMIZE_OPTIONS,
+    OPTIMIZER_CLASS,
+    PY_OPTIMIZER,
+    F90_OPTIMIZER_CONTROL_TFM,
+    SIMULATION_OPTIMIZE_OPTIONS_KEYS,
+    DEFAULT_TERMINATION_CRIT,
     DEFAULT_SIMULATION_COMMON_OPTIONS,
     DEFAULT_SIMULATION_COST_OPTIONS,
     METRICS,
@@ -28,6 +31,10 @@ from smash.core.signal_analysis.segmentation._standardize import (
     _standardize_hydrograph_segmentation_max_duration,
 )
 
+from smash.factory.net.net import Net
+
+from smash.factory.net._optimizers import Adam, Adagrad, SGD, RMSprop
+
 import numpy as np
 import pandas as pd
 import warnings
@@ -38,7 +45,6 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash._typing import Numeric, ListLike
     from smash.core.model.model import Model
-    from smash.factory.net.net import Net
 
 
 def _standardize_simulation_mapping(mapping: str) -> str:
@@ -182,15 +188,14 @@ def _standardize_simulation_optimize_options_bounds(
 
 def _standardize_simulation_optimize_options_control_tfm(
     optimizer: str, control_tfm: str | None, **kwargs
-) -> str:
-    # % "..." will not trigger any transformation in Fortran
+) -> (str, None):
     if control_tfm is None:
-        control_tfm = "..."
+        control_tfm = F90_OPTIMIZER_CONTROL_TFM[optimizer][0]
     else:
         if isinstance(control_tfm, str):
-            if control_tfm.lower() not in OPTIMIZER_CONTROL_TFM[optimizer]:
+            if control_tfm.lower() not in F90_OPTIMIZER_CONTROL_TFM[optimizer]:
                 raise ValueError(
-                    f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. Choices: {OPTIMIZER_CONTROL_TFM[optimizer]}"
+                    f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. Choices: {F90_OPTIMIZER_CONTROL_TFM[optimizer]}"
                 )
         else:
             TypeError("control_tfm optimize_options must be a str")
@@ -198,7 +203,6 @@ def _standardize_simulation_optimize_options_control_tfm(
     return control_tfm
 
 
-# % TODO: Add check for ANN (same descriptors for all optimized parameters)
 def _standardize_simulation_optimize_options_descriptor(
     model: Model, parameters: np.ndarray, descriptor: dict | None, **kwargs
 ) -> dict:
@@ -246,86 +250,225 @@ def _standardize_simulation_optimize_options_descriptor(
     return descriptor
 
 
-# % TODO: TH add standardize for net
 def _standardize_simulation_optimize_options_net(
-    model: Model, net: Net | None, bounds: dict, **kwargs
+    model: Model, bounds: dict, net: Net | None, **kwargs
 ) -> Net:
+    bound_values = list(bounds.values())
+    ncv = len(bound_values)
+
+    nd = model.physio_data.descriptor.shape[-1]
+
+    active_mask = np.where(model.mesh.active_cell == 1)
+    ntrain = active_mask[0].shape[0]
+
+    if net is None:  # default graph
+        net = Net()
+
+        n_neurons = round(np.sqrt(ntrain * nd) * 2 / 3)
+
+        net.add(
+            layer="dense",
+            options={
+                "input_shape": (nd,),
+                "neurons": n_neurons,
+                "kernel_initializer": "glorot_uniform",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+
+        net.add(
+            layer="dense",
+            options={
+                "neurons": round(n_neurons / 2),
+                "kernel_initializer": "glorot_uniform",
+            },
+        )
+        net.add(layer="activation", options={"name": "relu"})
+
+        net.add(
+            layer="dense",
+            options={"neurons": ncv, "kernel_initializer": "glorot_uniform"},
+        )
+        net.add(layer="activation", options={"name": "sigmoid"})
+
+        net.add(
+            layer="scale",
+            options={"bounds": bound_values},
+        )
+
+    elif not isinstance(net, Net):
+        raise ValueError(f"net optimize_options: Unknown network {net}")
+
+    elif not net.layers:
+        raise ValueError(f"net optimize_options: The graph has not been set yet")
+
+    else:
+        # % check input shape
+        ips = net.layers[0].input_shape
+
+        if ips[0] != nd:
+            raise ValueError(
+                f"net optimize_options: Inconsistent value between the number of input layer ({ips[0]}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+            )
+
+        # % check output shape
+        ios = net.layers[-1].output_shape()
+
+        if ios[0] != ncv:
+            raise ValueError(
+                f"net optimize_options: Inconsistent value between the number of output layer ({ios[0]}) and the number of parameters ({ncv}): {ios[0]} != {ncv}"
+            )
+
+        # % check bounds constraints
+        if hasattr(net.layers[-1], "_scale_func"):
+            net_bounds = net.layers[-1]._scale_func._bounds
+
+            diff = np.not_equal(net_bounds, bound_values)
+
+            for i, name in enumerate(bounds.keys()):
+                if diff[i].any():
+                    warnings.warn(
+                        f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}"
+                    )
+
     return net
 
 
-def _standardize_simulation_optimize_options_maxiter(maxiter: Numeric, **kwargs) -> int:
+def _standardize_simulation_optimize_options_learning_rate(
+    optimizer: str, learning_rate: Numeric | None, **kwargs
+) -> float:
+    if isinstance(learning_rate, (int, float)):
+        learning_rate = float(learning_rate)
+        if learning_rate < 0:
+            raise ValueError("learning_rate optimize_options must be greater than 0")
+    else:
+        if learning_rate is None:
+            opt_class = eval(OPTIMIZER_CLASS[PY_OPTIMIZER.index(optimizer)])
+            learning_rate = opt_class().learning_rate
+
+        else:
+            raise TypeError(
+                "learning_rate optimize_options must be of Numeric type (int, float) or None"
+            )
+
+    return learning_rate
+
+
+def _standardize_simulation_optimize_options_random_state(
+    random_state: Numeric | None, **kwargs
+) -> int:
+    if random_state is None:
+        pass
+
+    else:
+        if not isinstance(random_state, (int, float)):
+            raise TypeError(
+                "random_state optimize_options must be of Numeric type (int, float)"
+            )
+
+        random_state = int(random_state)
+
+        if random_state < 0 or random_state > 4_294_967_295:
+            raise ValueError(
+                "random_state optimize_options must be between 0 and 2**32 - 1"
+            )
+
+    return random_state
+
+
+def _standardize_simulation_optimize_options_termination_crit(
+    optimizer: str, termination_crit: dict | None, **kwargs
+) -> dict:
+    if termination_crit is None:
+        termination_crit = DEFAULT_TERMINATION_CRIT[optimizer].copy()
+
+    else:
+        if isinstance(termination_crit, dict):
+            pop_keys = []
+            for key, value in termination_crit.items():
+                if key not in DEFAULT_TERMINATION_CRIT[optimizer].keys():
+                    pop_keys.append(key)
+                    warnings.warn(
+                        f"Unknown termination_crit key '{key}' for optimizer '{optimizer}'. Choices: {list(DEFAULT_TERMINATION_CRIT[optimizer].keys())}"
+                    )
+
+            for key in pop_keys:
+                termination_crit.pop(key)
+
+        else:
+            raise TypeError("termination_crit argument must be a dictionary")
+
+    for key, value in DEFAULT_TERMINATION_CRIT[optimizer].items():
+        termination_crit.setdefault(key, value)
+        func = eval(f"_standardize_simulation_optimize_options_termination_crit_{key}")
+        termination_crit[key] = func(optimizer=optimizer, **termination_crit)
+
+    return termination_crit
+
+
+def _standardize_simulation_optimize_options_termination_crit_maxiter(
+    maxiter: Numeric, **kwargs
+) -> int:
     if isinstance(maxiter, (int, float)):
         maxiter = int(maxiter)
         if maxiter < 0:
             raise ValueError(
-                "maxiter optimize_options must be greater than or equal to 0"
+                "maxiter termination_crit must be greater than or equal to 0"
             )
     else:
-        raise TypeError("maxiter optimize_options must be of Numeric type (int, float)")
+        raise TypeError("maxiter termination_crit must be of Numeric type (int, float)")
 
     return maxiter
 
 
-def _standardize_simulation_optimize_options_factr(factr: Numeric, **kwargs) -> float:
+def _standardize_simulation_optimize_options_termination_crit_factr(
+    factr: Numeric, **kwargs
+) -> float:
     if isinstance(factr, (int, float)):
         factr = float(factr)
         if factr <= 0:
-            raise ValueError("factr optimize_options must be greater than 0")
+            raise ValueError("factr termination_crit must be greater than 0")
     else:
-        raise TypeError("factr optimize_options must be of Numeric type (int, float)")
+        raise TypeError("factr termination_crit must be of Numeric type (int, float)")
 
     return factr
 
 
-def _standardize_simulation_optimize_options_pgtol(pgtol: Numeric, **kwargs) -> float:
+def _standardize_simulation_optimize_options_termination_crit_pgtol(
+    pgtol: Numeric, **kwargs
+) -> float:
     if isinstance(pgtol, (int, float)):
         pgtol = float(pgtol)
         if pgtol <= 0:
-            raise ValueError("pgtol optimize_options must be greater than 0")
+            raise ValueError("pgtol termination_crit must be greater than 0")
     else:
-        raise TypeError("pgtol optimize_options must be of Numeric type (int, float)")
+        raise TypeError("pgtol termination_crit must be of Numeric type (int, float)")
 
     return pgtol
 
 
-# % TODO: TH check this
-def _standardize_simulation_optimize_options_epochs(epochs: Numeric, **kwargs) -> float:
+def _standardize_simulation_optimize_options_termination_crit_epochs(
+    epochs: Numeric, **kwargs
+) -> float:
     if isinstance(epochs, (int, float)):
         epochs = int(epochs)
         if epochs < 0:
             raise ValueError(
-                "epochs optimize_options must be greater than or equal to 0"
+                "epochs termination_crit must be greater than or equal to 0"
             )
     else:
-        raise TypeError("epochs optimize_options must be of Numeric type (int, float)")
+        raise TypeError("epochs termination_crit must be of Numeric type (int, float)")
 
     return epochs
 
 
-# % TODO: TH check this
-def _standardize_simulation_optimize_options_lerning_rate(
-    lerning_rate: Numeric, **kwargs
-) -> float:
-    if isinstance(lerning_rate, (int, float)):
-        lerning_rate = float(lerning_rate)
-        if lerning_rate < 0:
-            raise ValueError("lerning_rate optimize_options must be greater than 0")
-    else:
-        raise TypeError(
-            "lerning_rate optimize_options must be of Numeric type (int, float)"
-        )
-
-    return lerning_rate
-
-
-# % TODO: TH check this
-def _standardize_simulation_optimize_options_early_stopping(
+def _standardize_simulation_optimize_options_termination_crit_early_stopping(
     early_stopping: bool, **kwargs
 ) -> float:
     if isinstance(early_stopping, bool):
         pass
     else:
-        raise TypeError("early_stopping optimize_options must be of a boolean")
+        raise TypeError("early_stopping termination_crit must be of a boolean")
 
     return early_stopping
 
@@ -334,23 +477,18 @@ def _standardize_simulation_optimize_options(
     model: Model, mapping: str, optimizer: str, optimize_options: dict | None
 ) -> dict:
     if optimize_options is None:
-        optimize_options = DEFAULT_SIMULATION_OPTIMIZE_OPTIONS[
-            (mapping, optimizer)
-        ].copy()
+        optimize_options = dict.fromkeys(
+            SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)], None
+        )
 
     else:
         if isinstance(optimize_options, dict):
             pop_keys = []
             for key, value in optimize_options.items():
-                if (
-                    key
-                    not in DEFAULT_SIMULATION_OPTIMIZE_OPTIONS[
-                        (mapping, optimizer)
-                    ].keys()
-                ):
+                if key not in SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]:
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown optimize_options key '{key}' for mapping '{mapping}' and optimizer '{optimizer}'. Choices: {list(DEFAULT_SIMULATION_OPTIMIZE_OPTIONS[(mapping, optimizer)].keys())}"
+                        f"Unknown optimize_options key '{key}' for mapping '{mapping}' and optimizer '{optimizer}'. Choices: {SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]}"
                     )
 
             for key in pop_keys:
@@ -359,8 +497,8 @@ def _standardize_simulation_optimize_options(
         else:
             raise TypeError("optimize_options argument must be a dictionary")
 
-    for key, value in DEFAULT_SIMULATION_OPTIMIZE_OPTIONS[(mapping, optimizer)].items():
-        optimize_options.setdefault(key, value)
+    for key in SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]:
+        optimize_options.setdefault(key, None)
         func = eval(f"_standardize_simulation_optimize_options_{key}")
         optimize_options[key] = func(
             model=model, mapping=mapping, optimizer=optimizer, **optimize_options
@@ -395,7 +533,7 @@ def _standardize_simulation_cost_options_jobs_cmpt(
 
 def _standardize_simulation_cost_options_wjobs_cmpt(
     jobs_cmpt: np.ndarray, wjobs_cmpt: str | Numeric | ListLike, **kwargs
-) -> np.ndarray:
+) -> (np.ndarray, str):
     if isinstance(wjobs_cmpt, str):
         if wjobs_cmpt == "mean":
             wjobs_cmpt = (
@@ -403,9 +541,7 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
             )
 
         elif wjobs_cmpt == "median":
-            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float(
-                -0.5
-            )
+            pass
 
         else:
             raise ValueError(
@@ -471,7 +607,7 @@ def _standardize_simulation_cost_options_jreg_cmpt(
 
 def _standardize_simulation_cost_options_wjreg_cmpt(
     jreg_cmpt: np.ndarray, wjreg_cmpt: str | Numeric | ListLike, **kwargs
-) -> np.ndarray:
+) -> (np.ndarray, str):
     if isinstance(wjreg_cmpt, str):
         if wjreg_cmpt == "mean":
             wjreg_cmpt = (
@@ -479,9 +615,7 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
             )
 
         elif wjreg_cmpt == "median":
-            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float(
-                -0.5
-            )
+            pass
 
         else:
             raise ValueError(
@@ -515,18 +649,16 @@ def _standardize_simulation_cost_options_gauge(
 ) -> np.ndarray:
     if isinstance(gauge, str):
         if gauge == "dws":
-            gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
             for i, pos in enumerate(model.mesh.gauge_pos):
                 if model.mesh.flwdst[tuple(pos)] == 0:
-                    gauge[i] = 1
+                    gauge = np.array(model.mesh.code[i], ndmin=1)
+                    break
 
         elif gauge == "all":
-            gauge = np.ones(shape=model.mesh.ng, dtype=np.int32)
+            gauge = np.array(model.mesh.code, ndmin=1)
 
         elif gauge in model.mesh.code:
-            ind = np.argwhere(model.mesh.code == gauge).squeeze()
-            gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
-            gauge[ind] = 1
+            gauge = np.array(gauge, ndmin=1)
 
         else:
             raise ValueError(
@@ -535,15 +667,16 @@ def _standardize_simulation_cost_options_gauge(
 
     elif isinstance(gauge, (list, tuple, np.ndarray)):
         gauge_bak = np.array(gauge, ndmin=1)
-        gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
+        gauge = []
 
-        for i, ggc in enumerate(gauge_bak):
+        for ggc in gauge_bak:
             if ggc in model.mesh.code:
-                gauge[i] = 1
+                gauge.append(ggc)
             else:
                 raise ValueError(
-                    f"Unknown gauge code '{ggc}' at index {i} in gauge cost_options. Choices: {list(model.mesh.code)}"
+                    f"Unknown gauge code '{ggc}' in gauge cost_options. Choices: {list(model.mesh.code)}"
                 )
+        gauge = np.array(gauge, ndmin=1)
 
     else:
         raise TypeError(
@@ -555,15 +688,14 @@ def _standardize_simulation_cost_options_gauge(
 
 def _standardize_simulation_cost_options_wgauge(
     gauge: np.ndarray, model: Model, wgauge: str | Numeric | ListLike, **kwargs
-) -> np.ndarray:
+) -> (np.ndarray, str):
     if isinstance(wgauge, str):
         if wgauge == "mean":
-            wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
-            wgauge = np.where(gauge == 1, 1 / np.sum(gauge), wgauge)
+            wgauge = np.ones(shape=gauge.size, dtype=np.float32)
+            wgauge = 1 / wgauge.size * wgauge
 
         elif wgauge == "median":
-            wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
-            wgauge = np.where(gauge == 1, np.float(-0.5), wgauge)
+            pass
 
         else:
             raise ValueError(
@@ -571,21 +703,16 @@ def _standardize_simulation_cost_options_wgauge(
             )
 
     elif isinstance(wgauge, (int, float, list, tuple, np.ndarray)):
-        wgauge_bak = np.array(wgauge, ndmin=1)
-        wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
+        wgauge = np.array(wgauge, ndmin=1)
 
-        if wgauge_bak.size != np.sum(gauge):
+        if wgauge.size != gauge.size:
             raise ValueError(
-                f"Inconsistent sizes between wgauge ({wgauge_bak.size}) and gauge ({np.sum(gauge)}) cost_options"
+                f"Inconsistent sizes between wgauge ({wgauge.size}) and gauge ({gauge.size}) cost_options"
             )
 
-        for i, wggc in enumerate(wgauge_bak):
+        for wggc in wgauge:
             if wggc < 0:
-                raise ValueError(
-                    f"Negative component {wggc:f} at index {i} in wgauge cost_options"
-                )
-            if gauge[i] == 1:
-                wgauge[i] = wggc
+                raise ValueError(f"Negative component {wggc:f} in wgauge cost_options")
 
     else:
         raise TypeError(
@@ -597,9 +724,9 @@ def _standardize_simulation_cost_options_wgauge(
 
 def _standardize_simulation_cost_options_event_seg(
     event_seg: dict | None, **kwargs
-) -> dict:
+) -> (dict, None):
     if event_seg is None:
-        event_seg = {}
+        pass
 
     else:
         if isinstance(event_seg, dict):
@@ -615,14 +742,14 @@ def _standardize_simulation_cost_options_event_seg(
                     )
 
         else:
-            raise TypeError("event_seg cost_options must be a dictionary")
+            raise TypeError("event_seg cost_options must be a dictionary or None")
 
     return event_seg
 
 
 def _standardize_simulation_cost_options_end_warmup(
     model: Model, end_warmup: str | pd.Timestamp | None, **kwargs
-) -> int:
+) -> pd.Timestamp:
     st = pd.Timestamp(model.setup.start_time)
     et = pd.Timestamp(model.setup.end_time)
 
@@ -653,8 +780,6 @@ def _standardize_simulation_cost_options_end_warmup(
             raise ValueError(
                 f"end_warmup '{end_warmup}' cost_options must be between start time '{st}' and end time '{et}'"
             )
-
-    end_warmup = int((end_warmup - st).total_seconds() / model.setup.dt)
 
     return end_warmup
 
@@ -840,5 +965,47 @@ def _standardize_simulation_cost_options_finalize(
     cost_options["njoc"] = cost_options["jobs_cmpt"].size
     cost_options["njrc"] = cost_options["jreg_cmpt"].size
     # ~ cost_options["mask_event"] = _mask_event(**cost_options["event_seg"])
+
+    # % Handle flags send to Fortran
+    # % wjobs_cmpt
+    if isinstance(cost_options["wjobs_cmpt"], str):
+        if cost_options["wjobs_cmpt"] == "median":
+            cost_options["wjobs_cmpt"] = np.ones(
+                shape=cost_options["jobs_cmpt"].size, dtype=np.float32
+            ) * np.float(-0.5)
+    # % wjreg_cmpt
+    if isinstance(cost_options["wjreg_cmpt"], str):
+        if cost_options["wjreg_cmpt"] == "median":
+            cost_options["wjreg_cmpt"] = np.ones(
+                shape=cost_options["jreg_cmpt"].size, dtype=np.float32
+            ) * np.float(-0.5)
+
+    # % gauge and wgauge
+    if isinstance(cost_options["wgauge"], str):
+        if cost_options["wgauge"] == "median":
+            cost_options["wgauge"] = -0.5 * np.ones(
+                shape=cost_options["gauge"].size, dtype=np.float32
+            )
+
+    gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
+    wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
+
+    wg = dict(zip(cost_options["gauge"], cost_options["wgauge"]))
+
+    for i, gc in enumerate(model.mesh.code):
+        if gc in cost_options["gauge"]:
+            gauge[i] = 1
+            wgauge[i] = wg[gc]
+
+    cost_options["gauge"] = gauge
+    cost_options["wgauge"] = wgauge
+
+    # % event_seg: TODO
+
+    # % end_warmup
+    st = pd.Timestamp(model.setup.start_time)
+    cost_options["end_warmup"] = int(
+        (cost_options["end_warmup"] - st).total_seconds() / model.setup.dt
+    )
 
     return cost_options

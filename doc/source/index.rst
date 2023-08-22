@@ -8,7 +8,7 @@ smash documentation
 
 **Date**: |today| **Version**: |version|
 
-`smash` (**S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology models) is an open-source Python library that provides a variety of user-friendly routines for hydrological modeling. It includes features such as data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran solver.
+`smash` (**S**\patially distributed **M**\odelling and **AS**\similation for **H**\ydrology) is an open-source Python library that provides a variety of user-friendly routines for hydrological modeling. It includes features such as data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran solver.
 
 .. grid:: 2
 

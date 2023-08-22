@@ -19,6 +19,7 @@
 	"mwd_setup": "_mwd_setup",
 	"mwd_sparse_matrix": "_mwd_sparse_matrix",
 	"mw_forward": "_mw_forward",
+	"mw_control_dealloc": "_mw_control_dealloc",
 	"mw_optimize": "_mw_optimize",
 	"mwd_cost": "_mwd_cost",
 	"mw_atmos_statistic": "_mw_atmos_statistic",

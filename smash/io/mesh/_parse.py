@@ -6,7 +6,7 @@ import numpy as np
 def _parse_mesh_dict_to_hdf5(mesh: dict, hdf5_ins):
     for key, value in mesh.items():
         if isinstance(value, np.ndarray):
-            if value.dtype.char == "U":
+            if value.dtype == "object" or value.dtype.char == "U":
                 value = value.astype("S")
 
             hdf5_ins.create_dataset(

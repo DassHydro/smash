@@ -45,11 +45,11 @@ def generic_net_init(**kwargs):
     )
     net.add(layer="activation", options={"name": "sigmoid"})
 
-    net.compile(
+    net._compile(
         optimizer="adam",
-        options={"learning_rate": 0.002, "b1": 0.8, "b2": 0.99},
+        learning_param={"learning_rate": 0.002, "b1": 0.8, "b2": 0.99},
         random_state=11,
-    )
+    )  # % TODO: change this when net.fit_xx available
 
     graph = np.array([l.layer_name() for l in net.layers]).astype("S")
 

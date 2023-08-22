@@ -5,7 +5,7 @@ from smash.core.signal_analysis.metrics.metrics import metrics
 from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segmentation
 from smash.core.signal_analysis.signatures.signatures import signatures
 
-from smash.core.simulation import forward_run, optimize
+from smash.core.simulation import forward_run, optimize, optimize_options, cost_options
 
 # smash sub-packages
 from smash import io, factory
@@ -29,6 +29,8 @@ __all__ = [
     "signatures",
     "forward_run",
     "optimize",
+    "optimize_options",
+    "cost_options",
     "io",
     "factory",
     "Signatures",
