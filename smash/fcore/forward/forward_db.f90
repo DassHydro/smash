@@ -160,6 +160,13 @@ CONTAINS
     IMPLICIT NONE
     TYPE(CONTROLDT), INTENT(INOUT) :: this
     INTEGER, INTENT(IN) :: n
+    INTRINSIC ALLOCATED
+    INTRINSIC SIZE
+! Must check alloc before size
+    IF (ALLOCATED(this%x)) THEN
+      IF (SIZE(this%x) .EQ. n) RETURN
+    END IF
+    CALL CONTROLDT_FINALISE(this)
     ALLOCATE(this%x(n))
     this%x = -99._sp
 !~         allocate (this%x_bkg(n))
