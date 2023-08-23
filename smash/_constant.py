@@ -214,9 +214,9 @@ WB_INITIALIZER = [
 
 LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
 
-OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
+PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 
-PY_OPTIMIZER = [opt.lower() for opt in OPTIMIZER_CLASS]
+PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
 
 ACTIVATION_FUNCTION = [
     "Sigmoid",
@@ -291,20 +291,19 @@ WEIGHT_ALIAS = ["mean", "median"]
 
 GAUGE_ALIAS = ["dws", "all"]
 
-DEFAULT_TERMINATION_CRIT = {
-    "sbs": {
-        "maxiter": 50,
-    },
-    "lbfgsb": {
-        "maxiter": 100,
-        "factr": 1e6,
-        "pgtol": 1e-12,
-    },
-    **{
-        optimizer: {"epochs": 200, "early_stopping": False}
-        for optimizer in PY_OPTIMIZER
-    },
-}
+DEFAULT_TERMINATION_CRIT = dict(
+    **dict(
+        zip(
+            F90_OPTIMIZER,
+            [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
+        )
+    ),
+    **dict(
+        zip(
+            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": False}]
+        )
+    ),
+)
 
 SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ("uniform", "sbs"): [
@@ -339,17 +338,22 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
         "descriptor",
         "termination_crit",
     ],
-    **{
-        ("ann", optimizer): [
-            "parameters",
-            "bounds",
-            "net",
-            "learning_rate",
-            "random_state",
-            "termination_crit",
-        ]
-        for optimizer in PY_OPTIMIZER
-    },
+    **dict(
+        zip(
+            [("ann", optimizer) for optimizer in PY_OPTIMIZER],
+            len(PY_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "net",
+                    "learning_rate",
+                    "random_state",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),
 }
 
 # % Following COST_VARIANT order

@@ -10,7 +10,7 @@ from smash._constant import (
     MAPPING,
     COST_VARIANT,
     MAPPING_OPTIMIZER,
-    OPTIMIZER_CLASS,
+    PY_OPTIMIZER_CLASS,
     PY_OPTIMIZER,
     F90_OPTIMIZER_CONTROL_TFM,
     SIMULATION_OPTIMIZE_OPTIONS_KEYS,
@@ -256,7 +256,7 @@ def _standardize_simulation_optimize_options_net(
     bound_values = list(bounds.values())
     ncv = len(bound_values)
 
-    nd = model.physio_data.descriptor.shape[-1]
+    nd = model.setup.nd
 
     active_mask = np.where(model.mesh.active_cell == 1)
     ntrain = active_mask[0].shape[0]
@@ -297,7 +297,7 @@ def _standardize_simulation_optimize_options_net(
         )
 
     elif not isinstance(net, Net):
-        raise ValueError(f"net optimize_options: Unknown network {net}")
+        raise TypeError(f"net optimize_options: Unknown network {net}")
 
     elif not net.layers:
         raise ValueError(f"net optimize_options: The graph has not been set yet")
@@ -328,7 +328,7 @@ def _standardize_simulation_optimize_options_net(
             for i, name in enumerate(bounds.keys()):
                 if diff[i].any():
                     warnings.warn(
-                        f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}"
+                        f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}. Ingoring default bounds for scaling layer."
                     )
 
     return net
@@ -343,7 +343,7 @@ def _standardize_simulation_optimize_options_learning_rate(
             raise ValueError("learning_rate optimize_options must be greater than 0")
     else:
         if learning_rate is None:
-            opt_class = eval(OPTIMIZER_CLASS[PY_OPTIMIZER.index(optimizer)])
+            opt_class = eval(PY_OPTIMIZER_CLASS[PY_OPTIMIZER.index(optimizer)])
             learning_rate = opt_class().learning_rate
 
         else:
@@ -541,7 +541,9 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
             )
 
         elif wjobs_cmpt == "median":
-            pass
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float(
+                -0.5
+            )
 
         else:
             raise ValueError(
@@ -615,7 +617,9 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
             )
 
         elif wjreg_cmpt == "median":
-            pass
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float(
+                -0.5
+            )
 
         else:
             raise ValueError(
@@ -649,10 +653,11 @@ def _standardize_simulation_cost_options_gauge(
 ) -> np.ndarray:
     if isinstance(gauge, str):
         if gauge == "dws":
+            gauge = np.empty(shape=0)
+
             for i, pos in enumerate(model.mesh.gauge_pos):
                 if model.mesh.flwdst[tuple(pos)] == 0:
-                    gauge = np.array(model.mesh.code[i], ndmin=1)
-                    break
+                    gauge = np.append(gauge, model.mesh.code[i])
 
         elif gauge == "all":
             gauge = np.array(model.mesh.code, ndmin=1)
@@ -667,16 +672,15 @@ def _standardize_simulation_cost_options_gauge(
 
     elif isinstance(gauge, (list, tuple, np.ndarray)):
         gauge_bak = np.array(gauge, ndmin=1)
-        gauge = []
+        gauge = np.empty(shape=0)
 
         for ggc in gauge_bak:
             if ggc in model.mesh.code:
-                gauge.append(ggc)
+                gauge = np.append(gauge, ggc)
             else:
                 raise ValueError(
                     f"Unknown gauge code '{ggc}' in gauge cost_options. Choices: {list(model.mesh.code)}"
                 )
-        gauge = np.array(gauge, ndmin=1)
 
     else:
         raise TypeError(
@@ -692,10 +696,10 @@ def _standardize_simulation_cost_options_wgauge(
     if isinstance(wgauge, str):
         if wgauge == "mean":
             wgauge = np.ones(shape=gauge.size, dtype=np.float32)
-            wgauge = 1 / wgauge.size * wgauge
+            wgauge *= 1 / wgauge.size
 
         elif wgauge == "median":
-            pass
+            wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float(-0.5)
 
         else:
             raise ValueError(
@@ -967,26 +971,7 @@ def _standardize_simulation_cost_options_finalize(
     # ~ cost_options["mask_event"] = _mask_event(**cost_options["event_seg"])
 
     # % Handle flags send to Fortran
-    # % wjobs_cmpt
-    if isinstance(cost_options["wjobs_cmpt"], str):
-        if cost_options["wjobs_cmpt"] == "median":
-            cost_options["wjobs_cmpt"] = np.ones(
-                shape=cost_options["jobs_cmpt"].size, dtype=np.float32
-            ) * np.float(-0.5)
-    # % wjreg_cmpt
-    if isinstance(cost_options["wjreg_cmpt"], str):
-        if cost_options["wjreg_cmpt"] == "median":
-            cost_options["wjreg_cmpt"] = np.ones(
-                shape=cost_options["jreg_cmpt"].size, dtype=np.float32
-            ) * np.float(-0.5)
-
     # % gauge and wgauge
-    if isinstance(cost_options["wgauge"], str):
-        if cost_options["wgauge"] == "median":
-            cost_options["wgauge"] = -0.5 * np.ones(
-                shape=cost_options["gauge"].size, dtype=np.float32
-            )
-
     gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
     wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
 
@@ -1009,3 +994,20 @@ def _standardize_simulation_cost_options_finalize(
     )
 
     return cost_options
+
+
+def _standardize_default_optimize_options_args(
+    mapping: str, optimizer: str | None
+) -> dict:
+    mapping = _standardize_simulation_mapping(mapping)
+
+    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+
+    return (mapping, optimizer)
+
+
+# % Future TODO: cost_options depending on (mapping, cost_variant) instead of cost_variant
+def _standardize_default_cost_options_args(cost_variant: str) -> dict:
+    cost_variant = _standardize_simulation_cost_variant(cost_variant)
+
+    return cost_variant

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash._typing import Numeric
 
-from smash._constant import OPTIMIZER_CLASS, PY_OPTIMIZER
+from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 
 from smash.factory.net._standardize import _standardize_add_args
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
@@ -262,7 +262,7 @@ class Net(object):
 
         else:
             raise ValueError(
-                f"Inconsistent length between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
+                f"Inconsistent size between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
             )
 
     def _compile(
@@ -329,7 +329,7 @@ class Net(object):
         if self.layers:
             ind = PY_OPTIMIZER.index(optimizer.lower())
 
-            func = eval(OPTIMIZER_CLASS[ind])
+            func = eval(PY_OPTIMIZER_CLASS[ind])
 
             opt = func(**learning_param)
 
