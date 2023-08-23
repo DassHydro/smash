@@ -9,8 +9,6 @@ from smash.fcore._mwd_parameters_manipulation import (
 
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 
-from smash.fcore._mw_control_dealloc import dealloc_control
-
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -42,9 +40,6 @@ def _hcost_prime(
             ind = np.argwhere(instance.opr_initial_states.keys == name).item()
 
             instance.opr_inital_states.values[..., ind][mask] = y[:, i]
-
-    # % TRIGGER distributed control to get distributed gradients
-    wrap_options.optimize.mapping = "distributed"
 
     parameters_to_control(
         instance.setup,
@@ -88,11 +83,6 @@ def _hcost_prime(
             grad.append(parameters_b.opr_initial_states.values[..., ind][mask])
 
     grad = np.transpose(grad)
-
-    dealloc_control(instance._parameters.control)
-
-    # % Reset mapping type after TRIGGER
-    wrap_options.optimize.mapping = "ann"
 
     return grad
 
