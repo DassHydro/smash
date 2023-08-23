@@ -51,6 +51,13 @@ contains
         type(ControlDT), intent(inout) :: this
         integer, intent(in) :: n
 
+        ! Must check alloc before size
+        if (allocated(this%x)) then
+            if (size(this%x) .eq. n) return
+        end if
+
+        call ControlDT_finalise(this)
+
         allocate (this%x(n))
         this%x = -99._sp
 
@@ -110,5 +117,17 @@ contains
         this_copy = this
 
     end subroutine ControlDT_copy
+
+    ! To manually deallocate from Python. ControlDT_finalize is used as
+    ! __del__ method for garbage collecting (implemented by f90wrap automatically)
+    subroutine ControlDT_dealloc(this)
+
+        implicit none
+
+        type(ControlDT), intent(inout) :: this
+
+        call ControlDT_finalise(this)
+
+    end subroutine ControlDT_dealloc
 
 end module mwd_control

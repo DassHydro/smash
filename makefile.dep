@@ -30,7 +30,6 @@ f90: \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \
- obj/mw_control_dealloc.o \
  obj/m_array_creation.o \
  obj/md_stats.o \
  obj/mw_mask.o \

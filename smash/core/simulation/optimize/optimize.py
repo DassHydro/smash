@@ -121,6 +121,9 @@ def _ann_optimize(
 
     net = optimize_options["net"]
 
+    # % Change the mapping to trigger distributed control to get distributed gradients
+    wrap_options.optimize.mapping = "distributed"
+
     net._fit_d2p(
         x_train,
         active_mask,
@@ -135,6 +138,12 @@ def _ann_optimize(
         optimize_options["termination_crit"]["early_stopping"],
         common_options["verbose"],
     )
+
+    # % Manually deallocate control once fit_d2p done
+    model._parameters.control.dealloc()
+
+    # % Reset mapping to ann once fit_d2p done
+    wrap_options.optimize.mapping = "ann"
 
     # % predicting at inactive cells
     y = net._predict(x_inactive)

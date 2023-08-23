@@ -160,6 +160,13 @@ CONTAINS
     IMPLICIT NONE
     TYPE(CONTROLDT), INTENT(INOUT) :: this
     INTEGER, INTENT(IN) :: n
+    INTRINSIC ALLOCATED
+    INTRINSIC SIZE
+! Must check alloc before size
+    IF (ALLOCATED(this%x)) THEN
+      IF (SIZE(this%x) .EQ. n) RETURN
+    END IF
+    CALL CONTROLDT_FINALISE(this)
     ALLOCATE(this%x(n))
     this%x = -99._sp
 !~         allocate (this%x_bkg(n))
@@ -197,6 +204,14 @@ CONTAINS
     TYPE(CONTROLDT), INTENT(OUT) :: this_copy
     this_copy = this
   END SUBROUTINE CONTROLDT_COPY
+
+! To manually deallocate from Python. ControlDT_finalize is used as
+! __del__ method for garbage collecting (implemented by f90wrap automatically)
+  SUBROUTINE CONTROLDT_DEALLOC(this)
+    IMPLICIT NONE
+    TYPE(CONTROLDT), INTENT(INOUT) :: this
+    CALL CONTROLDT_FINALISE(this)
+  END SUBROUTINE CONTROLDT_DEALLOC
 
 END MODULE MWD_CONTROL_DIFF
 
@@ -796,7 +811,8 @@ MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 !% only: ControlDT_initialise, ControlDT_finalise
   USE MWD_CONTROL_DIFF
   IMPLICIT NONE
-  PUBLIC :: parameters_to_control
+  PUBLIC :: parameters_to_control, control_to_parameters
+  PUBLIC :: control_to_parameters_d, control_to_parameters_b
 
 CONTAINS
   SUBROUTINE UNIFORM_GET_CONTROL_SIZE(setup, options, n)

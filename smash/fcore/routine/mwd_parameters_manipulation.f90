@@ -42,7 +42,7 @@ module mwd_parameters_manipulation
 
     implicit none
 
-    public :: parameters_to_control
+    public :: parameters_to_control, control_to_parameters
 
 contains
 
