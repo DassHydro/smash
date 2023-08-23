@@ -151,6 +151,7 @@ def sed_index_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index" {pyf}')
         os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index" {pyf}')
 
+
 def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     """
     Modify Python script to handle index array decorator for specific attributes.
@@ -174,8 +175,12 @@ def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index_array" {pyf}')
-        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index_array" {pyf}')
+        os.system(
+            f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index_array" {pyf}'
+        )
+        os.system(
+            f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index_array" {pyf}'
+        )
 
 
 def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):

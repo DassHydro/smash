@@ -227,7 +227,7 @@ class Dense(Layer):
         self._bias_opt = copy.copy(optimizer)
 
     def n_params(self):
-        return np.prod(self.weight.shape) + np.prod(self.bias.shape)
+        return self.input_shape[0] * self.neurons + self.neurons
 
     def _forward_pass(self, x: np.ndarray, training: bool = True):
         if training:

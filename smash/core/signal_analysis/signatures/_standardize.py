@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash._constant import SIGNS, CSIGN, ESIGN, DOMAIN
+from smash._constant import SIGNS, CSIGN, ESIGN, DOMAIN, EVENT_SEG_KEYS
 
 from smash.core.signal_analysis.segmentation._standardize import (
     _standardize_hydrograph_segmentation_peak_quant,
@@ -76,24 +76,14 @@ def _standardize_signatures_event_seg(event_seg: dict | None) -> dict:
 
     else:
         if isinstance(event_seg, dict):
-            if "peak_quant" in event_seg:
-                event_seg[
-                    "peak_quant"
-                ] = _standardize_hydrograph_segmentation_peak_quant(
-                    event_seg["peak_quant"]
-                )
-
-            if "max_duration" in event_seg:
-                event_seg[
-                    "max_duration"
-                ] = _standardize_hydrograph_segmentation_max_duration(
-                    event_seg["max_duration"]
-                )
-
-            if "by" in event_seg:
-                event_seg["by"] = _standardize_hydrograph_segmentation_by(
-                    event_seg["by"]
-                )
+            for key, value in event_seg.items():
+                if key in EVENT_SEG_KEYS:
+                    func = eval(f"_standardize_hydrograph_segmentation_{key}")
+                    event_seg[key] = func(value)
+                else:
+                    raise ValueError(
+                        f"Unknown key '{key}' in event_seg. Choices: {EVENT_SEG_KEYS}"
+                    )
 
         else:
             raise TypeError(f"event_seg argument must be a dictionary")

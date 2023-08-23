@@ -2,22 +2,19 @@ from __future__ import annotations
 
 from smash._typing import Numeric
 
-# from smash.solver._mw_forward import forward_b
+from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 
-from smash.factory.net._standardize import (
-    _standardize_add_args,
-    _standardize_compile_args,
-)
+from smash.factory.net._standardize import _standardize_add_args
+from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 from smash.factory.net._layers import Dense, Activation, Scale, Dropout
 from smash.factory.net._optimizers import SGD, Adam, Adagrad, RMSprop
 
+from typing import TYPE_CHECKING
 
-# from typing import TYPE_CHECKING
-
-# if TYPE_CHECKING:
-#     from smash.core.model import Model
-#     from smash.solver._mwd_parameters import ParametersDT
-#     from smash.solver._mwd_states import StatesDT
+if TYPE_CHECKING:
+    from smash.core.model.model import Model
+    from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_returns import ReturnsDT
 
 import copy
 import numpy as np
@@ -44,49 +41,38 @@ class Net(object):
 
         self.history = {"loss_train": [], "loss_valid": []}
 
-        self._optimizer = None
-
-        self._learning_rate = None
-
-        self._compiled = False
+        self._opt = None
 
     def __repr__(self):
         ret = []
 
-        if self._compiled and self.layers:
-            tab = [["Layer Type", "Input/Output Shape", "Num Parameters"]]
+        tab = [["Layer Type", "Input/Output Shape", "Num Parameters"]]
 
-            tot_params = 0
-            trainable_params = 0
+        tot_params = 0
+        trainable_params = 0
 
-            for layer in self.layers:
-                layer_name = layer.layer_name()
+        for layer in self.layers:
+            layer_name = layer.layer_name()
 
-                n_params = layer.n_params()
+            n_params = layer.n_params()
 
-                ioshape = f"{layer.input_shape}/{layer.output_shape()}"
+            ioshape = f"{layer.input_shape}/{layer.output_shape()}"
 
-                tab.append([layer_name, str(ioshape), str(n_params)])
+            tab.append([layer_name, str(ioshape), str(n_params)])
 
-                tot_params += n_params
+            tot_params += n_params
 
-                if layer.trainable:
-                    trainable_params += n_params
+            if layer.trainable:
+                trainable_params += n_params
 
-            table_instance = AsciiTable(tab)
-            table_instance.inner_column_border = False
-            table_instance.padding_left = 1
-            table_instance.padding_right = 1
+        table_instance = AsciiTable(tab)
+        table_instance.inner_column_border = False
+        table_instance.padding_left = 1
+        table_instance.padding_right = 1
 
-            ret.append(table_instance.table)
-            ret.append(f"Total parameters: {tot_params}")
-            ret.append(f"Trainable parameters: {trainable_params}")
-            ret.append(f"Optimizer: ({self._optimizer}, lr={self._learning_rate})")
-
-        else:
-            ret.append(
-                "The network does not contain layers or has not been compiled yet"
-            )
+        ret.append(table_instance.table)
+        ret.append(f"Total parameters: {tot_params}")
+        ret.append(f"Trainable parameters: {trainable_params}")
 
         return "\n".join(ret)
 
@@ -242,11 +228,48 @@ class Net(object):
         # Add layer to the network
         self.layers.append(lay)
 
-    def compile(
+    def copy(self):
+        """
+        Make a deepcopy of the Net.
+
+        Returns
+        -------
+        Net
+            A copy of Net.
+        """
+
+        return copy.deepcopy(self)
+
+    def set_trainable(self, trainable: list[bool]):
+        """
+        Method which enables to train or freeze the weights and biases of the network's layers.
+
+        Parameters
+        ----------
+        trainable : list of bool
+            List of booleans with a length of the total number of the network's layers.
+
+            .. note::
+                Dropout, activation, and scaling functions are non-parametric layers,
+                meaning they do not have any learnable weights or biases.
+                Therefore, it is not necessary to set these layers as trainable
+                since they do not involve any weight updates during training.
+        """
+
+        if len(trainable) == len(self.layers):
+            for i, layer in enumerate(self.layers):
+                layer.trainable = trainable[i]
+
+        else:
+            raise ValueError(
+                f"Inconsistent size between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
+            )
+
+    def _compile(
         self,
-        optimizer: str = "Adam",
-        options: dict | None = None,
-        random_state: Numeric | None = None,
+        optimizer: str,
+        learning_param: dict,
+        random_state: Numeric | None,
     ):
         """
         Compile the network and set optimizer.
@@ -304,11 +327,11 @@ class Net(object):
         """
 
         if self.layers:
-            optimizer, random_state, options = _standardize_compile_args(
-                optimizer, random_state, options
-            )
+            ind = PY_OPTIMIZER.index(optimizer.lower())
 
-            opt = eval(optimizer)(**options)
+            func = eval(PY_OPTIMIZER_CLASS[ind])
+
+            opt = func(**learning_param)
 
             if random_state is not None:
                 np.random.seed(random_state)
@@ -317,113 +340,81 @@ class Net(object):
                 if hasattr(layer, "_initialize"):
                     layer._initialize(opt)
 
-            self._compiled = True
-            self._optimizer = optimizer
-            self._learning_rate = opt.learning_rate
+            self._opt = opt
 
         else:
             raise ValueError("The network does not contain layers")
 
-    def copy(self):
-        """
-        Make a deepcopy of the Net.
+    def _fit_d2p(
+        self,
+        x_train: np.ndarray,
+        mask: np.ndarray,
+        instance: Model,
+        wrap_options: OptionsDT,
+        wrap_returns: ReturnsDT,
+        optimizer: str,
+        parameters: np.ndarray,
+        learning_rate: Numeric,
+        random_state: Numeric | None,
+        epochs: int,
+        early_stopping: bool,
+        verbose: bool,
+    ):  # fit physiographic descriptors to Model parameters mapping
+        # % compile net
+        self._compile(
+            optimizer=optimizer,
+            learning_param={"learning_rate": learning_rate},
+            random_state=random_state,
+        )
 
-        Returns
-        -------
-        Net
-            A copy of Net.
-        """
+        loss_opt = 0  # only use for early stopping purpose
 
-        return copy.deepcopy(self)
+        # % train model
+        for epo in tqdm(range(epochs), desc="Training"):
+            # forward propogation
+            y_pred = self._forward_pass(x_train)
 
-    def set_trainable(self, trainable: list[bool]):
-        """
-        Method which enables to train or freeze the weights and biases of the network's layers.
-
-        Parameters
-        ----------
-        trainable : list of bool
-            List of booleans with a length of the total number of the network's layers.
-
-            .. note::
-                Dropout, activation, and scaling functions are non-parametric layers,
-                meaning they do not have any learnable weights or biases.
-                Therefore, it is not necessary to set these layers as trainable
-                since they do not involve any weight updates during training.
-        """
-
-        if len(trainable) == len(self.layers):
-            for i, layer in enumerate(self.layers):
-                layer.trainable = trainable[i]
-
-        else:
-            raise ValueError(
-                f"Inconsistent length between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
+            # calculate the gradient of the loss function wrt y_pred
+            loss_grad = _hcost_prime(
+                y_pred, parameters, mask, instance, wrap_options, wrap_returns
             )
 
-    # def _fit_d2p(
-    #     self,
-    #     x_train: np.ndarray,
-    #     instance: Model,
-    #     control_vector: np.ndarray,
-    #     mask: np.ndarray,
-    #     parameters_bgd: ParametersDT,
-    #     states_bgd: StatesDT,
-    #     epochs: int,
-    #     early_stopping: bool,
-    #     verbose: bool,
-    # ):  # fit physiographic descriptors to Model parameters mapping
-    #     if not self._compiled:
-    #         raise ValueError(f"The network has not been compiled yet")
+            # compute loss
+            loss = _hcost(instance)
 
-    #     loss_opt = 0  # only use for early stopping purpose
+            # calculate the infinity norm of the projected gradient
+            proj_g = _inf_norm(loss_grad)
 
-    #     # train model
-    #     for epo in tqdm(range(epochs), desc="Training"):
-    #         # Forward propogation
-    #         y_pred = self._forward_pass(x_train)
+            # early stopping
+            if early_stopping:
+                if loss_opt > loss or epo == 0:
+                    loss_opt = loss
 
-    #         # Calculate the gradient of the loss function wrt y_pred
-    #         loss_grad = _hcost_prime(
-    #             y_pred, control_vector, mask, instance, parameters_bgd, states_bgd
-    #         )
+                    for layer in self.layers:
+                        if hasattr(layer, "_initialize"):
+                            layer._weight = np.copy(layer.weight)
+                            layer._bias = np.copy(layer.bias)
 
-    #         # Compute loss
-    #         loss = _hcost(instance)
+            # backpropagation
+            self._backward_pass(loss_grad=loss_grad)
 
-    #         # Calculate the infinity norm of the projected gradient
-    #         proj_g = _inf_norm(loss_grad)
+            if verbose:
+                ret = []
 
-    #         # early stopping
-    #         if early_stopping:
-    #             if loss_opt > loss or epo == 0:
-    #                 loss_opt = loss
+                ret.append(f"{' ' * 4}At epoch")
+                ret.append("{:3}".format(epo + 1))
+                ret.append("J =" + "{:10.6f}".format(loss))
+                ret.append("|proj g| =" + "{:10.6f}".format(proj_g))
 
-    #                 for layer in self.layers:
-    #                     if hasattr(layer, "_initialize"):
-    #                         layer._weight = np.copy(layer.weight)
-    #                         layer._bias = np.copy(layer.bias)
+                tqdm.write((" " * 4).join(ret))
 
-    #         # Backpropagation
-    #         self._backward_pass(loss_grad=loss_grad)
+            self.history["loss_train"].append(loss)
 
-    #         if verbose:
-    #             ret = []
-
-    #             ret.append(f"{' ' * 4}At epoch")
-    #             ret.append("{:3}".format(epo + 1))
-    #             ret.append("J =" + "{:10.6f}".format(loss))
-    #             ret.append("|proj g| =" + "{:10.6f}".format(proj_g))
-
-    #             tqdm.write((" " * 4).join(ret))
-
-    #         self.history["loss_train"].append(loss)
-
-    #     if early_stopping:
-    #         for layer in self.layers:
-    #             if hasattr(layer, "_initialize"):
-    #                 layer.weight = np.copy(layer._weight)
-    #                 layer.bias = np.copy(layer._bias)
+        if early_stopping:
+            for layer in self.layers:
+                if hasattr(layer, "_initialize"):
+                    layer.weight = np.copy(layer._weight)
+                    layer.bias = np.copy(layer._bias)
 
     def _forward_pass(self, x_train: np.ndarray, training: bool = True):
         layer_output = x_train

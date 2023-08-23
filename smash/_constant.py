@@ -214,8 +214,9 @@ WB_INITIALIZER = [
 
 LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
 
-# % TODO: TH maybe rename this to NET_OPTIMIZER_CLASS_NAME
-NET_OPTIMIZER = ["Adam", "SGD", "Adagrad", "RMSprop"]
+PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
+
+PY_OPTIMIZER = [opt.lower() for opt in PY_OPTIMIZER_CLASS]
 
 ACTIVATION_FUNCTION = [
     "Sigmoid",
@@ -253,7 +254,9 @@ MAPPING = ["uniform", "distributed", "multi-linear", "multi-polynomial", "ann"]
 
 COST_VARIANT = ["cls", "bys"]
 
-OPTIMIZER = ["sbs", "lbfgsb", "adam", "sgd", "adagrad", "rmsprop"]
+F90_OPTIMIZER = ["sbs", "lbfgsb"]
+
+OPTIMIZER = F90_OPTIMIZER + PY_OPTIMIZER
 
 # % Following MAPPING order
 # % The first optimizer for each mapping is used as default optimizer
@@ -261,26 +264,21 @@ MAPPING_OPTIMIZER = dict(
     zip(
         MAPPING,
         [
-            ["sbs", "lbfgsb"],
+            F90_OPTIMIZER,
             ["lbfgsb"],
             ["lbfgsb"],
             ["lbfgsb"],
-            ["adam", "sgd", "adagrad", "rmsprop"],
+            PY_OPTIMIZER,
         ],
     )
 )
 
-OPTIMIZER_CONTROL_TFM = dict(
+F90_OPTIMIZER_CONTROL_TFM = dict(
     zip(
-        OPTIMIZER,
+        F90_OPTIMIZER,
         [
-            ["sbs", "normalize", None],
-            ["normalize"],
-            [None],
-            [None],
-            [None],
-            [None],
-            [None],
+            ["sbs", "normalize", "keep"],
+            ["normalize", "keep"],
         ],
     )
 )
@@ -293,84 +291,69 @@ WEIGHT_ALIAS = ["mean", "median"]
 
 GAUGE_ALIAS = ["dws", "all"]
 
-# % TODO: TH Complete ANN optimizer
-DEFAULT_SIMULATION_OPTIMIZE_OPTIONS = {
-    ("uniform", "sbs"): {
-        "parameters": None,
-        "bounds": None,
-        "control_tfm": "sbs",
-        "maxiter": 50,
-    },
-    ("uniform", "lbfgsb"): {
-        "parameters": None,
-        "bounds": None,
-        "control_tfm": "normalize",
-        "maxiter": 100,
-        "factr": 1e6,
-        "pgtol": 1e-12,
-    },
-    ("distributed", "lbfgsb"): {
-        "parameters": None,
-        "bounds": None,
-        "control_tfm": "normalize",
-        "maxiter": 100,
-        "factr": 1e6,
-        "pgtol": 1e-12,
-    },
-    ("multi-linear", "lbfgsb"): {
-        "parameters": None,
-        "bounds": None,
-        "control_tfm": "normalize",
-        "descriptor": None,
-        "maxiter": 100,
-        "factr": 1e6,
-        "pgtol": 1e-12,
-    },
-    ("multi-polynomial", "lbfgsb"): {
-        "parameters": None,
-        "bounds": None,
-        "control_tfm": "normalize",
-        "descriptor": None,
-        "maxiter": 100,
-        "factr": 1e6,
-        "pgtol": 1e-12,
-    },
-    ("ann", "adam"): {
-        "parameters": None,
-        "bounds": None,
-        "descriptor": None,
-        "net": None,
-        "epochs": 400,
-        "lerning_rate": 0.003,
-        "early_stopping": False,
-    },
-    ("ann", "sgd"): {
-        "parameters": None,
-        "bounds": None,
-        "descriptor": None,
-        "net": None,
-        "epochs": 400,
-        "lerning_rate": 0.003,
-        "early_stopping": False,
-    },
-    ("ann", "adagrad"): {
-        "parameters": None,
-        "bounds": None,
-        "descriptor": None,
-        "net": None,
-        "epochs": 400,
-        "lerning_rate": 0.003,
-        "early_stopping": False,
-    },
-    ("ann", "rmsprop"): {
-        "parameters": None,
-        "bounds": None,
-        "descriptor": None,
-        "net": None,
-        "epochs": 400,
-        "lerning_rate": 0.003,
-        "early_stopping": False,
-    },
+DEFAULT_TERMINATION_CRIT = dict(
+    **dict(
+        zip(
+            F90_OPTIMIZER,
+            [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
+        )
+    ),
+    **dict(
+        zip(
+            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": False}]
+        )
+    ),
+)
+
+SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
+    ("uniform", "sbs"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "termination_crit",
+    ],
+    ("uniform", "lbfgsb"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "termination_crit",
+    ],
+    ("distributed", "lbfgsb"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "termination_crit",
+    ],
+    ("multi-linear", "lbfgsb"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "descriptor",
+        "termination_crit",
+    ],
+    ("multi-polynomial", "lbfgsb"): [
+        "parameters",
+        "bounds",
+        "control_tfm",
+        "descriptor",
+        "termination_crit",
+    ],
+    **dict(
+        zip(
+            [("ann", optimizer) for optimizer in PY_OPTIMIZER],
+            len(PY_OPTIMIZER)
+            * [
+                [
+                    "parameters",
+                    "bounds",
+                    "net",
+                    "learning_rate",
+                    "random_state",
+                    "termination_crit",
+                ]
+            ],
+        )
+    ),
 }
 
 # % Following COST_VARIANT order

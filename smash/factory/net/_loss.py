@@ -2,66 +2,99 @@ from __future__ import annotations
 
 import numpy as np
 
+from smash.fcore._mwd_parameters_manipulation import (
+    parameters_to_control,
+    control_to_parameters,
+)
 
-# def _hcost(instance: Model):
-#     return instance.output.cost
+from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
+
+from smash.fcore._mw_control_dealloc import dealloc_control
+
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.core.model.model import Model
+    from smash.fcore._mwd_options import OptionsDT
+    from smash.fcore._mwd_returns import ReturnsDT
 
 
-# def _hcost_prime(
-#     y: np.ndarray,
-#     control_vector: np.ndarray,
-#     mask: np.ndarray,
-#     instance: Model,
-#     parameters_bgd: ParametersDT,
-#     states_bgd: StatesDT,
-# ):
-#     # % Set parameters or states
-#     for i, name in enumerate(control_vector):
-#         if name in instance.setup._parameters_name:
-#             getattr(instance.parameters, name)[mask] = y[:, i]
+def _hcost(instance: Model):
+    return instance._output.cost
 
-#         else:
-#             getattr(instance.states, name)[mask] = y[:, i]
 
-#     parameters_b = instance.parameters.copy()
-#     parameters_bgd_b = instance.parameters.copy()
+def _hcost_prime(
+    y: np.ndarray,
+    parameters: np.ndarray,
+    mask: np.ndarray,
+    instance: Model,
+    wrap_options: OptionsDT,
+    wrap_returns: ReturnsDT,
+):
+    # % Set parameters or states
+    for i, name in enumerate(parameters):
+        if name in instance.opr_parameters.keys:
+            ind = np.argwhere(instance.opr_parameters.keys == name).item()
 
-#     states_b = instance.states.copy()
-#     states_bgd_b = instance.states.copy()
+            instance.opr_parameters.values[..., ind][mask] = y[:, i]
 
-#     output_b = instance.output.copy()
+        else:
+            ind = np.argwhere(instance.opr_initial_states.keys == name).item()
 
-#     cost = np.float32(0)
-#     cost_b = np.float32(1)
+            instance.opr_inital_states.values[..., ind][mask] = y[:, i]
 
-#     forward_b(
-#         instance.setup,
-#         instance.mesh,
-#         instance.input_data,
-#         instance.parameters,
-#         parameters_b,
-#         parameters_bgd,
-#         parameters_bgd_b,
-#         instance.states,
-#         states_b,
-#         states_bgd,
-#         states_bgd_b,
-#         instance.output,
-#         output_b,
-#         cost,
-#         cost_b,
-#     )
+    # % TRIGGER distributed control to get distributed gradients
+    wrap_options.optimize.mapping = "distributed"
 
-#     grad = np.transpose(
-#         [
-#             getattr(parameters_b, name)[mask]
-#             if name in instance.setup._parameters_name
-#             else getattr(states_b, name)[mask]
-#             for name in control_vector
-#         ]
-#     )
+    parameters_to_control(
+        instance.setup,
+        instance.mesh,
+        instance._input_data,
+        instance._parameters,
+        wrap_options,
+    )
 
-#     return grad
+    parameters_b = instance._parameters.copy()
+
+    output_b = instance._output.copy()
+    output_b.cost = np.float32(1)
+
+    wrap_forward_run_b(
+        instance.setup,
+        instance.mesh,
+        instance._input_data,
+        instance._parameters,
+        parameters_b,
+        instance._output,
+        output_b,
+        wrap_options,
+        wrap_returns,
+    )
+
+    control_to_parameters(
+        instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
+    )
+
+    grad = []
+    for name in parameters:
+        if name in instance.opr_parameters.keys:
+            ind = np.argwhere(instance.opr_parameters.keys == name).item()
+
+            grad.append(parameters_b.opr_parameters.values[..., ind][mask])
+
+        else:
+            ind = np.argwhere(instance.opr_initial_states.keys == name).item()
+
+            grad.append(parameters_b.opr_initial_states.values[..., ind][mask])
+
+    grad = np.transpose(grad)
+
+    dealloc_control(instance._parameters.control)
+
+    # % Reset mapping type after TRIGGER
+    wrap_options.optimize.mapping = "ann"
+
+    return grad
 
 
 def _inf_norm(grad: np.ndarray):

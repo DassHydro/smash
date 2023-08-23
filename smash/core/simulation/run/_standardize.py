@@ -11,6 +11,7 @@ from smash.core.simulation._standardize import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from smash.core.model.model import Model
     from smash._typing import AnyTuple
 
 

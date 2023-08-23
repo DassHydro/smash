@@ -58,11 +58,12 @@ class Adam:
         learning_rate: float = 0.001,
         b1: float = 0.9,
         b2: float = 0.999,
+        eps=1e-8,
         **unknown_options,
     ):
         self.learning_rate = learning_rate
 
-        self.eps = 1e-8
+        self.eps = eps
         self.m = None
         self.v = None
 
@@ -99,11 +100,11 @@ class Adagrad:
     """
 
     # TODO: Add function check_unknown_options
-    def __init__(self, learning_rate: float = 0.01, **unknown_options):
+    def __init__(self, learning_rate: float = 0.01, eps=1e-8, **unknown_options):
         self.learning_rate = learning_rate
 
         self.G = None  # Sum of squares of the gradients
-        self.eps = 1e-8
+        self.eps = eps
 
     def update(self, w: np.ndarray, grad_wrt_w: np.ndarray):
         if self.G is None:
@@ -132,12 +133,16 @@ class RMSprop:
 
     # TODO: Add function check_unknown_options
     def __init__(
-        self, learning_rate: float = 0.001, rho: float = 0.9, **unknown_options
+        self,
+        learning_rate: float = 0.001,
+        rho: float = 0.9,
+        eps=1e-8,
+        **unknown_options,
     ):
         self.learning_rate = learning_rate
 
         self.Eg = None  # Running average of the square gradients at w
-        self.eps = 1e-8
+        self.eps = eps
         self.rho = rho
 
     def update(self, w: np.ndarray, grad_wrt_w: np.ndarray):
