@@ -20,7 +20,7 @@ def default_optimize_options(
     model: Model,
     mapping: str = "uniform",
     optimizer: str | None = None,
-):
+) -> dict:
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 
     return _standardize_simulation_optimize_options(model, mapping, optimizer, None)
