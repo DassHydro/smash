@@ -8,7 +8,15 @@
 !%      Function
 !%      --------
 !%
-!%      - signature_computation
+!%      - rc
+!%      - rchf
+!%      - rclf
+!%      - rch2r
+!%      - cfp
+!%      - eff
+!%      - ebf
+!%      - epf
+!%      - elt
 
 module mwd_signatures
 
@@ -109,47 +117,95 @@ contains
 
     end subroutine baseflow_separation
 
-    function signature_computation(p, q, stype) result(res)
+    function rc(p, q) result(res)
 
         !% Notes
         !% -----
         !%
-        !% Signature computation (S)
-        !%
+        !% Runoff Cofficient (Crc or Erc)
         !% Given two single precision array (p, q) of dim(1) and size(n),
-        !% it returns the result of S computation
-        !% S_i = f_i(p, q)
-        !% where i is a signature i and f_i is its associated signature computation function
+        !% it returns the result of RC computation
 
         implicit none
 
         real(sp), dimension(:), intent(in) :: p, q
-        character(len=*), intent(in) :: stype
         real(sp) :: res
 
-        real(sp), dimension(size(p)) :: nonnegative_p, nonnegative_q
-        real(sp), dimension(size(p)) :: bf, qf
-        integer :: i, j, n, imax_p, imax_q
-        real(sp) :: quant, numer, denom, max_p, max_q
+        integer :: n, i
+        real(sp) :: numer, denom
 
         n = size(p)
 
         res = -99._sp
 
-        select case (stype)
+        numer = 0._sp
+        denom = 0._sp
 
-            ! runoff coefs: only based on p and q
-        case ("Crc", "Erc")
+        do i = 1, n
+
+            if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
+
+            numer = numer + q(i)
+            denom = denom + p(i)
+
+        end do
+
+        if (denom .gt. 0._sp) then
+
+            res = numer/denom
+
+        end if
+
+    end function rc
+
+    function rchf(p, q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Runoff Cofficient on Highflow (Crchf or Erchf)
+        !% Given two single precision array (p, q) of dim(1) and size(n),
+        !% it returns the result of RCHF computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: p, q
+        real(sp) :: res
+
+        integer :: n, i, j
+        real(sp) :: numer, denom
+        real(sp), dimension(size(p)) :: nonnegative_p, nonnegative_q, bf, qf
+
+        n = size(p)
+
+        res = -99._sp
+
+        nonnegative_p = 0._sp
+        nonnegative_q = 0._sp
+
+        j = 0
+
+        do i = 1, n
+
+            if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
+
+            j = j + 1
+            nonnegative_p(j) = p(i)
+            nonnegative_q(j) = q(i)
+
+        end do
+
+        if (j .gt. 1) then
+
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
 
             numer = 0._sp
             denom = 0._sp
 
-            do i = 1, n
+            do i = 1, j
 
-                if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
-
-                numer = numer + q(i)
-                denom = denom + p(i)
+                numer = numer + qf(i)
+                denom = denom + nonnegative_p(i)
 
             end do
 
@@ -159,152 +215,341 @@ contains
 
             end if
 
-            ! runoff coefs based on baseflow and/or quickflow
-        case ("Crchf", "Crclf", "Crch2r", "Erchf", "Erclf", "Erch2r", "Eff", "Ebf")
-            nonnegative_p = 0._sp
-            nonnegative_q = 0._sp
+        end if
 
-            j = 0
+    end function rchf
 
-            do i = 1, n
+    function rclf(p, q) result(res)
 
-                if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
+        !% Notes
+        !% -----
+        !%
+        !% Runoff Cofficient on Lowflow (Crclf or Erclf)
+        !% Given two single precision array (p, q) of dim(1) and size(n),
+        !% it returns the result of RCLF computation
 
-                j = j + 1
-                nonnegative_p(j) = p(i)
-                nonnegative_q(j) = q(i)
+        implicit none
 
-            end do
+        real(sp), dimension(:), intent(in) :: p, q
+        real(sp) :: res
 
-            if (j .gt. 1) then
+        integer :: n, i, j
+        real(sp) :: numer, denom
+        real(sp), dimension(size(p)) :: nonnegative_p, nonnegative_q, bf, qf
 
-                call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+        n = size(p)
 
-                numer = 0._sp
-                denom = 0._sp
+        res = -99._sp
 
-                do i = 1, j
-                    select case (stype)
+        nonnegative_p = 0._sp
+        nonnegative_q = 0._sp
 
-                    case ("Crchf", "Erchf")
-                        numer = numer + qf(i)
-                        denom = denom + nonnegative_p(i)
+        j = 0
 
-                    case ("Crclf", "Erclf")
-                        numer = numer + bf(i)
-                        denom = denom + nonnegative_p(i)
+        do i = 1, n
 
-                    case ("Crch2r", "Erch2r")
-                        numer = numer + qf(i)
-                        denom = denom + nonnegative_q(i)
+            if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
 
-                    end select
+            j = j + 1
+            nonnegative_p(j) = p(i)
+            nonnegative_q(j) = q(i)
 
-                end do
+        end do
 
-                if (denom .gt. 0._sp) then
+        if (j .gt. 1) then
 
-                    res = numer/denom
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
 
-                end if
+            numer = 0._sp
+            denom = 0._sp
 
-                select case (stype)
+            do i = 1, j
 
-                case ("Eff")
-                    res = sum(qf(1:j))/j
-
-                case ("Ebf")
-                    res = sum(bf(1:j))/j
-
-                end select
-
-            end if
-
-            ! flow percentiles
-        case ("Cfp2", "Cfp10", "Cfp50", "Cfp90")
-
-            j = 0
-
-            do i = 1, n
-
-                if (q(i) .lt. 0._sp) cycle
-
-                j = j + 1
-                nonnegative_q(j) = q(i)
+                numer = numer + bf(i)
+                denom = denom + nonnegative_p(i)
 
             end do
 
-            if (j .gt. 1) then
+            if (denom .gt. 0._sp) then
 
-                quant = 0._sp
-
-                select case (stype)
-
-                case ("Cfp2")
-                    quant = 0.02_sp
-
-                case ("Cfp10")
-                    quant = 0.1_sp
-
-                case ("Cfp50")
-                    quant = 0.5_sp
-
-                case ("Cfp90")
-                    quant = 0.9_sp
-
-                end select
-
-                res = quantile1d_r(nonnegative_q(1:j), quant)
+                res = numer/denom
 
             end if
 
-            ! peak flow
-        case ("Epf")
-            max_q = -99._sp
+        end if
 
-            do i = 1, n
+    end function rclf
 
-                if (q(i) .le. max_q) cycle
+    function rch2r(p, q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Runoff Cofficient on Highflow and discharge (Crch2r or Erch2r)
+        !% Given two single precision array (p, q) of dim(1) and size(n),
+        !% it returns the result of RCLF computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: p, q
+        real(sp) :: res
+
+        integer :: n, i, j
+        real(sp) :: numer, denom
+        real(sp), dimension(size(p)) :: nonnegative_p, nonnegative_q, bf, qf
+
+        n = size(p)
+
+        res = -99._sp
+
+        nonnegative_p = 0._sp
+        nonnegative_q = 0._sp
+
+        j = 0
+
+        do i = 1, n
+
+            if (p(i) .lt. 0._sp .or. q(i) .lt. 0._sp) cycle
+
+            j = j + 1
+            nonnegative_p(j) = p(i)
+            nonnegative_q(j) = q(i)
+
+        end do
+
+        if (j .gt. 1) then
+
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+
+            numer = 0._sp
+            denom = 0._sp
+
+            do i = 1, j
+
+                numer = numer + qf(i)
+                denom = denom + nonnegative_q(i)
+
+            end do
+
+            if (denom .gt. 0._sp) then
+
+                res = numer/denom
+
+            end if
+
+        end if
+
+    end function rch2r
+
+    function cfp(q, quant) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Flow percentiles (Cfp2, Cfp10, Cfp50, or Cfp90)
+        !% Given one single precision array q of dim(1) and size(n),
+        !% it returns the result of FP computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: q
+        real(sp), intent(in) :: quant
+        real(sp) :: res
+
+        integer :: n, i, j
+        real(sp), dimension(size(q)) :: nonnegative_q
+
+        n = size(q)
+
+        res = -99._sp
+
+        j = 0
+
+        do i = 1, n
+
+            if (q(i) .lt. 0._sp) cycle
+
+            j = j + 1
+            nonnegative_q(j) = q(i)
+
+        end do
+
+        if (j .gt. 1) then
+
+            res = quantile1d_r(nonnegative_q(1:j), quant)
+
+        end if
+
+    end function cfp
+
+    function eff(q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Flood flow (Eff)
+        !% Given one single precision array q of dim(1) and size(n),
+        !% it returns the result of FF computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: q
+        real(sp) :: res
+
+        integer :: n, i, j
+        real(sp), dimension(size(q)) :: nonnegative_q, bf, qf
+
+        n = size(q)
+
+        res = -99._sp
+
+        nonnegative_q = 0._sp
+
+        j = 0
+
+        do i = 1, n
+
+            if (q(i) .lt. 0._sp) cycle
+
+            j = j + 1
+            nonnegative_q(j) = q(i)
+
+        end do
+
+        if (j .gt. 1) then
+
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+
+            res = sum(qf(1:j))/j
+
+        end if
+
+    end function eff
+
+    function ebf(q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Base flow (Ebf)
+        !% Given one single precision array q of dim(1) and size(n),
+        !% it returns the result of BF computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: q
+        real(sp) :: res
+
+        integer :: n, i, j
+        real(sp), dimension(size(q)) :: nonnegative_q, bf, qf
+
+        n = size(q)
+
+        res = -99._sp
+
+        nonnegative_q = 0._sp
+
+        j = 0
+
+        do i = 1, n
+
+            if (q(i) .lt. 0._sp) cycle
+
+            j = j + 1
+            nonnegative_q(j) = q(i)
+
+        end do
+
+        if (j .gt. 1) then
+
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+
+            res = sum(bf(1:j))/j
+
+        end if
+
+    end function ebf
+
+    function epf(q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Peak flow (Epf)
+        !% Given one single precision array q of dim(1) and size(n),
+        !% it returns the result of PF computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: q
+        real(sp) :: res
+
+        integer :: n, i
+
+        n = size(q)
+
+        res = -99._sp
+
+        do i = 1, n
+
+            if (q(i) .le. res) cycle
+
+            res = q(i)
+
+        end do
+
+    end function epf
+
+    function elt(p, q) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Lag time (Elt)
+        !% Given two single precision array (p, q) of dim(1) and size(n),
+        !% it returns the result of LT computation
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: p, q
+        real(sp) :: res
+
+        integer :: n, i, imax_p, imax_q
+        real(sp) :: max_p, max_q
+
+        n = size(q)
+
+        res = -99._sp
+
+        max_p = -99._sp
+        max_q = -99._sp
+
+        imax_p = 0
+        imax_q = 0
+
+        do i = 1, n
+            if (p(i) .gt. max_p) then
+
+                max_p = p(i)
+                imax_p = i
+
+            end if
+
+            if (q(i) .gt. max_q) then
 
                 max_q = q(i)
-
-            end do
-
-            res = max_q
-
-            ! lag time
-        case ("Elt")
-            max_p = -99._sp
-            max_q = -99._sp
-
-            imax_p = 0
-            imax_q = 0
-
-            do i = 1, n
-                if (p(i) .gt. max_p) then
-
-                    max_p = p(i)
-                    imax_p = i
-
-                end if
-
-                if (q(i) .gt. max_q) then
-
-                    max_q = q(i)
-                    imax_q = i
-
-                end if
-
-            end do
-
-            if (imax_p .gt. 0 .and. imax_q .gt. 0) then
-
-                res = imax_q - imax_p
+                imax_q = i
 
             end if
 
-        end select
+        end do
 
-    end function signature_computation
+        if (imax_p .gt. 0 .and. imax_q .gt. 0) then
+
+            res = imax_q - imax_p
+
+        end if
+
+    end function elt
 
 end module mwd_signatures

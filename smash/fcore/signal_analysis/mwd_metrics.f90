@@ -255,7 +255,7 @@ contains
         !% Notes
         !% -----
         !%
-        !% Square Error (SE) computation function
+        !% Squared Error (SE) computation function
         !%
         !% Given two single precision array (x, y) of dim(1) and size(n),
         !% it returns the result of SE computation
@@ -320,7 +320,7 @@ contains
         !% Notes
         !% -----
         !%
-        !% Root Mean Square Error (RMSE) computation function
+        !% Root Mean Squared Error (RMSE) computation function
         !%
         !% Given two single precision array (x, y) of dim(1) and size(n),
         !% it returns the result of SE computation

@@ -1,51 +1,11 @@
-commit fd978173deaba1af74500cada09e36bb46f89c95
+commit 626599c502b331b045dae4066fdf27a8866ba00d
+Merge: 930ddfb 2189500
 Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Fri Jul 28 16:48:18 2023 +0200
+Date:   Wed Aug 23 16:32:11 2023 +0200
 
-    ENC: Forward run and optimize (#52)
+    Merge pull request #57 from DassHydro-dev/fix-py-control-dealloc
     
-    * ENC: Forward run and optimize
-    
-    This commis add:
-    
-    - New f90wrap directive to handler index for arrays and sclar
-    - Standardize method to check user input for forward run and optimize
-    
-    Some adjustment must be done for everything link to ann optimize
-    Maybe some clean must be done in the _constant.py file
-    
-    * FIX PR: merge operator '|' not handled by all py version
-    
-    * FIX PR: Lower to 1e-5 tests on optimize
-    
-    * FIX PR: Try 1e-3 ...
-    
-    * FIX PR: Remove parallel for adjoint computation
-    
-    * FIX PR: Completly deactivate parallel
-    
-    * Update test_optimize.py
-    
-    Passing tol from 1e-6 to 1e-3
-    
-    * Update test_optimize.py
-    
-    Try tol 1e-5
-    
-    * Update test_optimize.py
-    
-    Back to 1e-3
-    
-    * FIX PR: Fix review TH
-    
-    Clean parameter/bound feasibility error message
-    Fix variable name and useless imports
-    
-    * FIX PR: Fix review TH 2
-    
-    Change np.logical_or for or
-    Fix a bug with set_opr_states which did not allowed np.ndarray of size 1
-    Change order of Error raising
+    FIX: Clean Python Control Dealloc
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -65,6 +25,8 @@ custom_optimize.gr4-lr.custom_set_1.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_2.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_3.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_4.sim_q |NON MODIFIED
+custom_optimize.gr4-lr.custom_set_5.sim_q |ADDED
+custom_optimize.gr4-lr.custom_set_6.sim_q |ADDED
 forward_run.gr4-kw.sim_q                  |NON MODIFIED
 forward_run.gr4-lr.sim_q                  |NON MODIFIED
 forward_run.grd-lr.sim_q                  |NON MODIFIED
@@ -108,17 +70,17 @@ net_init.weight_layer_1                   |NON MODIFIED
 net_init.weight_layer_2                   |NON MODIFIED
 net_init.weight_layer_3                   |NON MODIFIED
 net_init.weight_layer_4                   |NON MODIFIED
-optimize.gr4-kw.ann.sim_q                 |ADDED
+optimize.gr4-kw.ann.sim_q                 |NON MODIFIED
 optimize.gr4-kw.distributed.sim_q         |NON MODIFIED
 optimize.gr4-kw.multi-linear.sim_q        |NON MODIFIED
 optimize.gr4-kw.multi-polynomial.sim_q    |NON MODIFIED
 optimize.gr4-kw.uniform.sim_q             |NON MODIFIED
-optimize.gr4-lr.ann.sim_q                 |ADDED
+optimize.gr4-lr.ann.sim_q                 |NON MODIFIED
 optimize.gr4-lr.distributed.sim_q         |NON MODIFIED
 optimize.gr4-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.gr4-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.gr4-lr.uniform.sim_q             |NON MODIFIED
-optimize.grd-lr.ann.sim_q                 |ADDED
+optimize.grd-lr.ann.sim_q                 |NON MODIFIED
 optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.grd-lr.multi-polynomial.sim_q    |NON MODIFIED

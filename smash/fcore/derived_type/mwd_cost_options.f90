@@ -51,6 +51,7 @@ module mwd_cost_options
 
         integer :: end_warmup = -99 !$F90W index
 
+        integer, dimension(:), allocatable :: n_event
         integer, dimension(:, :), allocatable :: mask_event
 
     end type Cost_OptionsDT
@@ -86,6 +87,9 @@ contains
 
         allocate (this%wgauge(mesh%ng))
         this%wgauge = -99._sp
+
+        allocate (this%n_event(mesh%ng))
+        this%n_event = -99
 
         allocate (this%mask_event(mesh%ng, setup%ntime_step))
         this%mask_event = -99

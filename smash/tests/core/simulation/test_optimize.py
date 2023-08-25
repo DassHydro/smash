@@ -61,8 +61,8 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
 
     ncpu = max(1, os.cpu_count() - 1)
 
-    # % TODO: Add custom cost_options when cost computation is implemented
     custom_sets = [
+        # % Test custom optimize_options
         {
             "mapping": "distributed",
             "optimizer": "lbfgsb",
@@ -110,6 +110,38 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
             "optimize_options": {
                 "parameters": ["cp", "kexc"],
                 "bounds": {"cp": (10, 2000), "kexc": (-50, 20)},
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
+        # Test custom cost_options
+        {
+            "cost_options": {
+                "jobs_cmpt": ["nse", "Crc", "Cfp10"],
+                "wjobs_cmpt": "mean",
+                "gauge": "all",
+                "wgauge": [0.5, 0.3, 0.2],
+            },
+            "optimize_options": {
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
+        {
+            "cost_options": {
+                "jobs_cmpt": ["nse", "Epf", "Elt"],
+                "wjobs_cmpt": [0.5, 1.5, 0.5],
+                "event_seg": {"peak_quant": 0.9},
+                "gauge": ["V3524010", "V3517010"],
+                "wgauge": "uquartile",
+            },
+            "optimize_options": {
                 "termination_crit": {"maxiter": 1},
             },
             "common_options": {
