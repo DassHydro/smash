@@ -139,17 +139,17 @@ contains
                     jobs_tmp = rch2r(mprcp, qo)
                     if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (rch2r(mprcp, qs)/jobs_tmp - 1._sp)**2
                 case ("Cfp2")
-                    jobs_tmp = cfp(qo, 0.02)
-                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.02)/jobs_tmp - 1._sp)**2
+                    jobs_tmp = cfp(qo, 0.02_sp)
+                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.02_sp)/jobs_tmp - 1._sp)**2
                 case ("Cfp10")
-                    jobs_tmp = cfp(qo, 0.1)
-                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.1)/jobs_tmp - 1._sp)**2
+                    jobs_tmp = cfp(qo, 0.1_sp)
+                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.1_sp)/jobs_tmp - 1._sp)**2
                 case ("Cfp50")
-                    jobs_tmp = cfp(qo, 0.5)
-                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.5)/jobs_tmp - 1._sp)**2
+                    jobs_tmp = cfp(qo, 0.5_sp)
+                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.5_sp)/jobs_tmp - 1._sp)**2
                 case ("Cfp90")
-                    jobs_tmp = cfp(qo, 0.9)
-                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.9)/jobs_tmp - 1._sp)**2
+                    jobs_tmp = cfp(qo, 0.9_sp)
+                    if (jobs_tmp .gt. 0._sp) jobs_cmpt_values(i, j) = (cfp(qs, 0.9_sp)/jobs_tmp - 1._sp)**2
 
                     ! Event Signatures
                 case ("Erc")

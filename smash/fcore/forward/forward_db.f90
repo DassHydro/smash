@@ -3167,33 +3167,33 @@ CONTAINS
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp2') 
-            jobs_tmp = CFP(qo, 0.02)
+            jobs_tmp = CFP(qo, 0.02_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1_d = CFP_D(qs, qs_d, 0.02, result1)
+              result1_d = CFP_D(qs, qs_d, 0.02_sp, result1)
               jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
 &               result1_d/jobs_tmp
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp10') 
-            jobs_tmp = CFP(qo, 0.1)
+            jobs_tmp = CFP(qo, 0.1_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1_d = CFP_D(qs, qs_d, 0.1, result1)
+              result1_d = CFP_D(qs, qs_d, 0.1_sp, result1)
               jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
 &               result1_d/jobs_tmp
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp50') 
-            jobs_tmp = CFP(qo, 0.5)
+            jobs_tmp = CFP(qo, 0.5_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1_d = CFP_D(qs, qs_d, 0.5, result1)
+              result1_d = CFP_D(qs, qs_d, 0.5_sp, result1)
               jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
 &               result1_d/jobs_tmp
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp90') 
-            jobs_tmp = CFP(qo, 0.9)
+            jobs_tmp = CFP(qo, 0.9_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1_d = CFP_D(qs, qs_d, 0.9, result1)
+              result1_d = CFP_D(qs, qs_d, 0.9_sp, result1)
               jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
 &               result1_d/jobs_tmp
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
@@ -3575,10 +3575,10 @@ CONTAINS
             END IF
           CASE ('Cfp2') 
             CALL PUSHREAL4(jobs_tmp)
-            jobs_tmp = CFP(qo, 0.02)
+            jobs_tmp = CFP(qo, 0.02_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
               CALL PUSHREAL4(result1)
-              result1 = CFP(qs, 0.02)
+              result1 = CFP(qs, 0.02_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
               CALL PUSHCONTROL6B(16)
             ELSE
@@ -3586,10 +3586,10 @@ CONTAINS
             END IF
           CASE ('Cfp10') 
             CALL PUSHREAL4(jobs_tmp)
-            jobs_tmp = CFP(qo, 0.1)
+            jobs_tmp = CFP(qo, 0.1_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
               CALL PUSHREAL4(result1)
-              result1 = CFP(qs, 0.1)
+              result1 = CFP(qs, 0.1_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
               CALL PUSHCONTROL6B(14)
             ELSE
@@ -3597,10 +3597,10 @@ CONTAINS
             END IF
           CASE ('Cfp50') 
             CALL PUSHREAL4(jobs_tmp)
-            jobs_tmp = CFP(qo, 0.5)
+            jobs_tmp = CFP(qo, 0.5_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
               CALL PUSHREAL4(result1)
-              result1 = CFP(qs, 0.5)
+              result1 = CFP(qs, 0.5_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
               CALL PUSHCONTROL6B(12)
             ELSE
@@ -3608,10 +3608,10 @@ CONTAINS
             END IF
           CASE ('Cfp90') 
             CALL PUSHREAL4(jobs_tmp)
-            jobs_tmp = CFP(qo, 0.9)
+            jobs_tmp = CFP(qo, 0.9_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
               CALL PUSHREAL4(result1)
-              result1 = CFP(qs, 0.9)
+              result1 = CFP(qs, 0.9_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
               CALL PUSHCONTROL6B(10)
             ELSE
@@ -4086,7 +4086,7 @@ CONTAINS
 &                   jobs_cmpt_values_b(i, j)/jobs_tmp
                   jobs_cmpt_values_b(i, j) = 0.0_4
                   CALL POPREAL4(result1)
-                  CALL CFP_B(qs, qs_b, 0.9, result1_b)
+                  CALL CFP_B(qs, qs_b, 0.9_sp, result1_b)
                 ELSE
                   GOTO 100
                 END IF
@@ -4098,7 +4098,7 @@ CONTAINS
 &                     jobs_cmpt_values_b(i, j)/jobs_tmp
                     jobs_cmpt_values_b(i, j) = 0.0_4
                     CALL POPREAL4(result1)
-                    CALL CFP_B(qs, qs_b, 0.5, result1_b)
+                    CALL CFP_B(qs, qs_b, 0.5_sp, result1_b)
                     GOTO 100
                   END IF
                 ELSE IF (branch .EQ. 14) THEN
@@ -4106,7 +4106,7 @@ CONTAINS
 &                   jobs_cmpt_values_b(i, j)/jobs_tmp
                   jobs_cmpt_values_b(i, j) = 0.0_4
                   CALL POPREAL4(result1)
-                  CALL CFP_B(qs, qs_b, 0.1, result1_b)
+                  CALL CFP_B(qs, qs_b, 0.1_sp, result1_b)
                 ELSE
                   GOTO 130
                 END IF
@@ -4124,7 +4124,7 @@ CONTAINS
 &                     jobs_cmpt_values_b(i, j)/jobs_tmp
                     jobs_cmpt_values_b(i, j) = 0.0_4
                     CALL POPREAL4(result1)
-                    CALL CFP_B(qs, qs_b, 0.02, result1_b)
+                    CALL CFP_B(qs, qs_b, 0.02_sp, result1_b)
                     GOTO 130
                   END IF
                 ELSE IF (branch .EQ. 18) THEN
@@ -4325,27 +4325,27 @@ CONTAINS
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp2') 
-            jobs_tmp = CFP(qo, 0.02)
+            jobs_tmp = CFP(qo, 0.02_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1 = CFP(qs, 0.02)
+              result1 = CFP(qs, 0.02_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp10') 
-            jobs_tmp = CFP(qo, 0.1)
+            jobs_tmp = CFP(qo, 0.1_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1 = CFP(qs, 0.1)
+              result1 = CFP(qs, 0.1_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp50') 
-            jobs_tmp = CFP(qo, 0.5)
+            jobs_tmp = CFP(qo, 0.5_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1 = CFP(qs, 0.5)
+              result1 = CFP(qs, 0.5_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Cfp90') 
-            jobs_tmp = CFP(qo, 0.9)
+            jobs_tmp = CFP(qo, 0.9_sp)
             IF (jobs_tmp .GT. 0._sp) THEN
-              result1 = CFP(qs, 0.9)
+              result1 = CFP(qs, 0.9_sp)
               jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
             END IF
           CASE ('Erc') 
