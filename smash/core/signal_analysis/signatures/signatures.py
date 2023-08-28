@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.fcore._mwd_signatures import signature_computation
+from smash.fcore._mwd_signatures import rc, rchf, rclf, rch2r, cfp, eff, ebf, epf, elt
 
 from smash.core.signal_analysis.signatures._standardize import (
     _standardize_signatures_args,
@@ -214,7 +214,7 @@ def _signatures(
             else:
                 if len(cs) > 0:
                     csignatures = [
-                        signature_computation(prcp, q, signature) for signature in cs
+                        _signature_computation(prcp, q, signature) for signature in cs
                     ]
 
                     row_cs = pd.DataFrame([[catchment] + csignatures], columns=col_cs)
@@ -247,7 +247,7 @@ def _signatures(
                             season = _get_season(date_range[ts].date())
 
                             esignatures = [
-                                signature_computation(event_prcp, event_q, signature)
+                                _signature_computation(event_prcp, event_q, signature)
                                 for signature in es
                             ]
 
@@ -278,3 +278,41 @@ def _signatures(
             ],
         )
     )
+
+
+def _signature_computation(p: np.ndarray, q: np.ndarray, signature: str) -> float:
+    if signature in ["Crc", "Erc"]:
+        return rc(p, q)
+
+    elif signature in ["Crchf", "Erchf"]:
+        return rchf(p, q)
+
+    elif signature in ["Crclf", "Erclf"]:
+        return rclf(p, q)
+
+    elif signature in ["Crch2r", "Erch2r"]:
+        return rch2r(p, q)
+
+    elif signature == "Cfp2":
+        return cfp(q, 0.02)
+
+    elif signature == "Cfp10":
+        return cfp(q, 0.1)
+
+    elif signature == "Cfp50":
+        return cfp(q, 0.5)
+
+    elif signature == "Cfp90":
+        return cfp(q, 0.9)
+
+    elif signature == "Eff":
+        return eff(q)
+
+    elif signature == "Ebf":
+        return ebf(q)
+
+    elif signature == "Epf":
+        return epf(q)
+
+    elif signature == "Elt":
+        return elt(p, q)

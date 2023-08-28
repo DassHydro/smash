@@ -1,5 +1,12 @@
 !%      (MD) Module Differentiated.
 !%
+!%      Interface
+!%      ---------
+!%
+!%      - quantile1d_r
+!%          . quantile1d_r_scl
+!%          . quantile1d_r_1d
+!%
 !%      Subroutine
 !%      ----------
 !%
@@ -8,13 +15,21 @@
 !%      Function
 !%      --------
 !%
-!%      - quantile1d_r
+!%      - quantile1d_r_scl
+!%      - quantile1d_r_1d
 
 module md_stats
 
     use md_constant !% only: sp
 
     implicit none
+
+    interface quantile1d_r
+
+        module procedure quantile1d_r_scl
+        module procedure quantile1d_r_1d
+
+    end interface quantile1d_r
 
 contains
 
@@ -99,22 +114,22 @@ contains
 
     end subroutine heap_sort
 
-    function quantile1d_r(dat, p) result(res)
+    function quantile1d_r_scl(dat, p) result(res)
 
         !% Notes
         !% -----
         !%
-        !% Quantile function for real 1d array using linear interpolation
+        !% Quantile function for real 1d array and real scalar quantile value using linear interpolation
         !%
         !% Similar to numpy.quantile
 
         implicit none
 
-        real(sp), intent(in) :: p
         real(sp), dimension(:), intent(in) :: dat
-        real(sp), dimension(size(dat)) :: sorted_dat
+        real(sp), intent(in) :: p
         real(sp) :: res
 
+        real(sp), dimension(size(dat)) :: sorted_dat
         integer :: n
         real(sp) :: q1, q2, frac
 
@@ -149,6 +164,62 @@ contains
 
         end if
 
-    end function quantile1d_r
+    end function quantile1d_r_scl
+
+    function quantile1d_r_1d(dat, p) result(res)
+
+        !% Notes
+        !% -----
+        !%
+        !% Quantile function for real 1d array and real 1d array quantile using linear interpolation
+        !%
+        !% Similar to numpy.quantile
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: dat
+        real(sp), dimension(:), intent(in) :: p
+        real(sp), dimension(size(p)) :: res
+
+        real(sp), dimension(size(dat)) :: sorted_dat
+        integer :: n, i
+        real(sp) :: q1, q2, frac
+
+        res = dat(1)
+
+        n = size(dat)
+
+        if (n .gt. 1) then
+
+            sorted_dat = dat
+
+            call heap_sort(n, sorted_dat)
+
+            do i = 1, size(p)
+
+                frac = (n - 1)*p(i) + 1
+
+                if (frac .le. 1) then
+
+                    res(i) = sorted_dat(1)
+
+                else if (frac .ge. n) then
+
+                    res(i) = sorted_dat(n)
+
+                else
+                    q1 = sorted_dat(int(frac))
+
+                    q2 = sorted_dat(int(frac) + 1)
+
+                    res(i) = q1 + (q2 - q1)*(frac - int(frac)) ! linear interpolation
+
+                end if
+
+            end do
+
+        end if
+
+    end function quantile1d_r_1d
 
 end module md_stats

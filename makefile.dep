@@ -40,7 +40,7 @@ f90: \
  obj/mw_atmos_statistic.o \
  obj/md_forward_structure.o \
  obj/mwd_metrics.o \
+ obj/mwd_signatures.o \
  obj/mwd_cost.o \
  obj/forward.o \
  obj/forward_db.o \
- obj/mwd_signatures.o \

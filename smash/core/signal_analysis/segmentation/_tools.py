@@ -212,14 +212,13 @@ def _events_grad(
     return list_events
 
 
-# TODO: Add function check_unknown_options
 def _mask_event(
     model: Model,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,  # in hour
-    **unknown_options,
-):
+) -> dict:
     mask = np.zeros(model.obs_response.q.shape)
+    n_event = np.zeros(model.mesh.ng)
 
     for i, catchment in enumerate(model.mesh.code):
         prcp = model.atmos_data.mean_prcp[i, :].copy()
@@ -235,10 +234,12 @@ def _mask_event(
                 prcp, qobs, peak_quant, max_duration, model.setup.dt
             )
 
+            n_event[i] = len(list_events)
+
             for event_number, t in enumerate(list_events):
                 ts = t["start"]
                 te = t["end"]
 
                 mask[i, ts : te + 1] = event_number + 1
 
-    return mask
+    return {"n": n_event, "mask": mask}

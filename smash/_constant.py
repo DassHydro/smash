@@ -287,7 +287,7 @@ JOBS_CMPT = METRICS + SIGNS
 
 JREG_CMPT = ["prior", "smoothing", "hard-smoothing"]
 
-WEIGHT_ALIAS = ["mean", "median"]
+WEIGHT_ALIAS = ["mean", "median", "lquartile", "uquartile"]
 
 GAUGE_ALIAS = ["dws", "all"]
 

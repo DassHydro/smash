@@ -36,7 +36,7 @@ def metrics(
         - 'mae': Mean Absolute Error
         - 'mape': Mean Absolute Percentage Error
         - 'mse': Mean Squared Error
-        - 'rmse': Root Mean Square Error
+        - 'rmse': Root Mean Squared Error
         - 'lgrm': Logarithmic
 
     end_warmup : str, pandas.Timestamp or None, default None

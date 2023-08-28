@@ -378,6 +378,8 @@ CONTAINS
     n = 0
     sum_x = 0._sp
     sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
     sum_yy_d = 0.0_4
     sum_xy_d = 0.0_4
     DO i=1,SIZE(x)
@@ -386,19 +388,23 @@ CONTAINS
         sum_x = sum_x + x(i)
         sum_xx = sum_xx + x(i)*x(i)
         sum_yy_d = sum_yy_d + 2*y(i)*y_d(i)
+        sum_yy = sum_yy + y(i)*y(i)
         sum_xy_d = sum_xy_d + x(i)*y_d(i)
+        sum_xy = sum_xy + x(i)*y(i)
       END IF
     END DO
     mean_x = sum_x/n
 !% NSE numerator / denominator
     num_d = sum_yy_d - 2*sum_xy_d
+    num = sum_xx - 2*sum_xy + sum_yy
     den = sum_xx - n*mean_x*mean_x
 !% NSE criterion
     res_d = -(num_d/den)
+    res = 1._sp - num/den
   END FUNCTION NSE_D
 
 !  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: res
+!   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE NSE_B(x, y, y_b, res_b)
     IMPLICIT NONE
@@ -434,7 +440,6 @@ CONTAINS
     num_b = -(res_b/den)
     sum_yy_b = num_b
     sum_xy_b = -(2*num_b)
-    y_b = 0.0_4
     CALL POPINTEGER4(ad_to)
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
@@ -473,6 +478,38 @@ CONTAINS
     res = 1._sp - num/den
   END FUNCTION NSE
 
+!  Differentiation of nnse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION NNSE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    result1_d = NSE_D(x, y, y_d, result1)
+    res_d = result1_d/(2._sp-result1)**2
+    res = 1._sp/(2._sp-result1)
+  END FUNCTION NNSE_D
+
+!  Differentiation of nnse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE NNSE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    result1 = NSE(x, y)
+    result1_b = res_b/(2._sp-result1)**2
+    CALL NSE_B(x, y, y_b, result1_b)
+  END SUBROUTINE NNSE_B
+
   FUNCTION NNSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -481,6 +518,162 @@ CONTAINS
     result1 = NSE(x, y)
     res = 1._sp/(2._sp-result1)
   END FUNCTION NNSE
+
+!  Differentiation of kge_components in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: r a b
+!   with respect to varying inputs: y
+  SUBROUTINE KGE_COMPONENTS_D(x, y, y_d, r, r_d, a, a_d, b, b_d)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp), INTENT(INOUT) :: r_d, a_d, b_d
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
+    REAL(sp) :: sum_y_d, sum_yy_d, sum_xy_d, mean_y_d, var_x_d, var_y_d&
+&   , cov_d
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: result2
+    REAL(sp) :: result2_d
+    REAL(sp) :: temp
+! Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
+    sum_yy_d = 0.0_4
+    sum_y_d = 0.0_4
+    sum_xy_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_y_d = sum_y_d + y_d(i)
+        sum_y = sum_y + y(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy_d = sum_yy_d + 2*y(i)*y_d(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy_d = sum_xy_d + x(i)*y_d(i)
+        sum_xy = sum_xy + x(i)*y(i)
+      END IF
+    END DO
+    mean_x = sum_x/n
+    mean_y_d = sum_y_d/n
+    mean_y = sum_y/n
+    var_x = sum_xx/n - mean_x*mean_x
+    var_y_d = sum_yy_d/n - 2*mean_y*mean_y_d
+    var_y = sum_yy/n - mean_y*mean_y
+    cov_d = sum_xy_d/n - mean_x*mean_y_d
+    cov = sum_xy/n - mean_x*mean_y
+! KGE components (r, alpha, beta)
+    result1 = SQRT(var_x)
+    temp = SQRT(var_y)
+    IF (var_y .EQ. 0.0) THEN
+      result2_d = 0.0_4
+    ELSE
+      result2_d = var_y_d/(2.0*temp)
+    END IF
+    result2 = temp
+    temp = cov/(result1*result2)
+    r_d = (cov_d-temp*result1*result2_d)/(result1*result2)
+    r = temp
+    temp = SQRT(var_y)
+    IF (var_y .EQ. 0.0) THEN
+      result1_d = 0.0_4
+    ELSE
+      result1_d = var_y_d/(2.0*temp)
+    END IF
+    result1 = temp
+    result2 = SQRT(var_x)
+    a_d = result1_d/result2
+    a = result1/result2
+    b_d = mean_y_d/mean_x
+    b = mean_y/mean_x
+  END SUBROUTINE KGE_COMPONENTS_D
+
+!  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: r y a b
+!   with respect to varying inputs: y
+  SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp), INTENT(INOUT) :: r, a, b
+    REAL(sp), INTENT(INOUT) :: r_b, a_b, b_b
+    REAL(sp) :: sum_x, sum_y, sum_xx, sum_yy, sum_xy, mean_x, mean_y, &
+&   var_x, var_y, cov
+    REAL(sp) :: sum_y_b, sum_yy_b, sum_xy_b, mean_y_b, var_x_b, var_y_b&
+&   , cov_b
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: result2
+    REAL(sp) :: result2_b
+    REAL(sp) :: temp_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+! Metric computation
+    n = 0
+    sum_x = 0._sp
+    sum_y = 0._sp
+    sum_xx = 0._sp
+    sum_yy = 0._sp
+    sum_xy = 0._sp
+    DO i=1,SIZE(x)
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        n = n + 1
+        sum_x = sum_x + x(i)
+        sum_y = sum_y + y(i)
+        sum_xx = sum_xx + x(i)*x(i)
+        sum_yy = sum_yy + y(i)*y(i)
+        sum_xy = sum_xy + x(i)*y(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    mean_x = sum_x/n
+    mean_y = sum_y/n
+    var_x = sum_xx/n - mean_x*mean_x
+    var_y = sum_yy/n - mean_y*mean_y
+    cov = sum_xy/n - mean_x*mean_y
+! KGE components (r, alpha, beta)
+    result1 = SQRT(var_x)
+    result2 = SQRT(var_y)
+    CALL PUSHREAL4(result2)
+    result2 = SQRT(var_x)
+    result1_b = a_b/result2
+    CALL POPREAL4(result2)
+    IF (var_y .EQ. 0.0) THEN
+      var_y_b = 0.0_4
+    ELSE
+      var_y_b = result1_b/(2.0*SQRT(var_y))
+    END IF
+    temp_b = r_b/(result1*result2)
+    cov_b = temp_b
+    result2_b = -(cov*temp_b/result2)
+    IF (.NOT.var_y .EQ. 0.0) var_y_b = var_y_b + result2_b/(2.0*SQRT(&
+&       var_y))
+    mean_y_b = b_b/mean_x - mean_x*cov_b - 2*mean_y*var_y_b
+    sum_xy_b = cov_b/n
+    sum_yy_b = var_y_b/n
+    sum_y_b = mean_y_b/n
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) y_b(i) = y_b(i) + x(i)*sum_xy_b + 2*y(i)*&
+&         sum_yy_b + sum_y_b
+    END DO
+  END SUBROUTINE KGE_COMPONENTS_B
 
   SUBROUTINE KGE_COMPONENTS(x, y, r, a, b)
     IMPLICIT NONE
@@ -525,6 +718,73 @@ CONTAINS
     b = mean_y/mean_x
   END SUBROUTINE KGE_COMPONENTS
 
+!  Differentiation of kge in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION KGE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    REAL(sp) :: r, a, b
+    REAL(sp) :: r_d, a_d, b_d
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    CALL KGE_COMPONENTS_D(x, y, y_d, r, r_d, a, a_d, b, b_d)
+! KGE criterion
+    arg1_d = 2*(r-1._sp)*r_d + 2*(b-1._sp)*b_d + 2*(a-1._sp)*a_d
+    arg1 = (r-1._sp)*(r-1._sp) + (b-1._sp)*(b-1._sp) + (a-1._sp)*(a-&
+&     1._sp)
+    temp = SQRT(arg1)
+    IF (arg1 .EQ. 0.0) THEN
+      result1_d = 0.0_4
+    ELSE
+      result1_d = arg1_d/(2.0*temp)
+    END IF
+    result1 = temp
+    res_d = -result1_d
+    res = 1._sp - result1
+  END FUNCTION KGE_D
+
+!  Differentiation of kge in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE KGE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    REAL(sp) :: r, a, b
+    REAL(sp) :: r_b, a_b, b_b
+    INTRINSIC SQRT
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    CALL KGE_COMPONENTS(x, y, r, a, b)
+! KGE criterion
+    arg1 = (r-1._sp)*(r-1._sp) + (b-1._sp)*(b-1._sp) + (a-1._sp)*(a-&
+&     1._sp)
+    result1_b = -res_b
+    arg1 = (r-1._sp)*(r-1._sp) + (b-1._sp)*(b-1._sp) + (a-1._sp)*(a-&
+&     1._sp)
+    IF (arg1 .EQ. 0.0) THEN
+      arg1_b = 0.0_4
+    ELSE
+      arg1_b = result1_b/(2.0*SQRT(arg1))
+    END IF
+    r_b = 2*(r-1._sp)*arg1_b
+    b_b = 2*(b-1._sp)*arg1_b
+    a_b = 2*(a-1._sp)*arg1_b
+    CALL KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
+  END SUBROUTINE KGE_B
+
   FUNCTION KGE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -540,6 +800,88 @@ CONTAINS
     result1 = SQRT(arg1)
     res = 1._sp - result1
   END FUNCTION KGE
+
+!  Differentiation of mae in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION MAE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_d
+    n = 0
+    res = 0._sp
+    res_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        IF (x(i) - y(i) .GE. 0.) THEN
+          abs0_d = -y_d(i)
+          abs0 = x(i) - y(i)
+        ELSE
+          abs0_d = y_d(i)
+          abs0 = -(x(i)-y(i))
+        END IF
+        res_d = res_d + abs0_d
+        res = res + abs0
+      END IF
+    END DO
+    res_d = res_d/n
+    res = res/n
+  END FUNCTION MAE_D
+
+!  Differentiation of mae in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE MAE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_b
+    INTEGER :: branch
+    INTEGER :: ad_to
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        n = n + 1
+        IF (x(i) - y(i) .GE. 0.) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    res_b = res_b/n
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        abs0_b = res_b
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          y_b(i) = y_b(i) - abs0_b
+        ELSE
+          y_b(i) = y_b(i) + abs0_b
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE MAE_B
 
   FUNCTION MAE(x, y) RESULT (RES)
     IMPLICIT NONE
@@ -565,6 +907,88 @@ CONTAINS
     res = res/n
   END FUNCTION MAE
 
+!  Differentiation of mape in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION MAPE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_d
+    n = 0
+    res = 0._sp
+    res_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        n = n + 1
+        IF ((x(i)-y(i))/x(i) .GE. 0.) THEN
+          abs0_d = -(y_d(i)/x(i))
+          abs0 = (x(i)-y(i))/x(i)
+        ELSE
+          abs0_d = y_d(i)/x(i)
+          abs0 = -((x(i)-y(i))/x(i))
+        END IF
+        res_d = res_d + abs0_d
+        res = res + abs0
+      END IF
+    END DO
+    res_d = res_d/n
+    res = res/n
+  END FUNCTION MAPE_D
+
+!  Differentiation of mape in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE MAPE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    INTRINSIC ABS
+    REAL(sp) :: abs0
+    REAL(sp) :: abs0_b
+    INTEGER :: branch
+    INTEGER :: ad_to
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        n = n + 1
+        IF ((x(i)-y(i))/x(i) .GE. 0.) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHCONTROL1B(1)
+        END IF
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    res_b = res_b/n
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        abs0_b = res_b
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          y_b(i) = y_b(i) - abs0_b/x(i)
+        ELSE
+          y_b(i) = y_b(i) + abs0_b/x(i)
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE MAPE_B
+
   FUNCTION MAPE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -589,6 +1013,54 @@ CONTAINS
     res = res/n
   END FUNCTION MAPE
 
+!  Differentiation of se in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION SE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i
+    INTRINSIC SIZE
+    res = 0._sp
+    res_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) THEN
+        res_d = res_d - 2*(x(i)-y(i))*y_d(i)
+        res = res + (x(i)-y(i))*(x(i)-y(i))
+      END IF
+    END DO
+  END FUNCTION SE_D
+
+!  Differentiation of se in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE SE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTEGER :: ad_to
+    INTEGER :: branch
+    DO i=1,SIZE(x)
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    ad_to = i - 1
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) y_b(i) = y_b(i) - 2*(x(i)-y(i))*res_b
+    END DO
+  END SUBROUTINE SE_B
+
   FUNCTION SE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -600,6 +1072,65 @@ CONTAINS
       IF (x(i) .GE. 0._sp) res = res + (x(i)-y(i))*(x(i)-y(i))
     END DO
   END FUNCTION SE
+
+!  Differentiation of mse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION MSE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .GE. 0._sp) n = n + 1
+    END DO
+    result1_d = SE_D(x, y, y_d, result1)
+    res_d = result1_d/n
+    res = result1/n
+  END FUNCTION MSE_D
+
+!  Differentiation of mse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE MSE_B(x, y, y_b, res_b0)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b0
+    INTEGER :: i, n
+    INTRINSIC SIZE
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: res0
+    REAL(sp) :: res_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    n = 0
+    DO i=1,SIZE(x)
+      IF (x(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHCONTROL1B(1)
+        n = n + 1
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    res0 = SE(x, y)
+    result1_b = res_b0/n
+    res_b = result1_b
+    CALL SE_B(x, y, y_b, res_b)
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+    END DO
+  END SUBROUTINE MSE_B
 
   FUNCTION MSE(x, y) RESULT (RES)
     IMPLICIT NONE
@@ -616,6 +1147,50 @@ CONTAINS
     res = result1/n
   END FUNCTION MSE
 
+!  Differentiation of rmse in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION RMSE_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    result1_d = MSE_D(x, y, y_d, result1)
+    temp = SQRT(result1)
+    IF (result1 .EQ. 0.0) THEN
+      res_d = 0.0_4
+    ELSE
+      res_d = result1_d/(2.0*temp)
+    END IF
+    res = temp
+  END FUNCTION RMSE_D
+
+!  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE RMSE_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTRINSIC SQRT
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    result1 = MSE(x, y)
+    IF (result1 .EQ. 0.0) THEN
+      result1_b = 0.0_4
+    ELSE
+      result1_b = res_b/(2.0*SQRT(result1))
+    END IF
+    CALL MSE_B(x, y, y_b, result1_b)
+  END SUBROUTINE RMSE_B
+
   FUNCTION RMSE(x, y) RESULT (RES)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
@@ -625,6 +1200,80 @@ CONTAINS
     result1 = MSE(x, y)
     res = SQRT(result1)
   END FUNCTION RMSE
+
+!  Differentiation of lgrm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: y
+  FUNCTION LGRM_D(x, y, y_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:), INTENT(IN) :: y_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC LOG
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_d
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_d
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+    res = 0._sp
+    res_d = 0.0_4
+    DO i=1,SIZE(x)
+      IF (.NOT.(x(i) .LE. 0._sp .OR. y(i) .LE. 0._sp)) THEN
+        arg1_d = y_d(i)/x(i)
+        arg1 = y(i)/x(i)
+        arg2_d = y_d(i)/x(i)
+        arg2 = y(i)/x(i)
+        temp = LOG(arg2)
+        temp0 = LOG(arg1)
+        res_d = res_d + x(i)*(temp*arg1_d/arg1+temp0*arg2_d/arg2)
+        res = res + x(i)*(temp0*temp)
+      END IF
+    END DO
+  END FUNCTION LGRM_D
+
+!  Differentiation of lgrm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res y
+!   with respect to varying inputs: y
+  SUBROUTINE LGRM_B(x, y, y_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x, y
+    REAL(sp), DIMENSION(:) :: y_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC LOG
+    REAL(sp) :: arg1
+    REAL(sp) :: arg1_b
+    REAL(sp) :: arg2
+    REAL(sp) :: arg2_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    DO i=1,SIZE(x)
+      IF (x(i) .LE. 0._sp .OR. y(i) .LE. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        arg1 = y(i)/x(i)
+        arg2 = y(i)/x(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    ad_to = i - 1
+    DO i=ad_to,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        arg1 = y(i)/x(i)
+        arg2 = y(i)/x(i)
+        arg1_b = LOG(arg2)*x(i)*res_b/arg1
+        arg2_b = LOG(arg1)*x(i)*res_b/arg2
+        y_b(i) = y_b(i) + arg2_b/x(i) + arg1_b/x(i)
+      END IF
+    END DO
+  END SUBROUTINE LGRM_B
 
   FUNCTION LGRM(x, y) RESULT (RES)
     IMPLICIT NONE
@@ -647,17 +1296,1705 @@ CONTAINS
 
 END MODULE MWD_METRICS_DIFF
 
+!%      (MD) Module Differentiated.
+!%
+!%      Interface
+!%      ---------
+!%
+!%      - quantile1d_r
+!%          . quantile1d_r_scl
+!%          . quantile1d_r_1d
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - heap_sort
+!%
+!%      Function
+!%      --------
+!%
+!%      - quantile1d_r_scl
+!%      - quantile1d_r_1d
+MODULE MD_STATS_DIFF
+!% only: sp
+  USE MD_CONSTANT
+  IMPLICIT NONE
+  INTERFACE QUANTILE1D_R
+      MODULE PROCEDURE QUANTILE1D_R_SCL
+      MODULE PROCEDURE QUANTILE1D_R_1D
+  END INTERFACE QUANTILE1D_R
+
+  INTERFACE QUANTILE1D_R_D
+      MODULE PROCEDURE QUANTILE1D_R_SCL_D
+  END INTERFACE
+
+  INTERFACE QUANTILE1D_R_B
+      MODULE PROCEDURE QUANTILE1D_R_SCL_B
+  END INTERFACE
+
+
+CONTAINS
+!  Differentiation of heap_sort in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE HEAP_SORT_D(n, arr, arr_d)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr_d
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    REAL(sp) :: arr_l_d
+    l = n/2 + 1
+    ir = n
+ 10 IF (l .GT. 1) THEN
+      l = l - 1
+      arr_l_d = arr_d(l)
+      arr_l = arr(l)
+    ELSE
+      arr_l_d = arr_d(ir)
+      arr_l = arr(ir)
+      arr_d(ir) = arr_d(1)
+      arr(ir) = arr(1)
+      ir = ir - 1
+      IF (ir .EQ. 1) GOTO 100
+    END IF
+    i = l
+    j = l + l
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) j = j + 1
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        arr_d(i) = arr_d(j)
+        arr(i) = arr(j)
+        i = j
+        j = j + j
+      ELSE
+        j = ir + 1
+      END IF
+      GOTO 20
+    END IF
+    arr_d(i) = arr_l_d
+    arr(i) = arr_l
+    GOTO 10
+ 100 arr_d(1) = arr_l_d
+    arr(1) = arr_l
+  END SUBROUTINE HEAP_SORT_D
+
+!  Differentiation of heap_sort in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: arr
+!   with respect to varying inputs: arr
+  SUBROUTINE HEAP_SORT_B(n, arr, arr_b)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr_b
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    REAL(sp) :: arr_l_b
+    REAL(sp) :: tmp
+    REAL(sp) :: tmp_b
+    REAL(sp) :: tmp0
+    REAL(sp) :: tmp_b0
+    INTEGER :: branch
+    INTEGER :: ad_count
+    INTEGER :: i0
+    INTEGER :: ad_count0
+    INTEGER :: i1
+    l = n/2 + 1
+    ir = n
+    ad_count0 = 1
+ 10 IF (l .GT. 1) THEN
+      CALL PUSHINTEGER4(l)
+      l = l - 1
+      arr_l = arr(l)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      arr_l = arr(ir)
+      tmp = arr(1)
+      arr(ir) = tmp
+      CALL PUSHINTEGER4(ir)
+      ir = ir - 1
+      IF (ir .EQ. 1) THEN
+        GOTO 100
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END IF
+    CALL PUSHINTEGER4(i)
+    i = l
+    j = l + l
+    ad_count = 1
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) THEN
+          CALL PUSHCONTROL1B(0)
+          j = j + 1
+        ELSE
+          CALL PUSHCONTROL1B(0)
+        END IF
+      ELSE
+        CALL PUSHCONTROL1B(1)
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        tmp0 = arr(j)
+        arr(i) = tmp0
+        CALL PUSHINTEGER4(i)
+        i = j
+        CALL PUSHINTEGER4(j)
+        j = j + j
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        CALL PUSHCONTROL1B(0)
+        j = ir + 1
+      END IF
+      ad_count = ad_count + 1
+      GOTO 20
+    END IF
+    CALL PUSHINTEGER4(ad_count)
+    arr(i) = arr_l
+    ad_count0 = ad_count0 + 1
+    GOTO 10
+ 100 CALL PUSHINTEGER4(ad_count0)
+    arr_l_b = arr_b(1)
+    arr_b(1) = 0.0_4
+    CALL POPINTEGER4(ad_count0)
+    DO 110 i1=1,ad_count0
+      IF (i1 .NE. 1) THEN
+        arr_l_b = arr_b(i)
+        arr_b(i) = 0.0_4
+        CALL POPINTEGER4(ad_count)
+        DO i0=1,ad_count
+          IF (i0 .NE. 1) THEN
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              CALL POPINTEGER4(j)
+              CALL POPINTEGER4(i)
+              tmp_b0 = arr_b(i)
+              arr_b(i) = 0.0_4
+              arr_b(j) = arr_b(j) + tmp_b0
+            END IF
+            CALL POPCONTROL1B(branch)
+          END IF
+        END DO
+        CALL POPINTEGER4(i)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          arr_b(l) = arr_b(l) + arr_l_b
+          CALL POPINTEGER4(l)
+          GOTO 110
+        END IF
+      END IF
+      CALL POPINTEGER4(ir)
+      tmp_b = arr_b(ir)
+      arr_b(ir) = 0.0_4
+      arr_b(1) = arr_b(1) + tmp_b
+      arr_b(ir) = arr_b(ir) + arr_l_b
+ 110 CONTINUE
+  END SUBROUTINE HEAP_SORT_B
+
+  SUBROUTINE HEAP_SORT(n, arr)
+    IMPLICIT NONE
+    INTEGER, INTENT(IN) :: n
+    REAL(sp), DIMENSION(n), INTENT(INOUT) :: arr
+    INTEGER :: l, ir, i, j
+    REAL(sp) :: arr_l
+    l = n/2 + 1
+    ir = n
+ 10 IF (l .GT. 1) THEN
+      l = l - 1
+      arr_l = arr(l)
+    ELSE
+      arr_l = arr(ir)
+      arr(ir) = arr(1)
+      ir = ir - 1
+      IF (ir .EQ. 1) THEN
+        arr(1) = arr_l
+        RETURN
+      END IF
+    END IF
+    i = l
+    j = l + l
+ 20 IF (j .LE. ir) THEN
+      IF (j .LT. ir) THEN
+        IF (arr(j) .LT. arr(j+1)) j = j + 1
+      END IF
+      IF (arr_l .LT. arr(j)) THEN
+        arr(i) = arr(j)
+        i = j
+        j = j + j
+      ELSE
+        j = ir + 1
+      END IF
+      GOTO 20
+    ELSE
+      arr(i) = arr_l
+      GOTO 10
+    END IF
+  END SUBROUTINE HEAP_SORT
+
+!  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: dat
+  FUNCTION QUANTILE1D_R_SCL_D(dat, dat_d, p, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat_d
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat_d
+    INTEGER :: n
+    REAL(sp) :: q1, q2, frac
+    REAL(sp) :: q1_d, q2_d
+    INTRINSIC INT
+    REAL(sp) :: temp
+    res_d = dat_d(1)
+    res = dat(1)
+    n = SIZE(dat)
+    IF (n .GT. 1) THEN
+      sorted_dat_d = dat_d
+      sorted_dat = dat
+      CALL HEAP_SORT_D(n, sorted_dat, sorted_dat_d)
+      frac = (n-1)*p + 1
+      IF (frac .LE. 1) THEN
+        res_d = sorted_dat_d(1)
+        res = sorted_dat(1)
+      ELSE IF (frac .GE. n) THEN
+        res_d = sorted_dat_d(n)
+        res = sorted_dat(n)
+      ELSE
+        q1_d = sorted_dat_d(INT(frac))
+        q1 = sorted_dat(INT(frac))
+        q2_d = sorted_dat_d(INT(frac)+1)
+        q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+        temp = frac - INT(frac)
+        res_d = q1_d + temp*(q2_d-q1_d)
+        res = q1 + temp*(q2-q1)
+      END IF
+    END IF
+  END FUNCTION QUANTILE1D_R_SCL_D
+
+!  Differentiation of quantile1d_r_scl in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: dat
+  SUBROUTINE QUANTILE1D_R_SCL_B(dat, dat_b, p, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), DIMENSION(:) :: dat_b
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat_b
+    INTEGER :: n
+    REAL(sp) :: q1, q2, frac
+    REAL(sp) :: q1_b, q2_b
+    INTRINSIC INT
+    REAL(sp) :: temp_b
+    n = SIZE(dat)
+    IF (n .GT. 1) THEN
+      sorted_dat = dat
+      CALL PUSHREAL4ARRAY(sorted_dat, SIZE(dat))
+      CALL HEAP_SORT(n, sorted_dat)
+      frac = (n-1)*p + 1
+      IF (frac .LE. 1) THEN
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(1) = sorted_dat_b(1) + res_b
+      ELSE IF (frac .GE. n) THEN
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(n) = sorted_dat_b(n) + res_b
+      ELSE
+        temp_b = (frac-INT(frac))*res_b
+        q1_b = res_b - temp_b
+        q2_b = temp_b
+        sorted_dat_b = 0.0_4
+        sorted_dat_b(INT(frac)+1) = sorted_dat_b(INT(frac)+1) + q2_b
+        sorted_dat_b(INT(frac)) = sorted_dat_b(INT(frac)) + q1_b
+      END IF
+      CALL POPREAL4ARRAY(sorted_dat, SIZE(dat))
+      CALL HEAP_SORT_B(n, sorted_dat, sorted_dat_b)
+      dat_b = 0.0_4
+      dat_b = sorted_dat_b
+      res_b = 0.0_4
+    ELSE
+      dat_b = 0.0_4
+    END IF
+    dat_b(1) = dat_b(1) + res_b
+  END SUBROUTINE QUANTILE1D_R_SCL_B
+
+  FUNCTION QUANTILE1D_R_SCL(dat, p) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), INTENT(IN) :: p
+    REAL(sp) :: res
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    INTEGER :: n
+    REAL(sp) :: q1, q2, frac
+    INTRINSIC INT
+    res = dat(1)
+    n = SIZE(dat)
+    IF (n .GT. 1) THEN
+      sorted_dat = dat
+      CALL HEAP_SORT(n, sorted_dat)
+      frac = (n-1)*p + 1
+      IF (frac .LE. 1) THEN
+        res = sorted_dat(1)
+      ELSE IF (frac .GE. n) THEN
+        res = sorted_dat(n)
+      ELSE
+        q1 = sorted_dat(INT(frac))
+        q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+        res = q1 + (q2-q1)*(frac-INT(frac))
+      END IF
+    END IF
+  END FUNCTION QUANTILE1D_R_SCL
+
+  FUNCTION QUANTILE1D_R_1D(dat, p) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: dat
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: res
+    REAL(sp), DIMENSION(SIZE(dat)) :: sorted_dat
+    INTEGER :: n, i
+    REAL(sp) :: q1, q2, frac
+    INTRINSIC INT
+    res = dat(1)
+    n = SIZE(dat)
+    IF (n .GT. 1) THEN
+      sorted_dat = dat
+      CALL HEAP_SORT(n, sorted_dat)
+      DO i=1,SIZE(p)
+        frac = (n-1)*p(i) + 1
+        IF (frac .LE. 1) THEN
+          res(i) = sorted_dat(1)
+        ELSE IF (frac .GE. n) THEN
+          res(i) = sorted_dat(n)
+        ELSE
+          q1 = sorted_dat(INT(frac))
+          q2 = sorted_dat(INT(frac)+1)
+! linear interpolation
+          res(i) = q1 + (q2-q1)*(frac-INT(frac))
+        END IF
+      END DO
+    END IF
+  END FUNCTION QUANTILE1D_R_1D
+
+END MODULE MD_STATS_DIFF
+
 !%      (MWD) Module Wrapped and Differentiated.
 !%
 !%      Subroutine
 !%      ----------
 !%
+!%      - baseflow_separation
+!%
+!%      Function
+!%      --------
+!%
+!%      - rc
+!%      - rchf
+!%      - rclf
+!%      - rch2r
+!%      - cfp
+!%      - eff
+!%      - ebf
+!%      - epf
+!%      - elt
+MODULE MWD_SIGNATURES_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: quantile1d_r
+  USE MD_STATS_DIFF
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of baseflow_separation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: bt qft
+!   with respect to varying inputs: streamflow
+  SUBROUTINE BASEFLOW_SEPARATION_D(streamflow, streamflow_d, bt, bt_d, &
+&   qft, qft_d, filter_parameter, passes)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: streamflow
+    REAL(sp), DIMENSION(:), INTENT(IN) :: streamflow_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(streamflow)), INTENT(INOUT) :: bt, qft
+    REAL(sp), DIMENSION(SIZE(streamflow)), INTENT(INOUT) :: bt_d, qft_d
+    REAL(sp), INTENT(IN) :: filter_parameter
+    INTEGER, INTENT(IN) :: passes
+    REAL(sp), DIMENSION(SIZE(streamflow)) :: btp
+    REAL(sp), DIMENSION(SIZE(streamflow)) :: btp_d
+    INTEGER, DIMENSION(passes+1) :: ends
+    INTEGER, DIMENSION(passes) :: addtostart
+    INTEGER :: i, j
+    LOGICAL :: odd
+    INTRINSIC SUM
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    INTEGER :: temp0
+    odd = .true.
+! Start and end values for the filter function
+    DO j=1,passes
+      IF (odd) THEN
+        ends(j) = 1
+        addtostart(j) = 1
+      ELSE
+        ends(j) = SIZE(streamflow)
+        addtostart(j) = -1
+      END IF
+      odd = .NOT.odd
+    END DO
+    ends(passes+1) = ends(passes-1)
+    btp_d = streamflow_d
+    btp = streamflow
+    bt = 0._sp
+    qft = 0._sp
+! Guess baseflow value in the first time step
+    result1 = QUANTILE1D_R(streamflow, 0.25_sp)
+    IF (streamflow(1) .LT. result1) THEN
+      bt_d = 0.0_4
+      bt_d(1) = streamflow_d(1)
+      bt(1) = streamflow(1)
+      qft_d = 0.0_4
+    ELSE
+      bt_d = 0.0_4
+      temp = 1.5_sp*SIZE(streamflow)
+      bt_d(1) = SUM(streamflow_d)/temp
+      bt(1) = SUM(streamflow)/temp
+      qft_d = 0.0_4
+    END IF
+! Perform baseflow separation
+    DO j=1,passes
+      DO i=ends(j)+addtostart(j),ends(j+1),addtostart(j)
+        IF (filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j))) .GT. &
+&           btp(i)) THEN
+          bt_d(i) = btp_d(i)
+          bt(i) = btp(i)
+        ELSE
+          bt_d(i) = filter_parameter*bt_d(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)*(btp_d(i)+btp_d(i-addtostart(j)))/2._sp
+          bt(i) = filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j)))
+        END IF
+        qft_d(i) = streamflow_d(i) - bt_d(i)
+        qft(i) = streamflow(i) - bt(i)
+      END DO
+      IF (j .LT. passes) THEN
+        btp_d = bt_d
+        btp = bt
+        IF (streamflow(ends(j+1)) .LT. SUM(btp)/SIZE(btp)) THEN
+          bt_d(ends(j+1)) = streamflow_d(ends(j+1))/1.2_sp
+          bt(ends(j+1)) = streamflow(ends(j+1))/1.2_sp
+        ELSE
+          temp0 = SIZE(btp)
+          bt_d(ends(j+1)) = SUM(btp_d)/temp0
+          bt(ends(j+1)) = SUM(btp)/temp0
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE BASEFLOW_SEPARATION_D
+
+!  Differentiation of baseflow_separation in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: streamflow bt qft
+!   with respect to varying inputs: streamflow
+  SUBROUTINE BASEFLOW_SEPARATION_B(streamflow, streamflow_b, bt, bt_b, &
+&   qft, qft_b, filter_parameter, passes)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: streamflow
+    REAL(sp), DIMENSION(:) :: streamflow_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(streamflow)), INTENT(INOUT) :: bt, qft
+    REAL(sp), DIMENSION(SIZE(streamflow)), INTENT(INOUT) :: bt_b, qft_b
+    REAL(sp), INTENT(IN) :: filter_parameter
+    INTEGER, INTENT(IN) :: passes
+    REAL(sp), DIMENSION(SIZE(streamflow)) :: btp
+    REAL(sp), DIMENSION(SIZE(streamflow)) :: btp_b
+    INTEGER, DIMENSION(passes+1) :: ends
+    INTEGER, DIMENSION(passes) :: addtostart
+    INTEGER :: i, j
+    LOGICAL :: odd
+    INTRINSIC SUM
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: tmp
+    REAL(sp) :: tmp_b
+    REAL(sp) :: temp_b
+    INTEGER :: branch
+    INTEGER :: ad_from
+    INTEGER :: ad_stride
+    INTEGER :: ad_to
+    odd = .true.
+! Start and end values for the filter function
+    DO j=1,passes
+      IF (odd) THEN
+        ends(j) = 1
+        addtostart(j) = 1
+      ELSE
+        ends(j) = SIZE(streamflow)
+        addtostart(j) = -1
+      END IF
+      odd = .NOT.odd
+    END DO
+    ends(passes+1) = ends(passes-1)
+    btp = streamflow
+    bt = 0._sp
+! Guess baseflow value in the first time step
+    result1 = QUANTILE1D_R(streamflow, 0.25_sp)
+    IF (streamflow(1) .LT. result1) THEN
+      bt(1) = streamflow(1)
+      CALL PUSHCONTROL1B(1)
+    ELSE
+      bt(1) = SUM(streamflow)/SIZE(streamflow)/1.5_sp
+      CALL PUSHCONTROL1B(0)
+    END IF
+! Perform baseflow separation
+    DO j=1,passes
+      ad_from = ends(j) + addtostart(j)
+      ad_stride = addtostart(j)
+      DO i=ad_from,ends(j+1),ad_stride
+        IF (filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j))) .GT. &
+&           btp(i)) THEN
+          bt(i) = btp(i)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          tmp = filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j)))
+          bt(i) = tmp
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+      CALL PUSHINTEGER4(i - ad_stride)
+      CALL PUSHINTEGER4(ad_from)
+      CALL PUSHINTEGER4(ad_stride)
+      IF (j .LT. passes) THEN
+        CALL PUSHREAL4ARRAY(btp, SIZE(streamflow))
+        btp = bt
+        IF (streamflow(ends(j+1)) .LT. SUM(btp)/SIZE(btp)) THEN
+          bt(ends(j+1)) = streamflow(ends(j+1))/1.2_sp
+          CALL PUSHCONTROL2B(2)
+        ELSE
+          bt(ends(j+1)) = SUM(btp)/SIZE(btp)
+          CALL PUSHCONTROL2B(1)
+        END IF
+      ELSE
+        CALL PUSHCONTROL2B(0)
+      END IF
+    END DO
+    btp_b = 0.0_4
+    DO j=passes,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .NE. 0) THEN
+        IF (branch .EQ. 1) THEN
+          btp_b = btp_b + bt_b(ends(j+1))/SIZE(btp)
+          bt_b(ends(j+1)) = 0.0_4
+        ELSE
+          streamflow_b(ends(j+1)) = streamflow_b(ends(j+1)) + bt_b(ends(&
+&           j+1))/1.2_sp
+          bt_b(ends(j+1)) = 0.0_4
+        END IF
+        CALL POPREAL4ARRAY(btp, SIZE(streamflow))
+        bt_b = bt_b + btp_b
+        btp_b = 0.0_4
+      END IF
+      CALL POPINTEGER4(ad_stride)
+      CALL POPINTEGER4(ad_from)
+      CALL POPINTEGER4(ad_to)
+      DO i=ad_to,ad_from,-ad_stride
+        streamflow_b(i) = streamflow_b(i) + qft_b(i)
+        bt_b(i) = bt_b(i) - qft_b(i)
+        qft_b(i) = 0.0_4
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          btp_b(i) = btp_b(i) + bt_b(i)
+          bt_b(i) = 0.0_4
+        ELSE
+          tmp_b = bt_b(i)
+          bt_b(i) = 0.0_4
+          bt_b(i-addtostart(j)) = bt_b(i-addtostart(j)) + &
+&           filter_parameter*tmp_b
+          temp_b = (1._sp-filter_parameter)*tmp_b/2._sp
+          btp_b(i) = btp_b(i) + temp_b
+          btp_b(i-addtostart(j)) = btp_b(i-addtostart(j)) + temp_b
+        END IF
+      END DO
+    END DO
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      streamflow_b = streamflow_b + bt_b(1)/(SIZE(streamflow)*1.5_sp)
+    ELSE
+      streamflow_b(1) = streamflow_b(1) + bt_b(1)
+    END IF
+    streamflow_b = streamflow_b + btp_b
+    j = 0
+  END SUBROUTINE BASEFLOW_SEPARATION_B
+
+  SUBROUTINE BASEFLOW_SEPARATION(streamflow, bt, qft, filter_parameter, &
+&   passes)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: streamflow
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(streamflow)), INTENT(INOUT) :: bt, qft
+    REAL(sp), INTENT(IN) :: filter_parameter
+    INTEGER, INTENT(IN) :: passes
+    REAL(sp), DIMENSION(SIZE(streamflow)) :: btp
+    INTEGER, DIMENSION(passes+1) :: ends
+    INTEGER, DIMENSION(passes) :: addtostart
+    INTEGER :: i, j
+    LOGICAL :: odd
+    INTRINSIC SUM
+    REAL(sp) :: result1
+    odd = .true.
+! Start and end values for the filter function
+    DO j=1,passes
+      IF (odd) THEN
+        ends(j) = 1
+        addtostart(j) = 1
+      ELSE
+        ends(j) = SIZE(streamflow)
+        addtostart(j) = -1
+      END IF
+      odd = .NOT.odd
+    END DO
+    ends(passes+1) = ends(passes-1)
+    btp = streamflow
+    bt = 0._sp
+    qft = 0._sp
+! Guess baseflow value in the first time step
+    result1 = QUANTILE1D_R(streamflow, 0.25_sp)
+    IF (streamflow(1) .LT. result1) THEN
+      bt(1) = streamflow(1)
+    ELSE
+      bt(1) = SUM(streamflow)/SIZE(streamflow)/1.5_sp
+    END IF
+! Perform baseflow separation
+    DO j=1,passes
+      DO i=ends(j)+addtostart(j),ends(j+1),addtostart(j)
+        IF (filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j))) .GT. &
+&           btp(i)) THEN
+          bt(i) = btp(i)
+        ELSE
+          bt(i) = filter_parameter*bt(i-addtostart(j)) + (1._sp-&
+&           filter_parameter)/2._sp*(btp(i)+btp(i-addtostart(j)))
+        END IF
+        qft(i) = streamflow(i) - bt(i)
+      END DO
+      IF (j .LT. passes) THEN
+        btp = bt
+        IF (streamflow(ends(j+1)) .LT. SUM(btp)/SIZE(btp)) THEN
+          bt(ends(j+1)) = streamflow(ends(j+1))/1.2_sp
+        ELSE
+          bt(ends(j+1)) = SUM(btp)/SIZE(btp)
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE BASEFLOW_SEPARATION
+
+!  Differentiation of rc in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION RC_D(p, q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_d
+    INTRINSIC SIZE
+    n = SIZE(p)
+    res = -99._sp
+    numer = 0._sp
+    denom = 0._sp
+    numer_d = 0.0_4
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        numer_d = numer_d + q_d(i)
+        numer = numer + q(i)
+        denom = denom + p(i)
+      END IF
+    END DO
+    IF (denom .GT. 0._sp) THEN
+      res_d = numer_d/denom
+      res = numer/denom
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION RC_D
+
+!  Differentiation of rc in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE RC_B(p, q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_b
+    INTRINSIC SIZE
+    INTEGER :: branch
+    n = SIZE(p)
+    denom = 0._sp
+    DO i=1,n
+      IF (p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        denom = denom + p(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (denom .GT. 0._sp) THEN
+      numer_b = res_b/denom
+    ELSE
+      numer_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) q_b(i) = q_b(i) + numer_b
+    END DO
+  END SUBROUTINE RC_B
+
+  FUNCTION RC(p, q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp) :: res
+    INTEGER :: n, i
+    REAL(sp) :: numer, denom
+    INTRINSIC SIZE
+    n = SIZE(p)
+    res = -99._sp
+    numer = 0._sp
+    denom = 0._sp
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        numer = numer + q(i)
+        denom = denom + p(i)
+      END IF
+    END DO
+    IF (denom .GT. 0._sp) res = numer/denom
+  END FUNCTION RC
+
+!  Differentiation of rchf in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION RCHF_D(p, q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_d, bf_d, qf_d
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
+&                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
+&                          0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      numer_d = 0.0_4
+      DO i=1,j
+        numer_d = numer_d + qf_d(i)
+        numer = numer + qf(i)
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        res_d = numer_d/denom
+        res = numer/denom
+      ELSE
+        res_d = 0.0_4
+      END IF
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION RCHF_D
+
+!  Differentiation of rchf in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE RCHF_B(p, q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_b, bf_b, qf_b
+    INTEGER :: branch
+    n = SIZE(p)
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      denom = 0._sp
+      DO i=1,j
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        numer_b = res_b/denom
+      ELSE
+        numer_b = 0.0_4
+      END IF
+      qf_b = 0.0_4
+      DO i=j,1,-1
+        qf_b(i) = qf_b(i) + numer_b
+      END DO
+      nonnegative_q_b = 0.0_4
+      bf_b = 0.0_4
+      CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
+&                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
+&                          0.925, 3)
+      bf_b(1:j) = 0.0_4
+      qf_b(1:j) = 0.0_4
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE RCHF_B
+
+  FUNCTION RCHF(p, q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      DO i=1,j
+        numer = numer + qf(i)
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) res = numer/denom
+    END IF
+  END FUNCTION RCHF
+
+!  Differentiation of rclf in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION RCLF_D(p, q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_d, bf_d, qf_d
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
+&                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
+&                          0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      numer_d = 0.0_4
+      DO i=1,j
+        numer_d = numer_d + bf_d(i)
+        numer = numer + bf(i)
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        res_d = numer_d/denom
+        res = numer/denom
+      ELSE
+        res_d = 0.0_4
+      END IF
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION RCLF_D
+
+!  Differentiation of rclf in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE RCLF_B(p, q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_b, bf_b, qf_b
+    INTEGER :: branch
+    n = SIZE(p)
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      denom = 0._sp
+      DO i=1,j
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        numer_b = res_b/denom
+      ELSE
+        numer_b = 0.0_4
+      END IF
+      bf_b = 0.0_4
+      DO i=j,1,-1
+        bf_b(i) = bf_b(i) + numer_b
+      END DO
+      nonnegative_q_b = 0.0_4
+      qf_b = 0.0_4
+      CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
+&                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
+&                          0.925, 3)
+      bf_b(1:j) = 0.0_4
+      qf_b(1:j) = 0.0_4
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE RCLF_B
+
+  FUNCTION RCLF(p, q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      DO i=1,j
+        numer = numer + bf(i)
+        denom = denom + nonnegative_p(i)
+      END DO
+      IF (denom .GT. 0._sp) res = numer/denom
+    END IF
+  END FUNCTION RCLF
+
+!  Differentiation of rch2r in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION RCH2R_D(p, q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_d, denom_d
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_d, bf_d, qf_d
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_q = 0._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
+&                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
+&                          0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      denom_d = 0.0_4
+      numer_d = 0.0_4
+      DO i=1,j
+        numer_d = numer_d + qf_d(i)
+        numer = numer + qf(i)
+        denom_d = denom_d + nonnegative_q_d(i)
+        denom = denom + nonnegative_q(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        res_d = (numer_d-numer*denom_d/denom)/denom
+        res = numer/denom
+      ELSE
+        res_d = 0.0_4
+      END IF
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION RCH2R_D
+
+!  Differentiation of rch2r in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE RCH2R_B(p, q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    REAL(sp) :: numer_b, denom_b
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_q_b, bf_b, qf_b
+    INTEGER :: branch
+    n = SIZE(p)
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      DO i=1,j
+        numer = numer + qf(i)
+        denom = denom + nonnegative_q(i)
+      END DO
+      IF (denom .GT. 0._sp) THEN
+        numer_b = res_b/denom
+        denom_b = -(numer*res_b/denom**2)
+      ELSE
+        denom_b = 0.0_4
+        numer_b = 0.0_4
+      END IF
+      qf_b = 0.0_4
+      nonnegative_q_b = 0.0_4
+      DO i=j,1,-1
+        nonnegative_q_b(i) = nonnegative_q_b(i) + denom_b
+        qf_b(i) = qf_b(i) + numer_b
+      END DO
+      bf_b = 0.0_4
+      CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
+&                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
+&                          0.925, 3)
+      bf_b(1:j) = 0.0_4
+      qf_b(1:j) = 0.0_4
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE RCH2R_B
+
+  FUNCTION RCH2R(p, q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    REAL(sp) :: numer, denom
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(p)) :: nonnegative_p, nonnegative_q, bf, qf
+    n = SIZE(p)
+    res = -99._sp
+    nonnegative_p = 0._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (.NOT.(p(i) .LT. 0._sp .OR. q(i) .LT. 0._sp)) THEN
+        j = j + 1
+        nonnegative_p(j) = p(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      numer = 0._sp
+      denom = 0._sp
+      DO i=1,j
+        numer = numer + qf(i)
+        denom = denom + nonnegative_q(i)
+      END DO
+      IF (denom .GT. 0._sp) res = numer/denom
+    END IF
+  END FUNCTION RCH2R
+
+!  Differentiation of cfp in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION CFP_D(q, q_d, quant, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp), INTENT(IN) :: quant
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_d
+    n = SIZE(q)
+    res = -99._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      res_d = QUANTILE1D_R_D(nonnegative_q(1:j), nonnegative_q_d(1:j), &
+&       quant, res)
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION CFP_D
+
+!  Differentiation of cfp in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE CFP_B(q, q_b, quant, res_b0)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp), INTENT(IN) :: quant
+    REAL(sp) :: res
+    REAL(sp) :: res_b0
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_b
+    REAL(sp) :: res0
+    REAL(sp) :: res_b
+    INTEGER :: branch
+    n = SIZE(q)
+    j = 0
+    DO i=1,n
+      IF (q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      res0 = QUANTILE1D_R(nonnegative_q(1:j), quant)
+      nonnegative_q_b = 0.0_4
+      res_b = res_b0
+      CALL QUANTILE1D_R_B(nonnegative_q(1:j), nonnegative_q_b(1:j), &
+&                   quant, res_b)
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE CFP_B
+
+  FUNCTION CFP(q, quant) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), INTENT(IN) :: quant
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q
+    n = SIZE(q)
+    res = -99._sp
+    j = 0
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) res = QUANTILE1D_R(nonnegative_q(1:j), quant)
+  END FUNCTION CFP
+
+!  Differentiation of eff in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION EFF_D(q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_d, bf_d, qf_d
+    INTRINSIC SUM
+    n = SIZE(q)
+    res = -99._sp
+    nonnegative_q = 0._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
+&                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
+&                          0.925, 3)
+      res_d = SUM(qf_d(1:j))/j
+      res = SUM(qf(1:j))/j
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION EFF_D
+
+!  Differentiation of eff in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE EFF_B(q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_b, bf_b, qf_b
+    INTRINSIC SUM
+    INTEGER :: branch
+    n = SIZE(q)
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      qf_b = 0.0_4
+      qf_b(1:j) = qf_b(1:j) + res_b/j
+      nonnegative_q_b = 0.0_4
+      bf_b = 0.0_4
+      CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
+&                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
+&                          0.925, 3)
+      bf_b(1:j) = 0.0_4
+      qf_b(1:j) = 0.0_4
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE EFF_B
+
+  FUNCTION EFF(q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    INTRINSIC SUM
+    n = SIZE(q)
+    res = -99._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      res = SUM(qf(1:j))/j
+    END IF
+  END FUNCTION EFF
+
+!  Differentiation of ebf in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION EBF_D(q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_d, bf_d, qf_d
+    INTRINSIC SUM
+    n = SIZE(q)
+    res = -99._sp
+    nonnegative_q = 0._sp
+    j = 0
+    nonnegative_q_d = 0.0_4
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q_d(j) = q_d(i)
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
+&                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
+&                          0.925, 3)
+      res_d = SUM(bf_d(1:j))/j
+      res = SUM(bf(1:j))/j
+    ELSE
+      res_d = 0.0_4
+    END IF
+  END FUNCTION EBF_D
+
+!  Differentiation of ebf in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE EBF_B(q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q_b, bf_b, qf_b
+    INTRINSIC SUM
+    INTEGER :: branch
+    n = SIZE(q)
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (q(i) .LT. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        nonnegative_q(j) = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      bf_b = 0.0_4
+      bf_b(1:j) = bf_b(1:j) + res_b/j
+      nonnegative_q_b = 0.0_4
+      qf_b = 0.0_4
+      CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
+&                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
+&                          0.925, 3)
+      bf_b(1:j) = 0.0_4
+      qf_b(1:j) = 0.0_4
+    ELSE
+      nonnegative_q_b = 0.0_4
+    END IF
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + nonnegative_q_b(j)
+        nonnegative_q_b(j) = 0.0_4
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE EBF_B
+
+  FUNCTION EBF(q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp) :: res
+    INTEGER :: n, i, j
+    INTRINSIC SIZE
+    REAL(sp), DIMENSION(SIZE(q)) :: nonnegative_q, bf, qf
+    INTRINSIC SUM
+    n = SIZE(q)
+    res = -99._sp
+    nonnegative_q = 0._sp
+    j = 0
+    DO i=1,n
+      IF (q(i) .GE. 0._sp) THEN
+        j = j + 1
+        nonnegative_q(j) = q(i)
+      END IF
+    END DO
+    IF (j .GT. 1) THEN
+      CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
+&                        0.925, 3)
+      res = SUM(bf(1:j))/j
+    END IF
+  END FUNCTION EBF
+
+!  Differentiation of epf in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: q
+  FUNCTION EPF_D(q, q_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    n = SIZE(q)
+    res = -99._sp
+    res_d = 0.0_4
+    DO i=1,n
+      IF (q(i) .GT. res) THEN
+        res_d = q_d(i)
+        res = q(i)
+      END IF
+    END DO
+  END FUNCTION EPF_D
+
+!  Differentiation of epf in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res q
+!   with respect to varying inputs: q
+  SUBROUTINE EPF_B(q, q_b, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp), DIMENSION(:) :: q_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    INTEGER :: branch
+    n = SIZE(q)
+    res = -99._sp
+    DO i=1,n
+      IF (q(i) .LE. res) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        res = q(i)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=n,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        q_b(i) = q_b(i) + res_b
+        res_b = 0.0_4
+      END IF
+    END DO
+  END SUBROUTINE EPF_B
+
+  FUNCTION EPF(q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: q
+    REAL(sp) :: res
+    INTEGER :: n, i
+    INTRINSIC SIZE
+    n = SIZE(q)
+    res = -99._sp
+    DO i=1,n
+      IF (q(i) .GT. res) res = q(i)
+    END DO
+  END FUNCTION EPF
+
+  FUNCTION ELT(p, q) RESULT (RES)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:), INTENT(IN) :: p, q
+    REAL(sp) :: res
+    INTEGER :: n, i, imax_p, imax_q
+    REAL(sp) :: max_p, max_q
+    INTRINSIC SIZE
+    n = SIZE(q)
+    res = -99._sp
+    max_p = -99._sp
+    max_q = -99._sp
+    imax_p = 0
+    imax_q = 0
+    DO i=1,n
+      IF (p(i) .GT. max_p) THEN
+        max_p = p(i)
+        imax_p = i
+      END IF
+      IF (q(i) .GT. max_q) THEN
+        max_q = q(i)
+        imax_q = i
+      END IF
+    END DO
+    IF (imax_p .GT. 0 .AND. imax_q .GT. 0) res = imax_q - imax_p
+  END FUNCTION ELT
+
+END MODULE MWD_SIGNATURES_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - cls_compute_jobs
+!%      - cls_compute_cost
 !%      - compute_cost
+!%
+!%      Function
+!%      --------
+!%
+!%      - get_range_event
 MODULE MWD_COST_DIFF
 !% only: sp
   USE MD_CONSTANT
-!% any type
+!% only: quantile1d_r
+  USE MD_STATS_DIFF
+!% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
   USE MWD_METRICS_DIFF
+!% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
+  USE MWD_SIGNATURES_DIFF
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -675,6 +3012,1596 @@ MODULE MWD_COST_DIFF
   IMPLICIT NONE
 
 CONTAINS
+  FUNCTION GET_RANGE_EVENT(mask_event, i_event) RESULT (RES)
+    IMPLICIT NONE
+    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
+    INTEGER, INTENT(IN) :: i_event
+    INTEGER, DIMENSION(2) :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    res = 0
+    DO i=1,SIZE(mask_event)
+      IF (mask_event(i) .EQ. i_event) THEN
+        res(1) = i
+        GOTO 100
+      END IF
+    END DO
+ 100 DO i=SIZE(mask_event),1,-1
+      IF (mask_event(i) .EQ. i_event) THEN
+        res(2) = i
+        GOTO 110
+      END IF
+    END DO
+ 110 CONTINUE
+  END FUNCTION GET_RANGE_EVENT
+
+!  Differentiation of cls_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: jobs
+!   with respect to varying inputs: *(output.sim_response.q)
+!   Plus diff mem management of: output.sim_response.q:in
+  SUBROUTINE CLS_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
+&   output_d, options, returns, jobs, jobs_d)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OUTPUTDT), INTENT(IN) :: output_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), INTENT(INOUT) :: jobs
+    REAL(sp), INTENT(INOUT) :: jobs_d
+    INTEGER :: i, j, k, n_computed_event
+    REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   qo, qs, mprcp
+    REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   qo_d, qs_d
+    INTEGER, DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   mask_event
+    REAL(sp), DIMENSION(mesh%ng, options%cost%njoc) :: jobs_cmpt_values
+    REAL(sp), DIMENSION(mesh%ng, options%cost%njoc) :: &
+&   jobs_cmpt_values_d
+    INTEGER, DIMENSION(2) :: range_event
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge_d
+    REAL(sp) :: jobs_tmp
+    REAL(sp) :: jobs_tmp_d
+    INTRINSIC ABS
+    INTRINSIC ANY
+    REAL(sp) :: abs0
+    REAL(sp) :: abs1
+    REAL(sp) :: abs2
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    REAL(sp) :: temp
+    jobs_cmpt_values = 0._sp
+    jobs_cmpt_values_d = 0.0_4
+    DO i=1,mesh%ng
+      IF (options%cost%wgauge(i) .GE. 0.) THEN
+        abs0 = options%cost%wgauge(i)
+      ELSE
+        abs0 = -options%cost%wgauge(i)
+      END IF
+! Cycle if wgauge is equal to 0
+      IF (abs0 .GT. 0._sp) THEN
+        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        qs_d = output_d%sim_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        WHERE (qo .LT. 0._sp) 
+          qs_d = 0.0_4
+          qs = -99._sp
+        END WHERE
+! Convert mean_prcp from mm/dt to m3/s
+        mprcp = input_data%atmos_data%mean_prcp(i, options%cost%&
+&         end_warmup:setup%ntime_step)*mesh%area_dln(i)*1.e-3_sp/setup%&
+&         dt
+        mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
+&         setup%ntime_step)
+        DO j=1,options%cost%njoc
+! Should be unreachable.
+          SELECT CASE  (options%cost%jobs_cmpt(j)) 
+          CASE ('nse') 
+! Efficiency Metrics
+            result1_d = NSE_D(qo, qs, qs_d, result1)
+            jobs_cmpt_values_d(i, j) = -result1_d
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('nnse') 
+            result1_d = NNSE_D(qo, qs, qs_d, result1)
+            jobs_cmpt_values_d(i, j) = -result1_d
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('kge') 
+            result1_d = KGE_D(qo, qs, qs_d, result1)
+            jobs_cmpt_values_d(i, j) = -result1_d
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('mae') 
+            jobs_cmpt_values_d(i, j) = MAE_D(qo, qs, qs_d, &
+&             jobs_cmpt_values(i, j))
+          CASE ('mape') 
+            jobs_cmpt_values_d(i, j) = MAPE_D(qo, qs, qs_d, &
+&             jobs_cmpt_values(i, j))
+          CASE ('mse') 
+            jobs_cmpt_values_d(i, j) = MSE_D(qo, qs, qs_d, &
+&             jobs_cmpt_values(i, j))
+          CASE ('rmse') 
+            jobs_cmpt_values_d(i, j) = RMSE_D(qo, qs, qs_d, &
+&             jobs_cmpt_values(i, j))
+          CASE ('lgrm') 
+            jobs_cmpt_values_d(i, j) = LGRM_D(qo, qs, qs_d, &
+&             jobs_cmpt_values(i, j))
+          CASE ('Crc') 
+! Continuous Signatures
+            jobs_tmp = RC(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = RC_D(mprcp, qs, qs_d, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crchf') 
+            jobs_tmp = RCHF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = RCHF_D(mprcp, qs, qs_d, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crclf') 
+            jobs_tmp = RCLF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = RCLF_D(mprcp, qs, qs_d, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crch2r') 
+            jobs_tmp = RCH2R(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = RCH2R_D(mprcp, qs, qs_d, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp2') 
+            jobs_tmp = CFP(qo, 0.02_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = CFP_D(qs, qs_d, 0.02_sp, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp10') 
+            jobs_tmp = CFP(qo, 0.1_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = CFP_D(qs, qs_d, 0.1_sp, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp50') 
+            jobs_tmp = CFP(qo, 0.5_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = CFP_D(qs, qs_d, 0.5_sp, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp90') 
+            jobs_tmp = CFP(qo, 0.9_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1_d = CFP_D(qs, qs_d, 0.9_sp, result1)
+              jobs_cmpt_values_d(i, j) = 2*(result1/jobs_tmp-1._sp)*&
+&               result1_d/jobs_tmp
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Erc') 
+! Event Signatures
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RC(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = RC_D(mprcp(range_event(1):range_event(2))&
+&                   , qs(range_event(1):range_event(2)), qs_d(&
+&                   range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erchf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCHF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = RCHF_D(mprcp(range_event(1):range_event(2)&
+&                   ), qs(range_event(1):range_event(2)), qs_d(&
+&                   range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erclf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCLF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = RCLF_D(mprcp(range_event(1):range_event(2)&
+&                   ), qs(range_event(1):range_event(2)), qs_d(&
+&                   range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erch2r') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCH2R(mprcp(range_event(1):range_event(2)), &
+&                 qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = RCH2R_D(mprcp(range_event(1):range_event(2&
+&                   )), qs(range_event(1):range_event(2)), qs_d(&
+&                   range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Eff') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EFF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = EFF_D(qs(range_event(1):range_event(2)), &
+&                   qs_d(range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Ebf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EBF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = EBF_D(qs(range_event(1):range_event(2)), &
+&                   qs_d(range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Elt') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = ELT(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = ELT(mprcp(range_event(1):range_event(2)), qs&
+&                   (range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Epf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EPF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1_d = EPF_D(qs(range_event(1):range_event(2)), &
+&                   qs_d(range_event(1):range_event(2)), result1)
+                  jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j) + &
+&                   2*(result1/jobs_tmp-1._sp)*result1_d/jobs_tmp
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values_d(i, j) = jobs_cmpt_values_d(i, j)/&
+&             n_computed_event
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          END SELECT
+        END DO
+      END IF
+    END DO
+! TODO TH: handle with alias (median, low/upp quartiles) for jobs_cmpt
+    IF (ANY(options%cost%wgauge(:) .LT. 0._sp)) THEN
+      jobs_gauge = 0._sp
+      k = 0
+      jobs_gauge_d = 0.0_4
+      DO i=1,mesh%ng
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .GT. 0._sp) THEN
+          jobs_tmp = 0._sp
+          jobs_tmp_d = 0.0_4
+          DO j=1,options%cost%njoc
+            jobs_tmp_d = jobs_tmp_d + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values_d(i, j)
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
+          k = k + 1
+          jobs_gauge_d(k) = jobs_tmp_d
+          jobs_gauge(k) = jobs_tmp
+        END IF
+      END DO
+      IF (options%cost%wgauge(1) .GE. 0.) THEN
+        abs2 = options%cost%wgauge(1)
+      ELSE
+        abs2 = -options%cost%wgauge(1)
+      END IF
+      jobs_d = QUANTILE1D_R_D(jobs_gauge(1:k), jobs_gauge_d(1:k), abs2, &
+&       jobs)
+    ELSE
+      jobs_d = 0.0_4
+      DO i=1,mesh%ng
+        DO j=1,options%cost%njoc
+          temp = options%cost%wgauge(i)*options%cost%wjobs_cmpt(j)
+          jobs_d = jobs_d + temp*jobs_cmpt_values_d(i, j)
+        END DO
+      END DO
+    END IF
+  END SUBROUTINE CLS_COMPUTE_JOBS_D
+
+!  Differentiation of cls_compute_jobs in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: jobs
+!   with respect to varying inputs: *(output.sim_response.q)
+!   Plus diff mem management of: output.sim_response.q:in
+  SUBROUTINE CLS_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
+&   output_b, options, returns, jobs, jobs_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OUTPUTDT) :: output_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), INTENT(INOUT) :: jobs
+    REAL(sp), INTENT(INOUT) :: jobs_b
+    INTEGER :: i, j, k, n_computed_event
+    REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   qo, qs, mprcp
+    REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   qo_b, qs_b
+    INTEGER, DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   mask_event
+    REAL(sp), DIMENSION(mesh%ng, options%cost%njoc) :: jobs_cmpt_values
+    REAL(sp), DIMENSION(mesh%ng, options%cost%njoc) :: &
+&   jobs_cmpt_values_b
+    INTEGER, DIMENSION(2) :: range_event
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge_b
+    REAL(sp) :: jobs_tmp
+    REAL(sp) :: jobs_tmp_b
+    INTRINSIC ABS
+    INTRINSIC ANY
+    REAL(sp) :: abs0
+    REAL(sp) :: abs1
+    REAL(sp) :: abs2
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+    INTEGER :: ad_to0
+    INTEGER :: ad_to1
+    INTEGER :: ad_to2
+    INTEGER :: ad_to3
+    INTEGER :: ad_to4
+    INTEGER :: ad_to5
+    INTEGER :: ad_to6
+    jobs_cmpt_values = 0._sp
+    DO i=1,mesh%ng
+      IF (options%cost%wgauge(i) .GE. 0.) THEN
+        abs0 = options%cost%wgauge(i)
+      ELSE
+        abs0 = -options%cost%wgauge(i)
+      END IF
+! Cycle if wgauge is equal to 0
+      IF (abs0 .LE. 0._sp) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHREAL4ARRAY(qo, setup%ntime_step - options%cost%&
+&                     end_warmup + 1)
+        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        CALL PUSHREAL4ARRAY(qs, setup%ntime_step - options%cost%&
+&                     end_warmup + 1)
+        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        WHERE (qo .LT. 0._sp) qs = -99._sp
+! Convert mean_prcp from mm/dt to m3/s
+        CALL PUSHREAL4ARRAY(mprcp, setup%ntime_step - options%cost%&
+&                     end_warmup + 1)
+        mprcp = input_data%atmos_data%mean_prcp(i, options%cost%&
+&         end_warmup:setup%ntime_step)*mesh%area_dln(i)*1.e-3_sp/setup%&
+&         dt
+        mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
+&         setup%ntime_step)
+        DO j=1,options%cost%njoc
+! Should be unreachable.
+          SELECT CASE  (options%cost%jobs_cmpt(j)) 
+          CASE ('nse') 
+! Efficiency Metrics
+            CALL PUSHREAL4(result1)
+            result1 = NSE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+            CALL PUSHCONTROL6B(32)
+          CASE ('nnse') 
+            CALL PUSHREAL4(result1)
+            result1 = NNSE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+            CALL PUSHCONTROL6B(31)
+          CASE ('kge') 
+            CALL PUSHREAL4(result1)
+            result1 = KGE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+            CALL PUSHCONTROL6B(30)
+          CASE ('mae') 
+            jobs_cmpt_values(i, j) = MAE(qo, qs)
+            CALL PUSHCONTROL6B(29)
+          CASE ('mape') 
+            jobs_cmpt_values(i, j) = MAPE(qo, qs)
+            CALL PUSHCONTROL6B(28)
+          CASE ('mse') 
+            jobs_cmpt_values(i, j) = MSE(qo, qs)
+            CALL PUSHCONTROL6B(27)
+          CASE ('rmse') 
+            jobs_cmpt_values(i, j) = RMSE(qo, qs)
+            CALL PUSHCONTROL6B(26)
+          CASE ('lgrm') 
+            jobs_cmpt_values(i, j) = LGRM(qo, qs)
+            CALL PUSHCONTROL6B(25)
+          CASE ('Crc') 
+! Continuous Signatures
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = RC(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = RC(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(24)
+            ELSE
+              CALL PUSHCONTROL6B(23)
+            END IF
+          CASE ('Crchf') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = RCHF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = RCHF(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(22)
+            ELSE
+              CALL PUSHCONTROL6B(21)
+            END IF
+          CASE ('Crclf') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = RCLF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = RCLF(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(20)
+            ELSE
+              CALL PUSHCONTROL6B(19)
+            END IF
+          CASE ('Crch2r') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = RCH2R(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = RCH2R(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(18)
+            ELSE
+              CALL PUSHCONTROL6B(17)
+            END IF
+          CASE ('Cfp2') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = CFP(qo, 0.02_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = CFP(qs, 0.02_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(16)
+            ELSE
+              CALL PUSHCONTROL6B(15)
+            END IF
+          CASE ('Cfp10') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = CFP(qo, 0.1_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = CFP(qs, 0.1_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(14)
+            ELSE
+              CALL PUSHCONTROL6B(13)
+            END IF
+          CASE ('Cfp50') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = CFP(qo, 0.5_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = CFP(qs, 0.5_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(12)
+            ELSE
+              CALL PUSHCONTROL6B(11)
+            END IF
+          CASE ('Cfp90') 
+            CALL PUSHREAL4(jobs_tmp)
+            jobs_tmp = CFP(qo, 0.9_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              CALL PUSHREAL4(result1)
+              result1 = CFP(qs, 0.9_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+              CALL PUSHCONTROL6B(10)
+            ELSE
+              CALL PUSHCONTROL6B(9)
+            END IF
+          CASE ('Erc') 
+! Event Signatures
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = RC(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = RC(mprcp(range_event(1):range_event(2)), qs(&
+&                   range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(8)
+          CASE ('Erchf') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = RCHF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = RCHF(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(7)
+          CASE ('Erclf') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = RCLF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = RCLF(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(6)
+          CASE ('Erch2r') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = RCH2R(mprcp(range_event(1):range_event(2)), &
+&                 qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = RCH2R(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(5)
+          CASE ('Eff') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = EFF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = EFF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(4)
+          CASE ('Ebf') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = EBF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = EBF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(3)
+          CASE ('Elt') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = ELT(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = ELT(mprcp(range_event(1):range_event(2)), qs&
+&                   (range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(2)
+          CASE ('Epf') 
+            CALL PUSHINTEGER4(n_computed_event)
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              CALL PUSHINTEGER4ARRAY(range_event, 2)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .LT. 1) THEN
+                CALL PUSHCONTROL2B(0)
+              ELSE
+                CALL PUSHREAL4(jobs_tmp)
+                jobs_tmp = EPF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  CALL PUSHREAL4(result1)
+                  result1 = EPF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                  CALL PUSHCONTROL2B(2)
+                ELSE
+                  CALL PUSHCONTROL2B(1)
+                END IF
+              END IF
+            END DO
+            CALL PUSHINTEGER4(k - 1)
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+            CALL PUSHCONTROL6B(1)
+          CASE DEFAULT
+            CALL PUSHCONTROL6B(0)
+          END SELECT
+        END DO
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+! TODO TH: handle with alias (median, low/upp quartiles) for jobs_cmpt
+    IF (ANY(options%cost%wgauge(:) .LT. 0._sp)) THEN
+      jobs_gauge = 0._sp
+      k = 0
+      DO i=1,mesh%ng
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .LE. 0._sp) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL4(jobs_tmp)
+          jobs_tmp = 0._sp
+          DO j=1,options%cost%njoc
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
+          CALL PUSHINTEGER4(k)
+          k = k + 1
+          jobs_gauge(k) = jobs_tmp
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+      IF (options%cost%wgauge(1) .GE. 0.) THEN
+        abs2 = options%cost%wgauge(1)
+      ELSE
+        abs2 = -options%cost%wgauge(1)
+      END IF
+      res = QUANTILE1D_R(jobs_gauge(1:k), abs2)
+      jobs_gauge_b = 0.0_4
+      res_b = jobs_b
+      CALL QUANTILE1D_R_B(jobs_gauge(1:k), jobs_gauge_b(1:k), abs2, &
+&                   res_b)
+      jobs_cmpt_values_b = 0.0_4
+      DO i=mesh%ng,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          jobs_tmp_b = jobs_gauge_b(k)
+          jobs_gauge_b(k) = 0.0_4
+          CALL POPINTEGER4(k)
+          DO j=options%cost%njoc,1,-1
+            jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j) + &
+&             options%cost%wjobs_cmpt(j)*jobs_tmp_b
+          END DO
+          CALL POPREAL4(jobs_tmp)
+        END IF
+      END DO
+    ELSE
+      jobs_cmpt_values_b = 0.0_4
+      DO i=mesh%ng,1,-1
+        DO j=options%cost%njoc,1,-1
+          jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j) + options%&
+&           cost%wgauge(i)*options%cost%wjobs_cmpt(j)*jobs_b
+        END DO
+      END DO
+    END IF
+    output_b%sim_response%q = 0.0_4
+    DO i=mesh%ng,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        qs_b = 0.0_4
+        DO 140 j=options%cost%njoc,1,-1
+          CALL POPCONTROL6B(branch)
+          IF (branch .LT. 16) THEN
+            IF (branch .LT. 8) THEN
+              IF (branch .LT. 4) THEN
+                IF (branch .LT. 2) THEN
+                  IF (branch .NE. 0) THEN
+                    jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                     n_computed_event
+                    CALL POPINTEGER4(ad_to6)
+                    DO k=ad_to6,1,-1
+                      CALL POPCONTROL2B(branch)
+                      IF (branch .NE. 0) THEN
+                        IF (branch .NE. 1) THEN
+                          result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                           jobs_cmpt_values_b(i, j)/jobs_tmp
+                          CALL POPREAL4(result1)
+                          CALL EPF_B(qs(range_event(1):range_event(2)), &
+&                              qs_b(range_event(1):range_event(2)), &
+&                              result1_b)
+                        END IF
+                        CALL POPREAL4(jobs_tmp)
+                      END IF
+                      CALL POPINTEGER4ARRAY(range_event, 2)
+                    END DO
+                    CALL POPINTEGER4(n_computed_event)
+                  END IF
+                ELSE IF (branch .EQ. 2) THEN
+                  jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                   n_computed_event
+                  CALL POPINTEGER4(ad_to5)
+                  DO k=ad_to5,1,-1
+                    CALL POPCONTROL2B(branch)
+                    IF (branch .NE. 0) THEN
+                      IF (branch .NE. 1) CALL POPREAL4(result1)
+                      CALL POPREAL4(jobs_tmp)
+                    END IF
+                    CALL POPINTEGER4ARRAY(range_event, 2)
+                  END DO
+                  CALL POPINTEGER4(n_computed_event)
+                ELSE
+                  jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                   n_computed_event
+                  CALL POPINTEGER4(ad_to4)
+                  DO k=ad_to4,1,-1
+                    CALL POPCONTROL2B(branch)
+                    IF (branch .NE. 0) THEN
+                      IF (branch .NE. 1) THEN
+                        result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                         jobs_cmpt_values_b(i, j)/jobs_tmp
+                        CALL POPREAL4(result1)
+                        CALL EBF_B(qs(range_event(1):range_event(2)), &
+&                            qs_b(range_event(1):range_event(2)), &
+&                            result1_b)
+                      END IF
+                      CALL POPREAL4(jobs_tmp)
+                    END IF
+                    CALL POPINTEGER4ARRAY(range_event, 2)
+                  END DO
+                  CALL POPINTEGER4(n_computed_event)
+                END IF
+              ELSE IF (branch .LT. 6) THEN
+                IF (branch .EQ. 4) THEN
+                  jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                   n_computed_event
+                  CALL POPINTEGER4(ad_to3)
+                  DO k=ad_to3,1,-1
+                    CALL POPCONTROL2B(branch)
+                    IF (branch .NE. 0) THEN
+                      IF (branch .NE. 1) THEN
+                        result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                         jobs_cmpt_values_b(i, j)/jobs_tmp
+                        CALL POPREAL4(result1)
+                        CALL EFF_B(qs(range_event(1):range_event(2)), &
+&                            qs_b(range_event(1):range_event(2)), &
+&                            result1_b)
+                      END IF
+                      CALL POPREAL4(jobs_tmp)
+                    END IF
+                    CALL POPINTEGER4ARRAY(range_event, 2)
+                  END DO
+                  CALL POPINTEGER4(n_computed_event)
+                ELSE
+                  jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                   n_computed_event
+                  CALL POPINTEGER4(ad_to2)
+                  DO k=ad_to2,1,-1
+                    CALL POPCONTROL2B(branch)
+                    IF (branch .NE. 0) THEN
+                      IF (branch .NE. 1) THEN
+                        result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                         jobs_cmpt_values_b(i, j)/jobs_tmp
+                        CALL POPREAL4(result1)
+                        CALL RCH2R_B(mprcp(range_event(1):range_event(2)&
+&                              ), qs(range_event(1):range_event(2)), &
+&                              qs_b(range_event(1):range_event(2)), &
+&                              result1_b)
+                      END IF
+                      CALL POPREAL4(jobs_tmp)
+                    END IF
+                    CALL POPINTEGER4ARRAY(range_event, 2)
+                  END DO
+                  CALL POPINTEGER4(n_computed_event)
+                END IF
+              ELSE IF (branch .EQ. 6) THEN
+                jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                 n_computed_event
+                CALL POPINTEGER4(ad_to1)
+                DO k=ad_to1,1,-1
+                  CALL POPCONTROL2B(branch)
+                  IF (branch .NE. 0) THEN
+                    IF (branch .NE. 1) THEN
+                      result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                       jobs_cmpt_values_b(i, j)/jobs_tmp
+                      CALL POPREAL4(result1)
+                      CALL RCLF_B(mprcp(range_event(1):range_event(2)), &
+&                           qs(range_event(1):range_event(2)), qs_b(&
+&                           range_event(1):range_event(2)), result1_b)
+                    END IF
+                    CALL POPREAL4(jobs_tmp)
+                  END IF
+                  CALL POPINTEGER4ARRAY(range_event, 2)
+                END DO
+                CALL POPINTEGER4(n_computed_event)
+              ELSE
+                jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                 n_computed_event
+                CALL POPINTEGER4(ad_to0)
+                DO k=ad_to0,1,-1
+                  CALL POPCONTROL2B(branch)
+                  IF (branch .NE. 0) THEN
+                    IF (branch .NE. 1) THEN
+                      result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                       jobs_cmpt_values_b(i, j)/jobs_tmp
+                      CALL POPREAL4(result1)
+                      CALL RCHF_B(mprcp(range_event(1):range_event(2)), &
+&                           qs(range_event(1):range_event(2)), qs_b(&
+&                           range_event(1):range_event(2)), result1_b)
+                    END IF
+                    CALL POPREAL4(jobs_tmp)
+                  END IF
+                  CALL POPINTEGER4ARRAY(range_event, 2)
+                END DO
+                CALL POPINTEGER4(n_computed_event)
+              END IF
+            ELSE
+              IF (branch .LT. 12) THEN
+                IF (branch .LT. 10) THEN
+                  IF (branch .EQ. 8) THEN
+                    jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j)/&
+&                     n_computed_event
+                    CALL POPINTEGER4(ad_to)
+                    DO k=ad_to,1,-1
+                      CALL POPCONTROL2B(branch)
+                      IF (branch .NE. 0) THEN
+                        IF (branch .NE. 1) THEN
+                          result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                           jobs_cmpt_values_b(i, j)/jobs_tmp
+                          CALL POPREAL4(result1)
+                          CALL RC_B(mprcp(range_event(1):range_event(2))&
+&                             , qs(range_event(1):range_event(2)), qs_b(&
+&                             range_event(1):range_event(2)), result1_b)
+                        END IF
+                        CALL POPREAL4(jobs_tmp)
+                      END IF
+                      CALL POPINTEGER4ARRAY(range_event, 2)
+                    END DO
+                    CALL POPINTEGER4(n_computed_event)
+                    GOTO 140
+                  END IF
+                ELSE IF (branch .EQ. 10) THEN
+                  result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                   jobs_cmpt_values_b(i, j)/jobs_tmp
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  CALL POPREAL4(result1)
+                  CALL CFP_B(qs, qs_b, 0.9_sp, result1_b)
+                ELSE
+                  GOTO 100
+                END IF
+                CALL POPREAL4(jobs_tmp)
+              ELSE
+                IF (branch .LT. 14) THEN
+                  IF (branch .EQ. 12) THEN
+                    result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                     jobs_cmpt_values_b(i, j)/jobs_tmp
+                    jobs_cmpt_values_b(i, j) = 0.0_4
+                    CALL POPREAL4(result1)
+                    CALL CFP_B(qs, qs_b, 0.5_sp, result1_b)
+                    GOTO 100
+                  END IF
+                ELSE IF (branch .EQ. 14) THEN
+                  result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                   jobs_cmpt_values_b(i, j)/jobs_tmp
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  CALL POPREAL4(result1)
+                  CALL CFP_B(qs, qs_b, 0.1_sp, result1_b)
+                ELSE
+                  GOTO 130
+                END IF
+                CALL POPREAL4(jobs_tmp)
+              END IF
+              GOTO 140
+ 100          CALL POPREAL4(jobs_tmp)
+            END IF
+          ELSE
+            IF (branch .LT. 24) THEN
+              IF (branch .LT. 20) THEN
+                IF (branch .LT. 18) THEN
+                  IF (branch .EQ. 16) THEN
+                    result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                     jobs_cmpt_values_b(i, j)/jobs_tmp
+                    jobs_cmpt_values_b(i, j) = 0.0_4
+                    CALL POPREAL4(result1)
+                    CALL CFP_B(qs, qs_b, 0.02_sp, result1_b)
+                    GOTO 130
+                  END IF
+                ELSE IF (branch .EQ. 18) THEN
+                  result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                   jobs_cmpt_values_b(i, j)/jobs_tmp
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  CALL POPREAL4(result1)
+                  CALL RCH2R_B(mprcp, qs, qs_b, result1_b)
+                ELSE
+                  GOTO 110
+                END IF
+                CALL POPREAL4(jobs_tmp)
+              ELSE
+                IF (branch .LT. 22) THEN
+                  IF (branch .EQ. 20) THEN
+                    result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                     jobs_cmpt_values_b(i, j)/jobs_tmp
+                    jobs_cmpt_values_b(i, j) = 0.0_4
+                    CALL POPREAL4(result1)
+                    CALL RCLF_B(mprcp, qs, qs_b, result1_b)
+                    GOTO 110
+                  END IF
+                ELSE IF (branch .EQ. 22) THEN
+                  result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                   jobs_cmpt_values_b(i, j)/jobs_tmp
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  CALL POPREAL4(result1)
+                  CALL RCHF_B(mprcp, qs, qs_b, result1_b)
+                ELSE
+                  GOTO 120
+                END IF
+                CALL POPREAL4(jobs_tmp)
+              END IF
+              GOTO 140
+ 110          CALL POPREAL4(jobs_tmp)
+              GOTO 140
+            ELSE IF (branch .LT. 28) THEN
+              IF (branch .LT. 26) THEN
+                IF (branch .EQ. 24) THEN
+                  result1_b = 2*(result1/jobs_tmp-1._sp)*&
+&                   jobs_cmpt_values_b(i, j)/jobs_tmp
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  CALL POPREAL4(result1)
+                  CALL RC_B(mprcp, qs, qs_b, result1_b)
+                ELSE
+                  CALL LGRM_B(qo, qs, qs_b, jobs_cmpt_values_b(i, j))
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                  GOTO 140
+                END IF
+              ELSE
+                IF (branch .EQ. 26) THEN
+                  CALL RMSE_B(qo, qs, qs_b, jobs_cmpt_values_b(i, j))
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                ELSE
+                  CALL MSE_B(qo, qs, qs_b, jobs_cmpt_values_b(i, j))
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                END IF
+                GOTO 140
+              END IF
+            ELSE
+              IF (branch .LT. 30) THEN
+                IF (branch .EQ. 28) THEN
+                  CALL MAPE_B(qo, qs, qs_b, jobs_cmpt_values_b(i, j))
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                ELSE
+                  CALL MAE_B(qo, qs, qs_b, jobs_cmpt_values_b(i, j))
+                  jobs_cmpt_values_b(i, j) = 0.0_4
+                END IF
+              ELSE IF (branch .EQ. 30) THEN
+                result1_b = -jobs_cmpt_values_b(i, j)
+                jobs_cmpt_values_b(i, j) = 0.0_4
+                CALL POPREAL4(result1)
+                CALL KGE_B(qo, qs, qs_b, result1_b)
+              ELSE IF (branch .EQ. 31) THEN
+                result1_b = -jobs_cmpt_values_b(i, j)
+                jobs_cmpt_values_b(i, j) = 0.0_4
+                CALL POPREAL4(result1)
+                CALL NNSE_B(qo, qs, qs_b, result1_b)
+              ELSE
+                result1_b = -jobs_cmpt_values_b(i, j)
+                jobs_cmpt_values_b(i, j) = 0.0_4
+                CALL POPREAL4(result1)
+                CALL NSE_B(qo, qs, qs_b, result1_b)
+              END IF
+              GOTO 140
+            END IF
+ 120        CALL POPREAL4(jobs_tmp)
+          END IF
+          GOTO 140
+ 130      CALL POPREAL4(jobs_tmp)
+ 140    CONTINUE
+        WHERE (qo .LT. 0._sp) qs_b = 0.0_4
+        CALL POPREAL4ARRAY(mprcp, setup%ntime_step - options%cost%&
+&                    end_warmup + 1)
+        CALL POPREAL4ARRAY(qs, setup%ntime_step - options%cost%&
+&                    end_warmup + 1)
+        output_b%sim_response%q(i, options%cost%end_warmup:setup%&
+&       ntime_step) = output_b%sim_response%q(i, options%cost%end_warmup&
+&         :setup%ntime_step) + qs_b
+        CALL POPREAL4ARRAY(qo, setup%ntime_step - options%cost%&
+&                    end_warmup + 1)
+      END IF
+    END DO
+  END SUBROUTINE CLS_COMPUTE_JOBS_B
+
+  SUBROUTINE CLS_COMPUTE_JOBS(setup, mesh, input_data, output, options, &
+&   returns, jobs)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), INTENT(INOUT) :: jobs
+    INTEGER :: i, j, k, n_computed_event
+    REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   qo, qs, mprcp
+    INTEGER, DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
+&   mask_event
+    REAL(sp), DIMENSION(mesh%ng, options%cost%njoc) :: jobs_cmpt_values
+    INTEGER, DIMENSION(2) :: range_event
+    REAL(sp), DIMENSION(mesh%ng) :: jobs_gauge
+    REAL(sp) :: jobs_tmp
+    INTRINSIC ABS
+    INTRINSIC ANY
+    REAL(sp) :: abs0
+    REAL(sp) :: abs1
+    REAL(sp) :: abs2
+    REAL(sp) :: result1
+    jobs_cmpt_values = 0._sp
+    DO i=1,mesh%ng
+      IF (options%cost%wgauge(i) .GE. 0.) THEN
+        abs0 = options%cost%wgauge(i)
+      ELSE
+        abs0 = -options%cost%wgauge(i)
+      END IF
+! Cycle if wgauge is equal to 0
+      IF (abs0 .GT. 0._sp) THEN
+        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step)
+        WHERE (qo .LT. 0._sp) qs = -99._sp
+! Convert mean_prcp from mm/dt to m3/s
+        mprcp = input_data%atmos_data%mean_prcp(i, options%cost%&
+&         end_warmup:setup%ntime_step)*mesh%area_dln(i)*1.e-3_sp/setup%&
+&         dt
+        mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
+&         setup%ntime_step)
+        DO j=1,options%cost%njoc
+! Should be unreachable.
+          SELECT CASE  (options%cost%jobs_cmpt(j)) 
+          CASE ('nse') 
+! Efficiency Metrics
+            result1 = NSE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('nnse') 
+            result1 = NNSE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('kge') 
+            result1 = KGE(qo, qs)
+            jobs_cmpt_values(i, j) = 1._sp - result1
+          CASE ('mae') 
+            jobs_cmpt_values(i, j) = MAE(qo, qs)
+          CASE ('mape') 
+            jobs_cmpt_values(i, j) = MAPE(qo, qs)
+          CASE ('mse') 
+            jobs_cmpt_values(i, j) = MSE(qo, qs)
+          CASE ('rmse') 
+            jobs_cmpt_values(i, j) = RMSE(qo, qs)
+          CASE ('lgrm') 
+            jobs_cmpt_values(i, j) = LGRM(qo, qs)
+          CASE ('Crc') 
+! Continuous Signatures
+            jobs_tmp = RC(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = RC(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crchf') 
+            jobs_tmp = RCHF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = RCHF(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crclf') 
+            jobs_tmp = RCLF(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = RCLF(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Crch2r') 
+            jobs_tmp = RCH2R(mprcp, qo)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = RCH2R(mprcp, qs)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp2') 
+            jobs_tmp = CFP(qo, 0.02_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = CFP(qs, 0.02_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp10') 
+            jobs_tmp = CFP(qo, 0.1_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = CFP(qs, 0.1_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp50') 
+            jobs_tmp = CFP(qo, 0.5_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = CFP(qs, 0.5_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Cfp90') 
+            jobs_tmp = CFP(qo, 0.9_sp)
+            IF (jobs_tmp .GT. 0._sp) THEN
+              result1 = CFP(qs, 0.9_sp)
+              jobs_cmpt_values(i, j) = (result1/jobs_tmp-1._sp)**2
+            END IF
+          CASE ('Erc') 
+! Event Signatures
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RC(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = RC(mprcp(range_event(1):range_event(2)), qs(&
+&                   range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erchf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCHF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = RCHF(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erclf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCLF(mprcp(range_event(1):range_event(2)), qo&
+&                 (range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = RCLF(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Erch2r') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = RCH2R(mprcp(range_event(1):range_event(2)), &
+&                 qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = RCH2R(mprcp(range_event(1):range_event(2)), &
+&                   qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Eff') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EFF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = EFF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Ebf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EBF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = EBF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Elt') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = ELT(mprcp(range_event(1):range_event(2)), qo(&
+&                 range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = ELT(mprcp(range_event(1):range_event(2)), qs&
+&                   (range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          CASE ('Epf') 
+            n_computed_event = 0
+            DO k=1,options%cost%n_event(i)
+              range_event = GET_RANGE_EVENT(mask_event, k)
+              IF (range_event(1) .GE. 1) THEN
+                jobs_tmp = EPF(qo(range_event(1):range_event(2)))
+                IF (jobs_tmp .GT. 0._sp) THEN
+                  result1 = EPF(qs(range_event(1):range_event(2)))
+                  jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j) + (&
+&                   result1/jobs_tmp-1._sp)**2
+                  n_computed_event = n_computed_event + 1
+                END IF
+              END IF
+            END DO
+            jobs_cmpt_values(i, j) = jobs_cmpt_values(i, j)/&
+&             n_computed_event
+          END SELECT
+        END DO
+      END IF
+    END DO
+! TODO TH: handle with alias (median, low/upp quartiles) for jobs_cmpt
+    IF (ANY(options%cost%wgauge(:) .LT. 0._sp)) THEN
+      jobs_gauge = 0._sp
+      k = 0
+      DO i=1,mesh%ng
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .GT. 0._sp) THEN
+          jobs_tmp = 0._sp
+          DO j=1,options%cost%njoc
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
+          k = k + 1
+          jobs_gauge(k) = jobs_tmp
+        END IF
+      END DO
+      IF (options%cost%wgauge(1) .GE. 0.) THEN
+        abs2 = options%cost%wgauge(1)
+      ELSE
+        abs2 = -options%cost%wgauge(1)
+      END IF
+      jobs = QUANTILE1D_R(jobs_gauge(1:k), abs2)
+    ELSE
+      jobs = 0._sp
+      DO i=1,mesh%ng
+        DO j=1,options%cost%njoc
+          jobs = jobs + options%cost%wgauge(i)*options%cost%wjobs_cmpt(j&
+&           )*jobs_cmpt_values(i, j)
+        END DO
+      END DO
+    END IF
+  END SUBROUTINE CLS_COMPUTE_JOBS
+
+!  Differentiation of cls_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: output.cost
+!   with respect to varying inputs: *(output.sim_response.q)
+!   Plus diff mem management of: output.sim_response.q:in
+  SUBROUTINE CLS_COMPUTE_COST_D(setup, mesh, input_data, parameters, &
+&   output, output_d, options, returns)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(OUTPUTDT), INTENT(INOUT) :: output
+    TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp) :: jobs, jreg
+    REAL(sp) :: jobs_d
+    CALL CLS_COMPUTE_JOBS_D(setup, mesh, input_data, output, output_d, &
+&                     options, returns, jobs, jobs_d)
+! TODO FC: Not Implemented yet
+! call cls_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+    output_d%cost = jobs_d
+  END SUBROUTINE CLS_COMPUTE_COST_D
+
+!  Differentiation of cls_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: output.cost
+!   with respect to varying inputs: *(output.sim_response.q)
+!   Plus diff mem management of: output.sim_response.q:in
+  SUBROUTINE CLS_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
+&   output, output_b, options, returns)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(OUTPUTDT), INTENT(INOUT) :: output
+    TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp) :: jobs, jreg
+    REAL(sp) :: jobs_b
+    CALL CLS_COMPUTE_JOBS(setup, mesh, input_data, output, options, &
+&                   returns, jobs)
+! TODO FC: Not Implemented yet
+! call cls_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+    jobs_b = output_b%cost
+    CALL CLS_COMPUTE_JOBS_B(setup, mesh, input_data, output, output_b, &
+&                     options, returns, jobs, jobs_b)
+  END SUBROUTINE CLS_COMPUTE_COST_B
+
+  SUBROUTINE CLS_COMPUTE_COST(setup, mesh, input_data, parameters, &
+&   output, options, returns)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(OUTPUTDT), INTENT(INOUT) :: output
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp) :: jobs, jreg
+    jobs = 0._sp
+    jreg = 0._sp
+    CALL CLS_COMPUTE_JOBS(setup, mesh, input_data, output, options, &
+&                   returns, jobs)
+! TODO FC: Not Implemented yet
+! call cls_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+    output%cost = jobs + options%cost%wjreg*jreg
+  END SUBROUTINE CLS_COMPUTE_COST
+
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(output.sim_response.q)
@@ -690,18 +4617,16 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs
-    REAL(sp) :: jobs_d
-    REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
-    REAL(sp), DIMENSION(setup%ntime_step) :: qs_d
-    REAL(sp) :: result1
-    REAL(sp) :: result1_d
-    qo = input_data%obs_response%q(1, :)
-    qs_d = output_d%sim_response%q(1, :)
-    qs = output%sim_response%q(1, :)
-    result1_d = NSE_D(qo, qs, qs_d, result1)
-    jobs_d = -result1_d
-    output_d%cost = jobs_d
+! TODO BR: Not Implemented Yet
+    SELECT CASE  (options%cost%variant) 
+    CASE ('cls') 
+      CALL CLS_COMPUTE_COST_D(setup, mesh, input_data, parameters, &
+&                       output, output_d, options, returns)
+    CASE ('bys') 
+      output_d%cost = 0.0_4
+    CASE DEFAULT
+      output_d%cost = 0.0_4
+    END SELECT
   END SUBROUTINE COMPUTE_COST_D
 
 !  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -719,26 +4644,16 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs
-    REAL(sp) :: jobs_b
-    REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
-    REAL(sp), DIMENSION(setup%ntime_step) :: qs_b
-    REAL(sp) :: result1
-    REAL(sp) :: result1_b
-    REAL(sp) :: res
-    REAL(sp) :: res_b
-    qo = input_data%obs_response%q(1, :)
-    qs = output%sim_response%q(1, :)
-    res = NSE(qo, qs)
-    jobs_b = output_b%cost
-    result1_b = -jobs_b
-    qo = input_data%obs_response%q(1, :)
-    qs = output%sim_response%q(1, :)
-    qs_b = 0.0_4
-    res_b = result1_b
-    CALL NSE_B(qo, qs, qs_b, res_b)
-    output_b%sim_response%q = 0.0_4
-    output_b%sim_response%q(1, :) = output_b%sim_response%q(1, :) + qs_b
+! TODO BR: Not Implemented Yet
+    SELECT CASE  (options%cost%variant) 
+    CASE ('cls') 
+      CALL CLS_COMPUTE_COST(setup, mesh, input_data, parameters, output&
+&                     , options, returns)
+      CALL CLS_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
+&                       output, output_b, options, returns)
+    CASE DEFAULT
+      output_b%sim_response%q = 0.0_4
+    END SELECT
   END SUBROUTINE COMPUTE_COST_B
 
   SUBROUTINE COMPUTE_COST(setup, mesh, input_data, parameters, output, &
@@ -751,15 +4666,14 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp) :: jobs
-    REAL(sp), DIMENSION(setup%ntime_step) :: qo, qs
-    REAL(sp) :: result1
-    jobs = 0._sp
-    qo = input_data%obs_response%q(1, :)
-    qs = output%sim_response%q(1, :)
-    result1 = NSE(qo, qs)
-    jobs = 1 - result1
-    output%cost = jobs
+! TODO BR: Not Implemented Yet
+    SELECT CASE  (options%cost%variant) 
+    CASE ('cls') 
+      CALL CLS_COMPUTE_COST(setup, mesh, input_data, parameters, output&
+&                     , options, returns)
+    CASE ('bys') 
+
+    END SELECT
   END SUBROUTINE COMPUTE_COST
 
 END MODULE MWD_COST_DIFF

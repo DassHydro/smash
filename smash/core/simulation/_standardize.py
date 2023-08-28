@@ -31,6 +31,8 @@ from smash.core.signal_analysis.segmentation._standardize import (
     _standardize_hydrograph_segmentation_max_duration,
 )
 
+from smash.core.signal_analysis.segmentation._tools import _mask_event
+
 from smash.factory.net.net import Net
 
 from smash.factory.net._optimizers import Adam, Adagrad, SGD, RMSprop
@@ -540,9 +542,19 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
                 np.ones(shape=jobs_cmpt.size, dtype=np.float32) / jobs_cmpt.size
             )
 
+        elif wjobs_cmpt == "lquartile":
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
+                -0.25
+            )
+
         elif wjobs_cmpt == "median":
-            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float(
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
                 -0.5
+            )
+
+        elif wjobs_cmpt == "uquartile":
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
+                -0.75
             )
 
         else:
@@ -616,9 +628,19 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
                 np.ones(shape=jreg_cmpt.size, dtype=np.float32) / jreg_cmpt.size
             )
 
+        elif wjreg_cmpt == "lquartile":
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
+                -0.25
+            )
+
         elif wjreg_cmpt == "median":
-            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float(
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
                 -0.5
+            )
+
+        elif wjreg_cmpt == "uquartile":
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
+                -0.75
             )
 
         else:
@@ -698,8 +720,14 @@ def _standardize_simulation_cost_options_wgauge(
             wgauge = np.ones(shape=gauge.size, dtype=np.float32)
             wgauge *= 1 / wgauge.size
 
+        elif wgauge == "lquartile":
+            wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float32(-0.25)
+
         elif wgauge == "median":
-            wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float(-0.5)
+            wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float32(-0.5)
+
+        elif wgauge == "uquartile":
+            wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float32(-0.75)
 
         else:
             raise ValueError(
@@ -728,9 +756,9 @@ def _standardize_simulation_cost_options_wgauge(
 
 def _standardize_simulation_cost_options_event_seg(
     event_seg: dict | None, **kwargs
-) -> (dict, None):
+) -> dict:
     if event_seg is None:
-        pass
+        event_seg = {}
 
     else:
         if isinstance(event_seg, dict):
@@ -961,14 +989,17 @@ def _standardize_simulation_optimize_options_finalize(
     return optimize_options
 
 
-# % TODO: TH Implement mask_event function
 def _standardize_simulation_cost_options_finalize(
     model: Model, cost_variant: str, cost_options: dict
 ) -> dict:
     cost_options["variant"] = cost_variant
     cost_options["njoc"] = cost_options["jobs_cmpt"].size
     cost_options["njrc"] = cost_options["jreg_cmpt"].size
-    # ~ cost_options["mask_event"] = _mask_event(**cost_options["event_seg"])
+
+    if any(f.startswith("E") for f in cost_options["jobs_cmpt"]):
+        info_event = _mask_event(model=model, **cost_options["event_seg"])
+        cost_options["n_event"] = info_event["n"]
+        cost_options["mask_event"] = info_event["mask"]
 
     # % Handle flags send to Fortran
     # % gauge and wgauge
@@ -984,8 +1015,6 @@ def _standardize_simulation_cost_options_finalize(
 
     cost_options["gauge"] = gauge
     cost_options["wgauge"] = wgauge
-
-    # % event_seg: TODO
 
     # % end_warmup
     st = pd.Timestamp(model.setup.start_time)
