@@ -281,16 +281,16 @@ def _signatures(
 
 
 def _signature_computation(p: np.ndarray, q: np.ndarray, signature: str) -> float:
-    if signature in {"Crc", "Erc"}:
+    if signature in ["Crc", "Erc"]:
         return rc(p, q)
 
-    elif signature in {"Crchf", "Erchf"}:
+    elif signature in ["Crchf", "Erchf"]:
         return rchf(p, q)
 
-    elif signature in {"Crclf", "Erclf"}:
+    elif signature in ["Crclf", "Erclf"]:
         return rclf(p, q)
 
-    elif signature in {"Crch2r", "Erch2r"}:
+    elif signature in ["Crch2r", "Erch2r"]:
         return rch2r(p, q)
 
     elif signature == "Cfp2":

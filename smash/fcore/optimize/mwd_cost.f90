@@ -280,6 +280,8 @@ contains
             k = 0
 
             do i = 1, mesh%ng
+                if (abs(options%cost%wgauge(i)) .le. 0._sp) cycle
+
                 jobs_tmp = 0._sp
 
                 do j = 1, options%cost%njoc
@@ -287,8 +289,6 @@ contains
                     jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*jobs_cmpt_values(i, j)
 
                 end do
-
-                if (jobs_tmp .le. 0._sp) cycle
 
                 k = k + 1
                 jobs_gauge(k) = jobs_tmp

@@ -1016,8 +1016,6 @@ def _standardize_simulation_cost_options_finalize(
     cost_options["gauge"] = gauge
     cost_options["wgauge"] = wgauge
 
-    # % event_seg: TODO
-
     # % end_warmup
     st = pd.Timestamp(model.setup.start_time)
     cost_options["end_warmup"] = int(

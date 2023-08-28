@@ -17,6 +17,8 @@
 !%          gauge                    Optimized gauges
 !%          wgauge                   Weight optimized gauges
 !%          end_warmup               End Warmup index
+!%          n_event                  Number of flood events
+!%          mask_event               Mask info by segmentation algorithm
 !%          ======================== =======================================
 !%
 !%      Subroutine

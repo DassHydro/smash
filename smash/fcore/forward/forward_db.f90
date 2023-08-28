@@ -2993,7 +2993,7 @@ MODULE MWD_COST_DIFF
   USE MD_STATS_DIFF
 !% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
   USE MWD_METRICS_DIFF
-!% only: baseflow_separation
+!% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
   USE MWD_SIGNATURES_DIFF
 !% only: SetupDT
   USE MWD_SETUP
@@ -3019,8 +3019,7 @@ CONTAINS
     INTEGER, DIMENSION(2) :: res
     INTEGER :: i
     INTRINSIC SIZE
-    res(1) = 0
-    res(2) = 0
+    res = 0
     DO i=1,SIZE(mask_event)
       IF (mask_event(i) .EQ. i_event) THEN
         res(1) = i
@@ -3040,8 +3039,6 @@ CONTAINS
 !   variations   of useful results: jobs
 !   with respect to varying inputs: *(output.sim_response.q)
 !   Plus diff mem management of: output.sim_response.q:in
-! TODO FC: Can gain memory by allocate baseflow and fastflow arrays
-! but need to handle allocation state
   SUBROUTINE CLS_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &   output_d, options, returns, jobs, jobs_d)
     IMPLICIT NONE
@@ -3073,6 +3070,7 @@ CONTAINS
     INTRINSIC ANY
     REAL(sp) :: abs0
     REAL(sp) :: abs1
+    REAL(sp) :: abs2
     REAL(sp) :: result1
     REAL(sp) :: result1_d
     REAL(sp) :: temp
@@ -3384,26 +3382,31 @@ CONTAINS
       k = 0
       jobs_gauge_d = 0.0_4
       DO i=1,mesh%ng
-        jobs_tmp = 0._sp
-        jobs_tmp_d = 0.0_4
-        DO j=1,options%cost%njoc
-          jobs_tmp_d = jobs_tmp_d + options%cost%wjobs_cmpt(j)*&
-&           jobs_cmpt_values_d(i, j)
-          jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
-&           jobs_cmpt_values(i, j)
-        END DO
-        IF (jobs_tmp .GT. 0._sp) THEN
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .GT. 0._sp) THEN
+          jobs_tmp = 0._sp
+          jobs_tmp_d = 0.0_4
+          DO j=1,options%cost%njoc
+            jobs_tmp_d = jobs_tmp_d + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values_d(i, j)
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
           k = k + 1
           jobs_gauge_d(k) = jobs_tmp_d
           jobs_gauge(k) = jobs_tmp
         END IF
       END DO
       IF (options%cost%wgauge(1) .GE. 0.) THEN
-        abs1 = options%cost%wgauge(1)
+        abs2 = options%cost%wgauge(1)
       ELSE
-        abs1 = -options%cost%wgauge(1)
+        abs2 = -options%cost%wgauge(1)
       END IF
-      jobs_d = QUANTILE1D_R_D(jobs_gauge(1:k), jobs_gauge_d(1:k), abs1, &
+      jobs_d = QUANTILE1D_R_D(jobs_gauge(1:k), jobs_gauge_d(1:k), abs2, &
 &       jobs)
     ELSE
       jobs_d = 0.0_4
@@ -3420,8 +3423,6 @@ CONTAINS
 !   gradient     of useful results: jobs
 !   with respect to varying inputs: *(output.sim_response.q)
 !   Plus diff mem management of: output.sim_response.q:in
-! TODO FC: Can gain memory by allocate baseflow and fastflow arrays
-! but need to handle allocation state
   SUBROUTINE CLS_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &   output_b, options, returns, jobs, jobs_b)
     IMPLICIT NONE
@@ -3453,6 +3454,7 @@ CONTAINS
     INTRINSIC ANY
     REAL(sp) :: abs0
     REAL(sp) :: abs1
+    REAL(sp) :: abs2
     REAL(sp) :: result1
     REAL(sp) :: result1_b
     REAL(sp) :: res
@@ -3856,15 +3858,20 @@ CONTAINS
       jobs_gauge = 0._sp
       k = 0
       DO i=1,mesh%ng
-        CALL PUSHREAL4(jobs_tmp)
-        jobs_tmp = 0._sp
-        DO j=1,options%cost%njoc
-          jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
-&           jobs_cmpt_values(i, j)
-        END DO
-        IF (jobs_tmp .LE. 0._sp) THEN
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .LE. 0._sp) THEN
           CALL PUSHCONTROL1B(0)
         ELSE
+          CALL PUSHREAL4(jobs_tmp)
+          jobs_tmp = 0._sp
+          DO j=1,options%cost%njoc
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
           CALL PUSHINTEGER4(k)
           k = k + 1
           jobs_gauge(k) = jobs_tmp
@@ -3872,30 +3879,28 @@ CONTAINS
         END IF
       END DO
       IF (options%cost%wgauge(1) .GE. 0.) THEN
-        abs1 = options%cost%wgauge(1)
+        abs2 = options%cost%wgauge(1)
       ELSE
-        abs1 = -options%cost%wgauge(1)
+        abs2 = -options%cost%wgauge(1)
       END IF
-      res = QUANTILE1D_R(jobs_gauge(1:k), abs1)
+      res = QUANTILE1D_R(jobs_gauge(1:k), abs2)
       jobs_gauge_b = 0.0_4
       res_b = jobs_b
-      CALL QUANTILE1D_R_B(jobs_gauge(1:k), jobs_gauge_b(1:k), abs1, &
+      CALL QUANTILE1D_R_B(jobs_gauge(1:k), jobs_gauge_b(1:k), abs2, &
 &                   res_b)
       jobs_cmpt_values_b = 0.0_4
       DO i=mesh%ng,1,-1
         CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 0) THEN
-          jobs_tmp_b = 0.0_4
-        ELSE
+        IF (branch .NE. 0) THEN
           jobs_tmp_b = jobs_gauge_b(k)
           jobs_gauge_b(k) = 0.0_4
           CALL POPINTEGER4(k)
+          DO j=options%cost%njoc,1,-1
+            jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j) + &
+&             options%cost%wjobs_cmpt(j)*jobs_tmp_b
+          END DO
+          CALL POPREAL4(jobs_tmp)
         END IF
-        DO j=options%cost%njoc,1,-1
-          jobs_cmpt_values_b(i, j) = jobs_cmpt_values_b(i, j) + options%&
-&           cost%wjobs_cmpt(j)*jobs_tmp_b
-        END DO
-        CALL POPREAL4(jobs_tmp)
       END DO
     ELSE
       jobs_cmpt_values_b = 0.0_4
@@ -4230,8 +4235,6 @@ CONTAINS
     END DO
   END SUBROUTINE CLS_COMPUTE_JOBS_B
 
-! TODO FC: Can gain memory by allocate baseflow and fastflow arrays
-! but need to handle allocation state
   SUBROUTINE CLS_COMPUTE_JOBS(setup, mesh, input_data, output, options, &
 &   returns, jobs)
     IMPLICIT NONE
@@ -4255,6 +4258,7 @@ CONTAINS
     INTRINSIC ANY
     REAL(sp) :: abs0
     REAL(sp) :: abs1
+    REAL(sp) :: abs2
     REAL(sp) :: result1
     jobs_cmpt_values = 0._sp
     DO i=1,mesh%ng
@@ -4496,22 +4500,27 @@ CONTAINS
       jobs_gauge = 0._sp
       k = 0
       DO i=1,mesh%ng
-        jobs_tmp = 0._sp
-        DO j=1,options%cost%njoc
-          jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
-&           jobs_cmpt_values(i, j)
-        END DO
-        IF (jobs_tmp .GT. 0._sp) THEN
+        IF (options%cost%wgauge(i) .GE. 0.) THEN
+          abs1 = options%cost%wgauge(i)
+        ELSE
+          abs1 = -options%cost%wgauge(i)
+        END IF
+        IF (abs1 .GT. 0._sp) THEN
+          jobs_tmp = 0._sp
+          DO j=1,options%cost%njoc
+            jobs_tmp = jobs_tmp + options%cost%wjobs_cmpt(j)*&
+&             jobs_cmpt_values(i, j)
+          END DO
           k = k + 1
           jobs_gauge(k) = jobs_tmp
         END IF
       END DO
       IF (options%cost%wgauge(1) .GE. 0.) THEN
-        abs1 = options%cost%wgauge(1)
+        abs2 = options%cost%wgauge(1)
       ELSE
-        abs1 = -options%cost%wgauge(1)
+        abs2 = -options%cost%wgauge(1)
       END IF
-      jobs = QUANTILE1D_R(jobs_gauge(1:k), abs1)
+      jobs = QUANTILE1D_R(jobs_gauge(1:k), abs2)
     ELSE
       jobs = 0._sp
       DO i=1,mesh%ng
