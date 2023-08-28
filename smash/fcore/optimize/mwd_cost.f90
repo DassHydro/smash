@@ -17,7 +17,7 @@ module mwd_cost
     use md_constant !% only: sp
     use md_stats !% only: quantile1d_r
     use mwd_metrics !% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
-    use mwd_signatures !% only: baseflow_separation
+    use mwd_signatures !% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -41,8 +41,7 @@ contains
 
         integer :: i
 
-        res(1) = 0
-        res(2) = 0
+        res = 0
 
         do i = 1, size(mask_event)
 
@@ -64,8 +63,6 @@ contains
 
     end function get_range_event
 
-    ! TODO FC: Can gain memory by allocate baseflow and fastflow arrays
-    ! but need to handle allocation state
     subroutine cls_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         implicit none

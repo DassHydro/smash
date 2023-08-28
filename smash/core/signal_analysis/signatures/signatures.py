@@ -280,7 +280,7 @@ def _signatures(
     )
 
 
-def _signature_computation(p: np.ndarray, q: np.ndarray, signature: str):
+def _signature_computation(p: np.ndarray, q: np.ndarray, signature: str) -> float:
     if signature in {"Crc", "Erc"}:
         return rc(p, q)
 

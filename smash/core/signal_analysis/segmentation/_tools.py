@@ -216,9 +216,9 @@ def _mask_event(
     model: Model,
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,  # in hour
-):
+) -> dict:
     mask = np.zeros(model.obs_response.q.shape)
-    n_event = np.zeros(model.obs_response.q.shape[0])
+    n_event = np.zeros(model.mesh.ng)
 
     for i, catchment in enumerate(model.mesh.code):
         prcp = model.atmos_data.mean_prcp[i, :].copy()
