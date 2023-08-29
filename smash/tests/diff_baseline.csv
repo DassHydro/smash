@@ -1,11 +1,11 @@
-commit 626599c502b331b045dae4066fdf27a8866ba00d
-Merge: 930ddfb 2189500
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Wed Aug 23 16:32:11 2023 +0200
+commit acb1527d2e8afac200c53a90b37da058b2d23610
+Merge: 626599c 16dcf5b
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Mon Aug 28 12:20:07 2023 +0200
 
-    Merge pull request #57 from DassHydro-dev/fix-py-control-dealloc
+    Merge pull request #58 from DassHydro-dev/enc-cost-computation-multicrit-multigauge
     
-    FIX: Clean Python Control Dealloc
+    ENC: Add multicriteria and multigauge optim into cost computation
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -25,8 +25,8 @@ custom_optimize.gr4-lr.custom_set_1.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_2.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_3.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_4.sim_q |NON MODIFIED
-custom_optimize.gr4-lr.custom_set_5.sim_q |ADDED
-custom_optimize.gr4-lr.custom_set_6.sim_q |ADDED
+custom_optimize.gr4-lr.custom_set_5.sim_q |NON MODIFIED
+custom_optimize.gr4-lr.custom_set_6.sim_q |NON MODIFIED
 forward_run.gr4-kw.sim_q                  |NON MODIFIED
 forward_run.gr4-lr.sim_q                  |NON MODIFIED
 forward_run.grd-lr.sim_q                  |NON MODIFIED
@@ -85,6 +85,11 @@ optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.grd-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.grd-lr.uniform.sim_q             |NON MODIFIED
+precipitation_indices.d1                  |ADDED
+precipitation_indices.d2                  |ADDED
+precipitation_indices.hg                  |ADDED
+precipitation_indices.std                 |ADDED
+precipitation_indices.vg                  |ADDED
 setup_io.daily_interannual_pet            |NON MODIFIED
 setup_io.descriptor_name                  |NON MODIFIED
 setup_io.dt                               |NON MODIFIED

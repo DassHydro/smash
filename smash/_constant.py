@@ -193,6 +193,12 @@ SIGNS = CSIGN + ESIGN
 DOMAIN = ["obs", "observed", "observation", "sim", "simulated", "simulation"]
 
 
+### PRECIPITATION INDICES ###
+#############################
+
+PRECIPITATION_INDICES = ["std", "d1", "d2", "vg", "hg"]
+
+
 ### EFFICIENCY/ERROR METRICS ###
 ################################
 
