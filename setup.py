@@ -16,6 +16,7 @@ setup(
         "smash.core.signal_analysis.segmentation",
         "smash.core.signal_analysis.signatures",
         "smash.core.signal_analysis.metrics",
+        "smash.core.signal_analysis.prcp_indices",
         "smash.core.simulation",
         "smash.core.simulation.run",
         "smash.core.simulation.optimize",

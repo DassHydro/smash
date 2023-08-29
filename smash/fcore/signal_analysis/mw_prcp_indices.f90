@@ -45,51 +45,51 @@ contains
 
     end subroutine get_flwdst_cls
 
-    subroutine get_width_function_cdf(flwdst, flwdst_cls, wf_cdf)
+    subroutine get_width_function_cdf(flwdst, flwdst_cls, w_cdf)
 
         implicit none
 
         real(sp), dimension(:, :), intent(in) :: flwdst
         real(sp), dimension(:), intent(in) :: flwdst_cls
-        real(sp), dimension(:), intent(inout) :: wf_cdf
+        real(sp), dimension(:), intent(inout) :: w_cdf
 
         integer :: i
 
-        wf_cdf(1) = 1._sp
+        w_cdf(1) = 1._sp
 
         do i = 2, size(flwdst_cls)
 
-            wf_cdf(i) = wf_cdf(i - 1) + count(flwdst .gt. flwdst_cls(i - 1) .and. flwdst .le. flwdst_cls(i))
+            w_cdf(i) = w_cdf(i - 1) + count(flwdst .gt. flwdst_cls(i - 1) .and. flwdst .le. flwdst_cls(i))
 
         end do
 
-        wf_cdf = wf_cdf/wf_cdf(size(wf_cdf))
+        w_cdf = w_cdf/w_cdf(size(w_cdf))
 
     end subroutine get_width_function_cdf
 
-    subroutine get_rainfall_weighted_width_function_cdf(flwdst, flwdst_cls, prcp_matrix, rwwf_cdf)
+    subroutine get_rainfall_weighted_width_function_cdf(flwdst, flwdst_cls, prcp_matrix, wp_cdf)
 
         implicit none
 
         real(sp), dimension(:, :), intent(in) :: flwdst, prcp_matrix
         real(sp), dimension(:), intent(in) :: flwdst_cls
-        real(sp), dimension(:), intent(inout) :: rwwf_cdf
+        real(sp), dimension(:), intent(inout) :: wp_cdf
 
         integer :: i
         logical, dimension(size(flwdst, 1), size(flwdst, 2)) :: mask
 
         mask = (prcp_matrix .ge. 0._sp .and. flwdst .ge. 0._sp .and. flwdst .le. flwdst_cls(1))
 
-        rwwf_cdf(1) = sum(prcp_matrix, mask=mask)
+        wp_cdf(1) = sum(prcp_matrix, mask=mask)
 
         do i = 2, size(flwdst_cls)
 
             mask = (prcp_matrix .ge. 0._sp .and. flwdst .gt. flwdst_cls(i - 1) .and. flwdst .le. flwdst_cls(i))
-            rwwf_cdf(i) = rwwf_cdf(i - 1) + sum(prcp_matrix, mask=mask)
+            wp_cdf(i) = wp_cdf(i - 1) + sum(prcp_matrix, mask=mask)
 
         end do
 
-        rwwf_cdf = rwwf_cdf/rwwf_cdf(size(rwwf_cdf))
+        wp_cdf = wp_cdf/wp_cdf(size(wp_cdf))
 
     end subroutine get_rainfall_weighted_width_function_cdf
 
@@ -157,7 +157,7 @@ contains
 
                 sum_p = sum(prcp_matrix, mask=mask)
 
-                ! Cycle if there is no preciptiation
+                ! Cycle if there is no precipitation
                 if (sum_p .le. 0._sp) cycle
 
                 ! Get intermediate values for std, d1 and d2
