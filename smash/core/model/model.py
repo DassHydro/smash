@@ -32,10 +32,10 @@ from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_parameters import ParametersDT
 from smash.fcore._mwd_output import OutputDT
-from smash.fcore._mwd_options import OptionsDT
-from smash.fcore._mwd_returns import ReturnsDT
 
 import numpy as np
+
+from copy import deepcopy
 
 from typing import TYPE_CHECKING
 
@@ -217,9 +217,9 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
-        args = _standardize_forward_run_args(
-            self, cost_variant, cost_options, common_options
-        )
+        args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
+
+        args = _standardize_forward_run_args(self, cost_variant, *args_options)
 
         _forward_run(self, *args)
 
@@ -232,14 +232,16 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
+        args_options = [
+            deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
+        ]
+
         args = _standardize_optimize_args(
             self,
             mapping,
             cost_variant,
             optimizer,
-            optimize_options,
-            cost_options,
-            common_options,
+            *args_options,
         )
 
         _optimize(self, *args)
