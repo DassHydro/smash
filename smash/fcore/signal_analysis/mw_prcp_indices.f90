@@ -106,7 +106,7 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         real(sp), dimension(nprcp_indices, mesh%ng, setup%ntime_step), intent(inout) :: prcp_indices
 
-        integer :: i, j, k, row, col, ipvg, ivg
+        integer :: i, j, row, col, ipvg, ivg
         real(sp) :: minv_n, sum_p, sum_p2, sum_d, sum_d2, sum_pd, sum_pd2, &
         & p0, p1, p2, g1, g2, fpvg, dpvg, dvg, dmax, std, d1, d2, vg, hg
         logical, dimension(mesh%nrow, mesh%ncol) :: mask

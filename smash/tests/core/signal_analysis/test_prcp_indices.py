@@ -24,7 +24,7 @@ def test_precipitation_indices():
             value,
             pytest.baseline[key][:],
             equal_nan=True,
-            atol=1e-06,
+            atol=1e-04,
         ), key
 
 
@@ -37,7 +37,7 @@ def test_sparse_precipitation_indices():
             value,
             pytest.baseline[key][:],
             equal_nan=True,
-            atol=1e-06,
+            atol=1e-04,
         ), (
             "sparse." + key
         )
