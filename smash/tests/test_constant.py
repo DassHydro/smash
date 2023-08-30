@@ -1,6 +1,8 @@
 from __future__ import annotations
 
 from smash._constant import (
+    MODEL_PUBLIC_ATTRS,
+    MODEL_PRIVATE_ATTRS,
     STRUCTURE_NAME,
     OPR_PARAMETERS,
     OPR_STATES,
@@ -23,6 +25,22 @@ from smash._constant import (
 )
 
 import numpy as np
+
+
+def test_model_attrs():
+    # % Check public principal data attributes
+    assert MODEL_PUBLIC_ATTRS == [
+        "atmos_data",
+        "physio_data",
+        "obs_response",
+        "sim_response",
+        "opr_parameters",
+        "opr_initial_states",
+        "opr_final_states",
+    ]
+
+    # % Check private attrs
+    assert MODEL_PRIVATE_ATTRS == ["_l_descriptor", "_u_descriptor"]
 
 
 def test_structure_model():

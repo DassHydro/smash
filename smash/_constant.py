@@ -3,8 +3,25 @@ from __future__ import annotations
 import numpy as np
 
 
-### MODEL ###
-#############
+### MODEL DATA ATTRIBUTES ###
+#############################
+
+# % Model public principal data attributes
+MODEL_PUBLIC_ATTRS = [
+    "atmos_data",
+    "physio_data",
+    "obs_response",
+    "sim_response",
+    "opr_parameters",
+    "opr_initial_states",
+    "opr_final_states",
+]
+
+# % Model private attributes
+MODEL_PRIVATE_ATTRS = ["_l_descriptor", "_u_descriptor"]
+
+### MODEL STRUCTURE ###
+#######################
 
 STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "grd-lr"]
 
