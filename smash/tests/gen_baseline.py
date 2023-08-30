@@ -138,13 +138,14 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 
 
 if __name__ == "__main__":
+    # % Disable stderr
+    sys.stderr = open("/dev/null", "w")
+
     args = parser()
 
     setup, mesh = smash.factory.load_dataset("Cance")
 
     print("collecting ...")
-    # % Disable stderr
-    sys.stderr = open("/dev/null", "w")
 
     qs = h5py.File(
         os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r"
@@ -157,9 +158,6 @@ if __name__ == "__main__":
     for structure in STRUCTURE_NAME:
         setup["structure"] = structure
         model_structure.append(smash.Model(setup, mesh))
-
-    # % Enable stderr
-    sys.stderr = sys.__stderr__
 
     module_names = sorted(glob.glob("**/test_*.py", recursive=True))
 
@@ -207,3 +205,6 @@ if __name__ == "__main__":
     new_baseline = h5py.File("new_baseline.hdf5")
 
     compare_baseline(baseline, new_baseline)
+
+    # % Enable stderr
+    sys.stderr = sys.__stderr__

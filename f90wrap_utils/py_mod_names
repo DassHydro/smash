@@ -26,6 +26,7 @@
 	"mw_mask": "_mw_mask",
 	"mwd_parameters_manipulation": "_mwd_parameters_manipulation",
 	"mwd_sparse_matrix_manipulation": "_mwd_sparse_matrix_manipulation",
+	"mw_prcp_indices": "_mw_prcp_indices",
 	"mwd_metrics": "_mwd_metrics",
 	"mwd_signatures": "_mwd_signatures",
 }

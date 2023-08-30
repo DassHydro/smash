@@ -13,6 +13,9 @@ setup, mesh = smash.factory.load_dataset("Cance")
 
 pytest.model = smash.Model(setup, mesh)
 
+setup["sparse_storage"] = True
+pytest.sparse_model = smash.Model(setup, mesh)
+
 pytest.model_structure = []
 pytest.sparse_model_structure = []
 
