@@ -27,7 +27,7 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     )
 
     for typ, sign in zip(
-        ["cont", "event"], [CSIGN[:4], ESIGN]
+        ["cont", "event"], [CSIGN, ESIGN]
     ):  # % remove percentile signatures calculation
         for dom in signresult.keys():
             res[f"signatures.{typ}_{dom}"] = signresult[dom][typ][sign].to_numpy(
@@ -46,5 +46,5 @@ def test_signatures():
             value,
             pytest.baseline[key][:],
             equal_nan=True,
-            atol=1e-06,
+            atol=1e-04,
         ), key

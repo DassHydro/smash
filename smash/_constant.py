@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 
-### MODEL ###
-#############
+### MODEL STRUCTURE ###
+#######################
 
 STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "grd-lr"]
 

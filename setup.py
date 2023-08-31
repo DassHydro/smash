@@ -29,6 +29,7 @@ setup(
         "smash.io",
         "smash.io.mesh",
         "smash.io.setup",
+        "smash.io.model",
         "smash.tests",
         "smash.tests.core",
         "smash.tests.core.signal_analysis",

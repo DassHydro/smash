@@ -72,8 +72,8 @@ module mwd_mesh
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln
 
-        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse !$F90W private
-        integer, dimension(:, :), allocatable :: local_active_cell !$F90W private
+        integer, dimension(:, :), allocatable :: rowcol_to_ind_sparse
+        integer, dimension(:, :), allocatable :: local_active_cell
 
     end type MeshDT
 

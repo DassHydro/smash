@@ -1,11 +1,11 @@
-commit acb1527d2e8afac200c53a90b37da058b2d23610
-Merge: 626599c 16dcf5b
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Mon Aug 28 12:20:07 2023 +0200
+commit a32787a9b48e68df42b6bc181c7378cf23236c18
+Merge: 4470ae5 fee5ce9
+Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
+Date:   Wed Aug 30 09:45:35 2023 +0200
 
-    Merge pull request #58 from DassHydro-dev/enc-cost-computation-multicrit-multigauge
+    Merge pull request #61 from DassHydro-dev/enc-prcp_indices
     
-    ENC: Add multicriteria and multigauge optim into cost computation
+    ENC: Add Precipitation Indices
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -61,6 +61,19 @@ metrics.mse                               |NON MODIFIED
 metrics.nnse                              |NON MODIFIED
 metrics.nse                               |NON MODIFIED
 metrics.rmse                              |NON MODIFIED
+model_io.atmos_data.mean_pet              |ADDED
+model_io.atmos_data.mean_prcp             |ADDED
+model_io.mesh.active_cell                 |ADDED
+model_io.mesh.flwdir                      |ADDED
+model_io.obs_response.q                   |ADDED
+model_io.opr_final_states.values          |ADDED
+model_io.opr_initial_states.values        |ADDED
+model_io.opr_parameters.values            |ADDED
+model_io.physio_data.descriptor           |ADDED
+model_io.setup.end_time                   |ADDED
+model_io.setup.start_time                 |ADDED
+model_io.setup.structure                  |ADDED
+model_io.sim_response.q                   |ADDED
 net_init.bias_layer_1                     |NON MODIFIED
 net_init.bias_layer_2                     |NON MODIFIED
 net_init.bias_layer_3                     |NON MODIFIED
@@ -85,11 +98,11 @@ optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.grd-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.grd-lr.uniform.sim_q             |NON MODIFIED
-precipitation_indices.d1                  |ADDED
-precipitation_indices.d2                  |ADDED
-precipitation_indices.hg                  |ADDED
-precipitation_indices.std                 |ADDED
-precipitation_indices.vg                  |ADDED
+precipitation_indices.d1                  |NON MODIFIED
+precipitation_indices.d2                  |NON MODIFIED
+precipitation_indices.hg                  |NON MODIFIED
+precipitation_indices.std                 |NON MODIFIED
+precipitation_indices.vg                  |NON MODIFIED
 setup_io.daily_interannual_pet            |NON MODIFIED
 setup_io.descriptor_name                  |NON MODIFIED
 setup_io.dt                               |NON MODIFIED
@@ -104,9 +117,9 @@ setup_io.read_prcp                        |NON MODIFIED
 setup_io.read_qobs                        |NON MODIFIED
 setup_io.start_time                       |NON MODIFIED
 setup_io.structure                        |NON MODIFIED
-signatures.cont_obs_by_obs                |NON MODIFIED
-signatures.cont_sim_by_obs                |NON MODIFIED
-signatures.cont_sim_by_sim                |NON MODIFIED
+signatures.cont_obs_by_obs                |MODIFIED
+signatures.cont_sim_by_obs                |MODIFIED
+signatures.cont_sim_by_sim                |MODIFIED
 signatures.event_obs_by_obs               |NON MODIFIED
 signatures.event_sim_by_obs               |NON MODIFIED
 signatures.event_sim_by_sim               |NON MODIFIED
