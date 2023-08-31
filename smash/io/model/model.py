@@ -1,11 +1,6 @@
 from __future__ import annotations
 
-from smash.io._error import ReadHDF5MethodError
-
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from smash.core.model.model import Model
+import smash
 
 from smash.fcore._mwd_setup import SetupDT
 from smash.fcore._mwd_mesh import MeshDT
@@ -13,7 +8,7 @@ from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_parameters import ParametersDT
 from smash.fcore._mwd_output import OutputDT
 
-from smash.core.model._build_model import _build_mesh
+from smash.io._error import ReadHDF5MethodError
 from smash.io.model._parse import (
     _parse_derived_type_to_hdf5,
     _parse_hdf5_to_derived_type,
@@ -24,7 +19,10 @@ import errno
 import h5py
 import pandas as pd
 
-import smash
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.core.model.model import Model
 
 __all__ = ["save_model", "read_model"]
 
@@ -130,23 +128,9 @@ def read_model(path: str) -> Model:
             if f.attrs.get("_save_func") == "save_model":
                 instance = smash.Model(None, None)
 
-                if "descriptor_name" in f["setup"].keys():
-                    nd = f["setup"]["descriptor_name"].size
-
-                else:
-                    nd = 0
-
-                instance.setup = SetupDT(nd, f["mesh"].attrs["ng"])
+                instance.setup = SetupDT(f["setup"].attrs["nd"])
 
                 _parse_hdf5_to_derived_type(f["setup"], instance.setup)
-
-                st = pd.Timestamp(instance.setup.start_time)
-
-                et = pd.Timestamp(instance.setup.end_time)
-
-                instance.setup._ntime_step = (
-                    et - st
-                ).total_seconds() / instance.setup.dt
 
                 instance.mesh = MeshDT(
                     instance.setup,
@@ -156,8 +140,6 @@ def read_model(path: str) -> Model:
                 )
 
                 _parse_hdf5_to_derived_type(f["mesh"], instance.mesh)
-
-                _build_mesh(instance.setup, instance.mesh)
 
                 instance._input_data = Input_DataDT(instance.setup, instance.mesh)
 
