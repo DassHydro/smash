@@ -114,7 +114,7 @@ def _hydrograph_segmentation(
             pdrow = pd.DataFrame(
                 [[catchment] + [np.nan] * (len(col_name) - 1)], columns=col_name
             )
-            df = pd.concat([df, pdrow], ignore_index=True)
+            df = pdrow.copy() if df.empty else pd.concat([df, pdrow], ignore_index=True)
 
         else:
             list_events = _events_grad(
@@ -131,6 +131,10 @@ def _hydrograph_segmentation(
                 pdrow = pd.DataFrame(
                     [[catchment, ts, te, peakp, peakq, season]], columns=col_name
                 )
-                df = pd.concat([df, pdrow], ignore_index=True)
+                df = (
+                    pdrow.copy()
+                    if df.empty
+                    else pd.concat([df, pdrow], ignore_index=True)
+                )
 
     return df
