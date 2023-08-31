@@ -37,6 +37,8 @@ from smash.factory.net.net import Net
 
 from smash.factory.net._optimizers import Adam, Adagrad, SGD, RMSprop
 
+from smash.factory.samples.samples import Samples
+
 import numpy as np
 import pandas as pd
 import warnings
@@ -86,6 +88,35 @@ def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> st
             raise TypeError("optimizer argument must be a str")
 
     return optimizer.lower()
+
+
+def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
+    if isinstance(samples, Samples):
+        for key in samples._problem["names"]:
+            if key in model.opr_parameters.keys:
+                l, u = FEASIBLE_OPR_PARAMETERS[key]
+            elif key in model.opr_initial_states.keys:
+                l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+            else:
+                available_parameters = list(model.opr_parameters.keys) + list(
+                    model.opr_initial_states.keys
+                )
+                raise ValueError(
+                    f"Unknown parameter '{key}' in samples attributes. Choices: {available_parameters}"
+                )
+
+            # % Check that sample is inside feasible domain
+            arr = samples[key]
+            l_arr = np.min(arr)
+            u_arr = np.max(arr)
+            if l_arr <= l or u_arr >= u:
+                raise ValueError(
+                    f"Invalid sample values for parameter '{key}'. Sample domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                )
+    else:
+        raise TypeError(f"samples arguments must be a smash.Samples object")
+
+    return samples
 
 
 def _standardize_simulation_optimize_options_parameters(
@@ -169,7 +200,7 @@ def _standardize_simulation_optimize_options_bounds(
         elif key in model.opr_initial_states.keys:
             arr = model.get_opr_initial_states(key)
             l, u = FEASIBLE_OPR_INITIAL_STATES[key]
-        # % In case we have other kind of parameters
+        # % In case we have other kind of parameters. Should be unreachable.
         else:
             pass
 

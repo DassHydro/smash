@@ -6,7 +6,7 @@ CC := gcc
 F90_FLAGS := -cpp -O3 -march=native -funroll-loops -fPIC -fopenmp
 dbg: F90_FLAGS := -Wall -Wextra -fPIC -fopenmp -fmax-errors=1 -cpp -g -fcheck=all -fbacktrace -fcheck-array-temporaries
 F77_FLAGS := -O3 -march=native -funroll-loops -fPIC -fopenmp
-C_FLAGS := -g -O3 -march=native -fPIC -fopenmp
+C_FLAGS := -O3 -march=native -fPIC -fopenmp
 
 #% Files extension
 F90_EXT := f90
