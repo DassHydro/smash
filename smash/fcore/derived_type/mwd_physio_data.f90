@@ -30,8 +30,8 @@ module mwd_physio_data
     type Physio_DataDT
 
         real(sp), dimension(:, :, :), allocatable :: descriptor
-        real(sp), dimension(:), allocatable :: l_descriptor !$F90W private
-        real(sp), dimension(:), allocatable :: u_descriptor !$F90W private
+        real(sp), dimension(:), allocatable :: l_descriptor
+        real(sp), dimension(:), allocatable :: u_descriptor
 
     end type Physio_DataDT
 

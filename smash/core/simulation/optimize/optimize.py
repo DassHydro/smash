@@ -109,8 +109,8 @@ def _ann_optimize(
     active_mask = np.where(model.mesh.active_cell == 1)
     inactive_mask = np.where(model.mesh.active_cell == 0)
 
-    l_desc = model._input_data.physio_data._l_descriptor
-    u_desc = model._input_data.physio_data._u_descriptor
+    l_desc = model._input_data.physio_data.l_descriptor
+    u_desc = model._input_data.physio_data.u_descriptor
 
     desc = model._input_data.physio_data.descriptor.copy()
     desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
