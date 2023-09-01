@@ -11,7 +11,7 @@ if TYPE_CHECKING:
     from smash._typing import AnyTuple, Numeric
 
 
-# TODO: Check bounds, parameters name
+# TODO: Check bounds and num_vars
 def _standardize_generate_samples_problem(problem: dict) -> dict:
     if not isinstance(problem, dict):
         raise TypeError("problem argument must be a dictionary")

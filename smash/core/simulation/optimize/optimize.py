@@ -321,7 +321,7 @@ def _multiple_optimize(
     optimized_parameters = np.zeros(
         shape=(
             *model.mesh.flwdir.shape,
-            samples._problem["num_vars"],
+            len(optimize_options["parameters"]),
             samples.n_sample,
         ),
         dtype=np.float32,
@@ -341,6 +341,13 @@ def _multiple_optimize(
         cost,
         q,
         optimized_parameters,
+    )
+
+    optimized_parameters = dict(
+        zip(
+            optimize_options["parameters"],
+            np.transpose(optimized_parameters, (2, 0, 1, 3)),
+        )
     )
 
     return {

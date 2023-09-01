@@ -154,6 +154,9 @@ def _standardize_simulation_optimize_options_parameters(
                 "parameters optimize_options must be a str or ListLike type (List, Tuple, np.ndarray)"
             )
 
+    # % Sort parameters
+    parameters = [prmt for prmt in available_parameters if prmt in parameters]
+
     return parameters
 
 

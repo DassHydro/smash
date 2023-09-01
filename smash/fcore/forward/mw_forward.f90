@@ -7,12 +7,12 @@
 !%      - forward_run_d
 !%      - forward_run_b
 !%      - multiple_forward_run_sample_to_parameters
-!%      - multiple_forward_run_prgress
 !%      - multiple_forward_run
 
 module mw_forward
 
-    use md_constant, only: sp
+    use md_constant, only: sp, lchar
+    use m_screen_display, only: display_iteration_progress
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
@@ -102,26 +102,6 @@ contains
 
     end subroutine multiple_forward_run_sample_to_parameters
 
-    subroutine multiple_forward_run_progess(iter, niter)
-
-        implicit none
-
-        integer, intent(in) :: iter, niter
-
-        integer :: per
-
-        per = 100*iter/niter
-
-        if (per .ne. 100*(iter - 1)/niter) then
-
-            write (*, "(a,4x,a,1x,i0,a,i0,1x,a,i0,a)", advance="no") achar(13), "Forward Run", iter, "/", niter, "(", per, "%)"
-
-        end if
-
-        if (iter == niter) write (*, "(a)") new_line("")
-
-    end subroutine multiple_forward_run_progess
-
     subroutine multiple_forward_run(setup, mesh, input_data, parameters, output, options, &
     & samples, samples_kind, samples_ind, cost, q)
 
@@ -140,12 +120,14 @@ contains
 
         integer :: i, iter, niter, ncpu
         logical :: verbose
+        character(lchar) :: task
         type(ParametersDT) :: parameters_thread
         type(OutputDT) :: output_thread
         type(ReturnsDT) :: returns
 
         niter = size(samples, 2)
         iter = 0
+        task = "Forward Run"
 
         ! Trigger parallel in multiple forward run and not inside forward run
         ncpu = options%comm%ncpu
@@ -155,7 +137,7 @@ contains
         verbose = options%comm%verbose
         options%comm%verbose = .false.
 
-        if (verbose) call multiple_forward_run_progess(iter, niter)
+        if (verbose) call display_iteration_progress(iter, niter, task)
 
         !$OMP parallel do schedule(static) num_threads(ncpu) &
         !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
@@ -175,7 +157,7 @@ contains
             q(:, :, i) = output_thread%sim_response%q
 
             iter = iter + 1
-            if (verbose) call multiple_forward_run_progess(iter, niter)
+            if (verbose) call display_iteration_progress(iter, niter, task)
             !$OMP end critical
 
         end do

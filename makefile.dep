@@ -11,6 +11,9 @@ f77: \
 f90: \
  obj/mwd_common_options.o \
  obj/md_constant.o \
+ obj/m_screen_display.o \
+ obj/m_array_creation.o \
+ obj/md_stats.o \
  obj/mwd_control.o \
  obj/mwd_returns.o \
  obj/mwd_setup.o \
@@ -30,8 +33,6 @@ f90: \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \
- obj/m_array_creation.o \
- obj/md_stats.o \
  obj/mw_mask.o \
  obj/mwd_parameters_manipulation.o \
  obj/mw_optimize.o \
