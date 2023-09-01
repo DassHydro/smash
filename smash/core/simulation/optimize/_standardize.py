@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 from smash.core.simulation._standardize import (
+    _standardize_simulation_samples,
     _standardize_simulation_mapping,
     _standardize_simulation_optimizer,
     _standardize_simulation_cost_variant,
@@ -63,3 +64,28 @@ def _standardize_optimize_args(
         cost_options,
         common_options,
     )
+
+
+def _standardize_multiple_optimize_args(
+    model: Model,
+    samples: Samples,
+    mapping: str,
+    cost_variant: str,
+    optimizer: str | None,
+    optimize_options: dict | None,
+    cost_options: dict | None,
+    common_options: dict | None,
+) -> AnyTuple:
+    samples = _standardize_simulation_samples(model, samples)
+
+    optimize_args = _standardize_optimize_args(
+        model,
+        mapping,
+        cost_variant,
+        optimizer,
+        optimize_options,
+        cost_options,
+        common_options,
+    )
+
+    return (samples, *optimize_args)

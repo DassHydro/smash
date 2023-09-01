@@ -1,14 +1,19 @@
-!%      (MWD) Module Wrapped.
+!%      (MW) Module Wrapped.
 !%
 !%      Subroutine
 !%      ----------
 !%
-!%      - optimize_sbs
+!%      - sbs_optimize
 !%      - lbfgsb_optimize
+!%      - optimize
+!%      - multiple_optimize_sample_to_parameters
+!%      - multiple_optimize_save_parameters
+!%      - multiple_optimize
 
 module mw_optimize
 
     use md_constant, only: sp, dp, lchar
+    use m_screen_display, only: display_iteration_progress
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
@@ -25,32 +30,6 @@ module mw_optimize
     public :: optimize
 
 contains
-
-    subroutine optimize(setup, mesh, input_data, parameters, output, options, returns)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(OutputDT), intent(inout) :: output
-        type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
-
-        select case (options%optimize%optimizer)
-
-        case ("sbs")
-
-            call sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
-
-        case ("lbfgsb")
-
-            call lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
-
-        end select
-
-    end subroutine optimize
 
     subroutine sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
@@ -330,5 +309,162 @@ contains
         if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
 
     end subroutine lbfgsb_optimize
+
+    subroutine optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+
+        select case (options%optimize%optimizer)
+
+        case ("sbs")
+
+            call sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        case ("lbfgsb")
+
+            call lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
+
+        end select
+
+    end subroutine optimize
+
+    subroutine multiple_optimize_sample_to_parameters(sample, samples_kind, samples_ind, parameters)
+
+        implicit none
+
+        real(sp), dimension(:), intent(in) :: sample
+        integer, dimension(size(sample)), intent(in) :: samples_kind, samples_ind
+        type(ParametersDT), intent(inout) :: parameters
+
+        integer :: i
+
+        do i = 1, size(sample)
+
+            select case (samples_kind(i))
+
+            case (0)
+                parameters%opr_parameters%values(:, :, samples_ind(i)) = sample(i)
+
+            case (1)
+                parameters%opr_initial_states%values(:, :, samples_ind(i)) = sample(i)
+
+                ! Should be unreachable
+            case default
+
+            end select
+
+        end do
+
+    end subroutine multiple_optimize_sample_to_parameters
+
+    subroutine multiple_optimize_save_parameters(setup, parameters, options, optimized_parameters)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(ParametersDT), intent(in) :: parameters
+        type(OptionsDT), intent(in) :: options
+        real(sp), dimension(:, :, :) :: optimized_parameters
+
+        integer :: i, j
+
+        j = 0
+
+        do i = 1, setup%nop
+
+            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+
+            j = j + 1
+
+            optimized_parameters(:, :, j) = parameters%opr_parameters%values(:, :, i)
+
+        end do
+
+        do i = 1, setup%nos
+
+            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+
+            j = j + 1
+
+            optimized_parameters(:, :, j) = parameters%opr_initial_states%values(:, :, i)
+
+        end do
+
+    end subroutine multiple_optimize_save_parameters
+
+    subroutine multiple_optimize(setup, mesh, input_data, parameters, output, options, &
+    & samples, samples_kind, samples_ind, cost, q, optimized_parameters)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(inout) :: options
+        real(sp), dimension(:, :), intent(in) :: samples
+        integer, dimension(size(samples, 1)) :: samples_kind, samples_ind
+        real(sp), dimension(size(samples, 2)), intent(inout) :: cost
+        real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 2)), intent(inout) :: q
+        real(sp), dimension(mesh%nrow, mesh%ncol, &
+        & sum(options%optimize%opr_parameters) + sum(options%optimize%opr_initial_states), &
+        & size(samples, 2)) :: optimized_parameters
+
+        integer :: i, iter, niter, ncpu
+        logical :: verbose
+        character(lchar) :: task
+        type(ParametersDT) :: parameters_thread
+        type(OutputDT) :: output_thread
+        type(ReturnsDT) :: returns
+
+        niter = size(samples, 2)
+        iter = 0
+        task = "Optimize"
+
+        ! Trigger parallel in multiple optimize and not inside optimize
+        ncpu = options%comm%ncpu
+        options%comm%ncpu = 1
+
+        ! Deactivate other verbose
+        verbose = options%comm%verbose
+        options%comm%verbose = .false.
+
+        if (verbose) call display_iteration_progress(iter, niter, task)
+
+        !$OMP parallel do schedule(static) num_threads(ncpu) &
+        !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
+        !$OMP& shared(samples, samples_kind, samples_ind, iter, niter, cost, q, optimized_parameters) &
+        !$OMP& private(i, parameters_thread, output_thread)
+        do i = 1, niter
+
+            parameters_thread = parameters
+            output_thread = output
+
+            call multiple_optimize_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
+
+            call optimize(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
+
+            !$OMP critical
+            cost(i) = output_thread%cost
+            q(:, :, i) = output_thread%sim_response%q
+            call multiple_optimize_save_parameters(setup, parameters_thread, options, optimized_parameters(:, :, :, i))
+
+            iter = iter + 1
+            if (verbose) call display_iteration_progress(iter, niter, task)
+            !$OMP end critical
+
+        end do
+        !$OMP end parallel do
+
+    end subroutine multiple_optimize
 
 end module mw_optimize

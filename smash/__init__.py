@@ -6,14 +6,20 @@ from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segm
 from smash.core.signal_analysis.signatures.signatures import signatures
 from smash.core.signal_analysis.prcp_indices.prcp_indices import precipitation_indices
 
-from smash.core.simulation.run.run import forward_run
-from smash.core.simulation.optimize.optimize import optimize
-from smash.core.simulation.options import default_optimize_options, default_cost_options
+from smash.core.simulation.run.run import forward_run, multiple_forward_run
+from smash.core.simulation.optimize.optimize import optimize, multiple_optimize
+from smash.core.simulation.options import (
+    default_optimize_options,
+    default_cost_options,
+)
 
 # smash sub-packages
 from smash import io, factory
 
 # smash objects
+from smash.core.simulation.run.run import MultipleForwardRun
+from smash.core.simulation.optimize.optimize import MultipleOptimize
+
 from smash.core.signal_analysis.signatures.signatures import Signatures
 from smash.core.signal_analysis.prcp_indices.prcp_indices import PrecipitationIndices
 
@@ -33,11 +39,15 @@ __all__ = [
     "signatures",
     "precipitation_indices",
     "forward_run",
+    "multiple_forward_run",
     "optimize",
+    "multiple_optimize",
     "default_optimize_options",
     "default_cost_options",
     "io",
     "factory",
+    "MultipleForwardRun",
+    "MultipleOptimize",
     "Signatures",
     "PrecipitationIndices",
     "Samples",

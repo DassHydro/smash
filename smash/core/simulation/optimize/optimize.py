@@ -1,17 +1,70 @@
 from __future__ import annotations
 
-from smash.fcore._mw_optimize import optimize as wrap_optimize
+from smash.core.simulation.optimize._standardize import (
+    _standardize_multiple_optimize_args,
+)
+
+from smash.fcore._mw_optimize import (
+    optimize as wrap_optimize,
+    multiple_optimize as wrap_multiple_optimize,
+)
 from smash.fcore._mwd_options import OptionsDT
 from smash.fcore._mwd_returns import ReturnsDT
+
+import numpy as np
+from copy import deepcopy
 
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
 
-import numpy as np
 
-__all__ = ["optimize"]
+__all__ = ["MultipleOptimize", "optimize", "multiple_optimize"]
+
+
+class MultipleOptimize(dict):
+    """
+    Represents multiple optimize computation result.
+
+    Notes
+    -----
+    This class is essentially a subclass of dict with attribute accessors.
+
+    Attributes
+    ----------
+    TODO FC: Fill
+
+    See Also
+    --------
+    TODO FC: Fill
+
+    """
+
+    def __getattr__(self, name):
+        try:
+            return self[name]
+        except KeyError as e:
+            raise AttributeError(name) from e
+
+    __setattr__ = dict.__setitem__
+    __delattr__ = dict.__delitem__
+
+    def __repr__(self):
+        if self.keys():
+            m = max(map(len, list(self.keys()))) + 1
+            return "\n".join(
+                [
+                    k.rjust(m) + ": " + repr(v)
+                    for k, v in sorted(self.items())
+                    if not k.startswith("_")
+                ]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
+    def __dir__(self):
+        return list(self.keys())
 
 
 def optimize(
@@ -41,6 +94,9 @@ def _optimize(
     cost_options: dict,
     common_options: dict,
 ):
+    if common_options["verbose"]:
+        print("</> Optimize")
+
     wrap_options = OptionsDT(
         model.setup,
         model.mesh,
@@ -158,3 +214,145 @@ def _ann_optimize(
             ind = np.argwhere(model.opr_initial_states.keys == name).item()
 
             model.opr_inital_states.values[..., ind][inactive_mask] = y[:, i]
+
+
+def multiple_optimize(
+    model: Model,
+    samples: Samples,
+    mapping: str = "uniform",
+    cost_variant: str = "cls",
+    optimizer: str | None = None,
+    optimize_options: dict | None = None,
+    cost_options: dict | None = None,
+    common_options: dict | None = None,
+) -> MultipleOptimize:
+    args_options = [
+        deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
+    ]
+    args = _standardize_multiple_optimize_args(
+        model,
+        samples,
+        mapping,
+        cost_variant,
+        optimizer,
+        *args_options,
+    )
+
+    res = _multiple_optimize(model, *args)
+
+    return MultipleOptimize(res)
+
+
+def _multiple_optimize(
+    model: Model,
+    samples: Samples,
+    mapping: str,
+    cost_variant: str,
+    optimizer: str,
+    optimize_options: dict,
+    cost_options: dict,
+    common_options: dict,
+) -> dict:
+    if common_options["verbose"]:
+        print("</> Multiple Optimize")
+
+    wrap_options = OptionsDT(
+        model.setup,
+        model.mesh,
+        cost_options["njoc"],
+        cost_options["njrc"],
+    )
+
+    # % Map optimize_options dict to derived type
+    for key, value in optimize_options.items():
+        if hasattr(wrap_options.optimize, key):
+            setattr(wrap_options.optimize, key, value)
+
+        if key == "termination_crit":
+            for key_termination_crit, value_termination_crit in value.items():
+                if hasattr(wrap_options.optimize, key_termination_crit):
+                    setattr(
+                        wrap_options.optimize,
+                        key_termination_crit,
+                        value_termination_crit,
+                    )
+
+    # % Map cost_options dict to derived type
+    for key, value in cost_options.items():
+        if hasattr(wrap_options.cost, key):
+            setattr(wrap_options.cost, key, value)
+
+    # % Map common_options dict to derived type
+    for key, value in common_options.items():
+        if hasattr(wrap_options.comm, key):
+            setattr(wrap_options.comm, key, value)
+
+    # % Generate samples info
+    nv = samples._problem["num_vars"]
+    samples_kind = np.zeros(shape=nv, dtype=np.int32, order="F")
+    samples_ind = np.zeros(shape=nv, dtype=np.int32, order="F")
+
+    for i, name in enumerate(samples._problem["names"]):
+        if name in model._parameters.opr_parameters.keys:
+            samples_kind[i] = 0
+            # % Adding 1 because Fortran uses one based indexing
+            samples_ind[i] = (
+                np.argwhere(model._parameters.opr_parameters.keys == name).item() + 1
+            )
+        elif name in model._parameters.opr_initial_states.keys:
+            samples_kind[i] = 1
+            # % Adding 1 because Fortran uses one based indexing
+            samples_ind[i] = (
+                np.argwhere(model._parameters.opr_initial_states.keys == name).item()
+                + 1
+            )
+        # % Should be unreachable
+        else:
+            pass
+
+    # % Initialise results
+    cost = np.zeros(shape=samples.n_sample, dtype=np.float32, order="F")
+    q = np.zeros(
+        shape=(*model.obs_response.q.shape, samples.n_sample),
+        dtype=np.float32,
+        order="F",
+    )
+    # % Only work with grids (might be changed)
+    optimized_parameters = np.zeros(
+        shape=(
+            *model.mesh.flwdir.shape,
+            len(optimize_options["parameters"]),
+            samples.n_sample,
+        ),
+        dtype=np.float32,
+        order="F",
+    )
+
+    wrap_multiple_optimize(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        wrap_options,
+        samples.to_numpy(),
+        samples_kind,
+        samples_ind,
+        cost,
+        q,
+        optimized_parameters,
+    )
+
+    optimized_parameters = dict(
+        zip(
+            optimize_options["parameters"],
+            np.transpose(optimized_parameters, (2, 0, 1, 3)),
+        )
+    )
+
+    return {
+        "cost": cost,
+        "q": q,
+        "optimized_parameters": optimized_parameters,
+        "_samples": samples,
+    }
