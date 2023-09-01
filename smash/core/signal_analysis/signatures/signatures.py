@@ -208,8 +208,16 @@ def _signatures(
                     [[catchment] + [np.nan] * (len(col_es) - 1)], columns=col_es
                 )
 
-                df_cs = pd.concat([df_cs, row_cs], ignore_index=True)
-                df_es = pd.concat([df_es, row_es], ignore_index=True)
+                df_cs = (
+                    row_cs.copy()
+                    if df_cs.empty
+                    else pd.concat([df_cs, row_cs], ignore_index=True)
+                )
+                df_es = (
+                    row_es.copy()
+                    if df_es.empty
+                    else pd.concat([df_es, row_es], ignore_index=True)
+                )
 
             else:
                 if len(cs) > 0:
@@ -219,7 +227,11 @@ def _signatures(
 
                     row_cs = pd.DataFrame([[catchment] + csignatures], columns=col_cs)
 
-                    df_cs = pd.concat([df_cs, row_cs], ignore_index=True)
+                    df_cs = (
+                        row_cs.copy()
+                        if df_cs.empty
+                        else pd.concat([df_cs, row_cs], ignore_index=True)
+                    )
 
                 if len(es) > 0:
                     q_seg = getattr(instance, f"{by}_response").q[i, :].copy()
@@ -234,7 +246,11 @@ def _signatures(
                             columns=col_es,
                         )
 
-                        df_es = pd.concat([df_es, row_es], ignore_index=True)
+                        df_es = (
+                            row_es.copy()
+                            if df_es.empty
+                            else pd.concat([df_es, row_es], ignore_index=True)
+                        )
 
                     else:
                         for t in list_events:
@@ -264,7 +280,11 @@ def _signatures(
                                 columns=col_es,
                             )
 
-                            df_es = pd.concat([df_es, row_es], ignore_index=True)
+                            df_es = (
+                                row_es.copy()
+                                if df_es.empty
+                                else pd.concat([df_es, row_es], ignore_index=True)
+                            )
 
     df_cs.replace(-99, np.nan, inplace=True)
     df_es.replace(-99, np.nan, inplace=True)
