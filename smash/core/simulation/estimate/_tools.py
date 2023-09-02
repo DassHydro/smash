@@ -143,15 +143,13 @@ def _forward_run_with_estimated_parameters(
 
 
 def _lcurve_forward_run_with_estimated_parameters(
-    alpha: list,
+    alpha: np.ndarray,
     *args_forward_run_with_estimated_parameters: AnyTuple,
 ) -> dict:
-    n = len(alpha)
+    l_cost = np.zeros(alpha.size)
+    l_mahal_distance = np.zeros(alpha.size)
 
-    l_cost = np.zeros(n)
-    l_mahal_distance = np.zeros(n)
-
-    for i in tqdm(range(n), desc="    L-curve Computing"):
+    for i in tqdm(range(alpha.size), desc="    L-curve Computing"):
         lcurve_i = _forward_run_with_estimated_parameters(
             alpha[i], *args_forward_run_with_estimated_parameters
         )

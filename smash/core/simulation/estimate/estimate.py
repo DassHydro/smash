@@ -23,7 +23,7 @@ __all__ = ["multiset_estimate"]
 def multiset_estimate(
     model: Model,
     multiset: MultipleForwardRun | MultipleOptimize,
-    alpha: Numeric | ListLike = 4,
+    alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
     common_options: dict | None = None,
 ):
     wmodel = model.copy()
@@ -36,7 +36,7 @@ def multiset_estimate(
 def _multiset_estimate(
     model: Model,
     multiset: MultipleForwardRun | MultipleOptimize,
-    alpha: list,
+    alpha: float | np.ndarray,
     common_options: dict,
 ) -> dict:
     # TODO: Enhance verbose
@@ -85,7 +85,7 @@ def _multiset_estimate(
     if isinstance(alpha, float):
         estimator = _forward_run_with_estimated_parameters
 
-    elif isinstance(alpha, list):
+    elif isinstance(alpha, np.ndarray):
         estimator = _lcurve_forward_run_with_estimated_parameters
 
     else:  # Should be unreachable

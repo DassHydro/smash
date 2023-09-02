@@ -255,7 +255,7 @@ class Model(object):
     def multiset_estimate(
         self,
         multiset: MultipleForwardRun | MultipleOptimize,
-        alpha: Numeric | ListLike = 4,
+        alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
         common_options: dict | None = None,
     ):
         args_all = [deepcopy(arg) for arg in [multiset, alpha, common_options]]

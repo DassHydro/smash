@@ -39,7 +39,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
     qsim = instance.sim_response.q[:].flatten()
     qsim = qsim[::10]  # extract values at every 10th position
 
-    res[f"multiset_estimate.sim_q"] = qsim
+    res["multiset_estimate.sim_q"] = qsim
 
     return res
 
