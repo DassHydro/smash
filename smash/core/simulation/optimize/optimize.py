@@ -18,6 +18,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash.factory.samples.samples import Samples
 
 
 __all__ = ["MultipleOptimize", "optimize", "multiple_optimize"]
@@ -240,6 +241,9 @@ def multiple_optimize(
 
     res = _multiple_optimize(model, *args)
 
+    # % Backup cost options info
+    res["_cost_options"] = cost_options
+
     return MultipleOptimize(res)
 
 
@@ -355,4 +359,5 @@ def _multiple_optimize(
         "q": q,
         "optimized_parameters": optimized_parameters,
         "_samples": samples,
+        "_cost_variant": cost_variant,
     }

@@ -1,11 +1,11 @@
-commit a32787a9b48e68df42b6bc181c7378cf23236c18
-Merge: 4470ae5 fee5ce9
+commit b06ab57cc67ab3212bfd94d2e966b741caa1f701
+Merge: 480b1ad caee5be
 Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Wed Aug 30 09:45:35 2023 +0200
+Date:   Fri Sep 1 14:40:34 2023 +0200
 
-    Merge pull request #61 from DassHydro-dev/enc-prcp_indices
+    Merge pull request #67 from DassHydro-dev/fix-bug-flwdst-time
     
-    ENC: Add Precipitation Indices
+    Fix bug flwdst time
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -61,19 +61,20 @@ metrics.mse                               |NON MODIFIED
 metrics.nnse                              |NON MODIFIED
 metrics.nse                               |NON MODIFIED
 metrics.rmse                              |NON MODIFIED
-model_io.atmos_data.mean_pet              |ADDED
-model_io.atmos_data.mean_prcp             |ADDED
-model_io.mesh.active_cell                 |ADDED
-model_io.mesh.flwdir                      |ADDED
-model_io.obs_response.q                   |ADDED
-model_io.opr_final_states.values          |ADDED
-model_io.opr_initial_states.values        |ADDED
-model_io.opr_parameters.values            |ADDED
-model_io.physio_data.descriptor           |ADDED
-model_io.setup.end_time                   |ADDED
-model_io.setup.start_time                 |ADDED
-model_io.setup.structure                  |ADDED
-model_io.sim_response.q                   |ADDED
+model_io.atmos_data.mean_pet              |NON MODIFIED
+model_io.atmos_data.mean_prcp             |NON MODIFIED
+model_io.mesh.active_cell                 |NON MODIFIED
+model_io.mesh.flwdir                      |NON MODIFIED
+model_io.obs_response.q                   |NON MODIFIED
+model_io.opr_final_states.values          |NON MODIFIED
+model_io.opr_initial_states.values        |NON MODIFIED
+model_io.opr_parameters.values            |NON MODIFIED
+model_io.physio_data.descriptor           |NON MODIFIED
+model_io.setup.end_time                   |NON MODIFIED
+model_io.setup.start_time                 |NON MODIFIED
+model_io.setup.structure                  |NON MODIFIED
+model_io.sim_response.q                   |NON MODIFIED
+multiset_estimate.sim_q                   |ADDED
 net_init.bias_layer_1                     |NON MODIFIED
 net_init.bias_layer_2                     |NON MODIFIED
 net_init.bias_layer_3                     |NON MODIFIED
@@ -117,9 +118,9 @@ setup_io.read_prcp                        |NON MODIFIED
 setup_io.read_qobs                        |NON MODIFIED
 setup_io.start_time                       |NON MODIFIED
 setup_io.structure                        |NON MODIFIED
-signatures.cont_obs_by_obs                |MODIFIED
-signatures.cont_sim_by_obs                |MODIFIED
-signatures.cont_sim_by_sim                |MODIFIED
+signatures.cont_obs_by_obs                |NON MODIFIED
+signatures.cont_sim_by_obs                |NON MODIFIED
+signatures.cont_sim_by_sim                |NON MODIFIED
 signatures.event_obs_by_obs               |NON MODIFIED
 signatures.event_sim_by_obs               |NON MODIFIED
 signatures.event_sim_by_sim               |NON MODIFIED

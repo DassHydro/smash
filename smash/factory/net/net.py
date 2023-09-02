@@ -370,7 +370,7 @@ class Net(object):
         loss_opt = 0  # only use for early stopping purpose
 
         # % train model
-        for epo in tqdm(range(epochs), desc="Training"):
+        for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
