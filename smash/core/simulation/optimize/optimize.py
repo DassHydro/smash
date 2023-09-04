@@ -71,7 +71,6 @@ class MultipleOptimize(dict):
 def optimize(
     model: Model,
     mapping: str = "uniform",
-    cost_variant: str = "cls",
     optimizer: str | None = None,
     optimize_options: dict | None = None,
     cost_options: dict | None = None,
@@ -79,9 +78,7 @@ def optimize(
 ):
     wmodel = model.copy()
 
-    wmodel.optimize(
-        mapping, cost_variant, optimizer, optimize_options, cost_options, common_options
-    )
+    wmodel.optimize(mapping, optimizer, optimize_options, cost_options, common_options)
 
     return wmodel
 
@@ -89,7 +86,6 @@ def optimize(
 def _optimize(
     model: Model,
     mapping: str,
-    cost_variant: str,
     optimizer: str,
     optimize_options: dict,
     cost_options: dict,
@@ -221,7 +217,6 @@ def multiple_optimize(
     model: Model,
     samples: Samples,
     mapping: str = "uniform",
-    cost_variant: str = "cls",
     optimizer: str | None = None,
     optimize_options: dict | None = None,
     cost_options: dict | None = None,
@@ -235,7 +230,6 @@ def multiple_optimize(
         model,
         samples,
         mapping,
-        cost_variant,
         optimizer,
         *args_options,
     )
@@ -252,7 +246,6 @@ def _multiple_optimize(
     model: Model,
     samples: Samples,
     mapping: str,
-    cost_variant: str,
     optimizer: str,
     optimize_options: dict,
     cost_options: dict,
@@ -391,5 +384,4 @@ def _multiple_optimize(
         "q": q,
         "parameters": parameters,
         "_samples": samples_fnl,
-        "_cost_variant": cost_variant,
     }

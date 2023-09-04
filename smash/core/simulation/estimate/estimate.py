@@ -86,7 +86,6 @@ def _multiset_estimate(
     estimator(
         alpha,
         model,
-        multiset._cost_variant,
         multiset._cost_options,
         prior_data,
         density,

@@ -8,7 +8,6 @@ from smash._constant import (
     FEASIBLE_OPR_PARAMETERS,
     FEASIBLE_OPR_INITIAL_STATES,
     MAPPING,
-    COST_VARIANT,
     MAPPING_OPTIMIZER,
     PY_OPTIMIZER_CLASS,
     PY_OPTIMIZER,
@@ -59,18 +58,6 @@ def _standardize_simulation_mapping(mapping: str) -> str:
         raise TypeError("mapping argument must be a str")
 
     return mapping.lower()
-
-
-def _standardize_simulation_cost_variant(cost_variant: str) -> str:
-    if isinstance(cost_variant, str):
-        if cost_variant.lower() not in COST_VARIANT:
-            raise ValueError(
-                f"Unknown cost_variant '{cost_variant}'. Choices: {COST_VARIANT}"
-            )
-    else:
-        raise TypeError("cost_variant argument must be a str")
-
-    return cost_variant.lower()
 
 
 def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> str:
@@ -851,19 +838,19 @@ def _standardize_simulation_cost_options_end_warmup(
 
 
 def _standardize_simulation_cost_options(
-    model: Model, cost_variant: str, cost_options: dict | None
+    model: Model, cost_options: dict | None
 ) -> dict:
     if cost_options is None:
-        cost_options = DEFAULT_SIMULATION_COST_OPTIONS[cost_variant].copy()
+        cost_options = DEFAULT_SIMULATION_COST_OPTIONS.copy()
 
     else:
         if isinstance(cost_options, dict):
             pop_keys = []
             for key, value in cost_options.items():
-                if key not in DEFAULT_SIMULATION_COST_OPTIONS[cost_variant].keys():
+                if key not in DEFAULT_SIMULATION_COST_OPTIONS.keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown cost_options key '{key}' for cost_variant '{cost_variant}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS[cost_variant].keys())}"
+                        f"Unknown cost_options key '{key}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS.keys())}"
                     )
 
             for key in pop_keys:
@@ -872,7 +859,7 @@ def _standardize_simulation_cost_options(
         else:
             raise TypeError("cost_options argument must be a dictionary")
 
-    for key, value in DEFAULT_SIMULATION_COST_OPTIONS[cost_variant].items():
+    for key, value in DEFAULT_SIMULATION_COST_OPTIONS.items():
         cost_options.setdefault(key, value)
         func = eval(f"_standardize_simulation_cost_options_{key}")
         cost_options[key] = func(model=model, **cost_options)
@@ -1024,9 +1011,10 @@ def _standardize_simulation_optimize_options_finalize(
 
 
 def _standardize_simulation_cost_options_finalize(
-    model: Model, cost_variant: str, cost_options: dict
+    model: Model, cost_options: dict
 ) -> dict:
-    cost_options["variant"] = cost_variant
+    cost_options["variant"] = "cls"  # only appeared in Fortran
+
     cost_options["njoc"] = cost_options["jobs_cmpt"].size
     cost_options["njrc"] = cost_options["jreg_cmpt"].size
 
@@ -1067,10 +1055,3 @@ def _standardize_default_optimize_options_args(
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     return (mapping, optimizer)
-
-
-# % Future TODO: cost_options depending on (mapping, cost_variant) instead of cost_variant
-def _standardize_default_cost_options_args(cost_variant: str) -> dict:
-    cost_variant = _standardize_simulation_cost_variant(cost_variant)
-
-    return cost_variant
