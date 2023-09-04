@@ -1,15 +1,15 @@
 from __future__ import annotations
 
+from tqdm import tqdm
+import numpy as np
+from scipy.stats import gaussian_kde
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import AnyTuple
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
-
-from tqdm import tqdm
-import numpy as np
-from scipy.stats import gaussian_kde
 
 
 def _compute_density(

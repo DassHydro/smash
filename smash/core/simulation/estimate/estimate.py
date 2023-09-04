@@ -9,13 +9,13 @@ from smash.core.simulation.estimate._tools import (
 from smash.core.simulation.optimize.optimize import MultipleOptimize
 from smash.core.simulation.run.run import MultipleForwardRun
 
+import numpy as np
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import Numeric, ListLike
     from smash.core.model.model import Model
-
-import numpy as np
 
 __all__ = ["multiset_estimate"]
 

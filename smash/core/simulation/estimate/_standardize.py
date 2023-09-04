@@ -33,10 +33,7 @@ def _standardize_multiset_estimate_args(
 def _standardize_multiset_estimate_multiset(
     multiset: MultipleForwardRun | MultipleOptimize,
 ) -> MultipleForwardRun | MultipleOptimize:
-    if isinstance(multiset, (MultipleForwardRun, MultipleOptimize)):
-        pass
-
-    else:
+    if not isinstance(multiset, (MultipleForwardRun, MultipleOptimize)):
         raise TypeError(
             "multiset must be a MultipleForwardRun or MultipleOptimize object"
         )
