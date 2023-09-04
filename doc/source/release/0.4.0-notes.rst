@@ -126,10 +126,7 @@ If an error occurs during this stage, it means that the source tapenade file has
 Documentation
 *************
 
-Add the user guide for advanced optimization techniques, including:
-
-- :ref:`Variational Bayesian calibration <user_guide.in_depth.optimize.bayes_optimize>`
-- :ref:`Multi-criteria optimization <user_guide.in_depth.optimize.multi_criteria>`
+Add the user guide for advanced optimization techniques.
 
 Add :ref:`developers guide <developers_guide>`, :ref:`list of contributors <contributors>` and :ref:`license <license>` to the documentation.
 
@@ -211,9 +208,6 @@ This method also accepts the cost function arguments that are used in the :meth:
 .. code-block:: python
 
     >>> mtprr = model.multiple_run(sample, jobs_fun="kge", gauge="all", ncpu=4, return_qsim=True)
-
-.. hint::
-    See the specific :ref:`User Guide <user_guide.in_depth.multiple_run>` section.
 
 Makefile command
 ****************

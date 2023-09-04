@@ -98,12 +98,7 @@ Documentation
 Add the documentation for the ``options`` argument in the :meth:`Model.optimize`, :meth:`Net.add` and :meth:`Net.compile` 
 methods using a customize sphinx directive.
 
-Add the user guide for advanced optimization techniques, including:
-
-- :ref:`Fully-distributed optimization using a uniform first guess <user_guide.in_depth.optimize.fully_distributed>`
-- :ref:`Improving the first guess using Bayesian estimation <user_guide.in_depth.optimize.bayes_estimate>`
-- :ref:`Pre-regionalization using polynomial mapping <user_guide.in_depth.optimize.pre_regio_poly>`
-- :ref:`Pre-regionalization using artificial neural network <user_guide.in_depth.optimize.pre_regio_ann>`
+Add the user guide for advanced optimization techniques.
 
 ------------
 New Features

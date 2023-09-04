@@ -69,11 +69,7 @@ New Features
 gr-d Model structure
 ********************
 
-A new model structure ``gr-d`` with 3 parameters (``cp``, ``cft``, ``lr``) and 3 states (``hp``, ``hft``, ``hlr``) derived from the GR model has been added. 
-
-.. note::
-    
-    More information can be find in the User Guide section: :ref:`Model structure <user_guide.others.model_structure.gr_d>`.
+A new model structure ``gr-d`` with 3 parameters (``cp``, ``cft``, ``lr``) and 3 states (``hp``, ``hft``, ``hlr``) derived from the GR model has been added.
 
 Flow percentiles signatures optimization 
 ****************************************
@@ -123,10 +119,6 @@ Save a sample of the Model object data
 Two new methods `smash.save_model_ddt` and `smash.read_model_ddt` had been added to avoid to save all the data of the Model object (i.e. all precipitation data) but
 only the main data. A set of default has been chosen in order to facilitate the use of the method but any kind of data can be extra saved.
 
-.. note::
-    
-    More information can be find in the API reference section: :ref:`api_reference.io`.
-    
 It can be used as follows:
 
 To only save default data
