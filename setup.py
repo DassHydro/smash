@@ -20,6 +20,7 @@ setup(
         "smash.core.simulation",
         "smash.core.simulation.run",
         "smash.core.simulation.optimize",
+        "smash.core.simulation.estimate",
         "smash.factory",
         "smash.factory.dataset",
         "smash.factory.mesh",

@@ -132,6 +132,9 @@ def multiple_forward_run(
 
     res = _multiple_forward_run(model, *args)
 
+    # % Backup cost options info
+    res["_cost_options"] = cost_options
+
     return MultipleForwardRun(res)
 
 
@@ -207,4 +210,4 @@ def _multiple_forward_run(
         q,
     )
 
-    return {"cost": cost, "q": q, "_samples": samples}
+    return {"cost": cost, "q": q, "_samples": samples, "_cost_variant": cost_variant}

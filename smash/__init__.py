@@ -12,6 +12,7 @@ from smash.core.simulation.options import (
     default_optimize_options,
     default_cost_options,
 )
+from smash.core.simulation.estimate.estimate import multiset_estimate
 
 # smash sub-packages
 from smash import io, factory
@@ -44,6 +45,7 @@ __all__ = [
     "multiple_optimize",
     "default_optimize_options",
     "default_cost_options",
+    "multiset_estimate",
     "io",
     "factory",
     "MultipleForwardRun",

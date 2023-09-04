@@ -13,10 +13,13 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_cost_options_finalize,
 )
 
+from smash._constant import MAPPING
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash.factory.samples.samples import Samples
     from smash._typing import AnyTuple
 
 
@@ -78,8 +81,35 @@ def _standardize_multiple_optimize_args(
 ) -> AnyTuple:
     samples = _standardize_simulation_samples(model, samples)
 
-    optimize_args = _standardize_optimize_args(
-        model,
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
+
+    mapping = _standardize_multiple_optimize_mapping(mapping)
+
+    cost_variant = _standardize_simulation_cost_variant(cost_variant)
+
+    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+
+    optimize_options = _standardize_simulation_optimize_options(
+        model, mapping, optimizer, optimize_options
+    )
+
+    cost_options = _standardize_simulation_cost_options(
+        model, cost_variant, cost_options
+    )
+
+    common_options = _standardize_simulation_common_options(common_options)
+
+    # % Finalize optimize options
+    _standardize_simulation_optimize_options_finalize(
+        model, mapping, optimizer, optimize_options
+    )
+
+    # % Finalize cost_options
+    _standardize_simulation_cost_options_finalize(model, cost_variant, cost_options)
+
+    return (
+        samples,
         mapping,
         cost_variant,
         optimizer,
@@ -88,4 +118,17 @@ def _standardize_multiple_optimize_args(
         common_options,
     )
 
-    return (samples, *optimize_args)
+
+def _standardize_multiple_optimize_mapping(mapping: str) -> str:
+    avail_mapping = MAPPING.copy()
+    avail_mapping.remove("ann")  # cannot perform multiple optimize with ANN mapping
+
+    if isinstance(mapping, str):
+        if mapping.lower() not in avail_mapping:
+            raise ValueError(
+                f"Invalid mapping '{mapping}' for multiple optimize. Choices: {avail_mapping}"
+            )
+    else:
+        raise TypeError("mapping argument must be a str")
+
+    return mapping.lower()

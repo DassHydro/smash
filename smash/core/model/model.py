@@ -26,6 +26,10 @@ from smash.core.simulation.run.run import _forward_run
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
 from smash.core.simulation.optimize.optimize import _optimize
 from smash.core.simulation.optimize._standardize import _standardize_optimize_args
+from smash.core.simulation.estimate._standardize import (
+    _standardize_multiset_estimate_args,
+)
+from smash.core.simulation.estimate.estimate import _multiset_estimate
 
 from smash.fcore._mwd_setup import SetupDT
 from smash.fcore._mwd_mesh import MeshDT
@@ -40,7 +44,9 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric
+    from smash._typing import Numeric, ListLike
+    from smash.core.simulation.optimize.optimize import MultipleOptimize
+    from smash.core.simulation.run.run import MultipleForwardRun
 
 __all__ = ["Model"]
 
@@ -245,3 +251,15 @@ class Model(object):
         )
 
         _optimize(self, *args)
+
+    def multiset_estimate(
+        self,
+        multiset: MultipleForwardRun | MultipleOptimize,
+        alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
+        common_options: dict | None = None,
+    ):
+        arg_options = deepcopy(common_options)
+
+        args = _standardize_multiset_estimate_args(multiset, alpha, arg_options)
+
+        _multiset_estimate(self, *args)
