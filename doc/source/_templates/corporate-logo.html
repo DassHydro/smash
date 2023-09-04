@@ -1,0 +1,6 @@
+<a class="footer-end-corporate-logo" rel="noopener" target="_blank">
+  {% set image_light = pathto('_static/' + 'corporate_logo.svg', 1) %}
+  {% set image_dark = pathto('_static/' + 'corporate_logo_dark.svg', 1) %}
+    <img src="{{ image_light }}" class="logo_image only-light" alt="corporate logo">
+    <img src="{{ image_dark }}" class="logo_image only-dark" alt="corporate logo">
+</a>
