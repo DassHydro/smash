@@ -91,6 +91,8 @@ html_theme_options = {
         "image_light": "logo_smash.svg",
         "image_dark": "logo_smash_dark.svg",
     },
+    "footer_start": ["copyright", "sphinx-version", "theme-version"],
+    "footer_end": ["inrae-logo"],
 }
 
 html_context = {"default_mode": "light"}

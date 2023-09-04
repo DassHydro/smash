@@ -8,6 +8,11 @@
    height: 50px;
 }
 
+.footer-end-inrae-logo img {
+    margin-bottom: 0;
+    height: 100px;
+}
+
 .bd-sidebar-primary {
    max-width: 20%;
 }
