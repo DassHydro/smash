@@ -258,8 +258,8 @@ class Model(object):
         alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
         common_options: dict | None = None,
     ):
-        args_all = [deepcopy(arg) for arg in [multiset, alpha, common_options]]
+        arg_options = deepcopy(common_options)
 
-        args = _standardize_multiset_estimate_args(self, *args_all)
+        args = _standardize_multiset_estimate_args(multiset, alpha, arg_options)
 
         _multiset_estimate(self, *args)

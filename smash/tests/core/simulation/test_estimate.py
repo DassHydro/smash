@@ -21,7 +21,21 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
 
     sample = smash.factory.generate_samples(problem, n=20, random_state=11)
 
-    multiset = smash.multiple_optimize(
+    multisets = {}
+
+    multisets["mfwr"] = smash.multiple_forward_run(
+        model, sample, common_options={"ncpu": ncpu, "verbose": False}
+    )
+
+    multisets["mopt_unf"] = smash.multiple_optimize(
+        model,
+        sample,
+        mapping="uniform",
+        optimize_options={"termination_crit": {"maxiter": 1}},
+        common_options={"ncpu": ncpu, "verbose": False},
+    )
+
+    multisets["mopt_ml"] = smash.multiple_optimize(
         model,
         sample,
         mapping="multi-linear",
@@ -29,17 +43,18 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         common_options={"ncpu": ncpu, "verbose": False},
     )
 
-    instance = smash.multiset_estimate(
-        model,
-        multiset,
-        np.linspace(-1, 8, 10),
-        common_options={"ncpu": ncpu, "verbose": False},
-    )
+    for key, multiset in multisets.items():
+        instance = smash.multiset_estimate(
+            model,
+            multiset,
+            np.linspace(-1, 8, 10),
+            common_options={"ncpu": ncpu, "verbose": False},
+        )
 
-    qsim = instance.sim_response.q[:].flatten()
-    qsim = qsim[::10]  # extract values at every 10th position
+        qsim = instance.sim_response.q[:].flatten()
+        qsim = qsim[::10]  # extract values at every 10th position
 
-    res["multiset_estimate.sim_q"] = qsim
+        res[f"multiset_estimate.{key}.sim_q"] = qsim
 
     return res
 

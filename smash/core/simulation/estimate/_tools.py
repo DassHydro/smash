@@ -14,19 +14,18 @@ from scipy.stats import gaussian_kde
 
 def _compute_density(
     samples: Samples,
-    parameters: list,
-    optimized_parameters: dict | None,
+    optimized_parameters: dict,
     active_cell: np.ndarray,
 ) -> dict:
     density = {}
 
-    for p in parameters:
-        dst = getattr(samples, "_" + p)
+    for p, optim_param in optimized_parameters.items():
+        dst = getattr(samples, "_dst_" + p)
         density[p] = np.tile(
             dst, (*active_cell.shape, 1)
         )  # spatialized density (*active_cell.shape, n_sample)
 
-        if isinstance(optimized_parameters, dict):
+        if isinstance(optim_param, np.ndarray):
             estimated_cell = np.zeros(active_cell.shape)
 
             for ac in [0, 1]:  # Iterate on two blocs active/inactive cell
@@ -35,18 +34,20 @@ def _compute_density(
                 if np.all(
                     [
                         np.allclose(
-                            optimized_parameters[p][..., i][mask],
-                            optimized_parameters[p][..., i][mask][0],
+                            optim_param[..., i][mask],
+                            optim_param[..., i][mask][0],
                         )
-                        for i in range(optimized_parameters[p].shape[-1])
+                        for i in range(optim_param.shape[-1])
                     ]
-                ):  # if optimized_parameters[mask] contain only uniform values
-                    optim_param = optimized_parameters[p][mask][0, :]
+                ):  # if optim_param[mask] contain only uniform values
+                    unf_optim_param = optim_param[mask][0, :]
 
-                    if np.allclose(optim_param, optim_param[0]):
-                        estimted_density = np.ones(optim_param.shape)
+                    if np.allclose(unf_optim_param, unf_optim_param[0]):
+                        estimted_density = np.ones(unf_optim_param.shape)
                     else:
-                        estimted_density = gaussian_kde(optim_param)(optim_param)
+                        estimted_density = gaussian_kde(unf_optim_param)(
+                            unf_optim_param
+                        )
 
                     density[p][mask] *= estimted_density  # compute joint-probability
 
@@ -54,12 +55,14 @@ def _compute_density(
 
             for i, j in np.ndindex(active_cell.shape):  # Iterate on all grid cells
                 if not estimated_cell[i, j]:
-                    optim_param_ij = optimized_parameters[p][i, j, :]
+                    unf_optim_param_ij = optim_param[i, j, :]
 
-                    if np.allclose(optim_param_ij, optim_param_ij[0]):
-                        estimted_density = np.ones(optim_param_ij.shape)
+                    if np.allclose(unf_optim_param_ij, unf_optim_param_ij[0]):
+                        estimted_density = np.ones(unf_optim_param_ij.shape)
                     else:
-                        estimted_density = gaussian_kde(optim_param_ij)(optim_param_ij)
+                        estimted_density = gaussian_kde(unf_optim_param_ij)(
+                            unf_optim_param_ij
+                        )
 
                     density[p][i, j] *= estimted_density  # compute joint-probability
 
@@ -103,7 +106,6 @@ def _forward_run_with_estimated_parameters(
     model: Model,
     cost_variant: str,
     cost_options: dict,
-    parameters: list,
     prior_data: dict,
     density: dict,
     cost: np.ndarray,
@@ -111,7 +113,7 @@ def _forward_run_with_estimated_parameters(
 ) -> dict:
     mahal_distance = 0
 
-    for p in parameters:
+    for p in prior_data.keys():
         param_p, distance_p = _estimate_parameter(
             prior_data[p], cost, density[p], alpha
         )
@@ -137,7 +139,7 @@ def _forward_run_with_estimated_parameters(
     return dict(
         zip(
             ["mahal_dist", "cost"],
-            [mahal_distance / len(parameters), model._output.cost],
+            [mahal_distance / len(prior_data), model._output.cost],
         )
     )
 

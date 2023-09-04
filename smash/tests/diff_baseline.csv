@@ -1,11 +1,11 @@
-commit b06ab57cc67ab3212bfd94d2e966b741caa1f701
-Merge: 480b1ad caee5be
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Fri Sep 1 14:40:34 2023 +0200
+commit 6a5497dec3972ca6ef2b6c47014d7eda5e583026
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Sun Sep 3 00:48:35 2023 +0200
 
-    Merge pull request #67 from DassHydro-dev/fix-bug-flwdst-time
-    
-    Fix bug flwdst time
+    FIX PR: fix regularization parameters alpha in multiset estimate:
+    - fix default values
+    - enhance standardize
+    - fix type checking.
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -74,7 +74,10 @@ model_io.setup.end_time                   |NON MODIFIED
 model_io.setup.start_time                 |NON MODIFIED
 model_io.setup.structure                  |NON MODIFIED
 model_io.sim_response.q                   |NON MODIFIED
-multiset_estimate.sim_q                   |ADDED
+multiset_estimate.mfwr.sim_q              |ADDED
+multiset_estimate.mopt_ml.sim_q           |ADDED
+multiset_estimate.mopt_unf.sim_q          |ADDED
+multiset_estimate.sim_q                   |DELETED
 net_init.bias_layer_1                     |NON MODIFIED
 net_init.bias_layer_2                     |NON MODIFIED
 net_init.bias_layer_3                     |NON MODIFIED

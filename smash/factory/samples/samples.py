@@ -165,7 +165,7 @@ class Samples(dict):
         slc_n = end - start
 
         slc_names = [key for key in self._problem["names"]] + [
-            "_" + key for key in self._problem["names"]
+            "_dst_" + key for key in self._problem["names"]
         ]
 
         slc_dict = {key: self[key][start:end] for key in slc_names}
@@ -367,7 +367,7 @@ def _generate_samples(
         if generator == "uniform":
             ret_dict[p] = np.random.uniform(low, upp, n)
 
-            ret_dict["_" + p] = np.ones(n) / (upp - low)
+            ret_dict["_dst_" + p] = np.ones(n) / (upp - low)
 
         elif generator in ["normal", "gaussian"]:
             sd = (upp - low) / coef_std
@@ -378,6 +378,6 @@ def _generate_samples(
 
             ret_dict[p] = trunc_normal.rvs(size=n)
 
-            ret_dict["_" + p] = trunc_normal.pdf(ret_dict[p])
+            ret_dict["_dst_" + p] = trunc_normal.pdf(ret_dict[p])
 
     return Samples(ret_dict)

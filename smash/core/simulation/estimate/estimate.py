@@ -44,41 +44,32 @@ def _multiset_estimate(
         print("</> Multiple Set Estimate")
 
     # % Prepare data
-    sample_param = multiset._samples._problem["names"]
-    optim_param = (
-        list(multiset.optimized_parameters.keys())
-        if hasattr(multiset, "optimized_parameters")
-        else []
-    )
-
-    parameters = list(set(sample_param).union(optim_param))
-
     if isinstance(multiset, MultipleForwardRun):
-        optimized_parameters = None
+        optimized_parameters = {p: None for p in multiset._samples._problem["names"]}
 
         prior_data = dict(
             zip(
-                parameters,
+                optimized_parameters.keys(),
                 [
                     np.tile(
                         getattr(multiset._samples, p), (*model.mesh.flwdir.shape, 1)
                     )
-                    for p in parameters
+                    for p in optimized_parameters.keys()
                 ],
             )
         )
 
     elif isinstance(multiset, MultipleOptimize):
-        optimized_parameters = multiset.optimized_parameters
+        optimized_parameters = multiset.parameters
 
-        prior_data = optimized_parameters.copy()
+        prior_data = multiset.parameters
 
     else:  # In case we have other kind of multiset. Should be unreachable
         pass
 
     # % Compute density
     density = _compute_density(
-        multiset._samples, parameters, optimized_parameters, model.mesh.active_cell
+        multiset._samples, optimized_parameters, model.mesh.active_cell
     )
 
     # % Multiple set estimate
@@ -97,7 +88,6 @@ def _multiset_estimate(
         model,
         multiset._cost_variant,
         multiset._cost_options,
-        parameters,
         prior_data,
         density,
         multiset.cost,

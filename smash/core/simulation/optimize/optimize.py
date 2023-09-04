@@ -230,6 +230,7 @@ def multiple_optimize(
     args_options = [
         deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
     ]
+
     args = _standardize_multiple_optimize_args(
         model,
         samples,
@@ -322,7 +323,7 @@ def _multiple_optimize(
         order="F",
     )
     # % Only work with grids (might be changed)
-    optimized_parameters = np.zeros(
+    parameters = np.zeros(
         shape=(
             *model.mesh.flwdir.shape,
             len(optimize_options["parameters"]),
@@ -344,20 +345,51 @@ def _multiple_optimize(
         samples_ind,
         cost,
         q,
-        optimized_parameters,
+        parameters,
     )
 
-    optimized_parameters = dict(
+    # % Finalize parameters and samples for returns
+    parameters = dict(
         zip(
             optimize_options["parameters"],
-            np.transpose(optimized_parameters, (2, 0, 1, 3)),
+            np.transpose(parameters, (2, 0, 1, 3)),
         )
     )
+
+    for sp in samples._problem[
+        "names"
+    ]:  # add uncalibrated parameters from samples to parameters
+        if not sp in optimize_options["parameters"]:
+            value = getattr(samples, sp)
+            value = np.tile(value, (*model.mesh.flwdir.shape, 1))
+
+            parameters.update({sp: value})
+
+    samples_fnl = deepcopy(
+        samples
+    )  # make a deepcopy of samples (will be modified by setattr)
+
+    for op in optimize_options[
+        "parameters"
+    ]:  # add calibrated paramters from parameters to samples
+        if not op in samples._problem["names"]:
+            if op in model.opr_parameters.keys:
+                value = model.get_opr_parameters(op)[0, 0]
+
+            elif op in model.opr_initial_states.keys:
+                value = model.get_opr_initial_states(op)[0, 0]
+
+            # % In case we have other kind of parameters. Should be unreachable.
+            else:
+                pass
+
+            setattr(samples_fnl, op, value * np.ones(samples.n_sample))
+            setattr(samples_fnl, "_dst_" + op, np.ones(samples.n_sample))
 
     return {
         "cost": cost,
         "q": q,
-        "optimized_parameters": optimized_parameters,
-        "_samples": samples,
+        "parameters": parameters,
+        "_samples": samples_fnl,
         "_cost_variant": cost_variant,
     }

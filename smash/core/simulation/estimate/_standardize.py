@@ -17,12 +17,11 @@ import numpy as np
 
 
 def _standardize_multiset_estimate_args(
-    model: Model,
     multiset: MultipleForwardRun | MultipleOptimize,
     alpha: Numeric | ListLike,
     common_options: dict | None,
 ) -> AnyTuple:
-    multiset = _standardize_multiset_estimate_multiset(model, multiset)
+    multiset = _standardize_multiset_estimate_multiset(multiset)
 
     alpha = _standardize_multiset_estimate_alpha(alpha)
 
@@ -32,40 +31,10 @@ def _standardize_multiset_estimate_args(
 
 
 def _standardize_multiset_estimate_multiset(
-    model: Model, multiset: MultipleForwardRun | MultipleOptimize
+    multiset: MultipleForwardRun | MultipleOptimize,
 ) -> MultipleForwardRun | MultipleOptimize:
-    if isinstance(multiset, MultipleForwardRun):
+    if isinstance(multiset, (MultipleForwardRun, MultipleOptimize)):
         pass
-
-    elif isinstance(multiset, MultipleOptimize):
-        sampl_param = multiset._samples._problem["names"]
-        optim_param = multiset.optimized_parameters.keys()
-
-        for sp in sampl_param:
-            if not sp in optim_param:
-                value = getattr(multiset._samples, sp)
-                value = np.tile(value, (*model.mesh.flwdir.shape, 1))
-
-                multiset.optimized_parameters.update({sp: value})
-
-        for op in optim_param:
-            if not op in sampl_param:
-                if op in model.opr_parameters.keys:
-                    value = model.get_opr_parameters(op)[0, 0]
-
-                elif op in model.opr_initial_states.keys:
-                    value = model.get_opr_initial_states(op)[0, 0]
-
-                # % In case we have other kind of parameters. Should be unreachable.
-                else:
-                    pass
-
-                setattr(
-                    multiset._samples, op, value * np.ones(multiset._samples.n_sample)
-                )
-                setattr(
-                    multiset._samples, "_" + op, np.ones(multiset._samples.n_sample)
-                )
 
     else:
         raise TypeError(
