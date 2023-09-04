@@ -4,7 +4,6 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_samples,
     _standardize_simulation_mapping,
     _standardize_simulation_optimizer,
-    _standardize_simulation_cost_variant,
     _standardize_simulation_optimize_options,
     _standardize_simulation_cost_options,
     _standardize_simulation_common_options,
@@ -26,7 +25,6 @@ if TYPE_CHECKING:
 def _standardize_optimize_args(
     model: Model,
     mapping: str,
-    cost_variant: str,
     optimizer: str | None,
     optimize_options: dict | None,
     cost_options: dict | None,
@@ -37,17 +35,13 @@ def _standardize_optimize_args(
 
     mapping = _standardize_simulation_mapping(mapping)
 
-    cost_variant = _standardize_simulation_cost_variant(cost_variant)
-
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     optimize_options = _standardize_simulation_optimize_options(
         model, mapping, optimizer, optimize_options
     )
 
-    cost_options = _standardize_simulation_cost_options(
-        model, cost_variant, cost_options
-    )
+    cost_options = _standardize_simulation_cost_options(model, cost_options)
 
     common_options = _standardize_simulation_common_options(common_options)
 
@@ -57,11 +51,10 @@ def _standardize_optimize_args(
     )
 
     # % Finalize cost_options
-    _standardize_simulation_cost_options_finalize(model, cost_variant, cost_options)
+    _standardize_simulation_cost_options_finalize(model, cost_options)
 
     return (
         mapping,
-        cost_variant,
         optimizer,
         optimize_options,
         cost_options,
@@ -73,7 +66,6 @@ def _standardize_multiple_optimize_args(
     model: Model,
     samples: Samples,
     mapping: str,
-    cost_variant: str,
     optimizer: str | None,
     optimize_options: dict | None,
     cost_options: dict | None,
@@ -86,17 +78,13 @@ def _standardize_multiple_optimize_args(
 
     mapping = _standardize_multiple_optimize_mapping(mapping)
 
-    cost_variant = _standardize_simulation_cost_variant(cost_variant)
-
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     optimize_options = _standardize_simulation_optimize_options(
         model, mapping, optimizer, optimize_options
     )
 
-    cost_options = _standardize_simulation_cost_options(
-        model, cost_variant, cost_options
-    )
+    cost_options = _standardize_simulation_cost_options(model, cost_options)
 
     common_options = _standardize_simulation_common_options(common_options)
 
@@ -106,12 +94,11 @@ def _standardize_multiple_optimize_args(
     )
 
     # % Finalize cost_options
-    _standardize_simulation_cost_options_finalize(model, cost_variant, cost_options)
+    _standardize_simulation_cost_options_finalize(model, cost_options)
 
     return (
         samples,
         mapping,
-        cost_variant,
         optimizer,
         optimize_options,
         cost_options,

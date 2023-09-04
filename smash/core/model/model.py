@@ -219,20 +219,18 @@ class Model(object):
 
     def forward_run(
         self,
-        cost_variant: str = "cls",
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
         args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
 
-        args = _standardize_forward_run_args(self, cost_variant, *args_options)
+        args = _standardize_forward_run_args(self, *args_options)
 
         _forward_run(self, *args)
 
     def optimize(
         self,
         mapping: str = "uniform",
-        cost_variant: str = "cls",
         optimizer: str | None = None,
         optimize_options: dict | None = None,
         cost_options: dict | None = None,
@@ -245,7 +243,6 @@ class Model(object):
         args = _standardize_optimize_args(
             self,
             mapping,
-            cost_variant,
             optimizer,
             *args_options,
         )

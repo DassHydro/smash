@@ -69,20 +69,17 @@ class MultipleForwardRun(dict):
 
 def forward_run(
     model: Model,
-    cost_variant: str = "cls",
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> Model:
     wmodel = model.copy()
 
-    wmodel.forward_run(cost_variant, cost_options, common_options)
+    wmodel.forward_run(cost_options, common_options)
 
     return wmodel
 
 
-def _forward_run(
-    model: Model, cost_variant: str, cost_options: dict, common_options: dict
-):
+def _forward_run(model: Model, cost_options: dict, common_options: dict):
     if common_options["verbose"]:
         print("</> Forward Run")
 
@@ -120,15 +117,12 @@ def _forward_run(
 def multiple_forward_run(
     model: Model,
     samples: Samples,
-    cost_variant: str = "cls",
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> MultipleForwardRun:
     args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
 
-    args = _standardize_multiple_forward_run_args(
-        model, samples, cost_variant, *args_options
-    )
+    args = _standardize_multiple_forward_run_args(model, samples, *args_options)
 
     res = _multiple_forward_run(model, *args)
 
@@ -141,7 +135,6 @@ def multiple_forward_run(
 def _multiple_forward_run(
     model: Model,
     samples: Samples,
-    cost_variant: str,
     cost_options: dict,
     common_options: dict,
 ) -> dict:
@@ -210,4 +203,4 @@ def _multiple_forward_run(
         q,
     )
 
-    return {"cost": cost, "q": q, "_samples": samples, "_cost_variant": cost_variant}
+    return {"cost": cost, "q": q, "_samples": samples}

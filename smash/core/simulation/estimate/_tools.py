@@ -104,7 +104,6 @@ def _estimate_parameter(
 def _forward_run_with_estimated_parameters(
     alpha: float,
     model: Model,
-    cost_variant: str,
     cost_options: dict,
     prior_data: dict,
     density: dict,
@@ -131,7 +130,6 @@ def _forward_run_with_estimated_parameters(
         mahal_distance += distance_p
 
     model.forward_run(
-        cost_variant=cost_variant,
         cost_options=cost_options,
         common_options={"verbose": False, "ncpu": ncpu},
     )

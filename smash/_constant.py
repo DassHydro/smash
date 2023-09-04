@@ -258,8 +258,6 @@ PROBLEM_KEYS = ["num_vars", "names", "bounds"]
 
 MAPPING = ["uniform", "distributed", "multi-linear", "multi-polynomial", "ann"]
 
-COST_VARIANT = ["cls", "bys"]
-
 F90_OPTIMIZER = ["sbs", "lbfgsb"]
 
 OPTIMIZER = F90_OPTIMIZER + PY_OPTIMIZER
@@ -362,34 +360,16 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ),
 }
 
-# % Following COST_VARIANT order
-DEFAULT_SIMULATION_COST_OPTIONS = dict(
-    zip(
-        COST_VARIANT,
-        [
-            {
-                "jobs_cmpt": "nse",
-                "wjobs_cmpt": "mean",
-                "wjreg": 0,
-                "jreg_cmpt": None,
-                "wjreg_cmpt": "mean",
-                "gauge": "dws",
-                "wgauge": "mean",
-                "event_seg": None,
-                "end_warmup": None,
-            },
-            {
-                "jobs_cmpt": "lklhd",
-                "wjobs_cmpt": "mean",
-                "wjreg": 0,
-                "jreg_cmpt": None,
-                "wjreg_cmpt": "mean",
-                "gauge": "dws",
-                "event_seg": None,
-                "end_warmup": None,
-            },
-        ],
-    )
-)
+DEFAULT_SIMULATION_COST_OPTIONS = {
+    "jobs_cmpt": "nse",
+    "wjobs_cmpt": "mean",
+    "wjreg": 0,
+    "jreg_cmpt": None,
+    "wjreg_cmpt": "mean",
+    "gauge": "dws",
+    "wgauge": "mean",
+    "event_seg": None,
+    "end_warmup": None,
+}
 
 DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
