@@ -1,7 +1,7 @@
 <h1 align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro-dev/smash/main/doc/source/_static/logo_smash_dark.svg">
-  <img src="https://raw.githubusercontent.com/DassHydro-dev/smash/doc/source/_static/logo_smash.svg" width="300">
+  <img src="https://raw.githubusercontent.com/DassHydro-dev/smash/main/doc/source/_static/logo_smash.svg" width="300">
 </picture>
 </h1><br>
 
