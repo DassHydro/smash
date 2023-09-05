@@ -1,3 +1,10 @@
+<h1 align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro-dev/smash/main/doc/source/_static/logo_smash_dark.svg">
+  <img src="https://raw.githubusercontent.com/DassHydro-dev/smash/doc/source/_static/logo_smash.svg" width="300">
+</picture>
+</h1><br>
+
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro-dev/smash
 - **Contributors and contact:** https://smash.recover.inrae.fr/contributors/index.html
