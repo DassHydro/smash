@@ -617,11 +617,9 @@ def _standardize_simulation_cost_options_wjreg(wjreg: Numeric, **kwargs) -> floa
 
 
 def _standardize_simulation_cost_options_jreg_cmpt(
-    jreg_cmpt: str | ListLike | None, **kwargs
+    wjreg: float, jreg_cmpt: str | ListLike, **kwargs
 ) -> np.ndarray:
-    if jreg_cmpt is None:
-        jreg_cmpt = np.empty(shape=0)
-    else:
+    if wjreg > 0:
         if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
             jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
 
@@ -636,6 +634,8 @@ def _standardize_simulation_cost_options_jreg_cmpt(
             raise TypeError(
                 "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
             )
+    else:
+        jreg_cmpt = np.empty(shape=0)
 
     return jreg_cmpt
 
@@ -734,7 +734,7 @@ def _standardize_simulation_cost_options_gauge(
 
 
 def _standardize_simulation_cost_options_wgauge(
-    gauge: np.ndarray, model: Model, wgauge: str | Numeric | ListLike, **kwargs
+    gauge: np.ndarray, wgauge: str | Numeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wgauge, str):
         if wgauge == "mean":
@@ -775,27 +775,23 @@ def _standardize_simulation_cost_options_wgauge(
     return wgauge
 
 
-def _standardize_simulation_cost_options_event_seg(
-    event_seg: dict | None, **kwargs
-) -> dict:
-    if event_seg is None:
-        event_seg = {}
+def _standardize_simulation_cost_options_event_seg(event_seg: dict, **kwargs) -> dict:
+    if isinstance(event_seg, dict):
+        simulation_event_seg_keys = EVENT_SEG_KEYS.copy()
+        simulation_event_seg_keys.remove("by")
+
+        for key, value in event_seg.items():
+            if key in simulation_event_seg_keys:
+                func = eval(f"_standardize_hydrograph_segmentation_{key}")
+                event_seg[key] = func(value)
+
+            else:
+                raise ValueError(
+                    f"Unknown event_seg key '{key}' in cost_options. Choices: {simulation_event_seg_keys}"
+                )
 
     else:
-        if isinstance(event_seg, dict):
-            simulation_event_seg_keys = EVENT_SEG_KEYS.copy()
-            simulation_event_seg_keys.remove("by")
-            for key, value in event_seg.items():
-                if key in simulation_event_seg_keys:
-                    func = eval(f"_standardize_hydrograph_segmentation_{key}")
-                    event_seg[key] = func(value)
-                else:
-                    raise ValueError(
-                        f"Unknown event_seg key '{key}' in cost_options. Choices: {simulation_event_seg_keys}"
-                    )
-
-        else:
-            raise TypeError("event_seg cost_options must be a dictionary or None")
+        raise TypeError("event_seg cost_options must be a dictionary or None")
 
     return event_seg
 

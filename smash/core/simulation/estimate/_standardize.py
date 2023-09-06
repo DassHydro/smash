@@ -46,13 +46,15 @@ def _standardize_multiset_estimate_alpha(
 ) -> float | np.ndarray:
     if alpha is None:
         alpha = np.linspace(-2, 10, 50)
-    
+
     else:
         if isinstance(alpha, (int, float, list, tuple, np.ndarray)):
             alpha = np.array(alpha, ndmin=0)
 
             if not (alpha.dtype == int or alpha.dtype == float):
-                raise TypeError("All values in alpha must be of Numeric type (int, float)")
+                raise TypeError(
+                    "All values in alpha must be of Numeric type (int, float)"
+                )
 
             if alpha.ndim > 1:
                 raise ValueError(f"alpha must be a one-dimensional list-like array")

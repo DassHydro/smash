@@ -57,7 +57,7 @@ def precipitation_indices(
 ):
     """
     Compute precipitation indices of the Model.
-    
+
     TODO FC: Fill
 
     Returns
@@ -67,7 +67,7 @@ def precipitation_indices(
 
     See Also
     --------
-    PrecipitationIndices: Represents precipitation indices computation result.
+    PrecipitationIndices : Represents precipitation indices computation result.
     """
 
     # % Initialise result

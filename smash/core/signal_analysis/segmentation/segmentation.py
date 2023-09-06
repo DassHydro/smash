@@ -35,16 +35,16 @@ def hydrograph_segmentation(
 
     Parameters
     ----------
-    model: Model
+    model : Model
         Model object.
 
-    peak_quant: float, default 0.995
+    peak_quant : float, default 0.995
         Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
 
-    max_duration: int or float, default 240
+    max_duration : int or float, default 240
         The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
 
-    by: str, default 'obs'
+    by : str, default 'obs'
         Compute segmentation information based on observed (obs) or simulated (sim) discharges.
         If **by** = 'sim', you need to run a simulation (forward run or optimization) to obtain the simulated discharge.
 

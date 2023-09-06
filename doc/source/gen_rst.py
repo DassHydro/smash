@@ -28,7 +28,7 @@ if __name__ == "__main__":
             + ":"
         )
 
-    rst_main_title = ' '.join(word.capitalize() for word in file_path.stem.split('_'))
+    rst_main_title = " ".join(word.capitalize() for word in file_path.stem.split("_"))
     len_rst_main_title = len(rst_main_title)
 
     with open(file_path, "w") as f:

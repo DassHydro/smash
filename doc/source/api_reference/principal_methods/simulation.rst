@@ -47,4 +47,3 @@ Default Options
       :toctree: smash/
 
       default_optimize_options
-      default_cost_options

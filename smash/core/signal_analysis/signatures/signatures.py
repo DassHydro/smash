@@ -44,7 +44,7 @@ class Signatures(dict):
 
     See Also
     --------
-    smash.signatures: Compute simulated or observed hydrological signatures of the Model.
+    smash.signatures : Compute simulated or observed hydrological signatures of the Model.
 
     """
 
@@ -100,20 +100,14 @@ def signatures(
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
 
-    domain: str, default 'obs'
+    domain : str, default 'obs'
         Compute observed (obs) or simulated (sim) signatures.
 
     event_seg : dict or None, default None
-        A dictionary of event segmentation options when calculating flood event signatures. The keys are
-
-        - 'peak_quant'
-        - 'max_duration'
-        - 'by'
-
-        See `smash.hydrograph_segmentation` for more.
+        A dictionary of event segmentation options when calculating flood event signatures. The keys are 'peak_quant', 'max_duration', and 'by'.
 
         .. note::
-            If not given in case flood signatures are computed, the default values will be set for these parameters.
+            If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See `smash.hydrograph_segmentation` for more.
 
     Returns
     -------
@@ -122,7 +116,7 @@ def signatures(
 
     See Also
     --------
-    Signatures: Represents signatures computation result.
+    Signatures : Represents signatures computation result.
 
     Examples
     --------

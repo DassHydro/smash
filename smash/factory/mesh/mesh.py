@@ -98,12 +98,12 @@ def generate_mesh(
 
     Returns
     -------
-    dict
+    mesh : dict
         A mesh dictionary that can be used to initialize the `smash.Model` object.
 
     See Also
     --------
-    smash.Model: Primary data structure of the hydrological model `smash`.
+    smash.Model : Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
