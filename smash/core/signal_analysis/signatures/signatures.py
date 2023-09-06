@@ -44,7 +44,7 @@ class Signatures(dict):
 
     See Also
     --------
-    Model.signatures: Compute continuous or/and flood event signatures of the Model.
+    smash.signatures: Compute simulated or observed hydrological signatures of the Model.
 
     """
 
@@ -81,10 +81,10 @@ def signatures(
     domain: str = "obs",
 ):
     """
-    Compute continuous or/and flood event signatures of the Model.
+    Compute simulated or observed hydrological signatures of the Model.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.in_depth.signatures.computation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrological_signatures>` for more.
+        See the (TODO: Fill) for more.
 
     Parameters
     ----------
@@ -110,7 +110,7 @@ def signatures(
         - 'max_duration'
         - 'by'
 
-        See `smash.Model.event_segmentation` for more.
+        See `smash.hydrograph_segmentation` for more.
 
         .. note::
             If not given in case flood signatures are computed, the default values will be set for these parameters.
@@ -126,29 +126,7 @@ def signatures(
 
     Examples
     --------
-    >>> setup, mesh = smash.load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-    >>> model.run(inplace=True)
-
-    Compute all observed and simulated signatures:
-
-    >>> res = model.signatures()
-    >>> res.cont["obs"]  # observed continuous signatures
-            code       Crc     Crchf  ...   Cfp50      Cfp90
-    0  V3524010  0.516207  0.191349  ...  3.3225  42.631802
-    1  V3515010  0.509180  0.147217  ...  1.5755  10.628400
-    2  V3517010  0.514302  0.148364  ...  0.3235   2.776700
-
-    [3 rows x 9 columns]
-
-    >>> res.event["sim"]  # simulated flood event signatures
-            code  season               start  ...  Elt         Epf
-    0  V3524010  autumn 2014-11-03 03:00:00  ...    3  106.190651
-    1  V3515010  autumn 2014-11-03 10:00:00  ...    0   21.160324
-    2  V3517010  autumn 2014-11-03 08:00:00  ...    1   5.613392
-
-    [3 rows x 12 columns]
-
+    TODO
     """
 
     cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)

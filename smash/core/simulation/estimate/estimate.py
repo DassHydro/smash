@@ -23,9 +23,21 @@ __all__ = ["multiset_estimate"]
 def multiset_estimate(
     model: Model,
     multiset: MultipleForwardRun | MultipleOptimize,
-    alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
+    alpha: Numeric | ListLike | None = None,
     common_options: dict | None = None,
 ):
+    
+    """
+    Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+
+    TODO: Fill
+
+    Returns
+    -------
+    ret_model : Model
+        The optimized Model.
+    """
+
     wmodel = model.copy()
 
     wmodel.multiset_estimate(multiset, alpha, common_options)

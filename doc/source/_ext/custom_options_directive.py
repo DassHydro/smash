@@ -30,9 +30,9 @@ def _option_required_str(x):
 def _import_object_interface(name):
     parts = name.split(".")
     if parts[0] == "Model":
-        module_name = "smash.core.model.Model"
+        module_name = "smash.core.model.model.Model"
     elif parts[0] == "Net":
-        module_name = "smash.core.net.Net"
+        module_name = "smash.factory.net.net.Net"
     else:
         raise ValueError(f"Unknown object interface {name}")
     obj = getattr(eval(module_name), parts[-1])

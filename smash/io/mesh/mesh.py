@@ -14,7 +14,7 @@ __all__ = ["save_mesh", "read_mesh"]
 
 def save_mesh(mesh: dict, path: str):
     """
-    Save Model initialization mesh dictionary.
+    Save the Model initialization mesh dictionary.
 
     Parameters
     ----------
@@ -26,10 +26,11 @@ def save_mesh(mesh: dict, path: str):
 
     See Also
     --------
-    read_mesh: Read Model initialization mesh dictionary.
+    smash.io.read_mesh: Read the Model initialization mesh dictionary.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
@@ -55,7 +56,7 @@ def save_mesh(mesh: dict, path: str):
 
 def read_mesh(path: str) -> dict:
     """
-    Read Model initialization mesh dictionary.
+    Read the Model initialization mesh dictionary.
 
     Parameters
     ----------
@@ -76,10 +77,11 @@ def read_mesh(path: str) -> dict:
 
     See Also
     --------
-    save_mesh: Save Model initialization mesh dictionary.
+    smash.io.save_mesh: Save the Model initialization mesh dictionary.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}

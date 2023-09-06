@@ -52,6 +52,38 @@ __all__ = ["Model"]
 
 
 class Model(object):
+        
+    """
+    Primary data structure of the hydrological model `smash`.
+
+    Parameters
+    ----------
+    setup : dict
+        Model initialization setup dictionary (TODO: add reference).
+
+    mesh : dict
+        Model initialization mesh dictionary (TODO: add reference).
+
+    See Also
+    --------
+    smash.io.save_model : Save the Model object.
+    smash.io.read_model : Read the Model object.
+    smash.io.save_setup : Save the Model initialization setup dictionary.
+    smash.io.read_setup : Read the Model initialization setup dictionary.
+    smash.factory.generate_mesh : Automatic mesh generation.
+    smash.io.save_mesh : Save the Model initialization mesh dictionary.
+    smash.io.read_mesh : Read the Model initialization mesh dictionary.
+
+    Examples
+    --------
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+    </> Reading precipitation: 100%|█████████| 1440/1440 [00:00<00:00, 10512.83it/s]
+    </> Reading daily interannual pet: 100%|███| 366/366 [00:00<00:00, 13638.56it/s]
+    </> Disaggregating daily interannual pet: 100%|█| 1440/1440 [00:00<00:00, 129442
+    """
+        
     def __init__(self, setup: dict | None, mesh: dict | None):
         if setup and mesh:
             if isinstance(setup, dict):
@@ -100,6 +132,13 @@ class Model(object):
 
     @property
     def setup(self):
+
+        """
+        The setup used to create the Model object.
+
+        TODO: Fill
+        """
+
         return self._setup
 
     @setup.setter
@@ -108,6 +147,13 @@ class Model(object):
 
     @property
     def mesh(self):
+
+        """
+        The mesh used to create the Model object.
+
+        TODO: Fill
+        """
+
         return self._mesh
 
     @mesh.setter
@@ -116,6 +162,13 @@ class Model(object):
 
     @property
     def obs_response(self):
+
+        """
+        Observation response data.
+
+        TODO: Fill
+        """
+
         return self._input_data.obs_response
 
     @obs_response.setter
@@ -124,6 +177,13 @@ class Model(object):
 
     @property
     def physio_data(self):
+
+        """
+        Physiographic data.
+
+        TODO: Fill
+        """
+
         return self._input_data.physio_data
 
     @physio_data.setter
@@ -132,6 +192,13 @@ class Model(object):
 
     @property
     def atmos_data(self):
+
+        """
+        Atmospheric and meteorological data.
+
+        TODO: Fill
+        """
+
         return self._input_data.atmos_data
 
     @atmos_data.setter
@@ -140,6 +207,13 @@ class Model(object):
 
     @property
     def opr_parameters(self):
+
+        """
+        Get operator parameters for the actual structure of the Model.
+
+        TODO: Fill
+        """
+        
         return self._parameters.opr_parameters
 
     @opr_parameters.setter
@@ -148,6 +222,13 @@ class Model(object):
 
     @property
     def opr_initial_states(self):
+
+        """
+        Get operator initial states for the actual structure of the Model.
+
+        TODO: Fill
+        """
+                
         return self._parameters.opr_initial_states
 
     @opr_initial_states.setter
@@ -156,6 +237,13 @@ class Model(object):
 
     @property
     def sim_response(self):
+
+        """
+        Simulated response data.
+
+        TODO: Fill
+        """
+
         return self._output.sim_response
 
     @sim_response.setter
@@ -164,6 +252,13 @@ class Model(object):
 
     @property
     def opr_final_states(self):
+
+        """
+        Get operator final states for the actual structure of the Model.
+
+        TODO: Fill
+        """
+
         return self._output.opr_final_states
 
     @opr_final_states.setter
@@ -171,39 +266,178 @@ class Model(object):
         self._output.opr_final_states = value
 
     def copy(self):
+
+        """
+        Make a deepcopy of the Model.
+
+        Returns
+        -------
+        Model
+            A copy of Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
         return self.__copy__()
 
     def get_opr_parameters(self, key: str):
+
+        """
+        Get the values of an operator model parameter.
+
+        Parameters
+        ----------
+        key : str
+            The name of the operator parameter.
+
+        Returns
+        -------
+        value : np.ndarray
+            A 2D-array representing the values of the operator parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.opr_parameters : Get operator parameters for the actual structure of the Model.
+        """
+        
         key = _standardize_get_opr_parameters_args(self, key)
         ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
 
         return self._parameters.opr_parameters.values[..., ind]
 
     def set_opr_parameters(self, key: str, value: Numeric | np.ndarray):
+
+        """
+        Set the values for an operator model parameter.
+
+        Parameters
+        ----------
+        key : str
+            The name of the operator parameter.
+
+        value : Numeric or np.ndarray
+            The values to set for the operator parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.opr_parameters : Get operator parameters for the actual structure of the Model.
+        """
+
         key, value = _standardize_set_opr_parameters_args(self, key, value)
         ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
 
         self._parameters.opr_parameters.values[..., ind] = value
 
     def get_opr_initial_states(self, key: str):
+
+        """
+        Get the values of an operator model initial state.
+
+        Parameters
+        ----------
+        key : str
+            The name of the operator initial state.
+
+        Returns
+        -------
+        value : np.ndarray
+            A 2D-array representing the values of the operator initial state.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.opr_initial_states : Get operator initial states for the actual structure of the Model.
+        """
+
         key = _standardize_get_opr_initial_states_args(self, key)
         ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
 
         return self._parameters.opr_initial_states.values[..., ind]
 
     def set_opr_initial_states(self, key: str, value: Numeric | np.ndarray):
+
+        """
+        Set the values for an operator model initial state.
+
+        Parameters
+        ----------
+        key : str
+            The name of the operator initial state.
+
+        value : Numeric or np.ndarray
+            The values to set for the operator initial state.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.opr_initial_states : Get operator initial states for the actual structure of the Model.
+        """
+
         key, value = _standardize_set_opr_initial_states_args(self, key, value)
         ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
 
         self._parameters.opr_initial_states.values[..., ind] = value
 
     def get_opr_final_states(self, key: str):
+
+        """
+        Get the values of an operator model final state.
+
+        Parameters
+        ----------
+        key : str
+            The name of the operator final state.
+
+        Returns
+        -------
+        value : np.ndarray
+            A 2D-array representing the values of the operator final state.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.opr_final_states : Get operator final states for the actual structure of the Model.
+        """
+
         key = _standardize_get_opr_final_states_args(self, key)
         ind = np.argwhere(self._output.opr_final_states.keys == key).item()
 
         return self._output.opr_final_states.values[..., ind]
 
     def get_opr_parameters_bounds(self):
+
+        """
+        Get the boundary condition for the operator model parameters.
+
+        Returns
+        -------
+        bounds : dict
+            A dictionary representing the boundary condition for each operator parameter in the actual structure of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
         return {
             key: value
             for key, value in DEFAULT_BOUNDS_OPR_PARAMETERS.items()
@@ -211,6 +445,20 @@ class Model(object):
         }
 
     def get_opr_initial_states_bounds(self):
+
+        """
+        Get the boundary condition for the operator model initial states.
+
+        Returns
+        -------
+        bounds : dict
+            A dictionary representing the boundary condition for each operator initial state in the actual structure of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """    
+
         return {
             key: value
             for key, value in DEFAULT_BOUNDS_OPR_INITIAL_STATES.items()
@@ -222,6 +470,13 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
+        
+        """
+        Run the forward Model.
+
+        TODO: Fill
+        """
+
         args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
 
         args = _standardize_forward_run_args(self, *args_options)
@@ -236,6 +491,13 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
+
+        """
+        Model assimilation using numerical optimization algorithms.
+
+        TODO: Fill
+        """
+
         args_options = [
             deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
         ]
@@ -252,9 +514,16 @@ class Model(object):
     def multiset_estimate(
         self,
         multiset: MultipleForwardRun | MultipleOptimize,
-        alpha: Numeric | ListLike = np.linspace(-2, 10, 50),
+        alpha: Numeric | ListLike | None = None,
         common_options: dict | None = None,
     ):
+        
+        """
+        Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+
+        TODO: Fill
+        """
+        
         arg_options = deepcopy(common_options)
 
         args = _standardize_multiset_estimate_args(multiset, alpha, arg_options)

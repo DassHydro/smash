@@ -13,7 +13,7 @@ if TYPE_CHECKING:
     from smash._typing import Numeric
 
 
-__all__ = ["generate_samples", "Samples"]
+__all__ = ["Samples", "generate_samples"]
 
 
 class Samples(dict):
@@ -42,7 +42,7 @@ class Samples(dict):
 
     See Also
     --------
-    smash.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
+    smash.factory.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
 
     Examples
     --------
@@ -307,11 +307,11 @@ def generate_samples(
     Returns
     -------
     res : Samples
-        The generated samples result represented as a `Samples` object.
+        The generated samples result represented as a `smash.Samples` object.
 
     See Also
     --------
-    Samples: Represents the generated samples using `smash.generate_samples` method.
+    smash.Samples: Represents the generated samples using `smash.factory.generate_samples` method.
 
     Examples
     --------

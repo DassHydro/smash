@@ -31,7 +31,7 @@ def hydrograph_segmentation(
     Compute segmentation information of flood events over all catchments of the Model.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.in_depth.hydrograph_segmentation>` and :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.hydrograph_segmentation>` for more.
+        See the (TODO: Fill) for more.
 
     Parameters
     ----------
@@ -79,7 +79,6 @@ def hydrograph_segmentation(
     2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
 
     [3 rows x 6 columns]
-
     """
 
     peak_quant, max_duration, by = _standardize_hydrograph_segmentation_args(
