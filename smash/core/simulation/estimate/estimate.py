@@ -31,6 +31,9 @@ def multiset_estimate(
 
     Parameters
     ----------
+    model : Model
+        Model object.
+        
     multiset : MultipleForwardRun or MultipleOptimize
         The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
 

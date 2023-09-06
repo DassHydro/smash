@@ -71,6 +71,9 @@ def forward_run(
 
     Parameters
     ----------
+    model : Model
+        Model object.
+        
     cost_options : dict or None, default None
         Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -104,7 +107,7 @@ def forward_run(
             See `smash.hydrograph_segmentation` for more.
 
         end_warmup : str or pandas.Timestamp, default model.setup.start_time
-            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By defeault, it is set to be equal to the start time.
+            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 

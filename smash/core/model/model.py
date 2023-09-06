@@ -515,7 +515,7 @@ class Model(object):
                 See `smash.hydrograph_segmentation` for more.
 
             end_warmup : str or pandas.Timestamp, default model.setup.start_time
-                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By defeault, it is set to be equal to the start time.
+                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
@@ -557,7 +557,7 @@ class Model(object):
         Parameters
         ----------
         mapping : str, default 'uniform'
-            Type of mapping. Should be one of 'uniform', 'distributed', 'hyper-linear', 'hyper-polynomial', 'ann'.
+            Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
 
         optimizer : str or None, default None
             Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
@@ -616,7 +616,7 @@ class Model(object):
                 See `smash.hydrograph_segmentation` for more.
 
             end_warmup : str or pandas.Timestamp, default model.setup.start_time
-                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By defeault, it is set to be equal to the start time.
+                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 

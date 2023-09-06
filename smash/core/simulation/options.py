@@ -27,7 +27,7 @@ def default_optimize_options(
         Model object.
 
     mapping : str, default 'uniform'
-        Type of mapping. Should be one of 'uniform', 'distributed', 'hyper-linear', 'hyper-polynomial', 'ann'.
+        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
 
     optimizer : str or None, default None
         Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
