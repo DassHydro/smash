@@ -4,6 +4,7 @@ from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
 )
 
+from smash.fcore._mw_forward import forward_run as wrap_forward_run
 from smash.fcore._mw_optimize import (
     optimize as wrap_optimize,
     multiple_optimize as wrap_multiple_optimize,
@@ -302,6 +303,17 @@ def _ann_optimize(
             ind = np.argwhere(model.opr_initial_states.keys == name).item()
 
             model.opr_inital_states.values[..., ind][inactive_mask] = y[:, i]
+
+    # % Forward run for updating final states
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
 
 
 def multiple_optimize(
