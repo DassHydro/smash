@@ -4,6 +4,7 @@ from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
 )
 
+from smash.fcore._mw_forward import forward_run as wrap_forward_run
 from smash.fcore._mw_optimize import (
     optimize as wrap_optimize,
     multiple_optimize as wrap_multiple_optimize,
@@ -70,7 +71,6 @@ def optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ):
-    
     """
     Model assimilation using numerical optimization algorithms.
 
@@ -218,6 +218,17 @@ def _ann_optimize(
 
             model.opr_inital_states.values[..., ind][inactive_mask] = y[:, i]
 
+    # % Forward run for updating final states
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        wrap_options,
+        wrap_returns,
+    )
+
 
 def multiple_optimize(
     model: Model,
@@ -228,7 +239,6 @@ def multiple_optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> MultipleOptimize:
-    
     """
     Optimize the Model on multiple sets of operator parameters or/and initial states.
 
