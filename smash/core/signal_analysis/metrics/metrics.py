@@ -55,7 +55,7 @@ def metrics(
 
     Examples
     --------
-
+    TODO: Fill
     """
     metric, end_warmup = _standardize_metrics_args(metric, end_warmup, model.setup)
 

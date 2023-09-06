@@ -38,7 +38,7 @@ def generate_mesh(
     Automatic mesh generation.
 
     .. hint::
-        See the :ref:`User Guide <user_guide.in_depth.automatic_meshing>` for more.
+        See the (TODO: Fill) for more.
 
     Parameters
     ----------
@@ -86,7 +86,7 @@ def generate_mesh(
         the given catchment area and the modeled catchment area calculated from the flow directions file.
         This can be generalized to :math:`n`.
 
-        .. image:: ../../_static/max_depth.png
+        .. image:: ../../../_static/max_depth.png
             :align: center
             :width: 350
 
@@ -99,11 +99,11 @@ def generate_mesh(
     Returns
     -------
     dict
-        A mesh dictionary that can be used to initialize the `Model` object.
+        A mesh dictionary that can be used to initialize the `smash.Model` object.
 
     See Also
     --------
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------

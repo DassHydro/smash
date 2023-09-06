@@ -42,24 +42,28 @@ def _standardize_multiset_estimate_multiset(
 
 
 def _standardize_multiset_estimate_alpha(
-    alpha: Numeric | ListLike,
+    alpha: Numeric | ListLike | None,
 ) -> float | np.ndarray:
-    if isinstance(alpha, (int, float, list, tuple, np.ndarray)):
-        alpha = np.array(alpha, ndmin=0)
+    if alpha is None:
+        alpha = np.linspace(-2, 10, 50)
+    
+    else:
+        if isinstance(alpha, (int, float, list, tuple, np.ndarray)):
+            alpha = np.array(alpha, ndmin=0)
 
-        if not (alpha.dtype == int or alpha.dtype == float):
-            raise TypeError("All values in alpha must be of Numeric type (int, float)")
+            if not (alpha.dtype == int or alpha.dtype == float):
+                raise TypeError("All values in alpha must be of Numeric type (int, float)")
 
-        if alpha.ndim > 1:
-            raise ValueError(f"alpha must be a one-dimensional list-like array")
+            if alpha.ndim > 1:
+                raise ValueError(f"alpha must be a one-dimensional list-like array")
+
+            else:
+                if alpha.size == 1:
+                    alpha = float(alpha)
 
         else:
-            if alpha.size == 1:
-                alpha = float(alpha)
-
-    else:
-        raise TypeError(
-            "alpha must be a Numeric or ListLike type (List, Tuple, np.ndarray)"
-        )
+            raise TypeError(
+                "alpha must be a Numeric or ListLike type (List, Tuple, np.ndarray)"
+            )
 
     return alpha

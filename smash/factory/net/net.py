@@ -159,10 +159,10 @@ class Net(object):
             .. hint::
                 See options for each layer type:
 
-                - 'dense' :ref:`(see here) <api_reference.add_dense>`
-                - 'activation' :ref:`(see here) <api_reference.add_activation>`
-                - 'scale' :ref:`(see here) <api_reference.add_scale>`
-                - 'dropout' :ref:`(see here) <api_reference.add_dropout>`
+                - 'dense' :ref:`(see here) <api_reference.sub-packages.net.add_dense>`
+                - 'activation' :ref:`(see here) <api_reference.sub-packages.net.add_activation>`
+                - 'scale' :ref:`(see here) <api_reference.sub-packages.net.add_scale>`
+                - 'dropout' :ref:`(see here) <api_reference.sub-packages.net.add_dropout>`
 
         Examples
         --------

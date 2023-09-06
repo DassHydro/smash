@@ -31,12 +31,6 @@ class MultipleForwardRun(dict):
     -----
     This class is essentially a subclass of dict with attribute accessors.
 
-    Attributes
-    ----------
-    TODO FC: Fill
-
-    See Also
-    --------
     TODO FC: Fill
 
     """
@@ -72,6 +66,18 @@ def forward_run(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> Model:
+    
+    """
+    Run the forward Model.
+
+    TODO: Fill
+
+    Returns
+    -------
+    ret_model : Model
+        The Model with forward run outputs.
+    """
+
     wmodel = model.copy()
 
     wmodel.forward_run(cost_options, common_options)
@@ -120,6 +126,18 @@ def multiple_forward_run(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> MultipleForwardRun:
+    
+    """
+    Run the forward Model on multiple sets of operator parameters or/and initial states.
+
+    TODO: Fill
+
+    Returns
+    -------
+    mfr : MultipleForwardRun
+        The multiple forward run results represented as a `MultipleForwardRun` object.
+    """
+    
     args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
 
     args = _standardize_multiple_forward_run_args(model, samples, *args_options)

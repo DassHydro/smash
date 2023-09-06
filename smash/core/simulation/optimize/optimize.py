@@ -32,12 +32,6 @@ class MultipleOptimize(dict):
     -----
     This class is essentially a subclass of dict with attribute accessors.
 
-    Attributes
-    ----------
-    TODO FC: Fill
-
-    See Also
-    --------
     TODO FC: Fill
 
     """
@@ -76,6 +70,18 @@ def optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ):
+    
+    """
+    Model assimilation using numerical optimization algorithms.
+
+    TODO: Fill
+
+    Returns
+    -------
+    ret_model : Model
+        The optimized Model.
+    """
+
     wmodel = model.copy()
 
     wmodel.optimize(mapping, optimizer, optimize_options, cost_options, common_options)
@@ -222,6 +228,18 @@ def multiple_optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> MultipleOptimize:
+    
+    """
+    Optimize the Model on multiple sets of operator parameters or/and initial states.
+
+    TODO: Fill
+
+    Returns
+    -------
+    mopt : MultipleOptimize
+        The multiple optimize results represented as a `MultipleOptimize` object.
+    """
+
     args_options = [
         deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
     ]

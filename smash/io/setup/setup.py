@@ -9,7 +9,7 @@ __all__ = ["save_setup", "read_setup"]
 
 def save_setup(setup: dict, path: str):
     """
-    Save Model initialization setup dictionary.
+    Save the Model initialization setup dictionary.
 
     Parameters
     ----------
@@ -21,10 +21,11 @@ def save_setup(setup: dict, path: str):
 
     See Also
     --------
-    read_setup: Read Model initialization setup dictionary.
+    smash.io.read_setup: Read the Model initialization setup dictionary.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
@@ -49,7 +50,7 @@ def save_setup(setup: dict, path: str):
 
 def read_setup(path: str) -> dict:
     """
-    Read Model initialization setup dictionary.
+    Read the Model initialization setup dictionary.
 
     Parameters
     ----------
@@ -63,10 +64,11 @@ def read_setup(path: str) -> dict:
 
     See Also
     --------
-    save_setup: Save Model initialization setup dictionary.
+    smash.io.save_setup: Save the Model initialization setup dictionary.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> setup
     {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}

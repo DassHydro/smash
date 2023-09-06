@@ -17,7 +17,6 @@ from smash.io.model._parse import (
 import os
 import errno
 import h5py
-import pandas as pd
 
 from typing import TYPE_CHECKING
 
@@ -29,7 +28,7 @@ __all__ = ["save_model", "read_model"]
 
 def save_model(model: Model, path: str):
     """
-    Save Model object.
+    Save the Model object.
 
     Parameters
     ----------
@@ -41,11 +40,12 @@ def save_model(model: Model, path: str):
 
     See Also
     --------
-    read_model: Read Model object.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.io.read_model: Read the Model object.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
@@ -85,7 +85,7 @@ def save_model(model: Model, path: str):
 # % TODO: enhance Model initialization, using setup and mesh which ara not None (disable read data in setup)
 def read_model(path: str) -> Model:
     """
-    Read Model object.
+    Read the Model object.
 
     Parameters
     ----------
@@ -95,7 +95,7 @@ def read_model(path: str) -> Model:
     Returns
     -------
     Model :
-        A Model object loaded from HDF5 file.
+        The Model object loaded from HDF5 file.
 
     Raises
     ------
@@ -106,11 +106,12 @@ def read_model(path: str) -> Model:
 
     See Also
     --------
-    save_model: Save Model object.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.io.save_model: Save the Model object.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
+    >>> import smash
     >>> setup, mesh = smash.factory.load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 

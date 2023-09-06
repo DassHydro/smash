@@ -22,12 +22,6 @@ class PrecipitationIndices(dict):
     -----
     This class is essentially a subclass of dict with attribute accessors.
 
-    Attributes
-    ----------
-    TODO FC: Fill
-
-    See Also
-    --------
     TODO FC: Fill
 
     """
@@ -62,7 +56,18 @@ def precipitation_indices(
     model: Model,
 ):
     """
+    Compute precipitation indices of the Model.
+    
     TODO FC: Fill
+
+    Returns
+    -------
+    res : PrecipitationIndices
+        The generated samples result represented as a `PrecipitationIndices` object.
+
+    See Also
+    --------
+    PrecipitationIndices: Represents precipitation indices computation result.
     """
 
     # % Initialise result
