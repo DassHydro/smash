@@ -26,16 +26,47 @@ def multiset_estimate(
     alpha: Numeric | ListLike | None = None,
     common_options: dict | None = None,
 ):
-    
     """
     Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
 
-    TODO: Fill
+    Parameters
+    ----------
+    model : Model
+        Model object.
+        
+    multiset : MultipleForwardRun or MultipleOptimize
+        The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
+
+    alpha : Numeric, ListLike, or None, default None
+        A regularization parameter that controls the decay rate of the likelihood function. If **alpha** is a list-like object, the L-curve approach will be used to find an optimal value for the regularization parameter.
+
+        .. note:: If not given, a default numeric range will be set for optimization through the L-curve process.
+
+    common_options : dict or None, default None
+        Dictionary containing common options with two elements:
+
+        verbose : bool, default False
+            Whether to display information about the running method.
+
+        ncpu : bool, default 1
+            Whether to perform a parallel computation.
+
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
     Returns
     -------
     ret_model : Model
         The optimized Model.
+
+    Examples
+    --------
+    TODO: Fill
+
+    See Also
+    --------
+    Model.multiset_estimate : Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+    MultipleForwardRun : Represents multiple forward run computation result.
+    MultipleOptimize : Represents multiple optimize computation result.
     """
 
     wmodel = model.copy()

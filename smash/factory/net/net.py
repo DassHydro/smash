@@ -246,7 +246,7 @@ class Net(object):
 
         Parameters
         ----------
-        trainable : list of bool
+        trainable : ListLike
             List of booleans with a length of the total number of the network's layers.
 
             .. note::

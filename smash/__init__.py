@@ -8,10 +8,7 @@ from smash.core.signal_analysis.prcp_indices.prcp_indices import precipitation_i
 
 from smash.core.simulation.run.run import forward_run, multiple_forward_run
 from smash.core.simulation.optimize.optimize import optimize, multiple_optimize
-from smash.core.simulation.options import (
-    default_optimize_options,
-    default_cost_options,
-)
+from smash.core.simulation.options import default_optimize_options
 from smash.core.simulation.estimate.estimate import multiset_estimate
 
 # smash sub-packages
@@ -44,7 +41,6 @@ __all__ = [
     "optimize",
     "multiple_optimize",
     "default_optimize_options",
-    "default_cost_options",
     "multiset_estimate",
     "io",
     "factory",

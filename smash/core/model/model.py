@@ -52,7 +52,7 @@ __all__ = ["Model"]
 
 
 class Model(object):
-        
+
     """
     Primary data structure of the hydrological model `smash`.
 
@@ -83,7 +83,7 @@ class Model(object):
     </> Reading daily interannual pet: 100%|███| 366/366 [00:00<00:00, 13638.56it/s]
     </> Disaggregating daily interannual pet: 100%|█| 1440/1440 [00:00<00:00, 129442
     """
-        
+
     def __init__(self, setup: dict | None, mesh: dict | None):
         if setup and mesh:
             if isinstance(setup, dict):
@@ -132,10 +132,11 @@ class Model(object):
 
     @property
     def setup(self):
-
         """
         The setup used to create the Model object.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -147,10 +148,11 @@ class Model(object):
 
     @property
     def mesh(self):
-
         """
         The mesh used to create the Model object.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -162,10 +164,11 @@ class Model(object):
 
     @property
     def obs_response(self):
-
         """
         Observation response data.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -177,10 +180,11 @@ class Model(object):
 
     @property
     def physio_data(self):
-
         """
         Physiographic data.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -192,10 +196,11 @@ class Model(object):
 
     @property
     def atmos_data(self):
-
         """
         Atmospheric and meteorological data.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -207,13 +212,14 @@ class Model(object):
 
     @property
     def opr_parameters(self):
-
         """
         Get operator parameters for the actual structure of the Model.
 
+        Examples
+        --------
         TODO: Fill
         """
-        
+
         return self._parameters.opr_parameters
 
     @opr_parameters.setter
@@ -222,13 +228,14 @@ class Model(object):
 
     @property
     def opr_initial_states(self):
-
         """
         Get operator initial states for the actual structure of the Model.
 
+        Examples
+        --------
         TODO: Fill
         """
-                
+
         return self._parameters.opr_initial_states
 
     @opr_initial_states.setter
@@ -237,10 +244,11 @@ class Model(object):
 
     @property
     def sim_response(self):
-
         """
         Simulated response data.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -252,10 +260,11 @@ class Model(object):
 
     @property
     def opr_final_states(self):
-
         """
         Get operator final states for the actual structure of the Model.
 
+        Examples
+        --------
         TODO: Fill
         """
 
@@ -266,7 +275,6 @@ class Model(object):
         self._output.opr_final_states = value
 
     def copy(self):
-
         """
         Make a deepcopy of the Model.
 
@@ -283,7 +291,6 @@ class Model(object):
         return self.__copy__()
 
     def get_opr_parameters(self, key: str):
-
         """
         Get the values of an operator model parameter.
 
@@ -305,16 +312,17 @@ class Model(object):
         --------
         Model.opr_parameters : Get operator parameters for the actual structure of the Model.
         """
-        
+
         key = _standardize_get_opr_parameters_args(self, key)
         ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
 
         return self._parameters.opr_parameters.values[..., ind]
 
     def set_opr_parameters(self, key: str, value: Numeric | np.ndarray):
-
         """
         Set the values for an operator model parameter.
+
+        This method performs an in-place operation on the Model object.
 
         Parameters
         ----------
@@ -339,7 +347,6 @@ class Model(object):
         self._parameters.opr_parameters.values[..., ind] = value
 
     def get_opr_initial_states(self, key: str):
-
         """
         Get the values of an operator model initial state.
 
@@ -368,9 +375,10 @@ class Model(object):
         return self._parameters.opr_initial_states.values[..., ind]
 
     def set_opr_initial_states(self, key: str, value: Numeric | np.ndarray):
-
         """
         Set the values for an operator model initial state.
+
+        This method performs an in-place operation on the Model object.
 
         Parameters
         ----------
@@ -395,7 +403,6 @@ class Model(object):
         self._parameters.opr_initial_states.values[..., ind] = value
 
     def get_opr_final_states(self, key: str):
-
         """
         Get the values of an operator model final state.
 
@@ -424,7 +431,6 @@ class Model(object):
         return self._output.opr_final_states.values[..., ind]
 
     def get_opr_parameters_bounds(self):
-
         """
         Get the boundary condition for the operator model parameters.
 
@@ -445,7 +451,6 @@ class Model(object):
         }
 
     def get_opr_initial_states_bounds(self):
-
         """
         Get the boundary condition for the operator model initial states.
 
@@ -457,7 +462,7 @@ class Model(object):
         Examples
         --------
         TODO: Fill
-        """    
+        """
 
         return {
             key: value
@@ -470,11 +475,64 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
-        
         """
         Run the forward Model.
 
-        TODO: Fill
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        cost_options : dict or None, default None
+            Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+            jobs_cmpt : str or ListLike, default 'nse'
+                Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
+
+                - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
+                - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
+                - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures-based error metrics)
+
+                .. hint::
+                    See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+
+            wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
+                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
+
+            gauge : str or ListLike, default 'dws'
+                Type of gauge to be computed. There are two ways to specify it:
+
+                - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+
+            wgauge : str or ListLike, default 'mean'
+                Type of gauge weights. There are two ways to specify it:
+
+                - A sequence of value whose size must be equal to the number of gauges optimized.
+                - An alias among 'mean', 'lquartile' (1st quantile or lower quantile), 'median', or 'uquartile' (3rd quantile or upper quantile).
+
+            event_seg : dict, default {'peak_quant': 0.995, 'max_duration': 240}
+                A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
+                See `smash.hydrograph_segmentation` for more.
+
+            end_warmup : str or pandas.Timestamp, default model.setup.start_time
+                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        common_options : dict or None, default None
+            Dictionary containing common options with two elements:
+
+            verbose : bool, default False
+                Whether to display information about the running method.
+
+            ncpu : bool, default 1
+                Whether to perform a parallel computation.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        See Also
+        --------
+        smash.forward_run : Run the forward Model.
         """
 
         args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
@@ -491,11 +549,91 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
     ):
-
         """
         Model assimilation using numerical optimization algorithms.
 
-        TODO: Fill
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        mapping : str, default 'uniform'
+            Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
+
+        optimizer : str or None, default None
+            Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
+
+            .. note::
+                If not given, a default optimizer will be set depending on the optimization mapping:
+
+                - **mapping** = 'uniform'; **optimizer** = 'sbs'
+                - **mapping** = 'distributed', 'hyper-linear', or 'hyper-polynomial'; **optimizer** = 'lbfgsb'
+                - **mapping** = 'ann'; **optimizer** = 'adam'
+
+        optimize_options : dict or None, default None
+            Dictionary containing optimization options for fine-tuning the optimization process.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
+
+        cost_options : dict or None, default None
+            Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+            jobs_cmpt : str or ListLike, default 'nse'
+                Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
+
+                - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
+                - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
+                - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures-based error metrics)
+
+                .. hint::
+                    See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+
+            wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
+                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
+
+            wjreg : Numeric, default 0
+                The weighting of regularization term. Only used with distributed mapping.
+
+            jreg_cmpt : str or ListLike, default 'prior'
+                Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of 'prior' and 'smoothing'.
+
+            wjreg_cmpt : str, Numeric, or ListLike, default 'mean'
+                The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.
+
+            gauge : str or ListLike, default 'dws'
+                Type of gauge to be computed. There are two ways to specify it:
+
+                - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+
+            wgauge : str or ListLike, default 'mean'
+                Type of gauge weights. There are two ways to specify it:
+
+                - A sequence of value whose size must be equal to the number of gauges optimized.
+                - An alias among 'mean', 'lquartile' (1st quantile or lower quantile), 'median', or 'uquartile' (3rd quantile or upper quantile).
+
+            event_seg : dict, default {'peak_quant': 0.995, 'max_duration': 240}
+                A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
+                See `smash.hydrograph_segmentation` for more.
+
+            end_warmup : str or pandas.Timestamp, default model.setup.start_time
+                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        common_options : dict or None, default None
+            Dictionary containing common options with two elements:
+
+            verbose : bool, default False
+                Whether to display information about the running method.
+
+            ncpu : bool, default 1
+                Whether to perform a parallel computation.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        See Also
+        --------
+        smash.optimize : Model assimilation using numerical optimization algorithms.
         """
 
         args_options = [
@@ -517,13 +655,39 @@ class Model(object):
         alpha: Numeric | ListLike | None = None,
         common_options: dict | None = None,
     ):
-        
         """
         Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
 
-        TODO: Fill
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        multiset : MultipleForwardRun or MultipleOptimize
+            The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
+
+        alpha : Numeric, ListLike, or None, default None
+            A regularization parameter that controls the decay rate of the likelihood function. If **alpha** is a list-like object, the L-curve approach will be used to find an optimal value for the regularization parameter.
+
+            .. note:: If not given, a default numeric range will be set for optimization through the L-curve process.
+
+        common_options : dict or None, default None
+            Dictionary containing common options with two elements:
+
+            verbose : bool, default False
+                Whether to display information about the running method.
+
+            ncpu : bool, default 1
+                Whether to perform a parallel computation.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        See Also
+        --------
+        smash.multiset_estimate : Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+        MultipleForwardRun : Represents multiple forward run computation result.
+        MultipleOptimize : Represents multiple optimize computation result.
         """
-        
+
         arg_options = deepcopy(common_options)
 
         args = _standardize_multiset_estimate_args(multiset, alpha, arg_options)

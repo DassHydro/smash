@@ -70,16 +70,101 @@ def optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ):
-    
     """
     Model assimilation using numerical optimization algorithms.
 
-    TODO: Fill
+    Parameters
+    ----------
+    model : Model
+        Model object.
+        
+    mapping : str, default 'uniform'
+        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
+
+    optimizer : str or None, default None
+        Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
+
+        .. note::
+            If not given, a default optimizer will be set depending on the optimization mapping:
+
+            - **mapping** = 'uniform'; **optimizer** = 'sbs'
+            - **mapping** = 'distributed', 'hyper-linear', or 'hyper-polynomial'; **optimizer** = 'lbfgsb'
+            - **mapping** = 'ann'; **optimizer** = 'adam'
+
+    optimize_options : dict or None, default None
+        Dictionary containing optimization options for fine-tuning the optimization process.
+
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
+
+    cost_options : dict or None, default None
+        Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+        jobs_cmpt : str or ListLike, default 'nse'
+            Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
+
+            - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
+            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
+            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures-based error metrics)
+
+            .. hint::
+                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+
+        wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
+            The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
+
+        wjreg : Numeric, default 0
+            The weighting of regularization term. Only used with distributed mapping.
+
+        jreg_cmpt : str or ListLike, default 'prior'
+            Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of 'prior' and 'smoothing'.
+
+        wjreg_cmpt : str, Numeric, or ListLike, default 'mean'
+            The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.
+
+        gauge : str or ListLike, default 'dws'
+            Type of gauge to be computed. There are two ways to specify it:
+
+            - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+            - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+
+        wgauge : str or ListLike, default 'mean'
+            Type of gauge weights. There are two ways to specify it:
+
+            - A sequence of value whose size must be equal to the number of gauges optimized.
+            - An alias among 'mean', 'lquartile' (1st quantile or lower quantile), 'median', or 'uquartile' (3rd quantile or upper quantile).
+
+        event_seg : dict, default {'peak_quant': 0.995, 'max_duration': 240}
+            A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
+            See `smash.hydrograph_segmentation` for more.
+
+        end_warmup : str or pandas.Timestamp, default model.setup.start_time
+            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
+
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+    common_options : dict or None, default None
+        Dictionary containing common options with two elements:
+
+        verbose : bool, default False
+            Whether to display information about the running method.
+
+        ncpu : bool, default 1
+            Whether to perform a parallel computation.
+
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
     Returns
     -------
     ret_model : Model
         The optimized Model.
+
+    Examples
+    --------
+    TODO: Fill
+
+    See Also
+    --------
+    Model.optimize : Model assimilation using numerical optimization algorithms.
     """
 
     wmodel = model.copy()
@@ -228,16 +313,32 @@ def multiple_optimize(
     cost_options: dict | None = None,
     common_options: dict | None = None,
 ) -> MultipleOptimize:
-    
     """
     Optimize the Model on multiple sets of operator parameters or/and initial states.
 
-    TODO: Fill
+    Parameters
+    ----------
+    model : Model
+        Model object.
+
+    samples : Samples
+        The samples created by the `smash.factory.generate_samples` method.
+
+    mapping, optimizer, optimize_options, cost_options, common_options : multiple types
+        Optimization settings. Refer to `smash.optimize` or `Model.optimize` for details on these arguments.
 
     Returns
     -------
     mopt : MultipleOptimize
         The multiple optimize results represented as a `MultipleOptimize` object.
+
+    Examples
+    --------
+    TODO: Fill
+
+    See Also
+    --------
+    Samples : Represents the generated samples result.
     """
 
     args_options = [

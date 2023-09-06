@@ -364,11 +364,11 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
     "jobs_cmpt": "nse",
     "wjobs_cmpt": "mean",
     "wjreg": 0,
-    "jreg_cmpt": None,
+    "jreg_cmpt": "prior",
     "wjreg_cmpt": "mean",
     "gauge": "dws",
     "wgauge": "mean",
-    "event_seg": None,
+    "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
     "end_warmup": None,
 }
 

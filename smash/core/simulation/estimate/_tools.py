@@ -171,5 +171,8 @@ def _lcurve_forward_run_with_estimated_parameters(
     )
 
     return dict(
-        zip(["mahal_dist", "cost", "alpha", "alpha_opt"], [l_mahal_distance, l_cost, alpha, alpha_opt])
+        zip(
+            ["mahal_dist", "cost", "alpha", "alpha_opt"],
+            [l_mahal_distance, l_cost, alpha, alpha_opt],
+        )
     )

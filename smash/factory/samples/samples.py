@@ -17,6 +17,7 @@ __all__ = ["Samples", "generate_samples"]
 
 
 class Samples(dict):
+
     """
     Represents the generated samples result.
 
@@ -228,7 +229,6 @@ class Samples(dict):
         -------
         res : numpy.ndarray
             The `Samples` object as a numpy.ndarray.
-
         """
 
         return np.stack([self[k] for k in self._problem["names"]], axis=axis)
@@ -332,8 +332,8 @@ def generate_samples(
     0  1344.884839   32.414941 -12.559438    7.818907
     1   976.668720  808.241913 -18.832607  770.023235
     2  1651.164853  566.051802   4.765685  747.020334
-
     """
+
     args = _standardize_generate_samples_args(
         problem, generator, n, random_state, mean, coef_std
     )
