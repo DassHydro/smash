@@ -81,7 +81,7 @@ def test_feasible_domain():
 
 def test_default_parameters():
     # % Check default opr parameters
-    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 0, 0.01, 5, 5, 0.6]
+    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 0, 0.1, 5, 5, 0.6]
 
     # % Check default opr states
     assert list(DEFAULT_OPR_INITIAL_STATES.values()) == [1e-2, 1e-2, 1e-2, 1e-6]
