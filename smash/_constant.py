@@ -82,7 +82,7 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 # % Following OPR_PARAMETERS order
 # % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
-DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 0.01, 5, 5, 0.6]))
+DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 0.1, 5, 5, 0.6]))
 
 # % Following OPR_STATES order
 DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-6]))

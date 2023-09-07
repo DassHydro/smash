@@ -1,11 +1,13 @@
-commit 53fe767c73e0f99412a88a3432d102ca04e27573
-Merge: 67ac36c 8387041
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Thu Sep 7 00:43:53 2023 +0200
+commit a1f695d52a846d32e39b9ea34d7aa047b60cfbc9
+Author: Thomas De-Fournas <thomasdefournass@gmail.com>
+Date:   Thu Sep 7 15:18:02 2023 +0200
 
-    Merge pull request #77 from DassHydro-dev/fix-final-states-updating-ann
+    ENC: Add gr5 model structure
     
-    FIX: Update final states when using ANN mapping for regionalization
+    - Ajout de la structure gr5 (gr5-lr et gr5-kw)
+    - Ajout d'un nouveau paramètre d'opérateur texc
+    - Ajout d'une nouvelle fonction d'echange dans md_gr_operator.f90
+    - Ajout test structure gr5
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
