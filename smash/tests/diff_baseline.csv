@@ -1,11 +1,11 @@
-commit 6a5497dec3972ca6ef2b6c47014d7eda5e583026
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Sun Sep 3 00:48:35 2023 +0200
+commit 53fe767c73e0f99412a88a3432d102ca04e27573
+Merge: 67ac36c 8387041
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Thu Sep 7 00:43:53 2023 +0200
 
-    FIX PR: fix regularization parameters alpha in multiset estimate:
-    - fix default values
-    - enhance standardize
-    - fix type checking.
+    Merge pull request #77 from DassHydro-dev/fix-final-states-updating-ann
+    
+    FIX: Update final states when using ANN mapping for regionalization
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -29,6 +29,8 @@ custom_optimize.gr4-lr.custom_set_5.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_6.sim_q |NON MODIFIED
 forward_run.gr4-kw.sim_q                  |NON MODIFIED
 forward_run.gr4-lr.sim_q                  |NON MODIFIED
+forward_run.gr5-kw.sim_q                  |ADDED
+forward_run.gr5-lr.sim_q                  |ADDED
 forward_run.grd-lr.sim_q                  |NON MODIFIED
 generate_samples.normal                   |NON MODIFIED
 generate_samples.uniform                  |NON MODIFIED
@@ -74,10 +76,9 @@ model_io.setup.end_time                   |NON MODIFIED
 model_io.setup.start_time                 |NON MODIFIED
 model_io.setup.structure                  |NON MODIFIED
 model_io.sim_response.q                   |NON MODIFIED
-multiset_estimate.mfwr.sim_q              |ADDED
-multiset_estimate.mopt_ml.sim_q           |ADDED
-multiset_estimate.mopt_unf.sim_q          |ADDED
-multiset_estimate.sim_q                   |DELETED
+multiset_estimate.mfwr.sim_q              |NON MODIFIED
+multiset_estimate.mopt_ml.sim_q           |NON MODIFIED
+multiset_estimate.mopt_unf.sim_q          |NON MODIFIED
 net_init.bias_layer_1                     |NON MODIFIED
 net_init.bias_layer_2                     |NON MODIFIED
 net_init.bias_layer_3                     |NON MODIFIED
@@ -97,6 +98,16 @@ optimize.gr4-lr.distributed.sim_q         |NON MODIFIED
 optimize.gr4-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.gr4-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.gr4-lr.uniform.sim_q             |NON MODIFIED
+optimize.gr5-kw.ann.sim_q                 |ADDED
+optimize.gr5-kw.distributed.sim_q         |ADDED
+optimize.gr5-kw.multi-linear.sim_q        |ADDED
+optimize.gr5-kw.multi-polynomial.sim_q    |ADDED
+optimize.gr5-kw.uniform.sim_q             |ADDED
+optimize.gr5-lr.ann.sim_q                 |ADDED
+optimize.gr5-lr.distributed.sim_q         |ADDED
+optimize.gr5-lr.multi-linear.sim_q        |ADDED
+optimize.gr5-lr.multi-polynomial.sim_q    |ADDED
+optimize.gr5-lr.uniform.sim_q             |ADDED
 optimize.grd-lr.ann.sim_q                 |NON MODIFIED
 optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED

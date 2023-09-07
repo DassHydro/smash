@@ -66,17 +66,29 @@ contains
 
     end subroutine gr_production
 
-    subroutine gr_exchange(exc, hft, l)
+    subroutine gr_exchange(kexc, ht, l)
 
         implicit none
 
-        real(sp), intent(in) :: exc
-        real(sp), intent(inout) :: hft
+        real(sp), intent(in) :: kexc
+        real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = exc*hft**3.5_sp
+        l = kexc*ht**3.5_sp
 
     end subroutine gr_exchange
+
+    subroutine gr_threshold_exchange(kexc, ht, texc, l)
+
+        implicit none
+
+        real(sp), intent(in) :: kexc, texc
+        real(sp), intent(inout) :: ht
+        real(sp), intent(out) :: l
+
+        l = kexc*(ht - texc)
+
+    end subroutine gr_threshold_exchange
 
     subroutine gr_transfer(n, prcp, pr, ct, ht, q)
 
