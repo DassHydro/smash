@@ -93,7 +93,7 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
                 )
 
             # % Check that sample is inside feasible domain
-            arr = samples[key]
+            arr = getattr(samples, key)
             l_arr = np.min(arr)
             u_arr = np.max(arr)
             if l_arr <= l or u_arr >= u:

@@ -23,42 +23,28 @@ if TYPE_CHECKING:
 __all__ = ["MultipleForwardRun", "forward_run", "multiple_forward_run"]
 
 
-class MultipleForwardRun(dict):
+class MultipleForwardRun:
     """
     Represents multiple forward run computation result.
 
-    Notes
-    -----
-    This class is essentially a subclass of dict with attribute accessors.
+    Attributes
+    ----------
+    cost : numpy.ndarray
+        An array of shape *(n,)* representing cost values from *n* simulations.
 
-    TODO FC: Fill
+    q : numpy.ndarray
+        An array of shape *(..., n)* representing simulated discharges from *n* simulations.
 
+    See Also
+    --------
+    multiple_forward_run : Run the forward Model with multiple sets of parameters.
     """
 
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError as e:
-            raise AttributeError(name) from e
+    def __init__(self, data: dict | None = None):
+        if data is None:
+            data = {}
 
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-    def __repr__(self):
-        if self.keys():
-            m = max(map(len, list(self.keys()))) + 1
-            return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(v)
-                    for k, v in sorted(self.items())
-                    if not k.startswith("_")
-                ]
-            )
-        else:
-            return self.__class__.__name__ + "()"
-
-    def __dir__(self):
-        return list(self.keys())
+        self.__dict__.update(data)
 
 
 def forward_run(
@@ -73,12 +59,12 @@ def forward_run(
     ----------
     model : Model
         Model object.
-        
+
     cost_options : dict or None, default None
         Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
         jobs_cmpt : str or ListLike, default 'nse'
-            Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
+            Type of observation objective function(s) to be computed. Should be one or a sequence of any of
 
             - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
             - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
@@ -185,7 +171,7 @@ def multiple_forward_run(
     common_options: dict | None = None,
 ) -> MultipleForwardRun:
     """
-    Run the forward Model on multiple sets of operator parameters or/and initial states.
+    Run the forward Model with multiple sets of parameters.
 
     Parameters
     ----------

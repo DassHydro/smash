@@ -16,22 +16,14 @@ if TYPE_CHECKING:
 __all__ = ["Samples", "generate_samples"]
 
 
-class Samples(dict):
+class Samples:
 
     """
     Represents the generated samples result.
 
     Notes
     -----
-    This class is essentially a subclass of dict with attribute accessors and four additional methods, which are:
-
-    - `Samples.to_numpy`: Convert the `Samples` object to a numpy.ndarray.
-    - `Samples.to_dataframe`: Convert the `Samples` object to a pandas.DataFrame.
-    - `Samples.slice`: Slice the `Samples` object.
-    - `Samples.iterslice`: Iterate over the `Samples` object by slices.
-
-    This may have additional attributes not listed here depending on the specific names
-    provided in the argument ``problem`` in the `smash.generate_samples` method.
+    This class may have additional attributes not listed here depending on the specific names provided in the argument ``problem`` in the `smash.factory.generate_samples` method.
 
     Attributes
     ----------
@@ -44,91 +36,13 @@ class Samples(dict):
     See Also
     --------
     smash.factory.generate_samples: Generate a multiple set of spatially uniform Model parameters/states.
-
-    Examples
-    --------
-    >>> from smash.factory import generate_samples
-    >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
-    >>> sr = generate_samples(problem, n=5, random_state=1)
-
-    Convert the result to a numpy.ndarray:
-
-    >>> sr.to_numpy(axis=-1)
-    array([[ 83.98737894,  47.07695879],
-           [144.34457419,  93.94384548],
-           [  1.02276059, 173.43480279],
-           [ 61.16418195, 198.98696964],
-           [ 30.20442227, 269.86955027]])
-
-    Convert the result to a pandas.DataFrame:
-
-    >>> sr.to_dataframe()
-               cp         llr
-    0   83.987379   47.076959
-    1  144.344574   93.943845
-    2    1.022761  173.434803
-    3   61.164182  198.986970
-    4   30.204422  269.869550
-
-    Slice the first two sets:
-
-    >>> slc = sr.slice(2)
-    >>> slc.to_numpy(axis=-1)
-    array([[ 83.98737894,  47.07695879],
-           [144.34457419,  93.94384548]])
-
-    Slice between the start and end set:
-
-    >>> slc = sr.slice(start=3, end=5)
-    >>> slc.to_numpy(axis=-1)
-    array([[ 61.16418195, 198.98696964],
-           [ 30.20442227, 269.86955027]])
-
-    Iterate on each set:
-
-    >>> for slc_i in sr.iterslice():
-    >>>     slc_i.to_numpy(axis=-1)
-    array([[83.98737894, 47.07695879]])
-    array([[144.34457419,  93.94384548]])
-    array([[  1.02276059, 173.43480279]])
-    array([[ 61.16418195, 198.98696964]])
-    array([[ 30.20442227, 269.86955027]])
-
-    Iterate on pairs of sets:
-
-    >>> for slc_i in sr.iterslice(2):
-    >>>     slc_i.to_numpy(axis=-1)
-    array([[ 83.98737894,  47.07695879],
-           [144.34457419,  93.94384548]])
-    array([[  1.02276059, 173.43480279],
-           [ 61.16418195, 198.98696964]])
-    array([[ 30.20442227, 269.86955027]])
     """
 
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError as e:
-            raise AttributeError(name) from e
+    def __init__(self, data: dict | None = None):
+        if data is None:
+            data = {}
 
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
-
-    def __repr__(self):
-        if self.keys():
-            m = max(map(len, list(self.keys()))) + 1
-            return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(v)
-                    for k, v in sorted(self.items())
-                    if not k.startswith("_")
-                ]
-            )
-        else:
-            return self.__class__.__name__ + "()"
-
-    def __dir__(self):
-        return list(self.keys())
+        self.__dict__.update(data)
 
     def slice(self, end: int, start: int = 0) -> Samples:
         """
@@ -148,6 +62,26 @@ class Samples(dict):
         -------
         res : Samples
             The `Samples` object sliced according to **start** and **end** arguments.
+
+        Examples
+        --------
+        >>> from smash.factory import generate_samples
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> sr = generate_samples(problem, n=5, random_state=1)
+
+        Slice the first two sets:
+
+        >>> slc = sr.slice(2)
+        >>> slc.to_numpy(axis=-1)
+        array([[ 83.98737894,  47.07695879],
+            [144.34457419,  93.94384548]])
+
+        Slice between the start and end set:
+
+        >>> slc = sr.slice(start=3, end=5)
+        >>> slc.to_numpy(axis=-1)
+        array([[ 61.16418195, 198.98696964],
+            [ 30.20442227, 269.86955027]])
         """
 
         if end < start:
@@ -169,7 +103,7 @@ class Samples(dict):
             "_dst_" + key for key in self._problem["names"]
         ]
 
-        slc_dict = {key: self[key][start:end] for key in slc_names}
+        slc_dict = {key: getattr(self, key)[start:end] for key in slc_names}
 
         slc_dict["generator"] = self.generator
 
@@ -199,6 +133,32 @@ class Samples(dict):
         See Also
         --------
         Samples.slice: Slice the `Samples` object.
+
+        Examples
+        --------
+        >>> from smash.factory import generate_samples
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> sr = generate_samples(problem, n=5, random_state=1)
+
+        Iterate on each set:
+
+        >>> for slc_i in sr.iterslice():
+        >>>     slc_i.to_numpy(axis=-1)
+        array([[83.98737894, 47.07695879]])
+        array([[144.34457419,  93.94384548]])
+        array([[  1.02276059, 173.43480279]])
+        array([[ 61.16418195, 198.98696964]])
+        array([[ 30.20442227, 269.86955027]])
+
+        Iterate on pairs of sets:
+
+        >>> for slc_i in sr.iterslice(2):
+        >>>     slc_i.to_numpy(axis=-1)
+        array([[ 83.98737894,  47.07695879],
+            [144.34457419,  93.94384548]])
+        array([[  1.02276059, 173.43480279],
+            [ 61.16418195, 198.98696964]])
+        array([[ 30.20442227, 269.86955027]])
         """
 
         if by > self.n_sample:
@@ -229,9 +189,24 @@ class Samples(dict):
         -------
         res : numpy.ndarray
             The `Samples` object as a numpy.ndarray.
+
+        Examples
+        --------
+        >>> from smash.factory import generate_samples
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> sr = generate_samples(problem, n=5, random_state=1)
+
+        Convert the result to a numpy.ndarray:
+
+        >>> sr.to_numpy(axis=-1)
+        array([[ 83.98737894,  47.07695879],
+            [144.34457419,  93.94384548],
+            [  1.02276059, 173.43480279],
+            [ 61.16418195, 198.98696964],
+            [ 30.20442227, 269.86955027]])
         """
 
-        return np.stack([self[k] for k in self._problem["names"]], axis=axis)
+        return np.stack([getattr(self, k) for k in self._problem["names"]], axis=axis)
 
     def to_dataframe(self) -> pd.DataFrame:
         """
@@ -240,10 +215,26 @@ class Samples(dict):
         Returns
         -------
         res : pandas.DataFrame
-            The Samples object as a pandas.DataFrame.
+            The `Samples` object as a pandas.DataFrame.
+
+        Examples
+        --------
+        >>> from smash.factory import generate_samples
+        >>> problem = {"num_vars": 2, "names": ["cp", "llr"], "bounds": [[1,200], [1,500]]}
+        >>> sr = generate_samples(problem, n=5, random_state=1)
+
+        Convert the result to a pandas.DataFrame:
+
+        >>> sr.to_dataframe()
+                cp         llr
+        0   83.987379   47.076959
+        1  144.344574   93.943845
+        2    1.022761  173.434803
+        3   61.164182  198.986970
+        4   30.204422  269.869550
         """
 
-        return pd.DataFrame({k: self[k] for k in self._problem["names"]})
+        return pd.DataFrame({k: getattr(self, k) for k in self._problem["names"]})
 
 
 def generate_samples(
@@ -267,10 +258,7 @@ def generate_samples(
         - 'bounds' : the upper and lower bounds of each variable (a sequence of ``(min, max)``).
 
     generator : str, default 'uniform'
-        Samples generator. Should be one of
-
-        - 'uniform'
-        - 'normal' or 'gaussian'
+        Samples generator. Should be 'uniform' or 'normal' (or 'gaussian').
 
     n : int, default 1000
         Number of generated samples.
@@ -290,7 +278,7 @@ def generate_samples(
         .. note::
             If not given and Gaussian distribution is used, the mean of the distribution will be set to the center of the variable bounds.
 
-    coef_std : float or None
+    coef_std : Numeric or None, default None
         A coefficient related to the standard deviation in case of Gaussian generator:
 
         .. math::
@@ -323,7 +311,7 @@ def generate_samples(
     ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
     ... }
 
-    Generate samples with the uniform generator:
+    Generate samples:
 
     >>> from smash.factory import generate_samples
     >>> sr = generate_samples(problem, n=3, random_state=99)

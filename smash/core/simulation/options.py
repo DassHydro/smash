@@ -36,7 +36,7 @@ def default_optimize_options(
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'hyper-linear', or 'hyper-polynomial'; **optimizer** = 'lbfgsb'
+            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
             - **mapping** = 'ann'; **optimizer** = 'adam'
 
     Returns

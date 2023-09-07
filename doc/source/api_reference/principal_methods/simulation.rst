@@ -13,36 +13,36 @@ Forward Run
 
       forward_run
 
-Optimize
-********
-.. autosummary::
-      :toctree: smash/
-
-      optimize
-
-Multiple Forward Run
-********************
+Run Multiple Forward Model
+**************************
 .. autosummary::
       :toctree: smash/
 
       multiple_forward_run
 
-Multiple Optimize
-*****************
+Numerical Optimization
+**********************
+.. autosummary::
+      :toctree: smash/
+
+      optimize
+
+Run Multiple Optimization
+*************************
 .. autosummary::
       :toctree: smash/
 
       multiple_optimize
 
-Multiset Estimate
-*****************
+Multiple Sets Estimation
+************************
 .. autosummary::
       :toctree: smash/
 
       multiset_estimate
 
-Default Options
-*****************
+Default Optimization Options
+****************************
 .. autosummary::
       :toctree: smash/
 

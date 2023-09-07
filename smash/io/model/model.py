@@ -40,22 +40,24 @@ def save_model(model: Model, path: str):
 
     See Also
     --------
-    smash.io.read_model: Read the Model object.
-    smash.Model: Primary data structure of the hydrological model `smash`.
+    read_model : Read the Model object.
+    smash.Model : Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
     >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_model, read_model
+    >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Save Model
+    Save Model:
 
-    >>> smash.io.save_model(model, "model.hdf5")
+    >>> save_model(model, "model.hdf5")
 
-    Read Model
+    Read Model:
 
-    >>> model_rld = smash.io.read_model("model.hdf5")
+    >>> model_rld = read_model("model.hdf5")
     """
 
     if not path.endswith(".hdf5"):
@@ -94,7 +96,7 @@ def read_model(path: str) -> Model:
 
     Returns
     -------
-    Model :
+    model : Model
         The Model object loaded from HDF5 file.
 
     Raises
@@ -106,22 +108,24 @@ def read_model(path: str) -> Model:
 
     See Also
     --------
-    smash.io.save_model: Save the Model object.
-    smash.Model: Primary data structure of the hydrological model `smash`.
+    save_model : Save the Model object.
+    smash.Model : Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
     >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_model, read_model
+    >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Save Model
+    Save Model:
 
-    >>> smash.io.save_model(model, "model.hdf5")
+    >>> save_model(model, "model.hdf5")
 
-    Read Model
+    Read Model:
 
-    >>> model_rld = smash.io.read_model("model.hdf5")
+    >>> model_rld = read_model("model.hdf5")
     """
 
     if os.path.isfile(path):

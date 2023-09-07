@@ -187,9 +187,9 @@ def test_multiple_optimize():
     for i in range(n_sample):
         for key in samples._problem["names"]:
             if key in instance.opr_parameters.keys:
-                instance.set_opr_parameters(key, samples[key][i])
+                instance.set_opr_parameters(key, getattr(samples, key)[i])
             elif key in instance.opr_initial_states.keys:
-                instance.set_opr_initial_states(key, samples[key][i])
+                instance.set_opr_initial_states(key, getattr(samples, key)[i])
         instance.optimize(
             mapping="distributed",
             optimize_options={"termination_crit": {"maxiter": 1}},

@@ -24,10 +24,21 @@ Mesh Generation
 
 Neural Network Configuration
 ****************************
+.. autosummary::
+      :toctree: smash/
+
+      Net
+
 .. toctree::
-   :maxdepth: 2
-   
-   net/index
+      :hidden:
+      :maxdepth: 1
+
+      smash/smash.factory.Net.layers
+      smash/smash.factory.Net.history
+      net/add_dense
+      net/add_activation
+      net/add_scale
+      net/add_dropout
 
 Sample Generation
 *****************

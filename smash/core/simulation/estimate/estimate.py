@@ -27,13 +27,13 @@ def multiset_estimate(
     common_options: dict | None = None,
 ):
     """
-    Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+    Model assimilation using Bayesian-like estimation on multiple sets of solutions.
 
     Parameters
     ----------
     model : Model
         Model object.
-        
+
     multiset : MultipleForwardRun or MultipleOptimize
         The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
 
@@ -64,7 +64,7 @@ def multiset_estimate(
 
     See Also
     --------
-    Model.multiset_estimate : Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+    Model.multiset_estimate : Model assimilation using Bayesian-like estimation on multiple sets of solutions.
     MultipleForwardRun : Represents multiple forward run computation result.
     MultipleOptimize : Represents multiple optimize computation result.
     """
