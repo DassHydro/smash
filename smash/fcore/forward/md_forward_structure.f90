@@ -369,7 +369,7 @@ contains
 
     subroutine gr5_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: texc), (6: llr)
+        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: llr)
         !% - opr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
 
         implicit none
