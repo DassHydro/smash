@@ -8,7 +8,7 @@ import numpy as np
 
 STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "grd-lr"]
 
-OPR_PARAMETERS = ["ci", "cp", "ct", "kexc", "texc", "llr", "akw", "bkw"]
+OPR_PARAMETERS = ["ci", "cp", "ct", "kexc", "aexc", "llr", "akw", "bkw"]
 
 OPR_STATES = ["hi", "hp", "ht", "hlr"]
 
