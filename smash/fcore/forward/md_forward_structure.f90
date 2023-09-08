@@ -528,7 +528,7 @@ contains
 
     subroutine gr5_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: texc), (6: akw), (7: bkw)
+        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: akw), (7: bkw)
         !% - opr_states:     (1: hi), (2: hp), (3: ht)
 
         implicit none
