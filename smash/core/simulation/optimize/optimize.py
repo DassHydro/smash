@@ -51,6 +51,21 @@ class MultipleOptimize:
 
         self.__dict__.update(data)
 
+    def __repr__(self):
+        dct = self.__dict__
+
+        if dct.keys():
+            m = max(map(len, list(dct.keys()))) + 1
+            return "\n".join(
+                [
+                    k.rjust(m) + ": " + repr(type(v))
+                    for k, v in sorted(dct.items())
+                    if not k.startswith("_")
+                ]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
 
 def optimize(
     model: Model,

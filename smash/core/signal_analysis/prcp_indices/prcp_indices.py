@@ -30,7 +30,7 @@ class PrecipitationIndices:
     vg : numpy.ndarray
         The vertical gap :cite:p:`emmanuel_2015`.
     hg : numpy.ndarray
-        The horizontal gap (TODO FC: Fill citation).
+        The horizontal gap :cite:p:`emmanuel_2015`.
 
     See Also
     --------
@@ -43,12 +43,27 @@ class PrecipitationIndices:
 
         self.__dict__.update(data)
 
+    def __repr__(self):
+        dct = self.__dict__
+
+        if dct.keys():
+            m = max(map(len, list(dct.keys()))) + 1
+            return "\n".join(
+                [
+                    k.rjust(m) + ": " + repr(type(v))
+                    for k, v in sorted(dct.items())
+                    if not k.startswith("_")
+                ]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
     def to_numpy(self, axis=0):
         """
         Convert the `PrecipitationIndices` object to a numpy.ndarray.
 
         The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
-        based on the names of the precipitation indices.
+        based on the names of the precipitation indices (d1, d2, hg, std, vg).
 
         Parameters
         ----------
@@ -97,11 +112,11 @@ def precipitation_indices(
 
     5 precipitation indices are calculated for each gauge and each time step:
 
-    - ``std`` : The precipitation spatial standard deviation,.
+    - ``std`` : The precipitation spatial standard deviation.
     - ``d1`` : The first scaled moment, :cite:p:`zocatelli_2011`.
     - ``d2`` : The second scaled moment, :cite:p:`zocatelli_2011`.
     - ``vg`` : The vertical gap :cite:p:`emmanuel_2015`.
-    - ``hg`` : The horizontal gap (TODO FC: Fill citation).
+    - ``hg`` : The horizontal gap :cite:p:`emmanuel_2015`.
 
     .. hint::
         See the (TODO: Fill) for more.
