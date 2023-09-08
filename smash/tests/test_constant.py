@@ -39,8 +39,8 @@ def test_structure_model():
     assert list(STRUCTURE_OPR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc", "llr"],
         ["ci", "cp", "ct", "kexc", "akw", "bkw"],
-        ["ci", "cp", "ct", "kexc", "texc", "llr"],
-        ["ci", "cp", "ct", "kexc", "texc", "akw", "bkw"],
+        ["ci", "cp", "ct", "kexc", "aexc", "llr"],
+        ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],
         ["cp", "ct", "llr"],
     ]
 
