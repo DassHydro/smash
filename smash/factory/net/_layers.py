@@ -75,7 +75,7 @@ class Scale(Layer):
 
     Options
     -------
-    bounds : list, tuple or array-like
+    bounds : ListLike
         A sequence of ``(min, max)`` values that the outputs will be scaled to.
     """
 
@@ -160,26 +160,10 @@ class Dense(Layer):
         It must be specified if this is the first layer in the network.
 
     kernel_initializer : str, default 'glorot_uniform'
-        Weight initialization method. Should be one of
-
-        - 'uniform'
-        - 'glorot_uniform'
-        - 'he_uniform'
-        - 'normal'
-        - 'glorot_normal'
-        - 'he_normal'
-        - 'zeros'
+        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal', 'glorot_normal', 'he_normal', 'zeros'.
 
     bias_initializer : str, default 'zeros'
-        Bias initialization method. Should be one of
-
-        - 'uniform'
-        - 'glorot_uniform'
-        - 'he_uniform'
-        - 'normal'
-        - 'glorot_normal'
-        - 'he_normal'
-        - 'zeros'
+        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal', 'glorot_normal', 'he_normal', 'zeros'.
     """
 
     # TODO: Add function check_unknown_options
@@ -263,7 +247,7 @@ class Dropout(Layer):
 
     Options
     -------
-    drop_rate: float
+    drop_rate : float
         The probability of setting a given output value to zero.
     """
 

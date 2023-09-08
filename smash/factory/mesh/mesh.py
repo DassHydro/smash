@@ -107,8 +107,9 @@ def generate_mesh(
 
     Examples
     --------
-    >>> flwdir = smash.factory.load_dataset("flwdir")
-    >>> mesh = smash.factory.generate_mesh(
+    >>> from smash.factory import load_dataset, generate_mesh
+    >>> flwdir = load_dataset("flwdir")
+    >>> mesh = generate_mesh(
     ... flwdir,
     ... x=[840_261, 826_553, 828_269],
     ... y=[6_457_807, 6_467_115, 6_469_198],

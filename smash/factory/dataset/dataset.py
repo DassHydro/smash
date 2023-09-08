@@ -45,51 +45,53 @@ def load_dataset(name: str):
     Examples
     --------
 
-    Load ``flwdir`` dataset. (the path is updated for each user).
+    >>> from smash.factory import load_dataset
 
-    >>> flwdir = smash.factory.load_dataset("flwdir")
+    Load ``flwdir`` dataset (the path is updated for each user):
+
+    >>> flwdir = load_dataset("flwdir")
     >>> flwdir
     '/home/fcolleoni/anaconda3/envs/smash-dev/lib/python3.8/site-packages/smash/dataset/France_flwdir.tif'
 
-    Load ``cance`` dataset as a tuple of dictionaries.
+    Load ``cance`` dataset as a tuple of dictionaries:
 
-    >>> cance = smash.factory.load_dataset("cance")
+    >>> cance = load_dataset("cance")
     >>> cance
-    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'nac': 383, 'ncol': 28, ...})
+    ({'structure': 'gr4-lr', 'dt': 3600, ...}, {'nac': 383, 'ncol': 28, ...})
 
-    Or each dictionary in a different variable.
+    Or each dictionary in a different variable:
 
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a-lr', 'dt': 3600, ...}
+    {'structure': 'gr4-lr', 'dt': 3600, ...}
     >>> mesh
     {'nac': 383, 'ncol': 28, ...}
 
-    Load ``lez`` dataset as a tuple of dictionaries.
+    Load ``lez`` dataset as a tuple of dictionaries:
 
-    >>> lez = smash.factory.load_dataset("lez")
+    >>> lez = load_dataset("lez")
     >>> lez
-    ({'structure': 'gr-a-lr', 'dt': 86400, ...}, {'nac': 172, 'ncol': 14, ...})
+    ({'structure': 'gr4-lr', 'dt': 86400, ...}, {'nac': 172, 'ncol': 14, ...})
 
-    Or each dictionary in a different variable.
+    Or each dictionary in a different variable:
 
-    >>> setup, mesh = smash.factory.load_dataset("lez")
+    >>> setup, mesh = load_dataset("lez")
     >>> setup
-    {'structure': 'gr-a-lr', 'dt': 86400, ...}
+    {'structure': 'gr4-lr', 'dt': 86400, ...}
     >>> mesh
     {'nac': 172, 'ncol': 14, ...}
 
-    Load ``france`` dataset as a tuple of dictionaries.
+    Load ``france`` dataset as a tuple of dictionaries:
 
-    >>> france = smash.factory.load_dataset("france")
+    >>> france = load_dataset("france")
     >>> france
-    ({'structure': 'gr-a-lr', 'dt': 3600, ...}, {'nac': 906044, 'ncol': 1150, ...})
+    ({'structure': 'gr4-lr', 'dt': 3600, ...}, {'nac': 906044, 'ncol': 1150, ...})
 
-    Or each dictionary in a different variable.
+    Or each dictionary in a different variable:
 
-    >>> setup, mesh = smash.factory.load_dataset("france")
+    >>> setup, mesh = load_dataset("france")
     >>> setup
-    {'structure': 'gr-a-lr', 'dt': 3600, ...}
+    {'structure': 'gr4-lr', 'dt': 3600, ...}
     >>> mesh
     {'nac': 906044, 'ncol': 1150, ...}
     """

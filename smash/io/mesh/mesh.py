@@ -26,22 +26,24 @@ def save_mesh(mesh: dict, path: str):
 
     See Also
     --------
-    smash.io.read_mesh: Read the Model initialization mesh dictionary.
+    read_mesh : Read the Model initialization mesh dictionary.
 
     Examples
     --------
-    >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_mesh, read_mesh
+    >>> setup, mesh = load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh
+    Save mesh:
 
-    >>> smash.io.save_mesh(mesh, "mesh.hdf5")
+    >>> save_mesh(mesh, "mesh.hdf5")
 
-    Read mesh
+    Read mesh:
 
-    >>> mesh_rld = smash.io.read_mesh("mesh.hdf5")
+    >>> mesh_rld = read_mesh("mesh.hdf5")
+    >>> mesh_rld
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """
 
@@ -65,7 +67,7 @@ def read_mesh(path: str) -> dict:
 
     Returns
     -------
-    dict :
+    mesh : dict
         A mesh dictionary loaded from HDF5 file.
 
     Raises
@@ -77,22 +79,23 @@ def read_mesh(path: str) -> dict:
 
     See Also
     --------
-    smash.io.save_mesh: Save the Model initialization mesh dictionary.
+    save_mesh : Save the Model initialization mesh dictionary.
 
     Examples
     --------
-    >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_mesh, read_mesh
+    >>> setup, mesh = load_dataset("cance")
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh
+    Save mesh:
 
-    >>> smash.io.save_mesh(mesh, "mesh.hdf5")
+    >>> save_mesh(mesh, "mesh.hdf5")
 
-    Read mesh
+    Read mesh:
 
-    >>> mesh_rld = smash.io.read_mesh("mesh.hdf5")
+    >>> mesh_rld = read_mesh("mesh.hdf5")
     >>> mesh_rld
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """

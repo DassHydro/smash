@@ -30,9 +30,9 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
         ["cont", "event"], [CSIGN, ESIGN]
     ):  # % remove percentile signatures calculation
         for dom in signresult.keys():
-            res[f"signatures.{typ}_{dom}"] = signresult[dom][typ][sign].to_numpy(
-                dtype=np.float32
-            )
+            res[f"signatures.{typ}_{dom}"] = getattr(signresult[dom], typ)[
+                sign
+            ].to_numpy(dtype=np.float32)
 
     return res
 

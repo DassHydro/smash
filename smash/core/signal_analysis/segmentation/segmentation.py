@@ -65,13 +65,12 @@ def hydrograph_segmentation(
     --------
     >>> import smash
     >>> from smash.factory import load_dataset
-    >>> from smash.signal_analysis import hydrograph_segmentation
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
     Perform segmentation algorithm and display flood events infomation:
 
-    >>> res = hydrograph_segmentation(model)
+    >>> res = smash.hydrograph_segmentation(model)
     >>> res
             code               start                   flood  season
     0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn

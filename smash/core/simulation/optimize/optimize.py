@@ -25,42 +25,46 @@ if TYPE_CHECKING:
 __all__ = ["MultipleOptimize", "optimize", "multiple_optimize"]
 
 
-class MultipleOptimize(dict):
+class MultipleOptimize:
     """
     Represents multiple optimize computation result.
 
-    Notes
-    -----
-    This class is essentially a subclass of dict with attribute accessors.
+    Attributes
+    ----------
+    cost : numpy.ndarray
+        An array of shape *(n,)* representing cost values from *n* simulations.
 
-    TODO FC: Fill
+    q : numpy.ndarray
+        An array of shape *(..., n)* representing simulated discharges from *n* simulations.
 
+    parameters : dict
+        A dictionary containing optimized parameters and/or initial states. Each key represents an array of shape *(..., n)* corresponding to a specific parameter or state.
+
+    See Also
+    --------
+    multiple_optimize : Run multiple optimization processes with different starting points, yielding multiple solutions.
     """
 
-    def __getattr__(self, name):
-        try:
-            return self[name]
-        except KeyError as e:
-            raise AttributeError(name) from e
+    def __init__(self, data: dict | None = None):
+        if data is None:
+            data = {}
 
-    __setattr__ = dict.__setitem__
-    __delattr__ = dict.__delitem__
+        self.__dict__.update(data)
 
     def __repr__(self):
-        if self.keys():
-            m = max(map(len, list(self.keys()))) + 1
+        dct = self.__dict__
+
+        if dct.keys():
+            m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
                 [
-                    k.rjust(m) + ": " + repr(v)
-                    for k, v in sorted(self.items())
+                    k.rjust(m) + ": " + repr(type(v))
+                    for k, v in sorted(dct.items())
                     if not k.startswith("_")
                 ]
             )
         else:
             return self.__class__.__name__ + "()"
-
-    def __dir__(self):
-        return list(self.keys())
 
 
 def optimize(
@@ -78,7 +82,7 @@ def optimize(
     ----------
     model : Model
         Model object.
-        
+
     mapping : str, default 'uniform'
         Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
 
@@ -89,7 +93,7 @@ def optimize(
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'hyper-linear', or 'hyper-polynomial'; **optimizer** = 'lbfgsb'
+            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
             - **mapping** = 'ann'; **optimizer** = 'adam'
 
     optimize_options : dict or None, default None
@@ -326,7 +330,7 @@ def multiple_optimize(
     common_options: dict | None = None,
 ) -> MultipleOptimize:
     """
-    Optimize the Model on multiple sets of operator parameters or/and initial states.
+    Run multiple optimization processes with different starting points, yielding multiple solutions.
 
     Parameters
     ----------

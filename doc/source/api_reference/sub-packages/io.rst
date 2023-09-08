@@ -1,8 +1,8 @@
 .. _api_reference.sub-packages.io:
 
-===========
-Input/Ouput
-===========
+============
+Input/Output
+============
 
 .. currentmodule:: smash.io
 

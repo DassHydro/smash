@@ -486,7 +486,7 @@ class Model(object):
             Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
             jobs_cmpt : str or ListLike, default 'nse'
-                Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
+                Type of observation objective function(s) to be computed. Should be one or a sequence of any of
 
                 - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
                 - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
@@ -566,7 +566,7 @@ class Model(object):
                 If not given, a default optimizer will be set depending on the optimization mapping:
 
                 - **mapping** = 'uniform'; **optimizer** = 'sbs'
-                - **mapping** = 'distributed', 'hyper-linear', or 'hyper-polynomial'; **optimizer** = 'lbfgsb'
+                - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
                 - **mapping** = 'ann'; **optimizer** = 'adam'
 
         optimize_options : dict or None, default None
@@ -656,7 +656,7 @@ class Model(object):
         common_options: dict | None = None,
     ):
         """
-        Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+        Model assimilation using Bayesian-like estimation on multiple sets of solutions.
 
         This method performs an in-place operation on the Model object.
 
@@ -683,7 +683,7 @@ class Model(object):
 
         See Also
         --------
-        smash.multiset_estimate : Model assimilation using a Bayesian-like estimation method with multiple sets of operator parameters or/and initial states.
+        smash.multiset_estimate : Model assimilation using Bayesian-like estimation on multiple sets of solutions.
         MultipleForwardRun : Represents multiple forward run computation result.
         MultipleOptimize : Represents multiple optimize computation result.
         """

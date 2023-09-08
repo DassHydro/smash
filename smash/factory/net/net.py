@@ -33,7 +33,11 @@ class Net(object):
     >>> from smash.factory import Net
     >>> net = Net()
     >>> net
-    The network does not contain layers or has not been compiled yet
+    +------------------------------------------------+
+    | Layer Type  Input/Output Shape  Num Parameters |
+    +------------------------------------------------+
+    Total parameters: 0
+    Trainable parameters: 0
     """
 
     def __init__(self):
@@ -81,7 +85,7 @@ class Net(object):
         """
         List of Layer objects defining the graph of the network.
 
-        The graph is set using `smash.factory.Net.add` method.
+        The graph is set using `Net.add`.
 
         Examples
         --------
@@ -90,7 +94,6 @@ class Net(object):
         >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 32})
         >>> net.add(layer="activation", options={"name": "sigmoid"})
         >>> net.add(layer="dropout", options={"drop_rate": .2})
-        >>> net.compile()
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods of each Layer object:
 
@@ -127,10 +130,7 @@ class Net(object):
         """
         A dictionary saving the training and validation losses.
 
-        The keys are
-
-        - 'loss_train'
-        - 'loss_valid'
+        The keys are 'loss_train' and 'loss_valid'.
         """
 
         return self._history
@@ -146,12 +146,7 @@ class Net(object):
         Parameters
         ----------
         layer : str
-            Layer name. Should be one of
-
-            - 'dense'
-            - 'activation'
-            - 'scale'
-            - 'dropout'
+            Layer name. Should be one of 'dense', 'activation', 'scale', 'dropout'.
 
         options : dict
             A dictionary to configure layers added to the network.
@@ -166,12 +161,12 @@ class Net(object):
 
         Examples
         --------
-        Initialize the neural network
+        Initialize the neural network:
 
         >>> from smash.factory import Net
         >>> net = Net()
 
-        Define graph
+        Define graph:
 
         >>> # First Dense Layer
         >>> # input_shape is only required for the first layer
@@ -187,9 +182,8 @@ class Net(object):
         >>> # Last Activation function (output of the network)
         >>> net.add(layer="activation", options={"name": "sigmoid"})
 
-        Compile and display a summary of the network
+        Display a summary of the network:
 
-        >>> net.compile()
         >>> net
         +----------------------------------------------------------+
         | Layer Type            Input/Output Shape  Num Parameters |
@@ -203,7 +197,6 @@ class Net(object):
         +----------------------------------------------------------+
         Total parameters: 884
         Trainable parameters: 884
-        Optimizer: (adam, lr=0.001)
         """
 
         layer, options = _standardize_add_args(layer, options)
@@ -234,7 +227,7 @@ class Net(object):
 
         Returns
         -------
-        Net
+        net : Net
             A copy of Net.
         """
 
@@ -254,6 +247,39 @@ class Net(object):
                 meaning they do not have any learnable weights or biases.
                 Therefore, it is not necessary to set these layers as trainable
                 since they do not involve any weight updates during training.
+
+        Examples
+        --------
+        >>> net.add(layer="dense", options={"input_shape": (8,), "neurons": 32})
+        >>> net.add(layer="activation", options={"name": "relu"})
+        >>> net.add(layer="dense", options={"neurons": 16})
+        >>> net.add(layer="activation", options={"name": "relu"})
+        >>> net
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (8,)/(32,)          288            |
+        | Activation (ReLU)  (32,)/(32,)         0              |
+        | Dense              (32,)/(16,)         528            |
+        | Activation (ReLU)  (16,)/(16,)         0              |
+        +-------------------------------------------------------+
+        Total parameters: 816
+        Trainable parameters: 816
+
+        Freeze the parameters in the second dense layer:
+
+        >>> net.set_trainable([True, False, False, False])
+        >>> net
+        +-------------------------------------------------------+
+        | Layer Type         Input/Output Shape  Num Parameters |
+        +-------------------------------------------------------+
+        | Dense              (8,)/(32,)          288            |
+        | Activation (ReLU)  (32,)/(32,)         0              |
+        | Dense              (32,)/(16,)         528            |
+        | Activation (ReLU)  (16,)/(16,)         0              |
+        +-------------------------------------------------------+
+        Total parameters: 816
+        Trainable parameters: 288
         """
 
         if len(trainable) == len(self.layers):
@@ -271,61 +297,6 @@ class Net(object):
         learning_param: dict,
         random_state: Numeric | None,
     ):
-        """
-        Compile the network and set optimizer.
-
-        Parameters
-        ----------
-        optimizer : str, default 'adam'
-            Name of optimizer. Should be one of
-
-            - 'sgd'
-            - 'adam'
-            - 'adagrad'
-            - 'rmsprop'
-
-        options : dict or None, default None
-            A dictionary of optimizer options.
-
-            .. hint::
-                See options for each optimizer:
-
-                - 'sgd' :ref:`(see here) <api_reference.compile_sgd>`
-                - 'adam' :ref:`(see here) <api_reference.compile_adam>`
-                - 'adagrad' :ref:`(see here) <api_reference.compile_adagrad>`
-                - 'rmsprop' :ref:`(see here) <api_reference.compile_rmsprop>`
-
-        random_state : int or None, default None
-            Random seed used to initialize weights.
-
-            .. note::
-                If not given, the weights will be initialized with a random seed.
-
-        Examples
-        --------
-        >>> from smash.factory import Net
-        >>> net = Net()
-
-        Define graph
-
-        >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 16})
-        >>> net.add(layer="activation", options={"name": "relu"})
-
-        Compile the network
-
-        >>> net.compile(optimizer='sgd', options={'learning_rate': 0.009, 'momentum': 0.001})
-        >>> net
-        +-------------------------------------------------------+
-        | Layer Type         Input/Output Shape  Num Parameters |
-        +-------------------------------------------------------+
-        | Dense              (6,)/(16,)          112            |
-        | Activation (ReLU)  (16,)/(16,)         0              |
-        +-------------------------------------------------------+
-        Total parameters: 112
-        Trainable parameters: 112
-        Optimizer: (sgd, lr=0.009)
-        """
-
         if self.layers:
             ind = PY_OPTIMIZER.index(optimizer.lower())
 

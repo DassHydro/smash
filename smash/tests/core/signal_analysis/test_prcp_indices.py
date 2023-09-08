@@ -1,15 +1,18 @@
 from __future__ import annotations
 
 import smash
+from smash._constant import PRECIPITATION_INDICES
 
 import numpy as np
 import pytest
 
 
 def generic_precipitation_indices(model: smash.Model, **kwargs) -> dict:
+    prcp_ind = smash.precipitation_indices(model)
+
     res = {
-        "precipitation_indices." + k: v
-        for k, v in smash.precipitation_indices(model).items()
+        "precipitation_indices." + k: getattr(prcp_ind, k)
+        for k in PRECIPITATION_INDICES
     }
 
     return res

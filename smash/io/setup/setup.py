@@ -21,23 +21,24 @@ def save_setup(setup: dict, path: str):
 
     See Also
     --------
-    smash.io.read_setup: Read the Model initialization setup dictionary.
+    read_setup : Read the Model initialization setup dictionary.
 
     Examples
     --------
-    >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_setup, read_setup
+    >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup
+    Save setup:
 
-    >>> smash.io.save_setup(setup, "setup.yaml")
+    >>> save_setup(setup, "setup.yaml")
 
-    Read setup (the reloaded setup keys will be alphabetically sorted)
+    Read setup (the reloaded setup keys will be alphabetically sorted):
 
-    >>> setup_rld = smash.io.read_setup("setup.yaml")
-    setup_rld
+    >>> setup_rld = read_setup("setup.yaml")
+    >>> setup_rld
     {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
     """
 
@@ -59,28 +60,29 @@ def read_setup(path: str) -> dict:
 
     Returns
     -------
-    dict :
+    setup : dict
         A setup dictionary loaded from YAML file.
 
     See Also
     --------
-    smash.io.save_setup: Save the Model initialization setup dictionary.
+    save_setup : Save the Model initialization setup dictionary.
 
     Examples
     --------
-    >>> import smash
-    >>> setup, mesh = smash.factory.load_dataset("cance")
+    >>> from smash.factory import load_dataset
+    >>> from smash.io import save_setup, read_setup
+    >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr-a-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup
+    Save setup:
 
-    >>> smash.io.save_setup(setup, "setup.yaml")
+    >>> save_setup(setup, "setup.yaml")
 
-    Read setup (the reloaded setup keys will be alphabetically sorted)
+    Read setup (the reloaded setup keys will be alphabetically sorted):
 
-    >>> setup_rld = smash.io.read_setup("setup.yaml")
-    setup_rld
+    >>> setup_rld = read_setup("setup.yaml")
+    >>> setup_rld
     {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
     """
 
