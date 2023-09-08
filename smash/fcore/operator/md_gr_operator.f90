@@ -78,15 +78,15 @@ contains
 
     end subroutine gr_exchange
 
-    subroutine gr_threshold_exchange(kexc, ht, texc, l)
+    subroutine gr_threshold_exchange(kexc, ht, aexc, l)
 
         implicit none
 
-        real(sp), intent(in) :: kexc, texc
+        real(sp), intent(in) :: kexc, aexc
         real(sp), intent(inout) :: ht
         real(sp), intent(out) :: l
 
-        l = kexc*(ht - texc)
+        l = kexc*(ht - aexc)
 
     end subroutine gr_threshold_exchange
 
