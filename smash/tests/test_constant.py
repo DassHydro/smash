@@ -30,7 +30,7 @@ def test_structure_model():
     assert STRUCTURE_NAME == ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "grd-lr"]
 
     # % Check opr parameters
-    assert OPR_PARAMETERS == ["ci", "cp", "ct", "kexc", "texc", "llr", "akw", "bkw"]
+    assert OPR_PARAMETERS == ["ci", "cp", "ct", "kexc", "aexc", "llr", "akw", "bkw"]
 
     # % Check opr states
     assert OPR_STATES == ["hi", "hp", "ht", "hlr"]
