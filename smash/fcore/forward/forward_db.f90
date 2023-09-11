@@ -6808,43 +6808,43 @@ CONTAINS
 
 !  Differentiation of gr_threshold_exchange in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: l
-!   with respect to varying inputs: kexc texc ht
-  SUBROUTINE GR_THRESHOLD_EXCHANGE_D(kexc, kexc_d, ht, ht_d, texc, &
-&   texc_d, l, l_d)
+!   with respect to varying inputs: aexc kexc ht
+  SUBROUTINE GR_THRESHOLD_EXCHANGE_D(kexc, kexc_d, ht, ht_d, aexc, &
+&   aexc_d, l, l_d)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc, texc
-    REAL(sp), INTENT(IN) :: kexc_d, texc_d
+    REAL(sp), INTENT(IN) :: kexc, aexc
+    REAL(sp), INTENT(IN) :: kexc_d, aexc_d
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_d
     REAL(sp), INTENT(OUT) :: l
     REAL(sp), INTENT(OUT) :: l_d
-    l_d = (ht-texc)*kexc_d + kexc*(ht_d-texc_d)
-    l = kexc*(ht-texc)
+    l_d = (ht-aexc)*kexc_d + kexc*(ht_d-aexc_d)
+    l = kexc*(ht-aexc)
   END SUBROUTINE GR_THRESHOLD_EXCHANGE_D
 
 !  Differentiation of gr_threshold_exchange in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: l kexc texc ht
-!   with respect to varying inputs: kexc texc ht
-  SUBROUTINE GR_THRESHOLD_EXCHANGE_B(kexc, kexc_b, ht, ht_b, texc, &
-&   texc_b, l, l_b)
+!   gradient     of useful results: aexc l kexc ht
+!   with respect to varying inputs: aexc kexc ht
+  SUBROUTINE GR_THRESHOLD_EXCHANGE_B(kexc, kexc_b, ht, ht_b, aexc, &
+&   aexc_b, l, l_b)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc, texc
-    REAL(sp) :: kexc_b, texc_b
+    REAL(sp), INTENT(IN) :: kexc, aexc
+    REAL(sp) :: kexc_b, aexc_b
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
-    kexc_b = kexc_b + (ht-texc)*l_b
+    kexc_b = kexc_b + (ht-aexc)*l_b
     ht_b = ht_b + kexc*l_b
-    texc_b = texc_b - kexc*l_b
+    aexc_b = aexc_b - kexc*l_b
   END SUBROUTINE GR_THRESHOLD_EXCHANGE_B
 
-  SUBROUTINE GR_THRESHOLD_EXCHANGE(kexc, ht, texc, l)
+  SUBROUTINE GR_THRESHOLD_EXCHANGE(kexc, ht, aexc, l)
     IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: kexc, texc
+    REAL(sp), INTENT(IN) :: kexc, aexc
     REAL(sp), INTENT(INOUT) :: ht
     REAL(sp), INTENT(OUT) :: l
-    l = kexc*(ht-texc)
+    l = kexc*(ht-aexc)
   END SUBROUTINE GR_THRESHOLD_EXCHANGE
 
 !  Differentiation of gr_transfer in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
