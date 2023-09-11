@@ -1,11 +1,13 @@
-commit 6a5497dec3972ca6ef2b6c47014d7eda5e583026
-Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
-Date:   Sun Sep 3 00:48:35 2023 +0200
+commit a1f695d52a846d32e39b9ea34d7aa047b60cfbc9
+Author: Thomas De-Fournas <thomasdefournass@gmail.com>
+Date:   Thu Sep 7 15:18:02 2023 +0200
 
-    FIX PR: fix regularization parameters alpha in multiset estimate:
-    - fix default values
-    - enhance standardize
-    - fix type checking.
+    ENC: Add gr5 model structure
+    
+    - Ajout de la structure gr5 (gr5-lr et gr5-kw)
+    - Ajout d'un nouveau paramètre d'opérateur texc
+    - Ajout d'une nouvelle fonction d'echange dans md_gr_operator.f90
+    - Ajout test structure gr5
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -29,6 +31,8 @@ custom_optimize.gr4-lr.custom_set_5.sim_q |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_6.sim_q |NON MODIFIED
 forward_run.gr4-kw.sim_q                  |NON MODIFIED
 forward_run.gr4-lr.sim_q                  |NON MODIFIED
+forward_run.gr5-kw.sim_q                  |ADDED
+forward_run.gr5-lr.sim_q                  |ADDED
 forward_run.grd-lr.sim_q                  |NON MODIFIED
 generate_samples.normal                   |NON MODIFIED
 generate_samples.uniform                  |NON MODIFIED
@@ -74,10 +78,9 @@ model_io.setup.end_time                   |NON MODIFIED
 model_io.setup.start_time                 |NON MODIFIED
 model_io.setup.structure                  |NON MODIFIED
 model_io.sim_response.q                   |NON MODIFIED
-multiset_estimate.mfwr.sim_q              |ADDED
-multiset_estimate.mopt_ml.sim_q           |ADDED
-multiset_estimate.mopt_unf.sim_q          |ADDED
-multiset_estimate.sim_q                   |DELETED
+multiset_estimate.mfwr.sim_q              |NON MODIFIED
+multiset_estimate.mopt_ml.sim_q           |NON MODIFIED
+multiset_estimate.mopt_unf.sim_q          |NON MODIFIED
 net_init.bias_layer_1                     |NON MODIFIED
 net_init.bias_layer_2                     |NON MODIFIED
 net_init.bias_layer_3                     |NON MODIFIED
@@ -97,6 +100,16 @@ optimize.gr4-lr.distributed.sim_q         |NON MODIFIED
 optimize.gr4-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.gr4-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.gr4-lr.uniform.sim_q             |NON MODIFIED
+optimize.gr5-kw.ann.sim_q                 |ADDED
+optimize.gr5-kw.distributed.sim_q         |ADDED
+optimize.gr5-kw.multi-linear.sim_q        |ADDED
+optimize.gr5-kw.multi-polynomial.sim_q    |ADDED
+optimize.gr5-kw.uniform.sim_q             |ADDED
+optimize.gr5-lr.ann.sim_q                 |ADDED
+optimize.gr5-lr.distributed.sim_q         |ADDED
+optimize.gr5-lr.multi-linear.sim_q        |ADDED
+optimize.gr5-lr.multi-polynomial.sim_q    |ADDED
+optimize.gr5-lr.uniform.sim_q             |ADDED
 optimize.grd-lr.ann.sim_q                 |NON MODIFIED
 optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED

@@ -27,10 +27,10 @@ import numpy as np
 
 def test_structure_model():
     # % Check structure name
-    assert STRUCTURE_NAME == ["gr4-lr", "gr4-kw", "grd-lr"]
+    assert STRUCTURE_NAME == ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "grd-lr"]
 
     # % Check opr parameters
-    assert OPR_PARAMETERS == ["ci", "cp", "ct", "kexc", "llr", "akw", "bkw"]
+    assert OPR_PARAMETERS == ["ci", "cp", "ct", "kexc", "aexc", "llr", "akw", "bkw"]
 
     # % Check opr states
     assert OPR_STATES == ["hi", "hp", "ht", "hlr"]
@@ -39,6 +39,8 @@ def test_structure_model():
     assert list(STRUCTURE_OPR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc", "llr"],
         ["ci", "cp", "ct", "kexc", "akw", "bkw"],
+        ["ci", "cp", "ct", "kexc", "aexc", "llr"],
+        ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],
         ["cp", "ct", "llr"],
     ]
 
@@ -46,11 +48,13 @@ def test_structure_model():
     assert list(STRUCTURE_OPR_STATES.values()) == [
         ["hi", "hp", "ht", "hlr"],
         ["hi", "hp", "ht"],
+        ["hi", "hp", "ht", "hlr"],
+        ["hi", "hp", "ht"],
         ["hp", "ht", "hlr"],
     ]
 
     # % Check compute ci structure
-    assert list(STRUCTURE_COMPUTE_CI.values()) == [True, True, False]
+    assert list(STRUCTURE_COMPUTE_CI.values()) == [True, True, True, True, False]
 
 
 def test_feasible_domain():
@@ -60,6 +64,7 @@ def test_feasible_domain():
         (0, np.inf),
         (0, np.inf),
         (-np.inf, np.inf),
+        (0, 1),
         (0, np.inf),
         (0, np.inf),
         (0, np.inf),
@@ -76,7 +81,7 @@ def test_feasible_domain():
 
 def test_default_parameters():
     # % Check default opr parameters
-    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 0, 5, 5, 0.6]
+    assert list(DEFAULT_OPR_PARAMETERS.values()) == [1e-6, 200, 500, 0, 0.1, 5, 5, 0.6]
 
     # % Check default opr states
     assert list(DEFAULT_OPR_INITIAL_STATES.values()) == [1e-2, 1e-2, 1e-2, 1e-6]
@@ -89,6 +94,7 @@ def test_default_bounds_parameters():
         (1e-6, 1e3),
         (1e-6, 1e3),
         (-50, 50),
+        (1e-6, 0.999999),
         (1e-6, 1e3),
         (1e-3, 50),
         (1e-3, 1),
@@ -107,6 +113,7 @@ def test_optimizable_parameters():
     # % Check optimizable opr parameters
     assert list(OPTIMIZABLE_OPR_PARAMETERS.values()) == [
         False,
+        True,
         True,
         True,
         True,

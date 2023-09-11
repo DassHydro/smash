@@ -6,9 +6,9 @@ import numpy as np
 ### MODEL STRUCTURE ###
 #######################
 
-STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "grd-lr"]
+STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "grd-lr"]
 
-OPR_PARAMETERS = ["ci", "cp", "ct", "kexc", "llr", "akw", "bkw"]
+OPR_PARAMETERS = ["ci", "cp", "ct", "kexc", "aexc", "llr", "akw", "bkw"]
 
 OPR_STATES = ["hi", "hp", "ht", "hlr"]
 
@@ -19,6 +19,8 @@ STRUCTURE_OPR_PARAMETERS = dict(
         [
             ["ci", "cp", "ct", "kexc", "llr"],
             ["ci", "cp", "ct", "kexc", "akw", "bkw"],
+            ["ci", "cp", "ct", "kexc", "aexc", "llr"],
+            ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],
             ["cp", "ct", "llr"],
         ],
     )
@@ -31,13 +33,15 @@ STRUCTURE_OPR_STATES = dict(
         [
             ["hi", "hp", "ht", "hlr"],
             ["hi", "hp", "ht"],
+            ["hi", "hp", "ht", "hlr"],
+            ["hi", "hp", "ht"],
             ["hp", "ht", "hlr"],
         ],
     )
 )
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [True, True, False]))
+STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [True, True, True, True, False]))
 
 ### FEASIBLE PARAMETERS ###
 ###########################
@@ -51,6 +55,7 @@ FEASIBLE_OPR_PARAMETERS = dict(
             (0, np.inf),
             (0, np.inf),
             (-np.inf, np.inf),
+            (0, 1),
             (0, np.inf),
             (0, np.inf),
             (0, np.inf),
@@ -77,7 +82,7 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 # % Following OPR_PARAMETERS order
 # % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
-DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 5, 5, 0.6]))
+DEFAULT_OPR_PARAMETERS = dict(zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 0.1, 5, 5, 0.6]))
 
 # % Following OPR_STATES order
 DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-6]))
@@ -94,6 +99,7 @@ DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
             (1e-6, 1e3),
             (1e-6, 1e3),
             (-50, 50),
+            (1e-6, 0.999999),
             (1e-6, 1e3),
             (1e-3, 50),
             (1e-3, 1),
@@ -123,7 +129,7 @@ TOL_BOUNDS = 1e-9
 OPTIMIZABLE_OPR_PARAMETERS = dict(
     zip(
         OPR_PARAMETERS,
-        [False, True, True, True, True, True, True],
+        [False, True, True, True, True, True, True, True],
     )
 )
 

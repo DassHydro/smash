@@ -9,7 +9,7 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_parameters_manipulation !% only: control_to_parameters
-    use md_forward_structure !% only: gr4_lr_forward, gr4_kw_forward, grd_lr_forward
+    use md_forward_structure !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, grd_lr_forward
     use mwd_cost !% only: compute_cost
 
     implicit none
@@ -40,6 +40,14 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     case ("gr4-kw")
 
         call gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
+
+    case ("gr5-lr")
+
+        call gr5_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+
+    case ("gr5-kw")
+
+        call gr5_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
 
     case ("grd-lr")
 
