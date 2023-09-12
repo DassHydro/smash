@@ -184,7 +184,10 @@ def _events_grad(
         dflow_windows = (dflow[i:] for i in range(min(end_search, dflow.size)))
         dflow = np.array([sum(i) for i in zip(*dflow_windows)])
 
-        end = i_peak + np.nanargmin(dflow)
+        if np.isnan(dflow).all():  # if all nan values after the peak flow
+            continue
+        else:
+            end = i_peak + np.nanargmin(dflow)
 
         if len(list_events) > 0:
             prev_start = list_events[-1]["start"]
