@@ -46,7 +46,7 @@ def hydrograph_segmentation(
 
     by : str, default 'obs'
         Compute segmentation information based on observed (obs) or simulated (sim) discharges.
-        If **by** = 'sim', you need to run a simulation (forward run or optimization) to obtain the simulated discharge.
+        A simulation (forward run or optimization) is required to obtain the simulated discharge when **by** is 'sim'.
 
     Returns
     -------
@@ -68,11 +68,11 @@ def hydrograph_segmentation(
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Perform segmentation algorithm and display flood events infomation:
+    Perform segmentation algorithm and display flood events information:
 
-    >>> res = smash.hydrograph_segmentation(model)
-    >>> res
-            code               start                   flood  season
+    >>> hydro_seg = smash.hydrograph_segmentation(model)
+    >>> hydro_seg
+           code               start                   flood  season
     0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
     1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
     2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn

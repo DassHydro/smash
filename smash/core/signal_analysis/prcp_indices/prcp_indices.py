@@ -128,7 +128,37 @@ def precipitation_indices(
 
     Examples
     --------
-    TODO FC: Fill
+    Examples
+    --------
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> import numpy as np
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Compute precipitation indices:
+
+    >>> prcp_ind = smash.precipitation_indices(model)
+    >>> prcp_ind
+    d1: <class 'numpy.ndarray'>
+    d2: <class 'numpy.ndarray'>
+    hg: <class 'numpy.ndarray'>
+    std: <class 'numpy.ndarray'>
+    vg: <class 'numpy.ndarray'>
+
+    Each attribute is a numpy.ndarray of shape (number of gauge, number of time step):
+
+    >>> prcp_ind.d1.shape
+    (3, 1440)
+
+    NaN value means that there is no precipitation at this specific gauge and time step. Using numpy.where to find the index where precipitation indices were calculated on the most downstream gauge for the first scaled moment:
+
+    >>> ind = np.argwhere(~np.isnan(prcp_ind.d1[0,:])).squeeze()
+
+    Viewing the first scaled moment on the first time step where rainfall occured on the most downstream gauge:
+
+    >>> prcp_ind.d1[0, ind[0]]
+    1.209175
 
     See Also
     --------

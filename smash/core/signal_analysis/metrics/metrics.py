@@ -51,11 +51,30 @@ def metrics(
     Returns
     -------
     res : np.ndarray
-        A 1D-array of shape (n,) representing the computed evaluation metric for **n** catchment(s).
+        A 1D-array of shape *(n,)* representing the computed evaluation metric for *n* catchment(s).
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Optimize Model:
+
+    >>> model.optimize()
+
+    Compute the Mean Squared Error for all catchments:
+
+    >>> mse = smash.metrics(model, metric="mse")
+    >>> mse
+    array([49.50750351,  4.31146955,  0.57386672])
+
+    The Kling-Gupta Efficiency:
+
+    >>> kge = smash.metrics(model, metric="kge")
+    >>> kge
+    array([0.96001273, 0.86749017, 0.81862521])
     """
     metric, end_warmup = _standardize_metrics_args(metric, end_warmup, model.setup)
 

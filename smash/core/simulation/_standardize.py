@@ -486,12 +486,17 @@ def _standardize_simulation_optimize_options_termination_crit_epochs(
 
 
 def _standardize_simulation_optimize_options_termination_crit_early_stopping(
-    early_stopping: bool, **kwargs
-) -> float:
-    if isinstance(early_stopping, bool):
-        pass
+    early_stopping: Numeric, **kwargs
+) -> int:
+    if isinstance(early_stopping, (int, float)):
+        early_stopping = int(early_stopping)
+
+        if early_stopping < 0:
+            raise ValueError("early_stopping termination_crit must be non-negative")
     else:
-        raise TypeError("early_stopping termination_crit must be of a boolean")
+        raise TypeError(
+            "early_stopping termination_crit must be of Numeric type (int, float)"
+        )
 
     return early_stopping
 

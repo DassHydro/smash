@@ -328,19 +328,20 @@ class Net(object):
         learning_rate: Numeric,
         random_state: Numeric | None,
         epochs: int,
-        early_stopping: bool,
+        early_stopping: int,
         verbose: bool,
-    ):  # fit physiographic descriptors to Model parameters mapping
-        # % compile net
+    ):
+        """
+        Private function: fit physiographic descriptors to Model parameters mapping.
+        """
+        # % Compile net
         self._compile(
             optimizer=optimizer,
             learning_param={"learning_rate": learning_rate},
             random_state=random_state,
         )
 
-        loss_opt = 0  # only use for early stopping purpose
-
-        # % train model
+        # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
             y_pred = self._forward_pass(x_train)
@@ -356,18 +357,29 @@ class Net(object):
             # calculate the infinity norm of the projected gradient
             proj_g = _inf_norm(loss_grad)
 
-            # early stopping
+            # save optimal weights if early stopping is used
             if early_stopping:
-                if loss_opt > loss or epo == 0:
-                    loss_opt = loss
+                if epo == 0:
+                    loss_opt = {"epo": 0, "value": loss}
+
+                if loss <= loss_opt["value"]:
+                    loss_opt["epo"] = epo
+                    loss_opt["value"] = loss
 
                     for layer in self.layers:
                         if hasattr(layer, "_initialize"):
                             layer._weight = np.copy(layer.weight)
                             layer._bias = np.copy(layer.bias)
 
+                else:
+                    if (
+                        epo - loss_opt["epo"] > early_stopping
+                    ):  # stop training if the loss values do not decrease through early_stopping consecutive epochs
+                        break
+
             # backpropagation
-            self._backward_pass(loss_grad=loss_grad)
+            if epo < epochs - 1:  # do not update weights at the last epoch
+                self._backward_pass(loss_grad=loss_grad)
 
             if verbose:
                 ret = []

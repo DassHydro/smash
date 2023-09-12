@@ -34,7 +34,7 @@ It is recommended that you install the smash development enviroment using `Anaco
 
 .. code-block:: none
 
-    conda env create environment-dev.yml
+    conda env create -f environment-dev.yml
 
 Activate the conda environment:
 
