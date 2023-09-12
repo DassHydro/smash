@@ -254,9 +254,8 @@ def _ann_optimize(
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
 ):
-    # % preprocessing input descriptors and normalization
+    # % Preprocessing input descriptors and normalization
     active_mask = np.where(model.mesh.active_cell == 1)
-    inactive_mask = np.where(model.mesh.active_cell == 0)
 
     l_desc = model._input_data.physio_data.l_descriptor
     u_desc = model._input_data.physio_data.u_descriptor
@@ -264,9 +263,8 @@ def _ann_optimize(
     desc = model._input_data.physio_data.descriptor.copy()
     desc = (desc - l_desc) / (u_desc - l_desc)  # normalize input descriptors
 
-    # % training the network
+    # % Training the network
     x_train = desc[active_mask]
-    x_inactive = desc[inactive_mask]
 
     net = optimize_options["net"]
 
@@ -294,19 +292,22 @@ def _ann_optimize(
     # % Reset mapping to ann once fit_d2p done
     wrap_options.optimize.mapping = "ann"
 
-    # % predicting at inactive cells
-    y = net._predict(x_inactive)
+    # % Predicting at active and inactive cells
+    x = desc.reshape(-1, desc.shape[-1])
+    y = net._predict(x)
 
     for i, name in enumerate(optimize_options["parameters"]):
+        y_reshape = y[:, i].reshape(desc.shape[:2])
+
         if name in model.opr_parameters.keys:
             ind = np.argwhere(model.opr_parameters.keys == name).item()
 
-            model.opr_parameters.values[..., ind][inactive_mask] = y[:, i]
+            model.opr_parameters.values[..., ind] = y_reshape
 
         else:
             ind = np.argwhere(model.opr_initial_states.keys == name).item()
 
-            model.opr_inital_states.values[..., ind][inactive_mask] = y[:, i]
+            model.opr_inital_states.values[..., ind] = y_reshape
 
     # % Forward run for updating final states
     wrap_forward_run(

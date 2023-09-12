@@ -92,14 +92,14 @@ def signatures(
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
 
-    domain : str, default 'obs'
-        Compute observed (obs) or simulated (sim) signatures.
-
     event_seg : dict or None, default None
         A dictionary of event segmentation options when calculating flood event signatures. The keys are 'peak_quant', 'max_duration', and 'by'.
 
         .. note::
             If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See `smash.hydrograph_segmentation` for more.
+
+    domain : str, default 'obs'
+        Compute observed (obs) or simulated (sim) signatures.
 
     Returns
     -------
@@ -112,7 +112,29 @@ def signatures(
 
     Examples
     --------
-    TODO
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Run the forward Model:
+
+    >>> model.forward_run()
+
+    Compute simulated signatures:
+
+    >>> sign = smash.signatures(model, domain="sim")
+    >>> sign
+     cont: <class 'pandas.core.frame.DataFrame'>
+    event: <class 'pandas.core.frame.DataFrame'>
+
+    >>> sign.event  # simulated flood event signatures
+           code  season               start  ...    Erch2r  Elt        Epf
+    0  V3524010  autumn 2014-11-03 03:00:00  ...  0.214772  3.0  85.736832
+    1  V3515010  autumn 2014-11-03 10:00:00  ...  0.202139  0.0  17.256138
+    2  V3517010  autumn 2014-11-03 08:00:00  ...  0.187440  1.0   4.770674
+
+    [3 rows x 12 columns]
     """
 
     cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)

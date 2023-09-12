@@ -309,9 +309,7 @@ DEFAULT_TERMINATION_CRIT = dict(
         )
     ),
     **dict(
-        zip(
-            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": False}]
-        )
+        zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])
     ),
 )
 
