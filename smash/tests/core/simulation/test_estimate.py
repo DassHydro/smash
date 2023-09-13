@@ -56,10 +56,13 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"multiset_estimate.{key}.sim_q"] = qsim
+
+        # Remove multi-linear temporarily (solver precision issue)
         for lc_key, lc_value in ret.lcurve_multiset.items():
-            res[f"multiset_estimate.{key}.lcurve_multiset.{lc_key}"] = np.array(
-                lc_value, ndmin=1
-            )
+            if key != "mopt_ml":
+                res[f"multiset_estimate.{key}.lcurve_multiset.{lc_key}"] = np.array(
+                    lc_value, ndmin=1
+                )
 
     return res
 

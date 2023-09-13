@@ -2242,7 +2242,7 @@ CONTAINS
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
 &                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       numer_d = 0.0_4
@@ -2295,7 +2295,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       denom = 0._sp
       DO i=1,j
         denom = denom + nonnegative_p(i)
@@ -2313,7 +2313,7 @@ CONTAINS
       bf_b = 0.0_4
       CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
 &                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       bf_b(1:j) = 0.0_4
       qf_b(1:j) = 0.0_4
     ELSE
@@ -2351,7 +2351,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       DO i=1,j
@@ -2394,7 +2394,7 @@ CONTAINS
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
 &                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       numer_d = 0.0_4
@@ -2447,7 +2447,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       denom = 0._sp
       DO i=1,j
         denom = denom + nonnegative_p(i)
@@ -2465,7 +2465,7 @@ CONTAINS
       qf_b = 0.0_4
       CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
 &                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       bf_b(1:j) = 0.0_4
       qf_b(1:j) = 0.0_4
     ELSE
@@ -2503,7 +2503,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       DO i=1,j
@@ -2544,7 +2544,7 @@ CONTAINS
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
 &                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       denom_d = 0.0_4
@@ -2597,7 +2597,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       DO i=1,j
@@ -2620,7 +2620,7 @@ CONTAINS
       bf_b = 0.0_4
       CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
 &                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       bf_b(1:j) = 0.0_4
       qf_b(1:j) = 0.0_4
     ELSE
@@ -2658,7 +2658,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       numer = 0._sp
       denom = 0._sp
       DO i=1,j
@@ -2799,7 +2799,7 @@ CONTAINS
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
 &                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       res_d = SUM(qf_d(1:j))/j
       res = SUM(qf(1:j))/j
     ELSE
@@ -2837,14 +2837,14 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       qf_b = 0.0_4
       qf_b(1:j) = qf_b(1:j) + res_b/j
       nonnegative_q_b = 0.0_4
       bf_b = 0.0_4
       CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
 &                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       bf_b(1:j) = 0.0_4
       qf_b(1:j) = 0.0_4
     ELSE
@@ -2880,7 +2880,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       res = SUM(qf(1:j))/j
     END IF
   END FUNCTION EFF
@@ -2914,7 +2914,7 @@ CONTAINS
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION_D(nonnegative_q(1:j), nonnegative_q_d(1:j&
 &                          ), bf(1:j), bf_d(1:j), qf(1:j), qf_d(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       res_d = SUM(bf_d(1:j))/j
       res = SUM(bf(1:j))/j
     ELSE
@@ -2952,14 +2952,14 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       bf_b = 0.0_4
       bf_b(1:j) = bf_b(1:j) + res_b/j
       nonnegative_q_b = 0.0_4
       qf_b = 0.0_4
       CALL BASEFLOW_SEPARATION_B(nonnegative_q(1:j), nonnegative_q_b(1:j&
 &                          ), bf(1:j), bf_b(1:j), qf(1:j), qf_b(1:j), &
-&                          0.925, 3)
+&                          0.925_sp, 3)
       bf_b(1:j) = 0.0_4
       qf_b(1:j) = 0.0_4
     ELSE
@@ -2995,7 +2995,7 @@ CONTAINS
     END DO
     IF (j .GT. 1) THEN
       CALL BASEFLOW_SEPARATION(nonnegative_q(1:j), bf(1:j), qf(1:j), &
-&                        0.925, 3)
+&                        0.925_sp, 3)
       res = SUM(bf(1:j))/j
     END IF
   END FUNCTION EBF
@@ -6069,7 +6069,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
-    REAL :: l, u
+    REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
@@ -6162,7 +6162,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
-    REAL :: l, u
+    REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
@@ -6306,7 +6306,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
-    REAL :: l, u
+    REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     j = 0
     DO i=1,setup%nop

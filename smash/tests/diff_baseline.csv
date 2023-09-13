@@ -1,11 +1,18 @@
-commit dec566ab70d89eec933d65ee2b19a3b03477f80d
-Merge: 29e62b8 804c2d3
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Tue Sep 12 14:52:15 2023 +0200
+commit ed529b1c4b013578df04fcb3333317ca64c05bab
+Author: Francois Colleoni <francois.colleoni@inrae.fr>
+Date:   Wed Sep 13 09:59:06 2023 +0200
 
-    Merge pull request #80 from DassHydro-dev/enc-api-doc-and-fix-early-stopping-ann
+    ENC: Add optional returns options
     
-    ENC/FIX: Enhance API doc and fix early_stopping for ann optimize
+    This commit add the possibility to return optional intermediate variable inside three functions:
+    - forward_run
+    - optimize
+    - multiset_estimate
+    
+    - Add standardize for return options
+    - Add docstring for return options
+    - Add AD directive to remove some lines to not be differentiated
+    - Add new tests
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -118,10 +125,6 @@ multiset_estimate.mfwr.lcurve_multiset.alpha_opt      |ADDED
 multiset_estimate.mfwr.lcurve_multiset.cost           |ADDED
 multiset_estimate.mfwr.lcurve_multiset.mahal_dist     |ADDED
 multiset_estimate.mfwr.sim_q                          |NON MODIFIED
-multiset_estimate.mopt_ml.lcurve_multiset.alpha       |ADDED
-multiset_estimate.mopt_ml.lcurve_multiset.alpha_opt   |ADDED
-multiset_estimate.mopt_ml.lcurve_multiset.cost        |ADDED
-multiset_estimate.mopt_ml.lcurve_multiset.mahal_dist  |ADDED
 multiset_estimate.mopt_ml.sim_q                       |NON MODIFIED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha      |ADDED
 multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt  |ADDED
