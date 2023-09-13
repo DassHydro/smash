@@ -30,7 +30,7 @@ contains
 
         end if
 
-        if (iter == niter) write (*, "(a)") new_line("")
+        if (iter == niter) write (*, "(a)") ""
 
     end subroutine display_iteration_progress
 

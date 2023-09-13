@@ -1,5 +1,11 @@
 from __future__ import annotations
 
+from smash._constant import (
+    SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
+)
+
+from smash.core.model._build_model import _map_dict_to_object
+
 from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
 )
@@ -22,7 +28,7 @@ if TYPE_CHECKING:
     from smash.factory.samples.samples import Samples
 
 
-__all__ = ["MultipleOptimize", "optimize", "multiple_optimize"]
+__all__ = ["MultipleOptimize", "Optimize", "optimize", "multiple_optimize"]
 
 
 class MultipleOptimize:
@@ -67,6 +73,70 @@ class MultipleOptimize:
             return self.__class__.__name__ + "()"
 
 
+class Optimize:
+    """
+    Represents optimize optional results.
+
+    Attributes
+    ----------
+    time_step : pandas.DatetimeIndex
+        A pandas.DatetimeIndex containing *n* returned time steps.
+
+    opr_states : list
+        A list of length *n* of Opr_StatesDT for each **time_step**.
+
+    q_domain : numpy.ndarray
+        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
+
+    iter_cost : numpy.ndarray
+        An array of shape *(m,)* representing cost iteration values from *m* iterations.
+
+    iter_projg : numpy.ndarray
+        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
+
+    control : numpy.ndarray
+        An array of size *(k,)* representing the control vector at end of optimization.
+
+    cost : float
+        Cost value.
+
+    jobs : float
+        Cost observation component value.
+
+    jreg : float
+        Cost regularization component value.
+
+    Notes
+    -----
+    The object's available attributes depend on what is requested by the user during a call to `smash.optimize` in **return_options**.
+
+    See Also
+    --------
+    smash.optimize : Model assimilation using numerical optimization algorithms.
+    """
+
+    def __init__(self, data: dict | None = None):
+        if data is None:
+            data = {}
+
+        self.__dict__.update(data)
+
+    def __repr__(self):
+        dct = self.__dict__
+
+        if dct.keys():
+            m = max(map(len, list(dct.keys()))) + 1
+            return "\n".join(
+                [
+                    k.rjust(m) + ": " + repr(type(v))
+                    for k, v in sorted(dct.items())
+                    if not k.startswith("_")
+                ]
+            )
+        else:
+            return self.__class__.__name__ + "()"
+
+
 def optimize(
     model: Model,
     mapping: str = "uniform",
@@ -74,7 +144,8 @@ def optimize(
     optimize_options: dict | None = None,
     cost_options: dict | None = None,
     common_options: dict | None = None,
-):
+    return_options: dict | None = None,
+) -> Model | (Model, Optimize):
     """
     Model assimilation using numerical optimization algorithms.
 
@@ -158,10 +229,54 @@ def optimize(
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
+    return_options : dict or None, default None
+        Dictionary containing return options to save intermediate variables. The elements are:
+
+        time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+            Returned time steps. There are five ways to specify it:
+
+            - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+            - An alias among 'all' (return all time steps).
+            - A pandas.Timestamp object.
+            - A pandas.DatetimeIndex object.
+            - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+
+            .. note::
+                It only applies to the following variables: 'opr_states' and 'q_domain'
+
+        opr_states : bool, default False
+            Whether to return operator states for specific time steps.
+
+        q_domain : bool, defaul False
+            Whether to return simulated discharge on the whole domain for specific time steps.
+
+        iter_cost : bool, default False
+            Whether to return cost iteration values.
+
+        iter_projg : bool, default False
+            Whether to return infinity norm of the projected gardient iteration values.
+
+        control_vector : bool, default False
+            Whether to return control vector at end of optimization.
+
+        cost : bool, default False
+            Whether to return cost value.
+
+        jobs : bool, default False
+            Whether to return jobs (observation component of cost) value.
+
+        jreg : bool, default False
+            Whether to return jreg (regularization component of cost) value.
+
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
     Returns
     -------
     ret_model : Model
-        The optimized Model.
+        The Model with optimized outputs.
+
+    ret_optimize : Optimize or None, default None
+        It returns a `smash.Optimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
 
     Examples
     --------
@@ -170,13 +285,24 @@ def optimize(
     See Also
     --------
     Model.optimize : Model assimilation using numerical optimization algorithms.
+    Optimize : Represents optimize optional results.
     """
 
     wmodel = model.copy()
 
-    wmodel.optimize(mapping, optimizer, optimize_options, cost_options, common_options)
+    ret_optimize = wmodel.optimize(
+        mapping,
+        optimizer,
+        optimize_options,
+        cost_options,
+        common_options,
+        return_options,
+    )
 
-    return wmodel
+    if ret_optimize is None:
+        return wmodel
+    else:
+        return wmodel, ret_optimize
 
 
 def _optimize(
@@ -186,7 +312,8 @@ def _optimize(
     optimize_options: dict,
     cost_options: dict,
     common_options: dict,
-):
+    return_options: dict,
+) -> Optimize | None:
     if common_options["verbose"]:
         print("</> Optimize")
 
@@ -197,32 +324,24 @@ def _optimize(
         cost_options["njrc"],
     )
 
-    # % Map optimize_options dict to derived type
-    for key, value in optimize_options.items():
-        if hasattr(wrap_options.optimize, key):
-            setattr(wrap_options.optimize, key, value)
+    wrap_returns = ReturnsDT(
+        model.setup,
+        model.mesh,
+        return_options["nmts"],
+        return_options["fkeys"],
+    )
 
-        if key == "termination_crit":
-            for key_termination_crit, value_termination_crit in value.items():
-                if hasattr(wrap_options.optimize, key_termination_crit):
-                    setattr(
-                        wrap_options.optimize,
-                        key_termination_crit,
-                        value_termination_crit,
-                    )
+    # % Map optimize_options dict to derived type
+    _map_dict_to_object(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    for key, value in cost_options.items():
-        if hasattr(wrap_options.cost, key):
-            setattr(wrap_options.cost, key, value)
+    _map_dict_to_object(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    for key, value in common_options.items():
-        if hasattr(wrap_options.comm, key):
-            setattr(wrap_options.comm, key, value)
+    _map_dict_to_object(common_options, wrap_options.comm)
 
-    # % TODO: Implement return options
-    wrap_returns = ReturnsDT()
+    # % Map return_options dict to derived type
+    _map_dict_to_object(return_options, wrap_returns)
 
     if mapping == "ann":
         _ann_optimize(
@@ -244,6 +363,25 @@ def _optimize(
             wrap_options,
             wrap_returns,
         )
+
+    fret = {}
+    pyret = {}
+
+    for key in return_options["keys"]:
+        try:
+            value = getattr(wrap_returns, key)
+        except:
+            continue
+        if hasattr(value, "copy"):
+            value = value.copy()
+        fret[key] = value
+
+    ret = {**fret, **pyret}
+    if ret:
+        # % Add time_step to the object
+        if any([k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()]):
+            ret["time_step"] = return_options["time_step"].copy()
+        return Optimize(ret)
 
 
 def _ann_optimize(
@@ -372,9 +510,6 @@ def multiple_optimize(
 
     res = _multiple_optimize(model, *args)
 
-    # % Backup cost options info
-    res["_cost_options"] = cost_options
-
     return MultipleOptimize(res)
 
 
@@ -398,28 +533,13 @@ def _multiple_optimize(
     )
 
     # % Map optimize_options dict to derived type
-    for key, value in optimize_options.items():
-        if hasattr(wrap_options.optimize, key):
-            setattr(wrap_options.optimize, key, value)
-
-        if key == "termination_crit":
-            for key_termination_crit, value_termination_crit in value.items():
-                if hasattr(wrap_options.optimize, key_termination_crit):
-                    setattr(
-                        wrap_options.optimize,
-                        key_termination_crit,
-                        value_termination_crit,
-                    )
+    _map_dict_to_object(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    for key, value in cost_options.items():
-        if hasattr(wrap_options.cost, key):
-            setattr(wrap_options.cost, key, value)
+    _map_dict_to_object(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    for key, value in common_options.items():
-        if hasattr(wrap_options.comm, key):
-            setattr(wrap_options.comm, key, value)
+    _map_dict_to_object(common_options, wrap_options.comm)
 
     # % Generate samples info
     nv = samples._problem["num_vars"]
@@ -520,4 +640,5 @@ def _multiple_optimize(
         "q": q,
         "parameters": parameters,
         "_samples": samples_fnl,
+        "_cost_options": cost_options,
     }

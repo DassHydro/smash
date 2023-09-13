@@ -5,6 +5,8 @@ from smash.core.simulation.run.run import MultipleForwardRun
 
 from smash.core.simulation._standardize import (
     _standardize_simulation_common_options,
+    _standardize_simulation_return_options,
+    _standardize_simulation_return_options_finalize,
 )
 
 from typing import TYPE_CHECKING
@@ -17,9 +19,11 @@ import numpy as np
 
 
 def _standardize_multiset_estimate_args(
+    model: Model,
     multiset: MultipleForwardRun | MultipleOptimize,
     alpha: Numeric | ListLike,
     common_options: dict | None,
+    return_options: dict | None,
 ) -> AnyTuple:
     multiset = _standardize_multiset_estimate_multiset(multiset)
 
@@ -27,7 +31,14 @@ def _standardize_multiset_estimate_args(
 
     common_options = _standardize_simulation_common_options(common_options)
 
-    return (multiset, alpha, common_options)
+    return_options = _standardize_simulation_return_options(
+        model, "multiset_estimate", return_options
+    )
+
+    # % Finalize return_options
+    _standardize_simulation_return_options_finalize(model, return_options)
+
+    return (multiset, alpha, common_options, return_options)
 
 
 def _standardize_multiset_estimate_multiset(

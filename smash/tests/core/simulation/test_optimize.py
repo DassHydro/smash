@@ -16,21 +16,30 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
     for model in model_structure:
         for mp in MAPPING:
             if mp == "ann":
-                optimize_options = {
-                    "learning_rate": 0.01,
-                    "random_state": 11,
-                    "termination_crit": {"epochs": 3},
-                }
+                instance = smash.optimize(
+                    model,
+                    mapping=mp,
+                    optimize_options={
+                        "learning_rate": 0.01,
+                        "random_state": 11,
+                        "termination_crit": {"epochs": 3},
+                    },
+                    common_options={"ncpu": ncpu, "verbose": False},
+                )
 
             else:
-                optimize_options = {"termination_crit": {"maxiter": 1}}
+                instance, ret = smash.optimize(
+                    model,
+                    mapping=mp,
+                    optimize_options={"termination_crit": {"maxiter": 1}},
+                    common_options={"ncpu": ncpu, "verbose": False},
+                    return_options={"iter_cost": True, "control_vector": True},
+                )
 
-            instance = smash.optimize(
-                model,
-                mapping=mp,
-                optimize_options=optimize_options,
-                common_options={"ncpu": ncpu, "verbose": False},
-            )
+                res[f"optimize.{model.setup.structure}.{mp}.iter_cost"] = ret.iter_cost
+                res[
+                    f"optimize.{model.setup.structure}.{mp}.control_vector"
+                ] = ret.control_vector
 
             qsim = instance.sim_response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
@@ -45,7 +54,9 @@ def test_optimize():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), key
+        assert np.allclose(
+            value, pytest.baseline[key][:], atol=1e-03, equal_nan=True
+        ), key
 
 
 def test_sparse_optimize():
@@ -53,7 +64,9 @@ def test_sparse_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03), "sparse." + key
+        assert np.allclose(
+            value, pytest.baseline[key][:], atol=1e-03, equal_nan=True
+        ), ("sparse." + key)
 
 
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
@@ -206,4 +219,4 @@ def test_multiple_optimize():
     )
 
     # % Check that optimize discharge is equivalent to multiple optimize discharge
-    assert np.allclose(optq, mopt.q, atol=1e-03), "multiple_optimize.q"
+    assert np.allclose(optq, mopt.q, atol=1e-03, equal_nan=True), "multiple_optimize.q"

@@ -7,9 +7,11 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_optimize_options,
     _standardize_simulation_cost_options,
     _standardize_simulation_common_options,
+    _standardize_simulation_return_options,
     _standardize_simulation_parameters_feasibility,
     _standardize_simulation_optimize_options_finalize,
     _standardize_simulation_cost_options_finalize,
+    _standardize_simulation_return_options_finalize,
 )
 
 from smash._constant import MAPPING
@@ -29,6 +31,7 @@ def _standardize_optimize_args(
     optimize_options: dict | None,
     cost_options: dict | None,
     common_options: dict | None,
+    return_options: dict | None,
 ) -> AnyTuple:
     # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
@@ -45,13 +48,20 @@ def _standardize_optimize_args(
 
     common_options = _standardize_simulation_common_options(common_options)
 
+    return_options = _standardize_simulation_return_options(
+        model, "optimize", return_options
+    )
+
     # % Finalize optimize options
     _standardize_simulation_optimize_options_finalize(
         model, mapping, optimizer, optimize_options
     )
 
     # % Finalize cost_options
+
     _standardize_simulation_cost_options_finalize(model, cost_options)
+    # % Finalize return_options
+    _standardize_simulation_return_options_finalize(model, return_options)
 
     return (
         mapping,
@@ -59,6 +69,7 @@ def _standardize_optimize_args(
         optimize_options,
         cost_options,
         common_options,
+        return_options,
     )
 
 

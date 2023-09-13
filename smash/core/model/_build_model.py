@@ -33,10 +33,14 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_output import OutputDT
 
 
+# TODO: Move this function to a generic common function file
 def _map_dict_to_object(dct: dict, obj: object):
     for key, value in dct.items():
         if hasattr(obj, key):
             setattr(obj, key, value)
+        # % Apply to the same object and not sub-object
+        elif isinstance(value, dict):
+            _map_dict_to_object(value, obj)
 
 
 def _build_setup(setup: SetupDT):

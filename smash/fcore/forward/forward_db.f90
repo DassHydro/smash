@@ -3,341 +3,6 @@
 !
 !%      (MWD) Module Wrapped and Differentiated.
 !%
-!%      Type
-!%      ----
-!%
-!%      - Opr_StatesDT
-!%
-!%          ========================== =====================================
-!%          `Variables`                Description
-!%          ========================== =====================================
-!%          ``keys``                   Operator states keys
-!%          ``values``                 Operator states values
-!%
-!§      Subroutine
-!%      ----------
-!%
-!%      - Opr_StatesDT_initialise
-!%      - Opr_StatesDT_copy
-MODULE MWD_OPR_STATES_DIFF
-!% only: sp, lchar
-  USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-  IMPLICIT NONE
-!$F90W char-array
-  TYPE OPR_STATESDT
-      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_STATESDT
-  TYPE OPR_STATESDT_DIFF
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_STATESDT_DIFF
-
-CONTAINS
-  SUBROUTINE OPR_STATESDT_INITIALISE(this, setup, mesh)
-    IMPLICIT NONE
-    TYPE(OPR_STATESDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    ALLOCATE(this%keys(setup%nos))
-    this%keys = '...'
-    ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nos))
-    this%values = -99._sp
-  END SUBROUTINE OPR_STATESDT_INITIALISE
-
-  SUBROUTINE OPR_STATESDT_COPY(this, this_copy)
-    IMPLICIT NONE
-    TYPE(OPR_STATESDT), INTENT(IN) :: this
-    TYPE(OPR_STATESDT), INTENT(OUT) :: this_copy
-    this_copy = this
-  END SUBROUTINE OPR_STATESDT_COPY
-
-END MODULE MWD_OPR_STATES_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated.
-!%
-!%      Type
-!%      ----
-!%
-!%      - OutputDT
-!%
-!%          ======================== =======================================
-!%          `Variables`              Description
-!%          ======================== =======================================
-!%          ``cost``                 Value of cost function
-!%          ``sim_response``         ResponseDT
-!%          ``opr_final_states``     Opr_StatesDT
-!%          ======================== =======================================
-!%
-!%      Subroutine
-!%      ----------
-!%
-!%      - OutputDT_initialise
-!%      - OutputDT_copy
-MODULE MWD_OUTPUT_DIFF
-!% only: sp
-  USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-!% only: ResponseDT, ResponseDT_initialise
-  USE MWD_RESPONSE
-!% only: Opr_StatesDT, Opr_StatesDT_initialise
-  USE MWD_OPR_STATES_DIFF
-  IMPLICIT NONE
-  TYPE OUTPUTDT
-      TYPE(RESPONSEDT) :: sim_response
-      TYPE(OPR_STATESDT) :: opr_final_states
-      REAL(sp) :: cost
-  END TYPE OUTPUTDT
-  TYPE OUTPUTDT_DIFF
-      TYPE(RESPONSEDT) :: sim_response
-      REAL(sp) :: cost
-  END TYPE OUTPUTDT_DIFF
-
-CONTAINS
-  SUBROUTINE OUTPUTDT_INITIALISE(this, setup, mesh)
-    IMPLICIT NONE
-    TYPE(OUTPUTDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    CALL RESPONSEDT_INITIALISE(this%sim_response, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_final_states, setup, mesh)
-  END SUBROUTINE OUTPUTDT_INITIALISE
-
-  SUBROUTINE OUTPUTDT_COPY(this, this_copy)
-    IMPLICIT NONE
-    TYPE(OUTPUTDT), INTENT(IN) :: this
-    TYPE(OUTPUTDT), INTENT(OUT) :: this_copy
-    this_copy = this
-  END SUBROUTINE OUTPUTDT_COPY
-
-END MODULE MWD_OUTPUT_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated.
-!%
-!%      Type
-!%      ----
-!%
-!%      - ControlDT
-!%
-!%          ========================== =====================================
-!%          `Variables`                Description
-!%          ========================== =====================================
-!%          ``x``                      Control vector
-!%          ``l``                      Control vector lower bound
-!%          ``u``                      Control vector upper bound
-!%          ``x_bkg``                  Control vector background
-!%          ``l_bkg``                  Control vector lower bound background
-!%          ``u_bkg``                  Control vector upper bound background
-!%          ``nbd``                    Control vector kind of bound
-!%
-!§      Subroutine
-!%      ----------
-!%
-!%      - ControlDT_initialise
-!%      - ControlDT_copy
-MODULE MWD_CONTROL_DIFF
-!% only: sp
-  USE MD_CONSTANT
-  IMPLICIT NONE
-!~         real(sp), dimension(:), allocatable :: x_bkg
-  TYPE CONTROLDT
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: x
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: l
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: u
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_bkg
-      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_bkg
-      INTEGER, DIMENSION(:), ALLOCATABLE :: nbd
-  END TYPE CONTROLDT
-
-CONTAINS
-  SUBROUTINE CONTROLDT_INITIALISE(this, n)
-    IMPLICIT NONE
-    TYPE(CONTROLDT), INTENT(INOUT) :: this
-    INTEGER, INTENT(IN) :: n
-    INTRINSIC ALLOCATED
-    INTRINSIC SIZE
-! Must check alloc before size
-    IF (ALLOCATED(this%x)) THEN
-      IF (SIZE(this%x) .EQ. n) RETURN
-    END IF
-    CALL CONTROLDT_FINALISE(this)
-    ALLOCATE(this%x(n))
-    this%x = -99._sp
-!~         allocate (this%x_bkg(n))
-!~         this%x_bkg = 0._sp
-    ALLOCATE(this%l(n))
-    this%l = -99._sp
-    ALLOCATE(this%l_bkg(n))
-    this%l_bkg = -99._sp
-    ALLOCATE(this%u(n))
-    this%u = -99._sp
-    ALLOCATE(this%u_bkg(n))
-    this%u_bkg = -99._sp
-    ALLOCATE(this%nbd(n))
-    this%nbd = -99
-  END SUBROUTINE CONTROLDT_INITIALISE
-
-  SUBROUTINE CONTROLDT_FINALISE(this)
-    IMPLICIT NONE
-    TYPE(CONTROLDT), INTENT(INOUT) :: this
-    INTRINSIC ALLOCATED
-    IF (ALLOCATED(this%x)) THEN
-      DEALLOCATE(this%x)
-!~         deallocate (this%x_bkg(n))
-      DEALLOCATE(this%l)
-      DEALLOCATE(this%l_bkg)
-      DEALLOCATE(this%u)
-      DEALLOCATE(this%u_bkg)
-      DEALLOCATE(this%nbd)
-    END IF
-  END SUBROUTINE CONTROLDT_FINALISE
-
-  SUBROUTINE CONTROLDT_COPY(this, this_copy)
-    IMPLICIT NONE
-    TYPE(CONTROLDT), INTENT(IN) :: this
-    TYPE(CONTROLDT), INTENT(OUT) :: this_copy
-    this_copy = this
-  END SUBROUTINE CONTROLDT_COPY
-
-! To manually deallocate from Python. ControlDT_finalize is used as
-! __del__ method for garbage collecting (implemented by f90wrap automatically)
-  SUBROUTINE CONTROLDT_DEALLOC(this)
-    IMPLICIT NONE
-    TYPE(CONTROLDT), INTENT(INOUT) :: this
-    CALL CONTROLDT_FINALISE(this)
-  END SUBROUTINE CONTROLDT_DEALLOC
-
-END MODULE MWD_CONTROL_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated.
-!%
-!%      Type
-!%      ----
-!%
-!%
-!%      - Opr_ParametersDT
-!%
-!%          ========================== =====================================
-!%          `Variables`                Description
-!%          ========================== =====================================
-!%          ``keys``                   Operator parameters keys
-!%          ``values``                 Operator parameters values
-!%
-!%
-!%      Subroutine
-!%      ----------
-!%
-!%      - Opr_ParametersDT_initialise
-!%      - Opr_ParametersDT_copy
-MODULE MWD_OPR_PARAMETERS_DIFF
-!% only: sp, lchar
-  USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-  IMPLICIT NONE
-!$F90W char-array
-  TYPE OPR_PARAMETERSDT
-      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_PARAMETERSDT
-  TYPE OPR_PARAMETERSDT_DIFF
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_PARAMETERSDT_DIFF
-
-CONTAINS
-  SUBROUTINE OPR_PARAMETERSDT_INITIALISE(this, setup, mesh)
-    IMPLICIT NONE
-    TYPE(OPR_PARAMETERSDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    ALLOCATE(this%keys(setup%nop))
-    this%keys = '...'
-    ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nop))
-    this%values = -99._sp
-  END SUBROUTINE OPR_PARAMETERSDT_INITIALISE
-
-  SUBROUTINE OPR_PARAMETERSDT_COPY(this, this_copy)
-    IMPLICIT NONE
-    TYPE(OPR_PARAMETERSDT), INTENT(IN) :: this
-    TYPE(OPR_PARAMETERSDT), INTENT(OUT) :: this_copy
-    this_copy = this
-  END SUBROUTINE OPR_PARAMETERSDT_COPY
-
-END MODULE MWD_OPR_PARAMETERS_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated.
-!%
-!%      Type
-!%      ----
-!%
-!%      - ParametersDT
-!%
-!%          ========================== =====================================
-!%          `Variables`                Description
-!%          ========================== =====================================
-!%          ``control``                ControlDT
-!%          ``opr_parameters``         Opr_ParametersDT
-!%          ``opr_initial_states``     Opr_StatesDT
-!%
-!§      Subroutine
-!%      ----------
-!%
-!%      - ParametersDT_initialise
-!%      - ParametersDT_copy
-MODULE MWD_PARAMETERS_DIFF
-!% only: sp
-  USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-!% only: ControlDT
-  USE MWD_CONTROL_DIFF
-!% only: Opr_ParametersDT, Opr_ParametersDT_initialise
-  USE MWD_OPR_PARAMETERS_DIFF
-!% only: Opr_StatesDT, Opr_StatesDT_initialise
-  USE MWD_OPR_STATES_DIFF
-  IMPLICIT NONE
-  TYPE PARAMETERSDT
-      TYPE(CONTROLDT) :: control
-      TYPE(OPR_PARAMETERSDT) :: opr_parameters
-      TYPE(OPR_STATESDT) :: opr_initial_states
-  END TYPE PARAMETERSDT
-  TYPE PARAMETERSDT_DIFF
-      TYPE(CONTROLDT) :: control
-      TYPE(OPR_PARAMETERSDT_DIFF) :: opr_parameters
-      TYPE(OPR_STATESDT_DIFF) :: opr_initial_states
-  END TYPE PARAMETERSDT_DIFF
-
-CONTAINS
-  SUBROUTINE PARAMETERSDT_INITIALISE(this, setup, mesh)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    CALL OPR_PARAMETERSDT_INITIALISE(this%opr_parameters, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_initial_states, setup, mesh)
-  END SUBROUTINE PARAMETERSDT_INITIALISE
-
-  SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(IN) :: this
-    TYPE(PARAMETERSDT), INTENT(OUT) :: this_copy
-    this_copy = this
-  END SUBROUTINE PARAMETERSDT_COPY
-
-END MODULE MWD_PARAMETERS_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated.
-!%
 !%      Subroutine
 !%      ----------
 !%
@@ -1295,6 +960,462 @@ CONTAINS
   END FUNCTION LGRM
 
 END MODULE MWD_METRICS_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - Opr_StatesDT
+!%
+!%          ========================== =====================================
+!%          `Variables`                Description
+!%          ========================== =====================================
+!%          ``keys``                   Operator states keys
+!%          ``values``                 Operator states values
+!%
+!§      Subroutine
+!%      ----------
+!%
+!%      - Opr_StatesDT_initialise
+!%      - Opr_StatesDT_copy
+MODULE MWD_OPR_STATES_DIFF
+!% only: sp, lchar
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+  IMPLICIT NONE
+!$F90W char-array
+  TYPE OPR_STATESDT
+      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
+  END TYPE OPR_STATESDT
+  TYPE OPR_STATESDT_DIFF
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
+  END TYPE OPR_STATESDT_DIFF
+
+CONTAINS
+  SUBROUTINE OPR_STATESDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(OPR_STATESDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    ALLOCATE(this%keys(setup%nos))
+    this%keys = '...'
+    ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nos))
+    this%values = -99._sp
+  END SUBROUTINE OPR_STATESDT_INITIALISE
+
+  SUBROUTINE OPR_STATESDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(OPR_STATESDT), INTENT(IN) :: this
+    TYPE(OPR_STATESDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE OPR_STATESDT_COPY
+
+END MODULE MWD_OPR_STATES_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - OutputDT
+!%
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``cost``                 Value of cost function
+!%          ``sim_response``         ResponseDT
+!%          ``opr_final_states``     Opr_StatesDT
+!%          ======================== =======================================
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - OutputDT_initialise
+!%      - OutputDT_copy
+MODULE MWD_OUTPUT_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: ResponseDT, ResponseDT_initialise
+  USE MWD_RESPONSE
+!% only: Opr_StatesDT, Opr_StatesDT_initialise
+  USE MWD_OPR_STATES_DIFF
+  IMPLICIT NONE
+  TYPE OUTPUTDT
+      TYPE(RESPONSEDT) :: sim_response
+      TYPE(OPR_STATESDT) :: opr_final_states
+      REAL(sp) :: cost
+  END TYPE OUTPUTDT
+  TYPE OUTPUTDT_DIFF
+      TYPE(RESPONSEDT) :: sim_response
+      REAL(sp) :: cost
+  END TYPE OUTPUTDT_DIFF
+
+CONTAINS
+  SUBROUTINE OUTPUTDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(OUTPUTDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    CALL RESPONSEDT_INITIALISE(this%sim_response, setup, mesh)
+    CALL OPR_STATESDT_INITIALISE(this%opr_final_states, setup, mesh)
+  END SUBROUTINE OUTPUTDT_INITIALISE
+
+  SUBROUTINE OUTPUTDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(OUTPUTDT), INTENT(IN) :: this
+    TYPE(OUTPUTDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE OUTPUTDT_COPY
+
+END MODULE MWD_OUTPUT_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - ControlDT
+!%
+!%          ========================== =====================================
+!%          `Variables`                Description
+!%          ========================== =====================================
+!%          ``x``                      Control vector
+!%          ``l``                      Control vector lower bound
+!%          ``u``                      Control vector upper bound
+!%          ``x_bkg``                  Control vector background
+!%          ``l_bkg``                  Control vector lower bound background
+!%          ``u_bkg``                  Control vector upper bound background
+!%          ``nbd``                    Control vector kind of bound
+!%
+!§      Subroutine
+!%      ----------
+!%
+!%      - ControlDT_initialise
+!%      - ControlDT_copy
+MODULE MWD_CONTROL_DIFF
+!% only: sp
+  USE MD_CONSTANT
+  IMPLICIT NONE
+!~         real(sp), dimension(:), allocatable :: x_bkg
+  TYPE CONTROLDT
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: x
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: l
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: u
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: l_bkg
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: u_bkg
+      INTEGER, DIMENSION(:), ALLOCATABLE :: nbd
+  END TYPE CONTROLDT
+
+CONTAINS
+  SUBROUTINE CONTROLDT_INITIALISE(this, n)
+    IMPLICIT NONE
+    TYPE(CONTROLDT), INTENT(INOUT) :: this
+    INTEGER, INTENT(IN) :: n
+    INTRINSIC ALLOCATED
+    INTRINSIC SIZE
+! Must check alloc before size
+    IF (ALLOCATED(this%x)) THEN
+      IF (SIZE(this%x) .EQ. n) RETURN
+    END IF
+    CALL CONTROLDT_FINALISE(this)
+    ALLOCATE(this%x(n))
+    this%x = -99._sp
+!~         allocate (this%x_bkg(n))
+!~         this%x_bkg = 0._sp
+    ALLOCATE(this%l(n))
+    this%l = -99._sp
+    ALLOCATE(this%l_bkg(n))
+    this%l_bkg = -99._sp
+    ALLOCATE(this%u(n))
+    this%u = -99._sp
+    ALLOCATE(this%u_bkg(n))
+    this%u_bkg = -99._sp
+    ALLOCATE(this%nbd(n))
+    this%nbd = -99
+  END SUBROUTINE CONTROLDT_INITIALISE
+
+  SUBROUTINE CONTROLDT_FINALISE(this)
+    IMPLICIT NONE
+    TYPE(CONTROLDT), INTENT(INOUT) :: this
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(this%x)) THEN
+      DEALLOCATE(this%x)
+!~         deallocate (this%x_bkg(n))
+      DEALLOCATE(this%l)
+      DEALLOCATE(this%l_bkg)
+      DEALLOCATE(this%u)
+      DEALLOCATE(this%u_bkg)
+      DEALLOCATE(this%nbd)
+    END IF
+  END SUBROUTINE CONTROLDT_FINALISE
+
+  SUBROUTINE CONTROLDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(CONTROLDT), INTENT(IN) :: this
+    TYPE(CONTROLDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE CONTROLDT_COPY
+
+! To manually deallocate from Python. ControlDT_finalize is used as
+! __del__ method for garbage collecting (implemented by f90wrap automatically)
+  SUBROUTINE CONTROLDT_DEALLOC(this)
+    IMPLICIT NONE
+    TYPE(CONTROLDT), INTENT(INOUT) :: this
+    CALL CONTROLDT_FINALISE(this)
+  END SUBROUTINE CONTROLDT_DEALLOC
+
+END MODULE MWD_CONTROL_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%
+!%      - Opr_ParametersDT
+!%
+!%          ========================== =====================================
+!%          `Variables`                Description
+!%          ========================== =====================================
+!%          ``keys``                   Operator parameters keys
+!%          ``values``                 Operator parameters values
+!%
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - Opr_ParametersDT_initialise
+!%      - Opr_ParametersDT_copy
+MODULE MWD_OPR_PARAMETERS_DIFF
+!% only: sp, lchar
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+  IMPLICIT NONE
+!$F90W char-array
+  TYPE OPR_PARAMETERSDT
+      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
+  END TYPE OPR_PARAMETERSDT
+  TYPE OPR_PARAMETERSDT_DIFF
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
+  END TYPE OPR_PARAMETERSDT_DIFF
+
+CONTAINS
+  SUBROUTINE OPR_PARAMETERSDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(OPR_PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    ALLOCATE(this%keys(setup%nop))
+    this%keys = '...'
+    ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nop))
+    this%values = -99._sp
+  END SUBROUTINE OPR_PARAMETERSDT_INITIALISE
+
+  SUBROUTINE OPR_PARAMETERSDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(OPR_PARAMETERSDT), INTENT(IN) :: this
+    TYPE(OPR_PARAMETERSDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE OPR_PARAMETERSDT_COPY
+
+END MODULE MWD_OPR_PARAMETERS_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - ParametersDT
+!%
+!%          ========================== =====================================
+!%          `Variables`                Description
+!%          ========================== =====================================
+!%          ``control``                ControlDT
+!%          ``opr_parameters``         Opr_ParametersDT
+!%          ``opr_initial_states``     Opr_StatesDT
+!%
+!§      Subroutine
+!%      ----------
+!%
+!%      - ParametersDT_initialise
+!%      - ParametersDT_copy
+MODULE MWD_PARAMETERS_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: ControlDT
+  USE MWD_CONTROL_DIFF
+!% only: Opr_ParametersDT, Opr_ParametersDT_initialise
+  USE MWD_OPR_PARAMETERS_DIFF
+!% only: Opr_StatesDT, Opr_StatesDT_initialise
+  USE MWD_OPR_STATES_DIFF
+  IMPLICIT NONE
+  TYPE PARAMETERSDT
+      TYPE(CONTROLDT) :: control
+      TYPE(OPR_PARAMETERSDT) :: opr_parameters
+      TYPE(OPR_STATESDT) :: opr_initial_states
+  END TYPE PARAMETERSDT
+  TYPE PARAMETERSDT_DIFF
+      TYPE(CONTROLDT) :: control
+      TYPE(OPR_PARAMETERSDT_DIFF) :: opr_parameters
+      TYPE(OPR_STATESDT_DIFF) :: opr_initial_states
+  END TYPE PARAMETERSDT_DIFF
+
+CONTAINS
+  SUBROUTINE PARAMETERSDT_INITIALISE(this, setup, mesh)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    CALL OPR_PARAMETERSDT_INITIALISE(this%opr_parameters, setup, mesh)
+    CALL OPR_STATESDT_INITIALISE(this%opr_initial_states, setup, mesh)
+  END SUBROUTINE PARAMETERSDT_INITIALISE
+
+  SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: this
+    TYPE(PARAMETERSDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE PARAMETERSDT_COPY
+
+END MODULE MWD_PARAMETERS_DIFF
+
+!%      (MWD) Module Wrapped and Differentiated.
+!%
+!%      Type
+!%      ----
+!%
+!%      - ReturnsDT
+!%
+!%          ======================== =======================================
+!%          `Variables`              Description
+!%          ======================== =======================================
+!%          ``nmts``                 Number of time step to return
+!%          ``mask_time_step``       Mask of time step
+!%          ``opr_states``           Array of Opr_StatesDT
+!%          ``opr_states_flag``      Return flag of opr_states
+!%          ``q_domain``             Array of discharge
+!%          ``q_domain_flag``        Return flag of q_domain
+!%          ``iter_cost``            Array of cost iteration
+!%          ``iter_cost_flag``       Return flag of iter_cost
+!%          ``iter_projg``           Array of infinity norm of projected gradient iteration
+!%          ``iter_projg_flag``      Return flag of iter_projg
+!%          ``control_vector``       Array of control vector
+!%          ``control_vector_flag``  Return flag of control_vector
+!%          ``cost``                 Cost value
+!%          ``cost_flag``            Return flag of cost
+!%          ``jobs``                 Jobs value
+!%          ``jobs_flag``            Return flag of jobs
+!%          ``jreg``                 Jreg value
+!%          ``jreg_flag``            Return flag of jreg
+!%          ======================== =======================================
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - ReturnsDT_initialise
+!%      - ReturnsDT_copy
+MODULE MWD_RETURNS_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!%only: Opr_StatesDT
+  USE MWD_OPR_STATES_DIFF
+  IMPLICIT NONE
+  TYPE RETURNSDT
+      INTEGER :: nmts
+      LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
+      TYPE(OPR_STATESDT), DIMENSION(:), ALLOCATABLE :: opr_states
+      LOGICAL :: opr_states_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_domain
+      LOGICAL :: q_domain_flag=.false.
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: iter_cost
+      LOGICAL :: iter_cost_flag=.false.
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: iter_projg
+      LOGICAL :: iter_projg_flag=.false.
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: control_vector
+      LOGICAL :: control_vector_flag=.false.
+      REAL(sp) :: cost
+      LOGICAL :: cost_flag=.false.
+      REAL(sp) :: jobs
+      LOGICAL :: jobs_flag=.false.
+      REAL(sp) :: jreg
+      LOGICAL :: jreg_flag=.false.
+  END TYPE RETURNSDT
+
+CONTAINS
+  SUBROUTINE RETURNSDT_INITIALISE(this, setup, mesh, nmts, keys)
+    IMPLICIT NONE
+    TYPE(RETURNSDT), INTENT(INOUT) :: this
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: nmts
+    CHARACTER, DIMENSION(:, :), INTENT(IN) :: keys
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    CHARACTER(len=lchar), DIMENSION(SIZE(keys, 2)) :: wkeys
+    wkeys = ''
+    DO i=1,SIZE(keys, 2)
+      DO j=1,SIZE(keys, 1)
+        wkeys(i)(j:j) = keys(j, i)
+      END DO
+    END DO
+    this%nmts = nmts
+    ALLOCATE(this%mask_time_step(setup%ntime_step))
+    this%mask_time_step = .false.
+! Variable inside forward run are pre allocated
+! Variable inside optimize will be allocated on the fly
+    DO i=1,SIZE(wkeys)
+      SELECT CASE  (wkeys(i)) 
+      CASE ('opr_states') 
+        this%opr_states_flag = .true.
+        ALLOCATE(this%opr_states(this%nmts))
+      CASE ('q_domain') 
+        this%q_domain_flag = .true.
+        ALLOCATE(this%q_domain(mesh%nrow, mesh%ncol, this%nmts))
+      CASE ('iter_cost') 
+        this%iter_cost_flag = .true.
+      CASE ('iter_projg') 
+        this%iter_projg_flag = .true.
+      CASE ('control_vector') 
+        this%control_vector_flag = .true.
+      CASE ('cost') 
+        this%cost_flag = .true.
+      CASE ('jobs') 
+        this%jobs_flag = .true.
+      CASE ('jreg') 
+        this%jreg_flag = .true.
+      END SELECT
+    END DO
+  END SUBROUTINE RETURNSDT_INITIALISE
+
+  SUBROUTINE RETURNSDT_COPY(this, this_copy)
+    IMPLICIT NONE
+    TYPE(RETURNSDT), INTENT(IN) :: this
+    TYPE(RETURNSDT), INTENT(OUT) :: this_copy
+    this_copy = this
+  END SUBROUTINE RETURNSDT_COPY
+
+END MODULE MWD_RETURNS_DIFF
 
 !%      (MD) Module Differentiated.
 !%
@@ -3008,7 +3129,7 @@ MODULE MWD_COST_DIFF
 !% only: OptionsDT
   USE MWD_OPTIONS
 !% only: ReturnsDT
-  USE MWD_RETURNS
+  USE MWD_RETURNS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -7640,6 +7761,8 @@ END MODULE MD_ROUTING_OPERATOR_DIFF
 !%
 !%      - gr4_lr_forward
 !%      - gr4_kw_forward
+!%      - gr5_kw_forward
+!%      - gr5_kw_forward
 !%      - grd_lr_forward
 MODULE MD_FORWARD_STRUCTURE_DIFF
 !% only: sp
@@ -7657,7 +7780,7 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 !% only: OptionsDT
   USE MWD_OPTIONS
 !% only: ReturnsDT
-  USE MWD_RETURNS
+  USE MWD_RETURNS_DIFF
 !% only: sparse_matrix_to_matrix
   USE MWD_SPARSE_MATRIX_MANIPULATION
 !% only: gr_interception, gr_production, gr_exchange, &
@@ -7677,6 +7800,9 @@ CONTAINS
   SUBROUTINE GR4_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -7698,14 +7824,14 @@ CONTAINS
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
 &   , qd_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
-    output_d%sim_response%q = 0.0_4
-    q_d = 0.0_4
-    qt_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    output_d%sim_response%q = 0.0_4
+    q_d = 0.0_4
+    qt_d = 0.0_4
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -7858,6 +7984,9 @@ CONTAINS
   SUBROUTINE GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -7879,12 +8008,12 @@ CONTAINS
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
 &   , qd_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
-    INTEGER :: branch
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    INTEGER :: branch
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -8133,6 +8262,9 @@ CONTAINS
   SUBROUTINE GR4_LR_FORWARD(setup, mesh, input_data, parameters, output&
 &   , options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8149,11 +8281,12 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    iret = 0
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -8277,6 +8410,9 @@ CONTAINS
   SUBROUTINE GR4_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8301,7 +8437,7 @@ CONTAINS
 &   , qijm1, qim1j, qij
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
 &   , qd_d, qlijm1_d, qlij_d, qijm1_d, qim1j_d, qij_d
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
@@ -8482,6 +8618,9 @@ CONTAINS
   SUBROUTINE GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8506,7 +8645,7 @@ CONTAINS
 &   , qijm1, qim1j, qij
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
 &   , qd_b, qlijm1_b, qlij_b, qijm1_b, qim1j_b, qij_b
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
     INTEGER :: branch
 !% =================================================================================================================== %!
@@ -8785,6 +8924,9 @@ CONTAINS
   SUBROUTINE GR4_KW_FORWARD(setup, mesh, input_data, parameters, output&
 &   , options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8804,13 +8946,14 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qlijm1, qlij&
 &   , qijm1, qim1j, qij
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
     q = 0._sp
     qt = 0._sp
+    iret = 0
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -8946,6 +9089,9 @@ CONTAINS
   SUBROUTINE GR5_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -8967,14 +9113,14 @@ CONTAINS
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
 &   , qd_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
-    output_d%sim_response%q = 0.0_4
-    q_d = 0.0_4
-    qt_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    output_d%sim_response%q = 0.0_4
+    q_d = 0.0_4
+    qt_d = 0.0_4
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -9132,6 +9278,9 @@ CONTAINS
   SUBROUTINE GR5_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9153,12 +9302,12 @@ CONTAINS
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
 &   , qd_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
-    INTEGER :: branch
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    INTEGER :: branch
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -9414,6 +9563,9 @@ CONTAINS
   SUBROUTINE GR5_LR_FORWARD(setup, mesh, input_data, parameters, output&
 &   , options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9430,11 +9582,12 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    iret = 0
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -9560,6 +9713,9 @@ CONTAINS
   SUBROUTINE GR5_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9584,7 +9740,7 @@ CONTAINS
 &   , qijm1, qim1j, qij
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d&
 &   , qd_d, qlijm1_d, qlij_d, qijm1_d, qim1j_d, qij_d
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
@@ -9770,6 +9926,9 @@ CONTAINS
   SUBROUTINE GR5_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -9794,7 +9953,7 @@ CONTAINS
 &   , qijm1, qim1j, qij
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b&
 &   , qd_b, qlijm1_b, qlij_b, qijm1_b, qim1j_b, qij_b
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
     INTEGER :: branch
 !% =================================================================================================================== %!
@@ -10080,6 +10239,9 @@ CONTAINS
   SUBROUTINE GR5_KW_FORWARD(setup, mesh, input_data, parameters, output&
 &   , options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -10099,13 +10261,14 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qlijm1, qlij&
 &   , qijm1, qim1j, qij
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
     q = 0._sp
     qt = 0._sp
+    iret = 0
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -10243,6 +10406,9 @@ CONTAINS
   SUBROUTINE GRD_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -10263,15 +10429,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
     REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, prr_d, qr_d, qup_d, qrout_d
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MIN
     INTRINSIC MAX
-    output_d%sim_response%q = 0.0_4
-    q_d = 0.0_4
-    qt_d = 0.0_4
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    output_d%sim_response%q = 0.0_4
+    q_d = 0.0_4
+    qt_d = 0.0_4
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -10405,6 +10571,9 @@ CONTAINS
   SUBROUTINE GRD_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -10425,13 +10594,13 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
     REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, prr_b, qr_b, qup_b, qrout_b
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MIN
     INTRINSIC MAX
-    INTEGER :: branch
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    INTEGER :: branch
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -10644,6 +10813,9 @@ CONTAINS
   SUBROUTINE GRD_LR_FORWARD(setup, mesh, input_data, parameters, output&
 &   , options, returns)
     IMPLICIT NONE
+!% =============================================================================================================== %!
+!%   Store optional returns
+!% =============================================================================================================== %!
 !% [ END DO TIME ]
 !% =================================================================================================================== %!
 !%   Derived Type Variables (shared)
@@ -10660,12 +10832,13 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
-    INTEGER :: t, i, row, col, g
+    INTEGER :: t, i, row, col, g, iret
     INTRINSIC MIN
     INTRINSIC MAX
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
+    iret = 0
 !% [ DO TIME ]
     DO t=1,setup%ntime_step
 !% =============================================================================================================== %!
@@ -10798,7 +10971,7 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 !% only: OptionsDT
   USE MWD_OPTIONS
 !% only: ReturnsDT
-  USE MWD_RETURNS
+  USE MWD_RETURNS_DIFF
 !% only: control_to_parameters
   USE MWD_PARAMETERS_MANIPULATION_DIFF
 !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, grd_lr_forward
@@ -10875,7 +11048,7 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 !% only: OptionsDT
   USE MWD_OPTIONS
 !% only: ReturnsDT
-  USE MWD_RETURNS
+  USE MWD_RETURNS_DIFF
 !% only: control_to_parameters
   USE MWD_PARAMETERS_MANIPULATION_DIFF
 !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, grd_lr_forward
@@ -11017,7 +11190,7 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
 !% only: OptionsDT
   USE MWD_OPTIONS
 !% only: ReturnsDT
-  USE MWD_RETURNS
+  USE MWD_RETURNS_DIFF
 !% only: control_to_parameters
   USE MWD_PARAMETERS_MANIPULATION_DIFF
 !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, grd_lr_forward

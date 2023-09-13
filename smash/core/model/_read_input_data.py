@@ -20,6 +20,7 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_input_data import Input_DataDT
 
 
+# TODO: Move this function to a generic common function file
 def _index_containing_substring(l: ListLike, subs: str):
     for i, s in enumerate(l):
         if subs in s:

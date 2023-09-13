@@ -13,14 +13,40 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
     ncpu = max(1, os.cpu_count() - 1)
 
     for model in model_structure:
-        instance = smash.forward_run(
-            model, common_options={"verbose": False, "ncpu": ncpu}
+        instance, ret = smash.forward_run(
+            model,
+            common_options={"verbose": False, "ncpu": ncpu},
+            return_options={
+                "cost": True,
+                "jobs": True,
+                "jreg": True,
+                "q_domain": True,
+                "opr_states": True,
+            },
         )
+
+        mask = model.mesh.active_cell == 0
 
         qsim = instance.sim_response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"forward_run.{instance.setup.structure}.sim_q"] = qsim
+        res[f"forward_run.{instance.setup.structure}.cost"] = np.array(
+            ret.cost, ndmin=1
+        )
+        res[f"forward_run.{instance.setup.structure}.jobs"] = np.array(
+            ret.jobs, ndmin=1
+        )
+        res[f"forward_run.{instance.setup.structure}.jreg"] = np.array(
+            ret.jreg, ndmin=1
+        )
+        res[f"forward_run.{instance.setup.structure}.q_domain"] = np.where(
+            mask, np.nan, ret.q_domain[..., -1]
+        )
+        for i, key in enumerate(model.opr_initial_states.keys):
+            res[f"forward_run.{instance.setup.structure}.opr_states.{key}"] = np.where(
+                mask, np.nan, ret.opr_states[-1].values[..., i]
+            )
 
     return res
 
@@ -30,7 +56,9 @@ def test_forward_run():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), key
+        assert np.allclose(
+            value, pytest.baseline[key][:], atol=1e-06, equal_nan=True
+        ), key
 
 
 def test_sparse_forward_run():
@@ -38,7 +66,9 @@ def test_sparse_forward_run():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06), "sparse." + key
+        assert np.allclose(
+            value, pytest.baseline[key][:], atol=1e-06, equal_nan=True
+        ), ("sparse." + key)
 
 
 def test_multiple_forward_run():
@@ -69,4 +99,4 @@ def test_multiple_forward_run():
     )
 
     # % Check that forward run discharge is equivalent to multiple forward run discharge
-    assert np.allclose(frq, mfr.q, atol=1e-06), "multiple_forward_run.q"
+    assert np.allclose(frq, mfr.q, atol=1e-06, equal_nan=True), "multiple_forward_run.q"

@@ -14,3 +14,6 @@ Returned Objects
       Samples
       MultipleForwardRun
       MultipleOptimize
+      ForwardRun
+      Optimize
+      MultisetEstimate
