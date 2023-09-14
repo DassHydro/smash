@@ -15,8 +15,8 @@ OPR_PARAMETERS = [
     "kexc",
     "aexc",
     "ca",
-    "kb",
     "cc",
+    "kb",
     "llr",
     "akw",
     "bkw",
@@ -332,7 +332,7 @@ DEFAULT_TERMINATION_CRIT = dict(
     ),
     **dict(
         zip(
-            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": False}]
+            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}]
         )
     ),
 )

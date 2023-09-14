@@ -732,7 +732,7 @@ contains
         !% =================================================================================================================== %!
 
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
-        real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+        real(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd, qup, qrout
         integer :: t, i, row, col, g
 
         !% =================================================================================================================== %!
@@ -759,7 +759,7 @@ contains
 
 !~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
 !~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
             do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
 
                 row = mesh%path(1, i)
@@ -788,18 +788,10 @@ contains
                     call gr_production(pn, en, parameters%opr_parameters%values(row, col, 1), 9._sp/4._sp, &
                     & parameters%opr_initial_states%values(row, col, 1), pr, perc)
 
-                    !% =============================================================================================== %!
-                    !%   Exchange module
-                    !% =============================================================================================== %!
-
-                    !call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-                    !& parameters%opr_initial_states%values(row, col, 3), l)
-
                 else
 
                     pr = 0._sp
                     perc = 0._sp
-                    l = 0._sp
 
                 end if !% [ END IF PRCP GAP ]
 
@@ -807,13 +799,13 @@ contains
                 !%   Transfer module
                 !% =================================================================================================== %!
 
-                prr = 0.9_sp*(pr + perc) + l
+                prr = 0.9_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
                 call gr_transfer(4._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 2), &
                 & parameters%opr_initial_states%values(row, col, 2), qr)
 
-                qd = max(0._sp, prd + l)
+                qd = max(0._sp, prd)
 
                 qt(row, col) = parameters%opr_parameters%values(row, col, 3)*(qr + qd)
 

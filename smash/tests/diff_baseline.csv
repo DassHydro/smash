@@ -1,11 +1,12 @@
-commit 5eeb4880d3d49e740e320a7ce293331048eec597
-Merge: dec566a f472982
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Tue Sep 12 15:36:55 2023 +0200
+commit 3a6c97defbc60d1dc33e1cbd929d8924b18af6b8
+Author: Thomas De-Fournas <thomasdefournass@gmail.com>
+Date:   Thu Sep 14 10:28:14 2023 +0200
 
-    Merge pull request #81 from DassHydro-dev/fix-compute-dflow-segmentation
+    * ENC: Add loieau model structure
     
-    FIX: fix bug when computing dflow for segmentation algo
+    - Ajout de la structure loieau (loieau-lr)
+    - Ajout des 3 nouveaux  paramètres de loieau : ca,kb,cc
+    - Ajout test structure loieau
 
 TEST NAME                                 |STATUS
 bbox_mesh.active_cell                     |NON MODIFIED
@@ -32,7 +33,7 @@ forward_run.gr4-lr.sim_q                  |NON MODIFIED
 forward_run.gr5-kw.sim_q                  |NON MODIFIED
 forward_run.gr5-lr.sim_q                  |NON MODIFIED
 forward_run.grd-lr.sim_q                  |NON MODIFIED
-forward_run.loieau-lr.sim_q               |ADDED
+forward_run.loieau-lr.sim_q               |MODIFIED
 generate_samples.normal                   |NON MODIFIED
 generate_samples.uniform                  |NON MODIFIED
 hydrograph_segmentation.by_obs            |NON MODIFIED
@@ -114,11 +115,11 @@ optimize.grd-lr.distributed.sim_q         |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q        |NON MODIFIED
 optimize.grd-lr.multi-polynomial.sim_q    |NON MODIFIED
 optimize.grd-lr.uniform.sim_q             |NON MODIFIED
-optimize.loieau-lr.ann.sim_q              |ADDED
-optimize.loieau-lr.distributed.sim_q      |ADDED
-optimize.loieau-lr.multi-linear.sim_q     |ADDED
-optimize.loieau-lr.multi-polynomial.sim_q |ADDED
-optimize.loieau-lr.uniform.sim_q          |ADDED
+optimize.loieau-lr.ann.sim_q              |NON MODIFIED
+optimize.loieau-lr.distributed.sim_q      |MODIFIED
+optimize.loieau-lr.multi-linear.sim_q     |MODIFIED
+optimize.loieau-lr.multi-polynomial.sim_q |MODIFIED
+optimize.loieau-lr.uniform.sim_q          |MODIFIED
 precipitation_indices.d1                  |NON MODIFIED
 precipitation_indices.d2                  |NON MODIFIED
 precipitation_indices.hg                  |NON MODIFIED

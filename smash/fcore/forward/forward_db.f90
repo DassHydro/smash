@@ -10261,7 +10261,7 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_d, qt_d
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d, &
 &   qup_d, qrout_d
     INTEGER :: t, i, row, col, g
@@ -10289,7 +10289,7 @@ CONTAINS
       END IF
 !~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
 !~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -10326,15 +10326,9 @@ CONTAINS
 &                          opr_initial_states%values(row, col, 1), &
 &                          parameters_d%opr_initial_states%values(row, &
 &                          col, 1), pr, pr_d, perc, perc_d)
-!% =============================================================================================== %!
-!%   Exchange module
-!% =============================================================================================== %!
-!call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-!& parameters%opr_initial_states%values(row, col, 3), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
-            l = 0._sp
             perc_d = 0.0_4
             pr_d = 0.0_4
           END IF
@@ -10342,7 +10336,7 @@ CONTAINS
 !%   Transfer module
 !% =================================================================================================== %!
           prr_d = 0.9_sp*(pr_d+perc_d)
-          prr = 0.9_sp*(pr+perc) + l
+          prr = 0.9_sp*(pr+perc)
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(4._sp, prcp(row, col), prr, prr_d, &
@@ -10351,9 +10345,9 @@ CONTAINS
 &                      parameters%opr_initial_states%values(row, col, 2)&
 &                      , parameters_d%opr_initial_states%values(row, col&
 &                      , 2), qr, qr_d)
-          IF (0._sp .LT. prd + l) THEN
+          IF (0._sp .LT. prd) THEN
             qd_d = prd_d
-            qd = prd + l
+            qd = prd
           ELSE
             qd = 0._sp
             qd_d = 0.0_4
@@ -10442,7 +10436,7 @@ CONTAINS
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b, qt_b
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd, qup, qrout
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b, &
 &   qup_b, qrout_b
     INTEGER :: t, i, row, col, g
@@ -10473,7 +10467,7 @@ CONTAINS
       END IF
 !~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
 !~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -10514,23 +10508,17 @@ CONTAINS
 &                        row, col, 1), 9._sp/4._sp, parameters%&
 &                        opr_initial_states%values(row, col, 1), pr, &
 &                        perc)
-!% =============================================================================================== %!
-!%   Exchange module
-!% =============================================================================================== %!
-!call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-!& parameters%opr_initial_states%values(row, col, 3), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
             pr = 0._sp
             perc = 0._sp
-            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
 !% =================================================================================================== %!
           CALL PUSHREAL4(prr)
-          prr = 0.9_sp*(pr+perc) + l
+          prr = 0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(qr)
           CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
@@ -10538,9 +10526,9 @@ CONTAINS
           CALL GR_TRANSFER(4._sp, prcp(row, col), prr, parameters%&
 &                    opr_parameters%values(row, col, 2), parameters%&
 &                    opr_initial_states%values(row, col, 2), qr)
-          IF (0._sp .LT. prd + l) THEN
+          IF (0._sp .LT. prd) THEN
             CALL PUSHREAL4(qd)
-            qd = prd + l
+            qd = prd
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHREAL4(qd)
@@ -10712,7 +10700,7 @@ CONTAINS
 !%   Local Variables (private)
 !% =================================================================================================================== %!
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd, qup, qrout
     INTEGER :: t, i, row, col, g
     INTRINSIC MIN
     INTRINSIC MAX
@@ -10735,7 +10723,7 @@ CONTAINS
       END IF
 !~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
 !~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
-!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
 !% [ DO SPACE ]
       DO i=1,mesh%nrow*mesh%ncol
         row = mesh%path(1, i)
@@ -10767,26 +10755,20 @@ CONTAINS
 &                        row, col, 1), 9._sp/4._sp, parameters%&
 &                        opr_initial_states%values(row, col, 1), pr, &
 &                        perc)
-!% =============================================================================================== %!
-!%   Exchange module
-!% =============================================================================================== %!
-!call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-!& parameters%opr_initial_states%values(row, col, 3), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
-            l = 0._sp
           END IF
 !% =================================================================================================== %!
 !%   Transfer module
 !% =================================================================================================== %!
-          prr = 0.9_sp*(pr+perc) + l
+          prr = 0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(4._sp, prcp(row, col), prr, parameters%&
 &                    opr_parameters%values(row, col, 2), parameters%&
 &                    opr_initial_states%values(row, col, 2), qr)
-          IF (0._sp .LT. prd + l) THEN
-            qd = prd + l
+          IF (0._sp .LT. prd) THEN
+            qd = prd
           ELSE
             qd = 0._sp
           END IF
