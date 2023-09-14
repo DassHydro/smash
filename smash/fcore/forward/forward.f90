@@ -49,6 +49,10 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
 
         call gr5_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
 
+    case ("loieau-lr")
+
+        call loieau_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+
     case ("grd-lr")
 
         call grd_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
