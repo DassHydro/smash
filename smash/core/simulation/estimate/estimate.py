@@ -43,9 +43,6 @@ class MultisetEstimate:
     jobs : float
         Cost observation component value.
 
-    jreg : float
-        Cost regularization component value.
-
     lcurve_multiset : dict
         A dictionary containing the multiset estimate lcurve data. The elements are:
 
@@ -153,9 +150,6 @@ def multiset_estimate(
         jobs : bool, default False
             Whether to return jobs (observation component of cost) value.
 
-        jreg : bool, default False
-            Whether to return jreg (regularization component of cost) value.
-
         lcurve_multiset : bool, default False
             Whether to return the multiset estimate lcurve.
 
@@ -255,10 +249,11 @@ def _multiset_estimate(
     )
 
     fret = {} if ret_forward_run is None else ret_forward_run.__dict__
-    pyret = {}
-
-    if "lcurve_multiset" in return_options["keys"]:
-        pyret["lcurve_multiset"] = lcurve_multiset
+    pyret = (
+        {"lcurve_multiset": lcurve_multiset}
+        if "lcurve_multiset" in return_options["keys"]
+        else {}
+    )
 
     ret = {**fret, **pyret}
 

@@ -1,18 +1,8 @@
-commit ed529b1c4b013578df04fcb3333317ca64c05bab
+commit 3e1f95b956329d9b7fa1629ac69ffd5862c85f1c
 Author: Francois Colleoni <francois.colleoni@inrae.fr>
-Date:   Wed Sep 13 09:59:06 2023 +0200
+Date:   Wed Sep 13 15:20:56 2023 +0200
 
-    ENC: Add optional returns options
-    
-    This commit add the possibility to return optional intermediate variable inside three functions:
-    - forward_run
-    - optimize
-    - multiset_estimate
-    
-    - Add standardize for return options
-    - Add docstring for return options
-    - Add AD directive to remove some lines to not be differentiated
-    - Add new tests
+    FIX PR: Fix test estimate and real precision for some variables
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -34,47 +24,47 @@ custom_optimize.gr4-lr.custom_set_3.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_4.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_5.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_6.sim_q             |NON MODIFIED
-forward_run.gr4-kw.cost                               |ADDED
-forward_run.gr4-kw.jobs                               |ADDED
-forward_run.gr4-kw.jreg                               |ADDED
-forward_run.gr4-kw.opr_states.hi                      |ADDED
-forward_run.gr4-kw.opr_states.hp                      |ADDED
-forward_run.gr4-kw.opr_states.ht                      |ADDED
-forward_run.gr4-kw.q_domain                           |ADDED
+forward_run.gr4-kw.cost                               |NON MODIFIED
+forward_run.gr4-kw.jobs                               |NON MODIFIED
+forward_run.gr4-kw.jreg                               |DELETED
+forward_run.gr4-kw.opr_states.hi                      |NON MODIFIED
+forward_run.gr4-kw.opr_states.hp                      |NON MODIFIED
+forward_run.gr4-kw.opr_states.ht                      |NON MODIFIED
+forward_run.gr4-kw.q_domain                           |NON MODIFIED
 forward_run.gr4-kw.sim_q                              |NON MODIFIED
-forward_run.gr4-lr.cost                               |ADDED
-forward_run.gr4-lr.jobs                               |ADDED
-forward_run.gr4-lr.jreg                               |ADDED
-forward_run.gr4-lr.opr_states.hi                      |ADDED
-forward_run.gr4-lr.opr_states.hlr                     |ADDED
-forward_run.gr4-lr.opr_states.hp                      |ADDED
-forward_run.gr4-lr.opr_states.ht                      |ADDED
-forward_run.gr4-lr.q_domain                           |ADDED
+forward_run.gr4-lr.cost                               |NON MODIFIED
+forward_run.gr4-lr.jobs                               |NON MODIFIED
+forward_run.gr4-lr.jreg                               |DELETED
+forward_run.gr4-lr.opr_states.hi                      |NON MODIFIED
+forward_run.gr4-lr.opr_states.hlr                     |NON MODIFIED
+forward_run.gr4-lr.opr_states.hp                      |NON MODIFIED
+forward_run.gr4-lr.opr_states.ht                      |NON MODIFIED
+forward_run.gr4-lr.q_domain                           |NON MODIFIED
 forward_run.gr4-lr.sim_q                              |NON MODIFIED
-forward_run.gr5-kw.cost                               |ADDED
-forward_run.gr5-kw.jobs                               |ADDED
-forward_run.gr5-kw.jreg                               |ADDED
-forward_run.gr5-kw.opr_states.hi                      |ADDED
-forward_run.gr5-kw.opr_states.hp                      |ADDED
-forward_run.gr5-kw.opr_states.ht                      |ADDED
-forward_run.gr5-kw.q_domain                           |ADDED
+forward_run.gr5-kw.cost                               |NON MODIFIED
+forward_run.gr5-kw.jobs                               |NON MODIFIED
+forward_run.gr5-kw.jreg                               |DELETED
+forward_run.gr5-kw.opr_states.hi                      |NON MODIFIED
+forward_run.gr5-kw.opr_states.hp                      |NON MODIFIED
+forward_run.gr5-kw.opr_states.ht                      |NON MODIFIED
+forward_run.gr5-kw.q_domain                           |NON MODIFIED
 forward_run.gr5-kw.sim_q                              |NON MODIFIED
-forward_run.gr5-lr.cost                               |ADDED
-forward_run.gr5-lr.jobs                               |ADDED
-forward_run.gr5-lr.jreg                               |ADDED
-forward_run.gr5-lr.opr_states.hi                      |ADDED
-forward_run.gr5-lr.opr_states.hlr                     |ADDED
-forward_run.gr5-lr.opr_states.hp                      |ADDED
-forward_run.gr5-lr.opr_states.ht                      |ADDED
-forward_run.gr5-lr.q_domain                           |ADDED
+forward_run.gr5-lr.cost                               |NON MODIFIED
+forward_run.gr5-lr.jobs                               |NON MODIFIED
+forward_run.gr5-lr.jreg                               |DELETED
+forward_run.gr5-lr.opr_states.hi                      |NON MODIFIED
+forward_run.gr5-lr.opr_states.hlr                     |NON MODIFIED
+forward_run.gr5-lr.opr_states.hp                      |NON MODIFIED
+forward_run.gr5-lr.opr_states.ht                      |NON MODIFIED
+forward_run.gr5-lr.q_domain                           |NON MODIFIED
 forward_run.gr5-lr.sim_q                              |NON MODIFIED
-forward_run.grd-lr.cost                               |ADDED
-forward_run.grd-lr.jobs                               |ADDED
-forward_run.grd-lr.jreg                               |ADDED
-forward_run.grd-lr.opr_states.hlr                     |ADDED
-forward_run.grd-lr.opr_states.hp                      |ADDED
-forward_run.grd-lr.opr_states.ht                      |ADDED
-forward_run.grd-lr.q_domain                           |ADDED
+forward_run.grd-lr.cost                               |NON MODIFIED
+forward_run.grd-lr.jobs                               |NON MODIFIED
+forward_run.grd-lr.jreg                               |DELETED
+forward_run.grd-lr.opr_states.hlr                     |NON MODIFIED
+forward_run.grd-lr.opr_states.hp                      |NON MODIFIED
+forward_run.grd-lr.opr_states.ht                      |NON MODIFIED
+forward_run.grd-lr.q_domain                           |NON MODIFIED
 forward_run.grd-lr.sim_q                              |NON MODIFIED
 generate_samples.normal                               |NON MODIFIED
 generate_samples.uniform                              |NON MODIFIED
@@ -120,16 +110,16 @@ model_io.setup.end_time                               |NON MODIFIED
 model_io.setup.start_time                             |NON MODIFIED
 model_io.setup.structure                              |NON MODIFIED
 model_io.sim_response.q                               |NON MODIFIED
-multiset_estimate.mfwr.lcurve_multiset.alpha          |ADDED
-multiset_estimate.mfwr.lcurve_multiset.alpha_opt      |ADDED
-multiset_estimate.mfwr.lcurve_multiset.cost           |ADDED
-multiset_estimate.mfwr.lcurve_multiset.mahal_dist     |ADDED
+multiset_estimate.mfwr.lcurve_multiset.alpha          |NON MODIFIED
+multiset_estimate.mfwr.lcurve_multiset.alpha_opt      |NON MODIFIED
+multiset_estimate.mfwr.lcurve_multiset.cost           |NON MODIFIED
+multiset_estimate.mfwr.lcurve_multiset.mahal_dist     |NON MODIFIED
 multiset_estimate.mfwr.sim_q                          |NON MODIFIED
 multiset_estimate.mopt_ml.sim_q                       |NON MODIFIED
-multiset_estimate.mopt_unf.lcurve_multiset.alpha      |ADDED
-multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt  |ADDED
-multiset_estimate.mopt_unf.lcurve_multiset.cost       |ADDED
-multiset_estimate.mopt_unf.lcurve_multiset.mahal_dist |ADDED
+multiset_estimate.mopt_unf.lcurve_multiset.alpha      |NON MODIFIED
+multiset_estimate.mopt_unf.lcurve_multiset.alpha_opt  |NON MODIFIED
+multiset_estimate.mopt_unf.lcurve_multiset.cost       |NON MODIFIED
+multiset_estimate.mopt_unf.lcurve_multiset.mahal_dist |NON MODIFIED
 multiset_estimate.mopt_unf.sim_q                      |NON MODIFIED
 net_init.bias_layer_1                                 |NON MODIFIED
 net_init.bias_layer_2                                 |NON MODIFIED
@@ -141,69 +131,69 @@ net_init.weight_layer_2                               |NON MODIFIED
 net_init.weight_layer_3                               |NON MODIFIED
 net_init.weight_layer_4                               |NON MODIFIED
 optimize.gr4-kw.ann.sim_q                             |NON MODIFIED
-optimize.gr4-kw.distributed.control_vector            |ADDED
-optimize.gr4-kw.distributed.iter_cost                 |ADDED
+optimize.gr4-kw.distributed.control_vector            |NON MODIFIED
+optimize.gr4-kw.distributed.iter_cost                 |NON MODIFIED
 optimize.gr4-kw.distributed.sim_q                     |NON MODIFIED
-optimize.gr4-kw.multi-linear.control_vector           |ADDED
-optimize.gr4-kw.multi-linear.iter_cost                |ADDED
+optimize.gr4-kw.multi-linear.control_vector           |NON MODIFIED
+optimize.gr4-kw.multi-linear.iter_cost                |NON MODIFIED
 optimize.gr4-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.gr4-kw.multi-polynomial.control_vector       |ADDED
-optimize.gr4-kw.multi-polynomial.iter_cost            |ADDED
+optimize.gr4-kw.multi-polynomial.control_vector       |NON MODIFIED
+optimize.gr4-kw.multi-polynomial.iter_cost            |NON MODIFIED
 optimize.gr4-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.gr4-kw.uniform.control_vector                |ADDED
-optimize.gr4-kw.uniform.iter_cost                     |ADDED
+optimize.gr4-kw.uniform.control_vector                |NON MODIFIED
+optimize.gr4-kw.uniform.iter_cost                     |NON MODIFIED
 optimize.gr4-kw.uniform.sim_q                         |NON MODIFIED
 optimize.gr4-lr.ann.sim_q                             |NON MODIFIED
-optimize.gr4-lr.distributed.control_vector            |ADDED
-optimize.gr4-lr.distributed.iter_cost                 |ADDED
+optimize.gr4-lr.distributed.control_vector            |NON MODIFIED
+optimize.gr4-lr.distributed.iter_cost                 |NON MODIFIED
 optimize.gr4-lr.distributed.sim_q                     |NON MODIFIED
-optimize.gr4-lr.multi-linear.control_vector           |ADDED
-optimize.gr4-lr.multi-linear.iter_cost                |ADDED
+optimize.gr4-lr.multi-linear.control_vector           |NON MODIFIED
+optimize.gr4-lr.multi-linear.iter_cost                |NON MODIFIED
 optimize.gr4-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.gr4-lr.multi-polynomial.control_vector       |ADDED
-optimize.gr4-lr.multi-polynomial.iter_cost            |ADDED
+optimize.gr4-lr.multi-polynomial.control_vector       |NON MODIFIED
+optimize.gr4-lr.multi-polynomial.iter_cost            |NON MODIFIED
 optimize.gr4-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.gr4-lr.uniform.control_vector                |ADDED
-optimize.gr4-lr.uniform.iter_cost                     |ADDED
+optimize.gr4-lr.uniform.control_vector                |NON MODIFIED
+optimize.gr4-lr.uniform.iter_cost                     |NON MODIFIED
 optimize.gr4-lr.uniform.sim_q                         |NON MODIFIED
 optimize.gr5-kw.ann.sim_q                             |NON MODIFIED
-optimize.gr5-kw.distributed.control_vector            |ADDED
-optimize.gr5-kw.distributed.iter_cost                 |ADDED
+optimize.gr5-kw.distributed.control_vector            |NON MODIFIED
+optimize.gr5-kw.distributed.iter_cost                 |NON MODIFIED
 optimize.gr5-kw.distributed.sim_q                     |NON MODIFIED
-optimize.gr5-kw.multi-linear.control_vector           |ADDED
-optimize.gr5-kw.multi-linear.iter_cost                |ADDED
+optimize.gr5-kw.multi-linear.control_vector           |NON MODIFIED
+optimize.gr5-kw.multi-linear.iter_cost                |NON MODIFIED
 optimize.gr5-kw.multi-linear.sim_q                    |NON MODIFIED
-optimize.gr5-kw.multi-polynomial.control_vector       |ADDED
-optimize.gr5-kw.multi-polynomial.iter_cost            |ADDED
+optimize.gr5-kw.multi-polynomial.control_vector       |NON MODIFIED
+optimize.gr5-kw.multi-polynomial.iter_cost            |NON MODIFIED
 optimize.gr5-kw.multi-polynomial.sim_q                |NON MODIFIED
-optimize.gr5-kw.uniform.control_vector                |ADDED
-optimize.gr5-kw.uniform.iter_cost                     |ADDED
+optimize.gr5-kw.uniform.control_vector                |NON MODIFIED
+optimize.gr5-kw.uniform.iter_cost                     |NON MODIFIED
 optimize.gr5-kw.uniform.sim_q                         |NON MODIFIED
 optimize.gr5-lr.ann.sim_q                             |NON MODIFIED
-optimize.gr5-lr.distributed.control_vector            |ADDED
-optimize.gr5-lr.distributed.iter_cost                 |ADDED
+optimize.gr5-lr.distributed.control_vector            |NON MODIFIED
+optimize.gr5-lr.distributed.iter_cost                 |NON MODIFIED
 optimize.gr5-lr.distributed.sim_q                     |NON MODIFIED
-optimize.gr5-lr.multi-linear.control_vector           |ADDED
-optimize.gr5-lr.multi-linear.iter_cost                |ADDED
+optimize.gr5-lr.multi-linear.control_vector           |NON MODIFIED
+optimize.gr5-lr.multi-linear.iter_cost                |NON MODIFIED
 optimize.gr5-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.gr5-lr.multi-polynomial.control_vector       |ADDED
-optimize.gr5-lr.multi-polynomial.iter_cost            |ADDED
+optimize.gr5-lr.multi-polynomial.control_vector       |NON MODIFIED
+optimize.gr5-lr.multi-polynomial.iter_cost            |NON MODIFIED
 optimize.gr5-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.gr5-lr.uniform.control_vector                |ADDED
-optimize.gr5-lr.uniform.iter_cost                     |ADDED
+optimize.gr5-lr.uniform.control_vector                |NON MODIFIED
+optimize.gr5-lr.uniform.iter_cost                     |NON MODIFIED
 optimize.gr5-lr.uniform.sim_q                         |NON MODIFIED
 optimize.grd-lr.ann.sim_q                             |NON MODIFIED
-optimize.grd-lr.distributed.control_vector            |ADDED
-optimize.grd-lr.distributed.iter_cost                 |ADDED
+optimize.grd-lr.distributed.control_vector            |NON MODIFIED
+optimize.grd-lr.distributed.iter_cost                 |NON MODIFIED
 optimize.grd-lr.distributed.sim_q                     |NON MODIFIED
-optimize.grd-lr.multi-linear.control_vector           |ADDED
-optimize.grd-lr.multi-linear.iter_cost                |ADDED
+optimize.grd-lr.multi-linear.control_vector           |NON MODIFIED
+optimize.grd-lr.multi-linear.iter_cost                |NON MODIFIED
 optimize.grd-lr.multi-linear.sim_q                    |NON MODIFIED
-optimize.grd-lr.multi-polynomial.control_vector       |ADDED
-optimize.grd-lr.multi-polynomial.iter_cost            |ADDED
+optimize.grd-lr.multi-polynomial.control_vector       |NON MODIFIED
+optimize.grd-lr.multi-polynomial.iter_cost            |NON MODIFIED
 optimize.grd-lr.multi-polynomial.sim_q                |NON MODIFIED
-optimize.grd-lr.uniform.control_vector                |ADDED
-optimize.grd-lr.uniform.iter_cost                     |ADDED
+optimize.grd-lr.uniform.control_vector                |NON MODIFIED
+optimize.grd-lr.uniform.iter_cost                     |NON MODIFIED
 optimize.grd-lr.uniform.sim_q                         |NON MODIFIED
 precipitation_indices.d1                              |NON MODIFIED
 precipitation_indices.d2                              |NON MODIFIED

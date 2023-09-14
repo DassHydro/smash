@@ -89,9 +89,6 @@ class ForwardRun:
     jobs : float
         Cost observation component value.
 
-    jreg : float
-        Cost regularization component value.
-
     Notes
     -----
     The object's available attributes depend on what is requested by the user in **return_options** during a call to `smash.forward_run`.
@@ -211,9 +208,6 @@ def forward_run(
 
         jobs : bool, default False
             Whether to return jobs (observation component of cost) value.
-
-        jreg : bool, default False
-            Whether to return jreg (regularization component of cost) value.
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 

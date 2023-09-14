@@ -58,8 +58,8 @@ def _standardize_optimize_args(
     )
 
     # % Finalize cost_options
-
     _standardize_simulation_cost_options_finalize(model, cost_options)
+
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
 

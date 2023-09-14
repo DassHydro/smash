@@ -19,7 +19,6 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
             return_options={
                 "cost": True,
                 "jobs": True,
-                "jreg": True,
                 "q_domain": True,
                 "opr_states": True,
             },
@@ -36,9 +35,6 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         )
         res[f"forward_run.{instance.setup.structure}.jobs"] = np.array(
             ret.jobs, ndmin=1
-        )
-        res[f"forward_run.{instance.setup.structure}.jreg"] = np.array(
-            ret.jreg, ndmin=1
         )
         res[f"forward_run.{instance.setup.structure}.q_domain"] = np.where(
             mask, np.nan, ret.q_domain[..., -1]

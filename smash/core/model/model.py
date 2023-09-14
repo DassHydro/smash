@@ -559,9 +559,6 @@ class Model(object):
             jobs : bool, default False
                 Whether to return jobs (observation component of cost) value.
 
-            jreg : bool, default False
-                Whether to return jreg (regularization component of cost) value.
-
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
         Returns
@@ -800,9 +797,6 @@ class Model(object):
 
             jobs : bool, default False
                 Whether to return jobs (observation component of cost) value.
-
-            jreg : bool, default False
-                Whether to return jreg (regularization component of cost) value.
 
             lcurve_multiset : bool, default False
                 Whether to return the multiset estimate lcurve.
