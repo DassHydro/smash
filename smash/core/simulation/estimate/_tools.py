@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+from smash.core.simulation.run.run import _forward_run
+
 from tqdm import tqdm
 import numpy as np
 from scipy.stats import gaussian_kde
@@ -10,6 +12,7 @@ if TYPE_CHECKING:
     from smash._typing import AnyTuple
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
+    from smash.core.simulation.run.run import ForwardRun
 
 
 def _compute_density(
@@ -104,12 +107,13 @@ def _estimate_parameter(
 def _forward_run_with_estimated_parameters(
     alpha: float,
     model: Model,
-    cost_options: dict,
     prior_data: dict,
     density: dict,
     cost: np.ndarray,
-    ncpu: int,
-) -> dict:
+    cost_options: dict,
+    common_options: dict,
+    return_options: dict,
+) -> (ForwardRun | None, dict):
     mahal_distance = 0
 
     for p in prior_data.keys():
@@ -129,12 +133,17 @@ def _forward_run_with_estimated_parameters(
 
         mahal_distance += distance_p
 
-    model.forward_run(
+    # Remove forward run verbose
+    common_options["verbose"] = False
+
+    ret_forward_run = _forward_run(
+        model,
         cost_options=cost_options,
-        common_options={"verbose": False, "ncpu": ncpu},
+        common_options=common_options,
+        return_options=return_options,
     )
 
-    return dict(
+    return ret_forward_run, dict(
         zip(
             ["mahal_dist", "cost"],
             [mahal_distance / len(prior_data), model._output.cost],
@@ -145,12 +154,12 @@ def _forward_run_with_estimated_parameters(
 def _lcurve_forward_run_with_estimated_parameters(
     alpha: np.ndarray,
     *args_forward_run_with_estimated_parameters: AnyTuple,
-) -> dict:
+) -> (ForwardRun | None, dict):
     l_cost = np.zeros(alpha.size)
     l_mahal_distance = np.zeros(alpha.size)
 
     for i in tqdm(range(alpha.size), desc="    L-curve Computing"):
-        lcurve_i = _forward_run_with_estimated_parameters(
+        _, lcurve_i = _forward_run_with_estimated_parameters(
             alpha[i], *args_forward_run_with_estimated_parameters
         )
 
@@ -166,11 +175,11 @@ def _lcurve_forward_run_with_estimated_parameters(
 
     alpha_opt = alpha[np.argmin(regul_term)]
 
-    _forward_run_with_estimated_parameters(
+    ret_forward_run, _ = _forward_run_with_estimated_parameters(
         alpha_opt, *args_forward_run_with_estimated_parameters
     )
 
-    return dict(
+    return ret_forward_run, dict(
         zip(
             ["mahal_dist", "cost", "alpha", "alpha_opt"],
             [l_mahal_distance, l_cost, alpha, alpha_opt],

@@ -5,7 +5,11 @@
 !%
 !%      - gr4_lr_forward
 !%      - gr4_kw_forward
+!%      - gr5_kw_forward
+!%      - gr5_kw_forward
+!%      - loieau_lr_forward
 !%      - grd_lr_forward
+
 
 module md_forward_structure
 
@@ -18,7 +22,7 @@ module md_forward_structure
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_sparse_matrix_manipulation !% only: sparse_matrix_to_matrix
-    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, &
+    use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
     !% & gr_transfer
     use md_routing_operator !% only: upstream_discharge, linear_routing, kinematic_wave1d
 
@@ -51,12 +55,12 @@ contains
 
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
         real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
         !% =================================================================================================================== %!
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -181,6 +185,20 @@ contains
 
             end do
 
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
+
         end do !% [ END DO TIME ]
 
     end subroutine gr4_lr_forward
@@ -213,7 +231,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet
         real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
         & qlijm1, qlij, qijm1, qim1j, qij
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -221,7 +239,7 @@ contains
 
         q = 0._sp
         qt = 0._sp
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -363,6 +381,20 @@ contains
 
             end do
 
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q(:, :, zq)
+                end if
+            end if
+            !$AD end-exclude
+
         end do !% [ END DO TIME ]
 
     end subroutine gr4_kw_forward
@@ -392,12 +424,12 @@ contains
 
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
         real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, qup, qrout
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
         !% =================================================================================================================== %!
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -522,6 +554,20 @@ contains
 
             end do
 
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
+
         end do !% [ END DO TIME ]
 
     end subroutine gr5_lr_forward
@@ -554,7 +600,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet
         real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd, &
         & qlijm1, qlij, qijm1, qim1j, qij
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
@@ -562,7 +608,7 @@ contains
 
         q = 0._sp
         qt = 0._sp
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -704,6 +750,20 @@ contains
 
             end do
 
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q(:, :, zq)
+                end if
+            end if
+            !$AD end-exclude
+
         end do !% [ END DO TIME ]
 
     end subroutine gr5_kw_forward
@@ -711,7 +771,7 @@ contains
     subroutine loieau_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:             
         !% - opr_parameters: (1: ca), (2: cc), (3: kb), (4: llr)
-        !% - opr_states:     (1: hp), (2: ht), (3: hlr)
+        !% - opr_states:     (1: ha), (2: hc), (3: hlr)
 
         implicit none
 
@@ -733,12 +793,12 @@ contains
 
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
         real(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd, qup, qrout
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
         !% =================================================================================================================== %!
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -854,6 +914,20 @@ contains
 
             end do
 
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
+
         end do !% [ END DO TIME ]
 
     end subroutine loieau_lr_forward
@@ -883,12 +957,12 @@ contains
 
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
         real(sp) :: ei, pn, en, pr, perc, prr, qr, qup, qrout
-        integer :: t, i, row, col, g
+        integer :: t, i, row, col, g, iret
 
         !% =================================================================================================================== %!
         !%   Begin subroutine
         !% =================================================================================================================== %!
-
+        iret = 0
         do t = 1, setup%ntime_step !% [ DO TIME ]
 
             !% =============================================================================================================== %!
@@ -1002,6 +1076,20 @@ contains
                 output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
             end do
+
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
 
         end do !% [ END DO TIME ]
 

@@ -435,3 +435,36 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
 }
 
 DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
+
+DEFAULT_SIMULATION_RETURN_OPTIONS = {
+    "forward_run": {
+        "opr_states": False,
+        "q_domain": False,
+        "cost": False,
+        "jobs": False,
+        "time_step": "all",
+    },
+    "optimize": {
+        "opr_states": False,
+        "q_domain": False,
+        "iter_cost": False,
+        "iter_projg": False,
+        "control_vector": False,
+        "cost": False,
+        "jobs": False,
+        "jreg": False,
+        "net": False,
+        "lcurve_wjreg": False,
+        "time_step": "all",
+    },
+    "multiset_estimate": {
+        "opr_states": False,
+        "q_domain": False,
+        "cost": False,
+        "jobs": False,
+        "lcurve_multiset": False,
+        "time_step": "all",
+    },
+}
+
+SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["opr_states", "q_domain"]

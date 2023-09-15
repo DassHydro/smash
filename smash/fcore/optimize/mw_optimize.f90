@@ -14,6 +14,7 @@ module mw_optimize
 
     use md_constant, only: sp, dp, lchar
     use m_screen_display, only: display_iteration_progress
+    use m_array_manipulation, only: reallocate
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
@@ -79,6 +80,11 @@ contains
         if (options%comm%verbose) then
             write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+        end if
+
+        if (returns%iter_cost_flag) then
+            allocate (returns%iter_cost(options%optimize%maxiter + 1))
+            returns%iter_cost(1) = gx
         end if
 
         do iter = 1, options%optimize%maxiter*n
@@ -188,6 +194,8 @@ contains
                     & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
                 end if
 
+                if (returns%iter_cost_flag) returns%iter_cost(iter/n + 1) = gx
+
             end if
 
             if (ddx .lt. 0.01_sp) then
@@ -208,6 +216,13 @@ contains
 
         call forward_run(setup, mesh, input_data, parameters, output, options, returns)
 
+        if (returns%control_vector_flag) then
+            allocate (returns%control_vector(n))
+            returns%control_vector = parameters%control%x
+        end if
+
+        if (returns%iter_cost_flag) call reallocate(returns%iter_cost, iter/n + 1)
+
         call ControlDT_finalise(parameters%control)
 
         if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
@@ -227,7 +242,7 @@ contains
         type(ReturnsDT), intent(inout) :: returns
 
         integer :: iprint, n, m
-        real(dp) :: factr, pgtol, f
+        real(dp) :: factr, pgtol, f, projg
         character(lchar) :: task, csave
         logical, dimension(4) :: lsave
         integer, dimension(44) :: isave
@@ -257,6 +272,9 @@ contains
 
         task = "START"
 
+        if (returns%iter_cost_flag) allocate (returns%iter_cost(options%optimize%maxiter + 1))
+        if (returns%iter_projg_flag) allocate (returns%iter_projg(options%optimize%maxiter + 1))
+
         x_wa = real(parameters%control%x, dp)
         l_wa = real(parameters%control%l, dp)
         u_wa = real(parameters%control%u, dp)
@@ -278,14 +296,25 @@ contains
                 f = real(output%cost, dp)
                 g = real(parameters_b%control%x, dp)
 
-                if (task(4:8) .eq. "START" .and. options%comm%verbose) then
+                if (task(4:8) .eq. "START") then
 
-                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
-                    & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", maxval(abs(g))
+                    call projgr(n, l_wa, x_wa, parameters%control%nbd, x_wa, g, projg)
+                    if (returns%iter_cost_flag) returns%iter_cost(1) = real(f, sp)
+                    if (returns%iter_projg_flag) returns%iter_projg(1) = real(projg, sp)
+
+                    if (options%comm%verbose) then
+
+                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", projg
+
+                    end if
 
                 end if
 
             else if (task(1:5) .eq. "NEW_X") then
+
+                if (returns%iter_cost_flag) returns%iter_cost(isave(30) + 1) = real(f, sp)
+                if (returns%iter_projg_flag) returns%iter_projg(isave(30) + 1) = real(dsave(13), sp)
 
                 if (options%comm%verbose) then
 
@@ -303,6 +332,14 @@ contains
         end do
 
         call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+
+        if (returns%control_vector_flag) then
+            allocate (returns%control_vector(n))
+            returns%control_vector = parameters%control%x
+        end if
+
+        if (returns%iter_cost_flag) call reallocate(returns%iter_cost, isave(30) + 1)
+        if (returns%iter_projg_flag) call reallocate(returns%iter_projg, isave(30) + 1)
 
         call ControlDT_finalise(parameters%control)
 

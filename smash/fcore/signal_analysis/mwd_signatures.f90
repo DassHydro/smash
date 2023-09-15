@@ -197,7 +197,7 @@ contains
 
         if (j .gt. 1) then
 
-            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925_sp, 3)
 
             numer = 0._sp
             denom = 0._sp
@@ -258,7 +258,7 @@ contains
 
         if (j .gt. 1) then
 
-            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925_sp, 3)
 
             numer = 0._sp
             denom = 0._sp
@@ -319,7 +319,7 @@ contains
 
         if (j .gt. 1) then
 
-            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925_sp, 3)
 
             numer = 0._sp
             denom = 0._sp
@@ -418,7 +418,7 @@ contains
 
         if (j .gt. 1) then
 
-            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925_sp, 3)
 
             res = sum(qf(1:j))/j
 
@@ -462,7 +462,7 @@ contains
 
         if (j .gt. 1) then
 
-            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925, 3)
+            call baseflow_separation(nonnegative_q(1:j), bf(1:j), qf(1:j), 0.925_sp, 3)
 
             res = sum(bf(1:j))/j
 

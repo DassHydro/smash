@@ -45,8 +45,9 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import Numeric, ListLike
-    from smash.core.simulation.optimize.optimize import MultipleOptimize
-    from smash.core.simulation.run.run import MultipleForwardRun
+    from smash.core.simulation.optimize.optimize import MultipleOptimize, Optimize
+    from smash.core.simulation.run.run import MultipleForwardRun, ForwardRun
+    from smash.core.simulation.estimate.estimate import MultisetEstimate
 
 __all__ = ["Model"]
 
@@ -290,7 +291,7 @@ class Model(object):
 
         return self.__copy__()
 
-    def get_opr_parameters(self, key: str):
+    def get_opr_parameters(self, key: str) -> np.ndarray:
         """
         Get the values of an operator model parameter.
 
@@ -346,7 +347,7 @@ class Model(object):
 
         self._parameters.opr_parameters.values[..., ind] = value
 
-    def get_opr_initial_states(self, key: str):
+    def get_opr_initial_states(self, key: str) -> np.ndarray:
         """
         Get the values of an operator model initial state.
 
@@ -402,7 +403,7 @@ class Model(object):
 
         self._parameters.opr_initial_states.values[..., ind] = value
 
-    def get_opr_final_states(self, key: str):
+    def get_opr_final_states(self, key: str) -> np.ndarray:
         """
         Get the values of an operator model final state.
 
@@ -430,7 +431,7 @@ class Model(object):
 
         return self._output.opr_final_states.values[..., ind]
 
-    def get_opr_parameters_bounds(self):
+    def get_opr_parameters_bounds(self) -> dict:
         """
         Get the boundary condition for the operator model parameters.
 
@@ -450,7 +451,7 @@ class Model(object):
             if key in STRUCTURE_OPR_PARAMETERS[self.setup.structure]
         }
 
-    def get_opr_initial_states_bounds(self):
+    def get_opr_initial_states_bounds(self) -> dict:
         """
         Get the boundary condition for the operator model initial states.
 
@@ -474,7 +475,8 @@ class Model(object):
         self,
         cost_options: dict | None = None,
         common_options: dict | None = None,
-    ):
+        return_options: dict | None = None,
+    ) -> ForwardRun | None:
         """
         Run the forward Model.
 
@@ -530,16 +532,53 @@ class Model(object):
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
+        return_options : dict or None, default None
+            Dictionary containing return options to save intermediate variables. The elements are:
+
+            time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+                Returned time steps. There are five ways to specify it:
+
+                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - An alias among 'all' (return all time steps).
+                - A pandas.Timestamp object.
+                - A pandas.DatetimeIndex object.
+                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+
+                .. note::
+                    It only applies to the following variables: 'opr_states' and 'q_domain'
+
+            opr_states : bool, default False
+                Whether to return operator states for specific time steps.
+
+            q_domain : bool, defaul False
+                Whether to return simulated discharge on the whole domain for specific time steps.
+
+            cost : bool, default False
+                Whether to return cost value.
+
+            jobs : bool, default False
+                Whether to return jobs (observation component of cost) value.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        Returns
+        -------
+        ret_forward_run : ForwardRun or None, default None
+            It returns a `smash.ForwardRun` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
+
         See Also
         --------
         smash.forward_run : Run the forward Model.
+        ForwardRun : Represents forward run optional results.
         """
 
-        args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
+        args_options = [
+            deepcopy(arg) for arg in [cost_options, common_options, return_options]
+        ]
 
         args = _standardize_forward_run_args(self, *args_options)
 
-        _forward_run(self, *args)
+        return _forward_run(self, *args)
 
     def optimize(
         self,
@@ -548,7 +587,8 @@ class Model(object):
         optimize_options: dict | None = None,
         cost_options: dict | None = None,
         common_options: dict | None = None,
-    ):
+        return_options: dict | None = None,
+    ) -> Optimize | None:
         """
         Model assimilation using numerical optimization algorithms.
 
@@ -631,13 +671,62 @@ class Model(object):
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
+        return_options : dict or None, default None
+            Dictionary containing return options to save intermediate variables. The elements are:
+
+            time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+                Returned time steps. There are five ways to specify it:
+
+                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - An alias among 'all' (return all time steps).
+                - A pandas.Timestamp object.
+                - A pandas.DatetimeIndex object.
+                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+
+                .. note::
+                    It only applies to the following variables: 'opr_states' and 'q_domain'
+
+            opr_states : bool, default False
+                Whether to return operator states for specific time steps.
+
+            q_domain : bool, defaul False
+                Whether to return simulated discharge on the whole domain for specific time steps.
+
+            iter_cost : bool, default False
+                Whether to return cost iteration values.
+
+            iter_projg : bool, default False
+                Whether to return infinity norm of the projected gradient iteration values.
+
+            control_vector : bool, default False
+                Whether to return control vector at end of optimization.
+
+            cost : bool, default False
+                Whether to return cost value.
+
+            jobs : bool, default False
+                Whether to return jobs (observation component of cost) value.
+
+            jreg : bool, default False
+                Whether to return jreg (regularization component of cost) value.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        Returns
+        -------
+        ret_optimize : Optimize or None, default None
+            It returns a `smash.Optimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables
+            are defined, it returns None.
+
         See Also
         --------
         smash.optimize : Model assimilation using numerical optimization algorithms.
+        Optimize : Represents optimize optional results.
         """
 
         args_options = [
-            deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
+            deepcopy(arg)
+            for arg in [optimize_options, cost_options, common_options, return_options]
         ]
 
         args = _standardize_optimize_args(
@@ -647,14 +736,15 @@ class Model(object):
             *args_options,
         )
 
-        _optimize(self, *args)
+        return _optimize(self, *args)
 
     def multiset_estimate(
         self,
         multiset: MultipleForwardRun | MultipleOptimize,
         alpha: Numeric | ListLike | None = None,
         common_options: dict | None = None,
-    ):
+        return_options: dict | None = None,
+    ) -> MultisetEstimate | None:
         """
         Model assimilation using Bayesian-like estimation on multiple sets of solutions.
 
@@ -681,15 +771,53 @@ class Model(object):
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
+        return_options : dict or None, default None
+            Dictionary containing return options to save intermediate variables. The elements are:
+
+            time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+                Returned time steps. There are five ways to specify it:
+
+                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - An alias among 'all' (return all time steps).
+                - A pandas.Timestamp object.
+                - A pandas.DatetimeIndex object.
+                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+
+                .. note::
+                    It only applies to the following variables: 'opr_states' and 'q_domain'
+
+            opr_states : bool, default False
+                Whether to return operator states for specific time steps.
+
+            q_domain : bool, defaul False
+                Whether to return simulated discharge on the whole domain for specific time steps.
+
+            cost : bool, default False
+                Whether to return cost value.
+
+            jobs : bool, default False
+                Whether to return jobs (observation component of cost) value.
+
+            lcurve_multiset : bool, default False
+                Whether to return the multiset estimate lcurve.
+
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        Returns
+        -------
+        ret_multiset_estimate : MultisetEstimate or None, default None
+            It returns a `smash.MultisetEstimate` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
+
         See Also
         --------
         smash.multiset_estimate : Model assimilation using Bayesian-like estimation on multiple sets of solutions.
+        MultisetEstimate : Represents multiset estimate optional results.
         MultipleForwardRun : Represents multiple forward run computation result.
         MultipleOptimize : Represents multiple optimize computation result.
         """
 
-        arg_options = deepcopy(common_options)
+        args_options = [deepcopy(arg) for arg in [common_options, return_options]]
 
-        args = _standardize_multiset_estimate_args(multiset, alpha, arg_options)
+        args = _standardize_multiset_estimate_args(self, multiset, alpha, *args_options)
 
-        _multiset_estimate(self, *args)
+        return _multiset_estimate(self, *args)

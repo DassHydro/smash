@@ -16,6 +16,7 @@ from smash._constant import (
     DEFAULT_TERMINATION_CRIT,
     DEFAULT_SIMULATION_COMMON_OPTIONS,
     DEFAULT_SIMULATION_COST_OPTIONS,
+    DEFAULT_SIMULATION_RETURN_OPTIONS,
     METRICS,
     SIGNS,
     JOBS_CMPT,
@@ -744,7 +745,8 @@ def _standardize_simulation_cost_options_wgauge(
     if isinstance(wgauge, str):
         if wgauge == "mean":
             wgauge = np.ones(shape=gauge.size, dtype=np.float32)
-            wgauge *= 1 / wgauge.size
+            if wgauge.size > 0:
+                wgauge *= 1 / wgauge.size
 
         elif wgauge == "lquartile":
             wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float32(-0.25)
@@ -920,6 +922,100 @@ def _standardize_simulation_common_options(common_options: dict | None) -> dict:
     return common_options
 
 
+def _standardize_simulation_return_options_bool(key: str, value: bool) -> bool:
+    if not isinstance(value, bool):
+        raise TypeError(f"{key} return_options must be boolean")
+
+    return value
+
+
+def _standardize_simulation_return_options_time_step(
+    model: Model, time_step: str | pd.Timestamp | pd.DatetimeIndex | ListLike
+) -> pd.DatetimeIndex:
+    st = pd.Timestamp(model.setup.start_time)
+    et = pd.Timestamp(model.setup.end_time)
+
+    if isinstance(time_step, str):
+        if time_step == "all":
+            time_step = pd.date_range(start=st, end=et, freq=f"{int(model.setup.dt)}s")[
+                :-1
+            ]
+        else:
+            try:
+                # % Pass to list to convert to pd.DatetimeIndex
+                time_step = [pd.Timestamp(time_step)]
+
+            except:
+                raise ValueError(
+                    f"time_step '{time_step}' return_options is an invalid date"
+                )
+
+    elif isinstance(time_step, pd.Timestamp):
+        # % Pass to list to convert to pd.DatetimeIndex
+        time_step = [time_step]
+
+    elif isinstance(time_step, (list, tuple, np.ndarray)):
+        time_step = list(time_step)
+        for i, date in enumerate(time_step):
+            try:
+                time_step[i] = pd.Timestamp(str(date))
+            except:
+                raise ValueError(
+                    f"Invalid date '{date}' at index {i} in time_step return_options"
+                )
+    elif isinstance(time_step, pd.DatetimeIndex):
+        pass
+
+    else:
+        raise TypeError(
+            "time_step return_options must be a str, pd.Timestamp, pd.DatetimeIndex or ListLike type (List, Tuple, np.ndarray)"
+        )
+
+    time_step = pd.DatetimeIndex(time_step)
+
+    # % Check that all dates are inside Model start_time and end_time
+    for i, date in enumerate(time_step):
+        if (date - st).total_seconds() < 0 or (et - date).total_seconds() < 0:
+            raise ValueError(
+                f"date '{date}' at index {i} in time_step return_options must be between start time '{st}' and end time '{et}'"
+            )
+
+    return time_step
+
+
+def _standardize_simulation_return_options(
+    model: Model, func_name: str, return_options: dict | None
+) -> dict:
+    if return_options is None:
+        return_options = DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].copy()
+    else:
+        if isinstance(return_options, dict):
+            pop_keys = []
+            for key, value in return_options.items():
+                if key not in DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].keys():
+                    pop_keys.append(key)
+                    warnings.warn(
+                        f"Unknown return_options key '{key}': Choices: {list(DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].keys())}"
+                    )
+
+            for key in pop_keys:
+                return_options.pop(key)
+
+        else:
+            raise TypeError("return_options argument must be a dictionary")
+
+    for key, value in DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].items():
+        return_options.setdefault(key, value)
+        if key == "time_step":
+            return_options[key] = _standardize_simulation_return_options_time_step(
+                model, return_options[key]
+            )
+        else:
+            _standardize_simulation_return_options_bool(key, return_options[key])
+
+    return return_options
+
+
 def _standardize_simulation_parameters_feasibility(model: Model):
     for key in model.opr_parameters.keys:
         arr = model.get_opr_parameters(key)
@@ -1046,6 +1142,44 @@ def _standardize_simulation_cost_options_finalize(
     )
 
     return cost_options
+
+
+def _standardize_simulation_return_options_finalize(model: Model, return_options: dict):
+    st = pd.Timestamp(model.setup.start_time)
+
+    mask_time_step = np.zeros(shape=model.setup.ntime_step, dtype=bool)
+
+    for date in return_options["time_step"]:
+        ind = int((date - st).total_seconds() / model.setup.dt)
+        mask_time_step[ind] = True
+
+    # % To pass character array to Fortran.
+    keys = [k for k, v in return_options.items() if k != "time_step" and v]
+    if keys:
+        max_len = max(map(len, keys))
+    else:
+        max_len = 0
+    fkeys = np.empty(shape=(max_len, len(keys)), dtype="c")
+
+    for i, key in enumerate(keys):
+        fkeys[:, i] = key + (max_len - len(key)) * " "
+
+    return_options.update(
+        {
+            "nmts": np.count_nonzero(mask_time_step),
+            "mask_time_step": mask_time_step,
+            "fkeys": fkeys,
+            "keys": keys,
+        }
+    )
+
+    pop_keys = [
+        k
+        for k in return_options.keys()
+        if k not in ["nmts", "mask_time_step", "time_step", "fkeys", "keys"]
+    ]
+    for key in pop_keys:
+        return_options.pop(key)
 
 
 def _standardize_default_optimize_options_args(

@@ -15,8 +15,9 @@ from smash.core.simulation.estimate.estimate import multiset_estimate
 from smash import io, factory
 
 # smash objects
-from smash.core.simulation.run.run import MultipleForwardRun
-from smash.core.simulation.optimize.optimize import MultipleOptimize
+from smash.core.simulation.run.run import MultipleForwardRun, ForwardRun
+from smash.core.simulation.optimize.optimize import MultipleOptimize, Optimize
+from smash.core.simulation.estimate.estimate import MultisetEstimate
 
 from smash.core.signal_analysis.signatures.signatures import Signatures
 from smash.core.signal_analysis.prcp_indices.prcp_indices import PrecipitationIndices
@@ -45,7 +46,10 @@ __all__ = [
     "io",
     "factory",
     "MultipleForwardRun",
+    "ForwardRun",
     "MultipleOptimize",
+    "Optimize",
+    "MultisetEstimate",
     "Signatures",
     "PrecipitationIndices",
     "Samples",

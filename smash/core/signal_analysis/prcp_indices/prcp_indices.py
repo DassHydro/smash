@@ -106,7 +106,7 @@ class PrecipitationIndices:
 
 def precipitation_indices(
     model: Model,
-):
+) -> PrecipitationIndices:
     """
     Compute precipitation indices of the Model object.
 

@@ -338,6 +338,12 @@ contains
 
         output%cost = jobs + options%cost%wjreg*jreg
 
+        !$AD start-exclude
+        if (returns%cost_flag) returns%cost = output%cost
+        if (returns%jobs_flag) returns%jobs = jobs
+        if (returns%jreg_flag) returns%jreg = jreg
+        !$AD end-exclude
+
     end subroutine cls_compute_cost
 
     subroutine compute_cost(setup, mesh, input_data, parameters, output, options, returns)

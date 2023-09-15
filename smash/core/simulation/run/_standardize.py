@@ -4,8 +4,10 @@ from smash.core.simulation._standardize import (
     _standardize_simulation_samples,
     _standardize_simulation_cost_options,
     _standardize_simulation_common_options,
+    _standardize_simulation_return_options,
     _standardize_simulation_parameters_feasibility,
     _standardize_simulation_cost_options_finalize,
+    _standardize_simulation_return_options_finalize,
 )
 
 from typing import TYPE_CHECKING
@@ -20,6 +22,7 @@ def _standardize_forward_run_args(
     model: Model,
     cost_options: dict | None,
     common_options: dict | None,
+    return_options: dict | None,
 ) -> AnyTuple:
     # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
@@ -28,10 +31,17 @@ def _standardize_forward_run_args(
 
     common_options = _standardize_simulation_common_options(common_options)
 
+    return_options = _standardize_simulation_return_options(
+        model, "forward_run", return_options
+    )
+
     # % Finalize cost_options
     _standardize_simulation_cost_options_finalize(model, cost_options)
 
-    return (cost_options, common_options)
+    # % Finalize return_options
+    _standardize_simulation_return_options_finalize(model, return_options)
+
+    return (cost_options, common_options, return_options)
 
 
 def _standardize_multiple_forward_run_args(
@@ -42,8 +52,14 @@ def _standardize_multiple_forward_run_args(
 ) -> AnyTuple:
     samples = _standardize_simulation_samples(model, samples)
 
-    forward_run_args = _standardize_forward_run_args(
-        model, cost_options, common_options
-    )
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
 
-    return (samples, *forward_run_args)
+    cost_options = _standardize_simulation_cost_options(model, cost_options)
+
+    common_options = _standardize_simulation_common_options(common_options)
+
+    # % Finalize cost_options
+    _standardize_simulation_cost_options_finalize(model, cost_options)
+
+    return (samples, cost_options, common_options)

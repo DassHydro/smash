@@ -1,11 +1,20 @@
 SRC := ../smash/fcore
-NAME := mwd_*.f90 md_*.f90 forward.f90
-FILES := $(addprefix $(SRC)/*/,$(NAME))
+FILES := mwd_*.f90 md_*.f90 forward.f90
+SRC_FILES := $(addprefix $(SRC)/*/,$(FILES))
+ADJ_FILE = forward_db.f90
 TAPENADE := ./tapenade_3.16
 
-all: bd sed mv
+all: pre-sed bd post-sed mv clean
 
-tap-cmp: bd sed cmp
+tap-cmp: pre-sed bd post-sed cmp clean
+
+pre-sed:
+	# pre-sed
+	# Remove lines between !$$AD start-exclude and !$$AD end-exclude
+	cp $(SRC_FILES) .
+	for file in $(FILES); do \
+	    sed -i '/!\$$AD[[:space:]]*start-exclude/,/!\$$AD[[:space:]]*end-exclude/d' "$$file"; \
+	done
 
 bd:
 	$(TAPENADE)/bin/tapenade \
@@ -22,19 +31,21 @@ bd:
 	-head "base_forward_run(parameters.control.x)\(output.cost)" \
 	-O $(PWD) $(FILES)
 
-sed:
+post-sed:
 	# sed
 	# Tapenade creates new derived type when not all values inside the derived type are used inside the graph.
 	# Therefore, just seding the two derived type affected.
-	sed -i 's/TYPE(PARAMETERSDT_DIFF)/TYPE(PARAMETERSDT)/g' forward_db.f90
-	sed -i 's/TYPE(OUTPUTDT_DIFF)/TYPE(OUTPUTDT)/g' forward_db.f90
+	sed -i 's/TYPE(PARAMETERSDT_DIFF)/TYPE(PARAMETERSDT)/g' $(ADJ_FILE)
+	sed -i 's/TYPE(OUTPUTDT_DIFF)/TYPE(OUTPUTDT)/g' $(ADJ_FILE)
 mv:
 	# mv
-	mv forward_db.f90 $(SRC)/forward/.
+	mv $(ADJ_FILE) $(SRC)/forward/.
 
 cmp:
 	# compare old and new tap file
-	cmp forward_db.f90 $(SRC)/forward/forward_db.f90
+	cmp $(ADJ_FILE) $(SRC)/forward/$(ADJ_FILE)
 
-.PHONY: all tap-cmp bd sed mv cmp
+clean:
+	rm -f *.f90
 
+.PHONY: all tap-cmp bd pre-sed post-sed mv cmp clean

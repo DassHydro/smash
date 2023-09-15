@@ -800,7 +800,7 @@ contains
         type(OptionsDT), intent(in) :: options
 
         integer :: i, j, k
-        real :: l, u
+        real(sp) :: l, u
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
 
         j = 0
