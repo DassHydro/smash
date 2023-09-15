@@ -20,21 +20,21 @@ OPR_PARAMETERS = [
     "llr",
     "akw",
     "bkw",
-]  
+]
 
-OPR_STATES = ["hi", "hp", "ht", "hlr"]
+OPR_STATES = ["hi", "hp", "ht", "ha", "hc", "hlr"]
 
 # % Following STRUCTURE_NAME order
 STRUCTURE_OPR_PARAMETERS = dict(
     zip(
         STRUCTURE_NAME,
         [
-            ["ci", "cp", "ct", "kexc", "llr"],
-            ["ci", "cp", "ct", "kexc", "akw", "bkw"],
-            ["ci", "cp", "ct", "kexc", "aexc", "llr"],
-            ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],
-            ["ca", "cc", "kb", "llr"],
-            ["cp", "ct", "llr"],
+            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
+            ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
+            ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
+            ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
+            ["ca", "cc", "kb", "llr"],  # % loieau-lr
+            ["cp", "ct", "llr"],  # % grd-lr
         ],
     )
 )
@@ -44,18 +44,23 @@ STRUCTURE_OPR_STATES = dict(
     zip(
         STRUCTURE_NAME,
         [
-            ["hi", "hp", "ht", "hlr"],
-            ["hi", "hp", "ht"],
-            ["hi", "hp", "ht", "hlr"],
-            ["hi", "hp", "ht"],
-            ["hp", "ht", "hlr"],
-            ["hp", "ht", "hlr"],
+            ["hi", "hp", "ht", "hlr"],  # % gr4-lr
+            ["hi", "hp", "ht"],  # % gr4-kw
+            ["hi", "hp", "ht", "hlr"],  # % gr5-lr
+            ["hi", "hp", "ht"],  # % gr5-kw
+            ["ha", "hc", "hlr"],  # % loieau-lr
+            ["hp", "ht", "hlr"],  # % grd-lr
         ],
     )
 )
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_COMPUTE_CI = dict(zip(STRUCTURE_NAME, [True, True, True, True, False, False]))
+STRUCTURE_COMPUTE_CI = dict(
+    zip(
+        STRUCTURE_NAME,
+        ["ci" in v for v in STRUCTURE_OPR_PARAMETERS.values()],
+    )
+)
 
 ### FEASIBLE PARAMETERS ###
 ###########################
@@ -65,17 +70,17 @@ FEASIBLE_OPR_PARAMETERS = dict(
     zip(
         OPR_PARAMETERS,
         [
-            (0, np.inf),
-            (0, np.inf),
-            (0, np.inf),
-            (-np.inf, np.inf),
-            (0, 1),
-            (0, np.inf),
-            (0, np.inf),
-            (0, np.inf),
-            (0, np.inf),
-            (0, np.inf),
-            (0, np.inf),
+            (0, np.inf),  # % ci
+            (0, np.inf),  # % cp
+            (0, np.inf),  # % ct
+            (-np.inf, np.inf),  # % kexc
+            (0, 1),  # % aexc
+            (0, np.inf),  # % ca
+            (0, np.inf),  # % cc
+            (0, np.inf),  # % kb
+            (0, np.inf),  # % llr
+            (0, np.inf),  # % akw
+            (0, np.inf),  # % bkw
         ],
     )
 )
@@ -85,10 +90,12 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
     zip(
         OPR_STATES,
         [
-            (0, 1),
-            (0, 1),
-            (0, 1),
-            (0, np.inf),
+            (0, 1),  # % hi
+            (0, 1),  # % hp
+            (0, 1),  # % ht
+            (0, 1),  # % ha
+            (0, 1),  # % hc
+            (0, np.inf),  # % hlr
         ],
     )
 )
@@ -100,11 +107,38 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 # % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
 DEFAULT_OPR_PARAMETERS = dict(
-    zip(OPR_PARAMETERS, [1e-6, 200, 500, 0, 0.1, 200, 1, 500, 5, 5, 0.6])
+    zip(
+        OPR_PARAMETERS,
+        [
+            1e-6,  # % ci
+            200,  # % cp
+            500,  # % ct
+            0,  # % kexc
+            0.1,  # % aexc
+            200,  # % ca
+            500,  # % cc
+            1,  # % kb
+            5,  # % llr
+            5,  # % akw
+            0.6,  # % bkw
+        ],
+    )
 )
 
 # % Following OPR_STATES order
-DEFAULT_OPR_INITIAL_STATES = dict(zip(OPR_STATES, [1e-2, 1e-2, 1e-2, 1e-6]))
+DEFAULT_OPR_INITIAL_STATES = dict(
+    zip(
+        OPR_STATES,
+        [
+            1e-2,  # % hi
+            1e-2,  # % hp
+            1e-2,  # % ht
+            1e-2,  # % ha
+            1e-2,  # % hc
+            1e-6,  # % hlr
+        ],
+    )
+)
 
 ### DEFAULT BOUNDS PARAMETERS ###
 #################################
@@ -114,17 +148,17 @@ DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
     zip(
         OPR_PARAMETERS,
         [
-            (1e-6, 1e2),
-            (1e-6, 1e3),
-            (1e-6, 1e3),
-            (-50, 50),
-            (1e-6, 0.999999),
-            (1e-6, 1e3),
-            (1e-6, 4),
-            (1e-6, 1e3),
-            (1e-6, 1e3),
-            (1e-3, 50),
-            (1e-3, 1),
+            (1e-6, 1e2),  # % ci
+            (1e-6, 1e3),  # % cp
+            (1e-6, 1e3),  # % ct
+            (-50, 50),  # % kexc
+            (1e-6, 0.999999),  # % aexc
+            (1e-6, 1e3),  # % ca
+            (1e-6, 1e3),  # % cc
+            (1e-6, 4),  # % kb
+            (1e-6, 1e3),  # % llr
+            (1e-3, 50),  # % akw
+            (1e-3, 1),  # % bkw
         ],
     )
 )
@@ -134,10 +168,12 @@ DEFAULT_BOUNDS_OPR_INITIAL_STATES = dict(
     zip(
         OPR_STATES,
         [
-            (1e-6, 0.999999),
-            (1e-6, 0.999999),
-            (1e-6, 0.999999),
-            (1e-6, 1e3),
+            (1e-6, 0.999999),  # % hi
+            (1e-6, 0.999999),  # % hp
+            (1e-6, 0.999999),  # % ht
+            (1e-6, 0.999999),  # % ha
+            (1e-6, 0.999999),  # % hc
+            (1e-6, 1e3),  # % hlr
         ],
     )
 )
@@ -151,7 +187,7 @@ TOL_BOUNDS = 1e-9
 OPTIMIZABLE_OPR_PARAMETERS = dict(
     zip(
         OPR_PARAMETERS,
-        [False, True, True, True, True, True, True, True, True, True, True],
+        [k not in ["ci"] for k in OPR_PARAMETERS],
     )
 )
 
@@ -159,7 +195,7 @@ OPTIMIZABLE_OPR_PARAMETERS = dict(
 OPTIMIZABLE_OPR_INITIAL_STATES = dict(
     zip(
         OPR_STATES,
-        [True, True, True, True],
+        [True] * len(OPR_STATES),
     )
 )
 
@@ -331,9 +367,7 @@ DEFAULT_TERMINATION_CRIT = dict(
         )
     ),
     **dict(
-        zip(
-            PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}]
-        )
+        zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])
     ),
 )
 
