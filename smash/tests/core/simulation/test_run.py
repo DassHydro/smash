@@ -26,7 +26,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
 
         mask = model.mesh.active_cell == 0
 
-        qsim = instance.sim_response.q[:].flatten()
+        qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"forward_run.{instance.setup.structure}.sim_q"] = qsim
@@ -79,7 +79,7 @@ def test_multiple_forward_run():
     n_sample = 5
     samples = smash.factory.generate_samples(problem, random_state=99, n=n_sample)
 
-    frq = np.zeros(shape=(*instance.obs_response.q.shape, n_sample), dtype=np.float32)
+    frq = np.zeros(shape=(*instance.response_data.q.shape, n_sample), dtype=np.float32)
 
     for i in range(n_sample):
         for key in samples._problem["names"]:
@@ -88,7 +88,7 @@ def test_multiple_forward_run():
             elif key in instance.opr_initial_states.keys:
                 instance.set_opr_initial_states(key, getattr(samples, key)[i])
         instance.forward_run(common_options={"ncpu": ncpu})
-        frq[..., i] = instance.sim_response.q.copy()
+        frq[..., i] = instance.response.q.copy()
 
     mfr = smash.multiple_forward_run(
         instance, samples, common_options={"verbose": False, "ncpu": ncpu}

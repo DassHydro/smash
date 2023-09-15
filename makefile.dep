@@ -19,6 +19,7 @@ f90: \
  obj/mwd_setup.o \
  obj/mwd_optimize_options.o \
  obj/mwd_mesh.o \
+ obj/mwd_response_data.o \
  obj/mwd_response.o \
  obj/mwd_physio_data.o \
  obj/mwd_opr_states.o \
@@ -30,6 +31,7 @@ f90: \
  obj/mwd_options.o \
  obj/mwd_sparse_matrix.o \
  obj/mwd_atmos_data.o \
+ obj/mwd_u_response_data.o \
  obj/mwd_input_data.o \
  obj/mw_forward.o \
  obj/md_gr_operator.o \

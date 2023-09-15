@@ -4,6 +4,8 @@
 !%      ----
 !%
 !%      - Optimize_OptionsDT
+!%          Optimization options passed by user to define the 'parameters-to-control' mapping,
+!%          parameters to optimize and optimizer options (factr, pgtol, bounds)
 !%
 !%          ================================== =======================================
 !%          `Variables`                        Description

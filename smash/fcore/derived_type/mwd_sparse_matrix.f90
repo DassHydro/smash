@@ -4,6 +4,8 @@
 !%      ----
 !%
 !%      - Sparse_MatrixDT
+!%          Sparse matrices handling atmospheric data (prcp, pet, snow ...)
+!%          See COO matrices (google, scipy)
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

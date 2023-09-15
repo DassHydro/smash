@@ -492,7 +492,7 @@ contains
 
             !$OMP critical
             cost(i) = output_thread%cost
-            q(:, :, i) = output_thread%sim_response%q
+            q(:, :, i) = output_thread%response%q
             call multiple_optimize_save_parameters(setup, parameters_thread, options, optimized_parameters(:, :, :, i))
 
             iter = iter + 1

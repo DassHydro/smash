@@ -12,7 +12,7 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
 
     instance = model.copy()
 
-    instance.sim_response.q = qs
+    instance.response.q = qs
 
     signresult = {}
 

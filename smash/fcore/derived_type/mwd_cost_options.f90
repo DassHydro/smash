@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - Cost_OptionsDT
+!%          Cost options passed by user to define the output cost
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

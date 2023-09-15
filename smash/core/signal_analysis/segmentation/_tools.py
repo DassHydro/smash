@@ -220,12 +220,12 @@ def _mask_event(
     peak_quant: float = PEAK_QUANT,
     max_duration: float = MAX_DURATION,  # in hour
 ) -> dict:
-    mask = np.zeros(model.obs_response.q.shape)
+    mask = np.zeros(model.response_data.q.shape)
     n_event = np.zeros(model.mesh.ng)
 
     for i, catchment in enumerate(model.mesh.code):
         prcp = model.atmos_data.mean_prcp[i, :].copy()
-        qobs = model.obs_response.q[i, :].copy()
+        qobs = model.response_data.q[i, :].copy()
 
         if (prcp < 0).all() or (qobs < 0).all():
             warnings.warn(

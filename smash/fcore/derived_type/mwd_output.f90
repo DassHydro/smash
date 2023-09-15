@@ -9,7 +9,7 @@
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
-!%          ``sim_response``         ResponseDT
+!%          ``response``             ResponseDT
 !%          ``opr_final_states``     Opr_StatesDT
 !%          ======================== =======================================
 !%
@@ -31,7 +31,7 @@ module mwd_output
 
     type OutputDT
 
-        type(ResponseDT) :: sim_response
+        type(ResponseDT) :: response
         type(Opr_StatesDT) :: opr_final_states
         real(sp) :: cost
 
@@ -47,7 +47,7 @@ contains
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
-        call ResponseDT_initialise(this%sim_response, setup, mesh)
+        call ResponseDT_initialise(this%response, setup, mesh)
         call Opr_StatesDT_initialise(this%opr_final_states, setup, mesh)
 
     end subroutine OutputDT_initialise

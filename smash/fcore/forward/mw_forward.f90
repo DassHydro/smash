@@ -154,7 +154,7 @@ contains
 
             !$OMP critical
             cost(i) = output_thread%cost
-            q(:, :, i) = output_thread%sim_response%q
+            q(:, :, i) = output_thread%response%q
 
             iter = iter + 1
             if (verbose) call display_iteration_progress(iter, niter, task)

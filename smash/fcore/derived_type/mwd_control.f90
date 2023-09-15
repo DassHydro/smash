@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - ControlDT
+!%          Control vector used in optimize and quantities required by the optimizer
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description

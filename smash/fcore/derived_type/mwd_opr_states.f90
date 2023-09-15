@@ -4,6 +4,8 @@
 !%      ----
 !%
 !%      - Opr_StatesDT
+!%        Matrices containting spatialized states of hydrological operators.
+!%        (reservoir level ...) The matrices are updated at each time step.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description

@@ -41,7 +41,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                     f"optimize.{model.setup.structure}.{mp}.control_vector"
                 ] = ret.control_vector
 
-            qsim = instance.sim_response.q[:].flatten()
+            qsim = instance.response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
 
             res[f"optimize.{model.setup.structure}.{mp}.sim_q"] = qsim
@@ -167,7 +167,7 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     for i, kwargs in enumerate(custom_sets):
         instance = smash.optimize(model, **kwargs)
 
-        qsim = instance.sim_response.q[:].flatten()
+        qsim = instance.response.q[:].flatten()
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"custom_optimize.{model.setup.structure}.custom_set_{i+1}.sim_q"] = qsim
@@ -195,7 +195,7 @@ def test_multiple_optimize():
     n_sample = 5
     samples = smash.factory.generate_samples(problem, random_state=99, n=n_sample)
 
-    optq = np.zeros(shape=(*instance.obs_response.q.shape, n_sample), dtype=np.float32)
+    optq = np.zeros(shape=(*instance.response_data.q.shape, n_sample), dtype=np.float32)
 
     for i in range(n_sample):
         for key in samples._problem["names"]:
@@ -208,7 +208,7 @@ def test_multiple_optimize():
             optimize_options={"termination_crit": {"maxiter": 1}},
             common_options={"verbose": False, "ncpu": ncpu},
         )
-        optq[..., i] = instance.sim_response.q.copy()
+        optq[..., i] = instance.response.q.copy()
 
     mopt = smash.multiple_optimize(
         instance,

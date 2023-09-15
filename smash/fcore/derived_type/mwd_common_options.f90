@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - Common_OptionsDT
+!%        Common options passed by user
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

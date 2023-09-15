@@ -5,6 +5,8 @@
 !%
 !%
 !%      - Opr_ParametersDT
+!%          Matrices containting spatialized parameters of hydrological operators.
+!%          (reservoir max capacity, lag time ...)
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
