@@ -78,9 +78,9 @@ def metrics(
     """
     metric, end_warmup = _standardize_metrics_args(metric, end_warmup, model.setup)
 
-    obs = model.obs_response.q[..., end_warmup:]
+    obs = model.response_data.q[..., end_warmup:]
 
-    sim = model.sim_response.q[..., end_warmup:]
+    sim = model.response.q[..., end_warmup:]
 
     ng = obs.shape[0]
 

@@ -389,7 +389,7 @@ def _multiple_forward_run(
     # % Initialise results
     cost = np.zeros(shape=samples.n_sample, dtype=np.float32, order="F")
     q = np.zeros(
-        shape=(*model.obs_response.q.shape, samples.n_sample),
+        shape=(*model.response_data.q.shape, samples.n_sample),
         dtype=np.float32,
         order="F",
     )

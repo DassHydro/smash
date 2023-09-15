@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - Physio_DataDT
+!%           Physiographic data used to force the regionalization, among other things.
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

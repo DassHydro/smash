@@ -100,7 +100,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             ind_start_arr = max(0, -start_diff)
             ind_end_arr = ind_start_arr + ind_end_dat - ind_start_dat
 
-            input_data.obs_response.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
+            input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
                 ind_start_dat:ind_end_dat, 0
             ]
 

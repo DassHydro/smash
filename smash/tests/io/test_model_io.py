@@ -20,8 +20,8 @@ def generic_model_io(**kwargs) -> dict:
     dict_check = {
         "setup": ["structure", "start_time", "end_time"],
         "mesh": ["flwdir", "active_cell"],
-        "obs_response": ["q"],
-        "sim_response": ["q"],
+        "response_data": ["q"],
+        "response": ["q"],
         "physio_data": ["descriptor"],
         "atmos_data": ["mean_prcp", "mean_pet"],
         "opr_parameters": ["values"],

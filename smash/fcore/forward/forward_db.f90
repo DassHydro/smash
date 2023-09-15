@@ -967,6 +967,8 @@ END MODULE MWD_METRICS_DIFF
 !%      ----
 !%
 !%      - Opr_StatesDT
+!%        Matrices containting spatialized states of hydrological operators. 
+!%        (reservoir level ...) The matrices are updated at each time step.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
@@ -1028,7 +1030,7 @@ END MODULE MWD_OPR_STATES_DIFF
 !%          `Variables`              Description
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
-!%          ``sim_response``         ResponseDT
+!%          ``response``             ResponseDT
 !%          ``opr_final_states``     Opr_StatesDT
 !%          ======================== =======================================
 !%
@@ -1050,12 +1052,12 @@ MODULE MWD_OUTPUT_DIFF
   USE MWD_OPR_STATES_DIFF
   IMPLICIT NONE
   TYPE OUTPUTDT
-      TYPE(RESPONSEDT) :: sim_response
+      TYPE(RESPONSEDT) :: response
       TYPE(OPR_STATESDT) :: opr_final_states
       REAL(sp) :: cost
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
-      TYPE(RESPONSEDT) :: sim_response
+      TYPE(RESPONSEDT) :: response
       REAL(sp) :: cost
   END TYPE OUTPUTDT_DIFF
 
@@ -1065,7 +1067,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
-    CALL RESPONSEDT_INITIALISE(this%sim_response, setup, mesh)
+    CALL RESPONSEDT_INITIALISE(this%response, setup, mesh)
     CALL OPR_STATESDT_INITIALISE(this%opr_final_states, setup, mesh)
   END SUBROUTINE OUTPUTDT_INITIALISE
 
@@ -1084,6 +1086,7 @@ END MODULE MWD_OUTPUT_DIFF
 !%      ----
 !%
 !%      - ControlDT
+!%          Control vector used in optimize and quantities required by the optimizer
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
@@ -1182,6 +1185,8 @@ END MODULE MWD_CONTROL_DIFF
 !%
 !%
 !%      - Opr_ParametersDT
+!%          Matrices containting spatialized parameters of hydrological operators.
+!%          (reservoir max capacity, lag time ...)
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
@@ -1239,6 +1244,7 @@ END MODULE MWD_OPR_PARAMETERS_DIFF
 !%      ----
 !%
 !%      - ParametersDT
+!%          Container for all parameters. The goal is to keep the control vector and the spatial matrices in sync. 
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
@@ -1302,6 +1308,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ----
 !%
 !%      - ReturnsDT
+!%          Usefull quantities returned by the hydrological model other than response variables themselves. 
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description
@@ -3158,8 +3165,8 @@ CONTAINS
 
 !  Differentiation of cls_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: jobs
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLS_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &   output_d, options, returns, jobs, jobs_d)
     IMPLICIT NONE
@@ -3205,11 +3212,11 @@ CONTAINS
       END IF
 ! Cycle if wgauge is equal to 0
       IF (abs0 .GT. 0._sp) THEN
-        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
+        qo = input_data%response_data%q(i, options%cost%end_warmup:setup&
+&         %ntime_step)
+        qs_d = output_d%response%q(i, options%cost%end_warmup:setup%&
 &         ntime_step)
-        qs_d = output_d%sim_response%q(i, options%cost%end_warmup:setup%&
-&         ntime_step)
-        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+        qs = output%response%q(i, options%cost%end_warmup:setup%&
 &         ntime_step)
         WHERE (qo .LT. 0._sp) 
           qs_d = 0.0_4
@@ -3542,8 +3549,8 @@ CONTAINS
 
 !  Differentiation of cls_compute_jobs in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: jobs
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLS_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &   output_b, options, returns, jobs, jobs_b)
     IMPLICIT NONE
@@ -3602,11 +3609,11 @@ CONTAINS
       ELSE
         CALL PUSHREAL4ARRAY(qo, setup%ntime_step - options%cost%&
 &                     end_warmup + 1)
-        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
-&         ntime_step)
+        qo = input_data%response_data%q(i, options%cost%end_warmup:setup&
+&         %ntime_step)
         CALL PUSHREAL4ARRAY(qs, setup%ntime_step - options%cost%&
 &                     end_warmup + 1)
-        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+        qs = output%response%q(i, options%cost%end_warmup:setup%&
 &         ntime_step)
         WHERE (qo .LT. 0._sp) qs = -99._sp
 ! Convert mean_prcp from mm/dt to m3/s
@@ -4032,7 +4039,7 @@ CONTAINS
         END DO
       END DO
     END IF
-    output_b%sim_response%q = 0.0_4
+    output_b%response%q = 0.0_4
     DO i=mesh%ng,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
@@ -4347,9 +4354,9 @@ CONTAINS
 &                    end_warmup + 1)
         CALL POPREAL4ARRAY(qs, setup%ntime_step - options%cost%&
 &                    end_warmup + 1)
-        output_b%sim_response%q(i, options%cost%end_warmup:setup%&
-&       ntime_step) = output_b%sim_response%q(i, options%cost%end_warmup&
-&         :setup%ntime_step) + qs_b
+        output_b%response%q(i, options%cost%end_warmup:setup%ntime_step)&
+&        = output_b%response%q(i, options%cost%end_warmup:setup%&
+&         ntime_step) + qs_b
         CALL POPREAL4ARRAY(qo, setup%ntime_step - options%cost%&
 &                    end_warmup + 1)
       END IF
@@ -4390,9 +4397,9 @@ CONTAINS
       END IF
 ! Cycle if wgauge is equal to 0
       IF (abs0 .GT. 0._sp) THEN
-        qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%&
-&         ntime_step)
-        qs = output%sim_response%q(i, options%cost%end_warmup:setup%&
+        qo = input_data%response_data%q(i, options%cost%end_warmup:setup&
+&         %ntime_step)
+        qs = output%response%q(i, options%cost%end_warmup:setup%&
 &         ntime_step)
         WHERE (qo .LT. 0._sp) qs = -99._sp
 ! Convert mean_prcp from mm/dt to m3/s
@@ -4655,8 +4662,8 @@ CONTAINS
 
 !  Differentiation of cls_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLS_COMPUTE_COST_D(setup, mesh, input_data, parameters, &
 &   output, output_d, options, returns)
     IMPLICIT NONE
@@ -4679,8 +4686,8 @@ CONTAINS
 
 !  Differentiation of cls_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLS_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &   output, output_b, options, returns)
     IMPLICIT NONE
@@ -4725,8 +4732,8 @@ CONTAINS
 
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, output&
 &   , output_d, options, returns)
     IMPLICIT NONE
@@ -4752,8 +4759,8 @@ CONTAINS
 
 !  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(output.sim_response.q)
-!   Plus diff mem management of: output.sim_response.q:in
+!   with respect to varying inputs: *(output.response.q)
+!   Plus diff mem management of: output.response.q:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, output&
 &   , output_b, options, returns)
     IMPLICIT NONE
@@ -4773,7 +4780,7 @@ CONTAINS
       CALL CLS_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &                       output, output_b, options, returns)
     CASE DEFAULT
-      output_b%sim_response%q = 0.0_4
+      output_b%response%q = 0.0_4
     END SELECT
   END SUBROUTINE COMPUTE_COST_B
 
@@ -7793,11 +7800,11 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 
 CONTAINS
 !  Differentiation of gr4_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -7830,7 +7837,7 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -7968,20 +7975,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2))
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GR4_LR_FORWARD_D
 
 !  Differentiation of gr4_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -8153,9 +8160,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%sim_response&
-&         %q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%response%q(g&
+&         , t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -8396,18 +8403,18 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GR4_LR_FORWARD
 
 !  Differentiation of gr4_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -8445,7 +8452,7 @@ CONTAINS
 !% =================================================================================================================== %!
     q = 0._sp
     qt = 0._sp
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -8602,20 +8609,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2), zq)
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2), zq)
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2), zq)
       END DO
     END DO
   END SUBROUTINE GR4_KW_FORWARD_D
 
 !  Differentiation of gr4_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -8804,9 +8811,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) + output_b%&
-&         sim_response%q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) + output_b%response&
+&         %q(g, t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -9075,18 +9082,18 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2), zq)
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2), zq)
       END DO
     END DO
   END SUBROUTINE GR4_KW_FORWARD
 
 !  Differentiation of gr5_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -9119,7 +9126,7 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -9262,20 +9269,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2))
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GR5_LR_FORWARD_D
 
 !  Differentiation of gr5_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -9449,9 +9456,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%sim_response&
-&         %q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%response%q(g&
+&         , t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -9699,18 +9706,18 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GR5_LR_FORWARD
 
 !  Differentiation of gr5_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -9748,7 +9755,7 @@ CONTAINS
 !% =================================================================================================================== %!
     q = 0._sp
     qt = 0._sp
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -9910,20 +9917,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2), zq)
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2), zq)
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2), zq)
       END DO
     END DO
   END SUBROUTINE GR5_KW_FORWARD_D
 
 !  Differentiation of gr5_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -10114,9 +10121,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) + output_b%&
-&         sim_response%q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq) + output_b%response&
+&         %q(g, t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -10392,18 +10399,18 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2), zq)
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2), zq)
       END DO
     END DO
   END SUBROUTINE GR5_KW_FORWARD
 
 !  Differentiation of loieau_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE LOIEAU_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -10437,7 +10444,7 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -10568,20 +10575,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2))
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE LOIEAU_LR_FORWARD_D
 
 !  Differentiation of loieau_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE LOIEAU_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -10753,9 +10760,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%sim_response&
-&         %q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%response%q(g&
+&         , t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -10985,18 +10992,18 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE LOIEAU_LR_FORWARD
 
 !  Differentiation of grd_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.sim_response.q)
+!   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GRD_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -11029,7 +11036,7 @@ CONTAINS
 !% =================================================================================================================== %!
 !%   Begin subroutine
 !% =================================================================================================================== %!
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
     q_d = 0.0_4
     qt_d = 0.0_4
 !% [ DO TIME ]
@@ -11148,20 +11155,20 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output_d%sim_response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
+        output_d%response%q(g, t) = q_d(mesh%gauge_pos(g, 1), mesh%&
 &         gauge_pos(g, 2))
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GRD_LR_FORWARD_D
 
 !  Differentiation of grd_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.sim_response.q)
+!   gradient     of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
   SUBROUTINE GRD_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -11319,9 +11326,9 @@ CONTAINS
     DO t=setup%ntime_step,1,-1
       DO g=mesh%ng,1,-1
         q_b(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2)) = q_b(mesh%&
-&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%sim_response&
-&         %q(g, t)
-        output_b%sim_response%q(g, t) = 0.0_4
+&         gauge_pos(g, 1), mesh%gauge_pos(g, 2)) + output_b%response%q(g&
+&         , t)
+        output_b%response%q(g, t) = 0.0_4
       END DO
       DO i=mesh%nrow*mesh%ncol,1,-1
         CALL POPCONTROL2B(branch)
@@ -11530,8 +11537,8 @@ CONTAINS
 !%   Store simulated discharge at gauge
 !% =============================================================================================================== %!
       DO g=1,mesh%ng
-        output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%&
-&         gauge_pos(g, 2))
+        output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos&
+&         (g, 2))
       END DO
     END DO
   END SUBROUTINE GRD_LR_FORWARD
@@ -11543,11 +11550,11 @@ END MODULE MD_FORWARD_STRUCTURE_DIFF
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):in-killed
 !                *(parameters.opr_parameters.values):(loc) *(parameters.opr_initial_states.values):(loc)
-!                *(output.sim_response.q):(loc) output.cost:out
+!                *(output.response.q):(loc) output.cost:out
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, returns)
 !% only: sp
@@ -11610,7 +11617,7 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
     CALL GRD_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &                   parameters_d, output, output_d, options, returns)
   CASE DEFAULT
-    output_d%sim_response%q = 0.0_4
+    output_d%response%q = 0.0_4
   END SELECT
 !% Assign final states and reset initial states
   parameters_d%opr_initial_states%values = 0.0_4
@@ -11624,11 +11631,11 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):out
 !                *(parameters.opr_parameters.values):(loc) *(parameters.opr_initial_states.values):(loc)
-!                *(output.sim_response.q):(loc) output.cost:in-killed
+!                *(output.response.q):(loc) output.cost:in-killed
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
 !                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.sim_response.q:in
+!                parameters.opr_initial_states.values:in output.response.q:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, returns)
 !% only: sp

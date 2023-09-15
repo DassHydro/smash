@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - ParametersDT
+!%          Container for all parameters. The goal is to keep the control vector and the spatial matrices in sync.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description

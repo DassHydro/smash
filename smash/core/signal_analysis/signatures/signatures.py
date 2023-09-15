@@ -180,7 +180,8 @@ def _signatures(
                 i, :
             ]  # already conversion of instance.atmos_data.mean_prcp[i, :]
 
-            q = getattr(instance, f"{domain}_response").q[i, :].copy()
+            suffix = "_data" if domain == "obs" else ""
+            q = getattr(instance, f"response{suffix}").q[i, :].copy()
 
             if (prcp < 0).all() or (q < 0).all():
                 warnings.warn(
@@ -220,7 +221,8 @@ def _signatures(
                     )
 
                 if len(es) > 0:
-                    q_seg = getattr(instance, f"{by}_response").q[i, :].copy()
+                    suffix = "_data" if by == "obs" else ""
+                    q_seg = getattr(instance, f"response{suffix}").q[i, :].copy()
 
                     list_events = _events_grad(
                         prcp, q_seg, peak_quant, max_duration, instance.setup.dt

@@ -167,7 +167,7 @@ def precipitation_indices(
 
     # % Initialise result
     prcp_indices = np.zeros(
-        shape=(len(PRECIPITATION_INDICES), *model.obs_response.q.shape),
+        shape=(len(PRECIPITATION_INDICES), *model.response_data.q.shape),
         dtype=np.float32,
         order="F",
     )

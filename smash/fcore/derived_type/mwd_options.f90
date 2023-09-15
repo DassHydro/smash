@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - OptionsDT
+!%          Container for all user options (optimize, cost, common)
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

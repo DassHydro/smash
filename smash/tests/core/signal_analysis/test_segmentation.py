@@ -11,7 +11,7 @@ def generic_hydrograph_segmentation(
 ) -> dict:
     instance = model.copy()
 
-    instance.sim_response.q = qs
+    instance.response.q = qs
 
     by_obs = smash.hydrograph_segmentation(instance, by="obs").to_numpy()
     by_sim = smash.hydrograph_segmentation(instance, by="sim").to_numpy()

@@ -21,12 +21,12 @@ Attributes
 
    Model.setup
    Model.mesh
-   Model.obs_response
+   Model.response_data
    Model.physio_data
    Model.atmos_data
    Model.opr_parameters
    Model.opr_initial_states
-   Model.sim_response
+   Model.response
    Model.opr_final_states
    
 Simulation

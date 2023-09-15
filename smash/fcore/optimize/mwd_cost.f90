@@ -90,8 +90,8 @@ contains
             ! Cycle if wgauge is equal to 0
             if (abs(options%cost%wgauge(i)) .le. 0._sp) cycle
 
-            qo = input_data%obs_response%q(i, options%cost%end_warmup:setup%ntime_step)
-            qs = output%sim_response%q(i, options%cost%end_warmup:setup%ntime_step)
+            qo = input_data%response_data%q(i, options%cost%end_warmup:setup%ntime_step)
+            qs = output%response%q(i, options%cost%end_warmup:setup%ntime_step)
             where (qo .lt. 0._sp) qs = -99._sp
 
             ! Convert mean_prcp from mm/dt to m3/s

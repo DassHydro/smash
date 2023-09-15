@@ -13,7 +13,7 @@ def generic_metrics(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
 
     instance = model.copy()
 
-    instance.sim_response.q = qs
+    instance.response.q = qs
 
     for metric in METRICS:
         res[f"metrics.{metric}"] = smash.metrics(instance, metric=metric)

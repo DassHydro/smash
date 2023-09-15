@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - ReturnsDT
+!%          Usefull quantities returned by the hydrological model other than response variables themselves.
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description

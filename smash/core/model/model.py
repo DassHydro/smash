@@ -164,7 +164,7 @@ class Model(object):
         self._mesh = value
 
     @property
-    def obs_response(self):
+    def response_data(self):
         """
         Observation response data.
 
@@ -173,11 +173,11 @@ class Model(object):
         TODO: Fill
         """
 
-        return self._input_data.obs_response
+        return self._input_data.response_data
 
-    @obs_response.setter
-    def obs_response(self, value):
-        self._input_data.obs_response = value
+    @response_data.setter
+    def response_data(self, value):
+        self._input_data.response_data = value
 
     @property
     def physio_data(self):
@@ -244,7 +244,7 @@ class Model(object):
         self._parameters.opr_initial_states = value
 
     @property
-    def sim_response(self):
+    def response(self):
         """
         Simulated response data.
 
@@ -253,11 +253,11 @@ class Model(object):
         TODO: Fill
         """
 
-        return self._output.sim_response
+        return self._output.response
 
-    @sim_response.setter
-    def sim_response(self, value):
-        self._output.sim_response = value
+    @response.setter
+    def response(self, value):
+        self._output.response = value
 
     @property
     def opr_final_states(self):

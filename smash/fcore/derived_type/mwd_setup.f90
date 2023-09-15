@@ -4,11 +4,12 @@
 !%      ----
 !%
 !%      - SetupDT
+!%          All user setup informations
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Solver structure                                       (default: 'gr-a-lr')
+!%          ``structure``              Solver structure                                       (default: 'gr4-lr')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')

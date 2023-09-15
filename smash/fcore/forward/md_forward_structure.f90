@@ -181,7 +181,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
             end do
 
@@ -377,7 +377,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq)
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq)
 
             end do
 
@@ -550,7 +550,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
             end do
 
@@ -746,7 +746,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq)
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2), zq)
 
             end do
 
@@ -910,7 +910,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
             end do
 
@@ -1073,7 +1073,7 @@ contains
 
             do g = 1, mesh%ng
 
-                output%sim_response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
 
             end do
 

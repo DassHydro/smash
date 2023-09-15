@@ -4,6 +4,7 @@
 !%      ----
 !%
 !%      - Atmos_DataDT
+!%           Atmospheric data used to force smash and derived quantities.
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description
