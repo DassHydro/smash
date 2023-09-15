@@ -967,7 +967,7 @@ END MODULE MWD_METRICS_DIFF
 !%      ----
 !%
 !%      - Opr_StatesDT
-!%        Matrices containting spatialized states of hydrological operators. 
+!%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
 !%
 !%          ========================== =====================================
@@ -1244,7 +1244,7 @@ END MODULE MWD_OPR_PARAMETERS_DIFF
 !%      ----
 !%
 !%      - ParametersDT
-!%          Container for all parameters. The goal is to keep the control vector and the spatial matrices in sync. 
+!%          Container for all parameters. The goal is to keep the control vector and the spatial matrices in sync.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
@@ -1308,7 +1308,7 @@ END MODULE MWD_PARAMETERS_DIFF
 !%      ----
 !%
 !%      - ReturnsDT
-!%          Usefull quantities returned by the hydrological model other than response variables themselves. 
+!%          Usefull quantities returned by the hydrological model other than response variables themselves.
 !%
 !%          ======================== =======================================
 !%          `Variables`              Description
