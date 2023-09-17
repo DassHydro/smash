@@ -701,7 +701,7 @@ class Model(object):
             control_vector : bool, default False
                 Whether to return control vector at end of optimization. In case of optimization with ANN-based mapping, the control vector is represented in `smash.factory.Net.layers` instead.
 
-            net : Net
+            net : Net, default False
                 Whether to return the trained neural network `smash.factory.Net`. Only used with ANN-based mapping.
 
             cost : bool, default False
