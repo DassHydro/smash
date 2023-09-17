@@ -341,6 +341,9 @@ class Net(object):
             random_state=random_state,
         )
 
+        # % Private attr for return object Optimize
+        self._projg = []
+
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
@@ -355,7 +358,7 @@ class Net(object):
             loss = _hcost(instance)
 
             # calculate the infinity norm of the projected gradient
-            proj_g = _inf_norm(loss_grad)
+            self._projg.append(_inf_norm(loss_grad))
 
             # save optimal weights if early stopping is used
             if early_stopping:
@@ -387,7 +390,7 @@ class Net(object):
                 ret.append(f"{' ' * 4}At epoch")
                 ret.append("{:3}".format(epo + 1))
                 ret.append("J =" + "{:10.6f}".format(loss))
-                ret.append("|proj g| =" + "{:10.6f}".format(proj_g))
+                ret.append("|proj g| =" + "{:10.6f}".format(self._projg[-1]))
 
                 tqdm.write((" " * 4).join(ret))
 

@@ -25,6 +25,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash.factory.net.net import Net
     from smash.factory.samples.samples import Samples
 
 
@@ -94,8 +95,11 @@ class Optimize:
     iter_projg : numpy.ndarray
         An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
 
-    control : numpy.ndarray
+    control_vector : numpy.ndarray
         An array of size *(k,)* representing the control vector at end of optimization.
+
+    net : Net
+        The trained neural network `smash.factory.Net`.
 
     cost : float
         Cost value.
@@ -235,11 +239,11 @@ def optimize(
         time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
             Returned time steps. There are five ways to specify it:
 
-            - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+            - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
             - An alias among 'all' (return all time steps).
             - A pandas.Timestamp object.
             - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-23-05', '1998-23-06'])
 
             .. note::
                 It only applies to the following variables: 'opr_states' and 'q_domain'
@@ -257,7 +261,10 @@ def optimize(
             Whether to return infinity norm of the projected gardient iteration values.
 
         control_vector : bool, default False
-            Whether to return control vector at end of optimization.
+            Whether to return control vector at end of optimization. In case of optimization with ANN-based mapping, the control vector is represented in `smash.factory.Net.layers` instead.
+
+        net : Net
+            Whether to return the trained neural network `smash.factory.Net`. Only used with ANN-based mapping.
 
         cost : bool, default False
             Whether to return cost value.
@@ -344,7 +351,7 @@ def _optimize(
     _map_dict_to_object(return_options, wrap_returns)
 
     if mapping == "ann":
-        _ann_optimize(
+        net = _ann_optimize(
             model,
             optimizer,
             optimize_options,
@@ -367,6 +374,7 @@ def _optimize(
     fret = {}
     pyret = {}
 
+    # % Fortran returns
     for key in return_options["keys"]:
         try:
             value = getattr(wrap_returns, key)
@@ -375,6 +383,15 @@ def _optimize(
         if hasattr(value, "copy"):
             value = value.copy()
         fret[key] = value
+
+    # % Python returns
+    if mapping == "ann":
+        if "net" in return_options["keys"]:
+            pyret["net"] = net
+        if "iter_cost" in return_options["keys"]:
+            pyret["iter_cost"] = net.history["loss_train"]
+        if "iter_projg" in return_options["keys"]:
+            pyret["iter_projg"] = net._projg
 
     ret = {**fret, **pyret}
     if ret:
@@ -391,7 +408,7 @@ def _ann_optimize(
     common_options: dict,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-):
+) -> Net:
     # % Preprocessing input descriptors and normalization
     active_mask = np.where(model.mesh.active_cell == 1)
 
@@ -457,6 +474,8 @@ def _ann_optimize(
         wrap_options,
         wrap_returns,
     )
+
+    return net
 
 
 def multiple_optimize(
