@@ -43,7 +43,7 @@ class Net(object):
     def __init__(self):
         self.layers = []
 
-        self.history = {"loss_train": [], "loss_valid": []}
+        self.history = {"loss_train": [], "loss_valid": [], "proj_grad": []}
 
         self._opt = None
 
@@ -128,9 +128,9 @@ class Net(object):
     @property
     def history(self):
         """
-        A dictionary saving the training and validation losses.
+        A dictionary saving training information.
 
-        The keys are 'loss_train' and 'loss_valid'.
+        The keys are 'loss_train', 'loss_valid', and 'proj_grad'.
         """
 
         return self._history
@@ -341,24 +341,19 @@ class Net(object):
             random_state=random_state,
         )
 
-        # % Private attr for return object Optimize
-        self._projg = []
-
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred
-            loss_grad = _hcost_prime(
+            init_loss_grad = _hcost_prime(
                 y_pred, parameters, mask, instance, wrap_options, wrap_returns
             )
 
             # compute loss
             loss = _hcost(instance)
-
-            # calculate the infinity norm of the projected gradient
-            self._projg.append(_inf_norm(loss_grad))
+            self.history["loss_train"].append(loss)
 
             # save optimal weights if early stopping is used
             if early_stopping:
@@ -380,9 +375,11 @@ class Net(object):
                     ):  # stop training if the loss values do not decrease through early_stopping consecutive epochs
                         break
 
-            # backpropagation
-            if epo < epochs - 1:  # do not update weights at the last epoch
-                self._backward_pass(loss_grad=loss_grad)
+            # backpropagation and calculate infinity norm of the projected gradient
+            loss_grad = self._backward_pass(
+                init_loss_grad, inplace=True if epo < epochs - 1 else False
+            )  # do not update weights at the last epoch
+            self.history["proj_grad"].append(_inf_norm(loss_grad))
 
             if verbose:
                 ret = []
@@ -390,11 +387,11 @@ class Net(object):
                 ret.append(f"{' ' * 4}At epoch")
                 ret.append("{:3}".format(epo + 1))
                 ret.append("J =" + "{:10.6f}".format(loss))
-                ret.append("|proj g| =" + "{:10.6f}".format(self._projg[-1]))
+                ret.append(
+                    "|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1])
+                )
 
                 tqdm.write((" " * 4).join(ret))
-
-            self.history["loss_train"].append(loss)
 
         if early_stopping:
             for layer in self.layers:
@@ -410,9 +407,16 @@ class Net(object):
 
         return layer_output
 
-    def _backward_pass(self, loss_grad: np.ndarray):
-        for layer in reversed(self.layers):
+    def _backward_pass(self, loss_grad: np.ndarray, inplace=True):
+        if inplace:
+            net = self
+        else:
+            net = self.copy()
+
+        for layer in reversed(net.layers):
             loss_grad = layer._backward_pass(loss_grad)
+
+        return loss_grad
 
     def _predict(self, x_train: np.ndarray):
         preds = self._forward_pass(x_train, training=False)

@@ -192,7 +192,7 @@ def forward_run(
             - An alias among 'all' (return all time steps).
             - A pandas.Timestamp object.
             - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-23-05', '1998-23-06'])
+            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
                 It only applies to the following variables: 'opr_states' and 'q_domain'
