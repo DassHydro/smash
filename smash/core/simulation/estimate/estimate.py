@@ -129,11 +129,11 @@ def multiset_estimate(
         time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
             Returned time steps. There are five ways to specify it:
 
-            - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+            - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
             - An alias among 'all' (return all time steps).
             - A pandas.Timestamp object.
             - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
                 It only applies to the following variables: 'opr_states' and 'q_domain'

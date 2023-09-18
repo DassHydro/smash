@@ -538,11 +538,11 @@ class Model(object):
             time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
                 Returned time steps. There are five ways to specify it:
 
-                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
                 - An alias among 'all' (return all time steps).
                 - A pandas.Timestamp object.
                 - A pandas.DatetimeIndex object.
-                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+                - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
                     It only applies to the following variables: 'opr_states' and 'q_domain'
@@ -677,11 +677,11 @@ class Model(object):
             time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
                 Returned time steps. There are five ways to specify it:
 
-                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
                 - An alias among 'all' (return all time steps).
                 - A pandas.Timestamp object.
                 - A pandas.DatetimeIndex object.
-                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+                - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
                     It only applies to the following variables: 'opr_states' and 'q_domain'
@@ -699,7 +699,10 @@ class Model(object):
                 Whether to return infinity norm of the projected gradient iteration values.
 
             control_vector : bool, default False
-                Whether to return control vector at end of optimization.
+                Whether to return control vector at end of optimization. In case of optimization with ANN-based mapping, the control vector is represented in `smash.factory.Net.layers` instead.
+
+            net : Net, default False
+                Whether to return the trained neural network `smash.factory.Net`. Only used with ANN-based mapping.
 
             cost : bool, default False
                 Whether to return cost value.
@@ -777,11 +780,11 @@ class Model(object):
             time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
                 Returned time steps. There are five ways to specify it:
 
-                - A date as a character string which respect pandas.Timestamp format (i.e. '1997-12-21', '19971221', ...).
+                - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
                 - An alias among 'all' (return all time steps).
                 - A pandas.Timestamp object.
                 - A pandas.DatetimeIndex object.
-                - A sequence of dates as character string or pandas.Timestamp (i.e. ['1998-23-05', '1998-23-06'])
+                - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
                     It only applies to the following variables: 'opr_states' and 'q_domain'
