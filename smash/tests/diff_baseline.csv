@@ -1,11 +1,14 @@
-commit fcb35752bfb9d393d48fb5eb327c00cff16ad423
-Merge: 2559ff8 51beb44
-Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
-Date:   Mon Sep 18 13:54:19 2023 +0200
+commit db909316b0d83be65344553441ea6bd8f3e04c4b
+Author: Thomas De-Fournas <thomasdefournass@gmail.com>
+Date:   Wed Sep 20 15:35:46 2023 +0200
 
-    Merge pull request #85 from DassHydro-dev/enc-return-net
+    ENC_jobs_cmpt_tfm
     
-    ENC: Add net for return options:
+    -Ajout de jobs_cmpt_tfm permettant d'appliquer des transformations aux fonctions objectives jobs_cmpt
+    -Les transformations sont uniquement applicable aux metriques d'observations classiques (pas applicable sur les signatures)
+    -Ajout des transformations racine:'sqrt' et inverse: 'inv' ('keep' par défaut)
+    -Ajout des retours d'erreur potentiel pour l'utilisateur
+    -Ajout d'un test d'optimisation utilisant les transformations
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -26,7 +29,7 @@ custom_optimize.gr4-lr.custom_set_2.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_3.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_4.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_5.sim_q             |NON MODIFIED
-custom_optimize.gr4-lr.custom_set_6.sim_q             |MODIFIED
+custom_optimize.gr4-lr.custom_set_6.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_7.sim_q             |NON MODIFIED
 forward_run.gr4-kw.cost                               |NON MODIFIED
 forward_run.gr4-kw.jobs                               |NON MODIFIED
