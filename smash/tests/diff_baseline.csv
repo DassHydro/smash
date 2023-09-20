@@ -1,11 +1,11 @@
-commit 62a61d9be900c2141288338c5bea593e522422c9
-Merge: 64b4492 5e65cbb
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Fri Sep 15 11:29:43 2023 +0200
+commit fcb35752bfb9d393d48fb5eb327c00cff16ad423
+Merge: 2559ff8 51beb44
+Author: Ngo Nghi Truyen Huynh <129378719+nghi-truyen@users.noreply.github.com>
+Date:   Mon Sep 18 13:54:19 2023 +0200
 
-    Merge pull request #82 from DassHydro-dev/enc-add-optional-returns
+    Merge pull request #85 from DassHydro-dev/enc-return-net
     
-    ENC: Add optional returns options
+    ENC: Add net for return options:
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -26,7 +26,8 @@ custom_optimize.gr4-lr.custom_set_2.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_3.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_4.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_5.sim_q             |NON MODIFIED
-custom_optimize.gr4-lr.custom_set_6.sim_q             |NON MODIFIED
+custom_optimize.gr4-lr.custom_set_6.sim_q             |MODIFIED
+custom_optimize.gr4-lr.custom_set_7.sim_q             |NON MODIFIED
 forward_run.gr4-kw.cost                               |NON MODIFIED
 forward_run.gr4-kw.jobs                               |NON MODIFIED
 forward_run.gr4-kw.opr_states.hi                      |NON MODIFIED
@@ -106,17 +107,15 @@ model_io.atmos_data.mean_pet                          |NON MODIFIED
 model_io.atmos_data.mean_prcp                         |NON MODIFIED
 model_io.mesh.active_cell                             |NON MODIFIED
 model_io.mesh.flwdir                                  |NON MODIFIED
-model_io.obs_response.q                               |DELETED
 model_io.opr_final_states.values                      |NON MODIFIED
 model_io.opr_initial_states.values                    |NON MODIFIED
 model_io.opr_parameters.values                        |NON MODIFIED
 model_io.physio_data.descriptor                       |NON MODIFIED
-model_io.response.q                                   |ADDED
-model_io.response_data.q                              |ADDED
+model_io.response.q                                   |NON MODIFIED
+model_io.response_data.q                              |NON MODIFIED
 model_io.setup.end_time                               |NON MODIFIED
 model_io.setup.start_time                             |NON MODIFIED
 model_io.setup.structure                              |NON MODIFIED
-model_io.sim_response.q                               |DELETED
 multiset_estimate.mfwr.lcurve_multiset.alpha          |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.alpha_opt      |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.cost           |NON MODIFIED

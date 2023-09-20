@@ -353,6 +353,8 @@ F90_OPTIMIZER_CONTROL_TFM = dict(
 
 JOBS_CMPT = METRICS + SIGNS
 
+JOBS_CMPT_TFM = ["keep", "sqrt", "inv"]
+
 JREG_CMPT = ["prior", "smoothing", "hard-smoothing"]
 
 WEIGHT_ALIAS = ["mean", "median", "lquartile", "uquartile"]
@@ -425,6 +427,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 DEFAULT_SIMULATION_COST_OPTIONS = {
     "jobs_cmpt": "nse",
     "wjobs_cmpt": "mean",
+    "jobs_cmpt_tfm": None,
     "wjreg": 0,
     "jreg_cmpt": "prior",
     "wjreg_cmpt": "mean",

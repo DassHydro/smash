@@ -20,6 +20,7 @@ from smash._constant import (
     METRICS,
     SIGNS,
     JOBS_CMPT,
+    JOBS_CMPT_TFM,
     JREG_CMPT,
     WEIGHT_ALIAS,
     GAUGE_ALIAS,
@@ -609,6 +610,48 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
         )
 
     return wjobs_cmpt
+
+
+def _standardize_simulation_cost_options_jobs_cmpt_tfm(
+    jobs_cmpt: np.ndarray, jobs_cmpt_tfm: str | ListLike | None, **kwargs
+) -> np.ndarray:
+    if jobs_cmpt_tfm is None:
+        jobs_cmpt_tfm = np.array(["keep"] * jobs_cmpt.size)
+
+    else:
+        if isinstance(jobs_cmpt_tfm, (str, list, tuple, np.ndarray)):
+            jobs_cmpt_tfm = np.array(jobs_cmpt_tfm, ndmin=1)
+
+            if jobs_cmpt_tfm.size != jobs_cmpt.size:
+                raise ValueError(
+                    f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and jobs_cmpt_tfm ({jobs_cmpt_tfm.size}) cost_options"
+                )
+
+            for i, joct in enumerate(jobs_cmpt_tfm):
+                if joct.lower() in JOBS_CMPT_TFM:
+                    jobs_cmpt_tfm[i] = joct.lower()
+                else:
+                    raise ValueError(
+                        f"Unknown transformation '{joct}' at index {i} in jobs_cmpt_tfm cost_options. Choices: {JOBS_CMPT_TFM}"
+                    )
+
+            non_avail_tfm_signs = JOBS_CMPT_TFM.copy()
+            non_avail_tfm_signs.remove("keep")
+
+            for i in range(jobs_cmpt.size):
+                joc = jobs_cmpt[i]
+                joct = jobs_cmpt_tfm[i]
+                if joc in SIGNS and joct in non_avail_tfm_signs:
+                    raise ValueError(
+                        f"Transformation '{joct}' is not available for component '{joc}' at index {i} in jobs_cmpt_tfm cost_options"
+                    )
+
+        else:
+            raise TypeError(
+                "jobs_cmpt_tfm cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
+            )
+
+    return jobs_cmpt_tfm
 
 
 def _standardize_simulation_cost_options_wjreg(wjreg: Numeric, **kwargs) -> float:

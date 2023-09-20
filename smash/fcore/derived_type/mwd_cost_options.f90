@@ -43,6 +43,7 @@ module mwd_cost_options
         integer :: njoc = -99
         character(lchar), dimension(:), allocatable :: jobs_cmpt !$F90W char-array
         real(sp), dimension(:), allocatable :: wjobs_cmpt
+        character(lchar), dimension(:), allocatable :: jobs_cmpt_tfm !$F90W char-array
 
         integer :: njrc = -99
         real(sp) :: wjreg = -99._sp
@@ -78,6 +79,9 @@ contains
 
         allocate (this%wjobs_cmpt(this%njoc))
         this%wjobs_cmpt = -99._sp
+
+        allocate (this%jobs_cmpt_tfm(this%njoc))
+        this%jobs_cmpt_tfm = "..."
 
         allocate (this%jreg_cmpt(this%njrc))
         this%jreg_cmpt = "..."

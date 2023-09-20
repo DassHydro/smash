@@ -14,7 +14,7 @@
 
 module mwd_cost
 
-    use md_constant !% only: sp
+    use md_constant !% only: sp, lchar
     use md_stats !% only: quantile1d_r
     use mwd_metrics !% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
     use mwd_signatures !% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
@@ -63,6 +63,39 @@ contains
 
     end function get_range_event
 
+    subroutine apply_discharge_tfm(tfm_name, qo, qs)
+
+        implicit none
+
+        character(lchar), intent(in) :: tfm_name
+        real(sp), dimension(:), intent(inout) :: qo, qs
+
+        integer :: i
+        real(sp) :: mean_qo, e
+        logical, dimension(size(qo)) :: mask
+
+        select case (tfm_name)
+
+        case ("sqrt")
+
+            where (qo .gt. 0._sp) qo = sqrt(qo)
+            where (qs .gt. 0._sp) qs = sqrt(qs)
+
+        case ("inv")
+
+            mask = (qo .ge. 0._sp)
+            mean_qo = sum(qo, mask=mask)/count(mask)
+            e = 1e-2_sp*mean_qo
+            where (qo .ge. 0._sp) qo = 1._sp/(qo + e)
+            where (qs .ge. 0._sp) qs = 1._sp/(qs + e)
+
+            !% Should be reach by "keep" only. Do nothing
+        case default
+
+        end select
+
+    end subroutine apply_discharge_tfm
+
     subroutine cls_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         implicit none
@@ -90,10 +123,6 @@ contains
             ! Cycle if wgauge is equal to 0
             if (abs(options%cost%wgauge(i)) .le. 0._sp) cycle
 
-            qo = input_data%response_data%q(i, options%cost%end_warmup:setup%ntime_step)
-            qs = output%response%q(i, options%cost%end_warmup:setup%ntime_step)
-            where (qo .lt. 0._sp) qs = -99._sp
-
             ! Convert mean_prcp from mm/dt to m3/s
             mprcp = input_data%atmos_data%mean_prcp(i, options%cost%end_warmup:setup%ntime_step)* &
             & mesh%area_dln(i)*1.e-3_sp/setup%dt
@@ -101,6 +130,11 @@ contains
             mask_event = options%cost%mask_event(i, options%cost%end_warmup:setup%ntime_step)
 
             do j = 1, options%cost%njoc
+
+                qo = input_data%response_data%q(i, options%cost%end_warmup:setup%ntime_step)
+                qs = output%response%q(i, options%cost%end_warmup:setup%ntime_step)
+                where (qo .lt. 0._sp) qs = -99._sp
+                call apply_discharge_tfm(options%cost%jobs_cmpt_tfm(j), qo, qs)
 
                 select case (options%cost%jobs_cmpt(j))
 
