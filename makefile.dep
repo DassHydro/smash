@@ -9,6 +9,7 @@ f77: \
  obj/lbfgsb.o \
 
 f90: \
+ obj/mwd_bayesian_tools.o \
  obj/mwd_common_options.o \
  obj/md_constant.o \
  obj/m_screen_display.o \
@@ -19,6 +20,8 @@ f90: \
  obj/mwd_setup.o \
  obj/mwd_optimize_options.o \
  obj/mwd_mesh.o \
+ obj/mwd_serr_sigma_parameters.o \
+ obj/mwd_serr_mu_parameters.o \
  obj/mwd_response_data.o \
  obj/mwd_response.o \
  obj/mwd_physio_data.o \
@@ -27,12 +30,12 @@ f90: \
  obj/mwd_output.o \
  obj/mwd_opr_parameters.o \
  obj/mwd_parameters.o \
- obj/mwd_cost_options.o \
- obj/mwd_options.o \
  obj/mwd_sparse_matrix.o \
  obj/mwd_atmos_data.o \
  obj/mwd_u_response_data.o \
  obj/mwd_input_data.o \
+ obj/mwd_cost_options.o \
+ obj/mwd_options.o \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \

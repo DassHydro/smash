@@ -10,7 +10,6 @@
 !%      - loieau_lr_forward
 !%      - grd_lr_forward
 
-
 module md_forward_structure
 
     use md_constant !% only: sp
@@ -769,7 +768,7 @@ contains
     end subroutine gr5_kw_forward
 
     subroutine loieau_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-        !% Note:             
+        !% Note:
         !% - opr_parameters: (1: ca), (2: cc), (3: kb), (4: llr)
         !% - opr_states:     (1: ha), (2: hc), (3: hlr)
 

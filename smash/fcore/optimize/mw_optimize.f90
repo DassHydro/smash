@@ -23,7 +23,7 @@ module mw_optimize
     use mwd_options, only: OptionsDT
     use mwd_returns, only: ReturnsDT
     use mw_forward, only: forward_run, forward_run_b
-    use mwd_parameters_manipulation, only: parameters_to_control
+    use mwd_parameters_manipulation, only: parameters_to_control, get_serr_mu, get_serr_sigma
     use mwd_control, only: ControlDT, ControlDT_finalise
 
     implicit none
@@ -49,11 +49,9 @@ contains
         real(sp) :: gx, ga, clg, ddx, dxn
         real(sp), dimension(:), allocatable :: x_wa, y_wa, z_wa, l_wa, u_wa, sdx
 
-        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
-
         call parameters_to_control(setup, mesh, input_data, parameters, options)
 
-        n = size(parameters%control%x)
+        n = parameters%control%n
 
         allocate (x_wa(n), y_wa(n), z_wa(n), l_wa(n), u_wa(n), sdx(n))
 
@@ -62,6 +60,8 @@ contains
         u_wa = parameters%control%u
         y_wa = x_wa
         z_wa = x_wa
+
+        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
 
         gx = output%cost
         ga = gx
@@ -78,7 +78,7 @@ contains
         task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
 
         if (options%comm%verbose) then
-            write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+            write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
             & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
         end if
 
@@ -190,7 +190,7 @@ contains
             if (mod(iter, n) .eq. 0) then
 
                 if (options%comm%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f10.6,4x,a,f5.2)') &
+                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
                     & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
                 end if
 
@@ -220,6 +220,9 @@ contains
             allocate (returns%control_vector(n))
             returns%control_vector = parameters%control%x
         end if
+
+        if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
+        if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
 
         if (returns%iter_cost_flag) call reallocate(returns%iter_cost, iter/n + 1)
 
@@ -252,12 +255,10 @@ contains
         type(ParametersDT) :: parameters_b
         type(OutputDT) :: output_b
 
-        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
-
         call parameters_to_control(setup, mesh, input_data, parameters, options)
 
         iprint = -1
-        n = size(parameters%control%x)
+        n = parameters%control%n
         m = 10
         factr = real(options%optimize%factr, dp)
         pgtol = real(options%optimize%pgtol, dp)
@@ -290,8 +291,8 @@ contains
 
             if (task(1:2) .eq. "FG") then
 
-                call forward_run_b(setup, mesh, input_data, parameters, &
-                & parameters_b, output, output_b, options, returns)
+                call forward_run_b(setup, mesh, input_data, parameters, parameters_b, &
+                & output, output_b, options, returns)
 
                 f = real(output%cost, dp)
                 g = real(parameters_b%control%x, dp)
@@ -337,6 +338,9 @@ contains
             allocate (returns%control_vector(n))
             returns%control_vector = parameters%control%x
         end if
+
+        if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
+        if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
 
         if (returns%iter_cost_flag) call reallocate(returns%iter_cost, isave(30) + 1)
         if (returns%iter_projg_flag) call reallocate(returns%iter_projg, isave(30) + 1)

@@ -3,8 +3,9 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - cls_compute_jobs
-!%      - cls_compute_cost
+!%      - bayesian_compute_cost
+!%      - classical_compute_jobs
+!%      - classical_compute_cost
 !%      - compute_cost
 !%
 !%      Function
@@ -14,7 +15,8 @@
 
 module mwd_cost
 
-    use md_constant !% only: sp
+    use mwd_bayesian_tools !% only: compute_logPost, PriorType
+    use md_constant !% only: sp, dp
     use md_stats !% only: quantile1d_r
     use mwd_metrics !% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
     use mwd_signatures !% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
@@ -29,6 +31,80 @@ module mwd_cost
     implicit none
 
 contains
+
+    subroutine bayesian_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+
+        integer :: i, j, n
+        real(dp) :: log_lkh, log_prior, log_h, log_post
+        logical :: feas, isnull
+        character(lchar) :: mu_funk, sigma_funk
+        real(dp), dimension(setup%ntime_step, options%cost%nog) :: obs, uobs, sim
+        real(dp), dimension(sum(parameters%control%nbk(1:2))) :: theta
+        real(dp), dimension(setup%nsep_mu, options%cost%nog) :: mu_gamma
+        real(dp), dimension(setup%nsep_sigma, options%cost%nog) :: sigma_gamma
+        ! Derived Type from md_BayesianTools
+        type(PriorType), dimension(sum(parameters%control%nbk(1:2))) :: theta_prior
+        type(PriorType), dimension(0, 0) :: mu_gamma_prior, sigma_gamma_prior, dummy_prior2d
+
+        j = 0
+
+        do i = 1, mesh%ng
+
+            if (options%cost%gauge(i) .eq. 0) cycle
+
+            j = j + 1
+            obs(:, j) = input_data%response_data%q(i, options%cost%end_warmup:setup%ntime_step)
+            uobs(:, j) = input_data%u_response_data%q_stdev(i, options%cost%end_warmup:setup%ntime_step)
+            sim(:, j) = output%response%q(i, options%cost%end_warmup:setup%ntime_step)
+            mu_gamma(:, j) = parameters%serr_mu_parameters%values(i, :)
+            sigma_gamma(:, j) = parameters%serr_sigma_parameters%values(i, :)
+
+        end do
+
+        ! TODO: refactorize
+        ! Clarify prior for mu and sigma vs theta
+        obs = real(obs, dp)
+        uobs = real(uobs, dp)
+        sim = real(sim, dp)
+
+        n = sum(parameters%control%nbk(1:2))
+        if (n .gt. 0) then
+            theta = parameters%control%x(1:n)
+            theta_prior = options%cost%control_prior(1:n)
+        end if
+
+        mu_funk = setup%serr_mu_mapping
+        mu_gamma = real(mu_gamma, dp)
+        mu_gamma_prior = dummy_prior2d
+
+        sigma_funk = setup%serr_sigma_mapping
+        sigma_gamma = real(sigma_gamma, dp)
+        sigma_gamma_prior = dummy_prior2d
+
+        call compute_logPost(obs, uobs, sim, theta, theta_prior, mu_funk, mu_gamma, mu_gamma_prior, &
+        & sigma_funk, sigma_gamma, sigma_gamma_prior, log_post, log_prior, log_lkh, log_h, feas, isnull)
+        
+        ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
+        output%cost = -1._sp*log_post/size(obs)
+
+        !$AD start-exclude
+        if (returns%cost_flag) returns%cost = output%cost
+        if (returns%log_lkh_flag) returns%log_lkh = log_lkh
+        if (returns%log_prior_flag) returns%log_prior = log_prior
+        if (returns%log_h_flag) returns%log_h = log_h
+        !$AD end-exclude
+
+    end subroutine bayesian_compute_cost
 
     function get_range_event(mask_event, i_event) result(res)
 
@@ -63,7 +139,7 @@ contains
 
     end function get_range_event
 
-    subroutine cls_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
+    subroutine classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         implicit none
 
@@ -87,8 +163,8 @@ contains
 
         do i = 1, mesh%ng
 
-            ! Cycle if wgauge is equal to 0
-            if (abs(options%cost%wgauge(i)) .le. 0._sp) cycle
+            ! Cycle if gauge is equal to 0
+            if (options%cost%gauge(i) .eq. 0) cycle
 
             qo = input_data%response_data%q(i, options%cost%end_warmup:setup%ntime_step)
             qs = output%response%q(i, options%cost%end_warmup:setup%ntime_step)
@@ -280,7 +356,7 @@ contains
             k = 0
 
             do i = 1, mesh%ng
-                if (abs(options%cost%wgauge(i)) .le. 0._sp) cycle
+                if (options%cost%gauge(i) .eq. 0) cycle
 
                 jobs_tmp = 0._sp
 
@@ -312,9 +388,9 @@ contains
 
         end if
 
-    end subroutine cls_compute_jobs
+    end subroutine classical_compute_jobs
 
-    subroutine cls_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
+    subroutine classical_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
         implicit none
 
@@ -331,10 +407,10 @@ contains
         jobs = 0._sp
         jreg = 0._sp
 
-        call cls_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
+        call classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         ! TODO FC: Not Implemented yet
-        ! call cls_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+        ! call classical_compute_jreg(setup, mesh, parameters, options, returns, jreg)
 
         output%cost = jobs + options%cost%wjreg*jreg
 
@@ -344,7 +420,7 @@ contains
         if (returns%jreg_flag) returns%jreg = jreg
         !$AD end-exclude
 
-    end subroutine cls_compute_cost
+    end subroutine classical_compute_cost
 
     subroutine compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
@@ -358,16 +434,15 @@ contains
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
 
-        select case (options%cost%variant)
+        if (options%cost%bayesian) then
 
-        case ("cls")
+            call bayesian_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
-            call cls_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
+        else
 
-            ! TODO BR: Not Implemented Yet
-        case ("bys")
+            call classical_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
-        end select
+        end if
 
     end subroutine compute_cost
 

@@ -2,11 +2,17 @@ from __future__ import annotations
 
 from smash._constant import (
     STRUCTURE_NAME,
+    SERR_MU_MAPPING_NAME,
+    SERR_SIGMA_MAPPING_NAME,
     INPUT_DATA_FORMAT,
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
     FEASIBLE_OPR_PARAMETERS,
     FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_SERR_MU_PARAMETERS,
+    FEASIBLE_SERR_SIGMA_PARAMETERS,
 )
 
 import pandas as pd
@@ -24,11 +30,24 @@ if TYPE_CHECKING:
 
 
 def _standardize_setup(setup: SetupDT):
-    setup.structure = setup.structure.lower()
-
-    if setup.structure not in STRUCTURE_NAME:
+    if setup.structure.lower() in STRUCTURE_NAME:
+        setup.structure = setup.structure.lower()
+    else:
         raise ValueError(
             f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
+        )
+    if setup.serr_mu_mapping.capitalize() in SERR_MU_MAPPING_NAME:
+        setup.serr_mu_mapping = setup.serr_mu_mapping.capitalize()
+    else:
+        raise ValueError(
+            f"Unknown serr_mu_mapping '{setup.serr_mu_mapping}'. Choices: {SERR_MU_MAPPING_NAME}"
+        )
+
+    if setup.serr_sigma_mapping.capitalize() in SERR_SIGMA_MAPPING_NAME:
+        setup.serr_sigma_mapping = setup.serr_sigma_mapping.capitalize()
+    else:
+        raise ValueError(
+            f"Unknown serr_sigma_mapping '{setup.serr_sigma_mapping}'. Choices: {SERR_SIGMA_MAPPING_NAME}"
         )
 
     if setup.dt < 0:
@@ -158,6 +177,34 @@ def _standardize_opr_states_key(model: Model, state_kind: str, key: str) -> str:
     return key
 
 
+def _standardize_serr_mu_parameters_key(model: Model, key: str) -> str:
+    if not isinstance(key, str):
+        raise TypeError(f"key argument must be a str")
+
+    key = key.lower()
+
+    if key not in SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]:
+        raise ValueError(
+            f"Unknown model serr_mu_parameters '{key}'. Choices: {SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]}"
+        )
+
+    return key
+
+
+def _standardize_serr_sigma_parameters_key(model: Model, key: str) -> str:
+    if not isinstance(key, str):
+        raise TypeError(f"key argument must be a str")
+
+    key = key.lower()
+
+    if key not in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]:
+        raise ValueError(
+            f"Unknown model serr_sigma_parameters '{key}'. Choices: {SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]}"
+        )
+
+    return key
+
+
 def _standardize_opr_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
@@ -218,6 +265,66 @@ def _standardize_opr_states_value(
     return value
 
 
+def _standardize_serr_mu_parameters_value(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> Numeric | np.ndarray:
+    if not isinstance(value, (int, float, np.ndarray)):
+        raise TypeError(
+            f"value argument must be of Numeric type (int, float) or np.ndarray"
+        )
+
+    arr = np.array(value, ndmin=1)
+    l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
+    l_arr = np.min(arr)
+    u_arr = np.max(arr)
+
+    if (
+        isinstance(value, np.ndarray)
+        and value.shape != (model.mesh.ng,)
+        and value.size != 1
+    ):
+        raise ValueError(
+            f"Invalid shape for model serr_mu_parameters '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+        )
+
+    if l_arr <= l or u_arr >= u:
+        raise ValueError(
+            f"Invalid value for model serr_mu_parameters '{key}'. Serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+        )
+
+    return value
+
+
+def _standardize_serr_sigma_parameters_value(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> Numeric | np.ndarray:
+    if not isinstance(value, (int, float, np.ndarray)):
+        raise TypeError(
+            f"value argument must be of Numeric type (int, float) or np.ndarray"
+        )
+
+    arr = np.array(value, ndmin=1)
+    l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+    l_arr = np.min(arr)
+    u_arr = np.max(arr)
+
+    if (
+        isinstance(value, np.ndarray)
+        and value.shape != (model.mesh.ng,)
+        and value.size != 1
+    ):
+        raise ValueError(
+            f"Invalid shape for model serr_sigma_parameters '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+        )
+
+    if l_arr <= l or u_arr >= u:
+        raise ValueError(
+            f"Invalid value for model serr_sigma_parameters '{key}'. Serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+        )
+
+    return value
+
+
 def _standardize_get_opr_parameters_args(model: Model, key: str) -> str:
     key = _standardize_opr_parameters_key(model, key)
 
@@ -226,6 +333,18 @@ def _standardize_get_opr_parameters_args(model: Model, key: str) -> str:
 
 def _standardize_get_opr_initial_states_args(model: Model, key: str) -> str:
     key = _standardize_opr_states_key(model, "opr_initial_state", key)
+
+    return key
+
+
+def _standardize_get_serr_mu_parameters_args(model: Model, key: str) -> str:
+    key = _standardize_serr_mu_parameters_key(model, key)
+
+    return key
+
+
+def _standardize_get_serr_sigma_parameters_args(model: Model, key: str) -> str:
+    key = _standardize_serr_sigma_parameters_key(model, key)
 
     return key
 
@@ -253,5 +372,25 @@ def _standardize_set_opr_initial_states_args(
     key = _standardize_opr_states_key(model, state_kind, key)
 
     value = _standardize_opr_states_value(model, state_kind, key, value)
+
+    return (key, value)
+
+
+def _standardize_set_serr_mu_parameters_args(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> AnyTuple:
+    key = _standardize_serr_mu_parameters_key(model, key)
+
+    value = _standardize_serr_mu_parameters_value(model, key, value)
+
+    return (key, value)
+
+
+def _standardize_set_serr_sigma_parameters_args(
+    model: Model, key: str, value: Numeric | np.ndarray
+) -> AnyTuple:
+    key = _standardize_serr_sigma_parameters_key(model, key)
+
+    value = _standardize_serr_sigma_parameters_value(model, key, value)
 
     return (key, value)

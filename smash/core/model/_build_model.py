@@ -6,6 +6,10 @@ from smash._constant import (
     STRUCTURE_COMPUTE_CI,
     DEFAULT_OPR_PARAMETERS,
     DEFAULT_OPR_INITIAL_STATES,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
+    DEFAULT_SERR_MU_PARAMETERS,
+    DEFAULT_SERR_SIGMA_PARAMETERS,
 )
 
 from smash.core.model._read_input_data import (
@@ -34,8 +38,10 @@ if TYPE_CHECKING:
 
 
 # TODO: Move this function to a generic common function file
-def _map_dict_to_object(dct: dict, obj: object):
+def _map_dict_to_object(dct: dict, obj: object, skip: list = []):
     for key, value in dct.items():
+        if key in skip:
+            continue
         if hasattr(obj, key):
             setattr(obj, key, value)
         # % Apply to the same object and not sub-object
@@ -54,6 +60,8 @@ def _build_setup(setup: SetupDT):
 
     setup.nop = len(STRUCTURE_OPR_PARAMETERS[setup.structure])
     setup.nos = len(STRUCTURE_OPR_STATES[setup.structure])
+    setup.nsep_mu = len(SERR_MU_MAPPING_PARAMETERS[setup.serr_mu_mapping])
+    setup.nsep_sigma = len(SERR_SIGMA_MAPPING_PARAMETERS[setup.serr_sigma_mapping])
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
@@ -124,6 +132,24 @@ def _build_parameters(
             day_index[-1],
             parameters.opr_parameters.values[..., ind],
         )  # % Fortran subroutine mw_interception_capacity
+
+    # % Build structural mu error parameters
+    parameters.serr_mu_parameters.keys = SERR_MU_MAPPING_PARAMETERS[
+        setup.serr_mu_mapping
+    ]
+
+    for i, key in enumerate(parameters.serr_mu_parameters.keys):
+        value = DEFAULT_SERR_MU_PARAMETERS[key]
+        parameters.serr_mu_parameters.values[..., i] = value
+
+    # % Build structural sigma error parameters
+    parameters.serr_sigma_parameters.keys = SERR_SIGMA_MAPPING_PARAMETERS[
+        setup.serr_sigma_mapping
+    ]
+
+    for i, key in enumerate(parameters.serr_sigma_parameters.keys):
+        value = DEFAULT_SERR_SIGMA_PARAMETERS[key]
+        parameters.serr_sigma_parameters.values[..., i] = value
 
 
 def _build_output(

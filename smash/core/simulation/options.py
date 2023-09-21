@@ -3,6 +3,7 @@ from __future__ import annotations
 from smash.core.simulation._standardize import (
     _standardize_simulation_optimize_options,
     _standardize_default_optimize_options_args,
+    _standardize_default_bayesian_optimize_options_args,
 )
 
 from typing import TYPE_CHECKING
@@ -10,7 +11,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash.core.model.model import Model
 
-__all__ = ["default_optimize_options"]
+__all__ = ["default_optimize_options", "default_bayesian_optimize_options"]
 
 
 def default_optimize_options(
@@ -163,4 +164,96 @@ def default_optimize_options(
 
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 
-    return _standardize_simulation_optimize_options(model, mapping, optimizer, None)
+    return _standardize_simulation_optimize_options(
+        model, "optimize", mapping, optimizer, None
+    )
+
+
+def default_bayesian_optimize_options(
+    model: Model,
+    mapping: str = "uniform",
+    optimizer: str | None = None,
+) -> dict:
+    """
+    Get the default bayesian optimization options for the Model object.
+
+    Parameters
+    ----------
+    model : Model
+        Model object.
+
+    mapping : str, default 'uniform'
+        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
+
+    optimizer : str or None, default None
+        Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
+
+        .. note::
+            If not given, a default optimizer will be set depending on the optimization mapping:
+
+            - **mapping** = 'uniform'; **optimizer** = 'sbs'
+            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
+
+    Returns
+    -------
+    optimize_options : dict
+        A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
+
+        parameters : ListLike
+            Operator parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
+
+        bounds : dict
+            Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
+
+        control_tfm : str
+            Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
+
+        descriptor : dict
+            A dictionary containing lists of descriptors used for each operator parameter.
+            Only used when **mapping** is 'multi-linear' or 'multi-polynomial'.
+
+        termination_crit : dict
+            Termination criteria. The keys are:
+
+            - 'maxiter': The maximum number of iterations. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
+            - 'factr': An additional termination criterion based on cost values. Only used when **optimizer** is 'lbfgsb'.
+            - 'pgtol': An additional termination criterion based on the projected gradient of the cost function. Only used when **optimizer** is 'lbfgsb'.
+
+    Examples
+    --------
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Get the default bayesian optimiaztion options for multi-linear mapping:
+
+    >>> bay_opt_ml = smash.default_bayesian_optimize_options(model, mapping="multi-linear")
+    >>> bay_opt_ml
+        {
+            'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
+            'bounds': {
+                        'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0),
+                        'kexc': (-50, 50), 'llr': (1e-06, 1000.0),
+                        'sg0': (1e-06, 1000.0), 'sg1': (1e-06, 10.0)
+                      },
+            'control_tfm': 'normalize',
+            'control_prior': None,
+            'descriptor': {
+                            'cp': array(['slope', 'dd'], dtype='<U5'),
+                            'ct': array(['slope', 'dd'], dtype='<U5'),
+                            'kexc': array(['slope', 'dd'], dtype='<U5'),
+                            'llr': array(['slope', 'dd'], dtype='<U5'),
+                            'sg0': array(['slope', 'dd'], dtype='<U5'),
+                            'sg1': array(['slope', 'dd'], dtype='<U5')
+                          },
+            'termination_crit': {'maxiter': 100, 'factr': 1000000.0, 'pgtol': 1e-12}}
+    """
+
+    mapping, optimizer = _standardize_default_bayesian_optimize_options_args(
+        mapping, optimizer
+    )
+
+    return _standardize_simulation_optimize_options(
+        model, "bayesian_optimize", mapping, optimizer, None
+    )
