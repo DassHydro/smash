@@ -1,14 +1,8 @@
-commit db909316b0d83be65344553441ea6bd8f3e04c4b
+commit 36b36172b6c418ee0ac1c37644d92e50d61f3612
 Author: Thomas De-Fournas <thomasdefournass@gmail.com>
-Date:   Wed Sep 20 15:35:46 2023 +0200
+Date:   Wed Sep 20 16:23:59 2023 +0200
 
-    ENC_jobs_cmpt_tfm
-    
-    -Ajout de jobs_cmpt_tfm permettant d'appliquer des transformations aux fonctions objectives jobs_cmpt
-    -Les transformations sont uniquement applicable aux metriques d'observations classiques (pas applicable sur les signatures)
-    -Ajout des transformations racine:'sqrt' et inverse: 'inv' ('keep' par défaut)
-    -Ajout des retours d'erreur potentiel pour l'utilisateur
-    -Ajout d'un test d'optimisation utilisant les transformations
+    FIX: regenerated tapenad
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
