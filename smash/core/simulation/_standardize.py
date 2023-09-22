@@ -613,13 +613,32 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
 
 
 def _standardize_simulation_cost_options_jobs_cmpt_tfm(
-    jobs_cmpt: np.ndarray, jobs_cmpt_tfm: str | ListLike | None, **kwargs
+    jobs_cmpt: np.ndarray, jobs_cmpt_tfm: str | ListLike, **kwargs
 ) -> np.ndarray:
-    if jobs_cmpt_tfm is None:
-        jobs_cmpt_tfm = np.array(["keep"] * jobs_cmpt.size)
-
+    if isinstance(jobs_cmpt_tfm, str):
+        if jobs_cmpt_tfm.lower() == "keep":
+            jobs_cmpt_tfm = np.array(["keep"] * jobs_cmpt.size)
+        else:
+            if jobs_cmpt_tfm.lower() in JOBS_CMPT_TFM:
+                jobs_cmpt_tfm = jobs_cmpt_tfm.lower()
+            else:
+                raise ValueError(
+                    f"Unknown transformation '{jobs_cmpt_tfm}' at index 0 in jobs_cmpt_tfm cost_options. Choices: {JOBS_CMPT_TFM}"
+                )
+            joct = jobs_cmpt_tfm
+            jobs_cmpt_tfm = []
+            for i in range(jobs_cmpt.size):
+                joc = jobs_cmpt[i]
+                if joc in METRICS:
+                    jobs_cmpt_tfm.append(joct)
+                else:
+                    jobs_cmpt_tfm.append("keep")
+                    warnings.warn(
+                        f"Transformation '{joct}' is not available and so non apply for component '{joc}' at index {i} in jobs_cmpt_tfm cost_options"
+                    )
+            jobs_cmpt_tfm = np.array(jobs_cmpt_tfm)
     else:
-        if isinstance(jobs_cmpt_tfm, (str, list, tuple, np.ndarray)):
+        if isinstance(jobs_cmpt_tfm, (list, tuple, np.ndarray)):
             jobs_cmpt_tfm = np.array(jobs_cmpt_tfm, ndmin=1)
 
             if jobs_cmpt_tfm.size != jobs_cmpt.size:
@@ -645,7 +664,6 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
                     raise ValueError(
                         f"Transformation '{joct}' is not available for component '{joc}' at index {i} in jobs_cmpt_tfm cost_options"
                     )
-
         else:
             raise TypeError(
                 "jobs_cmpt_tfm cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"

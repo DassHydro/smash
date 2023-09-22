@@ -427,7 +427,7 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 DEFAULT_SIMULATION_COST_OPTIONS = {
     "jobs_cmpt": "nse",
     "wjobs_cmpt": "mean",
-    "jobs_cmpt_tfm": None,
+    "jobs_cmpt_tfm": "keep",
     "wjreg": 0,
     "jreg_cmpt": "prior",
     "wjreg_cmpt": "mean",

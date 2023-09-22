@@ -1,8 +1,8 @@
-commit 36b36172b6c418ee0ac1c37644d92e50d61f3612
-Author: Thomas De-Fournas <thomasdefournass@gmail.com>
-Date:   Wed Sep 20 16:23:59 2023 +0200
+commit b1fafe379fd4648a2211f39bc4f5b140f4387b75
+Author: ngo-nghi-truyen.huynh <ngo-nghi-truyen.huynh@inrae.fr>
+Date:   Fri Sep 22 11:56:48 2023 +0200
 
-    FIX: regenerated tapenad
+    FIX PR: re-generate baseline
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED

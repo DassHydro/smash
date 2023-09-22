@@ -500,6 +500,12 @@ class Model(object):
             wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
                 The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
 
+            jobs_cmpt_tfm : str or ListLike, default 'keep'
+                Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
+                - 'keep' : No transformation
+                - 'sqrt' : Square root transformation
+                - 'inv' : Multiplicative inverse transformation
+
             gauge : str or ListLike, default 'dws'
                 Type of gauge to be computed. There are two ways to specify it:
 
