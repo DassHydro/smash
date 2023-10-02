@@ -258,6 +258,7 @@ def _get_control_info(
 
     return ret
 
+
 def optimize(
     model: Model,
     mapping: str = "uniform",
@@ -859,20 +860,26 @@ def bayesian_optimize(
     optimize_options : dict or None, default None
         Dictionary containing optimization options for fine-tuning the optimization process.
 
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
+        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_bayesian_optimize_options` for more.
 
     cost_options : dict or None, default None
         Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-        prior: str or ListLike, default 'FlatPrior'
-            TODO BAYESIAN
-            Type of prior to link to parameters.
 
         gauge : str or ListLike, default 'dws'
             Type of gauge to be computed. There are two ways to specify it:
 
             - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
             - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+
+        control_prior: dict or None, default None
+            A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
+            The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
+
+            - 'FlatPrior', [] (0)
+            - 'Gaussian', [mu, sigma] (2)
+            - 'Exponential', [threshold, scale] (2)
+
+            .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
 
         end_warmup : str or pandas.Timestamp, default model.setup.start_time
             The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
@@ -933,10 +940,10 @@ def bayesian_optimize(
             Whether to return log h component value.
 
         serr_mu : bool, default False
-            Whether to return mu, the mean of structural errors.
+            Whether to return mu, the mean of structural errors. It can also be returned directly from the Model object using the `model.get_serr_mu` method.
 
         serr_sigma : bool, default False
-            Whether to return sigma, the standard deviation of structural errors.
+            Whether to return sigma, the standard deviation of structural errors. It can also be returned directly from the Model object using the `model.get_serr_sigma` method.
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 

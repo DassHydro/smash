@@ -33,7 +33,6 @@ from smash.core.model._standardize import (
 from smash.core.simulation.run.run import _forward_run
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
 from smash.core.simulation.optimize.optimize import (
-    _get_control_info,
     _optimize,
     _bayesian_optimize,
 )
@@ -64,8 +63,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import Numeric, ListLike
-    from smash.core.simulation.optimize.optimize import MultipleOptimize, Optimize
-    from smash.core.simulation.run.run import MultipleForwardRun, ForwardRun
+    from smash.core.simulation.optimize.optimize import (
+        Optimize,
+        MultipleOptimize,
+        BayesianOptimize,
+    )
+    from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
     from smash.core.simulation.estimate.estimate import MultisetEstimate
 
 __all__ = ["Model"]
@@ -210,8 +213,8 @@ class Model(object):
 
         return self._input_data.u_response_data
 
-    @response_data.setter
-    def response_data(self, value):
+    @u_response_data.setter
+    def u_response_data(self, value):
         self._input_data.u_response_data = value
 
     @property
@@ -281,7 +284,7 @@ class Model(object):
     @property
     def serr_mu_parameters(self):
         """
-        Get structural error mu hyper parameters for the actual mu mapping of the Model.
+        Get structural error mu parameters for the actual mu mapping of the Model.
 
         Examples
         --------
@@ -297,7 +300,7 @@ class Model(object):
     @property
     def serr_sigma_parameters(self):
         """
-        Get structural error sigma hyper parameters for the actual sigma mapping of the Model.
+        Get structural error sigma parameters for the actual sigma mapping of the Model.
 
         Examples
         --------
@@ -706,48 +709,6 @@ class Model(object):
         )
         return serr_sigma
 
-    def get_optimize_control_info(
-        self,
-        mapping: str = "uniform",
-        optimizer: str | None = None,
-        optimize_options: dict | None = None,
-        cost_options: dict | None = None,
-    ) -> dict:
-        args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
-
-        # % Only get mapping, optimizer, optimize_options and cost_options
-        *arg, _, _ = _standardize_optimize_args(
-            self,
-            mapping,
-            optimizer,
-            *args_options,
-            None,
-            None,
-        )
-
-        return _get_control_info(self, *arg)
-
-    def get_bayesian_optimize_control_info(
-        self,
-        mapping: str = "uniform",
-        optimizer: str | None = None,
-        optimize_options: dict | None = None,
-        cost_options: dict | None = None,
-    ) -> dict:
-        args_options = [deepcopy(arg) for arg in [optimize_options, cost_options]]
-
-        # % Only get mapping, optimizer, optimize_options and cost_options
-        *arg, _, _ = _standardize_bayesian_optimize_args(
-            self,
-            mapping,
-            optimizer,
-            *args_options,
-            None,
-            None,
-        )
-
-        return _get_control_info(self, *arg)
-
     def forward_run(
         self,
         cost_options: dict | None = None,
@@ -1136,22 +1097,28 @@ class Model(object):
         cost_options : dict or None, default None
             Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
-            prior: str or ListLike, default 'FlatPrior'
-                TODO BAYESIAN
-                Type of prior to link to parameters.
-
             gauge : str or ListLike, default 'dws'
                 Type of gauge to be computed. There are two ways to specify it:
 
                 - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
                 - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
 
+            control_prior: dict or None, default None
+                A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
+                The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
+
+                - 'FlatPrior', [] (0)
+                - 'Gaussian', [mu, sigma] (2)
+                - 'Exponential', [threshold, scale] (2)
+
+                .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
+
             end_warmup : str or pandas.Timestamp, default model.setup.start_time
                 The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
-        common_options : dict or None, default None
+    common_options : dict or None, default None
             Dictionary containing common options with two elements:
 
             verbose : bool, default False

@@ -20,9 +20,15 @@ from smash.core.model._read_input_data import (
 )
 from smash.core.model._standardize import _standardize_setup
 
-from smash.fcore._mwd_sparse_matrix_manipulation import compute_rowcol_to_ind_sparse
-from smash.fcore._mw_atmos_statistic import compute_mean_atmos
-from smash.fcore._mw_interception_capacity import compute_interception_capacity
+from smash.fcore._mwd_sparse_matrix_manipulation import (
+    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
+)
+from smash.fcore._mw_atmos_statistic import (
+    compute_mean_atmos as wrap_compute_mean_atmos,
+)
+from smash.fcore._mw_interception_capacity import (
+    compute_interception_capacity as wrap_compute_interception_capacity,
+)
 
 import pandas as pd
 import numpy as np
@@ -66,7 +72,7 @@ def _build_setup(setup: SetupDT):
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
     if setup.sparse_storage:
-        compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine mw_sparse_storage
+        wrap_compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine
     mesh.local_active_cell = mesh.active_cell.copy()
 
 
@@ -83,9 +89,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_descriptor:
         _read_descriptor(setup, mesh, input_data)
 
-    compute_mean_atmos(
-        setup, mesh, input_data
-    )  # % Fortran subroutine mw_atmos_statistic
+    wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
 
 
 def _build_parameters(
@@ -110,6 +114,7 @@ def _build_parameters(
         value = DEFAULT_OPR_INITIAL_STATES[key]
         parameters.opr_initial_states.values[..., i] = value
 
+    # TODO: Add a key in setup to trigger the auto computation of CI (True by default)
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
         # % Date
         day_index = pd.date_range(
@@ -124,16 +129,16 @@ def _build_parameters(
 
         ind = np.argwhere(parameters.opr_parameters.keys == "ci").item()
 
-        compute_interception_capacity(
+        wrap_compute_interception_capacity(
             setup,
             mesh,
             input_data,
             day_index,
             day_index[-1],
             parameters.opr_parameters.values[..., ind],
-        )  # % Fortran subroutine mw_interception_capacity
+        )  # % Fortran subroutine
 
-    # % Build structural mu error parameters
+    # % Build structural error mu parameters
     parameters.serr_mu_parameters.keys = SERR_MU_MAPPING_PARAMETERS[
         setup.serr_mu_mapping
     ]
@@ -142,7 +147,7 @@ def _build_parameters(
         value = DEFAULT_SERR_MU_PARAMETERS[key]
         parameters.serr_mu_parameters.values[..., i] = value
 
-    # % Build structural sigma error parameters
+    # % Build structural error sigma parameters
     parameters.serr_sigma_parameters.keys = SERR_SIGMA_MAPPING_PARAMETERS[
         setup.serr_sigma_mapping
     ]

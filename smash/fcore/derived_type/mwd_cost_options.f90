@@ -54,7 +54,7 @@ module mwd_cost_options
         character(lchar), dimension(:), allocatable :: jreg_cmpt !$F90W char-array
         real(sp), dimension(:), allocatable :: wjreg_cmpt
 
-        integer :: nog
+        integer :: nog = -99
         integer, dimension(:), allocatable :: gauge
         real(sp), dimension(:), allocatable :: wgauge
 
@@ -118,7 +118,6 @@ contains
 
     end subroutine Cost_OptionsDT_copy
 
-    ! WIP: Bayesian
     subroutine Cost_OptionsDT_allocate_control_prior(this, n, npar)
 
         implicit none

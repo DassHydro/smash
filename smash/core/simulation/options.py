@@ -238,7 +238,6 @@ def default_bayesian_optimize_options(
                         'sg0': (1e-06, 1000.0), 'sg1': (1e-06, 10.0)
                       },
             'control_tfm': 'normalize',
-            'control_prior': None,
             'descriptor': {
                             'cp': array(['slope', 'dd'], dtype='<U5'),
                             'ct': array(['slope', 'dd'], dtype='<U5'),

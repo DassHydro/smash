@@ -16,6 +16,10 @@ from smash.core.simulation.options import (
     default_optimize_options,
     default_bayesian_optimize_options,
 )
+from smash.core.simulation.control import (
+    optimize_control_info,
+    bayesian_optimize_control_info,
+)
 from smash.core.simulation.estimate.estimate import multiset_estimate
 
 # smash sub-packages
@@ -55,6 +59,8 @@ __all__ = [
     "bayesian_optimize",
     "default_optimize_options",
     "default_bayesian_optimize_options",
+    "optimize_control_info",
+    "bayesian_optimize_control_info",
     "multiset_estimate",
     "io",
     "factory",

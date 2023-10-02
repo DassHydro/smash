@@ -2899,7 +2899,7 @@ MODULE MWD_COST_OPTIONS_DIFF
       REAL(sp) :: wjreg=-99._sp
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: jreg_cmpt
       REAL(sp), DIMENSION(:), ALLOCATABLE :: wjreg_cmpt
-      INTEGER :: nog
+      INTEGER :: nog=-99
       INTEGER, DIMENSION(:), ALLOCATABLE :: gauge
       REAL(sp), DIMENSION(:), ALLOCATABLE :: wgauge
       INTEGER :: end_warmup=-99
@@ -2942,7 +2942,6 @@ CONTAINS
     this_copy = this
   END SUBROUTINE COST_OPTIONSDT_COPY
 
-! WIP: Bayesian
   SUBROUTINE COST_OPTIONSDT_ALLOCATE_CONTROL_PRIOR(this, n, npar)
     IMPLICIT NONE
     TYPE(COST_OPTIONSDT), INTENT(INOUT) :: this

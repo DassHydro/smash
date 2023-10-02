@@ -2,7 +2,16 @@ from __future__ import annotations
 
 from smash.core.signal_analysis.metrics._standardize import _standardize_metrics_args
 
-from smash.fcore._mwd_metrics import nse, nnse, kge, mae, mape, mse, rmse, lgrm
+from smash.fcore._mwd_metrics import (
+    nse as wrap_nse,
+    nnse as wrap_nnse,
+    kge as wrap_kge,
+    mae as wrap_mae,
+    mape as wrap_mape,
+    mse as wrap_mse,
+    rmse as wrap_rmse,
+    lgrm as wrap_lgrm,
+)
 
 import numpy as np
 
@@ -87,6 +96,6 @@ def metrics(
     evaluation_metric = np.zeros(ng)
 
     for i in range(ng):
-        evaluation_metric[i] = eval(metric)(obs[i], sim[i])
+        evaluation_metric[i] = eval("wrap_" + metric)(obs[i], sim[i])
 
     return evaluation_metric

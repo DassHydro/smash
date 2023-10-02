@@ -2,19 +2,28 @@ from __future__ import annotations
 
 from smash._constant import (
     STRUCTURE_NAME,
+    SERR_MU_MAPPING_NAME,
+    SERR_SIGMA_MAPPING_NAME,
     OPR_PARAMETERS,
     OPR_STATES,
+    SERR_MU_PARAMETERS,
+    SERR_SIGMA_PARAMETERS,
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
-    STRUCTURE_COMPUTE_CI,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
     FEASIBLE_OPR_PARAMETERS,
     FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_SERR_MU_PARAMETERS,
+    FEASIBLE_SERR_SIGMA_PARAMETERS,
     DEFAULT_OPR_PARAMETERS,
     DEFAULT_OPR_INITIAL_STATES,
+    DEFAULT_SERR_MU_PARAMETERS,
+    DEFAULT_SERR_SIGMA_PARAMETERS,
     DEFAULT_BOUNDS_OPR_PARAMETERS,
     DEFAULT_BOUNDS_OPR_INITIAL_STATES,
-    OPTIMIZABLE_OPR_PARAMETERS,
-    OPTIMIZABLE_OPR_INITIAL_STATES,
+    DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
+    DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
     INPUT_DATA_FORMAT,
     RATIO_PET_HOURLY,
     DATASET_NAME,
@@ -74,9 +83,43 @@ def test_structure_model():
         ["hp", "ht", "hlr"],  # % grd-lr
     ]
 
+    # % Check mu mapping name
+    assert SERR_MU_MAPPING_NAME == ["Zero", "Constant", "Linear"]
+
+    # % Check sigma mapping name
+    assert SERR_SIGMA_MAPPING_NAME == [
+        "Constant",
+        "Linear",
+        "Power",
+        "Exponential",
+        "Gaussian",
+    ]
+
+    # % Check serr mu parameters
+    assert SERR_MU_PARAMETERS == ["mg0", "mg1"]
+
+    # % Check serr mu parameters
+    assert SERR_SIGMA_PARAMETERS == ["sg0", "sg1", "sg2"]
+
+    # % Check mu mapping parameters
+    assert list(SERR_MU_MAPPING_PARAMETERS.values()) == [
+        [],  # % zero
+        ["mg0"],  # % constant
+        ["mg0", "mg1"],  # % linear
+    ]
+
+    # % Check sigma mapping parameters
+    assert list(SERR_SIGMA_MAPPING_PARAMETERS.values()) == [
+        ["sg0"],  # % constant
+        ["sg0", "sg1"],  # % linear
+        ["sg0", "sg1", "sg2"],  # % power
+        ["sg0", "sg1", "sg2"],  # % exponential
+        ["sg0", "sg1", "sg2"],  # % gaussian
+    ]
+
 
 def test_feasible_domain():
-    # % Feasible opr parameters
+    # % Check feasible opr parameters
     assert list(FEASIBLE_OPR_PARAMETERS.values()) == [
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
@@ -91,7 +134,7 @@ def test_feasible_domain():
         (0, np.inf),  # % bkw
     ]
 
-    # % Feasible opr states
+    # % Check feasible opr states
     assert list(FEASIBLE_OPR_INITIAL_STATES.values()) == [
         (0, 1),  # % hi
         (0, 1),  # % hp
@@ -99,6 +142,19 @@ def test_feasible_domain():
         (0, 1),  # % ha
         (0, 1),  # % hc
         (0, np.inf),  # % hlr
+    ]
+
+    # % Check feasible serr mu parameters
+    assert list(FEASIBLE_SERR_MU_PARAMETERS.values()) == [
+        (-np.inf, np.inf),  # % mg0
+        (-np.inf, np.inf),  # % mg1
+    ]
+
+    # % Check feasible serr sigma parameters
+    assert list(FEASIBLE_SERR_SIGMA_PARAMETERS.values()) == [
+        (0, np.inf),  # % sg0
+        (0, np.inf),  # % sg1
+        (0, np.inf),  # % sg2
     ]
 
 
@@ -128,6 +184,19 @@ def test_default_parameters():
         1e-6,  # % hlr
     ]
 
+    # % Check default serr mu parameters
+    assert list(DEFAULT_SERR_MU_PARAMETERS.values()) == [
+        0,  # % mg0
+        0,  # % mg1
+    ]
+
+    # % Check default serr sigma parameters
+    assert list(DEFAULT_SERR_SIGMA_PARAMETERS.values()) == [
+        1,  # % sg0
+        0.2,  # % sg1
+        2,  # % sg2
+    ]
+
 
 def test_default_bounds_parameters():
     # % Check default bounds opr parameters
@@ -153,6 +222,19 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),  # % ha
         (1e-6, 0.999999),  # % hc
         (1e-6, 1e3),  # % hlr
+    ]
+
+    # % Check default bounds serr mu parameters
+    assert list(DEFAULT_BOUNDS_SERR_MU_PARAMETERS.values()) == [
+        (-1e6, 1e6),  # % mg0
+        (-1e6, 1e6),  # % mg1
+    ]
+
+    # % Check default bounds serr sigma parameters
+    assert list(DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS.values()) == [
+        (1e-6, 1e3),  # % sg0
+        (1e-6, 1e1),  # % sg1
+        (1e-6, 1e3),  # % sg2
     ]
 
 

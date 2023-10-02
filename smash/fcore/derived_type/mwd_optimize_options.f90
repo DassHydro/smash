@@ -11,8 +11,6 @@
 !%          `Variables`                        Description
 !%          ================================== =======================================
 !%          ``mapping``                       Control mapping name
-!%          ``mu_mapping``                    Control mu mapping name
-!%          ``sigma_mapping``                 Control sigma mapping name
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
 !%          ``opr_parameters``                Opr parameters to optimize

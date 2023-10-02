@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from smash._constant import PRECIPITATION_INDICES
 
-from smash.fcore._mw_prcp_indices import precipitation_indices_computation
+from smash.fcore._mw_prcp_indices import (
+    precipitation_indices_computation as wrap_precipitation_indices_computation,
+)
 
 import numpy as np
 
@@ -173,7 +175,7 @@ def precipitation_indices(
     )
 
     # % Call Fortran wrapped subroutine
-    precipitation_indices_computation(
+    wrap_precipitation_indices_computation(
         model.setup, model.mesh, model._input_data, prcp_indices
     )
 

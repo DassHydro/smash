@@ -55,7 +55,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, ListLike
+    from smash._typing import Numeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -228,12 +228,12 @@ def _standardize_simulation_optimize_options_bounds(
         elif key in model.opr_initial_states.keys:
             arr = model.get_opr_initial_states(key)
             l, u = FEASIBLE_OPR_INITIAL_STATES[key]
-        elif key in model.serr_mu_parameters.keys:
-            arr = model.get_serr_mu_parameters(key)
-            l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
         elif key in model.serr_sigma_parameters.keys:
             arr = model.get_serr_sigma_parameters(key)
             l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+        elif key in model.serr_mu_parameters.keys:
+            arr = model.get_serr_mu_parameters(key)
+            l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
         # % In case we have other kind of parameters. Should be unreachable.
         else:
             pass
@@ -1092,6 +1092,9 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
     for key in model.opr_initial_states.keys:
         arr = model.get_opr_initial_states(key)
+        # % Skip if size == 0, i.e. no gauge
+        if arr.size == 0:
+            continue
         l, u = FEASIBLE_OPR_INITIAL_STATES[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
@@ -1113,6 +1116,9 @@ def _standardize_simulation_parameters_feasibility(model: Model):
             )
     for key in model.serr_sigma_parameters.keys:
         arr = model.get_serr_sigma_parameters(key)
+        # % Skip if size == 0, i.e. no gauge
+        if arr.size == 0:
+            continue
         l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
@@ -1127,9 +1133,6 @@ def _standardize_simulation_optimize_options_finalize(
     model: Model, mapping: str, optimizer: str, optimize_options: dict
 ) -> dict:
     optimize_options["mapping"] = mapping
-    # % External bayesian tools required capitalized mapping
-    optimize_options["mu_mapping"] = model.setup.serr_mu_mapping.capitalize()
-    optimize_options["sigma_mapping"] = model.setup.serr_sigma_mapping.capitalize()
     optimize_options["optimizer"] = optimizer
 
     descriptor_present = "descriptor" in optimize_options.keys()
@@ -1323,7 +1326,7 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
 
 def _standardize_default_optimize_options_args(
     mapping: str, optimizer: str | None
-) -> dict:
+) -> AnyTuple:
     mapping = _standardize_simulation_mapping(mapping)
 
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
@@ -1333,5 +1336,5 @@ def _standardize_default_optimize_options_args(
 
 def _standardize_default_bayesian_optimize_options_args(
     mapping: str, optimizer: str | None
-) -> dict:
+) -> AnyTuple:
     return _standardize_default_optimize_options_args(mapping, optimizer)
