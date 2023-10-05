@@ -1092,9 +1092,6 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
     for key in model.opr_initial_states.keys:
         arr = model.get_opr_initial_states(key)
-        # % Skip if size == 0, i.e. no gauge
-        if arr.size == 0:
-            continue
         l, u = FEASIBLE_OPR_INITIAL_STATES[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
@@ -1106,6 +1103,9 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
     for key in model.serr_mu_parameters.keys:
         arr = model.get_serr_mu_parameters(key)
+        # % Skip if size == 0, i.e. no gauge
+        if arr.size == 0:
+            continue
         l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
