@@ -39,7 +39,8 @@ __all__ = [
     "Optimize",
     "BayesianOptimize",
     "optimize",
-    "bayesian_optimize" "multiple_optimize",
+    "bayesian_optimize",
+    "multiple_optimize",
 ]
 
 
