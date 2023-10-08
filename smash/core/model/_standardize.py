@@ -153,56 +153,48 @@ def _standardize_opr_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    key = key.lower()
-
-    if key not in STRUCTURE_OPR_PARAMETERS[model.setup.structure]:
+    if key.lower() not in STRUCTURE_OPR_PARAMETERS[model.setup.structure]:
         raise ValueError(
             f"Unknown model opr_parameter '{key}'. Choices: {STRUCTURE_OPR_PARAMETERS[model.setup.structure]}"
         )
 
-    return key
+    return key.lower()
 
 
 def _standardize_opr_states_key(model: Model, state_kind: str, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    key = key.lower()
-
-    if key not in STRUCTURE_OPR_STATES[model.setup.structure]:
+    if key.lower() not in STRUCTURE_OPR_STATES[model.setup.structure]:
         raise ValueError(
             f"Unknown model {state_kind} '{key}'. Choices: {STRUCTURE_OPR_STATES[model.setup.structure]}"
         )
 
-    return key
+    return key.lower()
 
 
 def _standardize_serr_mu_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    key = key.lower()
-
-    if key not in SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]:
+    if key.lower() not in SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]:
         raise ValueError(
             f"Unknown model serr_mu_parameters '{key}'. Choices: {SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]}"
         )
 
-    return key
+    return key.lower()
 
 
 def _standardize_serr_sigma_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    key = key.lower()
-
-    if key not in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]:
+    if key.lower() not in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]:
         raise ValueError(
             f"Unknown model serr_sigma_parameters '{key}'. Choices: {SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]}"
         )
 
-    return key
+    return key.lower()
 
 
 def _standardize_opr_parameters_value(

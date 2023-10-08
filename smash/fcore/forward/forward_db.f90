@@ -5445,8 +5445,8 @@ CONTAINS
 &         )
       END IF
     END DO
-! TODO: refactorize
-! Clarify prior for mu and sigma vs theta
+! TODO: For the moment only priors for theta are handled.
+! Priors for mu_gamma and sigma_gamma are hard-coded to non-informative dummy_prior2d
     obs = REAL(obs, dp)
     uobs = REAL(uobs, dp)
     sim_d = REAL(sim_d, dp)
@@ -5541,8 +5541,8 @@ CONTAINS
         CALL PUSHCONTROL1B(1)
       END IF
     END DO
-! TODO: refactorize
-! Clarify prior for mu and sigma vs theta
+! TODO: For the moment only priors for theta are handled.
+! Priors for mu_gamma and sigma_gamma are hard-coded to non-informative dummy_prior2d
     obs = REAL(obs, dp)
     uobs = REAL(uobs, dp)
     sim = REAL(sim, dp)
@@ -5646,8 +5646,8 @@ CONTAINS
 &         )
       END IF
     END DO
-! TODO: refactorize
-! Clarify prior for mu and sigma vs theta
+! TODO: For the moment only priors for theta are handled.
+! Priors for mu_gamma and sigma_gamma are hard-coded to non-informative dummy_prior2d
     obs = REAL(obs, dp)
     uobs = REAL(uobs, dp)
     sim = REAL(sim, dp)

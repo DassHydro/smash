@@ -203,9 +203,12 @@ def bayesian_optimize_control_info(
             A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
             The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
 
-            - 'FlatPrior', [] (0)
-            - 'Gaussian', [mu, sigma] (2)
-            - 'Exponential', [threshold, scale] (2)
+            - 'FlatPrior',   []                                 (0)
+            - 'Uniform',     [lower_bound, higher_bound]        (2)
+            - 'Gaussian',    [mean, standard_deviation]         (2)
+            - 'Exponential', [threshold, scale]                 (2)
+            - 'LogNormal',   [mean_log, standard_deviation_log] (2)
+            - 'Triangle',    [peak, lower_bound, higher_bound]  (3)
 
             .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
 

@@ -71,8 +71,8 @@ contains
 
         end do
 
-        ! TODO: refactorize
-        ! Clarify prior for mu and sigma vs theta
+        ! TODO: For the moment only priors for theta are handled.
+        ! Priors for mu_gamma and sigma_gamma are hard-coded to non-informative dummy_prior2d
         obs = real(obs, dp)
         uobs = real(uobs, dp)
         sim = real(sim, dp)

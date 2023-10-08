@@ -506,12 +506,12 @@ DEFAULT_TERMINATION_CRIT = dict(
     ),
 )
 
-CONTROL_PRIOR_DISTRIBUTION = ["FlatPrior", "Gaussian", "Exponential"]
+CONTROL_PRIOR_DISTRIBUTION = ["FlatPrior", "Uniform", "Gaussian", "Exponential", "LogNormal", "Triangle"]
 
 CONTROL_PRIOR_DISTRIBUTION_PARAMETERS = dict(
     zip(
         CONTROL_PRIOR_DISTRIBUTION,
-        [0, 2, 1],
+        [0, 2, 2, 2, 2, 3],
     )
 )
 
