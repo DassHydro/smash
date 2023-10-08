@@ -45,7 +45,7 @@ contains
         type(MeshDT), intent(in) :: mesh
 
         allocate (this%q_stdev(mesh%ng, setup%ntime_step))
-        this%q_stdev = -99._sp
+        this%q_stdev = 0._sp
 
     end subroutine U_Response_DataDT_initialise
 

@@ -3,8 +3,8 @@ from __future__ import annotations
 import numpy as np
 
 from smash.fcore._mwd_parameters_manipulation import (
-    parameters_to_control,
-    control_to_parameters,
+    parameters_to_control as wrap_parameters_to_control,
+    control_to_parameters as wrap_control_to_parameters,
 )
 
 from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
@@ -41,7 +41,7 @@ def _hcost_prime(
 
             instance.opr_inital_states.values[..., ind][mask] = y[:, i]
 
-    parameters_to_control(
+    wrap_parameters_to_control(
         instance.setup,
         instance.mesh,
         instance._input_data,
@@ -50,7 +50,6 @@ def _hcost_prime(
     )
 
     parameters_b = instance._parameters.copy()
-
     output_b = instance._output.copy()
     output_b.cost = np.float32(1)
 
@@ -66,7 +65,7 @@ def _hcost_prime(
         wrap_returns,
     )
 
-    control_to_parameters(
+    wrap_control_to_parameters(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
     )
 

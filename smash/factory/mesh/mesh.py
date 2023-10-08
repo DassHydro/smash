@@ -165,7 +165,7 @@ def _generate_mesh_from_xy(
             flwdir, dx, dy, row, col, area[ind], max_depth
         )
 
-        area_dln[ind] = np.count_nonzero(mask_dln_imd == 1) * (xres * yres)
+        area_dln[ind] = np.sum(mask_dln_imd * dx * dy)
 
         mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
 

@@ -3,10 +3,18 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
+    OPR_PARAMETERS,
+    OPR_STATES,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
     OPTIMIZABLE_OPR_PARAMETERS,
     OPTIMIZABLE_OPR_INITIAL_STATES,
+    OPTIMIZABLE_SERR_MU_PARAMETERS,
+    OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
     FEASIBLE_OPR_PARAMETERS,
     FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_SERR_MU_PARAMETERS,
+    FEASIBLE_SERR_SIGMA_PARAMETERS,
     MAPPING,
     MAPPING_OPTIMIZER,
     PY_OPTIMIZER_CLASS,
@@ -47,7 +55,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, ListLike
+    from smash._typing import Numeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -108,8 +116,10 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
 
 
 def _standardize_simulation_optimize_options_parameters(
-    model: Model, parameters: str | ListLike | None, **kwargs
+    model: Model, func_name: str, parameters: str | ListLike | None, **kwargs
 ) -> np.ndarray:
+    is_bayesian = "bayesian" in func_name
+
     available_opr_parameters = [
         key
         for key in STRUCTURE_OPR_PARAMETERS[model.setup.structure]
@@ -120,10 +130,33 @@ def _standardize_simulation_optimize_options_parameters(
         for key in STRUCTURE_OPR_STATES[model.setup.structure]
         if OPTIMIZABLE_OPR_INITIAL_STATES[key]
     ]
+    available_serr_mu_parameters = [
+        key
+        for key in SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]
+        if OPTIMIZABLE_SERR_MU_PARAMETERS[key]
+    ]
+    available_serr_sigma_parameters = [
+        key
+        for key in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]
+        if OPTIMIZABLE_SERR_SIGMA_PARAMETERS[key]
+    ]
     available_parameters = available_opr_parameters + available_opr_initial_states
 
+    if is_bayesian:
+        available_parameters.extend(
+            available_serr_mu_parameters + available_serr_sigma_parameters
+        )
+
     if parameters is None:
-        parameters = np.array(available_opr_parameters, ndmin=1)
+        if is_bayesian:
+            parameters = np.array(
+                available_opr_parameters
+                + available_serr_mu_parameters
+                + available_serr_sigma_parameters,
+                ndmin=1,
+            )
+        else:
+            parameters = np.array(available_opr_parameters, ndmin=1)
 
     else:
         if isinstance(parameters, (str, list, tuple, np.ndarray)):
@@ -177,8 +210,12 @@ def _standardize_simulation_optimize_options_bounds(
             TypeError("bounds optimize_options must be a dictionary")
 
     parameters_bounds = dict(
-        **model.get_opr_parameters_bounds(), **model.get_opr_initial_states_bounds()
+        **model.get_opr_parameters_bounds(),
+        **model.get_opr_initial_states_bounds(),
+        **model.get_serr_mu_parameters_bounds(),
+        **model.get_serr_sigma_parameters_bounds(),
     )
+
     for key, value in parameters_bounds.items():
         if key in parameters:
             bounds.setdefault(key, value)
@@ -191,6 +228,12 @@ def _standardize_simulation_optimize_options_bounds(
         elif key in model.opr_initial_states.keys:
             arr = model.get_opr_initial_states(key)
             l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+        elif key in model.serr_sigma_parameters.keys:
+            arr = model.get_serr_sigma_parameters(key)
+            l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+        elif key in model.serr_mu_parameters.keys:
+            arr = model.get_serr_mu_parameters(key)
+            l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
         # % In case we have other kind of parameters. Should be unreachable.
         else:
             pass
@@ -230,13 +273,16 @@ def _standardize_simulation_optimize_options_control_tfm(
 def _standardize_simulation_optimize_options_descriptor(
     model: Model, parameters: np.ndarray, descriptor: dict | None, **kwargs
 ) -> dict:
+    desc_linked_parameters = [
+        key for key in parameters if key in OPR_PARAMETERS + OPR_STATES
+    ]
     if descriptor is None:
         descriptor = {}
 
     else:
         if isinstance(descriptor, dict):
             for key, value in descriptor.items():
-                if key in parameters:
+                if key in desc_linked_parameters:
                     if isinstance(value, (str, list, tuple, np.ndarray)):
                         value = np.array(value, ndmin=1)
                         for vle in value:
@@ -251,12 +297,12 @@ def _standardize_simulation_optimize_options_descriptor(
                         )
                 else:
                     raise ValueError(
-                        f"Unknown or non optimized parameter '{key}' in descriptor optimize_options. Choices: {parameters}"
+                        f"Unknown or non optimized or non descriptor linked parameter '{key}' in descriptor optimize_options. Choices: {desc_linked_parameters}"
                     )
         else:
             raise TypeError("descriptor optimize_options must be a dictionary")
 
-    for prmt in parameters:
+    for prmt in desc_linked_parameters:
         descriptor.setdefault(prmt, model.setup.descriptor_name)
 
     # % Check that descriptors are not uniform
@@ -503,7 +549,11 @@ def _standardize_simulation_optimize_options_termination_crit_early_stopping(
 
 
 def _standardize_simulation_optimize_options(
-    model: Model, mapping: str, optimizer: str, optimize_options: dict | None
+    model: Model,
+    func_name: str,
+    mapping: str,
+    optimizer: str,
+    optimize_options: dict | None,
 ) -> dict:
     if optimize_options is None:
         optimize_options = dict.fromkeys(
@@ -530,7 +580,11 @@ def _standardize_simulation_optimize_options(
         optimize_options.setdefault(key, None)
         func = eval(f"_standardize_simulation_optimize_options_{key}")
         optimize_options[key] = func(
-            model=model, mapping=mapping, optimizer=optimizer, **optimize_options
+            model=model,
+            func_name=func_name,
+            mapping=mapping,
+            optimizer=optimizer,
+            **optimize_options,
         )
 
     return optimize_options
@@ -840,17 +894,25 @@ def _standardize_simulation_cost_options_end_warmup(
     return end_warmup
 
 
+# % Some standardization of control_prior must be done with Fortran calls
+# % Otherwise we have to compute control size in Python ...
+def _standardize_simulation_cost_options_control_prior(
+    control_prior: dict | None, **kwargs
+) -> dict | None:
+    return control_prior
+
+
 def _standardize_simulation_cost_options(
-    model: Model, cost_options: dict | None
+    model: Model, func_name: str, cost_options: dict | None
 ) -> dict:
     if cost_options is None:
-        cost_options = DEFAULT_SIMULATION_COST_OPTIONS.copy()
+        cost_options = DEFAULT_SIMULATION_COST_OPTIONS[func_name].copy()
 
     else:
         if isinstance(cost_options, dict):
             pop_keys = []
             for key, value in cost_options.items():
-                if key not in DEFAULT_SIMULATION_COST_OPTIONS.keys():
+                if key not in DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys():
                     pop_keys.append(key)
                     warnings.warn(
                         f"Unknown cost_options key '{key}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS.keys())}"
@@ -862,7 +924,7 @@ def _standardize_simulation_cost_options(
         else:
             raise TypeError("cost_options argument must be a dictionary")
 
-    for key, value in DEFAULT_SIMULATION_COST_OPTIONS.items():
+    for key, value in DEFAULT_SIMULATION_COST_OPTIONS[func_name].items():
         cost_options.setdefault(key, value)
         func = eval(f"_standardize_simulation_cost_options_{key}")
         cost_options[key] = func(model=model, **cost_options)
@@ -1039,6 +1101,33 @@ def _standardize_simulation_parameters_feasibility(model: Model):
                 f"Invalid value for model opr_initial_states '{key}'. Opr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
+    for key in model.serr_mu_parameters.keys:
+        arr = model.get_serr_mu_parameters(key)
+        # % Skip if size == 0, i.e. no gauge
+        if arr.size == 0:
+            continue
+        l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
+        l_arr = np.min(arr)
+        u_arr = np.max(arr)
+
+        if l_arr <= l or u_arr >= u:
+            raise ValueError(
+                f"Invalid value for model serr_mu_parameters '{key}'. Serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            )
+    for key in model.serr_sigma_parameters.keys:
+        arr = model.get_serr_sigma_parameters(key)
+        # % Skip if size == 0, i.e. no gauge
+        if arr.size == 0:
+            continue
+        l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+        l_arr = np.min(arr)
+        u_arr = np.max(arr)
+
+        if l_arr <= l or u_arr >= u:
+            raise ValueError(
+                f"Invalid value for model serr_sigma_parameters '{key}'. Serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            )
+
 
 def _standardize_simulation_optimize_options_finalize(
     model: Model, mapping: str, optimizer: str, optimize_options: dict
@@ -1104,18 +1193,67 @@ def _standardize_simulation_optimize_options_finalize(
                     if desc in optimize_options["descriptor"][key]:
                         optimize_options["opr_initial_states_descriptor"][j, i] = 1
 
+    # % serr mu parameters
+    optimize_options["serr_mu_parameters"] = np.zeros(
+        shape=model.setup.nsep_mu, dtype=np.int32
+    )
+    optimize_options["l_serr_mu_parameters"] = np.zeros(
+        shape=model.setup.nsep_mu, dtype=np.float32
+    )
+    optimize_options["u_serr_mu_parameters"] = np.zeros(
+        shape=model.setup.nsep_mu, dtype=np.float32
+    )
+
+    for i, key in enumerate(model.serr_mu_parameters.keys):
+        if key in optimize_options["parameters"]:
+            optimize_options["serr_mu_parameters"][i] = 1
+            optimize_options["l_serr_mu_parameters"][i] = optimize_options["bounds"][
+                key
+            ][0]
+            optimize_options["u_serr_mu_parameters"][i] = optimize_options["bounds"][
+                key
+            ][1]
+
+    # % serr sigma parameters
+    optimize_options["serr_sigma_parameters"] = np.zeros(
+        shape=model.setup.nsep_sigma, dtype=np.int32
+    )
+    optimize_options["l_serr_sigma_parameters"] = np.zeros(
+        shape=model.setup.nsep_sigma, dtype=np.float32
+    )
+    optimize_options["u_serr_sigma_parameters"] = np.zeros(
+        shape=model.setup.nsep_sigma, dtype=np.float32
+    )
+
+    for i, key in enumerate(model.serr_sigma_parameters.keys):
+        if key in optimize_options["parameters"]:
+            optimize_options["serr_sigma_parameters"][i] = 1
+            optimize_options["l_serr_sigma_parameters"][i] = optimize_options["bounds"][
+                key
+            ][0]
+            optimize_options["u_serr_sigma_parameters"][i] = optimize_options["bounds"][
+                key
+            ][1]
+
     return optimize_options
 
 
 def _standardize_simulation_cost_options_finalize(
-    model: Model, cost_options: dict
+    model: Model, func_name: str, cost_options: dict
 ) -> dict:
-    cost_options["variant"] = "cls"  # only appeared in Fortran
+    is_bayesian = "bayesian" in func_name
 
-    cost_options["njoc"] = cost_options["jobs_cmpt"].size
-    cost_options["njrc"] = cost_options["jreg_cmpt"].size
+    if is_bayesian:
+        cost_options["bayesian"] = True
 
-    if any(f.startswith("E") for f in cost_options["jobs_cmpt"]):
+    cost_options["njoc"] = (
+        cost_options["jobs_cmpt"].size if "jobs_cmpt" in cost_options.keys() else 0
+    )
+    cost_options["njrc"] = (
+        cost_options["jreg_cmpt"].size if "jreg_cmpt" in cost_options.keys() else 0
+    )
+
+    if any(f.startswith("E") for f in cost_options.get("jobs_cmpt", [])):
         info_event = _mask_event(model=model, **cost_options["event_seg"])
         cost_options["n_event"] = info_event["n"]
         cost_options["mask_event"] = info_event["mask"]
@@ -1123,17 +1261,21 @@ def _standardize_simulation_cost_options_finalize(
     # % Handle flags send to Fortran
     # % gauge and wgauge
     gauge = np.zeros(shape=model.mesh.ng, dtype=np.int32)
-    wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
+    if not is_bayesian:
+        wgauge = np.zeros(shape=model.mesh.ng, dtype=np.float32)
 
-    wg = dict(zip(cost_options["gauge"], cost_options["wgauge"]))
-
+    n = 0
     for i, gc in enumerate(model.mesh.code):
         if gc in cost_options["gauge"]:
             gauge[i] = 1
-            wgauge[i] = wg[gc]
+            if not is_bayesian:
+                wgauge[i] = cost_options["wgauge"][n]
+            n += 1
 
+    cost_options["nog"] = np.count_nonzero(gauge)
     cost_options["gauge"] = gauge
-    cost_options["wgauge"] = wgauge
+    if not is_bayesian:
+        cost_options["wgauge"] = wgauge
 
     # % end_warmup
     st = pd.Timestamp(model.setup.start_time)
@@ -1184,9 +1326,15 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
 
 def _standardize_default_optimize_options_args(
     mapping: str, optimizer: str | None
-) -> dict:
+) -> AnyTuple:
     mapping = _standardize_simulation_mapping(mapping)
 
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     return (mapping, optimizer)
+
+
+def _standardize_default_bayesian_optimize_options_args(
+    mapping: str, optimizer: str | None
+) -> AnyTuple:
+    return _standardize_default_optimize_options_args(mapping, optimizer)

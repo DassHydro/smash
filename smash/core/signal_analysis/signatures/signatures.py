@@ -2,7 +2,17 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.fcore._mwd_signatures import rc, rchf, rclf, rch2r, cfp, eff, ebf, epf, elt
+from smash.fcore._mwd_signatures import (
+    rc as wrap_rc,
+    rchf as wrap_rchf,
+    rclf as wrap_rclf,
+    rch2r as wrap_rch2r,
+    cfp as wrap_cfp,
+    eff as wrap_eff,
+    ebf as wrap_ebf,
+    epf as wrap_epf,
+    elt as wrap_elt,
+)
 
 from smash.core.signal_analysis.signatures._standardize import (
     _standardize_signatures_args,
@@ -290,37 +300,37 @@ def _signatures(
 
 def _signature_computation(p: np.ndarray, q: np.ndarray, signature: str) -> float:
     if signature in ["Crc", "Erc"]:
-        return rc(p, q)
+        return wrap_rc(p, q)
 
     elif signature in ["Crchf", "Erchf"]:
-        return rchf(p, q)
+        return wrap_rchf(p, q)
 
     elif signature in ["Crclf", "Erclf"]:
-        return rclf(p, q)
+        return wrap_rclf(p, q)
 
     elif signature in ["Crch2r", "Erch2r"]:
-        return rch2r(p, q)
+        return wrap_rch2r(p, q)
 
     elif signature == "Cfp2":
-        return cfp(q, 0.02)
+        return wrap_cfp(q, 0.02)
 
     elif signature == "Cfp10":
-        return cfp(q, 0.1)
+        return wrap_cfp(q, 0.1)
 
     elif signature == "Cfp50":
-        return cfp(q, 0.5)
+        return wrap_cfp(q, 0.5)
 
     elif signature == "Cfp90":
-        return cfp(q, 0.9)
+        return wrap_cfp(q, 0.9)
 
     elif signature == "Eff":
-        return eff(q)
+        return wrap_eff(q)
 
     elif signature == "Ebf":
-        return ebf(q)
+        return wrap_ebf(q)
 
     elif signature == "Epf":
-        return epf(q)
+        return wrap_epf(q)
 
     elif signature == "Elt":
-        return elt(p, q)
+        return wrap_elt(p, q)

@@ -9,7 +9,9 @@
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Solver structure                                       (default: 'gr4-lr')
+!%          ``structure``              Hydrological model structure                           (default: 'gr4-lr')
+!%          ``serr_mu_mapping``        Mapping for structural error model                     (default: 'zero')
+!%          ``serr_sigma_mapping``     Mapping for structural error model                     (default: 'linear')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
@@ -33,6 +35,8 @@
 !%          ``nd``                     Number of descriptor maps                              (default: -99)
 !%          ``nop``                    Number of operator parameters                          (default: -99)
 !%          ``nos``                    Number of operator states                              (default: -99)
+!%          ``nsep_mu``                Number of structural error parameters for mu           (default: -99)
+!%          ``nsep_sigma``             Number of structural error parameters for sigma        (default: -99)
 !%
 !%      Subroutine
 !%      ----------
@@ -53,6 +57,8 @@ module mwd_setup
         !% SetupDT Derived Type.
 
         character(lchar) :: structure = "gr4-lr" !$F90W char
+        character(lchar) :: serr_mu_mapping = "zero" !$F90W char
+        character(lchar) :: serr_sigma_mapping = "linear" !$F90W char
 
         real(sp) :: dt = 3600._sp
 
@@ -84,6 +90,8 @@ module mwd_setup
         integer :: nd = -99
         integer :: nop = -99
         integer :: nos = -99
+        integer :: nsep_mu = -99
+        integer :: nsep_sigma = -99
 
     end type SetupDT
 

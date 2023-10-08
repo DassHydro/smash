@@ -1,11 +1,18 @@
-commit 62a61d9be900c2141288338c5bea593e522422c9
-Merge: 64b4492 5e65cbb
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Fri Sep 15 11:29:43 2023 +0200
+commit 9b235f4b9e3f82f0aa14680b8a024dae2bf3ad25
+Author: Francois Colleoni <francois.colleoni@inrae.fr>
+Date:   Thu Sep 21 17:59:28 2023 +0200
 
-    Merge pull request #82 from DassHydro-dev/enc-add-optional-returns
+    ENC: Add Bayesian Optimization
     
-    ENC: Add optional returns options
+    This commit adds:
+    - New model methods: get_serr_mu, get_serr_sigma, get_optimize_control_info,
+      get_bayesian_optimize_control_info, bayesian_optimize
+    - A rework of parameters to control and control to parameters to handle uncertainties parameters
+    - Wrapping and differentiation of external library mwd_bayesian_tools.f90
+    - A bayesian cost function
+    - Possibilty to pass prior to control
+    
+    This branch is not finished yet. Need to add tests, bayesian_optimize for smash, doc etc ...
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -21,6 +28,10 @@ bbox_mesh.xmin                                        |NON MODIFIED
 bbox_mesh.xres                                        |NON MODIFIED
 bbox_mesh.ymax                                        |NON MODIFIED
 bbox_mesh.yres                                        |NON MODIFIED
+custom_bayesian_optimize.gr4-lr.custom_set_1.sim_q    |ADDED
+custom_bayesian_optimize.gr4-lr.custom_set_2.sim_q    |ADDED
+custom_bayesian_optimize.gr4-lr.custom_set_3.sim_q    |ADDED
+custom_bayesian_optimize.gr4-lr.custom_set_4.sim_q    |ADDED
 custom_optimize.gr4-lr.custom_set_1.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_2.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_3.sim_q             |NON MODIFIED
@@ -106,17 +117,15 @@ model_io.atmos_data.mean_pet                          |NON MODIFIED
 model_io.atmos_data.mean_prcp                         |NON MODIFIED
 model_io.mesh.active_cell                             |NON MODIFIED
 model_io.mesh.flwdir                                  |NON MODIFIED
-model_io.obs_response.q                               |DELETED
 model_io.opr_final_states.values                      |NON MODIFIED
 model_io.opr_initial_states.values                    |NON MODIFIED
 model_io.opr_parameters.values                        |NON MODIFIED
 model_io.physio_data.descriptor                       |NON MODIFIED
-model_io.response.q                                   |ADDED
-model_io.response_data.q                              |ADDED
+model_io.response.q                                   |NON MODIFIED
+model_io.response_data.q                              |NON MODIFIED
 model_io.setup.end_time                               |NON MODIFIED
 model_io.setup.start_time                             |NON MODIFIED
 model_io.setup.structure                              |NON MODIFIED
-model_io.sim_response.q                               |DELETED
 multiset_estimate.mfwr.lcurve_multiset.alpha          |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.alpha_opt      |NON MODIFIED
 multiset_estimate.mfwr.lcurve_multiset.cost           |NON MODIFIED
