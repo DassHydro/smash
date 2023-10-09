@@ -147,6 +147,13 @@ def forward_run(
             .. hint::
                 See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
+        jobs_cmpt_tfm : str or ListLike, default 'keep'
+            Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
+                
+            - 'keep' : No transformation
+            - 'sqrt' : Square root transformation
+            - 'inv' : Multiplicative inverse transformation
+
         wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
             The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
 

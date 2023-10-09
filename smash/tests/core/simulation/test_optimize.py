@@ -162,6 +162,22 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
                 "verbose": False,
             },
         },
+        {
+            "cost_options": {
+                "jobs_cmpt": ["nse", "kge", "kge"],
+                "jobs_cmpt_tfm": ["keep", "sqrt", "inv"],
+                "wjobs_cmpt": "mean",
+                "gauge": "all",
+                "wgauge": [0.5, 0.3, 0.2],
+            },
+            "optimize_options": {
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
     ]
 
     for i, kwargs in enumerate(custom_sets):

@@ -488,6 +488,8 @@ F90_OPTIMIZER_CONTROL_TFM = dict(
 
 JOBS_CMPT = METRICS + SIGNS
 
+JOBS_CMPT_TFM = ["keep", "sqrt", "inv"]
+
 JREG_CMPT = ["prior", "smoothing", "hard-smoothing"]
 
 WEIGHT_ALIAS = ["mean", "median", "lquartile", "uquartile"]
@@ -506,7 +508,14 @@ DEFAULT_TERMINATION_CRIT = dict(
     ),
 )
 
-CONTROL_PRIOR_DISTRIBUTION = ["FlatPrior", "Uniform", "Gaussian", "Exponential", "LogNormal", "Triangle"]
+CONTROL_PRIOR_DISTRIBUTION = [
+    "FlatPrior",
+    "Uniform",
+    "Gaussian",
+    "Exponential",
+    "LogNormal",
+    "Triangle",
+]
 
 CONTROL_PRIOR_DISTRIBUTION_PARAMETERS = dict(
     zip(
@@ -570,6 +579,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
     "forward_run": {
         "jobs_cmpt": "nse",
         "wjobs_cmpt": "mean",
+        "jobs_cmpt_tfm": "keep",
         "gauge": "dws",
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
@@ -578,6 +588,7 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
     "optimize": {
         "jobs_cmpt": "nse",
         "wjobs_cmpt": "mean",
+        "jobs_cmpt_tfm": "keep",
         "wjreg": 0,
         "jreg_cmpt": "prior",
         "wjreg_cmpt": "mean",

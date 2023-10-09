@@ -2805,7 +2805,9 @@ CONTAINS
       IF (x(i) .LE. 0._sp .OR. y(i) .LE. 0._sp) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
+        CALL PUSHREAL4(arg1)
         arg1 = y(i)/x(i)
+        CALL PUSHREAL4(arg2)
         arg2 = y(i)/x(i)
         CALL PUSHCONTROL1B(1)
       END IF
@@ -2814,11 +2816,11 @@ CONTAINS
     DO i=ad_to,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        arg1 = y(i)/x(i)
-        arg2 = y(i)/x(i)
         arg1_b = LOG(arg2)*x(i)*res_b/arg1
         arg2_b = LOG(arg1)*x(i)*res_b/arg2
+        CALL POPREAL4(arg2)
         y_b(i) = y_b(i) + arg2_b/x(i) + arg1_b/x(i)
+        CALL POPREAL4(arg1)
       END IF
     END DO
   END SUBROUTINE LGRM_B
@@ -2889,12 +2891,14 @@ MODULE MWD_COST_OPTIONS_DIFF
   IMPLICIT NONE
 !$F90W char-array
 !$F90W char-array
+!$F90W char-array
 !$F90W index
   TYPE COST_OPTIONSDT
       LOGICAL :: bayesian=.false.
       INTEGER :: njoc=-99
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: jobs_cmpt
       REAL(sp), DIMENSION(:), ALLOCATABLE :: wjobs_cmpt
+      CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: jobs_cmpt_tfm
       INTEGER :: njrc=-99
       REAL(sp) :: wjreg=-99._sp
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: jreg_cmpt
@@ -2921,6 +2925,8 @@ CONTAINS
     this%jobs_cmpt = '...'
     ALLOCATE(this%wjobs_cmpt(this%njoc))
     this%wjobs_cmpt = -99._sp
+    ALLOCATE(this%jobs_cmpt_tfm(this%njoc))
+    this%jobs_cmpt_tfm = '...'
     ALLOCATE(this%jreg_cmpt(this%njrc))
     this%jreg_cmpt = '...'
     ALLOCATE(this%wjreg_cmpt(this%njrc))
@@ -5342,6 +5348,7 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      ----------
 !%
 !%      - bayesian_compute_cost
+!%      - discharge_tfm
 !%      - classical_compute_jobs
 !%      - classical_compute_cost
 !%      - compute_cost
@@ -5693,6 +5700,105 @@ CONTAINS
  110 CONTINUE
   END FUNCTION GET_RANGE_EVENT
 
+!  Differentiation of discharge_tranformation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: qs
+!   with respect to varying inputs: qs
+  SUBROUTINE DISCHARGE_TRANFORMATION_D(tfm, qo, qs, qs_d)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_d
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    REAL(sp), DIMENSION(SIZE(qs, 1)) :: temp
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
+      WHERE (qs .GE. 0._sp) 
+        temp = SQRT(e + qs)
+        WHERE (e + qs .EQ. 0.0) 
+          qs_d = 0.0_4
+        ELSEWHERE
+          qs_d = qs_d/(2.0*temp)
+        END WHERE
+        qs = temp
+      END WHERE
+    CASE ('inv') 
+      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
+      WHERE (qs .GE. 0._sp) 
+        qs_d = -(qs_d/(e+qs)**2)
+        qs = 1._sp/(qs+e)
+      END WHERE
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION_D
+
+!  Differentiation of discharge_tranformation in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: qs
+!   with respect to varying inputs: qs
+  SUBROUTINE DISCHARGE_TRANFORMATION_B(tfm, qo, qs, qs_b)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_b
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qs .GE. 0._sp) 
+        WHERE (e + qs .EQ. 0.0) 
+          qs_b = 0.0_4
+        ELSEWHERE
+          qs_b = qs_b/(2.0*SQRT(e+qs))
+        END WHERE
+      END WHERE
+    CASE ('inv') 
+      WHERE (qs .GE. 0._sp) qs_b = -(qs_b/(e+qs)**2)
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION_B
+
+  SUBROUTINE DISCHARGE_TRANFORMATION(tfm, qo, qs)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
+      WHERE (qs .GE. 0._sp) qs = SQRT(qs + e)
+    CASE ('inv') 
+      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
+      WHERE (qs .GE. 0._sp) qs = 1._sp/(qs+e)
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION
+
 !  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: jobs
 !   with respect to varying inputs: *(output.response.q)
@@ -5752,6 +5858,8 @@ CONTAINS
         mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
 &         setup%ntime_step)
         DO j=1,options%cost%njoc
+          CALL DISCHARGE_TRANFORMATION_D(options%cost%jobs_cmpt_tfm(j), &
+&                                  qo, qs, qs_d)
 ! Should be unreachable.
           SELECT CASE  (options%cost%jobs_cmpt(j)) 
           CASE ('nse') 
@@ -6136,6 +6244,12 @@ CONTAINS
         mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
 &         setup%ntime_step)
         DO j=1,options%cost%njoc
+          CALL PUSHREAL4ARRAY(qs, setup%ntime_step - options%cost%&
+&                       end_warmup + 1)
+          CALL PUSHREAL4ARRAY(qo, setup%ntime_step - options%cost%&
+&                       end_warmup + 1)
+          CALL DISCHARGE_TRANFORMATION(options%cost%jobs_cmpt_tfm(j), qo&
+&                                , qs)
 ! Should be unreachable.
           SELECT CASE  (options%cost%jobs_cmpt(j)) 
           CASE ('nse') 
@@ -6550,7 +6664,7 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         qs_b = 0.0_4
-        DO 140 j=options%cost%njoc,1,-1
+        DO j=options%cost%njoc,1,-1
           CALL POPCONTROL6B(branch)
           IF (branch .LT. 16) THEN
             IF (branch .LT. 8) THEN
@@ -6854,7 +6968,13 @@ CONTAINS
           END IF
           GOTO 140
  130      CALL POPREAL4(jobs_tmp)
- 140    CONTINUE
+ 140      CALL POPREAL4ARRAY(qo, setup%ntime_step - options%cost%&
+&                      end_warmup + 1)
+          CALL POPREAL4ARRAY(qs, setup%ntime_step - options%cost%&
+&                      end_warmup + 1)
+          CALL DISCHARGE_TRANFORMATION_B(options%cost%jobs_cmpt_tfm(j), &
+&                                  qo, qs, qs_b)
+        END DO
         WHERE (qo .LT. 0._sp) qs_b = 0.0_4
         CALL POPREAL4ARRAY(mprcp, setup%ntime_step - options%cost%&
 &                    end_warmup + 1)
@@ -6908,6 +7028,8 @@ CONTAINS
         mask_event = options%cost%mask_event(i, options%cost%end_warmup:&
 &         setup%ntime_step)
         DO j=1,options%cost%njoc
+          CALL DISCHARGE_TRANFORMATION(options%cost%jobs_cmpt_tfm(j), qo&
+&                                , qs)
 ! Should be unreachable.
           SELECT CASE  (options%cost%jobs_cmpt(j)) 
           CASE ('nse') 

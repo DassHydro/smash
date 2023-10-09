@@ -28,6 +28,7 @@ from smash._constant import (
     METRICS,
     SIGNS,
     JOBS_CMPT,
+    JOBS_CMPT_TFM,
     JREG_CMPT,
     WEIGHT_ALIAS,
     GAUGE_ALIAS,
@@ -663,6 +664,51 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
         )
 
     return wjobs_cmpt
+
+
+def _standardize_simulation_cost_options_jobs_cmpt_tfm(
+    jobs_cmpt: np.ndarray, jobs_cmpt_tfm: str | ListLike, **kwargs
+) -> np.ndarray:
+    if isinstance(jobs_cmpt_tfm, str):
+        if jobs_cmpt_tfm.lower() in JOBS_CMPT_TFM:
+            # % Broadcast transformation for all jobs cmpt
+            jobs_cmpt_tfm = np.array([jobs_cmpt_tfm.lower()] * jobs_cmpt.size, ndmin=1)
+        else:
+            raise ValueError(
+                f"Unknown discharge transformation '{jobs_cmpt_tfm}' in job_cmpt_tfm cost_options. Choices {JOBS_CMPT_TFM}"
+            )
+    elif isinstance(jobs_cmpt_tfm, (list, tuple, np.ndarray)):
+        jobs_cmpt_tfm = np.array(jobs_cmpt_tfm, ndmin=1)
+
+        if jobs_cmpt.size != jobs_cmpt_tfm.size:
+            raise ValueError(
+                f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and jobs_cmpt_tfm ({jobs_cmpt_tfm.size}) cost_options"
+            )
+
+        for i, joct in enumerate(jobs_cmpt_tfm):
+            if joct.lower() in JOBS_CMPT_TFM:
+                jobs_cmpt_tfm[i] = joct.lower()
+            else:
+                raise ValueError(
+                    f"Unknown discharge transformation '{jobs_cmpt_tfm}' at index {i} in job_cmpt_tfm cost_options. Choices: {JOBS_CMPT_TFM}"
+                )
+    else:
+        raise TypeError(
+            "jobs_cmpt_tfm cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
+        )
+
+    # % No transformation applied to signatures
+    avail_tfm_signs = ["keep"]
+
+    for i in range(jobs_cmpt_tfm.size):
+        joc = jobs_cmpt[i]
+        joct = jobs_cmpt_tfm[i]
+        if joc in SIGNS and joct not in avail_tfm_signs:
+            raise ValueError(
+                f"Discharge transformation '{joct}' is not available for component '{joc}' at index {i} in jobs_cmpt_tfm cost_options. Choices: {avail_tfm_signs}"
+            )
+
+    return jobs_cmpt_tfm
 
 
 def _standardize_simulation_cost_options_wjreg(wjreg: Numeric, **kwargs) -> float:

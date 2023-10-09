@@ -162,7 +162,7 @@ contains
         !%
         !% Given two single precision array (x, y) of dim(1) and size(n),
         !% it returns the result of KGE computation
-        !% KGE = 1 - sqrt((1 - r) ** 2 + (1 - a) ** 2 + (1 - b) ** 2)
+        !% KGE = 1 - sqrt((r - 1) ** 2 + (b - 1) ** 2 + (a - 1) ** 2)
         !%
         !% See Also
         !% --------

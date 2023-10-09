@@ -4,6 +4,7 @@
 !%      ----------
 !%
 !%      - bayesian_compute_cost
+!%      - discharge_tfm
 !%      - classical_compute_jobs
 !%      - classical_compute_cost
 !%      - compute_cost
@@ -93,7 +94,7 @@ contains
 
         call compute_logPost(obs, uobs, sim, theta, theta_prior, mu_funk, mu_gamma, mu_gamma_prior, &
         & sigma_funk, sigma_gamma, sigma_gamma_prior, log_post, log_prior, log_lkh, log_h, feas, isnull)
-        
+
         ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
         output%cost = -1._sp*log_post/size(obs)
 
@@ -139,6 +140,40 @@ contains
 
     end function get_range_event
 
+    subroutine discharge_tranformation(tfm, qo, qs)
+
+        implicit none
+
+        character(lchar), intent(in) :: tfm
+        real(sp), dimension(:), intent(inout) :: qo, qs
+
+        integer :: i
+        real(sp) :: mean_qo, e
+        logical, dimension(size(qo)) :: mask
+
+        mask = (qo .ge. 0._sp)
+        mean_qo = sum(qo, mask=mask)/count(mask)
+        e = 1e-2_sp*mean_qo
+
+        select case (tfm)
+
+        case ("sqrt")
+
+            where (qo .ge. 0._sp) qo = sqrt(qo + e)
+            where (qs .ge. 0._sp) qs = sqrt(qs + e)
+
+        case ("inv")
+
+            where (qo .ge. 0._sp) qo = 1._sp/(qo + e)
+            where (qs .ge. 0._sp) qs = 1._sp/(qs + e)
+
+            !% Should be reach by "keep" only. Do nothing
+        case default
+
+        end select
+
+    end subroutine discharge_tranformation
+
     subroutine classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
         implicit none
@@ -177,6 +212,8 @@ contains
             mask_event = options%cost%mask_event(i, options%cost%end_warmup:setup%ntime_step)
 
             do j = 1, options%cost%njoc
+
+                call discharge_tranformation(options%cost%jobs_cmpt_tfm(j), qo, qs)
 
                 select case (options%cost%jobs_cmpt(j))
 
