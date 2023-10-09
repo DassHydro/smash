@@ -1,11 +1,14 @@
-commit c2995513672c0cdee8f2531938a247fc99983e77
-Merge: 8f057a1 06483f0
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Mon Oct 9 11:10:09 2023 +0200
+commit 1c7afba539675d23e85af8be430ff10a3afd9265
+Author: Francois Colleoni <francois.colleoni@inrae.fr>
+Date:   Mon Oct 9 18:33:15 2023 +0200
 
-    Merge pull request #86 from DassHydro-dev/ENC_jobs_cmpt_tfm
+    ENC: Add regularization
     
-    ENC_jobs_cmpt_tfm
+    Add the three regularization functions (prior, smoothing and hard-smoothin)
+    Add new file md_regularization.f90
+    Update docstring of jreg_cmpt
+    Update cost computation to take into account jreg
+    Add regularization test
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -32,7 +35,7 @@ custom_optimize.gr4-lr.custom_set_4.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_5.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_6.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_7.sim_q             |NON MODIFIED
-custom_optimize.gr4-lr.custom_set_8.sim_q             |ADDED
+custom_optimize.gr4-lr.custom_set_8.sim_q             |NON MODIFIED
 forward_run.gr4-kw.cost                               |NON MODIFIED
 forward_run.gr4-kw.jobs                               |NON MODIFIED
 forward_run.gr4-kw.opr_states.hi                      |NON MODIFIED

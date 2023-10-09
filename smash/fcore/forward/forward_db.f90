@@ -8262,6 +8262,13 @@ CONTAINS
 END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 
 !%      (MW) Module Differentiated.
+!%
+!%      Function
+!%      ----------
+!%
+!%      - prior_regularization
+!%      - smoothing_regularization_spatial_loop
+!%      - smoothing_regularization
 MODULE MD_REGULARIZATION_DIFF
 !% only: sp
   USE MD_CONSTANT
@@ -10989,9 +10996,13 @@ CONTAINS
     REAL(sp) :: jobs_d, jreg_d
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &                           output_d, options, returns, jobs, jobs_d)
-    CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
-&                           parameters_d, options, options_d, returns, &
-&                           jreg, jreg_d)
+    IF (options%cost%wjreg .GT. 0._sp) THEN
+      CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters&
+&                             , parameters_d, options, options_d, &
+&                             returns, jreg, jreg_d)
+    ELSE
+      jreg_d = 0.0_4
+    END IF
     output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
@@ -11021,35 +11032,48 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_b, jreg_b
+    INTEGER :: branch
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
-&                 , 1))
-    CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                 parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                 opr_parameters%values, 2)*SIZE(parameters%&
-&                 opr_parameters%values, 3))
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
-    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, returns, jreg)
+    IF (options%cost%wjreg .GT. 0._sp) THEN
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                   parameters%opr_initial_states%values, 1)*SIZE(&
+&                   parameters%opr_initial_states%values, 2)*SIZE(&
+&                   parameters%opr_initial_states%values, 3))
+      CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                           options, returns, jreg)
+      CALL PUSHCONTROL1B(0)
+    ELSE
+      CALL PUSHCONTROL1B(1)
+    END IF
     jobs_b = output_b%cost
     jreg_b = options%cost%wjreg*output_b%cost
-    CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                parameters%opr_initial_states%values, 1)*SIZE(&
-&                parameters%opr_initial_states%values, 2)*SIZE(&
-&                parameters%opr_initial_states%values, 3))
-    CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters&
-&                %opr_parameters%values, 1)*SIZE(parameters%&
-&                opr_parameters%values, 2)*SIZE(parameters%&
-&                opr_parameters%values, 3))
-    CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
-&                1))
-    CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
-&                           parameters_b, options, options_b, returns, &
-&                           jreg, jreg_b)
+    CALL POPCONTROL1B(branch)
+    IF (branch .EQ. 0) THEN
+      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                  parameters%opr_initial_states%values, 1)*SIZE(&
+&                  parameters%opr_initial_states%values, 2)*SIZE(&
+&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
+      CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters&
+&                             , parameters_b, options, options_b, &
+&                             returns, jreg, jreg_b)
+    ELSE
+      parameters_b%control%x = 0.0_4
+      parameters_b%opr_parameters%values = 0.0_4
+      parameters_b%opr_initial_states%values = 0.0_4
+    END IF
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &                           output_b, options, returns, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
@@ -11065,10 +11089,18 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
+    jobs = 0._sp
+    jreg = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, returns, jreg)
+    IF (options%cost%wjreg .GT. 0._sp) CALL CLASSICAL_COMPUTE_JREG(setup&
+&                                                            , mesh, &
+&                                                            input_data&
+&                                                            , &
+&                                                            parameters&
+&                                                            , options, &
+&                                                            returns, &
+&                                                            jreg)
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
