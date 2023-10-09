@@ -148,8 +148,8 @@ def forward_run(
                 See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
 
         jobs_cmpt_tfm : str or ListLike, default 'keep'
-                Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
-
+            Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
+                
             - 'keep' : No transformation
             - 'sqrt' : Square root transformation
             - 'inv' : Multiplicative inverse transformation
