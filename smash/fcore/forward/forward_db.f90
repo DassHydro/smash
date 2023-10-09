@@ -8370,12 +8370,12 @@ CONTAINS
           ELSE
             p1row = mesh%nrow
           END IF
-          IF (1 .LT. col) THEN
-            m1col = col
+          IF (1 .LT. col - 1) THEN
+            m1col = col - 1
           ELSE
             m1col = 1
           END IF
-          IF (mesh%ncol .LT. col + 1) THEN
+          IF (mesh%ncol .GT. col + 1) THEN
             p1col = col + 1
           ELSE
             p1col = mesh%ncol
@@ -8438,16 +8438,16 @@ CONTAINS
             p1row = mesh%nrow
             CALL PUSHCONTROL1B(1)
           END IF
-          IF (1 .LT. col) THEN
+          IF (1 .LT. col - 1) THEN
             CALL PUSHINTEGER4(m1col)
-            m1col = col
+            m1col = col - 1
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHINTEGER4(m1col)
             m1col = 1
             CALL PUSHCONTROL1B(1)
           END IF
-          IF (mesh%ncol .LT. col + 1) THEN
+          IF (mesh%ncol .GT. col + 1) THEN
             CALL PUSHINTEGER4(p1col)
             p1col = col + 1
             CALL PUSHCONTROL1B(0)
@@ -8531,12 +8531,12 @@ CONTAINS
           ELSE
             p1row = mesh%nrow
           END IF
-          IF (1 .LT. col) THEN
-            m1col = col
+          IF (1 .LT. col - 1) THEN
+            m1col = col - 1
           ELSE
             m1col = 1
           END IF
-          IF (mesh%ncol .LT. col + 1) THEN
+          IF (mesh%ncol .GT. col + 1) THEN
             p1col = col + 1
           ELSE
             p1col = mesh%ncol

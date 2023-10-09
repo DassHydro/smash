@@ -57,8 +57,8 @@ contains
 
                 m1row = max(1, row - 1)
                 p1row = min(mesh%nrow, row + 1)
-                m1col = max(1, col)
-                p1col = max(mesh%ncol, col + 1)
+                m1col = max(1, col - 1)
+                p1col = min(mesh%ncol, col + 1)
 
                 if (mesh%active_cell(m1row, col) .eq. 0) m1row = row
                 if (mesh%active_cell(p1row, col) .eq. 0) p1row = row
