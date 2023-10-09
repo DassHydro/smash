@@ -17,3 +17,4 @@ Returned Objects
       ForwardRun
       Optimize
       MultisetEstimate
+      BayesianOptimize

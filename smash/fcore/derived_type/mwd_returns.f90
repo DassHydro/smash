@@ -27,6 +27,16 @@
 !%          ``jobs_flag``            Return flag of jobs
 !%          ``jreg``                 Jreg value
 !%          ``jreg_flag``            Return flag of jreg
+!%          ``log_lkh``              Log_lkh value
+!%          ``log_lkh_flag``         Return flag of log_lkh
+!%          ``log_prior``            Log_prior value
+!%          ``log_prior_flag``       Return flag of log_prior
+!%          ``log_h``                Log_h value
+!%          ``log_h_flag``           Return flag of log_h
+!%          ``serr_mu``              Serr mu value
+!%          ``serr_mu_flag``         Return flag of serr_mu
+!%          ``serr_sigma``           Serr sigma value
+!%          ``serr_sigma_flag``      Return flag of serr_sigma
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -73,6 +83,21 @@ module mwd_returns
 
         real(sp) :: jreg
         logical :: jreg_flag = .false.
+
+        real(sp) :: log_lkh
+        logical :: log_lkh_flag = .false.
+
+        real(sp) :: log_prior
+        logical :: log_prior_flag = .false.
+
+        real(sp) :: log_h
+        logical :: log_h_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: serr_mu
+        logical :: serr_mu_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: serr_sigma
+        logical :: serr_sigma_flag = .false.
 
     end type ReturnsDT
 
@@ -134,6 +159,23 @@ contains
 
             case ("jreg")
                 this%jreg_flag = .true.
+
+            case ("log_lkh")
+                this%log_lkh_flag = .true.
+
+            case ("log_prior")
+                this%log_prior_flag = .true.
+
+            case ("log_h")
+                this%log_h_flag = .true.
+
+            case ("serr_mu")
+                this%serr_mu_flag = .true.
+                allocate (this%serr_mu(mesh%ng, setup%ntime_step))
+
+            case ("serr_sigma")
+                this%serr_sigma_flag = .true.
+                allocate (this%serr_sigma(mesh%ng, setup%ntime_step))
 
             end select
 

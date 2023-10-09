@@ -14,13 +14,19 @@
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
 !%          ``opr_parameters``                Opr parameters to optimize
-!%          ``opr_initial_states``            Opr initial states to optimize
 !%          ``l_opr_parameters``              Opr parameters lower bound
 !%          ``u_opr_parameters``              Opr parameters upper bound
+!%          ``opr_parameters_descriptor``     Opr parameters descriptor to use
+!%          ``opr_initial_states``            Opr initial states to optimize
 !%          ``l_opr_initial_states``          Opr initial states lower bound
 !%          ``u_opr_initial_states``          Opr initial states upper bound
-!%          ``opr_parameters_descriptor``     Opr parameters descriptor to use
 !%          ``opr_initial_states_descriptor`` Opr initial states descriptor use
+!%          ``serr_mu_parameters``            Serr mu parameters to optimize
+!%          ``l_serr_mu_parameters``          Serr mu parameters lower bound
+!%          ``u_serr_mu_parameters``          Serr mu parameters upper bound
+!%          ``serr_sigma_parameters``         Serr sigma parameters to optimize
+!%          ``l_serr_sigma_parameters``       Serr sigma parameters lower bound
+!%          ``u_serr_sigma_parameters``       Serr sigma parameters upper bound
 !%          ``maxiter``                       Maximum number of iterations
 !%          ``factr``                         LBFGSB cost function criterion
 !%          ``pgtol``                         LBFGSB gradient criterion
@@ -54,6 +60,14 @@ module mwd_optimize_options
         real(sp), dimension(:), allocatable :: l_opr_initial_states
         real(sp), dimension(:), allocatable :: u_opr_initial_states
         integer, dimension(:, :), allocatable :: opr_initial_states_descriptor
+
+        integer, dimension(:), allocatable :: serr_mu_parameters
+        real(sp), dimension(:), allocatable :: l_serr_mu_parameters
+        real(sp), dimension(:), allocatable :: u_serr_mu_parameters
+
+        integer, dimension(:), allocatable :: serr_sigma_parameters
+        real(sp), dimension(:), allocatable :: l_serr_sigma_parameters
+        real(sp), dimension(:), allocatable :: u_serr_sigma_parameters
 
         integer :: maxiter = -99
         real(sp) :: factr = -99._sp
@@ -93,6 +107,24 @@ contains
 
         allocate (this%opr_initial_states_descriptor(setup%nd, setup%nos))
         this%opr_initial_states_descriptor = -99
+
+        allocate (this%serr_mu_parameters(setup%nsep_mu))
+        this%serr_mu_parameters = -99
+
+        allocate (this%l_serr_mu_parameters(setup%nsep_mu))
+        this%l_serr_mu_parameters = -99._sp
+
+        allocate (this%u_serr_mu_parameters(setup%nsep_mu))
+        this%u_serr_mu_parameters = -99._sp
+
+        allocate (this%serr_sigma_parameters(setup%nsep_sigma))
+        this%serr_sigma_parameters = -99
+
+        allocate (this%l_serr_sigma_parameters(setup%nsep_sigma))
+        this%l_serr_sigma_parameters = -99._sp
+
+        allocate (this%u_serr_sigma_parameters(setup%nsep_sigma))
+        this%u_serr_sigma_parameters = -99._sp
 
     end subroutine Optimize_OptionsDT_initialise
 

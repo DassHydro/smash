@@ -2,7 +2,9 @@ from __future__ import annotations
 
 from smash._constant import RATIO_PET_HOURLY
 
-from smash.fcore._mwd_sparse_matrix_manipulation import matrix_to_sparse_matrix
+from smash.fcore._mwd_sparse_matrix_manipulation import (
+    matrix_to_sparse_matrix as wrap_matrix_to_sparse_matrix,
+)
 
 import warnings
 import glob
@@ -133,7 +135,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
                     )
                     matrix.fill(np.float32(-99))
-                    matrix_to_sparse_matrix(
+                    wrap_matrix_to_sparse_matrix(
                         mesh,
                         matrix,
                         np.float32(-99),
@@ -152,7 +154,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 )
 
                 if setup.sparse_storage:
-                    matrix_to_sparse_matrix(
+                    wrap_matrix_to_sparse_matrix(
                         mesh,
                         matrix,
                         np.float32(0),
@@ -240,7 +242,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
                         )
                         matrix.fill(np.float32(-99))
-                        matrix_to_sparse_matrix(
+                        wrap_matrix_to_sparse_matrix(
                             mesh,
                             matrix,
                             np.float32(-99),
@@ -252,7 +254,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 else:
                     matrix = matrix_dip[..., day - 1] * ratio[ratio_ind]
                     if setup.sparse_storage:
-                        matrix_to_sparse_matrix(
+                        wrap_matrix_to_sparse_matrix(
                             mesh,
                             matrix,
                             np.float32(0),
@@ -273,7 +275,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
                         )
                         matrix.fill(np.float32(-99))
-                        matrix_to_sparse_matrix(
+                        wrap_matrix_to_sparse_matrix(
                             mesh,
                             matrix,
                             np.float32(-99),
@@ -292,7 +294,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     )
 
                     if setup.sparse_storage:
-                        matrix_to_sparse_matrix(
+                        wrap_matrix_to_sparse_matrix(
                             mesh,
                             matrix,
                             np.float32(0),

@@ -9,17 +9,21 @@
 !%          ======================== =======================================
 !%          `Variables`              Description
 !%          ======================== =======================================
-!%          variant                  Cost variant
-!%          jobs_cmpt                Jobs components
-!%          wjobs_cmpt               Weight jobs components
-!%          wjreg                    Base weight for regularization
-!%          jreg_cmpt                Jreg components
-!%          wjreg_cmpt               Weight jreg components
-!%          gauge                    Optimized gauges
-!%          wgauge                   Weight optimized gauges
-!%          end_warmup               End Warmup index
-!%          n_event                  Number of flood events
-!%          mask_event               Mask info by segmentation algorithm
+!%          ``bayesian``             Enable bayesian cost computation
+!%          ``njoc``                 Number of jobs components
+!%          ``jobs_cmpt``            Jobs components
+!%          ``wjobs_cmpt``           Weight jobs components
+!%          ``njrc``                 Number of jreg components
+!%          ``wjreg``                Base weight for regularization
+!%          ``jreg_cmpt``            Jreg components
+!%          ``wjreg_cmpt``           Weight jreg components
+!%          ``nog``                  Number of optimized gauges
+!%          ``gauge``                Optimized gauges
+!%          ``wgauge``               Weight optimized gauges
+!%          ``end_warmup``           End Warmup index
+!%          ``n_event ``             Number of flood events
+!%          ``mask_event  ``         Mask info by segmentation algorithm
+!%          ``control_prior``        Array of PriorType (from mwd_bayesian_tools)
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -30,6 +34,7 @@
 
 module mwd_cost_options
 
+    use mwd_bayesian_tools !% only PriorType, PriorType_initialise
     use md_constant !% only: sp, lchar
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
@@ -38,7 +43,7 @@ module mwd_cost_options
 
     type Cost_OptionsDT
 
-        character(lchar) :: variant = "..." !$F90W char
+        logical :: bayesian = .false.
 
         integer :: njoc = -99
         character(lchar), dimension(:), allocatable :: jobs_cmpt !$F90W char-array
@@ -50,6 +55,7 @@ module mwd_cost_options
         character(lchar), dimension(:), allocatable :: jreg_cmpt !$F90W char-array
         real(sp), dimension(:), allocatable :: wjreg_cmpt
 
+        integer :: nog = -99
         integer, dimension(:), allocatable :: gauge
         real(sp), dimension(:), allocatable :: wgauge
 
@@ -57,6 +63,8 @@ module mwd_cost_options
 
         integer, dimension(:), allocatable :: n_event
         integer, dimension(:, :), allocatable :: mask_event
+
+        type(PriorType), dimension(:), allocatable :: control_prior
 
     end type Cost_OptionsDT
 
@@ -113,5 +121,22 @@ contains
         this_copy = this
 
     end subroutine Cost_OptionsDT_copy
+
+    subroutine Cost_OptionsDT_allocate_control_prior(this, n, npar)
+
+        implicit none
+
+        type(Cost_OptionsDT), intent(inout) :: this
+        integer, intent(in) :: n
+        integer, dimension(n), intent(in) :: npar
+
+        integer :: i
+        allocate (this%control_prior(n))
+
+        do i = 1, n
+            call PriorType_initialise(this%control_prior(i), npar(i))
+        end do
+
+    end subroutine Cost_OptionsDT_allocate_control_prior
 
 end module mwd_cost_options

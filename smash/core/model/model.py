@@ -3,8 +3,12 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_OPR_PARAMETERS,
     STRUCTURE_OPR_STATES,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
     DEFAULT_BOUNDS_OPR_PARAMETERS,
     DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+    DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
+    DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
 )
 
 from smash.core.model._build_model import (
@@ -18,24 +22,38 @@ from smash.core.model._build_model import (
 from smash.core.model._standardize import (
     _standardize_get_opr_parameters_args,
     _standardize_get_opr_initial_states_args,
+    _standardize_get_serr_mu_parameters_args,
+    _standardize_get_serr_sigma_parameters_args,
     _standardize_get_opr_final_states_args,
     _standardize_set_opr_parameters_args,
     _standardize_set_opr_initial_states_args,
+    _standardize_set_serr_mu_parameters_args,
+    _standardize_set_serr_sigma_parameters_args,
 )
 from smash.core.simulation.run.run import _forward_run
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
-from smash.core.simulation.optimize.optimize import _optimize
-from smash.core.simulation.optimize._standardize import _standardize_optimize_args
+from smash.core.simulation.optimize.optimize import (
+    _optimize,
+    _bayesian_optimize,
+)
+from smash.core.simulation.optimize._standardize import (
+    _standardize_optimize_args,
+    _standardize_bayesian_optimize_args,
+)
+from smash.core.simulation.estimate.estimate import _multiset_estimate
 from smash.core.simulation.estimate._standardize import (
     _standardize_multiset_estimate_args,
 )
-from smash.core.simulation.estimate.estimate import _multiset_estimate
 
 from smash.fcore._mwd_setup import SetupDT
 from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_input_data import Input_DataDT
 from smash.fcore._mwd_parameters import ParametersDT
 from smash.fcore._mwd_output import OutputDT
+from smash.fcore._mwd_parameters_manipulation import (
+    get_serr_mu as wrap_get_serr_mu,
+    get_serr_sigma as wrap_get_serr_sigma,
+)
 
 import numpy as np
 
@@ -45,8 +63,12 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash._typing import Numeric, ListLike
-    from smash.core.simulation.optimize.optimize import MultipleOptimize, Optimize
-    from smash.core.simulation.run.run import MultipleForwardRun, ForwardRun
+    from smash.core.simulation.optimize.optimize import (
+        Optimize,
+        MultipleOptimize,
+        BayesianOptimize,
+    )
+    from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
     from smash.core.simulation.estimate.estimate import MultisetEstimate
 
 __all__ = ["Model"]
@@ -180,6 +202,22 @@ class Model(object):
         self._input_data.response_data = value
 
     @property
+    def u_response_data(self):
+        """
+        Observation uncertainties response data.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
+        return self._input_data.u_response_data
+
+    @u_response_data.setter
+    def u_response_data(self, value):
+        self._input_data.u_response_data = value
+
+    @property
     def physio_data(self):
         """
         Physiographic data.
@@ -242,6 +280,38 @@ class Model(object):
     @opr_initial_states.setter
     def opr_initial_states(self, value):
         self._parameters.opr_initial_states = value
+
+    @property
+    def serr_mu_parameters(self):
+        """
+        Get structural error mu parameters for the actual mu mapping of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
+        return self._parameters.serr_mu_parameters
+
+    @serr_mu_parameters.setter
+    def serr_mu_parameters(self, value):
+        self._parameters.serr_mu_parameters = value
+
+    @property
+    def serr_sigma_parameters(self):
+        """
+        Get structural error sigma parameters for the actual sigma mapping of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
+        return self._parameters.serr_sigma_parameters
+
+    @serr_sigma_parameters.setter
+    def serr_sigma_parameters(self, value):
+        self._parameters.serr_sigma_parameters = value
 
     @property
     def response(self):
@@ -403,6 +473,118 @@ class Model(object):
 
         self._parameters.opr_initial_states.values[..., ind] = value
 
+    def get_serr_mu_parameters(self, key: str) -> np.ndarray:
+        """
+        Get the values of a stuctural error mu parameter.
+
+        Parameters
+        ----------
+        key : str
+            The name of the structural error mu parameter.
+
+        Returns
+        -------
+        value : np.ndarray
+            A 2D-array representing the values of the structural error mu parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.serr_mu_parameters : Get structural error mu parameters for the actual mu mapping of the Model.
+        """
+
+        key = _standardize_get_serr_mu_parameters_args(self, key)
+        ind = np.argwhere(self._parameters.serr_mu_parameters.keys == key).item()
+
+        return self._parameters.serr_mu_parameters.values[..., ind]
+
+    def set_serr_mu_parameters(self, key: str, value: Numeric | np.ndarray):
+        """
+        Set the values for a structural error mu parameter.
+
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        key : str
+            The name of the structural error mu parameter.
+
+        value : Numeric or np.ndarray
+            The values to set for the structural error mu parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.serr_mu_parameters : Get structural error mu parameters for the actual mu mapping of the Model.
+        """
+
+        key, value = _standardize_set_serr_mu_parameters_args(self, key, value)
+        ind = np.argwhere(self._parameters.serr_mu_parameters.keys == key).item()
+
+        self._parameters.serr_mu_parameters.values[..., ind] = value
+
+    def get_serr_sigma_parameters(self, key: str) -> np.ndarray:
+        """
+        Get the values of a stuctural error sigma parameter.
+
+        Parameters
+        ----------
+        key : str
+            The name of the structural error sigma parameter.
+
+        Returns
+        -------
+        value : np.ndarray
+            A 2D-array representing the values of the structural error sigma parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.serr_sigma_parameters : Get structural error sigma parameters for the actual sigma mapping of the Model.
+        """
+
+        key = _standardize_get_serr_sigma_parameters_args(self, key)
+        ind = np.argwhere(self._parameters.serr_sigma_parameters.keys == key).item()
+
+        return self._parameters.serr_sigma_parameters.values[..., ind]
+
+    def set_serr_sigma_parameters(self, key: str, value: Numeric | np.ndarray):
+        """
+        Set the values for a structural error sigma parameter.
+
+        This method performs an in-place operation on the Model object.
+
+        Parameters
+        ----------
+        key : str
+            The name of the structural error sigma parameter.
+
+        value : Numeric or np.ndarray
+            The values to set for the structural error sigma parameter.
+
+        Examples
+        --------
+        TODO: Fill
+
+        See Also
+        --------
+        Model.serr_sigma_parameters : Get structural error sigma parameters for the actual sigma mapping of the Model.
+        """
+
+        key, value = _standardize_set_serr_sigma_parameters_args(self, key, value)
+        ind = np.argwhere(self._parameters.serr_sigma_parameters.keys == key).item()
+
+        self._parameters.serr_sigma_parameters.values[..., ind] = value
+
     def get_opr_final_states(self, key: str) -> np.ndarray:
         """
         Get the values of an operator model final state.
@@ -438,7 +620,7 @@ class Model(object):
         Returns
         -------
         bounds : dict
-            A dictionary representing the boundary condition for each operator parameter in the actual structure of the Model.
+            A dictionary representing the boundary condition for each operator parameter for the actual structure of the Model.
 
         Examples
         --------
@@ -470,6 +652,62 @@ class Model(object):
             for key, value in DEFAULT_BOUNDS_OPR_INITIAL_STATES.items()
             if key in STRUCTURE_OPR_STATES[self.setup.structure]
         }
+
+    def get_serr_mu_parameters_bounds(self) -> dict:
+        """
+        Get the boundary condition for the structural error mu parameters.
+
+        Returns
+        -------
+        bounds : dict
+            A dictionary representing the boundary condition for each structural error mu parameter in the actual mu mapping of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
+        return {
+            key: value
+            for key, value in DEFAULT_BOUNDS_SERR_MU_PARAMETERS.items()
+            if key in SERR_MU_MAPPING_PARAMETERS[self.setup.serr_mu_mapping]
+        }
+
+    def get_serr_sigma_parameters_bounds(self) -> dict:
+        """
+        Get the boundary condition for the structural error sigma parameters.
+
+        Returns
+        -------
+        bounds : dict
+            A dictionary representing the boundary condition for each structural error sigma parameter in the actual sigma mapping of the Model.
+
+        Examples
+        --------
+        TODO: Fill
+        """
+
+        return {
+            key: value
+            for key, value in DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS.items()
+            if key in SERR_SIGMA_MAPPING_PARAMETERS[self.setup.serr_sigma_mapping]
+        }
+
+    def get_serr_mu(self) -> np.ndarray:
+        serr_mu = np.zeros(
+            shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
+        )
+        wrap_get_serr_mu(self.setup, self.mesh, self._parameters, self._output, serr_mu)
+        return serr_mu
+
+    def get_serr_sigma(self) -> np.ndarray:
+        serr_sigma = np.zeros(
+            shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
+        )
+        wrap_get_serr_sigma(
+            self.setup, self.mesh, self._parameters, self._output, serr_sigma
+        )
+        return serr_sigma
 
     def forward_run(
         self,
@@ -837,3 +1075,151 @@ class Model(object):
         args = _standardize_multiset_estimate_args(self, multiset, alpha, *args_options)
 
         return _multiset_estimate(self, *args)
+
+    def bayesian_optimize(
+        self,
+        mapping: str = "uniform",
+        optimizer: str | None = None,
+        optimize_options: dict | None = None,
+        cost_options: dict | None = None,
+        common_options: dict | None = None,
+        return_options: dict | None = None,
+    ):
+        """
+            Model bayesian assimilation using numerical optimization algorithms.
+
+            Parameters
+            ----------
+            mapping : str, default 'uniform'
+                Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
+
+            optimizer : str or None, default None
+                Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
+
+                .. note::
+                    If not given, a default optimizer will be set depending on the optimization mapping:
+
+                    - **mapping** = 'uniform'; **optimizer** = 'sbs'
+                    - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
+
+            optimize_options : dict or None, default None
+                Dictionary containing optimization options for fine-tuning the optimization process.
+
+                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
+
+            cost_options : dict or None, default None
+                Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+                gauge : str or ListLike, default 'dws'
+                    Type of gauge to be computed. There are two ways to specify it:
+
+                    - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+                    - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+
+                control_prior: dict or None, default None
+                    A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
+                    The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
+
+                    - 'FlatPrior',   []                                 (0)
+                    - 'Uniform',     [lower_bound, higher_bound]        (2)
+                    - 'Gaussian',    [mean, standard_deviation]         (2)
+                    - 'Exponential', [threshold, scale]                 (2)
+                    - 'LogNormal',   [mean_log, standard_deviation_log] (2)
+                    - 'Triangle',    [peak, lower_bound, higher_bound]  (3)
+
+                    .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
+
+                end_warmup : str or pandas.Timestamp, default model.setup.start_time
+                    The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
+
+                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+        common_options : dict or None, default None
+                Dictionary containing common options with two elements:
+
+                verbose : bool, default False
+                    Whether to display information about the running method.
+
+                ncpu : bool, default 1
+                    Whether to perform a parallel computation.
+
+                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+            return_options : dict or None, default None
+                Dictionary containing return options to save intermediate variables. The elements are:
+
+                time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+                    Returned time steps. There are five ways to specify it:
+
+                    - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
+                    - An alias among 'all' (return all time steps).
+                    - A pandas.Timestamp object.
+                    - A pandas.DatetimeIndex object.
+                    - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
+
+                    .. note::
+                        It only applies to the following variables: 'opr_states' and 'q_domain'
+
+                opr_states : bool, default False
+                    Whether to return operator states for specific time steps.
+
+                q_domain : bool, defaul False
+                    Whether to return simulated discharge on the whole domain for specific time steps.
+
+                iter_cost : bool, default False
+                    Whether to return cost iteration values.
+
+                iter_projg : bool, default False
+                    Whether to return infinity norm of the projected gardient iteration values.
+
+                control_vector : bool, default False
+                    Whether to return control vector at end of optimization.
+
+                cost : bool, default False
+                    Whether to return cost value.
+
+                log_lkh : bool, default False
+                    Whether to return log likelihood component value.
+
+                log_prior : bool, default False
+                    Whether to return log prior component value.
+
+                log_h : bool, default False
+                    Whether to return log h component value.
+
+                serr_mu : bool, default False
+                    Whether to return mu, the mean of structural errors.
+
+                serr_sigma : bool, default False
+                    Whether to return sigma, the standard deviation of structural errors.
+
+                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+
+            Returns
+            -------
+            ret_bayesian_optimize : BayesianOptimize or None, default None
+                It returns a `smash.BayesianOptimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
+
+            Examples
+            --------
+            TODO: Fill
+
+            See Also
+            --------
+            smash.bayesian_optimize : Model bayesian assimilation using numerical optimization algorithms.
+            BayesianOptimize : Represents bayesian optimize optional results.
+        """
+
+        args_options = [
+            deepcopy(arg)
+            for arg in [optimize_options, cost_options, common_options, return_options]
+        ]
+
+        args = _standardize_bayesian_optimize_args(
+            self,
+            mapping,
+            optimizer,
+            *args_options,
+        )
+
+        return _bayesian_optimize(self, *args)

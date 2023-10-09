@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from smash._constant import PEAK_QUANT, MAX_DURATION
 
-from smash.fcore._mwd_signatures import baseflow_separation
+from smash.fcore._mwd_signatures import baseflow_separation as wrap_baseflow_separation
 
 import numpy as np
 from datetime import date, datetime
@@ -176,7 +176,7 @@ def _events_grad(
         bf = np.zeros(mask.sum(), dtype=np.float32)
         qf = bf.copy()
 
-        baseflow_separation(q_end[mask], bf, qf, filter_parameter=0.925, passes=3)
+        wrap_baseflow_separation(q_end[mask], bf, qf, filter_parameter=0.925, passes=3)
 
         qbf[mask] = bf
 

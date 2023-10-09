@@ -31,54 +31,59 @@ module mwd_control
 
     type ControlDT
 
+        integer :: n
+        ! Four kinds of parameters (opr_parameters, opr_initial_states, serr_mu_parameters, serr_sigma_parameters)
+        integer, dimension(4) :: nbk
         real(sp), dimension(:), allocatable :: x
         real(sp), dimension(:), allocatable :: l
         real(sp), dimension(:), allocatable :: u
 
-!~         real(sp), dimension(:), allocatable :: x_bkg
+        real(sp), dimension(:), allocatable :: x_bkg
         real(sp), dimension(:), allocatable :: l_bkg
         real(sp), dimension(:), allocatable :: u_bkg
 
         integer, dimension(:), allocatable :: nbd
+        character(lchar), dimension(:), allocatable :: name !$F90W char-array
 
     end type ControlDT
 
 contains
 
-    subroutine ControlDT_initialise(this, n)
+    subroutine ControlDT_initialise(this, nbk)
 
         implicit none
 
         type(ControlDT), intent(inout) :: this
-        integer, intent(in) :: n
-
-        ! Must check alloc before size
-        if (allocated(this%x)) then
-            if (size(this%x) .eq. n) return
-        end if
+        integer, dimension(size(this%nbk)), intent(in) :: nbk
 
         call ControlDT_finalise(this)
 
-        allocate (this%x(n))
+        this%nbk = nbk
+        this%n = sum(this%nbk)
+
+        allocate (this%x(this%n))
         this%x = -99._sp
 
-!~         allocate (this%x_bkg(n))
-!~         this%x_bkg = 0._sp
-
-        allocate (this%l(n))
+        allocate (this%l(this%n))
         this%l = -99._sp
 
-        allocate (this%l_bkg(n))
-        this%l_bkg = -99._sp
-
-        allocate (this%u(n))
+        allocate (this%u(this%n))
         this%u = -99._sp
 
-        allocate (this%u_bkg(n))
+        allocate (this%x_bkg(this%n))
+        this%x_bkg = 0._sp
+
+        allocate (this%l_bkg(this%n))
+        this%l_bkg = -99._sp
+
+        allocate (this%u_bkg(this%n))
         this%u_bkg = -99._sp
 
-        allocate (this%nbd(n))
+        allocate (this%nbd(this%n))
         this%nbd = -99
+
+        allocate (this%name(this%n))
+        this%name = "..."
 
     end subroutine ControlDT_initialise
 
@@ -92,17 +97,19 @@ contains
 
             deallocate (this%x)
 
-!~         deallocate (this%x_bkg(n))
-
             deallocate (this%l)
 
-            deallocate (this%l_bkg)
-
             deallocate (this%u)
+
+            deallocate (this%x_bkg)
+
+            deallocate (this%l_bkg)
 
             deallocate (this%u_bkg)
 
             deallocate (this%nbd)
+
+            deallocate (this%name)
 
         end if
 

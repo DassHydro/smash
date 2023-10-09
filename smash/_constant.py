@@ -199,6 +199,141 @@ OPTIMIZABLE_OPR_INITIAL_STATES = dict(
     )
 )
 
+### STRUCTURAL ERROR (SERR) MODEL ###
+#####################################
+
+SERR_MU_MAPPING_NAME = ["Zero", "Constant", "Linear"]
+
+SERR_SIGMA_MAPPING_NAME = ["Constant", "Linear", "Power", "Exponential", "Gaussian"]
+
+SERR_MU_PARAMETERS = ["mg0", "mg1"]
+
+SERR_SIGMA_PARAMETERS = ["sg0", "sg1", "sg2"]
+
+# % Following SERR_MU_MAPPING_NAME order
+SERR_MU_MAPPING_PARAMETERS = dict(
+    zip(
+        SERR_MU_MAPPING_NAME,
+        [
+            [],  # % zero
+            ["mg0"],  # % constant
+            ["mg0", "mg1"],  # % linear
+        ],
+    )
+)
+
+# % Following SERR_SIGMA_MAPPING_NAME order
+SERR_SIGMA_MAPPING_PARAMETERS = dict(
+    zip(
+        SERR_SIGMA_MAPPING_NAME,
+        [
+            ["sg0"],  # % constant
+            ["sg0", "sg1"],  # % linear
+            ["sg0", "sg1", "sg2"],  # % power
+            ["sg0", "sg1", "sg2"],  # % exponential
+            ["sg0", "sg1", "sg2"],  # % gaussian
+        ],
+    )
+)
+
+### FEASIBLE SERR PARAMETERS ###
+################################
+
+# % Following SERR_MU_PARAMETERS order
+FEASIBLE_SERR_MU_PARAMETERS = dict(
+    zip(
+        SERR_MU_PARAMETERS,
+        [
+            (-np.inf, np.inf),  # % mg0
+            (-np.inf, np.inf),  # % mg1
+        ],
+    )
+)
+
+# % Following SERR_SIGMA_PARAMETERS order
+FEASIBLE_SERR_SIGMA_PARAMETERS = dict(
+    zip(
+        SERR_SIGMA_PARAMETERS,
+        [
+            (0, np.inf),  # % sg0
+            (0, np.inf),  # % sg1
+            (0, np.inf),  # % sg2
+        ],
+    )
+)
+
+
+### DEFAULT SERR PARAMETERS ###
+###############################
+
+# % Following SERR_MU_PARAMETERS order
+DEFAULT_SERR_MU_PARAMETERS = dict(
+    zip(
+        SERR_MU_PARAMETERS,
+        [
+            0,  # % mg0
+            0,  # % mg1
+        ],
+    )
+)
+
+# % Following SERR_SIGMA_PARAMETERS order
+DEFAULT_SERR_SIGMA_PARAMETERS = dict(
+    zip(
+        SERR_SIGMA_PARAMETERS,
+        [
+            1,  # % sg0
+            0.2,  # % sg1
+            2,  # % sg2
+        ],
+    )
+)
+
+### DEFAULT BOUNDS SERR PARAMETERS ###
+######################################
+
+# % Following SERR_MU_PARAMETERS order
+DEFAULT_BOUNDS_SERR_MU_PARAMETERS = dict(
+    zip(
+        SERR_MU_PARAMETERS,
+        [
+            (-1e6, 1e6),  # % mg0
+            (-1e6, 1e6),  # % mg1
+        ],
+    )
+)
+
+# % Following SERR_SIGMA_PARAMETERS order
+DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS = dict(
+    zip(
+        SERR_SIGMA_PARAMETERS,
+        [
+            (1e-6, 1e3),  # % sg0
+            (1e-6, 1e1),  # % sg1
+            (1e-6, 1e3),  # % sg2
+        ],
+    )
+)
+
+### OPTIMIZABLE SERR PARAMETERS ###
+###################################
+
+# % Following SERR_MU_PARAMETERS order
+OPTIMIZABLE_SERR_MU_PARAMETERS = dict(
+    zip(
+        SERR_MU_PARAMETERS,
+        [True] * len(SERR_MU_PARAMETERS),
+    )
+)
+
+# % Following SERR_SIGMA_PARAMETERS order
+OPTIMIZABLE_SERR_SIGMA_PARAMETERS = dict(
+    zip(
+        SERR_SIGMA_PARAMETERS,
+        [True] * len(SERR_SIGMA_PARAMETERS),
+    )
+)
+
 ### READ INPUT DATA ###
 #######################
 
@@ -373,6 +508,22 @@ DEFAULT_TERMINATION_CRIT = dict(
     ),
 )
 
+CONTROL_PRIOR_DISTRIBUTION = [
+    "FlatPrior",
+    "Uniform",
+    "Gaussian",
+    "Exponential",
+    "LogNormal",
+    "Triangle",
+]
+
+CONTROL_PRIOR_DISTRIBUTION_PARAMETERS = dict(
+    zip(
+        CONTROL_PRIOR_DISTRIBUTION,
+        [0, 2, 2, 2, 2, 3],
+    )
+)
+
 SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
     ("uniform", "sbs"): [
         "parameters",
@@ -425,16 +576,32 @@ SIMULATION_OPTIMIZE_OPTIONS_KEYS = {
 }
 
 DEFAULT_SIMULATION_COST_OPTIONS = {
-    "jobs_cmpt": "nse",
-    "wjobs_cmpt": "mean",
-    "jobs_cmpt_tfm": "keep",
-    "wjreg": 0,
-    "jreg_cmpt": "prior",
-    "wjreg_cmpt": "mean",
-    "gauge": "dws",
-    "wgauge": "mean",
-    "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
-    "end_warmup": None,
+    "forward_run": {
+        "jobs_cmpt": "nse",
+        "wjobs_cmpt": "mean",
+        "jobs_cmpt_tfm": "keep",
+        "gauge": "dws",
+        "wgauge": "mean",
+        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "end_warmup": None,
+    },
+    "optimize": {
+        "jobs_cmpt": "nse",
+        "wjobs_cmpt": "mean",
+        "jobs_cmpt_tfm": "keep",
+        "wjreg": 0,
+        "jreg_cmpt": "prior",
+        "wjreg_cmpt": "mean",
+        "gauge": "dws",
+        "wgauge": "mean",
+        "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
+        "end_warmup": None,
+    },
+    "bayesian_optimize": {
+        "gauge": "dws",
+        "control_prior": None,
+        "end_warmup": None,
+    },
 }
 
 DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
@@ -458,6 +625,20 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "jobs": False,
         "jreg": False,
         "lcurve_wjreg": False,
+        "time_step": "all",
+    },
+    "bayesian_optimize": {
+        "opr_states": False,
+        "q_domain": False,
+        "iter_cost": False,
+        "iter_projg": False,
+        "control_vector": False,
+        "cost": False,
+        "log_lkh": False,
+        "log_prior": False,
+        "log_h": False,
+        "serr_mu": False,
+        "serr_sigma": False,
         "time_step": "all",
     },
     "multiset_estimate": {

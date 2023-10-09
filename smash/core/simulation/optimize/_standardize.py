@@ -24,6 +24,36 @@ if TYPE_CHECKING:
     from smash._typing import AnyTuple
 
 
+def _standardize_multiple_optimize_mapping(mapping: str) -> str:
+    avail_mapping = MAPPING.copy()
+    avail_mapping.remove("ann")  # cannot perform multiple optimize with ANN mapping
+
+    if isinstance(mapping, str):
+        if mapping.lower() not in avail_mapping:
+            raise ValueError(
+                f"Invalid mapping '{mapping}' for multiple optimize. Choices: {avail_mapping}"
+            )
+    else:
+        raise TypeError("mapping argument must be a str")
+
+    return mapping.lower()
+
+
+def _standardize_bayesian_optimize_mapping(mapping: str) -> str:
+    avail_mapping = MAPPING.copy()
+    avail_mapping.remove("ann")  # cannot perform bayesian optimize with ANN mapping
+
+    if isinstance(mapping, str):
+        if mapping.lower() not in avail_mapping:
+            raise ValueError(
+                f"Invalid mapping '{mapping}' for bayesian optimize. Choices: {avail_mapping}"
+            )
+    else:
+        raise TypeError("mapping argument must be a str")
+
+    return mapping.lower()
+
+
 def _standardize_optimize_args(
     model: Model,
     mapping: str,
@@ -33,6 +63,7 @@ def _standardize_optimize_args(
     common_options: dict | None,
     return_options: dict | None,
 ) -> AnyTuple:
+    func_name = "optimize"
     # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
@@ -41,15 +72,7 @@ def _standardize_optimize_args(
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     optimize_options = _standardize_simulation_optimize_options(
-        model, mapping, optimizer, optimize_options
-    )
-
-    cost_options = _standardize_simulation_cost_options(model, cost_options)
-
-    common_options = _standardize_simulation_common_options(common_options)
-
-    return_options = _standardize_simulation_return_options(
-        model, "optimize", return_options
+        model, func_name, mapping, optimizer, optimize_options
     )
 
     # % Finalize optimize options
@@ -57,8 +80,16 @@ def _standardize_optimize_args(
         model, mapping, optimizer, optimize_options
     )
 
+    cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
+
     # % Finalize cost_options
-    _standardize_simulation_cost_options_finalize(model, cost_options)
+    _standardize_simulation_cost_options_finalize(model, func_name, cost_options)
+
+    common_options = _standardize_simulation_common_options(common_options)
+
+    return_options = _standardize_simulation_return_options(
+        model, func_name, return_options
+    )
 
     # % Finalize return_options
     _standardize_simulation_return_options_finalize(model, return_options)
@@ -82,6 +113,7 @@ def _standardize_multiple_optimize_args(
     cost_options: dict | None,
     common_options: dict | None,
 ) -> AnyTuple:
+    func_name = "optimize"
     samples = _standardize_simulation_samples(model, samples)
 
     # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
@@ -92,20 +124,20 @@ def _standardize_multiple_optimize_args(
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
 
     optimize_options = _standardize_simulation_optimize_options(
-        model, mapping, optimizer, optimize_options
+        model, func_name, mapping, optimizer, optimize_options
     )
-
-    cost_options = _standardize_simulation_cost_options(model, cost_options)
-
-    common_options = _standardize_simulation_common_options(common_options)
 
     # % Finalize optimize options
     _standardize_simulation_optimize_options_finalize(
         model, mapping, optimizer, optimize_options
     )
 
+    cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
+
     # % Finalize cost_options
-    _standardize_simulation_cost_options_finalize(model, cost_options)
+    _standardize_simulation_cost_options_finalize(model, func_name, cost_options)
+
+    common_options = _standardize_simulation_common_options(common_options)
 
     return (
         samples,
@@ -117,16 +149,51 @@ def _standardize_multiple_optimize_args(
     )
 
 
-def _standardize_multiple_optimize_mapping(mapping: str) -> str:
-    avail_mapping = MAPPING.copy()
-    avail_mapping.remove("ann")  # cannot perform multiple optimize with ANN mapping
+def _standardize_bayesian_optimize_args(
+    model: Model,
+    mapping: str,
+    optimizer: str | None,
+    optimize_options: dict | None,
+    cost_options: dict | None,
+    common_options: dict | None,
+    return_options: dict | None,
+) -> AnyTuple:
+    func_name = "bayesian_optimize"
+    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    _standardize_simulation_parameters_feasibility(model)
 
-    if isinstance(mapping, str):
-        if mapping.lower() not in avail_mapping:
-            raise ValueError(
-                f"Invalid mapping '{mapping}' for multiple optimize. Choices: {avail_mapping}"
-            )
-    else:
-        raise TypeError("mapping argument must be a str")
+    mapping = _standardize_bayesian_optimize_mapping(mapping)
 
-    return mapping.lower()
+    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+
+    optimize_options = _standardize_simulation_optimize_options(
+        model, func_name, mapping, optimizer, optimize_options
+    )
+
+    cost_options = _standardize_simulation_cost_options(model, func_name, cost_options)
+
+    common_options = _standardize_simulation_common_options(common_options)
+
+    return_options = _standardize_simulation_return_options(
+        model, func_name, return_options
+    )
+
+    # % Finalize optimize options
+    _standardize_simulation_optimize_options_finalize(
+        model, mapping, optimizer, optimize_options
+    )
+
+    # % Finalize cost_options
+    _standardize_simulation_cost_options_finalize(model, func_name, cost_options)
+
+    # % Finalize return_options
+    _standardize_simulation_return_options_finalize(model, return_options)
+
+    return (
+        mapping,
+        optimizer,
+        optimize_options,
+        cost_options,
+        common_options,
+        return_options,
+    )

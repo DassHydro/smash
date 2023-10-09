@@ -7,6 +7,7 @@
         "8": "double",
         "dp": "double",
         "idp": "double",
+        "mrk": "double",
     },
     "complex": {
         "": "complex_float",
@@ -20,5 +21,6 @@
         "c_int": "int",
         "8": "long_long",
         "dp": "long_long",
+        "mik": "long_long",
     },
 }
