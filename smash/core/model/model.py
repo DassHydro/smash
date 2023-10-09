@@ -1086,128 +1086,128 @@ class Model(object):
         return_options: dict | None = None,
     ):
         """
-            Model bayesian assimilation using numerical optimization algorithms.
+        Model bayesian assimilation using numerical optimization algorithms.
 
-            Parameters
-            ----------
-            mapping : str, default 'uniform'
-                Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
+        Parameters
+        ----------
+        mapping : str, default 'uniform'
+            Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
 
-            optimizer : str or None, default None
-                Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
+        optimizer : str or None, default None
+            Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
 
-                .. note::
-                    If not given, a default optimizer will be set depending on the optimization mapping:
+            .. note::
+                If not given, a default optimizer will be set depending on the optimization mapping:
 
-                    - **mapping** = 'uniform'; **optimizer** = 'sbs'
-                    - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
+                - **mapping** = 'uniform'; **optimizer** = 'sbs'
+                - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
 
-            optimize_options : dict or None, default None
-                Dictionary containing optimization options for fine-tuning the optimization process.
+        optimize_options : dict or None, default None
+            Dictionary containing optimization options for fine-tuning the optimization process.
 
-                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
 
-            cost_options : dict or None, default None
-                Dictionary containing computation cost options for simulated and observed responses. The elements are:
+        cost_options : dict or None, default None
+            Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
-                gauge : str or ListLike, default 'dws'
-                    Type of gauge to be computed. There are two ways to specify it:
+            gauge : str or ListLike, default 'dws'
+                Type of gauge to be computed. There are two ways to specify it:
 
-                    - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-                    - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+                - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
+                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
 
-                control_prior: dict or None, default None
-                    A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
-                    The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
+            control_prior: dict or None, default None
+                A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
+                The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
 
-                    - 'FlatPrior',   []                                 (0)
-                    - 'Uniform',     [lower_bound, higher_bound]        (2)
-                    - 'Gaussian',    [mean, standard_deviation]         (2)
-                    - 'Exponential', [threshold, scale]                 (2)
-                    - 'LogNormal',   [mean_log, standard_deviation_log] (2)
-                    - 'Triangle',    [peak, lower_bound, higher_bound]  (3)
+                - 'FlatPrior',   []                                 (0)
+                - 'Uniform',     [lower_bound, higher_bound]        (2)
+                - 'Gaussian',    [mean, standard_deviation]         (2)
+                - 'Exponential', [threshold, scale]                 (2)
+                - 'LogNormal',   [mean_log, standard_deviation_log] (2)
+                - 'Triangle',    [peak, lower_bound, higher_bound]  (3)
 
-                    .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
+                .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
 
-                end_warmup : str or pandas.Timestamp, default model.setup.start_time
-                    The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
+            end_warmup : str or pandas.Timestamp, default model.setup.start_time
+                The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
 
-                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
         common_options : dict or None, default None
-                Dictionary containing common options with two elements:
+            Dictionary containing common options with two elements:
 
-                verbose : bool, default False
-                    Whether to display information about the running method.
+            verbose : bool, default False
+                Whether to display information about the running method.
 
-                ncpu : bool, default 1
-                    Whether to perform a parallel computation.
+            ncpu : bool, default 1
+                Whether to perform a parallel computation.
 
-                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
-            return_options : dict or None, default None
-                Dictionary containing return options to save intermediate variables. The elements are:
+        return_options : dict or None, default None
+            Dictionary containing return options to save intermediate variables. The elements are:
 
-                time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
-                    Returned time steps. There are five ways to specify it:
+            time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
+                Returned time steps. There are five ways to specify it:
 
-                    - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
-                    - An alias among 'all' (return all time steps).
-                    - A pandas.Timestamp object.
-                    - A pandas.DatetimeIndex object.
-                    - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
+                - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
+                - An alias among 'all' (return all time steps).
+                - A pandas.Timestamp object.
+                - A pandas.DatetimeIndex object.
+                - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
-                    .. note::
-                        It only applies to the following variables: 'opr_states' and 'q_domain'
+                .. note::
+                    It only applies to the following variables: 'opr_states' and 'q_domain'
 
-                opr_states : bool, default False
-                    Whether to return operator states for specific time steps.
+            opr_states : bool, default False
+                Whether to return operator states for specific time steps.
 
-                q_domain : bool, defaul False
-                    Whether to return simulated discharge on the whole domain for specific time steps.
+            q_domain : bool, defaul False
+                Whether to return simulated discharge on the whole domain for specific time steps.
 
-                iter_cost : bool, default False
-                    Whether to return cost iteration values.
+            iter_cost : bool, default False
+                Whether to return cost iteration values.
 
-                iter_projg : bool, default False
-                    Whether to return infinity norm of the projected gardient iteration values.
+            iter_projg : bool, default False
+                Whether to return infinity norm of the projected gardient iteration values.
 
-                control_vector : bool, default False
-                    Whether to return control vector at end of optimization.
+            control_vector : bool, default False
+                Whether to return control vector at end of optimization.
 
-                cost : bool, default False
-                    Whether to return cost value.
+            cost : bool, default False
+                Whether to return cost value.
 
-                log_lkh : bool, default False
-                    Whether to return log likelihood component value.
+            log_lkh : bool, default False
+                Whether to return log likelihood component value.
 
-                log_prior : bool, default False
-                    Whether to return log prior component value.
+            log_prior : bool, default False
+                Whether to return log prior component value.
 
-                log_h : bool, default False
-                    Whether to return log h component value.
+            log_h : bool, default False
+                Whether to return log h component value.
 
-                serr_mu : bool, default False
-                    Whether to return mu, the mean of structural errors.
+            serr_mu : bool, default False
+                Whether to return mu, the mean of structural errors.
 
-                serr_sigma : bool, default False
-                    Whether to return sigma, the standard deviation of structural errors.
+            serr_sigma : bool, default False
+                Whether to return sigma, the standard deviation of structural errors.
 
-                .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
+            .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
-            Returns
-            -------
-            ret_bayesian_optimize : BayesianOptimize or None, default None
-                It returns a `smash.BayesianOptimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
+        Returns
+        -------
+        ret_bayesian_optimize : BayesianOptimize or None, default None
+            It returns a `smash.BayesianOptimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
 
-            Examples
-            --------
-            TODO: Fill
+        Examples
+        --------
+        TODO: Fill
 
-            See Also
-            --------
-            smash.bayesian_optimize : Model bayesian assimilation using numerical optimization algorithms.
-            BayesianOptimize : Represents bayesian optimize optional results.
+        See Also
+        --------
+        smash.bayesian_optimize : Model bayesian assimilation using numerical optimization algorithms.
+        BayesianOptimize : Represents bayesian optimize optional results.
         """
 
         args_options = [
