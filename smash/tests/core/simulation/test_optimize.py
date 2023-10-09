@@ -178,6 +178,20 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
                 "verbose": False,
             },
         },
+        {
+            "cost_options": {
+                "wjreg": 0.0001,
+                "jreg_cmpt": ["prior", "smoothing", "hard-smoothing"],
+                "wjreg_cmpt": [0.5, 0.2, 0.2],
+            },
+            "optimize_options": {
+                "termination_crit": {"maxiter": 1},
+            },
+            "common_options": {
+                "ncpu": ncpu,
+                "verbose": False,
+            },
+        },
     ]
 
     for i, kwargs in enumerate(custom_sets):

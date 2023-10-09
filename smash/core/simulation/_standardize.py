@@ -961,7 +961,7 @@ def _standardize_simulation_cost_options(
                 if key not in DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown cost_options key '{key}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS.keys())}"
+                        f"Unknown cost_options key '{key}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys())}"
                     )
 
             for key in pop_keys:

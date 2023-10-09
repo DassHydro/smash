@@ -2911,6 +2911,9 @@ MODULE MWD_COST_OPTIONS_DIFF
       INTEGER, DIMENSION(:, :), ALLOCATABLE :: mask_event
       TYPE(PRIORTYPE), DIMENSION(:), ALLOCATABLE :: control_prior
   END TYPE COST_OPTIONSDT
+  TYPE COST_OPTIONSDT_DIFF
+      REAL(sp), DIMENSION(:), ALLOCATABLE :: wjreg_cmpt
+  END TYPE COST_OPTIONSDT_DIFF
 
 CONTAINS
   SUBROUTINE COST_OPTIONSDT_INITIALISE(this, setup, mesh, njoc, njrc)
@@ -3000,6 +3003,9 @@ MODULE MWD_OPTIONS_DIFF
       TYPE(COST_OPTIONSDT) :: cost
       TYPE(COMMON_OPTIONSDT) :: comm
   END TYPE OPTIONSDT
+  TYPE OPTIONSDT_DIFF
+      TYPE(COST_OPTIONSDT_DIFF) :: cost
+  END TYPE OPTIONSDT_DIFF
 
 CONTAINS
   SUBROUTINE OPTIONSDT_INITIALISE(this, setup, mesh, njoc, njrc)
@@ -5342,13 +5348,3493 @@ CONTAINS
 
 END MODULE MWD_SIGNATURES_DIFF
 
+!%      (MWD) Module Wrapped and Differentiated
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - sigmoide
+!%      - inv_sigmoide
+!%      - scaled_sigmoide
+!%      - inv_scaled_sigmoid
+!%      - sigmoide2d
+!%      - scaled_sigmoide2d
+!%      - sbs_control_tfm
+!%      - sbs_inv_control_tfm
+!%      - normalize_control_tfm
+!%      - normalize_inv_control_tfm
+!%      - control_tfm
+!%      - inv_control_tfm
+!%      - uniform_opr_parameters_get_control_size
+!%      - uniform_opr_initial_states_get_control_size
+!%      - distributed_opr_parameters_get_control_size
+!%      - distributed_opr_initial_states_get_control_size
+!%      - multi_linear_opr_parameters_get_control_size
+!%      - multi_linear_opr_initial_states_get_control_size
+!%      - multi_polynomial_opr_parameters_get_control_size
+!%      - multi_polynomial_opr_initial_states_get_control_size
+!%      - serr_mu_parameters_get_control_size
+!%      - get_control_sizes
+!%      - uniform_opr_parameters_fill_control
+!%      - uniform_opr_initial_states_fill_control
+!%      - distributed_opr_parameters_fill_control
+!%      - distributed_opr_initial_states_fill_control
+!%      - multi_linear_opr_parameters_fill_control
+!%      - multi_linear_opr_initial_states_fill_control
+!%      - multi_polynomial_opr_parameters_fill_control
+!%      - multi_polynomial_opr_initial_states_fill_control
+!%      - serr_mu_parameters_fill_control
+!%      - serr_sigma_parameters_fill_control
+!%      - fill_control
+!%      - uniform_opr_parameters_fill_parameters
+!%      - uniform_opr_initial_states_fill_parameters
+!%      - distributed_opr_parameters_fill_parameters
+!%      - distributed_opr_initial_states_fill_parameters
+!%      - multi_linear_opr_parameters_fill_parameters
+!%      - multi_linear_opr_initial_states_fill_parameters
+!%      - multi_polynomial_opr_parameters_fill_parameters
+!%      - multi_polynomial_opr_initial_states_fill_parameters
+!%      - serr_mu_parameters_fill_parameters
+!%      - serr_sigma_parameters_fill_parameters
+!%      - fill_parameters
+MODULE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: MuFunk_vect, SigmaFunk_vect
+  USE MWD_BAYESIAN_TOOLS_DIFF
+!% only: sp, dp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
+!% only: ControlDT_initialise, ControlDT_finalise
+  USE MWD_CONTROL_DIFF
+  IMPLICIT NONE
+
+CONTAINS
+  SUBROUTINE SIGMOIDE(x, res)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: x
+    REAL(sp), INTENT(INOUT) :: res
+    INTRINSIC EXP
+    res = 1._sp/(1._sp+EXP(-x))
+  END SUBROUTINE SIGMOIDE
+
+  SUBROUTINE INV_SIGMOIDE(x, res)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: x
+    REAL(sp), INTENT(INOUT) :: res
+    INTRINSIC LOG
+    res = LOG(x/(1._sp-x))
+  END SUBROUTINE INV_SIGMOIDE
+
+  SUBROUTINE SCALED_SIGMOIDE(x, l, u, res)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: x, l, u
+    REAL(sp), INTENT(INOUT) :: res
+    CALL SIGMOIDE(x, res)
+    res = res*(u-l) + l
+  END SUBROUTINE SCALED_SIGMOIDE
+
+  SUBROUTINE INV_SCALED_SIGMOID(x, l, u, res)
+    IMPLICIT NONE
+    REAL(sp), INTENT(IN) :: x, l, u
+    REAL(sp), INTENT(INOUT) :: res
+    REAL(sp) :: xw
+    REAL(sp), SAVE :: eps=1e-3_sp
+    INTRINSIC MAX
+    INTRINSIC MIN
+    IF (x .LT. l + eps) THEN
+      xw = l + eps
+    ELSE
+      xw = x
+    END IF
+    IF (x .GT. u - eps) THEN
+      xw = u - eps
+    ELSE
+      xw = x
+    END IF
+    xw = (xw-l)/(u-l)
+    CALL INV_SIGMOIDE(xw, res)
+  END SUBROUTINE INV_SCALED_SIGMOID
+
+!  Differentiation of sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SIGMOIDE2D_D(x, x_d, res, res_d)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x_d
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_d
+    INTRINSIC EXP
+    REAL*4, DIMENSION(SIZE(x, 1), SIZE(x, 2)) :: temp
+    temp = 1.0/(EXP(-x)+1._sp)
+    res_d = temp*EXP(-x)*x_d/(EXP(-x)+1._sp)
+    res = temp
+  END SUBROUTINE SIGMOIDE2D_D
+
+!  Differentiation of sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SIGMOIDE2D_B(x, x_b, res, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:, :) :: x_b
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_b
+    INTRINSIC EXP
+    REAL(sp), DIMENSION(SIZE(x, 1), SIZE(x, 2)) :: temp
+    x_b = 0.0_4
+    temp = EXP(-x) + 1._sp
+    x_b = EXP(-x)*res_b/temp**2
+  END SUBROUTINE SIGMOIDE2D_B
+
+  SUBROUTINE SIGMOIDE2D(x, res)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    INTRINSIC EXP
+    res = 1._sp/(1._sp+EXP(-x))
+  END SUBROUTINE SIGMOIDE2D
+
+!  Differentiation of scaled_sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SCALED_SIGMOIDE2D_D(x, x_d, l, u, res, res_d)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x_d
+    REAL(sp), INTENT(IN) :: l, u
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_d
+    CALL SIGMOIDE2D_D(x, x_d, res, res_d)
+    res_d = (u-l)*res_d
+    res = res*(u-l) + l
+  END SUBROUTINE SCALED_SIGMOIDE2D_D
+
+!  Differentiation of scaled_sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res
+!   with respect to varying inputs: x
+  SUBROUTINE SCALED_SIGMOIDE2D_B(x, x_b, l, u, res, res_b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:, :) :: x_b
+    REAL(sp), INTENT(IN) :: l, u
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_b
+    CALL PUSHREAL4ARRAY(res, SIZE(res, 1)*SIZE(res, 2))
+    CALL SIGMOIDE2D(x, res)
+    res_b = (u-l)*res_b
+    CALL POPREAL4ARRAY(res, SIZE(res, 1)*SIZE(res, 2))
+    CALL SIGMOIDE2D_B(x, x_b, res, res_b)
+  END SUBROUTINE SCALED_SIGMOIDE2D_B
+
+  SUBROUTINE SCALED_SIGMOIDE2D(x, l, u, res)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
+    REAL(sp), INTENT(IN) :: l, u
+    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
+    CALL SIGMOIDE2D(x, res)
+    res = res*(u-l) + l
+  END SUBROUTINE SCALED_SIGMOIDE2D
+
+!  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE SBS_CONTROL_TFM_D(parameters, parameters_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC ASINH
+    INTRINSIC LOG
+    REAL(sp) :: temp
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs transformation on Opr parameters and Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (nbd_mask(i)) THEN
+        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+          parameters_d%control%x(i) = parameters_d%control%x(i)/SQRT(1.0&
+&           +parameters%control%x(i)**2)
+          parameters%control%x(i) = ASINH(parameters%control%x(i))
+        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
+&           %control%u_bkg(i) .LE. 1._sp) THEN
+          temp = parameters%control%x(i)/(-parameters%control%x(i)+1._sp&
+&           )
+          parameters_d%control%x(i) = (temp+1.0)*parameters_d%control%x(&
+&           i)/(temp*(1._sp-parameters%control%x(i)))
+          parameters%control%x(i) = LOG(temp)
+        ELSE
+          parameters_d%control%x(i) = parameters_d%control%x(i)/&
+&           parameters%control%x(i)
+          parameters%control%x(i) = LOG(parameters%control%x(i))
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE SBS_CONTROL_TFM_D
+
+!  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE SBS_CONTROL_TFM_B(parameters, parameters_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC ASINH
+    INTRINSIC LOG
+    REAL(sp) :: temp
+    REAL(sp) :: temp_b
+    INTEGER :: ad_to
+    INTEGER :: branch
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs transformation on Opr parameters and Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (.NOT.nbd_mask(i)) THEN
+        CALL PUSHCONTROL2B(0)
+      ELSE IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = ASINH(parameters%control%x(i))
+        CALL PUSHCONTROL2B(3)
+      ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters%&
+&         control%u_bkg(i) .LE. 1._sp) THEN
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = LOG(parameters%control%x(i)/(1._sp-&
+&         parameters%control%x(i)))
+        CALL PUSHCONTROL2B(2)
+      ELSE
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = LOG(parameters%control%x(i))
+        CALL PUSHCONTROL2B(1)
+      END IF
+    END DO
+    ad_to = i - 1
+    DO i=ad_to,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .LT. 2) THEN
+        IF (branch .NE. 0) THEN
+          CALL POPREAL4(parameters%control%x(i))
+          parameters_b%control%x(i) = parameters_b%control%x(i)/&
+&           parameters%control%x(i)
+        END IF
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL4(parameters%control%x(i))
+        temp = parameters%control%x(i)/(-parameters%control%x(i)+1._sp)
+        temp_b = parameters_b%control%x(i)/((1._sp-parameters%control%x(&
+&         i))*temp)
+        parameters_b%control%x(i) = (temp+1.0)*temp_b
+      ELSE
+        CALL POPREAL4(parameters%control%x(i))
+        parameters_b%control%x(i) = parameters_b%control%x(i)/SQRT(1.0+&
+&         parameters%control%x(i)**2)
+      END IF
+    END DO
+  END SUBROUTINE SBS_CONTROL_TFM_B
+
+  SUBROUTINE SBS_CONTROL_TFM(parameters)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC ASINH
+    INTRINSIC LOG
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs transformation on Opr parameters and Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (nbd_mask(i)) THEN
+        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+          parameters%control%x(i) = ASINH(parameters%control%x(i))
+          parameters%control%l(i) = ASINH(parameters%control%l_bkg(i))
+          parameters%control%u(i) = ASINH(parameters%control%u_bkg(i))
+        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
+&           %control%u_bkg(i) .LE. 1._sp) THEN
+          parameters%control%x(i) = LOG(parameters%control%x(i)/(1._sp-&
+&           parameters%control%x(i)))
+          parameters%control%l(i) = LOG(parameters%control%l_bkg(i)/(&
+&           1._sp-parameters%control%l_bkg(i)))
+          parameters%control%u(i) = LOG(parameters%control%u_bkg(i)/(&
+&           1._sp-parameters%control%u_bkg(i)))
+        ELSE
+          parameters%control%x(i) = LOG(parameters%control%x(i))
+          parameters%control%l(i) = LOG(parameters%control%l_bkg(i))
+          parameters%control%u(i) = LOG(parameters%control%u_bkg(i))
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE SBS_CONTROL_TFM
+
+!  Differentiation of sbs_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE SBS_INV_CONTROL_TFM_D(parameters, parameters_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC SINH
+    INTRINSIC EXP
+    REAL(sp) :: temp
+    REAL(sp) :: temp0
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs inv transformation on Opr parameters et Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (nbd_mask(i)) THEN
+        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+          parameters_d%control%x(i) = COSH(parameters%control%x(i))*&
+&           parameters_d%control%x(i)
+          parameters%control%x(i) = SINH(parameters%control%x(i))
+        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
+&           %control%u_bkg(i) .LE. 1._sp) THEN
+          temp = EXP(parameters%control%x(i)) + 1._sp
+          temp0 = EXP(parameters%control%x(i))/temp
+          parameters_d%control%x(i) = (EXP(parameters%control%x(i))-&
+&           temp0*EXP(parameters%control%x(i)))*parameters_d%control%x(i&
+&           )/temp
+          parameters%control%x(i) = temp0
+        ELSE
+          parameters_d%control%x(i) = EXP(parameters%control%x(i))*&
+&           parameters_d%control%x(i)
+          parameters%control%x(i) = EXP(parameters%control%x(i))
+        END IF
+      END IF
+    END DO
+  END SUBROUTINE SBS_INV_CONTROL_TFM_D
+
+!  Differentiation of sbs_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE SBS_INV_CONTROL_TFM_B(parameters, parameters_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC SINH
+    INTRINSIC EXP
+    REAL(sp) :: temp
+    INTEGER :: ad_to
+    INTEGER :: branch
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs inv transformation on Opr parameters et Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (.NOT.nbd_mask(i)) THEN
+        CALL PUSHCONTROL2B(0)
+      ELSE IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = SINH(parameters%control%x(i))
+        CALL PUSHCONTROL2B(3)
+      ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters%&
+&         control%u_bkg(i) .LE. 1._sp) THEN
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
+&         EXP(parameters%control%x(i)))
+        CALL PUSHCONTROL2B(2)
+      ELSE
+        CALL PUSHREAL4(parameters%control%x(i))
+        parameters%control%x(i) = EXP(parameters%control%x(i))
+        CALL PUSHCONTROL2B(1)
+      END IF
+    END DO
+    CALL PUSHINTEGER4(i - 1)
+    CALL POPINTEGER4(ad_to)
+    DO i=ad_to,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .LT. 2) THEN
+        IF (branch .NE. 0) THEN
+          CALL POPREAL4(parameters%control%x(i))
+          parameters_b%control%x(i) = EXP(parameters%control%x(i))*&
+&           parameters_b%control%x(i)
+        END IF
+      ELSE IF (branch .EQ. 2) THEN
+        CALL POPREAL4(parameters%control%x(i))
+        temp = EXP(parameters%control%x(i)) + 1._sp
+        parameters_b%control%x(i) = (EXP(parameters%control%x(i))/temp-&
+&         EXP(parameters%control%x(i))**2/temp**2)*parameters_b%control%&
+&         x(i)
+      ELSE
+        CALL POPREAL4(parameters%control%x(i))
+        parameters_b%control%x(i) = COSH(parameters%control%x(i))*&
+&         parameters_b%control%x(i)
+      END IF
+    END DO
+  END SUBROUTINE SBS_INV_CONTROL_TFM_B
+
+  SUBROUTINE SBS_INV_CONTROL_TFM(parameters)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    INTEGER :: i
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+    INTRINSIC SUM
+    INTRINSIC SINH
+    INTRINSIC EXP
+!% Need lower and upper bound to sbs tfm
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+! Only apply sbs inv transformation on Opr parameters et Opr initial states
+    DO i=1,SUM(parameters%control%nbk(1:2))
+      IF (nbd_mask(i)) THEN
+        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
+          parameters%control%x(i) = SINH(parameters%control%x(i))
+        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
+&           %control%u_bkg(i) .LE. 1._sp) THEN
+          parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
+&           EXP(parameters%control%x(i)))
+        ELSE
+          parameters%control%x(i) = EXP(parameters%control%x(i))
+        END IF
+      END IF
+    END DO
+    parameters%control%l = parameters%control%l_bkg
+    parameters%control%u = parameters%control%u_bkg
+  END SUBROUTINE SBS_INV_CONTROL_TFM
+
+!  Differentiation of normalize_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE NORMALIZE_CONTROL_TFM_D(parameters, parameters_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to normalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) 
+      parameters_d%control%x = parameters_d%control%x/(parameters%&
+&       control%u_bkg-parameters%control%l_bkg)
+      parameters%control%x = (parameters%control%x-parameters%control%&
+&       l_bkg)/(parameters%control%u_bkg-parameters%control%l_bkg)
+    END WHERE
+  END SUBROUTINE NORMALIZE_CONTROL_TFM_D
+
+!  Differentiation of normalize_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE NORMALIZE_CONTROL_TFM_B(parameters, parameters_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to normalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) parameters_b%control%x = parameters_b%control%x/(&
+&       parameters%control%u_bkg-parameters%control%l_bkg)
+  END SUBROUTINE NORMALIZE_CONTROL_TFM_B
+
+  SUBROUTINE NORMALIZE_CONTROL_TFM(parameters)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to normalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) 
+      parameters%control%x = (parameters%control%x-parameters%control%&
+&       l_bkg)/(parameters%control%u_bkg-parameters%control%l_bkg)
+      parameters%control%l = 0._sp
+      parameters%control%u = 1._sp
+    END WHERE
+  END SUBROUTINE NORMALIZE_CONTROL_TFM
+
+!  Differentiation of normalize_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D(parameters, parameters_d)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to denormalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) 
+      parameters_d%control%x = (parameters%control%u_bkg-parameters%&
+&       control%l_bkg)*parameters_d%control%x
+      parameters%control%x = parameters%control%x*(parameters%control%&
+&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
+    END WHERE
+  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D
+
+!  Differentiation of normalize_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B(parameters, parameters_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to denormalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) parameters_b%control%x = (parameters%control%u_bkg-&
+&       parameters%control%l_bkg)*parameters_b%control%x
+  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B
+
+  SUBROUTINE NORMALIZE_INV_CONTROL_TFM(parameters)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
+!% Need lower and upper bound to denormalize
+    nbd_mask = parameters%control%nbd(:) .EQ. 2
+    WHERE (nbd_mask) 
+      parameters%control%x = parameters%control%x*(parameters%control%&
+&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
+      parameters%control%l = parameters%control%l_bkg
+      parameters%control%u = parameters%control%u_bkg
+    END WHERE
+  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM
+
+!  Differentiation of control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE CONTROL_TFM_D(parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL SBS_CONTROL_TFM_D(parameters, parameters_d)
+    CASE ('normalize') 
+      CALL NORMALIZE_CONTROL_TFM_D(parameters, parameters_d)
+    END SELECT
+  END SUBROUTINE CONTROL_TFM_D
+
+!  Differentiation of control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE CONTROL_TFM_B(parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL SBS_CONTROL_TFM(parameters)
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
+      CALL SBS_CONTROL_TFM_B(parameters, parameters_b)
+    CASE ('normalize') 
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL NORMALIZE_CONTROL_TFM(parameters)
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
+      CALL NORMALIZE_CONTROL_TFM_B(parameters, parameters_b)
+    END SELECT
+  END SUBROUTINE CONTROL_TFM_B
+
+  SUBROUTINE CONTROL_TFM(parameters, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL SBS_CONTROL_TFM(parameters)
+    CASE ('normalize') 
+      CALL NORMALIZE_CONTROL_TFM(parameters)
+    END SELECT
+  END SUBROUTINE CONTROL_TFM
+
+!  Differentiation of inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE INV_CONTROL_TFM_D(parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL SBS_INV_CONTROL_TFM_D(parameters, parameters_d)
+    CASE ('normalize') 
+      CALL NORMALIZE_INV_CONTROL_TFM_D(parameters, parameters_d)
+    END SELECT
+  END SUBROUTINE INV_CONTROL_TFM_D
+
+!  Differentiation of inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in
+  SUBROUTINE INV_CONTROL_TFM_B(parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL SBS_INV_CONTROL_TFM(parameters)
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
+      CALL SBS_INV_CONTROL_TFM_B(parameters, parameters_b)
+    CASE ('normalize') 
+      CALL NORMALIZE_INV_CONTROL_TFM(parameters)
+      CALL NORMALIZE_INV_CONTROL_TFM_B(parameters, parameters_b)
+    END SELECT
+  END SUBROUTINE INV_CONTROL_TFM_B
+
+  SUBROUTINE INV_CONTROL_TFM(parameters, options)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%control_tfm) 
+    CASE ('sbs') 
+      CALL SBS_INV_CONTROL_TFM(parameters)
+    CASE ('normalize') 
+      CALL NORMALIZE_INV_CONTROL_TFM(parameters)
+    END SELECT
+  END SUBROUTINE INV_CONTROL_TFM
+
+  SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, n)
+    IMPLICIT NONE
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%opr_parameters)
+  END SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, n)
+    IMPLICIT NONE
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%opr_initial_states)
+  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+
+  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
+&   n)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%opr_parameters)*mesh%nac
+  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, &
+&   options, n)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%opr_initial_states)*mesh%nac
+  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+
+  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options&
+&   , n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTEGER :: i
+    INTRINSIC SUM
+    n = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + SUM(&
+&         options%optimize%opr_parameters_descriptor(:, i))
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&   options, n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTEGER :: i
+    INTRINSIC SUM
+    n = 0
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + SUM&
+&         (options%optimize%opr_initial_states_descriptor(:, i))
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
+&   options, n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTEGER :: i
+    INTRINSIC SUM
+    n = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + 2*SUM(&
+&         options%optimize%opr_parameters_descriptor(:, i))
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup&
+&   , options, n)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTEGER :: i
+    INTRINSIC SUM
+    n = 0
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + 2*&
+&         SUM(options%optimize%opr_initial_states_descriptor(:, i))
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+
+  SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, n)
+    IMPLICIT NONE
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%serr_mu_parameters)*options%cost%nog
+  END SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, n)
+    IMPLICIT NONE
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, INTENT(INOUT) :: n
+    INTRINSIC SUM
+    n = SUM(options%optimize%serr_sigma_parameters)*options%cost%nog
+  END SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE
+
+  SUBROUTINE GET_CONTROL_SIZES(setup, mesh, options, nbk)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER, DIMENSION(:), INTENT(OUT) :: nbk
+    SELECT CASE  (options%optimize%mapping) 
+    CASE ('uniform') 
+      CALL UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, nbk(1))
+      CALL UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, nbk(2))
+    CASE ('distributed') 
+      CALL DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
+&                                                nbk(1))
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, options&
+&                                                    , nbk(2))
+    CASE ('multi-linear') 
+      CALL MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
+&                                                 nbk(1))
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&                                                     options, nbk(2))
+    CASE ('multi-polynomial') 
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
+&                                                     options, nbk(1))
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&                                                         options, nbk(2&
+&                                                         ))
+    END SELECT
+! Directly working with hyper parameters
+    CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))
+    CALL SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, nbk(4))
+  END SUBROUTINE GET_CONTROL_SIZES
+
+  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
+&   , options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        parameters%control%x(j) = SUM(parameters%opr_parameters%values(:&
+&         , :, i), mask=ac_mask)/mesh%nac
+        parameters%control%l(j) = options%optimize%l_opr_parameters(i)
+        parameters%control%u(j) = options%optimize%u_opr_parameters(i)
+        parameters%control%nbd(j) = 2
+        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
+&         (i))//'0'
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        parameters%control%x(j) = SUM(parameters%opr_initial_states%&
+&         values(:, :, i), mask=ac_mask)/mesh%nac
+        parameters%control%l(j) = options%optimize%l_opr_initial_states(&
+&         i)
+        parameters%control%u(j) = options%optimize%u_opr_initial_states(&
+&         i)
+        parameters%control%nbd(j) = 2
+        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+&         keys(i))//'0'
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL
+
+  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    CHARACTER(len=lchar) :: name
+    INTEGER :: n, i, j, row, col
+    INTRINSIC TRIM
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters%control%x(j) = parameters%opr_parameters%values&
+&               (row, col, i)
+              parameters%control%l(j) = options%optimize%&
+&               l_opr_parameters(i)
+              parameters%control%u(j) = options%optimize%&
+&               u_opr_parameters(i)
+              parameters%control%nbd = 2
+              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%opr_parameters%&
+&             keys(i)), row, '-', col
+              parameters%control%name(j) = name
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    CHARACTER(len=lchar) :: name
+    INTEGER :: n, i, j, row, col
+    INTRINSIC TRIM
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters%control%x(j) = parameters%opr_initial_states%&
+&               values(row, col, i)
+              parameters%control%l(j) = options%optimize%&
+&               l_opr_initial_states(i)
+              parameters%control%u(j) = options%optimize%&
+&               u_opr_initial_states(i)
+              parameters%control%nbd = 2
+              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
+&             opr_initial_states%keys(i)), row, '-', col
+              parameters%control%name(j) = name
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL
+
+  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j, k
+    REAL(sp) :: y, l, u
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
+&         /mesh%nac
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
+&         (i))//'0'
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 1
+            parameters%control%x(j) = 0._sp
+            parameters%control%nbd(j) = 0
+            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
+&             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-a'
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j, k
+    REAL(sp) :: y, l, u
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
+&         ac_mask)/mesh%nac
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+&         keys(i))//'0'
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 1
+            parameters%control%x(j) = 0._sp
+            parameters%control%nbd(j) = 0
+            parameters%control%name(j) = TRIM(parameters%&
+&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             descriptor_name(k))//'-a'
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j, k
+    REAL(sp) :: y, l, u
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
+&         /mesh%nac
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
+&         (i))//'0'
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 2
+            parameters%control%x(j-1) = 0._sp
+            parameters%control%nbd(j-1) = 0
+            parameters%control%name(j-1) = TRIM(parameters%&
+&             opr_parameters%keys(i))//'-'//TRIM(setup%descriptor_name(k&
+&             ))//'-a'
+            parameters%control%x(j) = 1._sp
+            parameters%control%l(j) = 0.5_sp
+            parameters%control%u(j) = 2._sp
+            parameters%control%nbd(j) = 2
+            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
+&             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-b'
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, &
+&   mesh, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: n, i, j, k
+    REAL(sp) :: y, l, u
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTRINSIC SUM
+    INTRINSIC TRIM
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
+&         ac_mask)/mesh%nac
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
+        parameters%control%nbd(j) = 0
+        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+&         keys(i))//'0'
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 2
+            parameters%control%x(j-1) = 0._sp
+            parameters%control%nbd(j-1) = 0
+            parameters%control%name(j-1) = TRIM(parameters%&
+&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             descriptor_name(k))//'-a'
+            parameters%control%x(j) = 1._sp
+            parameters%control%l(j) = 0.5_sp
+            parameters%control%u(j) = 2._sp
+            parameters%control%nbd(j) = 2
+            parameters%control%name(j) = TRIM(parameters%&
+&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             descriptor_name(k))//'-b'
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL
+
+  SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
+&   options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+    INTRINSIC TRIM
+! Serr mu parameters is third control kind
+    j = SUM(parameters%control%nbk(1:2))
+    DO i=1,setup%nsep_mu
+      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters%control%x(j) = parameters%serr_mu_parameters%&
+&             values(k, i)
+            parameters%control%l(j) = options%optimize%&
+&             l_serr_mu_parameters(i)
+            parameters%control%u(j) = options%optimize%&
+&             u_serr_mu_parameters(i)
+            parameters%control%nbd(j) = 2
+            parameters%control%name(j) = TRIM(parameters%&
+&             serr_mu_parameters%keys(i))//'-'//TRIM(mesh%code(k))
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
+&   , options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+    INTRINSIC TRIM
+! Serr sigma parameters is fourth control kind
+    j = SUM(parameters%control%nbk(1:3))
+    DO i=1,setup%nsep_sigma
+      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters%control%x(j) = parameters%serr_sigma_parameters%&
+&             values(k, i)
+            parameters%control%l(j) = options%optimize%&
+&             l_serr_sigma_parameters(i)
+            parameters%control%u(j) = options%optimize%&
+&             u_serr_sigma_parameters(i)
+            parameters%control%nbd(j) = 2
+            parameters%control%name(j) = TRIM(parameters%&
+&             serr_sigma_parameters%keys(i))//'-'//TRIM(mesh%code(k))
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL
+
+  SUBROUTINE FILL_CONTROL(setup, mesh, input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%mapping) 
+    CASE ('uniform') 
+      CALL UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
+&                                        options)
+      CALL UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                            parameters, options)
+    CASE ('distributed') 
+      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                            parameters, options)
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                                parameters, options)
+    CASE ('multi-linear') 
+      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                             parameters, options)
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                                 parameters, options)
+    CASE ('multi-polynomial') 
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                                 parameters, options)
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh&
+&                                                     , parameters, &
+&                                                     options)
+    END SELECT
+! Directly working with hyper parameters
+    CALL SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
+&                                  options)
+    CALL SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
+&                                     options)
+! Store background
+    parameters%control%x_bkg = parameters%control%x
+    parameters%control%l_bkg = parameters%control%l
+    parameters%control%u_bkg = parameters%control%u
+  END SUBROUTINE FILL_CONTROL
+
+!  Differentiation of uniform_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP 
+!context):
+!   variations   of useful results: *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        WHERE (ac_mask) 
+          parameters_d%opr_parameters%values(:, :, i) = parameters_d%&
+&           control%x(j)
+          parameters%opr_parameters%values(:, :, i) = parameters%control&
+&           %x(j)
+        END WHERE
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of uniform_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP 
+!context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTEGER :: branch
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nop,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         parameters_b%opr_parameters%values(:, :, i), MASK=ac_mask)
+        CALL POPINTEGER4(j)
+        WHERE (ac_mask) parameters_b%opr_parameters%values(:, :, i) = &
+&           0.0_4
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        WHERE (ac_mask) parameters%opr_parameters%values(:, :, i) = &
+&           parameters%control%x(j)
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of uniform_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+&   parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        WHERE (ac_mask) 
+          parameters_d%opr_initial_states%values(:, :, i) = parameters_d&
+&           %control%x(j)
+          parameters%opr_initial_states%values(:, :, i) = parameters%&
+&           control%x(j)
+        END WHERE
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+
+!  Differentiation of uniform_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
+&   parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    INTEGER :: branch
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nos,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         parameters_b%opr_initial_states%values(:, :, i), MASK=ac_mask)
+        CALL POPINTEGER4(j)
+        WHERE (ac_mask) parameters_b%opr_initial_states%values(:, :, i)&
+&          = 0.0_4
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+
+  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
+    ac_mask = mesh%active_cell(:, :) .EQ. 1
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        WHERE (ac_mask) parameters%opr_initial_states%values(:, :, i) = &
+&           parameters%control%x(j)
+      END IF
+    END DO
+  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS
+
+!  Differentiation of distributed_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   variations   of useful results: *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters_d%opr_parameters%values(row, col, i) = &
+&               parameters_d%control%x(j)
+              parameters%opr_parameters%values(row, col, i) = parameters&
+&               %control%x(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of distributed_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+    INTEGER :: branch
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .EQ. 0) THEN
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHINTEGER4(j)
+              j = j + 1
+              CALL PUSHCONTROL1B(1)
+            END IF
+          END DO
+        END DO
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nop,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO col=mesh%ncol,1,-1
+          DO row=mesh%nrow,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&               parameters_b%opr_parameters%values(row, col, i)
+              parameters_b%opr_parameters%values(row, col, i) = 0.0_4
+              CALL POPINTEGER4(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters%opr_parameters%values(row, col, i) = parameters&
+&               %control%x(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of distributed_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
+&   mesh, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters_d%opr_initial_states%values(row, col, i) = &
+&               parameters_d%control%x(j)
+              parameters%opr_initial_states%values(row, col, i) = &
+&               parameters%control%x(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+
+!  Differentiation of distributed_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
+&   mesh, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+    INTEGER :: branch
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .EQ. 0) THEN
+              CALL PUSHCONTROL1B(0)
+            ELSE
+              CALL PUSHINTEGER4(j)
+              j = j + 1
+              CALL PUSHCONTROL1B(1)
+            END IF
+          END DO
+        END DO
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nos,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO col=mesh%ncol,1,-1
+          DO row=mesh%nrow,1,-1
+            CALL POPCONTROL1B(branch)
+            IF (branch .NE. 0) THEN
+              parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&               parameters_b%opr_initial_states%values(row, col, i)
+              parameters_b%opr_initial_states%values(row, col, i) = &
+&               0.0_4
+              CALL POPINTEGER4(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+
+  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
+&   , parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, row, col
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        DO col=1,mesh%ncol
+          DO row=1,mesh%nrow
+            IF (mesh%active_cell(row, col) .NE. 0) THEN
+              j = j + 1
+              parameters%opr_initial_states%values(row, col, i) = &
+&               parameters%control%x(j)
+            END IF
+          END DO
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS
+
+!  Differentiation of multi_linear_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Op
+!enMP context):
+!   variations   of useful results: *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   input_data, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
+&                          opr_parameters%values(:, :, i), parameters_d%&
+&                          opr_parameters%values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of multi_linear_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Op
+!enMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   input_data, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
+    INTEGER :: branch
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
+&         THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
+&                     SIZE(parameters%opr_parameters%values, 1)*SIZE(&
+&                     parameters%opr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+&                        values(:, :, i))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nop,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL POPREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
+&                    SIZE(parameters%opr_parameters%values, 1)*SIZE(&
+&                    parameters%opr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
+&                          opr_parameters%values(:, :, i), parameters_b%&
+&                          opr_parameters%values(:, :, i))
+        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc*wa2d_b)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+&                        values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of multi_linear_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
+!E OpenMP context):
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
+&   mesh, input_data, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
+&                          opr_initial_states%values(:, :, i), &
+&                          parameters_d%opr_initial_states%values(:, :, &
+&                          i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+
+!  Differentiation of multi_linear_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
+!E OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
+&   mesh, input_data, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
+    INTEGER :: branch
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
+&             0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
+&                        %values(:, :, i))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nos,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
+&                          opr_initial_states%values(:, :, i), &
+&                          parameters_b%opr_initial_states%values(:, :, &
+&                          i))
+        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc*wa2d_b)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+
+  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
+&   , input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 1
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            wa2d = wa2d + parameters%control%x(j)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_initial_states(i)
+        u = options%optimize%u_opr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
+&                        %values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS
+
+!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
+!E OpenMP context):
+!   variations   of useful results: *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, &
+&   mesh, input_data, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            temp = norm_desc**parameters%control%x(j)
+            WHERE (norm_desc .LE. 0.0) 
+              norm_desc_d = 0.0_4
+            ELSEWHERE
+              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
+&               )
+            END WHERE
+            norm_desc = temp
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
+&             parameters%control%x(j-1)*norm_desc_d
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
+&                          opr_parameters%values(:, :, i), parameters_d%&
+&                          opr_parameters%values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
+!E OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, &
+&   mesh, input_data, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
+    INTEGER :: branch
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
+&         THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 2
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
+&                     SIZE(parameters%opr_parameters%values, 1)*SIZE(&
+&                     parameters%opr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+&                        values(:, :, i))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nop,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL POPREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
+&                    SIZE(parameters%opr_parameters%values, 1)*SIZE(&
+&                    parameters%opr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
+&                          opr_parameters%values(:, :, i), parameters_b%&
+&                          opr_parameters%values(:, :, i))
+        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc_b = 0.0_4
+            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
+&             SUM(norm_desc*wa2d_b)
+            norm_desc_b = parameters%control%x(j-1)*wa2d_b
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
+&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh&
+&   , input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+! Opr parameters is first control kind
+    j = 0
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+&         THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+&                        values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface no
+!ISIZE OpenMP context):
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup&
+&   , mesh, input_data, parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        wa2d_d = parameters_d%control%x(j)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            temp = norm_desc**parameters%control%x(j)
+            WHERE (norm_desc .LE. 0.0) 
+              norm_desc_d = 0.0_4
+            ELSEWHERE
+              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
+&               )
+            END WHERE
+            norm_desc = temp
+            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
+&             parameters%control%x(j-1)*norm_desc_d
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
+&                          opr_initial_states%values(:, :, i), &
+&                          parameters_d%opr_initial_states%values(:, :, &
+&                          i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+
+!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface no
+!ISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup&
+&   , mesh, input_data, parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
+    INTEGER :: branch
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
+&             0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 2
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
+&                        %values(:, :, i))
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nos,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
+&                          opr_initial_states%values(:, :, i), &
+&                          parameters_b%opr_initial_states%values(:, :, &
+&                          i))
+        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
+        DO k=setup%nd,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            norm_desc_b = 0.0_4
+            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
+&             SUM(norm_desc*wa2d_b)
+            norm_desc_b = parameters%control%x(j-1)*wa2d_b
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
+&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
+            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
+        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
+&         wa2d_b)
+        CALL POPINTEGER4(j)
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+
+  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+&   mesh, input_data, parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    REAL(sp) :: l, u
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
+! Opr initial states is second control kind
+    j = parameters%control%nbk(1)
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        j = j + 1
+        wa2d = parameters%control%x(j)
+        DO k=1,setup%nd
+          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
+&             0) THEN
+            j = j + 2
+            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
+&             input_data%physio_data%l_descriptor(k))/(input_data%&
+&             physio_data%u_descriptor(k)-input_data%physio_data%&
+&             l_descriptor(k))
+            norm_desc = norm_desc**parameters%control%x(j)
+            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
+          END IF
+        END DO
+        l = options%optimize%l_opr_parameters(i)
+        u = options%optimize%u_opr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
+&                        %values(:, :, i))
+      END IF
+    END DO
+  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS
+
+!  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP cont
+!ext):
+!   variations   of useful results: *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
+  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+! Serr mu parameters is third control kind
+    j = SUM(parameters%control%nbk(1:2))
+    parameters_d%serr_mu_parameters%values = 0.0_4
+    DO i=1,setup%nsep_mu
+      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters_d%serr_mu_parameters%values(k, i) = parameters_d%&
+&             control%x(j)
+            parameters%serr_mu_parameters%values(k, i) = parameters%&
+&             control%x(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of serr_mu_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP cont
+!ext):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
+  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+    INTEGER :: branch
+! Serr mu parameters is third control kind
+    j = SUM(parameters%control%nbk(1:2))
+    DO i=1,setup%nsep_mu
+      IF (options%optimize%serr_mu_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 1
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nsep_mu,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO k=mesh%ng,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&             parameters_b%serr_mu_parameters%values(k, i)
+            parameters_b%serr_mu_parameters%values(k, i) = 0.0_4
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters&
+&   , options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+! Serr mu parameters is third control kind
+    j = SUM(parameters%control%nbk(1:2))
+    DO i=1,setup%nsep_mu
+      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters%serr_mu_parameters%values(k, i) = parameters%&
+&             control%x(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of serr_sigma_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   variations   of useful results: *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
+  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&   parameters, parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+! Serr mu parameters is fourth control kind
+    j = SUM(parameters%control%nbk(1:3))
+    parameters_d%serr_sigma_parameters%values = 0.0_4
+    DO i=1,setup%nsep_sigma
+      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters_d%serr_sigma_parameters%values(k, i) = &
+&             parameters_d%control%x(j)
+            parameters%serr_sigma_parameters%values(k, i) = parameters%&
+&             control%x(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D
+
+!  Differentiation of serr_sigma_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
+  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&   parameters, parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+    INTEGER :: branch
+! Serr mu parameters is fourth control kind
+    j = SUM(parameters%control%nbk(1:3))
+    DO i=1,setup%nsep_sigma
+      IF (options%optimize%serr_sigma_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(j)
+            j = j + 1
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nsep_sigma,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        DO k=mesh%ng,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&             parameters_b%serr_sigma_parameters%values(k, i)
+            parameters_b%serr_sigma_parameters%values(k, i) = 0.0_4
+            CALL POPINTEGER4(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B
+
+  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: i, j, k
+    INTRINSIC SUM
+! Serr mu parameters is fourth control kind
+    j = SUM(parameters%control%nbk(1:3))
+    DO i=1,setup%nsep_sigma
+      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
+        DO k=1,mesh%ng
+          IF (options%cost%gauge(k) .NE. 0) THEN
+            j = j + 1
+            parameters%serr_sigma_parameters%values(k, i) = parameters%&
+&             control%x(j)
+          END IF
+        END DO
+      END IF
+    END DO
+  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS
+
+!  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!                *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  SUBROUTINE FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
+&   parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%mapping) 
+    CASE ('uniform') 
+      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                             parameters, parameters_d, &
+&                                             options)
+      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+&                                                 parameters, &
+&                                                 parameters_d, options)
+    CASE ('distributed') 
+      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                                 parameters, &
+&                                                 parameters_d, options)
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
+&                                                     , parameters, &
+&                                                     parameters_d, &
+&                                                     options)
+    CASE ('multi-linear') 
+      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                                  input_data, &
+&                                                  parameters, &
+&                                                  parameters_d, options&
+&                                                 )
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
+&                                                      , input_data, &
+&                                                      parameters, &
+&                                                      parameters_d, &
+&                                                      options)
+    CASE ('multi-polynomial') 
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh&
+&                                                      , input_data, &
+&                                                      parameters, &
+&                                                      parameters_d, &
+&                                                      options)
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
+&                                                          mesh, &
+&                                                          input_data, &
+&                                                          parameters, &
+&                                                          parameters_d&
+&                                                          , options)
+    END SELECT
+! Directly working with hyper parameters
+    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters, &
+&                                       parameters_d, options)
+    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters&
+&                                          , parameters_d, options)
+  END SUBROUTINE FILL_PARAMETERS_D
+
+!  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!                *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  SUBROUTINE FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
+&   parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTEGER :: branch
+    SELECT CASE  (options%optimize%mapping) 
+    CASE ('uniform') 
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                           parameters, options)
+      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                               parameters, options)
+      CALL PUSHCONTROL3B(1)
+    CASE ('distributed') 
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                               parameters, options)
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                   parameters, options)
+      CALL PUSHCONTROL3B(2)
+    CASE ('multi-linear') 
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                input_data, parameters&
+&                                                , options)
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, options&
+&                                                   )
+      CALL PUSHCONTROL3B(3)
+    CASE ('multi-polynomial') 
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, options&
+&                                                   )
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+&                                                        mesh, &
+&                                                        input_data, &
+&                                                        parameters, &
+&                                                        options)
+      CALL PUSHCONTROL3B(4)
+    CASE DEFAULT
+      CALL PUSHCONTROL3B(0)
+    END SELECT
+! Directly working with hyper parameters
+    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
+&                                     options)
+    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
+&                                        options)
+    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters&
+&                                          , parameters_b, options)
+    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters, &
+&                                       parameters_b, options)
+    CALL POPCONTROL3B(branch)
+    IF (branch .LT. 2) THEN
+      IF (branch .NE. 0) THEN
+        CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
+&                                                   parameters, &
+&                                                   parameters_b, &
+&                                                   options)
+        CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                    parameters%opr_parameters%values, 1)*SIZE(&
+&                    parameters%opr_parameters%values, 2)*SIZE(&
+&                    parameters%opr_parameters%values, 3))
+        CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                               parameters, parameters_b&
+&                                               , options)
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
+&                                                     , parameters, &
+&                                                     parameters_b, &
+&                                                     options)
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                                 parameters, &
+&                                                 parameters_b, options)
+    ELSE IF (branch .EQ. 3) THEN
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
+&                                                      , input_data, &
+&                                                      parameters, &
+&                                                      parameters_b, &
+&                                                      options)
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                                  input_data, &
+&                                                  parameters, &
+&                                                  parameters_b, options&
+&                                                 )
+    ELSE
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
+&                                                          mesh, &
+&                                                          input_data, &
+&                                                          parameters, &
+&                                                          parameters_b&
+&                                                          , options)
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh&
+&                                                      , input_data, &
+&                                                      parameters, &
+&                                                      parameters_b, &
+&                                                      options)
+    END IF
+  END SUBROUTINE FILL_PARAMETERS_B
+
+  SUBROUTINE FILL_PARAMETERS(setup, mesh, input_data, parameters, &
+&   options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    SELECT CASE  (options%optimize%mapping) 
+    CASE ('uniform') 
+      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                           parameters, options)
+      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                               parameters, options)
+    CASE ('distributed') 
+      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                               parameters, options)
+      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                   parameters, options)
+    CASE ('multi-linear') 
+      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                input_data, parameters&
+&                                                , options)
+      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, options&
+&                                                   )
+    CASE ('multi-polynomial') 
+      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                    input_data, &
+&                                                    parameters, options&
+&                                                   )
+      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+&                                                        mesh, &
+&                                                        input_data, &
+&                                                        parameters, &
+&                                                        options)
+    END SELECT
+! Directly working with hyper parameters
+    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
+&                                     options)
+    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
+&                                        options)
+  END SUBROUTINE FILL_PARAMETERS
+
+  SUBROUTINE PARAMETERS_TO_CONTROL(setup, mesh, input_data, parameters, &
+&   options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTRINSIC SIZE
+    INTEGER, DIMENSION(SIZE(parameters%control%nbk)) :: nbk
+    CALL GET_CONTROL_SIZES(setup, mesh, options, nbk)
+    CALL CONTROLDT_INITIALISE(parameters%control, nbk)
+    CALL FILL_CONTROL(setup, mesh, input_data, parameters, options)
+    CALL CONTROL_TFM(parameters, options)
+  END SUBROUTINE PARAMETERS_TO_CONTROL
+
+!  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!                *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  SUBROUTINE CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters&
+&   , parameters_d, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTRINSIC ALLOCATED
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      parameters_d%serr_mu_parameters%values = 0.0_4
+      parameters_d%serr_sigma_parameters%values = 0.0_4
+    ELSE
+      CALL INV_CONTROL_TFM_D(parameters, parameters_d, options)
+      CALL FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
+&                      parameters_d, options)
+    END IF
+  END SUBROUTINE CONTROL_TO_PARAMETERS_D
+
+!  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!                *(parameters.serr_sigma_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  SUBROUTINE CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters&
+&   , parameters_b, options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTRINSIC ALLOCATED
+    IF (ALLOCATED(parameters%control%x)) THEN
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL INV_CONTROL_TFM(parameters, options)
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
+&                      parameters_b, options)
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
+      CALL INV_CONTROL_TFM_B(parameters, parameters_b, options)
+    END IF
+  END SUBROUTINE CONTROL_TO_PARAMETERS_B
+
+  SUBROUTINE CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
+&   options)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    INTRINSIC ALLOCATED
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      RETURN
+    ELSE
+      CALL INV_CONTROL_TFM(parameters, options)
+      CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
+    END IF
+  END SUBROUTINE CONTROL_TO_PARAMETERS
+
+END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
+
+!%      (MW) Module Differentiated.
+MODULE MD_REGULARIZATION_DIFF
+!% only: sp
+  USE MD_CONSTANT
+!% only: SetupDT
+  USE MWD_SETUP
+!% only: MeshDT
+  USE MWD_MESH
+!% only: Input_DataDT
+  USE MWD_INPUT_DATA
+!% only: ParametersDT
+  USE MWD_PARAMETERS_DIFF
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
+!% only: control_tfm, control_to_parameters
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+  IMPLICIT NONE
+
+CONTAINS
+!  Differentiation of prior_regularization in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  FUNCTION PRIOR_REGULARIZATION_D(parameters, parameters_d, res) RESULT &
+& (RES_D)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    REAL(sp), DIMENSION(parameters%control%n) :: dbkg
+    REAL(sp), DIMENSION(parameters%control%n) :: dbkg_d
+    INTRINSIC SUM
+! Tapenade needs to know the size somehow
+    dbkg_d = parameters_d%control%x
+    dbkg = parameters%control%x - parameters%control%x_bkg
+    res_d = SUM(2*dbkg*dbkg_d)
+    res = SUM(dbkg*dbkg)
+  END FUNCTION PRIOR_REGULARIZATION_D
+
+!  Differentiation of prior_regularization in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res *(parameters.control.x)
+!   with respect to varying inputs: *(parameters.control.x)
+!   Plus diff mem management of: parameters.control.x:in
+  SUBROUTINE PRIOR_REGULARIZATION_B(parameters, parameters_b, res_b)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT) :: parameters_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    REAL(sp), DIMENSION(parameters%control%n) :: dbkg
+    REAL(sp), DIMENSION(parameters%control%n) :: dbkg_b
+    INTRINSIC SUM
+! Tapenade needs to know the size somehow
+    dbkg = parameters%control%x - parameters%control%x_bkg
+    dbkg = parameters%control%x - parameters%control%x_bkg
+    dbkg_b = 0.0_4
+    dbkg_b = 2*dbkg*res_b
+    parameters_b%control%x = parameters_b%control%x + dbkg_b
+  END SUBROUTINE PRIOR_REGULARIZATION_B
+
+  FUNCTION PRIOR_REGULARIZATION(parameters) RESULT (RES)
+    IMPLICIT NONE
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    REAL(sp) :: res
+    REAL(sp), DIMENSION(parameters%control%n) :: dbkg
+    INTRINSIC SUM
+! Tapenade needs to know the size somehow
+    dbkg = parameters%control%x - parameters%control%x_bkg
+    res = SUM(dbkg*dbkg)
+  END FUNCTION PRIOR_REGULARIZATION
+
+!  Differentiation of smoothing_regularization_spatial_loop in forward (tangent) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   variations   of useful results: res
+!   with respect to varying inputs: matrix
+  FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix, &
+&   matrix_d, res) RESULT (RES_D)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix_d
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: row, col, m1row, p1row, m1col, p1col
+    INTRINSIC MAX
+    INTRINSIC MIN
+    res = 0._sp
+    res_d = 0.0_4
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .NE. 0) THEN
+          IF (1 .LT. row - 1) THEN
+            m1row = row - 1
+          ELSE
+            m1row = 1
+          END IF
+          IF (mesh%nrow .GT. row + 1) THEN
+            p1row = row + 1
+          ELSE
+            p1row = mesh%nrow
+          END IF
+          IF (1 .LT. col) THEN
+            m1col = col
+          ELSE
+            m1col = 1
+          END IF
+          IF (mesh%ncol .LT. col + 1) THEN
+            p1col = col + 1
+          ELSE
+            p1col = mesh%ncol
+          END IF
+          IF (mesh%active_cell(m1row, col) .EQ. 0) m1row = row
+          IF (mesh%active_cell(p1row, col) .EQ. 0) p1row = row
+          IF (mesh%active_cell(row, m1col) .EQ. 0) m1col = col
+          IF (mesh%active_cell(row, p1col) .EQ. 0) p1col = col
+          res_d = res_d + 2*(matrix(p1row, col)-2._sp*matrix(row, col)+&
+&           matrix(m1row, col))*(matrix_d(p1row, col)-2._sp*matrix_d(row&
+&           , col)+matrix_d(m1row, col)) + 2*(matrix(row, p1col)-2._sp*&
+&           matrix(row, col)+matrix(row, m1col))*(matrix_d(row, p1col)-&
+&           2._sp*matrix_d(row, col)+matrix_d(row, m1col))
+          res = res + (matrix(p1row, col)-2._sp*matrix(row, col)+matrix(&
+&           m1row, col))**2 + (matrix(row, p1col)-2._sp*matrix(row, col)&
+&           +matrix(row, m1col))**2
+        END IF
+      END DO
+    END DO
+  END FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D
+
+!  Differentiation of smoothing_regularization_spatial_loop in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   gradient     of useful results: res
+!   with respect to varying inputs: matrix
+  SUBROUTINE SMOOTHING_REGULARIZATION_SPATIAL_LOOP_B(mesh, matrix, &
+&   matrix_b, res_b)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix_b
+    REAL(sp) :: res
+    REAL(sp) :: res_b
+    INTEGER :: row, col, m1row, p1row, m1col, p1col
+    INTRINSIC MAX
+    INTRINSIC MIN
+    REAL(sp) :: temp_b
+    REAL(sp) :: temp_b0
+    INTEGER :: branch
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .EQ. 0) THEN
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          IF (1 .LT. row - 1) THEN
+            CALL PUSHINTEGER4(m1row)
+            m1row = row - 1
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(m1row)
+            m1row = 1
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (mesh%nrow .GT. row + 1) THEN
+            CALL PUSHINTEGER4(p1row)
+            p1row = row + 1
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(p1row)
+            p1row = mesh%nrow
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (1 .LT. col) THEN
+            CALL PUSHINTEGER4(m1col)
+            m1col = col
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(m1col)
+            m1col = 1
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (mesh%ncol .LT. col + 1) THEN
+            CALL PUSHINTEGER4(p1col)
+            p1col = col + 1
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL PUSHINTEGER4(p1col)
+            p1col = mesh%ncol
+            CALL PUSHCONTROL1B(1)
+          END IF
+          IF (mesh%active_cell(m1row, col) .EQ. 0) m1row = row
+          IF (mesh%active_cell(p1row, col) .EQ. 0) p1row = row
+          IF (mesh%active_cell(row, m1col) .EQ. 0) m1col = col
+          IF (mesh%active_cell(row, p1col) .EQ. 0) p1col = col
+          CALL PUSHCONTROL1B(1)
+        END IF
+      END DO
+    END DO
+    matrix_b = 0.0_4
+    DO col=mesh%ncol,1,-1
+      DO row=mesh%nrow,1,-1
+        CALL POPCONTROL1B(branch)
+        IF (branch .NE. 0) THEN
+          temp_b = 2*(matrix(p1row, col)-2._sp*matrix(row, col)+matrix(&
+&           m1row, col))*res_b
+          temp_b0 = 2*(matrix(row, p1col)-2._sp*matrix(row, col)+matrix(&
+&           row, m1col))*res_b
+          matrix_b(row, p1col) = matrix_b(row, p1col) + temp_b0
+          matrix_b(row, col) = matrix_b(row, col) - 2._sp*temp_b0
+          matrix_b(row, m1col) = matrix_b(row, m1col) + temp_b0
+          matrix_b(p1row, col) = matrix_b(p1row, col) + temp_b
+          matrix_b(row, col) = matrix_b(row, col) - 2._sp*temp_b
+          matrix_b(m1row, col) = matrix_b(m1row, col) + temp_b
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPINTEGER4(p1col)
+          ELSE
+            CALL POPINTEGER4(p1col)
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPINTEGER4(m1col)
+          ELSE
+            CALL POPINTEGER4(m1col)
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPINTEGER4(p1row)
+          ELSE
+            CALL POPINTEGER4(p1row)
+          END IF
+          CALL POPCONTROL1B(branch)
+          IF (branch .EQ. 0) THEN
+            CALL POPINTEGER4(m1row)
+          ELSE
+            CALL POPINTEGER4(m1row)
+          END IF
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE SMOOTHING_REGULARIZATION_SPATIAL_LOOP_B
+
+  FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix) RESULT (&
+& RES)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    REAL(sp) :: res
+    INTEGER :: row, col, m1row, p1row, m1col, p1col
+    INTRINSIC MAX
+    INTRINSIC MIN
+    res = 0._sp
+    DO col=1,mesh%ncol
+      DO row=1,mesh%nrow
+        IF (mesh%active_cell(row, col) .NE. 0) THEN
+          IF (1 .LT. row - 1) THEN
+            m1row = row - 1
+          ELSE
+            m1row = 1
+          END IF
+          IF (mesh%nrow .GT. row + 1) THEN
+            p1row = row + 1
+          ELSE
+            p1row = mesh%nrow
+          END IF
+          IF (1 .LT. col) THEN
+            m1col = col
+          ELSE
+            m1col = 1
+          END IF
+          IF (mesh%ncol .LT. col + 1) THEN
+            p1col = col + 1
+          ELSE
+            p1col = mesh%ncol
+          END IF
+          IF (mesh%active_cell(m1row, col) .EQ. 0) m1row = row
+          IF (mesh%active_cell(p1row, col) .EQ. 0) p1row = row
+          IF (mesh%active_cell(row, m1col) .EQ. 0) m1col = col
+          IF (mesh%active_cell(row, p1col) .EQ. 0) p1col = col
+          res = res + (matrix(p1row, col)-2._sp*matrix(row, col)+matrix(&
+&           m1row, col))**2 + (matrix(row, p1col)-2._sp*matrix(row, col)&
+&           +matrix(row, m1col))**2
+        END IF
+      END DO
+    END DO
+  END FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP
+
+!  Differentiation of smoothing_regularization in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: res *(parameters.control.x)
+!                *(parameters.opr_parameters.values) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  FUNCTION SMOOTHING_REGULARIZATION_D(setup, mesh, input_data, &
+&   parameters, parameters_d, options, hard, res) RESULT (RES_D)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    LOGICAL :: hard
+    REAL(sp) :: res
+    REAL(sp) :: res_d
+    INTEGER :: i
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix_d
+    TYPE(PARAMETERSDT) :: parameters_bkg
+    TYPE(PARAMETERSDT) :: parameters_bkg_d
+    REAL(sp) :: result1
+    REAL(sp) :: result1_d
+    res = 0._sp
+! This allows to retrieve a parameters structure with background values
+    parameters_bkg_d = parameters_d
+    parameters_bkg = parameters
+    parameters_bkg_d%control%x = 0.0_4
+    parameters_bkg%control%x = parameters%control%x_bkg
+    CALL CONTROL_TFM_D(parameters_bkg, parameters_bkg_d, options)
+    CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters_bkg&
+&                          , parameters_bkg_d, options)
+    res_d = 0.0_4
+! Loop on opr_parameters
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        IF (hard) THEN
+          matrix_d = parameters_d%opr_parameters%values(:, :, i)
+          matrix = parameters%opr_parameters%values(:, :, i)
+        ELSE
+          matrix_d = parameters_d%opr_parameters%values(:, :, i) - &
+&           parameters_bkg_d%opr_parameters%values(:, :, i)
+          matrix = parameters%opr_parameters%values(:, :, i) - &
+&           parameters_bkg%opr_parameters%values(:, :, i)
+        END IF
+        result1_d = SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix&
+&         , matrix_d, result1)
+        res_d = res_d + result1_d
+        res = res + result1
+      END IF
+    END DO
+! Loop on opr_initial_states
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        IF (hard) THEN
+          matrix_d = parameters_d%opr_initial_states%values(:, :, i)
+          matrix = parameters%opr_initial_states%values(:, :, i)
+        ELSE
+          matrix_d = parameters_d%opr_initial_states%values(:, :, i) - &
+&           parameters_bkg_d%opr_initial_states%values(:, :, i)
+          matrix = parameters%opr_initial_states%values(:, :, i) - &
+&           parameters_bkg%opr_initial_states%values(:, :, i)
+        END IF
+        result1_d = SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix&
+&         , matrix_d, result1)
+        res_d = res_d + result1_d
+        res = res + result1
+      END IF
+    END DO
+  END FUNCTION SMOOTHING_REGULARIZATION_D
+
+!  Differentiation of smoothing_regularization in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: res *(parameters.control.x)
+!                *(parameters.opr_parameters.values) *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in
+  SUBROUTINE SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&   parameters, parameters_b, options, hard, res_b1)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    LOGICAL :: hard
+    REAL(sp) :: res
+    REAL(sp) :: res_b1
+    INTEGER :: i
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix_b
+    TYPE(PARAMETERSDT) :: parameters_bkg
+    TYPE(PARAMETERSDT) :: parameters_bkg_b
+    REAL(sp) :: result1
+    REAL(sp) :: result1_b
+    REAL(sp) :: res0
+    REAL(sp) :: res_b
+    REAL(sp) :: res1
+    REAL(sp) :: res_b0
+    INTEGER :: branch
+! This allows to retrieve a parameters structure with background values
+    parameters_bkg_b = parameters_b
+    parameters_bkg = parameters
+    CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                 control%x, 1))
+    parameters_bkg%control%x = parameters%control%x_bkg
+    CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                 control%x, 1))
+    CALL CONTROL_TFM(parameters_bkg, options)
+    CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                 control%x, 1))
+    CALL PUSHREAL4ARRAY(parameters_bkg%opr_parameters%values, SIZE(&
+&                 parameters_bkg%opr_parameters%values, 1)*SIZE(&
+&                 parameters_bkg%opr_parameters%values, 2)*SIZE(&
+&                 parameters_bkg%opr_parameters%values, 3))
+    CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
+&                        options)
+! Loop on opr_parameters
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        IF (hard) THEN
+          CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          matrix = parameters%opr_parameters%values(:, :, i)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          matrix = parameters%opr_parameters%values(:, :, i) - &
+&           parameters_bkg%opr_parameters%values(:, :, i)
+          CALL PUSHCONTROL1B(1)
+        END IF
+        res0 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+! Loop on opr_initial_states
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+        CALL PUSHCONTROL1B(0)
+      ELSE
+        IF (hard) THEN
+          CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          matrix = parameters%opr_initial_states%values(:, :, i)
+          CALL PUSHCONTROL1B(0)
+        ELSE
+          CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          matrix = parameters%opr_initial_states%values(:, :, i) - &
+&           parameters_bkg%opr_initial_states%values(:, :, i)
+          CALL PUSHCONTROL1B(1)
+        END IF
+        res1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
+        CALL PUSHCONTROL1B(1)
+      END IF
+    END DO
+    DO i=setup%nos,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        result1_b = res_b1
+        matrix_b = 0.0_4
+        res_b0 = result1_b
+        CALL SMOOTHING_REGULARIZATION_SPATIAL_LOOP_B(mesh, matrix, &
+&                                              matrix_b, res_b0)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          parameters_b%opr_initial_states%values(:, :, i) = parameters_b&
+&           %opr_initial_states%values(:, :, i) + matrix_b
+        ELSE
+          CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          parameters_b%opr_initial_states%values(:, :, i) = parameters_b&
+&           %opr_initial_states%values(:, :, i) + matrix_b
+          parameters_bkg_b%opr_initial_states%values(:, :, i) = &
+&           parameters_bkg_b%opr_initial_states%values(:, :, i) - &
+&           matrix_b
+        END IF
+      END IF
+    END DO
+    DO i=setup%nop,1,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .NE. 0) THEN
+        result1_b = res_b1
+        matrix_b = 0.0_4
+        res_b = result1_b
+        CALL SMOOTHING_REGULARIZATION_SPATIAL_LOOP_B(mesh, matrix, &
+&                                              matrix_b, res_b)
+        CALL POPCONTROL1B(branch)
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          parameters_b%opr_parameters%values(:, :, i) = parameters_b%&
+&           opr_parameters%values(:, :, i) + matrix_b
+        ELSE
+          CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
+          parameters_b%opr_parameters%values(:, :, i) = parameters_b%&
+&           opr_parameters%values(:, :, i) + matrix_b
+          parameters_bkg_b%opr_parameters%values(:, :, i) = &
+&           parameters_bkg_b%opr_parameters%values(:, :, i) - matrix_b
+        END IF
+      END IF
+    END DO
+    CALL POPREAL4ARRAY(parameters_bkg%opr_parameters%values, SIZE(&
+&                parameters_bkg%opr_parameters%values, 1)*SIZE(&
+&                parameters_bkg%opr_parameters%values, 2)*SIZE(&
+&                parameters_bkg%opr_parameters%values, 3))
+    CALL POPREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                control%x, 1))
+    parameters_b%serr_mu_parameters%values = 0.0_4
+    parameters_b%serr_sigma_parameters%values = 0.0_4
+    CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters_bkg&
+&                          , parameters_bkg_b, options)
+    CALL POPREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                control%x, 1))
+    CALL CONTROL_TFM_B(parameters_bkg, parameters_bkg_b, options)
+    CALL POPREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
+&                control%x, 1))
+    parameters_bkg_b%control%x = 0.0_4
+  END SUBROUTINE SMOOTHING_REGULARIZATION_B
+
+  FUNCTION SMOOTHING_REGULARIZATION(setup, mesh, input_data, parameters&
+&   , options, hard) RESULT (RES)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    LOGICAL :: hard
+    REAL(sp) :: res
+    INTEGER :: i
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: matrix
+    TYPE(PARAMETERSDT) :: parameters_bkg
+    REAL(sp) :: result1
+    res = 0._sp
+! This allows to retrieve a parameters structure with background values
+    parameters_bkg = parameters
+    parameters_bkg%control%x = parameters%control%x_bkg
+    parameters_bkg%control%l = parameters%control%l_bkg
+    parameters_bkg%control%u = parameters%control%u_bkg
+    CALL CONTROL_TFM(parameters_bkg, options)
+    CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
+&                        options)
+! Loop on opr_parameters
+    DO i=1,setup%nop
+      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+        IF (hard) THEN
+          matrix = parameters%opr_parameters%values(:, :, i)
+        ELSE
+          matrix = parameters%opr_parameters%values(:, :, i) - &
+&           parameters_bkg%opr_parameters%values(:, :, i)
+        END IF
+        result1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
+        res = res + result1
+      END IF
+    END DO
+! Loop on opr_initial_states
+    DO i=1,setup%nos
+      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+        IF (hard) THEN
+          matrix = parameters%opr_initial_states%values(:, :, i)
+        ELSE
+          matrix = parameters%opr_initial_states%values(:, :, i) - &
+&           parameters_bkg%opr_initial_states%values(:, :, i)
+        END IF
+        result1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
+        res = res + result1
+      END IF
+    END DO
+  END FUNCTION SMOOTHING_REGULARIZATION
+
+END MODULE MD_REGULARIZATION_DIFF
+
 !%      (MWD) Module Wrapped and Differentiated.
 !%
 !%      Subroutine
 !%      ----------
 !%
+!%      - discharge_transformation
 !%      - bayesian_compute_cost
-!%      - discharge_tfm
 !%      - classical_compute_jobs
 !%      - classical_compute_cost
 !%      - compute_cost
@@ -5368,6 +8854,8 @@ MODULE MWD_COST_DIFF
   USE MWD_METRICS_DIFF
 !% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
   USE MWD_SIGNATURES_DIFF
+!% only: prior_regularization, smoothing_regularization
+  USE MD_REGULARIZATION_DIFF
 !% only: SetupDT
   USE MWD_SETUP
 !% only: MeshDT
@@ -5385,6 +8873,128 @@ MODULE MWD_COST_DIFF
   IMPLICIT NONE
 
 CONTAINS
+  FUNCTION GET_RANGE_EVENT(mask_event, i_event) RESULT (RES)
+    IMPLICIT NONE
+    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
+    INTEGER, INTENT(IN) :: i_event
+    INTEGER, DIMENSION(2) :: res
+    INTEGER :: i
+    INTRINSIC SIZE
+    res = 0
+    DO i=1,SIZE(mask_event)
+      IF (mask_event(i) .EQ. i_event) THEN
+        res(1) = i
+        GOTO 100
+      END IF
+    END DO
+ 100 DO i=SIZE(mask_event),1,-1
+      IF (mask_event(i) .EQ. i_event) THEN
+        res(2) = i
+        GOTO 110
+      END IF
+    END DO
+ 110 CONTINUE
+  END FUNCTION GET_RANGE_EVENT
+
+!  Differentiation of discharge_tranformation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: qs
+!   with respect to varying inputs: qs
+  SUBROUTINE DISCHARGE_TRANFORMATION_D(tfm, qo, qs, qs_d)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_d
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    REAL(sp), DIMENSION(SIZE(qs, 1)) :: temp
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
+      WHERE (qs .GE. 0._sp) 
+        temp = SQRT(e + qs)
+        WHERE (e + qs .EQ. 0.0) 
+          qs_d = 0.0_4
+        ELSEWHERE
+          qs_d = qs_d/(2.0*temp)
+        END WHERE
+        qs = temp
+      END WHERE
+    CASE ('inv') 
+      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
+      WHERE (qs .GE. 0._sp) 
+        qs_d = -(qs_d/(e+qs)**2)
+        qs = 1._sp/(qs+e)
+      END WHERE
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION_D
+
+!  Differentiation of discharge_tranformation in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: qs
+!   with respect to varying inputs: qs
+  SUBROUTINE DISCHARGE_TRANFORMATION_B(tfm, qo, qs, qs_b)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_b
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qs .GE. 0._sp) 
+        WHERE (e + qs .EQ. 0.0) 
+          qs_b = 0.0_4
+        ELSEWHERE
+          qs_b = qs_b/(2.0*SQRT(e+qs))
+        END WHERE
+      END WHERE
+    CASE ('inv') 
+      WHERE (qs .GE. 0._sp) qs_b = -(qs_b/(e+qs)**2)
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION_B
+
+  SUBROUTINE DISCHARGE_TRANFORMATION(tfm, qo, qs)
+    IMPLICIT NONE
+    CHARACTER(len=lchar), INTENT(IN) :: tfm
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
+    INTEGER :: i
+    REAL(sp) :: mean_qo, e
+    INTRINSIC SIZE
+    LOGICAL, DIMENSION(SIZE(qo)) :: mask
+    INTRINSIC SUM
+    INTRINSIC COUNT
+    INTRINSIC SQRT
+    mask = qo .GE. 0._sp
+    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
+    e = 1e-2_sp*mean_qo
+!% Should be reach by "keep" only. Do nothing
+    SELECT CASE  (tfm) 
+    CASE ('sqrt') 
+      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
+      WHERE (qs .GE. 0._sp) qs = SQRT(qs + e)
+    CASE ('inv') 
+      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
+      WHERE (qs .GE. 0._sp) qs = 1._sp/(qs+e)
+    END SELECT
+  END SUBROUTINE DISCHARGE_TRANFORMATION
+
 !  Differentiation of bayesian_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
@@ -5676,128 +9286,6 @@ CONTAINS
 ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
     output%cost = -(1._sp*log_post/SIZE(obs))
   END SUBROUTINE BAYESIAN_COMPUTE_COST
-
-  FUNCTION GET_RANGE_EVENT(mask_event, i_event) RESULT (RES)
-    IMPLICIT NONE
-    INTEGER, DIMENSION(:), INTENT(IN) :: mask_event
-    INTEGER, INTENT(IN) :: i_event
-    INTEGER, DIMENSION(2) :: res
-    INTEGER :: i
-    INTRINSIC SIZE
-    res = 0
-    DO i=1,SIZE(mask_event)
-      IF (mask_event(i) .EQ. i_event) THEN
-        res(1) = i
-        GOTO 100
-      END IF
-    END DO
- 100 DO i=SIZE(mask_event),1,-1
-      IF (mask_event(i) .EQ. i_event) THEN
-        res(2) = i
-        GOTO 110
-      END IF
-    END DO
- 110 CONTINUE
-  END FUNCTION GET_RANGE_EVENT
-
-!  Differentiation of discharge_tranformation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: qs
-!   with respect to varying inputs: qs
-  SUBROUTINE DISCHARGE_TRANFORMATION_D(tfm, qo, qs, qs_d)
-    IMPLICIT NONE
-    CHARACTER(len=lchar), INTENT(IN) :: tfm
-    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
-    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_d
-    INTEGER :: i
-    REAL(sp) :: mean_qo, e
-    INTRINSIC SIZE
-    LOGICAL, DIMENSION(SIZE(qo)) :: mask
-    INTRINSIC SUM
-    INTRINSIC COUNT
-    INTRINSIC SQRT
-    REAL(sp), DIMENSION(SIZE(qs, 1)) :: temp
-    mask = qo .GE. 0._sp
-    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
-    e = 1e-2_sp*mean_qo
-!% Should be reach by "keep" only. Do nothing
-    SELECT CASE  (tfm) 
-    CASE ('sqrt') 
-      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
-      WHERE (qs .GE. 0._sp) 
-        temp = SQRT(e + qs)
-        WHERE (e + qs .EQ. 0.0) 
-          qs_d = 0.0_4
-        ELSEWHERE
-          qs_d = qs_d/(2.0*temp)
-        END WHERE
-        qs = temp
-      END WHERE
-    CASE ('inv') 
-      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
-      WHERE (qs .GE. 0._sp) 
-        qs_d = -(qs_d/(e+qs)**2)
-        qs = 1._sp/(qs+e)
-      END WHERE
-    END SELECT
-  END SUBROUTINE DISCHARGE_TRANFORMATION_D
-
-!  Differentiation of discharge_tranformation in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: qs
-!   with respect to varying inputs: qs
-  SUBROUTINE DISCHARGE_TRANFORMATION_B(tfm, qo, qs, qs_b)
-    IMPLICIT NONE
-    CHARACTER(len=lchar), INTENT(IN) :: tfm
-    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
-    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_b
-    INTEGER :: i
-    REAL(sp) :: mean_qo, e
-    INTRINSIC SIZE
-    LOGICAL, DIMENSION(SIZE(qo)) :: mask
-    INTRINSIC SUM
-    INTRINSIC COUNT
-    INTRINSIC SQRT
-    mask = qo .GE. 0._sp
-    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
-    e = 1e-2_sp*mean_qo
-!% Should be reach by "keep" only. Do nothing
-    SELECT CASE  (tfm) 
-    CASE ('sqrt') 
-      WHERE (qs .GE. 0._sp) 
-        WHERE (e + qs .EQ. 0.0) 
-          qs_b = 0.0_4
-        ELSEWHERE
-          qs_b = qs_b/(2.0*SQRT(e+qs))
-        END WHERE
-      END WHERE
-    CASE ('inv') 
-      WHERE (qs .GE. 0._sp) qs_b = -(qs_b/(e+qs)**2)
-    END SELECT
-  END SUBROUTINE DISCHARGE_TRANFORMATION_B
-
-  SUBROUTINE DISCHARGE_TRANFORMATION(tfm, qo, qs)
-    IMPLICIT NONE
-    CHARACTER(len=lchar), INTENT(IN) :: tfm
-    REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
-    INTEGER :: i
-    REAL(sp) :: mean_qo, e
-    INTRINSIC SIZE
-    LOGICAL, DIMENSION(SIZE(qo)) :: mask
-    INTRINSIC SUM
-    INTRINSIC COUNT
-    INTRINSIC SQRT
-    mask = qo .GE. 0._sp
-    mean_qo = SUM(qo, mask=mask)/COUNT(mask)
-    e = 1e-2_sp*mean_qo
-!% Should be reach by "keep" only. Do nothing
-    SELECT CASE  (tfm) 
-    CASE ('sqrt') 
-      WHERE (qo .GE. 0._sp) qo = SQRT(qo + e)
-      WHERE (qs .GE. 0._sp) qs = SQRT(qs + e)
-    CASE ('inv') 
-      WHERE (qo .GE. 0._sp) qo = 1._sp/(qo+e)
-      WHERE (qs .GE. 0._sp) qs = 1._sp/(qs+e)
-    END SELECT
-  END SUBROUTINE DISCHARGE_TRANFORMATION
 
 !  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: jobs
@@ -7276,52 +10764,292 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JOBS
 
-!  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: output.cost
-!   with respect to varying inputs: *(output.response.q)
-!   Plus diff mem management of: output.response.q:in
-  SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
-&   parameters, output, output_d, options, returns)
+!  Differentiation of classical_compute_jreg in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: jreg
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
+  SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
+&   parameters, parameters_d, options, options_d, returns, jreg, jreg_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    REAL(sp), INTENT(INOUT) :: jreg
+    REAL(sp), INTENT(INOUT) :: jreg_d
+    INTEGER :: i
+    REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
+    REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_d
+    INTRINSIC SUM
+    jreg_cmpt_values = 0._sp
+    jreg_cmpt_values_d = 0.0_4
+    DO i=1,options%cost%njrc
+      SELECT CASE  (options%cost%jreg_cmpt(i)) 
+      CASE ('prior') 
+! Can be applied to any control
+        jreg_cmpt_values_d(i) = PRIOR_REGULARIZATION_D(parameters, &
+&         parameters_d, jreg_cmpt_values(i))
+      CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
+&         input_data, parameters, parameters_d, options, .false., &
+&         jreg_cmpt_values(i))
+      CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
+&         input_data, parameters, parameters_d, options, .true., &
+&         jreg_cmpt_values(i))
+      END SELECT
+    END DO
+    jreg_d = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values_d)
+    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+  END SUBROUTINE CLASSICAL_COMPUTE_JREG_D
+
+!  Differentiation of classical_compute_jreg in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!   gradient     of useful results: jreg
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
+  SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
+&   parameters, parameters_b, options, options_b, returns, jreg, jreg_b)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT) :: parameters_b
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF) :: options_b
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    REAL(sp), INTENT(INOUT) :: jreg
+    REAL(sp), INTENT(INOUT) :: jreg_b
+    INTEGER :: i
+    REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
+    REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_b
+    INTRINSIC SUM
+    INTEGER :: branch
+    jreg_cmpt_values = 0._sp
+    DO i=1,options%cost%njrc
+      SELECT CASE  (options%cost%jreg_cmpt(i)) 
+      CASE ('prior') 
+! Can be applied to any control
+        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+        CALL PUSHCONTROL2B(2)
+      CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                     control%x, 1))
+        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                     parameters%opr_parameters%values, 1)*SIZE(&
+&                     parameters%opr_parameters%values, 2)*SIZE(&
+&                     parameters%opr_parameters%values, 3))
+        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                     parameters%opr_initial_states%values, 1)*SIZE(&
+&                     parameters%opr_initial_states%values, 2)*SIZE(&
+&                     parameters%opr_initial_states%values, 3))
+        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&         input_data, parameters, options, .false.)
+        CALL PUSHCONTROL2B(1)
+      CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                     control%x, 1))
+        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                     parameters%opr_parameters%values, 1)*SIZE(&
+&                     parameters%opr_parameters%values, 2)*SIZE(&
+&                     parameters%opr_parameters%values, 3))
+        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                     parameters%opr_initial_states%values, 1)*SIZE(&
+&                     parameters%opr_initial_states%values, 2)*SIZE(&
+&                     parameters%opr_initial_states%values, 3))
+        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&         input_data, parameters, options, .true.)
+        CALL PUSHCONTROL2B(0)
+      CASE DEFAULT
+        CALL PUSHCONTROL2B(3)
+      END SELECT
+    END DO
+    jreg_cmpt_values_b = 0.0_4
+    jreg_cmpt_values_b = options%cost%wjreg_cmpt*jreg_b
+    parameters_b%control%x = 0.0_4
+    parameters_b%opr_parameters%values = 0.0_4
+    parameters_b%opr_initial_states%values = 0.0_4
+    DO i=options%cost%njrc,1,-1
+      CALL POPCONTROL2B(branch)
+      IF (branch .LT. 2) THEN
+        IF (branch .EQ. 0) THEN
+          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                      parameters%opr_initial_states%values, 1)*SIZE(&
+&                      parameters%opr_initial_states%values, 2)*SIZE(&
+&                      parameters%opr_initial_states%values, 3))
+          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                      parameters%opr_parameters%values, 1)*SIZE(&
+&                      parameters%opr_parameters%values, 2)*SIZE(&
+&                      parameters%opr_parameters%values, 3))
+          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                      control%x, 1))
+          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                   parameters, parameters_b, options, &
+&                                   .true., jreg_cmpt_values_b(i))
+          jreg_cmpt_values_b(i) = 0.0_4
+        ELSE
+          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                      parameters%opr_initial_states%values, 1)*SIZE(&
+&                      parameters%opr_initial_states%values, 2)*SIZE(&
+&                      parameters%opr_initial_states%values, 3))
+          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                      parameters%opr_parameters%values, 1)*SIZE(&
+&                      parameters%opr_parameters%values, 2)*SIZE(&
+&                      parameters%opr_parameters%values, 3))
+          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                      control%x, 1))
+          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                   parameters, parameters_b, options, &
+&                                   .false., jreg_cmpt_values_b(i))
+          jreg_cmpt_values_b(i) = 0.0_4
+        END IF
+      ELSE IF (branch .EQ. 2) THEN
+        CALL PRIOR_REGULARIZATION_B(parameters, parameters_b, &
+&                             jreg_cmpt_values_b(i))
+        jreg_cmpt_values_b(i) = 0.0_4
+      END IF
+    END DO
+  END SUBROUTINE CLASSICAL_COMPUTE_JREG_B
+
+  SUBROUTINE CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters&
+&   , options, returns, jreg)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(IN) :: returns
+    REAL(sp), INTENT(INOUT) :: jreg
+    INTEGER :: i
+    REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
+    INTRINSIC SUM
+    jreg_cmpt_values = 0._sp
+    DO i=1,options%cost%njrc
+      SELECT CASE  (options%cost%jreg_cmpt(i)) 
+      CASE ('prior') 
+! Can be applied to any control
+        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+      CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&         input_data, parameters, options, .false.)
+      CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&         input_data, parameters, options, .true.)
+      END SELECT
+    END DO
+    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+  END SUBROUTINE CLASSICAL_COMPUTE_JREG
+
+!  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!   variations   of useful results: output.cost
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
+  SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
+&   parameters, parameters_d, output, output_d, options, options_d, &
+&   returns)
+    IMPLICIT NONE
+    TYPE(SETUPDT), INTENT(IN) :: setup
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
-    REAL(sp) :: jobs_d
+    REAL(sp) :: jobs_d, jreg_d
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &                           output_d, options, returns, jobs, jobs_d)
-! TODO FC: Not Implemented yet
-! call classical_compute_jreg(setup, mesh, parameters, options, returns, jreg)
-    output_d%cost = jobs_d
+    CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
+&                           parameters_d, options, options_d, returns, &
+&                           jreg, jreg_d)
+    output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
 !  Differentiation of classical_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(output.response.q)
-!   Plus diff mem management of: output.response.q:in
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, &
-&   parameters, output, output_b, options, returns)
+&   parameters, parameters_b, output, output_b, options, options_b, &
+&   returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
+    TYPE(PARAMETERSDT) :: parameters_b
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF) :: options_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
-    REAL(sp) :: jobs_b
+    REAL(sp) :: jobs_b, jreg_b
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-! TODO FC: Not Implemented yet
-! call classical_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+    CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                 , 1))
+    CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                 parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                 opr_parameters%values, 2)*SIZE(parameters%&
+&                 opr_parameters%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                 parameters%opr_initial_states%values, 1)*SIZE(&
+&                 parameters%opr_initial_states%values, 2)*SIZE(&
+&                 parameters%opr_initial_states%values, 3))
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     jobs_b = output_b%cost
+    jreg_b = options%cost%wjreg*output_b%cost
+    CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                parameters%opr_initial_states%values, 1)*SIZE(&
+&                parameters%opr_initial_states%values, 2)*SIZE(&
+&                parameters%opr_initial_states%values, 3))
+    CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters&
+&                %opr_parameters%values, 1)*SIZE(parameters%&
+&                opr_parameters%values, 2)*SIZE(parameters%&
+&                opr_parameters%values, 3))
+    CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
+&                1))
+    CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
+&                           parameters_b, options, options_b, returns, &
+&                           jreg, jreg_b)
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &                           output_b, options, returns, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
@@ -7337,23 +11065,26 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
-    jobs = 0._sp
-    jreg = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-! TODO FC: Not Implemented yet
-! call classical_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
-&   parameters_d, output, output_d, options, returns)
+&   parameters_d, output, output_d, options, options_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7363,6 +11094,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     IF (options%cost%bayesian) THEN
       CALL BAYESIAN_COMPUTE_COST_D(setup, mesh, input_data, parameters, &
@@ -7370,18 +11102,24 @@ CONTAINS
 &                            returns)
     ELSE
       CALL CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, parameters&
-&                             , output, output_d, options, returns)
+&                             , parameters_d, output, output_d, options&
+&                             , options_d, returns)
     END IF
   END SUBROUTINE COMPUTE_COST_D
 
 !  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
+!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
+!                parameters.control.u:in parameters.control.l_bkg:in
+!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
+!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
-&   parameters_b, output, output_b, options, returns)
+&   parameters_b, output, output_b, options, options_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -7391,6 +11129,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(OPTIONSDT_DIFF) :: options_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     IF (options%cost%bayesian) THEN
       CALL BAYESIAN_COMPUTE_COST(setup, mesh, input_data, parameters, &
@@ -7398,12 +11137,34 @@ CONTAINS
       CALL BAYESIAN_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &                            parameters_b, output, output_b, options, &
 &                            returns)
+      parameters_b%opr_parameters%values = 0.0_4
+      parameters_b%opr_initial_states%values = 0.0_4
     ELSE
+      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
+&                   x, 1))
+      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
+&                   %opr_parameters%values, 2)*SIZE(parameters%&
+&                   opr_parameters%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                   parameters%opr_initial_states%values, 1)*SIZE(&
+&                   parameters%opr_initial_states%values, 2)*SIZE(&
+&                   parameters%opr_initial_states%values, 3))
       CALL CLASSICAL_COMPUTE_COST(setup, mesh, input_data, parameters, &
 &                           output, options, returns)
+      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                  parameters%opr_initial_states%values, 1)*SIZE(&
+&                  parameters%opr_initial_states%values, 2)*SIZE(&
+&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                  opr_parameters%values, 2)*SIZE(parameters%&
+&                  opr_parameters%values, 3))
+      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                  , 1))
       CALL CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, parameters&
-&                             , output, output_b, options, returns)
-      parameters_b%control%x = 0.0_4
+&                             , parameters_b, output, output_b, options&
+&                             , options_b, returns)
       parameters_b%serr_mu_parameters%values = 0.0_4
       parameters_b%serr_sigma_parameters%values = 0.0_4
     END IF
@@ -7429,2687 +11190,6 @@ CONTAINS
   END SUBROUTINE COMPUTE_COST
 
 END MODULE MWD_COST_DIFF
-
-!%      (MWD) Module Wrapped and Differentiated
-!%
-!%      Subroutine
-!%      ----------
-!%
-!%      - sigmoide
-!%      - inv_sigmoide
-!%      - scaled_sigmoide
-!%      - inv_scaled_sigmoid
-!%      - sigmoide2d
-!%      - scaled_sigmoide2d
-!%      - sbs_control_tfm
-!%      - sbs_inv_control_tfm
-!%      - normalize_control_tfm
-!%      - normalize_inv_control_tfm
-!%      - control_tfm
-!%      - inv_control_tfm
-!%      - uniform_opr_parameters_get_control_size
-!%      - uniform_opr_initial_states_get_control_size
-!%      - distributed_opr_parameters_get_control_size
-!%      - distributed_opr_initial_states_get_control_size
-!%      - multi_linear_opr_parameters_get_control_size
-!%      - multi_linear_opr_initial_states_get_control_size
-!%      - multi_polynomial_opr_parameters_get_control_size
-!%      - multi_polynomial_opr_initial_states_get_control_size
-!%      - serr_mu_parameters_get_control_size
-!%      - get_control_sizes
-!%      - uniform_opr_parameters_fill_control
-!%      - uniform_opr_initial_states_fill_control
-!%      - distributed_opr_parameters_fill_control
-!%      - distributed_opr_initial_states_fill_control
-!%      - multi_linear_opr_parameters_fill_control
-!%      - multi_linear_opr_initial_states_fill_control
-!%      - multi_polynomial_opr_parameters_fill_control
-!%      - multi_polynomial_opr_initial_states_fill_control
-!%      - serr_mu_parameters_fill_control
-!%      - serr_sigma_parameters_fill_control
-!%      - fill_control
-!%      - uniform_opr_parameters_fill_parameters
-!%      - uniform_opr_initial_states_fill_parameters
-!%      - distributed_opr_parameters_fill_parameters
-!%      - distributed_opr_initial_states_fill_parameters
-!%      - multi_linear_opr_parameters_fill_parameters
-!%      - multi_linear_opr_initial_states_fill_parameters
-!%      - multi_polynomial_opr_parameters_fill_parameters
-!%      - multi_polynomial_opr_initial_states_fill_parameters
-!%      - serr_mu_parameters_fill_parameters
-!%      - serr_sigma_parameters_fill_parameters
-!%      - fill_parameters
-MODULE MWD_PARAMETERS_MANIPULATION_DIFF
-!% only: MuFunk_vect, SigmaFunk_vect
-  USE MWD_BAYESIAN_TOOLS_DIFF
-!% only: sp, dp
-  USE MD_CONSTANT
-!% only: SetupDT
-  USE MWD_SETUP
-!% only: MeshDT
-  USE MWD_MESH
-!% only: Input_DataDT
-  USE MWD_INPUT_DATA
-!% only: ParametersDT
-  USE MWD_PARAMETERS_DIFF
-!% only: OutputDT
-  USE MWD_OUTPUT_DIFF
-!% only: OptionsDT
-  USE MWD_OPTIONS_DIFF
-!% only: ReturnsDT
-  USE MWD_RETURNS_DIFF
-!% only: ControlDT_initialise, ControlDT_finalise
-  USE MWD_CONTROL_DIFF
-  IMPLICIT NONE
-
-CONTAINS
-  SUBROUTINE SIGMOIDE(x, res)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: x
-    REAL(sp), INTENT(INOUT) :: res
-    INTRINSIC EXP
-    res = 1._sp/(1._sp+EXP(-x))
-  END SUBROUTINE SIGMOIDE
-
-  SUBROUTINE INV_SIGMOIDE(x, res)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: x
-    REAL(sp), INTENT(INOUT) :: res
-    INTRINSIC LOG
-    res = LOG(x/(1._sp-x))
-  END SUBROUTINE INV_SIGMOIDE
-
-  SUBROUTINE SCALED_SIGMOIDE(x, l, u, res)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: x, l, u
-    REAL(sp), INTENT(INOUT) :: res
-    CALL SIGMOIDE(x, res)
-    res = res*(u-l) + l
-  END SUBROUTINE SCALED_SIGMOIDE
-
-  SUBROUTINE INV_SCALED_SIGMOID(x, l, u, res)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: x, l, u
-    REAL(sp), INTENT(INOUT) :: res
-    REAL(sp) :: xw
-    REAL(sp), SAVE :: eps=1e-3_sp
-    INTRINSIC MAX
-    INTRINSIC MIN
-    IF (x .LT. l + eps) THEN
-      xw = l + eps
-    ELSE
-      xw = x
-    END IF
-    IF (x .GT. u - eps) THEN
-      xw = u - eps
-    ELSE
-      xw = x
-    END IF
-    xw = (xw-l)/(u-l)
-    CALL INV_SIGMOIDE(xw, res)
-  END SUBROUTINE INV_SCALED_SIGMOID
-
-!  Differentiation of sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: res
-!   with respect to varying inputs: x
-  SUBROUTINE SIGMOIDE2D_D(x, x_d, res, res_d)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x_d
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_d
-    INTRINSIC EXP
-    REAL*4, DIMENSION(SIZE(x, 1), SIZE(x, 2)) :: temp
-    temp = 1.0/(EXP(-x)+1._sp)
-    res_d = temp*EXP(-x)*x_d/(EXP(-x)+1._sp)
-    res = temp
-  END SUBROUTINE SIGMOIDE2D_D
-
-!  Differentiation of sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: res
-!   with respect to varying inputs: x
-  SUBROUTINE SIGMOIDE2D_B(x, x_b, res, res_b)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), DIMENSION(:, :) :: x_b
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_b
-    INTRINSIC EXP
-    REAL(sp), DIMENSION(SIZE(x, 1), SIZE(x, 2)) :: temp
-    x_b = 0.0_4
-    temp = EXP(-x) + 1._sp
-    x_b = EXP(-x)*res_b/temp**2
-  END SUBROUTINE SIGMOIDE2D_B
-
-  SUBROUTINE SIGMOIDE2D(x, res)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    INTRINSIC EXP
-    res = 1._sp/(1._sp+EXP(-x))
-  END SUBROUTINE SIGMOIDE2D
-
-!  Differentiation of scaled_sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: res
-!   with respect to varying inputs: x
-  SUBROUTINE SCALED_SIGMOIDE2D_D(x, x_d, l, u, res, res_d)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x_d
-    REAL(sp), INTENT(IN) :: l, u
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_d
-    CALL SIGMOIDE2D_D(x, x_d, res, res_d)
-    res_d = (u-l)*res_d
-    res = res*(u-l) + l
-  END SUBROUTINE SCALED_SIGMOIDE2D_D
-
-!  Differentiation of scaled_sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: res
-!   with respect to varying inputs: x
-  SUBROUTINE SCALED_SIGMOIDE2D_B(x, x_b, l, u, res, res_b)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), DIMENSION(:, :) :: x_b
-    REAL(sp), INTENT(IN) :: l, u
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res_b
-    CALL SIGMOIDE2D(x, res)
-    res_b = (u-l)*res_b
-    CALL SIGMOIDE2D_B(x, x_b, res, res_b)
-  END SUBROUTINE SCALED_SIGMOIDE2D_B
-
-  SUBROUTINE SCALED_SIGMOIDE2D(x, l, u, res)
-    IMPLICIT NONE
-    REAL(sp), DIMENSION(:, :), INTENT(IN) :: x
-    REAL(sp), INTENT(IN) :: l, u
-    REAL(sp), DIMENSION(:, :), INTENT(INOUT) :: res
-    CALL SIGMOIDE2D(x, res)
-    res = res*(u-l) + l
-  END SUBROUTINE SCALED_SIGMOIDE2D
-
-  SUBROUTINE SBS_CONTROL_TFM(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    INTEGER :: i
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-    INTRINSIC SUM
-    INTRINSIC ASINH
-    INTRINSIC LOG
-!% Need lower and upper bound to sbs tfm
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Opr parameters and Opr initial states
-    DO i=1,SUM(parameters%control%nbk(1:2))
-      IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
-          parameters%control%x(i) = ASINH(parameters%control%x(i))
-          parameters%control%l(i) = ASINH(parameters%control%l_bkg(i))
-          parameters%control%u(i) = ASINH(parameters%control%u_bkg(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
-          parameters%control%x(i) = LOG(parameters%control%x(i)/(1._sp-&
-&           parameters%control%x(i)))
-          parameters%control%l(i) = LOG(parameters%control%l_bkg(i)/(&
-&           1._sp-parameters%control%l_bkg(i)))
-          parameters%control%u(i) = LOG(parameters%control%u_bkg(i)/(&
-&           1._sp-parameters%control%u_bkg(i)))
-        ELSE
-          parameters%control%x(i) = LOG(parameters%control%x(i))
-          parameters%control%l(i) = LOG(parameters%control%l_bkg(i))
-          parameters%control%u(i) = LOG(parameters%control%u_bkg(i))
-        END IF
-      END IF
-    END DO
-  END SUBROUTINE SBS_CONTROL_TFM
-
-!  Differentiation of sbs_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in
-  SUBROUTINE SBS_INV_CONTROL_TFM_D(parameters, parameters_d)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    INTEGER :: i
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-    INTRINSIC SUM
-    INTRINSIC SINH
-    INTRINSIC EXP
-    REAL(sp) :: temp
-    REAL(sp) :: temp0
-!% Need lower and upper bound to sbs tfm
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
-    DO i=1,SUM(parameters%control%nbk(1:2))
-      IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
-          parameters_d%control%x(i) = COSH(parameters%control%x(i))*&
-&           parameters_d%control%x(i)
-          parameters%control%x(i) = SINH(parameters%control%x(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
-          temp = EXP(parameters%control%x(i)) + 1._sp
-          temp0 = EXP(parameters%control%x(i))/temp
-          parameters_d%control%x(i) = (EXP(parameters%control%x(i))-&
-&           temp0*EXP(parameters%control%x(i)))*parameters_d%control%x(i&
-&           )/temp
-          parameters%control%x(i) = temp0
-        ELSE
-          parameters_d%control%x(i) = EXP(parameters%control%x(i))*&
-&           parameters_d%control%x(i)
-          parameters%control%x(i) = EXP(parameters%control%x(i))
-        END IF
-      END IF
-    END DO
-  END SUBROUTINE SBS_INV_CONTROL_TFM_D
-
-!  Differentiation of sbs_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in
-  SUBROUTINE SBS_INV_CONTROL_TFM_B(parameters, parameters_b)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    INTEGER :: i
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-    INTRINSIC SUM
-    INTRINSIC SINH
-    INTRINSIC EXP
-    REAL(sp) :: temp
-    INTEGER :: ad_to
-    INTEGER :: branch
-!% Need lower and upper bound to sbs tfm
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
-    DO i=1,SUM(parameters%control%nbk(1:2))
-      IF (.NOT.nbd_mask(i)) THEN
-        CALL PUSHCONTROL2B(0)
-      ELSE IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
-        CALL PUSHREAL4(parameters%control%x(i))
-        parameters%control%x(i) = SINH(parameters%control%x(i))
-        CALL PUSHCONTROL2B(3)
-      ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters%&
-&         control%u_bkg(i) .LE. 1._sp) THEN
-        CALL PUSHREAL4(parameters%control%x(i))
-        parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
-&         EXP(parameters%control%x(i)))
-        CALL PUSHCONTROL2B(2)
-      ELSE
-        CALL PUSHREAL4(parameters%control%x(i))
-        parameters%control%x(i) = EXP(parameters%control%x(i))
-        CALL PUSHCONTROL2B(1)
-      END IF
-    END DO
-    CALL PUSHINTEGER4(i - 1)
-    CALL POPINTEGER4(ad_to)
-    DO i=ad_to,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .NE. 0) THEN
-          CALL POPREAL4(parameters%control%x(i))
-          parameters_b%control%x(i) = EXP(parameters%control%x(i))*&
-&           parameters_b%control%x(i)
-        END IF
-      ELSE IF (branch .EQ. 2) THEN
-        CALL POPREAL4(parameters%control%x(i))
-        temp = EXP(parameters%control%x(i)) + 1._sp
-        parameters_b%control%x(i) = (EXP(parameters%control%x(i))/temp-&
-&         EXP(parameters%control%x(i))**2/temp**2)*parameters_b%control%&
-&         x(i)
-      ELSE
-        CALL POPREAL4(parameters%control%x(i))
-        parameters_b%control%x(i) = COSH(parameters%control%x(i))*&
-&         parameters_b%control%x(i)
-      END IF
-    END DO
-  END SUBROUTINE SBS_INV_CONTROL_TFM_B
-
-  SUBROUTINE SBS_INV_CONTROL_TFM(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    INTEGER :: i
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-    INTRINSIC SUM
-    INTRINSIC SINH
-    INTRINSIC EXP
-!% Need lower and upper bound to sbs tfm
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
-    DO i=1,SUM(parameters%control%nbk(1:2))
-      IF (nbd_mask(i)) THEN
-        IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
-          parameters%control%x(i) = SINH(parameters%control%x(i))
-        ELSE IF (parameters%control%l_bkg(i) .GE. 0._sp .AND. parameters&
-&           %control%u_bkg(i) .LE. 1._sp) THEN
-          parameters%control%x(i) = EXP(parameters%control%x(i))/(1._sp+&
-&           EXP(parameters%control%x(i)))
-        ELSE
-          parameters%control%x(i) = EXP(parameters%control%x(i))
-        END IF
-      END IF
-    END DO
-    parameters%control%l = parameters%control%l_bkg
-    parameters%control%u = parameters%control%u_bkg
-  END SUBROUTINE SBS_INV_CONTROL_TFM
-
-  SUBROUTINE NORMALIZE_CONTROL_TFM(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-!% Need lower and upper bound to normalize
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-    WHERE (nbd_mask) 
-      parameters%control%x = (parameters%control%x-parameters%control%&
-&       l_bkg)/(parameters%control%u_bkg-parameters%control%l_bkg)
-      parameters%control%l = 0._sp
-      parameters%control%u = 1._sp
-    END WHERE
-  END SUBROUTINE NORMALIZE_CONTROL_TFM
-
-!  Differentiation of normalize_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in
-  SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D(parameters, parameters_d)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-!% Need lower and upper bound to denormalize
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-    WHERE (nbd_mask) 
-      parameters_d%control%x = (parameters%control%u_bkg-parameters%&
-&       control%l_bkg)*parameters_d%control%x
-      parameters%control%x = parameters%control%x*(parameters%control%&
-&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
-    END WHERE
-  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D
-
-!  Differentiation of normalize_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in
-  SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B(parameters, parameters_b)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-!% Need lower and upper bound to denormalize
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-    WHERE (nbd_mask) parameters_b%control%x = (parameters%control%u_bkg-&
-&       parameters%control%l_bkg)*parameters_b%control%x
-  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_B
-
-  SUBROUTINE NORMALIZE_INV_CONTROL_TFM(parameters)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    LOGICAL, DIMENSION(parameters%control%n) :: nbd_mask
-!% Need lower and upper bound to denormalize
-    nbd_mask = parameters%control%nbd(:) .EQ. 2
-    WHERE (nbd_mask) 
-      parameters%control%x = parameters%control%x*(parameters%control%&
-&       u_bkg-parameters%control%l_bkg) + parameters%control%l_bkg
-      parameters%control%l = parameters%control%l_bkg
-      parameters%control%u = parameters%control%u_bkg
-    END WHERE
-  END SUBROUTINE NORMALIZE_INV_CONTROL_TFM
-
-  SUBROUTINE CONTROL_TFM(parameters, options)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%control_tfm) 
-    CASE ('sbs') 
-      CALL SBS_CONTROL_TFM(parameters)
-    CASE ('normalize') 
-      CALL NORMALIZE_CONTROL_TFM(parameters)
-    END SELECT
-  END SUBROUTINE CONTROL_TFM
-
-!  Differentiation of inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
-  SUBROUTINE INV_CONTROL_TFM_D(parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%control_tfm) 
-    CASE ('sbs') 
-      CALL SBS_INV_CONTROL_TFM_D(parameters, parameters_d)
-    CASE ('normalize') 
-      CALL NORMALIZE_INV_CONTROL_TFM_D(parameters, parameters_d)
-    END SELECT
-  END SUBROUTINE INV_CONTROL_TFM_D
-
-!  Differentiation of inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in
-  SUBROUTINE INV_CONTROL_TFM_B(parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%control_tfm) 
-    CASE ('sbs') 
-      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
-&                   x, 1))
-      CALL SBS_INV_CONTROL_TFM(parameters)
-      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
-&                  , 1))
-      CALL SBS_INV_CONTROL_TFM_B(parameters, parameters_b)
-    CASE ('normalize') 
-      CALL NORMALIZE_INV_CONTROL_TFM(parameters)
-      CALL NORMALIZE_INV_CONTROL_TFM_B(parameters, parameters_b)
-    END SELECT
-  END SUBROUTINE INV_CONTROL_TFM_B
-
-  SUBROUTINE INV_CONTROL_TFM(parameters, options)
-    IMPLICIT NONE
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%control_tfm) 
-    CASE ('sbs') 
-      CALL SBS_INV_CONTROL_TFM(parameters)
-    CASE ('normalize') 
-      CALL NORMALIZE_INV_CONTROL_TFM(parameters)
-    END SELECT
-  END SUBROUTINE INV_CONTROL_TFM
-
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, n)
-    IMPLICIT NONE
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%opr_parameters)
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, n)
-    IMPLICIT NONE
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%opr_initial_states)
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE
-
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
-&   n)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%opr_parameters)*mesh%nac
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, &
-&   options, n)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%opr_initial_states)*mesh%nac
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE
-
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options&
-&   , n)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTEGER :: i
-    INTRINSIC SUM
-    n = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + SUM(&
-&         options%optimize%opr_parameters_descriptor(:, i))
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&   options, n)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTEGER :: i
-    INTRINSIC SUM
-    n = 0
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + SUM&
-&         (options%optimize%opr_initial_states_descriptor(:, i))
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
-&   options, n)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTEGER :: i
-    INTRINSIC SUM
-    n = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + 2*SUM(&
-&         options%optimize%opr_parameters_descriptor(:, i))
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup&
-&   , options, n)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTEGER :: i
-    INTRINSIC SUM
-    n = 0
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + 2*&
-&         SUM(options%optimize%opr_initial_states_descriptor(:, i))
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE
-
-  SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, n)
-    IMPLICIT NONE
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%serr_mu_parameters)*options%cost%nog
-  END SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, n)
-    IMPLICIT NONE
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, INTENT(INOUT) :: n
-    INTRINSIC SUM
-    n = SUM(options%optimize%serr_sigma_parameters)*options%cost%nog
-  END SUBROUTINE SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE
-
-  SUBROUTINE GET_CONTROL_SIZES(setup, mesh, options, nbk)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER, DIMENSION(:), INTENT(OUT) :: nbk
-    SELECT CASE  (options%optimize%mapping) 
-    CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, nbk(1))
-      CALL UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, nbk(2))
-    CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
-&                                                nbk(1))
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, options&
-&                                                    , nbk(2))
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
-&                                                 nbk(1))
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&                                                     options, nbk(2))
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
-&                                                     options, nbk(1))
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&                                                         options, nbk(2&
-&                                                         ))
-    END SELECT
-! Directly working with hyper parameters
-    CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))
-    CALL SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, nbk(4))
-  END SUBROUTINE GET_CONTROL_SIZES
-
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
-&   , options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        parameters%control%x(j) = SUM(parameters%opr_parameters%values(:&
-&         , :, i), mask=ac_mask)/mesh%nac
-        parameters%control%l(j) = options%optimize%l_opr_parameters(i)
-        parameters%control%u(j) = options%optimize%u_opr_parameters(i)
-        parameters%control%nbd(j) = 2
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        parameters%control%x(j) = SUM(parameters%opr_initial_states%&
-&         values(:, :, i), mask=ac_mask)/mesh%nac
-        parameters%control%l(j) = options%optimize%l_opr_initial_states(&
-&         i)
-        parameters%control%u(j) = options%optimize%u_opr_initial_states(&
-&         i)
-        parameters%control%nbd(j) = 2
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
-&         keys(i))//'0'
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL
-
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    CHARACTER(len=lchar) :: name
-    INTEGER :: n, i, j, row, col
-    INTRINSIC TRIM
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters%control%x(j) = parameters%opr_parameters%values&
-&               (row, col, i)
-              parameters%control%l(j) = options%optimize%&
-&               l_opr_parameters(i)
-              parameters%control%u(j) = options%optimize%&
-&               u_opr_parameters(i)
-              parameters%control%nbd = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%opr_parameters%&
-&             keys(i)), row, '-', col
-              parameters%control%name(j) = name
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    CHARACTER(len=lchar) :: name
-    INTEGER :: n, i, j, row, col
-    INTRINSIC TRIM
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters%control%x(j) = parameters%opr_initial_states%&
-&               values(row, col, i)
-              parameters%control%l(j) = options%optimize%&
-&               l_opr_initial_states(i)
-              parameters%control%u(j) = options%optimize%&
-&               u_opr_initial_states(i)
-              parameters%control%nbd = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
-&             opr_initial_states%keys(i)), row, '-', col
-              parameters%control%name(j) = name
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL
-
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
-    REAL(sp) :: y, l, u
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
-&         /mesh%nac
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
-        parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 1
-            parameters%control%x(j) = 0._sp
-            parameters%control%nbd(j) = 0
-            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
-&             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-a'
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
-    REAL(sp) :: y, l, u
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
-&         ac_mask)/mesh%nac
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
-        parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
-&         keys(i))//'0'
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 1
-            parameters%control%x(j) = 0._sp
-            parameters%control%nbd(j) = 0
-            parameters%control%name(j) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
-&             descriptor_name(k))//'-a'
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
-    REAL(sp) :: y, l, u
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
-&         /mesh%nac
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
-        parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 2
-            parameters%control%x(j-1) = 0._sp
-            parameters%control%nbd(j-1) = 0
-            parameters%control%name(j-1) = TRIM(parameters%&
-&             opr_parameters%keys(i))//'-'//TRIM(setup%descriptor_name(k&
-&             ))//'-a'
-            parameters%control%x(j) = 1._sp
-            parameters%control%l(j) = 0.5_sp
-            parameters%control%u(j) = 2._sp
-            parameters%control%nbd(j) = 2
-            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
-&             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-b'
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, &
-&   mesh, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
-    REAL(sp) :: y, l, u
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTRINSIC SUM
-    INTRINSIC TRIM
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
-&         ac_mask)/mesh%nac
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
-        parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
-&         keys(i))//'0'
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 2
-            parameters%control%x(j-1) = 0._sp
-            parameters%control%nbd(j-1) = 0
-            parameters%control%name(j-1) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
-&             descriptor_name(k))//'-a'
-            parameters%control%x(j) = 1._sp
-            parameters%control%l(j) = 0.5_sp
-            parameters%control%u(j) = 2._sp
-            parameters%control%nbd(j) = 2
-            parameters%control%name(j) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
-&             descriptor_name(k))//'-b'
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL
-
-  SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
-&   options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-    INTRINSIC TRIM
-! Serr mu parameters is third control kind
-    j = SUM(parameters%control%nbk(1:2))
-    DO i=1,setup%nsep_mu
-      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters%control%x(j) = parameters%serr_mu_parameters%&
-&             values(k, i)
-            parameters%control%l(j) = options%optimize%&
-&             l_serr_mu_parameters(i)
-            parameters%control%u(j) = options%optimize%&
-&             u_serr_mu_parameters(i)
-            parameters%control%nbd(j) = 2
-            parameters%control%name(j) = TRIM(parameters%&
-&             serr_mu_parameters%keys(i))//'-'//TRIM(mesh%code(k))
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
-&   , options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-    INTRINSIC TRIM
-! Serr sigma parameters is fourth control kind
-    j = SUM(parameters%control%nbk(1:3))
-    DO i=1,setup%nsep_sigma
-      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters%control%x(j) = parameters%serr_sigma_parameters%&
-&             values(k, i)
-            parameters%control%l(j) = options%optimize%&
-&             l_serr_sigma_parameters(i)
-            parameters%control%u(j) = options%optimize%&
-&             u_serr_sigma_parameters(i)
-            parameters%control%nbd(j) = 2
-            parameters%control%name(j) = TRIM(parameters%&
-&             serr_sigma_parameters%keys(i))//'-'//TRIM(mesh%code(k))
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_CONTROL
-
-  SUBROUTINE FILL_CONTROL(setup, mesh, input_data, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%mapping) 
-    CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
-&                                        options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                            parameters, options)
-    CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                            parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                                parameters, options)
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                             parameters, options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                                 parameters, options)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                                 parameters, options)
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh&
-&                                                     , parameters, &
-&                                                     options)
-    END SELECT
-! Directly working with hyper parameters
-    CALL SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
-&                                  options)
-    CALL SERR_SIGMA_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
-&                                     options)
-! Store background
-    parameters%control%x_bkg = parameters%control%x
-    parameters%control%l_bkg = parameters%control%l
-    parameters%control%u_bkg = parameters%control%u
-  END SUBROUTINE FILL_CONTROL
-
-!  Differentiation of uniform_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP 
-!context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&   parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    parameters_d%opr_parameters%values = 0.0_4
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        WHERE (ac_mask) 
-          parameters_d%opr_parameters%values(:, :, i) = parameters_d%&
-&           control%x(j)
-          parameters%opr_parameters%values(:, :, i) = parameters%control&
-&           %x(j)
-        END WHERE
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of uniform_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP 
-!context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&   parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTEGER :: branch
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nop,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         parameters_b%opr_parameters%values(:, :, i), MASK=ac_mask)
-        CALL POPINTEGER4(j)
-        WHERE (ac_mask) parameters_b%opr_parameters%values(:, :, i) = &
-&           0.0_4
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        WHERE (ac_mask) parameters%opr_parameters%values(:, :, i) = &
-&           parameters%control%x(j)
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of uniform_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
-&   parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    parameters_d%opr_initial_states%values = 0.0_4
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        WHERE (ac_mask) 
-          parameters_d%opr_initial_states%values(:, :, i) = parameters_d&
-&           %control%x(j)
-          parameters%opr_initial_states%values(:, :, i) = parameters%&
-&           control%x(j)
-        END WHERE
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D
-
-!  Differentiation of uniform_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
-&   parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    INTEGER :: branch
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nos,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         parameters_b%opr_initial_states%values(:, :, i), MASK=ac_mask)
-        CALL POPINTEGER4(j)
-        WHERE (ac_mask) parameters_b%opr_initial_states%values(:, :, i)&
-&          = 0.0_4
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B
-
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
-    ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        WHERE (ac_mask) parameters%opr_initial_states%values(:, :, i) = &
-&           parameters%control%x(j)
-      END IF
-    END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS
-
-!  Differentiation of distributed_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&   parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-! Opr parameters is first control kind
-    j = 0
-    parameters_d%opr_parameters%values = 0.0_4
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters_d%opr_parameters%values(row, col, i) = &
-&               parameters_d%control%x(j)
-              parameters%opr_parameters%values(row, col, i) = parameters&
-&               %control%x(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of distributed_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&   parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-    INTEGER :: branch
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .EQ. 0) THEN
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              CALL PUSHINTEGER4(j)
-              j = j + 1
-              CALL PUSHCONTROL1B(1)
-            END IF
-          END DO
-        END DO
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nop,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        DO col=mesh%ncol,1,-1
-          DO row=mesh%nrow,1,-1
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&               parameters_b%opr_parameters%values(row, col, i)
-              parameters_b%opr_parameters%values(row, col, i) = 0.0_4
-              CALL POPINTEGER4(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters%opr_parameters%values(row, col, i) = parameters&
-&               %control%x(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of distributed_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
-! OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&   mesh, parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    parameters_d%opr_initial_states%values = 0.0_4
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters_d%opr_initial_states%values(row, col, i) = &
-&               parameters_d%control%x(j)
-              parameters%opr_initial_states%values(row, col, i) = &
-&               parameters%control%x(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D
-
-!  Differentiation of distributed_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
-! OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&   mesh, parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-    INTEGER :: branch
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .EQ. 0) THEN
-              CALL PUSHCONTROL1B(0)
-            ELSE
-              CALL PUSHINTEGER4(j)
-              j = j + 1
-              CALL PUSHCONTROL1B(1)
-            END IF
-          END DO
-        END DO
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nos,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        DO col=mesh%ncol,1,-1
-          DO row=mesh%nrow,1,-1
-            CALL POPCONTROL1B(branch)
-            IF (branch .NE. 0) THEN
-              parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&               parameters_b%opr_initial_states%values(row, col, i)
-              parameters_b%opr_initial_states%values(row, col, i) = &
-&               0.0_4
-              CALL POPINTEGER4(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B
-
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
-&   , parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, row, col
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        DO col=1,mesh%ncol
-          DO row=1,mesh%nrow
-            IF (mesh%active_cell(row, col) .NE. 0) THEN
-              j = j + 1
-              parameters%opr_initial_states%values(row, col, i) = &
-&               parameters%control%x(j)
-            END IF
-          END DO
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS
-
-!  Differentiation of multi_linear_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Op
-!enMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&   input_data, parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Opr parameters is first control kind
-    j = 0
-    parameters_d%opr_parameters%values = 0.0_4
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        wa2d_d = parameters_d%control%x(j)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_d%&
-&                          opr_parameters%values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of multi_linear_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Op
-!enMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&   input_data, parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
-    INTEGER :: branch
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
-&         THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
-&                        values(:, :, i))
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nop,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_b%&
-&                          opr_parameters%values(:, :, i))
-        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
-        DO k=setup%nd,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&             norm_desc*wa2d_b)
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         wa2d_b)
-        CALL POPINTEGER4(j)
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&   input_data, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
-&                        values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of multi_linear_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&   mesh, input_data, parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    parameters_d%opr_initial_states%values = 0.0_4
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        wa2d_d = parameters_d%control%x(j)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j)
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_d%opr_initial_states%values(:, :, &
-&                          i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D
-
-!  Differentiation of multi_linear_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&   mesh, input_data, parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
-    INTEGER :: branch
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
-&             0) THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nos,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_b%opr_initial_states%values(:, :, &
-&                          i))
-        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
-        DO k=setup%nd,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&             norm_desc*wa2d_b)
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         wa2d_b)
-        CALL POPINTEGER4(j)
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B
-
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
-&   , input_data, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 1
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            wa2d = wa2d + parameters%control%x(j)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS
-
-!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, &
-&   mesh, input_data, parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Opr parameters is first control kind
-    j = 0
-    parameters_d%opr_parameters%values = 0.0_4
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        wa2d_d = parameters_d%control%x(j)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            temp = norm_desc**parameters%control%x(j)
-            WHERE (norm_desc .LE. 0.0) 
-              norm_desc_d = 0.0_4
-            ELSEWHERE
-              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
-&               )
-            END WHERE
-            norm_desc = temp
-            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
-&             parameters%control%x(j-1)*norm_desc_d
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_d%&
-&                          opr_parameters%values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, &
-&   mesh, input_data, parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
-    INTEGER :: branch
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
-&         THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 2
-            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = norm_desc**parameters%control%x(j)
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
-&                        values(:, :, i))
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nop,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_b%&
-&                          opr_parameters%values(:, :, i))
-        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
-        DO k=setup%nd,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            norm_desc_b = 0.0_4
-            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
-&             SUM(norm_desc*wa2d_b)
-            norm_desc_b = parameters%control%x(j-1)*wa2d_b
-            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
-&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
-            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         wa2d_b)
-        CALL POPINTEGER4(j)
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh&
-&   , input_data, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr parameters is first control kind
-    j = 0
-    DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
-        j = j + 1
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
-&         THEN
-            j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            norm_desc = norm_desc**parameters%control%x(j)
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
-&                        values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface no
-!ISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup&
-&   , mesh, input_data, parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    parameters_d%opr_initial_states%values = 0.0_4
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        wa2d_d = parameters_d%control%x(j)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            temp = norm_desc**parameters%control%x(j)
-            WHERE (norm_desc .LE. 0.0) 
-              norm_desc_d = 0.0_4
-            ELSEWHERE
-              norm_desc_d = temp*LOG(norm_desc)*parameters_d%control%x(j&
-&               )
-            END WHERE
-            norm_desc = temp
-            wa2d_d = wa2d_d + norm_desc*parameters_d%control%x(j-1) + &
-&             parameters%control%x(j-1)*norm_desc_d
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_d%opr_initial_states%values(:, :, &
-&                          i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D
-
-!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface no
-!ISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup&
-&   , mesh, input_data, parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
-    INTEGER :: branch
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        CALL PUSHINTEGER4(j)
-        j = j + 1
-        CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
-&             0) THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 2
-            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            CALL PUSHREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            norm_desc = norm_desc**parameters%control%x(j)
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nos,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_b%opr_initial_states%values(:, :, &
-&                          i))
-        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
-        DO k=setup%nd,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            norm_desc_b = 0.0_4
-            parameters_b%control%x(j-1) = parameters_b%control%x(j-1) + &
-&             SUM(norm_desc*wa2d_b)
-            norm_desc_b = parameters%control%x(j-1)*wa2d_b
-            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&             norm_desc**parameters%control%x(j)*LOG(norm_desc)*&
-&             norm_desc_b, MASK=.NOT.norm_desc.LE.0.0)
-            CALL POPREAL4ARRAY(norm_desc, mesh%nrow*mesh%ncol)
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-        CALL POPREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
-        parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         wa2d_b)
-        CALL POPINTEGER4(j)
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B
-
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&   mesh, input_data, parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    REAL(sp) :: l, u
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr initial states is second control kind
-    j = parameters%control%nbk(1)
-    DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
-        j = j + 1
-        wa2d = parameters%control%x(j)
-        DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
-            j = j + 2
-            norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
-&             input_data%physio_data%l_descriptor(k))/(input_data%&
-&             physio_data%u_descriptor(k)-input_data%physio_data%&
-&             l_descriptor(k))
-            norm_desc = norm_desc**parameters%control%x(j)
-            wa2d = wa2d + parameters%control%x(j-1)*norm_desc
-          END IF
-        END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
-      END IF
-    END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS
-
-!  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP cont
-!ext):
-!   variations   of useful results: *(parameters.serr_mu_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
-  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&   parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-! Serr mu parameters is third control kind
-    j = SUM(parameters%control%nbk(1:2))
-    parameters_d%serr_mu_parameters%values = 0.0_4
-    DO i=1,setup%nsep_mu
-      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters_d%serr_mu_parameters%values(k, i) = parameters_d%&
-&             control%x(j)
-            parameters%serr_mu_parameters%values(k, i) = parameters%&
-&             control%x(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of serr_mu_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP cont
-!ext):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
-  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&   parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-    INTEGER :: branch
-! Serr mu parameters is third control kind
-    j = SUM(parameters%control%nbk(1:2))
-    DO i=1,setup%nsep_mu
-      IF (options%optimize%serr_mu_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .EQ. 0) THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 1
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nsep_mu,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        DO k=mesh%ng,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&             parameters_b%serr_mu_parameters%values(k, i)
-            parameters_b%serr_mu_parameters%values(k, i) = 0.0_4
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters&
-&   , options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-! Serr mu parameters is third control kind
-    j = SUM(parameters%control%nbk(1:2))
-    DO i=1,setup%nsep_mu
-      IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters%serr_mu_parameters%values(k, i) = parameters%&
-&             control%x(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of serr_sigma_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP c
-!ontext):
-!   variations   of useful results: *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
-  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&   parameters, parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-! Serr mu parameters is fourth control kind
-    j = SUM(parameters%control%nbk(1:3))
-    parameters_d%serr_sigma_parameters%values = 0.0_4
-    DO i=1,setup%nsep_sigma
-      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters_d%serr_sigma_parameters%values(k, i) = &
-&             parameters_d%control%x(j)
-            parameters%serr_sigma_parameters%values(k, i) = parameters%&
-&             control%x(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D
-
-!  Differentiation of serr_sigma_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP c
-!ontext):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
-  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&   parameters, parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-    INTEGER :: branch
-! Serr mu parameters is fourth control kind
-    j = SUM(parameters%control%nbk(1:3))
-    DO i=1,setup%nsep_sigma
-      IF (options%optimize%serr_sigma_parameters(i) .EQ. 0) THEN
-        CALL PUSHCONTROL1B(0)
-      ELSE
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .EQ. 0) THEN
-            CALL PUSHCONTROL1B(0)
-          ELSE
-            CALL PUSHINTEGER4(j)
-            j = j + 1
-            CALL PUSHCONTROL1B(1)
-          END IF
-        END DO
-        CALL PUSHCONTROL1B(1)
-      END IF
-    END DO
-    DO i=setup%nsep_sigma,1,-1
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        DO k=mesh%ng,1,-1
-          CALL POPCONTROL1B(branch)
-          IF (branch .NE. 0) THEN
-            parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&             parameters_b%serr_sigma_parameters%values(k, i)
-            parameters_b%serr_sigma_parameters%values(k, i) = 0.0_4
-            CALL POPINTEGER4(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B
-
-  SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&   parameters, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: i, j, k
-    INTRINSIC SUM
-! Serr mu parameters is fourth control kind
-    j = SUM(parameters%control%nbk(1:3))
-    DO i=1,setup%nsep_sigma
-      IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
-        DO k=1,mesh%ng
-          IF (options%cost%gauge(k) .NE. 0) THEN
-            j = j + 1
-            parameters%serr_sigma_parameters%values(k, i) = parameters%&
-&             control%x(j)
-          END IF
-        END DO
-      END IF
-    END DO
-  END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS
-
-!  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
-  SUBROUTINE FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
-&   parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%mapping) 
-    CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                             parameters, parameters_d, &
-&                                             options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_d, options)
-    CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_d, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
-&                                                     , parameters, &
-&                                                     parameters_d, &
-&                                                     options)
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                                  input_data, &
-&                                                  parameters, &
-&                                                  parameters_d, options&
-&                                                 )
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_d, &
-&                                                      options)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_d, &
-&                                                      options)
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&                                                          mesh, &
-&                                                          input_data, &
-&                                                          parameters, &
-&                                                          parameters_d&
-&                                                          , options)
-    CASE DEFAULT
-      parameters_d%opr_parameters%values = 0.0_4
-      parameters_d%opr_initial_states%values = 0.0_4
-    END SELECT
-! Directly working with hyper parameters
-    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters, &
-&                                       parameters_d, options)
-    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters&
-&                                          , parameters_d, options)
-  END SUBROUTINE FILL_PARAMETERS_D
-
-!  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
-  SUBROUTINE FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
-&   parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: branch
-    SELECT CASE  (options%optimize%mapping) 
-    CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                           parameters, options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-      CALL PUSHCONTROL3B(1)
-    CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                   parameters, options)
-      CALL PUSHCONTROL3B(2)
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                input_data, parameters&
-&                                                , options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-      CALL PUSHCONTROL3B(3)
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                        mesh, &
-&                                                        input_data, &
-&                                                        parameters, &
-&                                                        options)
-      CALL PUSHCONTROL3B(4)
-    CASE DEFAULT
-      CALL PUSHCONTROL3B(0)
-    END SELECT
-! Directly working with hyper parameters
-    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
-&                                     options)
-    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
-&                                        options)
-    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters&
-&                                          , parameters_b, options)
-    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, parameters, &
-&                                       parameters_b, options)
-    CALL POPCONTROL3B(branch)
-    IF (branch .LT. 2) THEN
-      IF (branch .NE. 0) THEN
-        CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
-&                                                   parameters, &
-&                                                   parameters_b, &
-&                                                   options)
-        CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                               parameters, parameters_b&
-&                                               , options)
-      END IF
-    ELSE IF (branch .EQ. 2) THEN
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
-&                                                     , parameters, &
-&                                                     parameters_b, &
-&                                                     options)
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_b, options)
-    ELSE IF (branch .EQ. 3) THEN
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_b, &
-&                                                      options)
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                                  input_data, &
-&                                                  parameters, &
-&                                                  parameters_b, options&
-&                                                 )
-    ELSE
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&                                                          mesh, &
-&                                                          input_data, &
-&                                                          parameters, &
-&                                                          parameters_b&
-&                                                          , options)
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_b, &
-&                                                      options)
-    END IF
-  END SUBROUTINE FILL_PARAMETERS_B
-
-  SUBROUTINE FILL_PARAMETERS(setup, mesh, input_data, parameters, &
-&   options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    SELECT CASE  (options%optimize%mapping) 
-    CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                           parameters, options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-    CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                   parameters, options)
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                input_data, parameters&
-&                                                , options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-    CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                        mesh, &
-&                                                        input_data, &
-&                                                        parameters, &
-&                                                        options)
-    END SELECT
-! Directly working with hyper parameters
-    CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
-&                                     options)
-    CALL SERR_SIGMA_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
-&                                        options)
-  END SUBROUTINE FILL_PARAMETERS
-
-  SUBROUTINE PARAMETERS_TO_CONTROL(setup, mesh, input_data, parameters, &
-&   options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTRINSIC SIZE
-    INTEGER, DIMENSION(SIZE(parameters%control%nbk)) :: nbk
-    CALL GET_CONTROL_SIZES(setup, mesh, options, nbk)
-    CALL CONTROLDT_INITIALISE(parameters%control, nbk)
-    CALL FILL_CONTROL(setup, mesh, input_data, parameters, options)
-    CALL CONTROL_TFM(parameters, options)
-  END SUBROUTINE PARAMETERS_TO_CONTROL
-
-!  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
-  SUBROUTINE CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters&
-&   , parameters_d, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTRINSIC ALLOCATED
-    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
-      parameters_d%opr_parameters%values = 0.0_4
-      parameters_d%opr_initial_states%values = 0.0_4
-      parameters_d%serr_mu_parameters%values = 0.0_4
-      parameters_d%serr_sigma_parameters%values = 0.0_4
-    ELSE
-      CALL INV_CONTROL_TFM_D(parameters, parameters_d, options)
-      CALL FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
-&                      parameters_d, options)
-    END IF
-  END SUBROUTINE CONTROL_TO_PARAMETERS_D
-
-!  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
-!                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x)
-!   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
-!                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
-!                parameters.serr_sigma_parameters.values:in
-  SUBROUTINE CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters&
-&   , parameters_b, options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_b
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTRINSIC ALLOCATED
-    IF (ALLOCATED(parameters%control%x)) THEN
-      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
-&                   x, 1))
-      CALL INV_CONTROL_TFM(parameters, options)
-      CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
-      CALL FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
-&                      parameters_b, options)
-      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
-&                  , 1))
-      CALL INV_CONTROL_TFM_B(parameters, parameters_b, options)
-    END IF
-  END SUBROUTINE CONTROL_TO_PARAMETERS_B
-
-  SUBROUTINE CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
-&   options)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(INPUT_DATADT), INTENT(IN) :: input_data
-    TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTRINSIC ALLOCATED
-    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
-      RETURN
-    ELSE
-      CALL INV_CONTROL_TFM(parameters, options)
-      CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
-    END IF
-  END SUBROUTINE CONTROL_TO_PARAMETERS
-
-END MODULE MWD_PARAMETERS_MANIPULATION_DIFF
 
 !%      (MD) Module Differentiated.
 !%
@@ -11320,7 +12400,8 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 
 CONTAINS
 !  Differentiation of gr4_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -11504,7 +12585,8 @@ CONTAINS
   END SUBROUTINE GR4_LR_FORWARD_D
 
 !  Differentiation of gr4_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -11673,8 +12755,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -11930,7 +13010,8 @@ CONTAINS
   END SUBROUTINE GR4_LR_FORWARD
 
 !  Differentiation of gr4_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -12138,7 +13219,8 @@ CONTAINS
   END SUBROUTINE GR4_KW_FORWARD_D
 
 !  Differentiation of gr4_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -12324,8 +13406,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -12609,7 +13689,8 @@ CONTAINS
   END SUBROUTINE GR4_KW_FORWARD
 
 !  Differentiation of gr5_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -12798,7 +13879,8 @@ CONTAINS
   END SUBROUTINE GR5_LR_FORWARD_D
 
 !  Differentiation of gr5_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -12969,8 +14051,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -13233,7 +14313,8 @@ CONTAINS
   END SUBROUTINE GR5_LR_FORWARD
 
 !  Differentiation of gr5_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -13446,7 +14527,8 @@ CONTAINS
   END SUBROUTINE GR5_KW_FORWARD_D
 
 !  Differentiation of gr5_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -13634,8 +14716,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -13926,7 +15006,8 @@ CONTAINS
   END SUBROUTINE GR5_KW_FORWARD
 
 !  Differentiation of loieau_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -14104,7 +15185,8 @@ CONTAINS
   END SUBROUTINE LOIEAU_LR_FORWARD_D
 
 !  Differentiation of loieau_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -14273,8 +15355,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -14519,7 +15599,8 @@ CONTAINS
   END SUBROUTINE LOIEAU_LR_FORWARD
 
 !  Differentiation of grd_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(output.response.q)
+!   variations   of useful results: *(parameters.opr_initial_states.values)
+!                *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -14684,7 +15765,8 @@ CONTAINS
   END SUBROUTINE GRD_LR_FORWARD_D
 
 !  Differentiation of grd_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(output.response.q)
+!   gradient     of useful results: *(parameters.opr_parameters.values)
+!                *(parameters.opr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.opr_parameters.values)
 !                *(parameters.opr_initial_states.values)
 !   Plus diff mem management of: parameters.opr_parameters.values:in
@@ -14839,8 +15921,6 @@ CONTAINS
         END IF
       END DO
     END DO
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
     q_b = 0.0_4
     qt_b = 0.0_4
     DO t=setup%ntime_step,1,-1
@@ -15078,8 +16158,9 @@ END MODULE MD_FORWARD_STRUCTURE_DIFF
 !                parameters.control.u_bkg:in parameters.opr_parameters.values:in
 !                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
-& parameters_d, output, output_d, options, returns)
+& parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
   USE MD_CONSTANT
 !% only: SetupDT
@@ -15112,13 +16193,20 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
   TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
 & opr_states_buffer_values
+  REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
+& opr_states_buffer_values_d
 !% Map control to parameters
+  parameters_d%opr_parameters%values = 0.0_4
+  parameters_d%opr_initial_states%values = 0.0_4
   CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters, &
 &                        parameters_d, options)
 !% Save initial states
+  opr_states_buffer_values_d = parameters_d%opr_initial_states%values
+  opr_states_buffer_values = parameters%opr_initial_states%values
 !% Simulation
   SELECT CASE  (setup%structure) 
   CASE ('gr4-lr') 
@@ -15143,10 +16231,11 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
     output_d%response%q = 0.0_4
   END SELECT
 !% Assign final states and reset initial states
-  parameters_d%opr_initial_states%values = 0.0_4
+  parameters_d%opr_initial_states%values = opr_states_buffer_values_d
+  parameters%opr_initial_states%values = opr_states_buffer_values
 !% Compute cost
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
-&               , output, output_d, options, returns)
+&               , output, output_d, options, options_d, returns)
 END SUBROUTINE BASE_FORWARD_RUN_D
 
 !  Differentiation of base_forward_run in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -15162,8 +16251,9 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.control.u_bkg:in parameters.opr_parameters.values:in
 !                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
+!                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
-& parameters_b, output, output_b, options, returns)
+& parameters_b, output, output_b, options, options_b, returns)
 !% only: sp
   USE MD_CONSTANT
 !% only: SetupDT
@@ -15196,9 +16286,12 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   TYPE(OUTPUTDT), INTENT(INOUT) :: output
   TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
   TYPE(OPTIONSDT), INTENT(IN) :: options
+  TYPE(OPTIONSDT_DIFF) :: options_b
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
 & opr_states_buffer_values
+  REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
+& opr_states_buffer_values_b
   INTEGER :: branch
 !% Map control to parameters
   CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
@@ -15206,6 +16299,7 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
 &                      options)
 !% Save initial states
+  opr_states_buffer_values = parameters%opr_initial_states%values
 !% Simulation
   SELECT CASE  (setup%structure) 
   CASE ('gr4-lr') 
@@ -15260,30 +16354,65 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
     CALL PUSHCONTROL3B(0)
   END SELECT
 !% Assign final states and reset initial states
+  parameters%opr_initial_states%values = opr_states_buffer_values
 !% Compute cost
+  CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
+&               ))
+  CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters%&
+&               opr_parameters%values, 1)*SIZE(parameters%opr_parameters&
+&               %values, 2)*SIZE(parameters%opr_parameters%values, 3))
+  CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&               parameters%opr_initial_states%values, 1)*SIZE(parameters&
+&               %opr_initial_states%values, 2)*SIZE(parameters%&
+&               opr_initial_states%values, 3))
+  CALL PUSHREAL4ARRAY(parameters%serr_mu_parameters%values, SIZE(&
+&               parameters%serr_mu_parameters%values, 1)*SIZE(parameters&
+&               %serr_mu_parameters%values, 2))
+  CALL PUSHREAL4ARRAY(parameters%serr_sigma_parameters%values, SIZE(&
+&               parameters%serr_sigma_parameters%values, 1)*SIZE(&
+&               parameters%serr_sigma_parameters%values, 2))
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, output, options&
 &             , returns)
+  CALL POPREAL4ARRAY(parameters%serr_sigma_parameters%values, SIZE(&
+&              parameters%serr_sigma_parameters%values, 1)*SIZE(&
+&              parameters%serr_sigma_parameters%values, 2))
+  CALL POPREAL4ARRAY(parameters%serr_mu_parameters%values, SIZE(&
+&              parameters%serr_mu_parameters%values, 1)*SIZE(parameters%&
+&              serr_mu_parameters%values, 2))
+  CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&              parameters%opr_initial_states%values, 1)*SIZE(parameters%&
+&              opr_initial_states%values, 2)*SIZE(parameters%&
+&              opr_initial_states%values, 3))
+  CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters%&
+&              opr_parameters%values, 1)*SIZE(parameters%opr_parameters%&
+&              values, 2)*SIZE(parameters%opr_parameters%values, 3))
+  CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
+&             )
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
-&               , output, output_b, options, returns)
+&               , output, output_b, options, options_b, returns)
+  opr_states_buffer_values_b = 0.0_4
+  opr_states_buffer_values_b = parameters_b%opr_initial_states%values
+  parameters_b%opr_initial_states%values = 0.0_4
   CALL POPCONTROL3B(branch)
   IF (branch .LT. 3) THEN
-    IF (branch .EQ. 0) THEN
-      parameters_b%opr_parameters%values = 0.0_4
-      parameters_b%opr_initial_states%values = 0.0_4
-    ELSE IF (branch .EQ. 1) THEN
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
-      CALL GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
-&                     parameters_b, output, output_b, options, returns)
-    ELSE
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
-      CALL GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
-&                     parameters_b, output, output_b, options, returns)
+    IF (branch .NE. 0) THEN
+      IF (branch .EQ. 1) THEN
+        CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                    parameters%opr_initial_states%values, 1)*SIZE(&
+&                    parameters%opr_initial_states%values, 2)*SIZE(&
+&                    parameters%opr_initial_states%values, 3))
+        CALL GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
+&                       parameters_b, output, output_b, options, returns&
+&                      )
+      ELSE
+        CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                    parameters%opr_initial_states%values, 1)*SIZE(&
+&                    parameters%opr_initial_states%values, 2)*SIZE(&
+&                    parameters%opr_initial_states%values, 3))
+        CALL GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
+&                       parameters_b, output, output_b, options, returns&
+&                      )
+      END IF
     END IF
   ELSE IF (branch .LT. 5) THEN
     IF (branch .EQ. 3) THEN
@@ -15316,6 +16445,8 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
     CALL GRD_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &                   parameters_b, output, output_b, options, returns)
   END IF
+  parameters_b%opr_initial_states%values = parameters_b%&
+&   opr_initial_states%values + opr_states_buffer_values_b
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
 &             )
   CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters, &

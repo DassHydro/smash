@@ -12,500 +12,500 @@
 
 module mw_optimize
 
-    use md_constant, only: sp, dp, lchar
-    use m_screen_display, only: display_iteration_progress
-    use m_array_manipulation, only: reallocate
-    use mwd_setup, only: SetupDT
-    use mwd_mesh, only: MeshDT
-    use mwd_input_data, only: Input_DataDT
-    use mwd_parameters, only: ParametersDT
-    use mwd_output, only: OutputDT
-    use mwd_options, only: OptionsDT
-    use mwd_returns, only: ReturnsDT
-    use mw_forward, only: forward_run, forward_run_b
-    use mwd_parameters_manipulation, only: parameters_to_control, get_serr_mu, get_serr_sigma
-    use mwd_control, only: ControlDT, ControlDT_finalise
+   use md_constant, only: sp, dp, lchar
+   use m_screen_display, only: display_iteration_progress
+   use m_array_manipulation, only: reallocate
+   use mwd_setup, only: SetupDT
+   use mwd_mesh, only: MeshDT
+   use mwd_input_data, only: Input_DataDT
+   use mwd_parameters, only: ParametersDT
+   use mwd_output, only: OutputDT
+   use mwd_options, only: OptionsDT
+   use mwd_returns, only: ReturnsDT
+   use mw_forward, only: forward_run, forward_run_b
+   use mwd_parameters_manipulation, only: parameters_to_control, get_serr_mu, get_serr_sigma
+   use mwd_control, only: ControlDT, ControlDT_finalise
 
-    implicit none
+   implicit none
 
-    public :: optimize
+   public :: optimize
 
 contains
 
-    subroutine sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
+   subroutine sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
-        implicit none
+      implicit none
 
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(OutputDT), intent(inout) :: output
-        type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
+      type(SetupDT), intent(in) :: setup
+      type(MeshDT), intent(in) :: mesh
+      type(Input_DataDT), intent(in) :: input_data
+      type(ParametersDT), intent(inout) :: parameters
+      type(OutputDT), intent(inout) :: output
+      type(OptionsDT), intent(in) :: options
+      type(ReturnsDT), intent(inout) :: returns
 
-        character(lchar) :: task
-        integer :: n, i, j, ia, iaa, iam, jf, jfa, jfaa, nfg, iter
-        real(sp) :: gx, ga, clg, ddx, dxn
-        real(sp), dimension(:), allocatable :: x_wa, y_wa, z_wa, l_wa, u_wa, sdx
+      character(lchar) :: task
+      integer :: n, i, j, ia, iaa, iam, jf, jfa, jfaa, nfg, iter
+      real(sp) :: gx, ga, clg, ddx, dxn
+      real(sp), dimension(:), allocatable :: x_wa, y_wa, z_wa, l_wa, u_wa, sdx
 
-        call parameters_to_control(setup, mesh, input_data, parameters, options)
+      call parameters_to_control(setup, mesh, input_data, parameters, options)
 
-        n = parameters%control%n
+      n = parameters%control%n
 
-        allocate (x_wa(n), y_wa(n), z_wa(n), l_wa(n), u_wa(n), sdx(n))
+      allocate (x_wa(n), y_wa(n), z_wa(n), l_wa(n), u_wa(n), sdx(n))
 
-        x_wa = parameters%control%x
-        l_wa = parameters%control%l
-        u_wa = parameters%control%u
-        y_wa = x_wa
-        z_wa = x_wa
+      x_wa = parameters%control%x
+      l_wa = parameters%control%l
+      u_wa = parameters%control%u
+      y_wa = x_wa
+      z_wa = x_wa
 
-        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+      call forward_run(setup, mesh, input_data, parameters, output, options, returns)
 
-        gx = output%cost
-        ga = gx
-        clg = 0.7_sp**(1._sp/real(n, sp))
-        sdx = 0._sp
-        ddx = 0.64_sp
-        dxn = ddx
-        ia = 0
-        iaa = 0
-        iam = 0
-        jfaa = 0
-        nfg = 1
+      gx = output%cost
+      ga = gx
+      clg = 0.7_sp**(1._sp/real(n, sp))
+      sdx = 0._sp
+      ddx = 0.64_sp
+      dxn = ddx
+      ia = 0
+      iaa = 0
+      iam = 0
+      jfaa = 0
+      nfg = 1
 
-        task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+      task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
 
-        if (options%comm%verbose) then
-            write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
-            & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
-        end if
+      if (options%comm%verbose) then
+         write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
+         & "At iterate", 0, "nfg = ", nfg, "J =", gx, "ddx =", ddx
+      end if
 
-        if (returns%iter_cost_flag) then
-            allocate (returns%iter_cost(options%optimize%maxiter + 1))
-            returns%iter_cost(1) = gx
-        end if
+      if (returns%iter_cost_flag) then
+         allocate (returns%iter_cost(options%optimize%maxiter + 1))
+         returns%iter_cost(1) = gx
+      end if
 
-        do iter = 1, options%optimize%maxiter*n
+      do iter = 1, options%optimize%maxiter*n
 
-            if (dxn .gt. ddx) dxn = ddx
-            if (ddx .gt. 2._sp) ddx = dxn
+         if (dxn .gt. ddx) dxn = ddx
+         if (ddx .gt. 2._sp) ddx = dxn
 
-            do i = 1, n
+         do i = 1, n
 
-                x_wa = y_wa
+            x_wa = y_wa
 
-                do j = 1, 2
+            do j = 1, 2
 
-                    jf = 2*j - 3
-                    if (i .eq. iaa .and. jf .eq. -jfaa) cycle
-                    if (y_wa(i) .le. l_wa(i) .and. jf .lt. 0) cycle
-                    if (y_wa(i) .ge. u_wa(i) .and. jf .gt. 0) cycle
+               jf = 2*j - 3
+               if (i .eq. iaa .and. jf .eq. -jfaa) cycle
+               if (y_wa(i) .le. l_wa(i) .and. jf .lt. 0) cycle
+               if (y_wa(i) .ge. u_wa(i) .and. jf .gt. 0) cycle
 
-                    x_wa(i) = y_wa(i) + jf*ddx
-                    if (x_wa(i) .lt. l_wa(i)) x_wa(i) = l_wa(i)
-                    if (x_wa(i) .gt. u_wa(i)) x_wa(i) = u_wa(i)
+               x_wa(i) = y_wa(i) + jf*ddx
+               if (x_wa(i) .lt. l_wa(i)) x_wa(i) = l_wa(i)
+               if (x_wa(i) .gt. u_wa(i)) x_wa(i) = u_wa(i)
 
-                    parameters%control%x = x_wa
-                    parameters%control%l = l_wa
-                    parameters%control%u = u_wa
+               parameters%control%x = x_wa
+               parameters%control%l = l_wa
+               parameters%control%u = u_wa
 
-                    call forward_run(setup, mesh, input_data, parameters, output, options, returns)
-                    nfg = nfg + 1
+               call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+               nfg = nfg + 1
 
-                    if (output%cost .lt. gx) then
+               if (output%cost .lt. gx) then
 
-                        z_wa = x_wa
-                        gx = output%cost
-                        ia = i
-                        jfa = jf
+                  z_wa = x_wa
+                  gx = output%cost
+                  ia = i
+                  jfa = jf
 
-                    end if
-
-                end do
+               end if
 
             end do
 
-            iaa = ia
-            jfaa = jfa
+         end do
 
-            if (ia .ne. 0) then
+         iaa = ia
+         jfaa = jfa
 
-                y_wa = z_wa
+         if (ia .ne. 0) then
 
-                sdx = clg*sdx
-                sdx(ia) = (1._sp - clg)*real(jfa, sp)*ddx + clg*sdx(ia)
+            y_wa = z_wa
 
-                iam = iam + 1
+            sdx = clg*sdx
+            sdx(ia) = (1._sp - clg)*real(jfa, sp)*ddx + clg*sdx(ia)
 
-                if (iam .gt. 2*n) then
+            iam = iam + 1
 
-                    ddx = ddx*2._sp
-                    iam = 0
+            if (iam .gt. 2*n) then
 
-                end if
-
-                if (gx .lt. ga - 2) ga = gx
-
-            else
-
-                ddx = ddx/2._sp
-                iam = 0
+               ddx = ddx*2._sp
+               iam = 0
 
             end if
 
-            if (iter .gt. 4*n) then
+            if (gx .lt. ga - 2) ga = gx
 
-                do i = 1, n
+         else
 
-                    x_wa(i) = y_wa(i) + sdx(i)
-                    if (x_wa(i) .lt. l_wa(i)) x_wa(i) = l_wa(i)
-                    if (x_wa(i) .gt. u_wa(i)) x_wa(i) = u_wa(i)
+            ddx = ddx/2._sp
+            iam = 0
 
-                end do
+         end if
 
-                parameters%control%x = x_wa
-                parameters%control%l = l_wa
-                parameters%control%u = u_wa
+         if (iter .gt. 4*n) then
 
-                call forward_run(setup, mesh, input_data, parameters, output, options, returns)
-                nfg = nfg + 1
+            do i = 1, n
 
-                if (output%cost .lt. gx) then
+               x_wa(i) = y_wa(i) + sdx(i)
+               if (x_wa(i) .lt. l_wa(i)) x_wa(i) = l_wa(i)
+               if (x_wa(i) .gt. u_wa(i)) x_wa(i) = u_wa(i)
 
-                    gx = output%cost
-                    jfaa = 0
-                    y_wa = x_wa
-                    z_wa = x_wa
+            end do
 
-                    if (gx .lt. ga - 2) ga = gx
+            parameters%control%x = x_wa
+            parameters%control%l = l_wa
+            parameters%control%u = u_wa
 
-                end if
+            call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+            nfg = nfg + 1
 
-            end if
+            if (output%cost .lt. gx) then
 
-            ia = 0
+               gx = output%cost
+               jfaa = 0
+               y_wa = x_wa
+               z_wa = x_wa
 
-            if (mod(iter, n) .eq. 0) then
-
-                if (options%comm%verbose) then
-                    write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
-                    & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
-                end if
-
-                if (returns%iter_cost_flag) returns%iter_cost(iter/n + 1) = gx
+               if (gx .lt. ga - 2) ga = gx
 
             end if
 
-            if (ddx .lt. 0.01_sp) then
-                task = "CONVERGENCE: DDX < 0.01"
-                exit
+         end if
+
+         ia = 0
+
+         if (mod(iter, n) .eq. 0) then
+
+            if (options%comm%verbose) then
+               write (*, '(4x,a,4x,i3,4x,a,i5,4x,a,f14.6,4x,a,f5.2)') &
+               & "At iterate", (iter/n), "nfg = ", nfg, "J =", gx, "ddx =", ddx
             end if
 
-            if (iter .eq. options%optimize%maxiter*n) then
-                task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
-                exit
-            end if
+            if (returns%iter_cost_flag) returns%iter_cost(iter/n + 1) = gx
 
-        end do
+         end if
 
-        parameters%control%x = z_wa
-        parameters%control%l = l_wa
-        parameters%control%u = u_wa
+         if (ddx .lt. 0.01_sp) then
+            task = "CONVERGENCE: DDX < 0.01"
+            exit
+         end if
 
-        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+         if (iter .eq. options%optimize%maxiter*n) then
+            task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
+            exit
+         end if
 
-        if (returns%control_vector_flag) then
-            allocate (returns%control_vector(n))
-            returns%control_vector = parameters%control%x
-        end if
+      end do
 
-        if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
-        if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
+      parameters%control%x = z_wa
+      parameters%control%l = l_wa
+      parameters%control%u = u_wa
 
-        if (returns%iter_cost_flag) call reallocate(returns%iter_cost, iter/n + 1)
+      call forward_run(setup, mesh, input_data, parameters, output, options, returns)
 
-        call ControlDT_finalise(parameters%control)
+      if (returns%control_vector_flag) then
+         allocate (returns%control_vector(n))
+         returns%control_vector = parameters%control%x
+      end if
 
-        if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
+      if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
+      if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
 
-    end subroutine sbs_optimize
+      if (returns%iter_cost_flag) call reallocate(returns%iter_cost, iter/n + 1)
 
-    subroutine lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
+      call ControlDT_finalise(parameters%control)
 
-        implicit none
+      if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
 
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(OutputDT), intent(inout) :: output
-        type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
+   end subroutine sbs_optimize
 
-        integer :: iprint, n, m
-        real(dp) :: factr, pgtol, f, projg
-        character(lchar) :: task, csave
-        logical, dimension(4) :: lsave
-        integer, dimension(44) :: isave
-        real(dp), dimension(29) :: dsave
-        integer, dimension(:), allocatable :: iwa
-        real(dp), dimension(:), allocatable :: g, wa, x_wa, l_wa, u_wa
-        type(ParametersDT) :: parameters_b
-        type(OutputDT) :: output_b
+   subroutine lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
-        call parameters_to_control(setup, mesh, input_data, parameters, options)
+      implicit none
 
-        iprint = -1
-        n = parameters%control%n
-        m = 10
-        factr = real(options%optimize%factr, dp)
-        pgtol = real(options%optimize%pgtol, dp)
+      type(SetupDT), intent(in) :: setup
+      type(MeshDT), intent(in) :: mesh
+      type(Input_DataDT), intent(in) :: input_data
+      type(ParametersDT), intent(inout) :: parameters
+      type(OutputDT), intent(inout) :: output
+      type(OptionsDT), intent(in) :: options
+      type(ReturnsDT), intent(inout) :: returns
 
-        allocate (g(n), x_wa(n), l_wa(n), u_wa(n))
-        allocate (iwa(3*n))
-        allocate (wa(2*m*n + 5*n + 11*m*m + 8*m))
+      integer :: iprint, n, m
+      real(dp) :: factr, pgtol, f, projg
+      character(lchar) :: task, csave
+      logical, dimension(4) :: lsave
+      integer, dimension(44) :: isave
+      real(dp), dimension(29) :: dsave
+      integer, dimension(:), allocatable :: iwa
+      real(dp), dimension(:), allocatable :: g, wa, x_wa, l_wa, u_wa
+      type(ParametersDT) :: parameters_b
+      type(OutputDT) :: output_b
 
-        parameters_b = parameters
-        output_b = output
-        output_b%cost = 1._sp
+      call parameters_to_control(setup, mesh, input_data, parameters, options)
 
-        task = "START"
+      iprint = -1
+      n = parameters%control%n
+      m = 10
+      factr = real(options%optimize%factr, dp)
+      pgtol = real(options%optimize%pgtol, dp)
 
-        if (returns%iter_cost_flag) allocate (returns%iter_cost(options%optimize%maxiter + 1))
-        if (returns%iter_projg_flag) allocate (returns%iter_projg(options%optimize%maxiter + 1))
+      allocate (g(n), x_wa(n), l_wa(n), u_wa(n))
+      allocate (iwa(3*n))
+      allocate (wa(2*m*n + 5*n + 11*m*m + 8*m))
 
-        x_wa = real(parameters%control%x, dp)
-        l_wa = real(parameters%control%l, dp)
-        u_wa = real(parameters%control%u, dp)
+      parameters_b = parameters
+      output_b = output
+      output_b%cost = 1._sp
 
-        do while (task(1:2) .eq. "FG" .or. task .eq. "NEW_X" .or. task .eq. "START")
+      task = "START"
 
-            call setulb(n, m, x_wa, l_wa, u_wa, parameters%control%nbd, f, g, &
-            & factr, pgtol, wa, iwa, task, iprint, csave, lsave, isave, dsave)
+      if (returns%iter_cost_flag) allocate (returns%iter_cost(options%optimize%maxiter + 1))
+      if (returns%iter_projg_flag) allocate (returns%iter_projg(options%optimize%maxiter + 1))
 
-            parameters%control%x = real(x_wa, sp)
-            parameters%control%l = real(l_wa, sp)
-            parameters%control%u = real(u_wa, sp)
+      x_wa = real(parameters%control%x, dp)
+      l_wa = real(parameters%control%l, dp)
+      u_wa = real(parameters%control%u, dp)
 
-            if (task(1:2) .eq. "FG") then
+      do while (task(1:2) .eq. "FG" .or. task .eq. "NEW_X" .or. task .eq. "START")
 
-                call forward_run_b(setup, mesh, input_data, parameters, parameters_b, &
-                & output, output_b, options, returns)
+         call setulb(n, m, x_wa, l_wa, u_wa, parameters%control%nbd, f, g, &
+         & factr, pgtol, wa, iwa, task, iprint, csave, lsave, isave, dsave)
 
-                f = real(output%cost, dp)
-                g = real(parameters_b%control%x, dp)
+         parameters%control%x = real(x_wa, sp)
+         parameters%control%l = real(l_wa, sp)
+         parameters%control%u = real(u_wa, sp)
 
-                if (task(4:8) .eq. "START") then
+         if (task(1:2) .eq. "FG") then
 
-                    call projgr(n, l_wa, x_wa, parameters%control%nbd, x_wa, g, projg)
-                    if (returns%iter_cost_flag) returns%iter_cost(1) = real(f, sp)
-                    if (returns%iter_projg_flag) returns%iter_projg(1) = real(projg, sp)
+            call forward_run_b(setup, mesh, input_data, parameters, parameters_b, &
+            & output, output_b, options, returns)
 
-                    if (options%comm%verbose) then
+            f = real(output%cost, dp)
+            g = real(parameters_b%control%x, dp)
 
-                        write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
-                        & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", projg
+            if (task(4:8) .eq. "START") then
 
-                    end if
+               call projgr(n, l_wa, x_wa, parameters%control%nbd, x_wa, g, projg)
+               if (returns%iter_cost_flag) returns%iter_cost(1) = real(f, sp)
+               if (returns%iter_projg_flag) returns%iter_projg(1) = real(projg, sp)
 
-                end if
+               if (options%comm%verbose) then
 
-            else if (task(1:5) .eq. "NEW_X") then
+                  write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+                  & "At iterate", 0, "nfg = ", 1, "J =", f, "|proj g| =", projg
 
-                if (returns%iter_cost_flag) returns%iter_cost(isave(30) + 1) = real(f, sp)
-                if (returns%iter_projg_flag) returns%iter_projg(isave(30) + 1) = real(dsave(13), sp)
-
-                if (options%comm%verbose) then
-
-                    write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
-                    & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
-
-                end if
-
-                if (isave(30) .ge. options%optimize%maxiter) task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
-
-                if (dsave(13) .le. 1.d-10*(1.0d0 + abs(f))) task = "STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL"
+               end if
 
             end if
 
-        end do
+         else if (task(1:5) .eq. "NEW_X") then
 
-        call forward_run(setup, mesh, input_data, parameters, output, options, returns)
+            if (returns%iter_cost_flag) returns%iter_cost(isave(30) + 1) = real(f, sp)
+            if (returns%iter_projg_flag) returns%iter_projg(isave(30) + 1) = real(dsave(13), sp)
 
-        if (returns%control_vector_flag) then
-            allocate (returns%control_vector(n))
-            returns%control_vector = parameters%control%x
-        end if
+            if (options%comm%verbose) then
 
-        if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
-        if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
+               write (*, '(4x,a,4x,i3,4x,a,i5,3(4x,a,f14.6),4x,a,f10.6)') &
+               & "At iterate", isave(30), "nfg = ", isave(34), "J =", f, "|proj g| =", dsave(13)
 
-        if (returns%iter_cost_flag) call reallocate(returns%iter_cost, isave(30) + 1)
-        if (returns%iter_projg_flag) call reallocate(returns%iter_projg, isave(30) + 1)
+            end if
 
-        call ControlDT_finalise(parameters%control)
+            if (isave(30) .ge. options%optimize%maxiter) task = "STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT"
 
-        if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
+            if (dsave(13) .le. 1.d-10*(1.0d0 + abs(f))) task = "STOP: THE PROJECTED GRADIENT IS SUFFICIENTLY SMALL"
 
-    end subroutine lbfgsb_optimize
+         end if
 
-    subroutine optimize(setup, mesh, input_data, parameters, output, options, returns)
+      end do
 
-        implicit none
+      call forward_run(setup, mesh, input_data, parameters, output, options, returns)
 
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(OutputDT), intent(inout) :: output
-        type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
+      if (returns%control_vector_flag) then
+         allocate (returns%control_vector(n))
+         returns%control_vector = parameters%control%x
+      end if
 
-        select case (options%optimize%optimizer)
+      if (returns%serr_mu_flag) call get_serr_mu(setup, mesh, parameters, output, returns%serr_mu)
+      if (returns%serr_sigma_flag) call get_serr_sigma(setup, mesh, parameters, output, returns%serr_sigma)
 
-        case ("sbs")
+      if (returns%iter_cost_flag) call reallocate(returns%iter_cost, isave(30) + 1)
+      if (returns%iter_projg_flag) call reallocate(returns%iter_projg, isave(30) + 1)
 
-            call sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
+      call ControlDT_finalise(parameters%control)
 
-        case ("lbfgsb")
+      if (options%comm%verbose) write (*, '(4x,2a)') task, new_line("")
 
-            call lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
+   end subroutine lbfgsb_optimize
 
-        end select
+   subroutine optimize(setup, mesh, input_data, parameters, output, options, returns)
 
-    end subroutine optimize
+      implicit none
 
-    subroutine multiple_optimize_sample_to_parameters(sample, samples_kind, samples_ind, parameters)
+      type(SetupDT), intent(in) :: setup
+      type(MeshDT), intent(in) :: mesh
+      type(Input_DataDT), intent(in) :: input_data
+      type(ParametersDT), intent(inout) :: parameters
+      type(OutputDT), intent(inout) :: output
+      type(OptionsDT), intent(in) :: options
+      type(ReturnsDT), intent(inout) :: returns
 
-        implicit none
+      select case (options%optimize%optimizer)
 
-        real(sp), dimension(:), intent(in) :: sample
-        integer, dimension(size(sample)), intent(in) :: samples_kind, samples_ind
-        type(ParametersDT), intent(inout) :: parameters
+      case ("sbs")
 
-        integer :: i
+         call sbs_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
-        do i = 1, size(sample)
+      case ("lbfgsb")
 
-            select case (samples_kind(i))
+         call lbfgsb_optimize(setup, mesh, input_data, parameters, output, options, returns)
 
-            case (0)
-                parameters%opr_parameters%values(:, :, samples_ind(i)) = sample(i)
+      end select
 
-            case (1)
-                parameters%opr_initial_states%values(:, :, samples_ind(i)) = sample(i)
+   end subroutine optimize
 
-                ! Should be unreachable
-            case default
+   subroutine multiple_optimize_sample_to_parameters(sample, samples_kind, samples_ind, parameters)
 
-            end select
+      implicit none
 
-        end do
+      real(sp), dimension(:), intent(in) :: sample
+      integer, dimension(size(sample)), intent(in) :: samples_kind, samples_ind
+      type(ParametersDT), intent(inout) :: parameters
 
-    end subroutine multiple_optimize_sample_to_parameters
+      integer :: i
 
-    subroutine multiple_optimize_save_parameters(setup, parameters, options, optimized_parameters)
+      do i = 1, size(sample)
 
-        implicit none
+         select case (samples_kind(i))
 
-        type(SetupDT), intent(in) :: setup
-        type(ParametersDT), intent(in) :: parameters
-        type(OptionsDT), intent(in) :: options
-        real(sp), dimension(:, :, :) :: optimized_parameters
+         case (0)
+            parameters%opr_parameters%values(:, :, samples_ind(i)) = sample(i)
 
-        integer :: i, j
+         case (1)
+            parameters%opr_initial_states%values(:, :, samples_ind(i)) = sample(i)
 
-        j = 0
+            ! Should be unreachable
+         case default
 
-        do i = 1, setup%nop
+         end select
 
-            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+      end do
 
-            j = j + 1
+   end subroutine multiple_optimize_sample_to_parameters
 
-            optimized_parameters(:, :, j) = parameters%opr_parameters%values(:, :, i)
+   subroutine multiple_optimize_save_parameters(setup, parameters, options, optimized_parameters)
 
-        end do
+      implicit none
 
-        do i = 1, setup%nos
+      type(SetupDT), intent(in) :: setup
+      type(ParametersDT), intent(in) :: parameters
+      type(OptionsDT), intent(in) :: options
+      real(sp), dimension(:, :, :) :: optimized_parameters
 
-            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+      integer :: i, j
 
-            j = j + 1
+      j = 0
 
-            optimized_parameters(:, :, j) = parameters%opr_initial_states%values(:, :, i)
+      do i = 1, setup%nop
 
-        end do
+         if (options%optimize%opr_parameters(i) .ne. 1) cycle
 
-    end subroutine multiple_optimize_save_parameters
+         j = j + 1
 
-    subroutine multiple_optimize(setup, mesh, input_data, parameters, output, options, &
-    & samples, samples_kind, samples_ind, cost, q, optimized_parameters)
+         optimized_parameters(:, :, j) = parameters%opr_parameters%values(:, :, i)
 
-        implicit none
+      end do
 
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        type(Input_DataDT), intent(in) :: input_data
-        type(ParametersDT), intent(inout) :: parameters
-        type(OutputDT), intent(inout) :: output
-        type(OptionsDT), intent(inout) :: options
-        real(sp), dimension(:, :), intent(in) :: samples
-        integer, dimension(size(samples, 1)) :: samples_kind, samples_ind
-        real(sp), dimension(size(samples, 2)), intent(inout) :: cost
-        real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 2)), intent(inout) :: q
-        real(sp), dimension(mesh%nrow, mesh%ncol, &
-        & sum(options%optimize%opr_parameters) + sum(options%optimize%opr_initial_states), &
-        & size(samples, 2)) :: optimized_parameters
+      do i = 1, setup%nos
 
-        integer :: i, iter, niter, ncpu
-        logical :: verbose
-        character(lchar) :: task
-        type(ParametersDT) :: parameters_thread
-        type(OutputDT) :: output_thread
-        type(ReturnsDT) :: returns
+         if (options%optimize%opr_initial_states(i) .ne. 1) cycle
 
-        niter = size(samples, 2)
-        iter = 0
-        task = "Optimize"
+         j = j + 1
 
-        ! Trigger parallel in multiple optimize and not inside optimize
-        ncpu = options%comm%ncpu
-        options%comm%ncpu = 1
+         optimized_parameters(:, :, j) = parameters%opr_initial_states%values(:, :, i)
 
-        ! Deactivate other verbose
-        verbose = options%comm%verbose
-        options%comm%verbose = .false.
+      end do
 
-        if (verbose) call display_iteration_progress(iter, niter, task)
+   end subroutine multiple_optimize_save_parameters
 
-        !$OMP parallel do schedule(static) num_threads(ncpu) &
-        !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
-        !$OMP& shared(samples, samples_kind, samples_ind, iter, niter, cost, q, optimized_parameters) &
-        !$OMP& private(i, parameters_thread, output_thread)
-        do i = 1, niter
+   subroutine multiple_optimize(setup, mesh, input_data, parameters, output, options, &
+   & samples, samples_kind, samples_ind, cost, q, optimized_parameters)
 
-            parameters_thread = parameters
-            output_thread = output
+      implicit none
 
-            call multiple_optimize_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
+      type(SetupDT), intent(in) :: setup
+      type(MeshDT), intent(in) :: mesh
+      type(Input_DataDT), intent(in) :: input_data
+      type(ParametersDT), intent(inout) :: parameters
+      type(OutputDT), intent(inout) :: output
+      type(OptionsDT), intent(inout) :: options
+      real(sp), dimension(:, :), intent(in) :: samples
+      integer, dimension(size(samples, 1)) :: samples_kind, samples_ind
+      real(sp), dimension(size(samples, 2)), intent(inout) :: cost
+      real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 2)), intent(inout) :: q
+      real(sp), dimension(mesh%nrow, mesh%ncol, &
+      & sum(options%optimize%opr_parameters) + sum(options%optimize%opr_initial_states), &
+      & size(samples, 2)) :: optimized_parameters
 
-            call optimize(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
+      integer :: i, iter, niter, ncpu
+      logical :: verbose
+      character(lchar) :: task
+      type(ParametersDT) :: parameters_thread
+      type(OutputDT) :: output_thread
+      type(ReturnsDT) :: returns
 
-            !$OMP critical
-            cost(i) = output_thread%cost
-            q(:, :, i) = output_thread%response%q
-            call multiple_optimize_save_parameters(setup, parameters_thread, options, optimized_parameters(:, :, :, i))
+      niter = size(samples, 2)
+      iter = 0
+      task = "Optimize"
 
-            iter = iter + 1
-            if (verbose) call display_iteration_progress(iter, niter, task)
-            !$OMP end critical
+      ! Trigger parallel in multiple optimize and not inside optimize
+      ncpu = options%comm%ncpu
+      options%comm%ncpu = 1
 
-        end do
-        !$OMP end parallel do
+      ! Deactivate other verbose
+      verbose = options%comm%verbose
+      options%comm%verbose = .false.
 
-    end subroutine multiple_optimize
+      if (verbose) call display_iteration_progress(iter, niter, task)
+
+      !$OMP parallel do schedule(static) num_threads(ncpu) &
+      !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
+      !$OMP& shared(samples, samples_kind, samples_ind, iter, niter, cost, q, optimized_parameters) &
+      !$OMP& private(i, parameters_thread, output_thread)
+      do i = 1, niter
+
+         parameters_thread = parameters
+         output_thread = output
+
+         call multiple_optimize_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
+
+         call optimize(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
+
+         !$OMP critical
+         cost(i) = output_thread%cost
+         q(:, :, i) = output_thread%response%q
+         call multiple_optimize_save_parameters(setup, parameters_thread, options, optimized_parameters(:, :, :, i))
+
+         iter = iter + 1
+         if (verbose) call display_iteration_progress(iter, niter, task)
+         !$OMP end critical
+
+      end do
+      !$OMP end parallel do
+
+   end subroutine multiple_optimize
 
 end module mw_optimize
