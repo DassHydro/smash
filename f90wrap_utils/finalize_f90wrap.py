@@ -4,6 +4,22 @@ import pathlib
 import os
 import re
 
+REPR_METHOD = """
+    def __repr__(self):
+        ret = [self.__class__.__name__]
+        for attr in dir(self):
+            if attr.startswith("_"):
+                continue
+            try:
+                value = getattr(self, attr)
+            except:
+                continue
+            if callable(value):
+                continue
+            ret.append(f"    {attr}: {repr(value)}")
+        return "\n".join(ret)
+"""
+
 
 def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
     """
@@ -296,6 +312,22 @@ def sed_finalise_method(pyf: pathlib.PosixPath):
     os.system(f'sed -i "/.*_finalise/a \\\t\t\texcept:\\n\t\t\t\tpass" {pyf}')
 
 
+def sed_repr_method(pyf: pathlib.PosixPath):
+    """
+    Replace __str__ method with __repr__. It allows to display
+    object without calling print explicitly. The function is overwrited
+    by REPR_METHOD. This is a monkey patch of f90wrap.
+    Done by using the unix command sed in place
+    """
+
+    method = "\\\t" + REPR_METHOD.strip()
+    method = method.replace("\n", r"\n")
+    method = method.replace('"\\n"', r'"\\n"')
+
+    # Sed command that removes lines between def _str__ and join(ret) and replaces by REPR_METHOD
+    os.system(f"sed -i '/def __str__(self):/,/join(ret)/c{method}' {pyf}")
+
+
 def sed_tab(pyf: pathlib.PosixPath):
     """
     Replace tabs with 4 spaces.
@@ -327,5 +359,7 @@ if __name__ == "__main__":
         sed_derived_type_procedure(pyf)
 
         sed_finalise_method(pyf)
+
+        sed_repr_method(pyf)
 
         sed_tab(pyf)
