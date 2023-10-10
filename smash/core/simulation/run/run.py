@@ -149,7 +149,7 @@ def forward_run(
 
         jobs_cmpt_tfm : str or ListLike, default 'keep'
             Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
-                
+
             - 'keep' : No transformation
             - 'sqrt' : Square root transformation
             - 'inv' : Multiplicative inverse transformation

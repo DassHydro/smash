@@ -307,10 +307,10 @@ def optimize(
 
             .. hint::
                 See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
-                
+
         jobs_cmpt_tfm : str or ListLike, default 'keep'
             Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
-                
+
             - 'keep' : No transformation
             - 'sqrt' : Square root transformation
             - 'inv' : Multiplicative inverse transformation
@@ -322,7 +322,11 @@ def optimize(
             The weighting of regularization term. Only used with distributed mapping.
 
         jreg_cmpt : str or ListLike, default 'prior'
-            Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of 'prior' and 'smoothing'.
+            Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
+
+            - 'prior' : Squared difference between control and control background
+            - 'smoothing' : Spatial derivative **not** penalized by background
+            - 'hard-smoothing' : Spatial derivative penalized by background
 
         wjreg_cmpt : str, Numeric, or ListLike, default 'mean'
             The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.

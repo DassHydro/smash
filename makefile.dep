@@ -42,6 +42,7 @@ f90: \
  obj/mw_mask.o \
  obj/mwd_parameters_manipulation.o \
  obj/mw_optimize.o \
+ obj/md_regularization.o \
  obj/mwd_sparse_matrix_manipulation.o \
  obj/mw_interception_capacity.o \
  obj/mw_atmos_statistic.o \

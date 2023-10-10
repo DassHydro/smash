@@ -3,8 +3,8 @@
 !%      Subroutine
 !%      ----------
 !%
+!%      - discharge_transformation
 !%      - bayesian_compute_cost
-!%      - discharge_tfm
 !%      - classical_compute_jobs
 !%      - classical_compute_cost
 !%      - compute_cost
@@ -21,6 +21,7 @@ module mwd_cost
     use md_stats !% only: quantile1d_r
     use mwd_metrics !% only: nse, nnse, kge, mae, mape, mse, rmse, lgrm
     use mwd_signatures !% only: rc, rchf, rclf, rch2r, cfp, ebf, elt, eff
+    use md_regularization !% only: prior_regularization, smoothing_regularization
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
@@ -32,6 +33,73 @@ module mwd_cost
     implicit none
 
 contains
+
+    function get_range_event(mask_event, i_event) result(res)
+
+        implicit none
+
+        integer, dimension(:), intent(in) :: mask_event
+        integer, intent(in) :: i_event
+
+        integer, dimension(2) :: res
+
+        integer :: i
+
+        res = 0
+
+        do i = 1, size(mask_event)
+
+            if (mask_event(i) .eq. i_event) then
+                res(1) = i
+                exit
+            end if
+
+        end do
+
+        do i = size(mask_event), 1, -1
+
+            if (mask_event(i) .eq. i_event) then
+                res(2) = i
+                exit
+            end if
+
+        end do
+
+    end function get_range_event
+
+    subroutine discharge_tranformation(tfm, qo, qs)
+
+        implicit none
+
+        character(lchar), intent(in) :: tfm
+        real(sp), dimension(:), intent(inout) :: qo, qs
+
+        integer :: i
+        real(sp) :: mean_qo, e
+        logical, dimension(size(qo)) :: mask
+
+        mask = (qo .ge. 0._sp)
+        mean_qo = sum(qo, mask=mask)/count(mask)
+        e = 1e-2_sp*mean_qo
+
+        select case (tfm)
+
+        case ("sqrt")
+
+            where (qo .ge. 0._sp) qo = sqrt(qo + e)
+            where (qs .ge. 0._sp) qs = sqrt(qs + e)
+
+        case ("inv")
+
+            where (qo .ge. 0._sp) qo = 1._sp/(qo + e)
+            where (qs .ge. 0._sp) qs = 1._sp/(qs + e)
+
+            !% Should be reach by "keep" only. Do nothing
+        case default
+
+        end select
+
+    end subroutine discharge_tranformation
 
     subroutine bayesian_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
@@ -106,73 +174,6 @@ contains
         !$AD end-exclude
 
     end subroutine bayesian_compute_cost
-
-    function get_range_event(mask_event, i_event) result(res)
-
-        implicit none
-
-        integer, dimension(:), intent(in) :: mask_event
-        integer, intent(in) :: i_event
-
-        integer, dimension(2) :: res
-
-        integer :: i
-
-        res = 0
-
-        do i = 1, size(mask_event)
-
-            if (mask_event(i) .eq. i_event) then
-                res(1) = i
-                exit
-            end if
-
-        end do
-
-        do i = size(mask_event), 1, -1
-
-            if (mask_event(i) .eq. i_event) then
-                res(2) = i
-                exit
-            end if
-
-        end do
-
-    end function get_range_event
-
-    subroutine discharge_tranformation(tfm, qo, qs)
-
-        implicit none
-
-        character(lchar), intent(in) :: tfm
-        real(sp), dimension(:), intent(inout) :: qo, qs
-
-        integer :: i
-        real(sp) :: mean_qo, e
-        logical, dimension(size(qo)) :: mask
-
-        mask = (qo .ge. 0._sp)
-        mean_qo = sum(qo, mask=mask)/count(mask)
-        e = 1e-2_sp*mean_qo
-
-        select case (tfm)
-
-        case ("sqrt")
-
-            where (qo .ge. 0._sp) qo = sqrt(qo + e)
-            where (qs .ge. 0._sp) qs = sqrt(qs + e)
-
-        case ("inv")
-
-            where (qo .ge. 0._sp) qo = 1._sp/(qo + e)
-            where (qs .ge. 0._sp) qs = 1._sp/(qs + e)
-
-            !% Should be reach by "keep" only. Do nothing
-        case default
-
-        end select
-
-    end subroutine discharge_tranformation
 
     subroutine classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
@@ -427,6 +428,50 @@ contains
 
     end subroutine classical_compute_jobs
 
+    subroutine classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(in) :: parameters
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(in) :: returns
+        real(sp), intent(inout) :: jreg
+
+        integer :: i
+        real(sp), dimension(options%cost%njrc) :: jreg_cmpt_values
+
+        jreg_cmpt_values = 0._sp
+
+        do i = 1, options%cost%njrc
+
+            select case (options%cost%jreg_cmpt(i))
+
+                ! Can be applied to any control
+            case ("prior")
+
+                jreg_cmpt_values(i) = prior_regularization(parameters)
+
+                ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+            case ("smoothing")
+
+                jreg_cmpt_values(i) = smoothing_regularization(setup, mesh, input_data, parameters, options, .false.)
+
+                ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+            case ("hard-smoothing")
+
+                jreg_cmpt_values(i) = smoothing_regularization(setup, mesh, input_data, parameters, options, .true.)
+
+            end select
+
+        end do
+
+        jreg = sum(options%cost%wjreg_cmpt*jreg_cmpt_values)
+
+    end subroutine classical_compute_jreg
+
     subroutine classical_compute_cost(setup, mesh, input_data, parameters, output, options, returns)
 
         implicit none
@@ -446,8 +491,7 @@ contains
 
         call classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
-        ! TODO FC: Not Implemented yet
-        ! call classical_compute_jreg(setup, mesh, parameters, options, returns, jreg)
+        if (options%cost%wjreg .gt. 0._sp) call classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
 
         output%cost = jobs + options%cost%wjreg*jreg
 
