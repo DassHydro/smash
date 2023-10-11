@@ -38,6 +38,10 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
 
         call gr4_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
+    case ("gr4-ode")
+
+        call gr4_ode_forward(setup, mesh, input_data, parameters, output, options, returns)
+
     case ("gr4-kw")
 
         call gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)

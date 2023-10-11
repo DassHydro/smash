@@ -6,7 +6,7 @@ import numpy as np
 ### MODEL STRUCTURE ###
 #######################
 
-STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "loieau-lr", "grd-lr"]
+STRUCTURE_NAME = ["gr4-lr", "gr4-ode", "gr4-kw", "gr5-lr", "gr5-kw", "loieau-lr", "grd-lr"]
 
 OPR_PARAMETERS = [
     "ci",
@@ -30,6 +30,7 @@ STRUCTURE_OPR_PARAMETERS = dict(
         STRUCTURE_NAME,
         [
             ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
+            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-ode
             ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
             ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
             ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
@@ -45,6 +46,7 @@ STRUCTURE_OPR_STATES = dict(
         STRUCTURE_NAME,
         [
             ["hi", "hp", "ht", "hlr"],  # % gr4-lr
+            ["hi", "hp", "ht", "hlr"],  # % gr4-ode
             ["hi", "hp", "ht"],  # % gr4-kw
             ["hi", "hp", "ht", "hlr"],  # % gr5-lr
             ["hi", "hp", "ht"],  # % gr5-kw
