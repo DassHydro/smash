@@ -15,7 +15,7 @@ First, clone the Git repository:
 
 .. code-block:: none
 
-    git clone https://github.com/DassHydro-dev/smash.git
+    git clone https://github.com/DassHydro/smash.git
 
 and navigate to the working directory:
 
