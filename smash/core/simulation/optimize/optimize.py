@@ -282,7 +282,9 @@ def _get_control_info(
 
 
 def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> float:
-    print(f"{' '*4}FAST WJREG CYCLE 1")
+    if options.comm.verbose:
+        print(f"{' '*4}FAST WJREG CYCLE 1")
+
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
         setattr(returns, flag + "_flag", True)
@@ -357,7 +359,9 @@ def _get_lcurve_wjreg_best(
 def _get_lcurve_wjreg(
     model: Model, options: OptionsDT, returns: ReturnsDT
 ) -> (float, dict):
-    print(f"{' '*4}LCURVE WJREG CYCLE 1")
+    if options.comm.verbose:
+        print(f"{' '*4}LCURVE WJREG CYCLE 1")
+
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
         setattr(returns, flag + "_flag", True)
@@ -410,7 +414,9 @@ def _get_lcurve_wjreg(
     for i, wj in enumerate(wjreg_range):
         options.cost.wjreg = wj
 
-        print(f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
+        if options.comm.verbose:
+            print(f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
+
         wparameters = model._parameters.copy()
         wrap_optimize(
             model.setup,
@@ -681,16 +687,18 @@ def _optimize(
     else:
         if auto_wjreg == "fast":
             wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns)
-            print(
-                f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
-            )
+            if wrap_options.comm.verbose:
+                print(
+                    f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
+                )
         elif auto_wjreg == "lcurve":
             wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(
                 model, wrap_options, wrap_returns
             )
-            print(
-                f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
-            )
+            if wrap_options.comm.verbose:
+                print(
+                    f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
+                )
         else:
             pass
 
