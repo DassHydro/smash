@@ -133,22 +133,22 @@ contains
         integer :: i
         integer :: n_subtimesteps = 20
 
-        hp = h(1)
-        ht = h(2)
+        hp = h(1)  !% trick for aliasing issue TAPENADE
+        ht = h(2)  !% trick for aliasing issue TAPENADE
 
         dt = 1._sp / real(n_subtimesteps, sp)
 
         do i = 1, n_subtimesteps
 
             hp_dot = ((1._sp - hp**2._sp)*pn - hp*(2._sp - hp)*en)/cp
-            ht_dot = (0.9_sp*pn*hp**2._sp - (ct**(-4._sp))/4._sp*((ht*ct)**5._sp) + kexc*ht**3.5_sp)/ct
+            ht_dot = (0.9_sp*pn*hp**2._sp - ct*(ht**5._sp)/4._sp + kexc*ht**3.5_sp)/ct
 
             hp = hp + dt*hp_dot
             ht = ht + dt*ht_dot
 
         end do
 
-        qti = (ct**(-4._sp))/4._sp*((ht*ct)**5._sp) + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
+        qti = ct*(ht**5._sp)/4._sp + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
 
         h(1) = hp
         h(2) = ht
@@ -185,7 +185,7 @@ contains
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, ct, kexc
-        real(sp), dimension(2), intent(inout) :: h  !% h = (hp, ht)
+        real(sp), dimension(2), intent(inout) :: h  !% h=(hp, ht)
         real(sp), intent(inout) :: qti
 
         real(sp), dimension(2, 2) :: jacob
@@ -194,10 +194,10 @@ contains
         integer :: i, j
         integer :: n_subtimesteps = 2
         integer :: maxiter = 10
-        real(sp) :: tol = 1e-8
+        real(sp) :: tol = 1e-6
 
-        hp = h(1)
-        ht = h(2)
+        hp = h(1)  !% trick for aliasing issue TAPENADE
+        ht = h(2)  !% trick for aliasing issue TAPENADE
 
         dt = 1._sp / real(n_subtimesteps, sp)
 
@@ -214,20 +214,20 @@ contains
                 jacob(2, 2) = 1._sp + dt*5._sp*(ht**4._sp)/4._sp - dt*3.5_sp*kexc*(ht**2.5_sp)/ct
 
                 dh(1) = hp - hp0 - dt*((1._sp - hp**2._sp)*pn - hp*(2._sp - hp)*en)/cp
-                dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2._sp - (ct**(-4._sp))/4._sp*((ht*ct)**5._sp) + kexc*ht**3.5_sp)/ct
+                dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2._sp - ct*(ht**5._sp)/4._sp + kexc*ht**3.5_sp)/ct
 
                 call solve_linear_system_2vars(jacob, delta_h, dh)
 
                 hp = hp + delta_h(1)
                 ht = ht + delta_h(2)
 
-                if (sqrt(delta_h(1)**2 + delta_h(2)**2) .lt. tol) exit
+                if (sqrt((delta_h(1)/hp)**2 + (delta_h(2)/ht)**2) .lt. tol) exit
 
             end do
 
         end do
 
-        qti = (ct**(-4._sp))/4._sp*((ht*ct)**5._sp) + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
+        qti = ct*(ht**5._sp)/4._sp + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
 
         h(1) = hp
         h(2) = ht
