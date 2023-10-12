@@ -10796,29 +10796,35 @@ CONTAINS
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_d
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
-    jreg_cmpt_values = 0._sp
-    jreg_cmpt_values_d = 0.0_4
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      jreg_d = 0.0_4
+    ELSE
+      jreg_cmpt_values = 0._sp
+      jreg_cmpt_values_d = 0.0_4
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values_d(i) = PRIOR_REGULARIZATION_D(parameters, &
-&         parameters_d, jreg_cmpt_values(i))
-      CASE ('smoothing') 
+          jreg_cmpt_values_d(i) = PRIOR_REGULARIZATION_D(parameters, &
+&           parameters_d, jreg_cmpt_values(i))
+        CASE ('smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
-&         input_data, parameters, parameters_d, options, .false., &
-&         jreg_cmpt_values(i))
-      CASE ('hard-smoothing') 
+          jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh&
+&           , input_data, parameters, parameters_d, options, .false., &
+&           jreg_cmpt_values(i))
+        CASE ('hard-smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
-&         input_data, parameters, parameters_d, options, .true., &
-&         jreg_cmpt_values(i))
-      END SELECT
-    END DO
-    jreg_d = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values_d)
-    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+          jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh&
+&           , input_data, parameters, parameters_d, options, .true., &
+&           jreg_cmpt_values(i))
+        END SELECT
+      END DO
+      jreg_d = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values_d)
+      jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_D
 
 !  Differentiation of classical_compute_jreg in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -10846,94 +10852,102 @@ CONTAINS
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_b
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
     INTEGER :: branch
-    jreg_cmpt_values = 0._sp
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      parameters_b%control%x = 0.0_4
+      parameters_b%opr_parameters%values = 0.0_4
+      parameters_b%opr_initial_states%values = 0.0_4
+    ELSE
+      jreg_cmpt_values = 0._sp
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
-        CALL PUSHCONTROL2B(2)
-      CASE ('smoothing') 
+          jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+          CALL PUSHCONTROL2B(2)
+        CASE ('smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                     control%x, 1))
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                     parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2)*SIZE(&
-&                     parameters%opr_parameters%values, 3))
-        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                     parameters%opr_initial_states%values, 1)*SIZE(&
-&                     parameters%opr_initial_states%values, 2)*SIZE(&
-&                     parameters%opr_initial_states%values, 3))
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .false.)
-        CALL PUSHCONTROL2B(1)
-      CASE ('hard-smoothing') 
+          CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                       control%x, 1))
+          CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                       parameters%opr_parameters%values, 1)*SIZE(&
+&                       parameters%opr_parameters%values, 2)*SIZE(&
+&                       parameters%opr_parameters%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE&
+&                       (parameters%opr_initial_states%values, 1)*SIZE(&
+&                       parameters%opr_initial_states%values, 2)*SIZE(&
+&                       parameters%opr_initial_states%values, 3))
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .false.)
+          CALL PUSHCONTROL2B(1)
+        CASE ('hard-smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                     control%x, 1))
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                     parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2)*SIZE(&
-&                     parameters%opr_parameters%values, 3))
-        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                     parameters%opr_initial_states%values, 1)*SIZE(&
-&                     parameters%opr_initial_states%values, 2)*SIZE(&
-&                     parameters%opr_initial_states%values, 3))
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .true.)
-        CALL PUSHCONTROL2B(0)
-      CASE DEFAULT
-        CALL PUSHCONTROL2B(3)
-      END SELECT
-    END DO
-    jreg_cmpt_values_b = 0.0_4
-    jreg_cmpt_values_b = options%cost%wjreg_cmpt*jreg_b
-    parameters_b%control%x = 0.0_4
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
-    DO i=options%cost%njrc,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                      parameters%opr_initial_states%values, 1)*SIZE(&
-&                      parameters%opr_initial_states%values, 2)*SIZE(&
-&                      parameters%opr_initial_states%values, 3))
-          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                      parameters%opr_parameters%values, 1)*SIZE(&
-&                      parameters%opr_parameters%values, 2)*SIZE(&
-&                      parameters%opr_parameters%values, 3))
-          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                      control%x, 1))
-          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
-&                                   parameters, parameters_b, options, &
-&                                   .true., jreg_cmpt_values_b(i))
-          jreg_cmpt_values_b(i) = 0.0_4
-        ELSE
-          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                      parameters%opr_initial_states%values, 1)*SIZE(&
-&                      parameters%opr_initial_states%values, 2)*SIZE(&
-&                      parameters%opr_initial_states%values, 3))
-          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                      parameters%opr_parameters%values, 1)*SIZE(&
-&                      parameters%opr_parameters%values, 2)*SIZE(&
-&                      parameters%opr_parameters%values, 3))
-          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                      control%x, 1))
-          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
-&                                   parameters, parameters_b, options, &
-&                                   .false., jreg_cmpt_values_b(i))
+          CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                       control%x, 1))
+          CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                       parameters%opr_parameters%values, 1)*SIZE(&
+&                       parameters%opr_parameters%values, 2)*SIZE(&
+&                       parameters%opr_parameters%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE&
+&                       (parameters%opr_initial_states%values, 1)*SIZE(&
+&                       parameters%opr_initial_states%values, 2)*SIZE(&
+&                       parameters%opr_initial_states%values, 3))
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .true.)
+          CALL PUSHCONTROL2B(0)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(3)
+        END SELECT
+      END DO
+      jreg_cmpt_values_b = 0.0_4
+      jreg_cmpt_values_b = options%cost%wjreg_cmpt*jreg_b
+      parameters_b%control%x = 0.0_4
+      parameters_b%opr_parameters%values = 0.0_4
+      parameters_b%opr_initial_states%values = 0.0_4
+      DO i=options%cost%njrc,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4ARRAY(parameters%opr_initial_states%values, &
+&                        SIZE(parameters%opr_initial_states%values, 1)*&
+&                        SIZE(parameters%opr_initial_states%values, 2)*&
+&                        SIZE(parameters%opr_initial_states%values, 3))
+            CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                        parameters%opr_parameters%values, 1)*SIZE(&
+&                        parameters%opr_parameters%values, 2)*SIZE(&
+&                        parameters%opr_parameters%values, 3))
+            CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                        control%x, 1))
+            CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                     parameters, parameters_b, options&
+&                                     , .true., jreg_cmpt_values_b(i))
+            jreg_cmpt_values_b(i) = 0.0_4
+          ELSE
+            CALL POPREAL4ARRAY(parameters%opr_initial_states%values, &
+&                        SIZE(parameters%opr_initial_states%values, 1)*&
+&                        SIZE(parameters%opr_initial_states%values, 2)*&
+&                        SIZE(parameters%opr_initial_states%values, 3))
+            CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                        parameters%opr_parameters%values, 1)*SIZE(&
+&                        parameters%opr_parameters%values, 2)*SIZE(&
+&                        parameters%opr_parameters%values, 3))
+            CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                        control%x, 1))
+            CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                     parameters, parameters_b, options&
+&                                     , .false., jreg_cmpt_values_b(i))
+            jreg_cmpt_values_b(i) = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
+          CALL PRIOR_REGULARIZATION_B(parameters, parameters_b, &
+&                               jreg_cmpt_values_b(i))
           jreg_cmpt_values_b(i) = 0.0_4
         END IF
-      ELSE IF (branch .EQ. 2) THEN
-        CALL PRIOR_REGULARIZATION_B(parameters, parameters_b, &
-&                             jreg_cmpt_values_b(i))
-        jreg_cmpt_values_b(i) = 0.0_4
-      END IF
-    END DO
+      END DO
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters&
@@ -10948,24 +10962,30 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: jreg
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
-    jreg_cmpt_values = 0._sp
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      RETURN
+    ELSE
+      jreg_cmpt_values = 0._sp
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
-      CASE ('smoothing') 
+          jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+        CASE ('smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .false.)
-      CASE ('hard-smoothing') 
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .false.)
+        CASE ('hard-smoothing') 
 ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .true.)
-      END SELECT
-    END DO
-    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .true.)
+        END SELECT
+      END DO
+      jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG
 
 !  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -10996,13 +11016,9 @@ CONTAINS
     REAL(sp) :: jobs_d, jreg_d
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &                           output_d, options, returns, jobs, jobs_d)
-    IF (options%cost%wjreg .GT. 0._sp) THEN
-      CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters&
-&                             , parameters_d, options, options_d, &
-&                             returns, jreg, jreg_d)
-    ELSE
-      jreg_d = 0.0_4
-    END IF
+    CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
+&                           parameters_d, options, options_d, returns, &
+&                           jreg, jreg_d)
     output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
@@ -11032,48 +11048,35 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_b, jreg_b
-    INTEGER :: branch
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    IF (options%cost%wjreg .GT. 0._sp) THEN
-      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
-&                   x, 1))
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                   parameters%opr_initial_states%values, 1)*SIZE(&
-&                   parameters%opr_initial_states%values, 2)*SIZE(&
-&                   parameters%opr_initial_states%values, 3))
-      CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                           options, returns, jreg)
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
+    CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                 , 1))
+    CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
+&                 parameters%opr_parameters%values, 1)*SIZE(parameters%&
+&                 opr_parameters%values, 2)*SIZE(parameters%&
+&                 opr_parameters%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                 parameters%opr_initial_states%values, 1)*SIZE(&
+&                 parameters%opr_initial_states%values, 2)*SIZE(&
+&                 parameters%opr_initial_states%values, 3))
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     jobs_b = output_b%cost
     jreg_b = options%cost%wjreg*output_b%cost
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
-      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
-&                  , 1))
-      CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters&
-&                             , parameters_b, options, options_b, &
-&                             returns, jreg, jreg_b)
-    ELSE
-      parameters_b%control%x = 0.0_4
-      parameters_b%opr_parameters%values = 0.0_4
-      parameters_b%opr_initial_states%values = 0.0_4
-    END IF
+    CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
+&                parameters%opr_initial_states%values, 1)*SIZE(&
+&                parameters%opr_initial_states%values, 2)*SIZE(&
+&                parameters%opr_initial_states%values, 3))
+    CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters&
+&                %opr_parameters%values, 1)*SIZE(parameters%&
+&                opr_parameters%values, 2)*SIZE(parameters%&
+&                opr_parameters%values, 3))
+    CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
+&                1))
+    CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
+&                           parameters_b, options, options_b, returns, &
+&                           jreg, jreg_b)
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &                           output_b, options, returns, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
@@ -11093,14 +11096,8 @@ CONTAINS
     jreg = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    IF (options%cost%wjreg .GT. 0._sp) CALL CLASSICAL_COMPUTE_JREG(setup&
-&                                                            , mesh, &
-&                                                            input_data&
-&                                                            , &
-&                                                            parameters&
-&                                                            , options, &
-&                                                            returns, &
-&                                                            jreg)
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 

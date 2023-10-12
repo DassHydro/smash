@@ -29,6 +29,7 @@ from smash._constant import (
     SIGNS,
     JOBS_CMPT,
     JOBS_CMPT_TFM,
+    WJREG_ALIAS,
     JREG_CMPT,
     WEIGHT_ALIAS,
     GAUGE_ALIAS,
@@ -56,7 +57,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, ListLike, AnyTuple
+    from smash._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -616,7 +617,7 @@ def _standardize_simulation_cost_options_jobs_cmpt(
 
 
 def _standardize_simulation_cost_options_wjobs_cmpt(
-    jobs_cmpt: np.ndarray, wjobs_cmpt: str | Numeric | ListLike, **kwargs
+    jobs_cmpt: np.ndarray, wjobs_cmpt: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wjobs_cmpt, str):
         if wjobs_cmpt == "mean":
@@ -660,7 +661,7 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
 
     else:
         raise TypeError(
-            "wjobs_cmpt cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjobs_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wjobs_cmpt
@@ -711,43 +712,52 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
     return jobs_cmpt_tfm
 
 
-def _standardize_simulation_cost_options_wjreg(wjreg: Numeric, **kwargs) -> float:
-    if isinstance(wjreg, (int, float)):
+def _standardize_simulation_cost_options_wjreg(
+    wjreg: AlphaNumeric, **kwargs
+) -> str | float:
+    if isinstance(wjreg, str):
+        if wjreg.lower() in WJREG_ALIAS:
+            wjreg = wjreg.lower()
+        else:
+            raise ValueError(
+                f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}"
+            )
+
+    elif isinstance(wjreg, (int, float)):
         wjreg = float(wjreg)
         if wjreg < 0:
             raise ValueError("wjreg cost_options must be greater than or equal to 0")
     else:
-        raise TypeError("wjreg cost_options must be of Numeric type (int, float)")
+        raise TypeError(
+            "wjreg cost_options must be of AlphaNumeric type (str, int, float)"
+        )
 
     return wjreg
 
 
 def _standardize_simulation_cost_options_jreg_cmpt(
-    wjreg: float, jreg_cmpt: str | ListLike, **kwargs
+    jreg_cmpt: str | ListLike, **kwargs
 ) -> np.ndarray:
-    if wjreg > 0:
-        if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
-            jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
+    if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
+        jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
 
-            for i, jrc in enumerate(jreg_cmpt):
-                if jrc.lower() in JREG_CMPT:
-                    jreg_cmpt[i] = jrc.lower()
-                else:
-                    raise ValueError(
-                        f"Unknown component '{jrc}' at index {i} in jreg_cmpt cost_options. Choices: {JREG_CMPT}"
-                    )
-        else:
-            raise TypeError(
-                "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-            )
+        for i, jrc in enumerate(jreg_cmpt):
+            if jrc.lower() in JREG_CMPT:
+                jreg_cmpt[i] = jrc.lower()
+            else:
+                raise ValueError(
+                    f"Unknown component '{jrc}' at index {i} in jreg_cmpt cost_options. Choices: {JREG_CMPT}"
+                )
     else:
-        jreg_cmpt = np.empty(shape=0)
+        raise TypeError(
+            "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
+        )
 
     return jreg_cmpt
 
 
 def _standardize_simulation_cost_options_wjreg_cmpt(
-    jreg_cmpt: np.ndarray, wjreg_cmpt: str | Numeric | ListLike, **kwargs
+    jreg_cmpt: np.ndarray, wjreg_cmpt: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wjreg_cmpt, str):
         if wjreg_cmpt == "mean":
@@ -791,7 +801,7 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
 
     else:
         raise TypeError(
-            "wjreg_cmpt cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjreg_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wjreg_cmpt
@@ -840,7 +850,7 @@ def _standardize_simulation_cost_options_gauge(
 
 
 def _standardize_simulation_cost_options_wgauge(
-    gauge: np.ndarray, wgauge: str | Numeric | ListLike, **kwargs
+    gauge: np.ndarray, wgauge: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wgauge, str):
         if wgauge == "mean":
@@ -876,7 +886,7 @@ def _standardize_simulation_cost_options_wgauge(
 
     else:
         raise TypeError(
-            "wgauge cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wgauge cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wgauge
@@ -1303,6 +1313,10 @@ def _standardize_simulation_cost_options_finalize(
         info_event = _mask_event(model=model, **cost_options["event_seg"])
         cost_options["n_event"] = info_event["n"]
         cost_options["mask_event"] = info_event["mask"]
+
+    if isinstance(cost_options.get("wjreg", None), str):
+        cost_options["auto_wjreg"] = cost_options["wjreg"]
+        cost_options["wjreg"] = 0
 
     # % Handle flags send to Fortran
     # % gauge and wgauge

@@ -443,6 +443,9 @@ contains
         integer :: i
         real(sp), dimension(options%cost%njrc) :: jreg_cmpt_values
 
+        ! Case of forward run
+        if (.not. allocated(parameters%control%x)) return
+
         jreg_cmpt_values = 0._sp
 
         do i = 1, options%cost%njrc
@@ -491,7 +494,7 @@ contains
 
         call classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
 
-        if (options%cost%wjreg .gt. 0._sp) call classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
+        call classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
 
         output%cost = jobs + options%cost%wjreg*jreg
 

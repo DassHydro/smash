@@ -490,6 +490,8 @@ JOBS_CMPT = METRICS + SIGNS
 
 JOBS_CMPT_TFM = ["keep", "sqrt", "inv"]
 
+WJREG_ALIAS = ["fast", "lcurve"]
+
 JREG_CMPT = ["prior", "smoothing", "hard-smoothing"]
 
 WEIGHT_ALIAS = ["mean", "median", "lquartile", "uquartile"]
