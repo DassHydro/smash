@@ -11913,13 +11913,12 @@ CONTAINS
     ht = h(2)
     dt = 1._sp/REAL(n_subtimesteps, sp)
     DO i=1,n_subtimesteps
-      hp_dot = ((1._sp-hp**2._sp)*pn-hp*(2._sp-hp)*en)/cp
-      ht_dot = (0.9_sp*pn*hp**2._sp-ct*ht**5._sp/4._sp+kexc*ht**3.5_sp)/&
-&       ct
+      hp_dot = ((1._sp-hp**2)*pn-hp*(2._sp-hp)*en)/cp
+      ht_dot = (0.9_sp*pn*hp**2-ct*ht**5+kexc*ht**3.5_sp)/ct
       hp = hp + dt*hp_dot
       ht = ht + dt*ht_dot
     END DO
-    qti = ct*ht**5._sp/4._sp + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
+    qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
     h(1) = hp
     h(2) = ht
   END SUBROUTINE GR_ODE_EXPLICIT_EULER
@@ -12055,7 +12054,6 @@ CONTAINS
     INTEGER :: i, j
     INTEGER, SAVE :: n_subtimesteps=2
     INTEGER, SAVE :: maxiter=10
-    REAL(sp), SAVE :: tol=1e-6
     INTRINSIC REAL
     INTRINSIC SQRT
     REAL(sp) :: arg1
@@ -12063,7 +12061,6 @@ CONTAINS
     REAL(sp) :: temp
     REAL(sp) :: temp0
     REAL(sp) :: temp1
-    REAL(sp) :: temp2
 !% trick for aliasing issue TAPENADE
     hp_d = h_d(1)
     hp = h(1)
@@ -12080,35 +12077,31 @@ CONTAINS
       ht0_d = ht_d
       ht0 = ht
       DO j=1,maxiter
-        temp = hp/cp
-        jacob_d(1, 1) = dt*2._sp*(en_d-en*cp_d/cp)/cp + dt*2._sp*(temp*(&
-&         pn_d-en_d)+(pn-en)*(hp_d-temp*cp_d)/cp)
-        jacob(1, 1) = dt*2._sp*(en/cp) + dt*2._sp*((pn-en)*temp) + 1._sp
+        temp = ((-(hp*hp)+1._sp)*pn-(-hp+2._sp)*hp*en)/cp
+        dh_d(1) = hp_d - hp0_d - dt*((1._sp-hp**2)*pn_d-(pn*2*hp-hp*en)*&
+&         hp_d-(2._sp-hp)*(en*hp_d+hp*en_d)-temp*cp_d)/cp
+        dh(1) = hp - hp0 - dt*temp
+        temp = ht**5
+        temp0 = ht**3.5_sp
+        temp1 = (0.9_sp*pn*(hp*hp)-ct*temp+kexc*temp0)/ct
+        dh_d(2) = ht_d - ht0_d - dt*(0.9_sp*(hp**2*pn_d+pn*2*hp*hp_d)-(&
+&         temp+temp1)*ct_d-(ct*5*ht**4-kexc*3.5_sp*ht**2.5)*ht_d+temp0*&
+&         kexc_d)/ct
+        dh(2) = ht - ht0 - dt*temp1
+        temp1 = (hp*(pn-en)+en)/cp
+        jacob_d(1, 1) = dt*2._sp*((pn-en)*hp_d+hp*(pn_d-en_d)+en_d-temp1&
+&         *cp_d)/cp
+        jacob(1, 1) = dt*2._sp*temp1 + 1._sp
         jacob_d(1, 2) = 0.0_4
         jacob(1, 2) = 0._sp
-        temp = 0.9_sp*dt*2._sp
-        temp0 = pn*hp/ct
-        jacob_d(2, 1) = temp*(hp*pn_d+pn*hp_d-temp0*ct_d)/ct
-        jacob(2, 1) = temp*temp0
-        temp0 = kexc/ct
-        temp = ht**2.5_sp
-        jacob_d(2, 2) = dt*5._sp*ht**3.0*ht_d - dt*3.5_sp*(temp0*2.5_sp*&
-&         ht**1.5*ht_d+temp*(kexc_d-temp0*ct_d)/ct)
-        jacob(2, 2) = dt*5._sp*(ht**4._sp/4._sp) - dt*3.5_sp*(temp*temp0&
-&         ) + 1._sp
-        temp0 = -(hp**2._sp) + 1._sp
-        temp = (temp0*pn-(-hp+2._sp)*hp*en)/cp
-        dh_d(1) = hp_d - hp0_d - dt*(temp0*pn_d-(pn*2._sp*hp-hp*en)*hp_d&
-&         -(2._sp-hp)*(en*hp_d+hp*en_d)-temp*cp_d)/cp
-        dh(1) = hp - hp0 - dt*temp
-        temp0 = hp**2._sp
-        temp = ht**5._sp
-        temp1 = ht**3.5_sp
-        temp2 = (0.9_sp*pn*temp0-ct*temp/4._sp+kexc*temp1)/ct
-        dh_d(2) = ht_d - ht0_d - dt*(0.9_sp*(temp0*pn_d+pn*2._sp*hp*hp_d&
-&         )-(temp/4._sp+temp2)*ct_d-(ct*5._sp*ht**4.0/4._sp-kexc*3.5_sp*&
-&         ht**2.5)*ht_d+temp1*kexc_d)/ct
-        dh(2) = ht - ht0 - dt*temp2
+        temp1 = pn*hp/ct
+        jacob_d(2, 1) = dt*1.8_sp*(hp*pn_d+pn*hp_d-temp1*ct_d)/ct
+        jacob(2, 1) = dt*1.8_sp*temp1
+        temp1 = kexc/ct
+        temp0 = ht**2.5_sp
+        jacob_d(2, 2) = dt*(5._sp*4*ht**3*ht_d-3.5_sp*(temp1*2.5_sp*ht**&
+&         1.5*ht_d+temp0*(kexc_d-temp1*ct_d)/ct))
+        jacob(2, 2) = dt*(5._sp*ht**4-3.5_sp*(temp0*temp1)) + 1._sp
         CALL SOLVE_LINEAR_SYSTEM_2VARS_D(jacob, jacob_d, delta_h, &
 &                                  delta_h_d, dh, dh_d)
         hp_d = hp_d + delta_h_d(1)
@@ -12117,15 +12110,14 @@ CONTAINS
         ht = ht + delta_h(2)
         arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
         result1 = SQRT(arg1)
-        IF (result1 .LT. tol) EXIT
+        IF (result1 .LT. 1.e-6_sp) EXIT
       END DO
     END DO
-    temp2 = ht**5._sp
-    temp1 = hp**2._sp
+    temp1 = ht**5
     temp0 = ht**3.5_sp
-    qti_d = temp2*ct_d/4._sp + (ct*5._sp*ht**4.0/4._sp+kexc*3.5_sp*ht**&
-&     2.5)*ht_d + 0.1_sp*(temp1*pn_d+pn*2._sp*hp*hp_d) + temp0*kexc_d
-    qti = ct/4._sp*temp2 + 0.1_sp*(pn*temp1) + kexc*temp0
+    qti_d = temp1*ct_d + (ct*5*ht**4+kexc*3.5_sp*ht**2.5)*ht_d + 0.1_sp*&
+&     (hp**2*pn_d+pn*2*hp*hp_d) + temp0*kexc_d
+    qti = ct*temp1 + 0.1_sp*(pn*(hp*hp)) + kexc*temp0
     h_d(1) = hp_d
     h(1) = hp
     h_d(2) = ht_d
@@ -12154,18 +12146,15 @@ CONTAINS
     INTEGER :: i, j
     INTEGER, SAVE :: n_subtimesteps=2
     INTEGER, SAVE :: maxiter=10
-    REAL(sp), SAVE :: tol=1e-6
     INTRINSIC REAL
     INTRINSIC SQRT
     REAL(sp) :: arg1
     REAL(sp) :: result1
-    REAL(sp) :: temp
     REAL(sp) :: temp_b
+    REAL(sp) :: temp
     REAL(sp) :: temp0
     REAL(sp) :: temp_b0
-    REAL(sp) :: temp1
     REAL(sp) :: temp_b1
-    REAL(sp) :: temp2
     INTEGER :: ad_count
     INTEGER :: i0
     INTEGER :: branch
@@ -12179,20 +12168,19 @@ CONTAINS
       ht0 = ht
       ad_count = 1
       DO j=1,maxiter
+        CALL PUSHREAL4(dh(1))
+        dh(1) = hp - hp0 - dt*((1._sp-hp**2)*pn-hp*(2._sp-hp)*en)/cp
+        CALL PUSHREAL4(dh(2))
+        dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2-ct*ht**5+kexc*ht**3.5_sp)&
+&         /ct
         CALL PUSHREAL4(jacob(1, 1))
-        jacob(1, 1) = 1._sp + dt*2._sp*en/cp + dt*2._sp*(pn-en)*hp/cp
+        jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn-en)+en)/cp
         CALL PUSHREAL4(jacob(1, 2))
         jacob(1, 2) = 0._sp
         CALL PUSHREAL4(jacob(2, 1))
-        jacob(2, 1) = dt*2._sp*0.9_sp*pn*hp/ct
+        jacob(2, 1) = dt*1.8_sp*pn*hp/ct
         CALL PUSHREAL4(jacob(2, 2))
-        jacob(2, 2) = 1._sp + dt*5._sp*ht**4._sp/4._sp - dt*3.5_sp*kexc*&
-&         ht**2.5_sp/ct
-        CALL PUSHREAL4(dh(1))
-        dh(1) = hp - hp0 - dt*((1._sp-hp**2._sp)*pn-hp*(2._sp-hp)*en)/cp
-        CALL PUSHREAL4(dh(2))
-        dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2._sp-ct*ht**5._sp/4._sp+&
-&         kexc*ht**3.5_sp)/ct
+        jacob(2, 2) = 1._sp + dt*(5._sp*ht**4-3.5_sp*kexc*ht**2.5_sp/ct)
         CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
         CALL PUSHREAL4(hp)
         hp = hp + delta_h(1)
@@ -12200,7 +12188,7 @@ CONTAINS
         ht = ht + delta_h(2)
         arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
         result1 = SQRT(arg1)
-        IF (result1 .LT. tol) THEN
+        IF (result1 .LT. 1.e-6_sp) THEN
           GOTO 100
         ELSE
           ad_count = ad_count + 1
@@ -12212,12 +12200,12 @@ CONTAINS
  100  CALL PUSHCONTROL1B(1)
       CALL PUSHINTEGER4(ad_count)
  110 CONTINUE
-    ht_b = h_b(2) + (5._sp*ht**4.0*ct/4._sp+3.5_sp*ht**2.5*kexc)*qti_b
+    ht_b = h_b(2) + (5*ht**4*ct+3.5_sp*ht**2.5*kexc)*qti_b
     h_b(2) = 0.0_4
-    hp_b = h_b(1) + 2._sp*hp*pn*0.1_sp*qti_b
+    hp_b = h_b(1) + 2*hp*pn*0.1_sp*qti_b
     h_b(1) = 0.0_4
-    ct_b = ct_b + ht**5._sp*qti_b/4._sp
-    pn_b = hp**2._sp*0.1_sp*qti_b
+    ct_b = ct_b + ht**5*qti_b
+    pn_b = hp**2*0.1_sp*qti_b
     kexc_b = kexc_b + ht**3.5_sp*qti_b
     en_b = 0.0_4
     dh_b = 0.0_4
@@ -12245,54 +12233,42 @@ CONTAINS
         delta_h_b(1) = delta_h_b(1) + hp_b
         CALL SOLVE_LINEAR_SYSTEM_2VARS_B(jacob, jacob_b, delta_h, &
 &                                  delta_h_b, dh, dh_b)
-        CALL POPREAL4(dh(2))
-        temp0 = hp**2._sp
-        temp = ht**5._sp
-        temp2 = ht**3.5_sp
-        ht0_b = ht0_b - dh_b(2)
-        temp_b1 = -(dt*dh_b(2)/ct)
-        ht_b = ht_b + dh_b(2) + (3.5_sp*ht**2.5*kexc-5._sp*ht**4.0*ct/&
-&         4._sp)*temp_b1
-        dh_b(2) = 0.0_4
-        pn_b = pn_b + temp0*0.9_sp*temp_b1
-        hp_b = hp_b + 2._sp*hp*pn*0.9_sp*temp_b1
-        ct_b = ct_b - (temp/4._sp+(0.9_sp*(pn*temp0)-ct/4._sp*temp+kexc*&
-&         temp2)/ct)*temp_b1
-        kexc_b = kexc_b + temp2*temp_b1
-        CALL POPREAL4(dh(1))
-        temp0 = -(hp**2._sp) + 1._sp
-        hp0_b = hp0_b - dh_b(1)
-        temp_b1 = -(dt*dh_b(1)/cp)
-        hp_b = hp_b + dh_b(1) + (hp*en-en*(2._sp-hp)-2._sp*hp*pn)*&
-&         temp_b1
-        dh_b(1) = 0.0_4
-        pn_b = pn_b + temp0*temp_b1
-        en_b = en_b - hp*(2._sp-hp)*temp_b1
-        cp_b = cp_b - (temp0*pn-(2._sp-hp)*(hp*en))*temp_b1/cp
         CALL POPREAL4(jacob(2, 2))
-        temp_b1 = -(dt*3.5_sp*jacob_b(2, 2))
-        ht_b = ht_b + ht**3.0*dt*5._sp*jacob_b(2, 2) + 2.5_sp*ht**1.5*&
-&         kexc*temp_b1/ct
+        temp_b0 = dt*jacob_b(2, 2)
         jacob_b(2, 2) = 0.0_4
-        temp_b0 = ht**2.5_sp*temp_b1/ct
-        kexc_b = kexc_b + temp_b0
+        temp_b1 = -(ht**2.5_sp*3.5_sp*temp_b0/ct)
         CALL POPREAL4(jacob(2, 1))
-        temp_b1 = dt*0.9_sp*2._sp*jacob_b(2, 1)/ct
-        ct_b = ct_b - kexc*temp_b0/ct - pn*hp*temp_b1/ct
-        jacob_b(2, 1) = 0.0_4
-        hp_b = hp_b + pn*temp_b1
         CALL POPREAL4(jacob(1, 2))
         jacob_b(1, 2) = 0.0_4
         CALL POPREAL4(jacob(1, 1))
-        temp1 = hp/cp
-        temp_b = dt*2._sp*jacob_b(1, 1)/cp
-        temp_b0 = dt*2._sp*jacob_b(1, 1)
-        pn_b = pn_b + hp*temp_b1 + temp1*temp_b0
+        CALL POPREAL4(dh(2))
+        temp = ht**5
+        temp0 = ht**3.5_sp
+        ht0_b = ht0_b - dh_b(2)
+        temp_b = -(dt*dh_b(2)/ct)
+        ht_b = ht_b + (4*ht**3*5._sp-2.5_sp*ht**1.5*kexc*3.5_sp/ct)*&
+&         temp_b0 + dh_b(2) + (3.5_sp*ht**2.5*kexc-5*ht**4*ct)*temp_b
+        kexc_b = kexc_b + temp_b1 + temp0*temp_b
+        temp_b0 = dt*1.8_sp*jacob_b(2, 1)/ct
+        ct_b = ct_b - kexc*temp_b1/ct - pn*hp*temp_b0/ct - (temp+(0.9_sp&
+&         *(pn*hp**2)-ct*temp+kexc*temp0)/ct)*temp_b
+        jacob_b(2, 1) = 0.0_4
+        pn_b = pn_b + hp*temp_b0
+        hp_b = hp_b + pn*temp_b0
+        temp_b0 = dt*2._sp*jacob_b(1, 1)/cp
         jacob_b(1, 1) = 0.0_4
-        en_b = en_b + temp_b - temp1*temp_b0
-        temp_b1 = (pn-en)*temp_b0/cp
-        hp_b = hp_b + temp_b1
-        cp_b = cp_b - temp1*temp_b1 - en*temp_b/cp
+        hp_b = hp_b + (pn-en)*temp_b0 + 2*hp*pn*0.9_sp*temp_b
+        pn_b = pn_b + hp*temp_b0 + hp**2*0.9_sp*temp_b
+        dh_b(2) = 0.0_4
+        CALL POPREAL4(dh(1))
+        hp0_b = hp0_b - dh_b(1)
+        temp_b = -(dt*dh_b(1)/cp)
+        en_b = en_b + (1.0-hp)*temp_b0 - hp*(2._sp-hp)*temp_b
+        cp_b = cp_b - (hp*(pn-en)+en)*temp_b0/cp - ((1._sp-hp**2)*pn-(&
+&         2._sp-hp)*(hp*en))*temp_b/cp
+        hp_b = hp_b + dh_b(1) + (hp*en-en*(2._sp-hp)-2*hp*pn)*temp_b
+        dh_b(1) = 0.0_4
+        pn_b = pn_b + (1._sp-hp**2)*temp_b
  120  CONTINUE
       ht_b = ht_b + ht0_b
       hp_b = hp_b + hp0_b
@@ -12313,7 +12289,6 @@ CONTAINS
     INTEGER :: i, j
     INTEGER, SAVE :: n_subtimesteps=2
     INTEGER, SAVE :: maxiter=10
-    REAL(sp), SAVE :: tol=1e-6
     INTRINSIC REAL
     INTRINSIC SQRT
     REAL(sp) :: arg1
@@ -12327,23 +12302,22 @@ CONTAINS
       hp0 = hp
       ht0 = ht
       DO j=1,maxiter
-        jacob(1, 1) = 1._sp + dt*2._sp*en/cp + dt*2._sp*(pn-en)*hp/cp
+        dh(1) = hp - hp0 - dt*((1._sp-hp**2)*pn-hp*(2._sp-hp)*en)/cp
+        dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2-ct*ht**5+kexc*ht**3.5_sp)&
+&         /ct
+        jacob(1, 1) = 1._sp + dt*2._sp*(hp*(pn-en)+en)/cp
         jacob(1, 2) = 0._sp
-        jacob(2, 1) = dt*2._sp*0.9_sp*pn*hp/ct
-        jacob(2, 2) = 1._sp + dt*5._sp*ht**4._sp/4._sp - dt*3.5_sp*kexc*&
-&         ht**2.5_sp/ct
-        dh(1) = hp - hp0 - dt*((1._sp-hp**2._sp)*pn-hp*(2._sp-hp)*en)/cp
-        dh(2) = ht - ht0 - dt*(0.9_sp*pn*hp**2._sp-ct*ht**5._sp/4._sp+&
-&         kexc*ht**3.5_sp)/ct
+        jacob(2, 1) = dt*1.8_sp*pn*hp/ct
+        jacob(2, 2) = 1._sp + dt*(5._sp*ht**4-3.5_sp*kexc*ht**2.5_sp/ct)
         CALL SOLVE_LINEAR_SYSTEM_2VARS(jacob, delta_h, dh)
         hp = hp + delta_h(1)
         ht = ht + delta_h(2)
         arg1 = (delta_h(1)/hp)**2 + (delta_h(2)/ht)**2
         result1 = SQRT(arg1)
-        IF (result1 .LT. tol) GOTO 100
+        IF (result1 .LT. 1.e-6_sp) GOTO 100
       END DO
  100 CONTINUE
-    qti = ct*ht**5._sp/4._sp + 0.1_sp*pn*hp**2._sp + kexc*ht**3.5_sp
+    qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
     h(1) = hp
     h(2) = ht
   END SUBROUTINE GR_ODE_IMPLICIT_EULER
