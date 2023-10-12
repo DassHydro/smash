@@ -892,7 +892,7 @@ class Model(object):
                 The weighting of regularization term. There are two ways to specify it:
 
                 - A numeric value greater than or equal to 0
-                - An alias among 'fast' or 'lcurve'. **wjreg** will be auto-computed by one of these methods. 
+                - An alias among 'fast' or 'lcurve'. **wjreg** will be auto-computed by one of these methods.
 
             jreg_cmpt : str or ListLike, default 'prior'
                 Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
@@ -980,7 +980,7 @@ class Model(object):
 
             jreg : bool, default False
                 Whether to return jreg (regularization component of cost) value.
-            
+
             lcurve_wjreg : bool, default False
                 Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to 'lcurve'.
 

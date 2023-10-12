@@ -712,24 +712,31 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
     return jobs_cmpt_tfm
 
 
-def _standardize_simulation_cost_options_wjreg(wjreg: AlphaNumeric, **kwargs) -> str | float:
+def _standardize_simulation_cost_options_wjreg(
+    wjreg: AlphaNumeric, **kwargs
+) -> str | float:
     if isinstance(wjreg, str):
         if wjreg.lower() in WJREG_ALIAS:
             wjreg = wjreg.lower()
         else:
-            raise ValueError(f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}")
+            raise ValueError(
+                f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}"
+            )
 
     elif isinstance(wjreg, (int, float)):
         wjreg = float(wjreg)
         if wjreg < 0:
             raise ValueError("wjreg cost_options must be greater than or equal to 0")
     else:
-        raise TypeError("wjreg cost_options must be of AlphaNumeric type (str, int, float)")
+        raise TypeError(
+            "wjreg cost_options must be of AlphaNumeric type (str, int, float)"
+        )
 
     return wjreg
 
 
-def _standardize_simulation_cost_options_jreg_cmpt(jreg_cmpt: str | ListLike, **kwargs
+def _standardize_simulation_cost_options_jreg_cmpt(
+    jreg_cmpt: str | ListLike, **kwargs
 ) -> np.ndarray:
     if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
         jreg_cmpt = np.array(jreg_cmpt, ndmin=1)

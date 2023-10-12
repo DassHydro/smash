@@ -280,19 +280,35 @@ def _get_control_info(
 
     return ret
 
-def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> float:
 
-    print( f"{' '*4}FAST WJREG CYCLE 1")
+def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> float:
+    print(f"{' '*4}FAST WJREG CYCLE 1")
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
         setattr(returns, flag + "_flag", True)
 
-    wrap_forward_run(model.setup, model.mesh, model._input_data, model._parameters, model._output, options, returns)
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        options,
+        returns,
+    )
     jobs0 = returns.jobs
 
     # Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
+    wrap_optimize(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        wparameters,
+        model._output,
+        options,
+        returns,
+    )
     jobs = returns.jobs
     jreg = returns.jreg
 
@@ -300,29 +316,34 @@ def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> flo
 
     return wjreg
 
-def _get_lcurve_wjreg_best(cost_arr: np.ndarray, jobs_arr: np.ndarray, jreg_arr: np.ndarray, wjreg_arr: np.ndarray) -> (np.ndarray, float):
 
+def _get_lcurve_wjreg_best(
+    cost_arr: np.ndarray,
+    jobs_arr: np.ndarray,
+    jreg_arr: np.ndarray,
+    wjreg_arr: np.ndarray,
+) -> (np.ndarray, float):
     jobs_min = np.min(jobs_arr)
     jobs_max = np.max(jobs_arr)
     jreg_min = np.min(jreg_arr)
     jreg_max = np.max(jreg_arr)
 
     if (jobs_max - jobs_min) < 0 or (jreg_max - jreg_min) < 0:
-        return np.empty(shape=0), 0.
-    
-    max_distance = 0.
+        return np.empty(shape=0), 0.0
+
+    max_distance = 0.0
     distance = np.zeros(shape=cost_arr.size)
 
     for i in range(cost_arr.size):
         lcurve_y = (jreg_arr[i] - jreg_min) / (jreg_max - jreg_min)
         lcurve_x = (jobs_max - jobs_arr[i]) / (jobs_max - jobs_min)
         # % Skip point above y = x
-        if (lcurve_y < lcurve_x):
+        if lcurve_y < lcurve_x:
             if jobs_arr[i] < jobs_max:
                 hypot = np.hypot(lcurve_x, lcurve_y)
                 alpha = np.pi * 0.25 - np.arccos(lcurve_x / hypot)
                 distance[i] = hypot * np.sin(alpha)
-            
+
             if distance[i] > max_distance:
                 max_distance = distance[i]
                 wjreg = wjreg_arr[i]
@@ -333,47 +354,74 @@ def _get_lcurve_wjreg_best(cost_arr: np.ndarray, jobs_arr: np.ndarray, jreg_arr:
     return distance, wjreg
 
 
-def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (float, dict):
-
-    print( f"{' '*4}LCURVE WJREG CYCLE 1")
+def _get_lcurve_wjreg(
+    model: Model, options: OptionsDT, returns: ReturnsDT
+) -> (float, dict):
+    print(f"{' '*4}LCURVE WJREG CYCLE 1")
     # % Activate returns flags
     for flag in ["cost", "jobs", "jreg"]:
         setattr(returns, flag + "_flag", True)
 
-    wrap_forward_run(model.setup, model.mesh, model._input_data, model._parameters, model._output, options, returns)
+    wrap_forward_run(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        model._parameters,
+        model._output,
+        options,
+        returns,
+    )
     jobs_max = returns.jobs
 
     # % Avoid to make a complete copy of model
     wparameters = model._parameters.copy()
-    wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
+    wrap_optimize(
+        model.setup,
+        model.mesh,
+        model._input_data,
+        wparameters,
+        model._output,
+        options,
+        returns,
+    )
     cost = returns.cost
     jobs_min = returns.jobs
-    jreg_min = 0.
+    jreg_min = 0.0
     jreg_max = returns.jreg
 
-    if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.:
+    if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
         wjreg_fast = (jobs_max - jobs_min) / jreg_max
         log10_wjreg_fast = np.log10(wjreg_fast)
-        wjreg_range = np.array(10 ** np.arange(log10_wjreg_fast - 0.66, log10_wjreg_fast + 0.67, 0.33))
+        wjreg_range = np.array(
+            10 ** np.arange(log10_wjreg_fast - 0.66, log10_wjreg_fast + 0.67, 0.33)
+        )
     else:
         wjreg_range = np.empty(shape=0)
-    
+
     nwjr = wjreg_range.size
     cost_arr = np.zeros(shape=nwjr + 1)
     cost_arr[0] = cost
     jobs_arr = np.zeros(shape=nwjr + 1)
-    jobs_arr[0] = jobs_min    
+    jobs_arr[0] = jobs_min
     jreg_arr = np.zeros(shape=nwjr + 1)
-    jreg_arr[0] = jreg_max    
-    wjreg_arr = np.insert(wjreg_range, 0, 0.)
+    jreg_arr[0] = jreg_max
+    wjreg_arr = np.insert(wjreg_range, 0, 0.0)
 
     for i, wj in enumerate(wjreg_range):
         options.cost.wjreg = wj
 
-        print( f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
+        print(f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
         wparameters = model._parameters.copy()
-        wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
-        
+        wrap_optimize(
+            model.setup,
+            model.mesh,
+            model._input_data,
+            wparameters,
+            model._output,
+            options,
+            returns,
+        )
+
         cost_arr[i + 1] = returns.cost
         jobs_arr[i + 1] = returns.jobs
         jreg_arr[i + 1] = returns.jreg
@@ -390,6 +438,7 @@ def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (
     }
 
     return wjreg, lcurve
+
 
 def optimize(
     model: Model,
@@ -632,10 +681,16 @@ def _optimize(
     else:
         if auto_wjreg == "fast":
             wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns)
-            print( f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+            print(
+                f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
+            )
         elif auto_wjreg == "lcurve":
-            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(model, wrap_options, wrap_returns)
-            print( f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(
+                model, wrap_options, wrap_returns
+            )
+            print(
+                f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
+            )
         else:
             pass
 
