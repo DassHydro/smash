@@ -122,6 +122,27 @@ class Optimize:
     jreg : float
         Cost regularization component value.
 
+    lcurve_wjreg : dict
+        A dictionary containing the wjreg lcurve data. The elements are:
+
+        - 'wjreg_opt' : float
+            The optimal wjreg value.
+
+        - 'distance' : np.ndarray
+            An array of shape *(6,)* representing the L-Curve distance for each optimization cycle (the maximum distance corresponds to the optimal wjreg).
+
+        - 'cost' : np.ndarray
+            An array of shape *(6,)* representing the cost values for each optimization cycle.
+
+        - 'jobs' : np.ndarray
+            An array of shape *(6,)* representing the jobs values for each optimization cycle.
+
+        - 'jreg' : np.ndarray
+            An array of shape *(6,)* representing the jreg values for each optimization cycle.
+
+        - 'wjreg' : np.ndarray
+            An array of shape *(6,)* representing the wjreg values for each optimization cycle.
+
     Notes
     -----
     The object's available attributes depend on what is requested by the user during a call to `smash.optimize` in **return_options**.
@@ -259,6 +280,116 @@ def _get_control_info(
 
     return ret
 
+def _get_fast_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> float:
+
+    print( f"{' '*4}FAST WJREG CYCLE 1")
+    # % Activate returns flags
+    for flag in ["cost", "jobs", "jreg"]:
+        setattr(returns, flag + "_flag", True)
+
+    wrap_forward_run(model.setup, model.mesh, model._input_data, model._parameters, model._output, options, returns)
+    jobs0 = returns.jobs
+
+    # Avoid to make a complete copy of model
+    wparameters = model._parameters.copy()
+    wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
+    jobs = returns.jobs
+    jreg = returns.jreg
+
+    wjreg = (jobs0 - jobs) / jreg
+
+    return wjreg
+
+def _get_lcurve_wjreg_best(cost_arr: np.ndarray, jobs_arr: np.ndarray, jreg_arr: np.ndarray, wjreg_arr: np.ndarray) -> (np.ndarray, float):
+
+    jobs_min = np.min(jobs_arr)
+    jobs_max = np.max(jobs_arr)
+    jreg_min = np.min(jreg_arr)
+    jreg_max = np.max(jreg_arr)
+
+    if (jobs_max - jobs_min) < 0 or (jreg_max - jreg_min) < 0:
+        return np.empty(shape=0), 0.
+    
+    max_distance = 0.
+    distance = np.zeros(shape=cost_arr.size)
+
+    for i in range(cost_arr.size):
+        lcurve_y = (jreg_arr[i] - jreg_min) / (jreg_max - jreg_min)
+        lcurve_x = (jobs_max - jobs_arr[i]) / (jobs_max - jobs_min)
+        # % Skip point above y = x
+        if (lcurve_y < lcurve_x):
+            if jobs_arr[i] < jobs_max:
+                hypot = np.hypot(lcurve_x, lcurve_y)
+                alpha = np.pi * 0.25 - np.arccos(lcurve_x / hypot)
+                distance[i] = hypot * np.sin(alpha)
+            
+            if distance[i] > max_distance:
+                max_distance = distance[i]
+                wjreg = wjreg_arr[i]
+
+        else:
+            distance[i] = np.nan
+
+    return distance, wjreg
+
+
+def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (float, dict):
+
+    print( f"{' '*4}LCURVE WJREG CYCLE 1")
+    # % Activate returns flags
+    for flag in ["cost", "jobs", "jreg"]:
+        setattr(returns, flag + "_flag", True)
+
+    wrap_forward_run(model.setup, model.mesh, model._input_data, model._parameters, model._output, options, returns)
+    jobs_max = returns.jobs
+
+    # % Avoid to make a complete copy of model
+    wparameters = model._parameters.copy()
+    wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
+    cost = returns.cost
+    jobs_min = returns.jobs
+    jreg_min = 0.
+    jreg_max = returns.jreg
+
+    if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.:
+        wjreg_fast = (jobs_max - jobs_min) / jreg_max
+        log10_wjreg_fast = np.log10(wjreg_fast)
+        wjreg_range = np.array(10 ** np.arange(log10_wjreg_fast - 0.66, log10_wjreg_fast + 0.67, 0.33))
+    else:
+        wjreg_range = np.empty(shape=0)
+    
+    nwjr = wjreg_range.size
+    cost_arr = np.zeros(shape=nwjr + 1)
+    cost_arr[0] = cost
+    jobs_arr = np.zeros(shape=nwjr + 1)
+    jobs_arr[0] = jobs_min    
+    jreg_arr = np.zeros(shape=nwjr + 1)
+    jreg_arr[0] = jreg_max    
+    wjreg_arr = np.insert(wjreg_range, 0, 0.)
+
+    for i, wj in enumerate(wjreg_range):
+        options.cost.wjreg = wj
+
+        print( f"{' '*4}LCURVE WJREG CYCLE {i + 2}")
+        wparameters = model._parameters.copy()
+        wrap_optimize(model.setup, model.mesh, model._input_data, wparameters, model._output, options, returns)
+        
+        cost_arr[i + 1] = returns.cost
+        jobs_arr[i + 1] = returns.jobs
+        jreg_arr[i + 1] = returns.jreg
+
+    distance, wjreg = _get_lcurve_wjreg_best(cost_arr, jobs_arr, jreg_arr, wjreg_arr)
+
+    lcurve = {
+        "wjreg_opt": wjreg,
+        "distance": distance,
+        "cost": cost_arr,
+        "jobs": jobs_arr,
+        "jreg": jreg_arr,
+        "wjreg": wjreg_arr,
+    }
+
+    return wjreg, lcurve
 
 def optimize(
     model: Model,
@@ -315,11 +446,14 @@ def optimize(
             - 'sqrt' : Square root transformation
             - 'inv' : Multiplicative inverse transformation
 
-        wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
+        wjobs_cmpt : AlphaNumeric or ListLike, default 'mean'
             The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
 
         wjreg : Numeric, default 0
-            The weighting of regularization term. Only used with distributed mapping.
+            The weighting of regularization term. There are two ways to specify it:
+
+            - A numeric value greater than or equal to 0
+            - An alias among 'fast' or 'lcurve'. **wjreg** will be auto-computed by one of these methods.
 
         jreg_cmpt : str or ListLike, default 'prior'
             Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
@@ -328,16 +462,16 @@ def optimize(
             - 'smoothing' : Spatial derivative **not** penalized by background
             - 'hard-smoothing' : Spatial derivative penalized by background
 
-        wjreg_cmpt : str, Numeric, or ListLike, default 'mean'
+        wjreg_cmpt : AlphaNumeric or ListLike, default 'mean'
             The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.
 
         gauge : str or ListLike, default 'dws'
             Type of gauge to be computed. There are two ways to specify it:
 
             - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+            - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
 
-        wgauge : str or ListLike, default 'mean'
+        wgauge : AlphaNumeric or ListLike, default 'mean'
             Type of gauge weights. There are two ways to specify it:
 
             - A sequence of value whose size must be equal to the number of gauges optimized.
@@ -404,6 +538,9 @@ def optimize(
 
         jreg : bool, default False
             Whether to return jreg (regularization component of cost) value.
+
+        lcurve_wjreg : bool, default False
+            Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to 'lcurve'.
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
@@ -480,6 +617,8 @@ def _optimize(
     # % Map return_options dict to derived type
     _map_dict_to_object(return_options, wrap_returns)
 
+    auto_wjreg = cost_options.get("auto_wjreg", None)
+
     if mapping == "ann":
         net = _ann_optimize(
             model,
@@ -491,6 +630,15 @@ def _optimize(
         )
 
     else:
+        if auto_wjreg == "fast":
+            wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns)
+            print( f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+        elif auto_wjreg == "lcurve":
+            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(model, wrap_options, wrap_returns)
+            print( f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
+        else:
+            pass
+
         wrap_optimize(
             model.setup,
             model.mesh,
@@ -514,7 +662,7 @@ def _optimize(
             value = value.copy()
         fret[key] = value
 
-    # % Python returns
+    # % ANN Python returns
     if mapping == "ann":
         if "net" in return_options["keys"]:
             pyret["net"] = net
@@ -522,6 +670,10 @@ def _optimize(
             pyret["iter_cost"] = net.history["loss_train"]
         if "iter_projg" in return_options["keys"]:
             pyret["iter_projg"] = net.history["proj_grad"]
+
+    # % L-curve wjreg return
+    if auto_wjreg == "lcurve" and "lcurve_wjreg" in return_options["keys"]:
+        pyret["lcurve_wjreg"] = lcurve_wjreg
 
     ret = {**fret, **pyret}
     if ret:
@@ -881,7 +1033,7 @@ def bayesian_optimize(
             Type of gauge to be computed. There are two ways to specify it:
 
             - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+            - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
 
         control_prior: dict or None, default None
             A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.

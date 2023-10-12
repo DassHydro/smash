@@ -742,16 +742,19 @@ class Model(object):
                 - 'sqrt' : Square root transformation
                 - 'inv' : Multiplicative inverse transformation
 
-            wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
-                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
+            wjobs_cmpt : AlphaNumeric or ListLike, default 'mean'
+                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). There are two ways to specify it:
+
+                - A sequence of value whose size must be equal to the number of **jobs_cmpt**.
+                - An alias among 'mean'.
 
             gauge : str or ListLike, default 'dws'
                 Type of gauge to be computed. There are two ways to specify it:
 
                 - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+                - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
 
-            wgauge : str or ListLike, default 'mean'
+            wgauge : AlphaNumeric or ListLike, default 'mean'
                 Type of gauge weights. There are two ways to specify it:
 
                 - A sequence of value whose size must be equal to the number of gauges optimized.
@@ -879,11 +882,17 @@ class Model(object):
                 - 'sqrt' : Square root transformation
                 - 'inv' : Multiplicative inverse transformation
 
-            wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
-                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
+            wjobs_cmpt : AlphaNumeric or ListLike, default 'mean'
+                The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). There are two ways to specify it:
+
+                - A sequence of value whose size must be equal to the number of **jobs_cmpt**.
+                - An alias among 'mean'.
 
             wjreg : Numeric, default 0
-                The weighting of regularization term. Only used with distributed mapping.
+                The weighting of regularization term. There are two ways to specify it:
+
+                - A numeric value greater than or equal to 0
+                - An alias among 'fast' or 'lcurve'. **wjreg** will be auto-computed by one of these methods. 
 
             jreg_cmpt : str or ListLike, default 'prior'
                 Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
@@ -892,16 +901,19 @@ class Model(object):
                 - 'smoothing' : Spatial derivative **not** penalized by background
                 - 'hard-smoothing' : Spatial derivative penalized by background
 
-            wjreg_cmpt : str, Numeric, or ListLike, default 'mean'
-                The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.
+            wjreg_cmpt : AlphaNumeric or ListLike, default 'mean'
+                The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). There are two ways to specify it:
+
+                - A sequence of value whose size must be equal to the number of **jreg_cmpt**.
+                - An alias among 'mean'.
 
             gauge : str or ListLike, default 'dws'
                 Type of gauge to be computed. There are two ways to specify it:
 
                 - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+                - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
 
-            wgauge : str or ListLike, default 'mean'
+            wgauge : AlphaNumeric or ListLike, default 'mean'
                 Type of gauge weights. There are two ways to specify it:
 
                 - A sequence of value whose size must be equal to the number of gauges optimized.
@@ -968,6 +980,9 @@ class Model(object):
 
             jreg : bool, default False
                 Whether to return jreg (regularization component of cost) value.
+            
+            lcurve_wjreg : bool, default False
+                Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to 'lcurve'.
 
             .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
@@ -1119,7 +1134,7 @@ class Model(object):
                 Type of gauge to be computed. There are two ways to specify it:
 
                 - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-                - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
+                - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
 
             control_prior: dict or None, default None
                 A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
