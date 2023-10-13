@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash.fcore import _flib_fcore
+from smash.fcore import _libfcore
 
 import functools
 import numpy as np
@@ -32,7 +32,7 @@ def f90wrap_setter_char_array(func):
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 
-        getter = eval(f"_flib_fcore.f90wrap_{class_name}__array__{func_name}")
+        getter = eval(f"_libfcore.f90wrap_{class_name}__array__{func_name}")
 
         array_ndim, arra_type, array_shape, array_handle = getter(self._handle)
 
@@ -98,7 +98,7 @@ def f90wrap_setter_index_array(func):
         func_name = func.__name__
         class_name = self.__class__.__name__.lower()
 
-        getter = eval(f"_flib_fcore.f90wrap_{class_name}__array__{func_name}")
+        getter = eval(f"_libfcore.f90wrap_{class_name}__array__{func_name}")
 
         array_ndim, arra_type, array_shape, array_handle = getter(self._handle)
 

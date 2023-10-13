@@ -18,7 +18,7 @@ OBJ_EXT := o
 BUILD_DIR := obj
 SMASH_DIR := smash
 TAPENADE_DIR := tapenade
-F90WRAP_UTILS_DIR := f90wrap_utils
+F90WRAP_DIR := f90wrap
 FCORE_DIR := smash/fcore
 MESH_DIR := smash/factory/mesh
 TESTS_DIR := smash/tests
@@ -36,8 +36,8 @@ FCORE_F90WRAP_FILES := f90wrap*.$(F90_EXT)
 MESH_WRAP_FILES := $(MESH_DIR)/mw_*.$(F90_EXT)
 
 #% Shared lib name
-FCORE_SHARED_LIB := flib_fcore
-MESH_SHARED_LIB := flib_mesh
+FCORE_SHARED_LIB := libfcore
+MESH_SHARED_LIB := libmesh
 
 #% Classic `make` call
 #% 'c' 'f77' and 'f90' targets are in makefile.dep
@@ -73,8 +73,8 @@ $(BUILD_DIR)/%.$(OBJ_EXT): $(FCORE_DIR)/*/%.$(F90_EXT)
 #% Automatic generation of py_mod_names file (allow to do not modified this file each time a wrapped module is added to source)
 f90wrap:
 	rm -rf $(BUILD_DIR)/f90wrap*
-	cd $(F90WRAP_UTILS_DIR) ; python3 gen_py_mod_names.py
-	f90wrap -m $(FCORE_SHARED_LIB) $(FCORE_WRAP_FILES) -k $(F90WRAP_UTILS_DIR)/kind_map --py-mod-names $(F90WRAP_UTILS_DIR)/py_mod_names --package
+	cd $(F90WRAP_DIR) ; python3 gen_py_mod_names.py
+	f90wrap -m $(FCORE_SHARED_LIB) $(FCORE_WRAP_FILES) -k $(F90WRAP_DIR)/kind_map --py-mod-names $(F90WRAP_DIR)/py_mod_names --package
 
 #% Make f2py-f90wrap .so library
 f2py-f90wrap:
@@ -100,7 +100,7 @@ finalize:
 	mv _$(FCORE_SHARED_LIB)* $(FCORE_DIR)/.
 	mv _$(MESH_SHARED_LIB)* $(MESH_DIR)/.
 	rm -rf $(FCORE_SHARED_LIB)
-	cd $(F90WRAP_UTILS_DIR) ; python3 finalize_f90wrap.py
+	cd $(F90WRAP_DIR) ; python3 finalize_f90wrap.py
 
 #% Generate tapenade file (adjoint and tangent linear models)
 tap:
