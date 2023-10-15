@@ -1,12 +1,12 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    DEFAULT_BOUNDS_OPR_PARAMETERS,
-    DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+    DEFAULT_BOUNDS_RR_PARAMETERS,
+    DEFAULT_BOUNDS_RR_INITIAL_STATES,
     DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
     DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
 )
@@ -20,13 +20,13 @@ from smash.core.model._build_model import (
     _build_output,
 )
 from smash.core.model._standardize import (
-    _standardize_get_opr_parameters_args,
-    _standardize_get_opr_initial_states_args,
+    _standardize_get_rr_parameters_args,
+    _standardize_get_rr_initial_states_args,
     _standardize_get_serr_mu_parameters_args,
     _standardize_get_serr_sigma_parameters_args,
-    _standardize_get_opr_final_states_args,
-    _standardize_set_opr_parameters_args,
-    _standardize_set_opr_initial_states_args,
+    _standardize_get_rr_final_states_args,
+    _standardize_set_rr_parameters_args,
+    _standardize_set_rr_initial_states_args,
     _standardize_set_serr_mu_parameters_args,
     _standardize_set_serr_sigma_parameters_args,
 )
@@ -250,36 +250,36 @@ class Model(object):
         self._input_data.atmos_data = value
 
     @property
-    def opr_parameters(self):
+    def rr_parameters(self):
         """
-        Get operator parameters for the actual structure of the Model.
+        Get rainfall-runoff parameters for the actual structure of the Model.
 
         Examples
         --------
         TODO: Fill
         """
 
-        return self._parameters.opr_parameters
+        return self._parameters.rr_parameters
 
-    @opr_parameters.setter
-    def opr_parameters(self, value):
-        self._parameters.opr_parameters = value
+    @rr_parameters.setter
+    def rr_parameters(self, value):
+        self._parameters.rr_parameters = value
 
     @property
-    def opr_initial_states(self):
+    def rr_initial_states(self):
         """
-        Get operator initial states for the actual structure of the Model.
+        Get rainfall-runoff initial states for the actual structure of the Model.
 
         Examples
         --------
         TODO: Fill
         """
 
-        return self._parameters.opr_initial_states
+        return self._parameters.rr_initial_states
 
-    @opr_initial_states.setter
-    def opr_initial_states(self, value):
-        self._parameters.opr_initial_states = value
+    @rr_initial_states.setter
+    def rr_initial_states(self, value):
+        self._parameters.rr_initial_states = value
 
     @property
     def serr_mu_parameters(self):
@@ -330,20 +330,20 @@ class Model(object):
         self._output.response = value
 
     @property
-    def opr_final_states(self):
+    def rr_final_states(self):
         """
-        Get operator final states for the actual structure of the Model.
+        Get rainfall-runoff final states for the actual structure of the Model.
 
         Examples
         --------
         TODO: Fill
         """
 
-        return self._output.opr_final_states
+        return self._output.rr_final_states
 
-    @opr_final_states.setter
-    def opr_final_states(self, value):
-        self._output.opr_final_states = value
+    @rr_final_states.setter
+    def rr_final_states(self, value):
+        self._output.rr_final_states = value
 
     def copy(self):
         """
@@ -361,19 +361,19 @@ class Model(object):
 
         return self.__copy__()
 
-    def get_opr_parameters(self, key: str) -> np.ndarray:
+    def get_rr_parameters(self, key: str) -> np.ndarray:
         """
-        Get the values of an operator model parameter.
+        Get the values of a rainfall-runoff model parameter.
 
         Parameters
         ----------
         key : str
-            The name of the operator parameter.
+            The name of the rainfall-runoff parameter.
 
         Returns
         -------
         value : np.ndarray
-            A 2D-array representing the values of the operator parameter.
+            A 2D-array representing the values of the rainfall-runoff parameter.
 
         Examples
         --------
@@ -381,27 +381,27 @@ class Model(object):
 
         See Also
         --------
-        Model.opr_parameters : Get operator parameters for the actual structure of the Model.
+        Model.rr_parameters : Get rainfall-runoff parameters for the actual structure of the Model.
         """
 
-        key = _standardize_get_opr_parameters_args(self, key)
-        ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
+        key = _standardize_get_rr_parameters_args(self, key)
+        ind = np.argwhere(self._parameters.rr_parameters.keys == key).item()
 
-        return self._parameters.opr_parameters.values[..., ind]
+        return self._parameters.rr_parameters.values[..., ind]
 
-    def set_opr_parameters(self, key: str, value: Numeric | np.ndarray):
+    def set_rr_parameters(self, key: str, value: Numeric | np.ndarray):
         """
-        Set the values for an operator model parameter.
+        Set the values for a rainfall-runoff model parameter.
 
         This method performs an in-place operation on the Model object.
 
         Parameters
         ----------
         key : str
-            The name of the operator parameter.
+            The name of the rainfall-runoff parameter.
 
         value : Numeric or np.ndarray
-            The values to set for the operator parameter.
+            The values to set for the rainfall-runoff parameter.
 
         Examples
         --------
@@ -409,27 +409,27 @@ class Model(object):
 
         See Also
         --------
-        Model.opr_parameters : Get operator parameters for the actual structure of the Model.
+        Model.rr_parameters : Get rainfall-runoff parameters for the actual structure of the Model.
         """
 
-        key, value = _standardize_set_opr_parameters_args(self, key, value)
-        ind = np.argwhere(self._parameters.opr_parameters.keys == key).item()
+        key, value = _standardize_set_rr_parameters_args(self, key, value)
+        ind = np.argwhere(self._parameters.rr_parameters.keys == key).item()
 
-        self._parameters.opr_parameters.values[..., ind] = value
+        self._parameters.rr_parameters.values[..., ind] = value
 
-    def get_opr_initial_states(self, key: str) -> np.ndarray:
+    def get_rr_initial_states(self, key: str) -> np.ndarray:
         """
-        Get the values of an operator model initial state.
+        Get the values of a rainfall-runoff model initial state.
 
         Parameters
         ----------
         key : str
-            The name of the operator initial state.
+            The name of the rainfall-runoff initial state.
 
         Returns
         -------
         value : np.ndarray
-            A 2D-array representing the values of the operator initial state.
+            A 2D-array representing the values of the rainfall-runoff initial state.
 
         Examples
         --------
@@ -437,27 +437,27 @@ class Model(object):
 
         See Also
         --------
-        Model.opr_initial_states : Get operator initial states for the actual structure of the Model.
+        Model.rr_initial_states : Get rainfall-runoff initial states for the actual structure of the Model.
         """
 
-        key = _standardize_get_opr_initial_states_args(self, key)
-        ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
+        key = _standardize_get_rr_initial_states_args(self, key)
+        ind = np.argwhere(self._parameters.rr_initial_states.keys == key).item()
 
-        return self._parameters.opr_initial_states.values[..., ind]
+        return self._parameters.rr_initial_states.values[..., ind]
 
-    def set_opr_initial_states(self, key: str, value: Numeric | np.ndarray):
+    def set_rr_initial_states(self, key: str, value: Numeric | np.ndarray):
         """
-        Set the values for an operator model initial state.
+        Set the values for a rainfall-runoff model initial state.
 
         This method performs an in-place operation on the Model object.
 
         Parameters
         ----------
         key : str
-            The name of the operator initial state.
+            The name of the rainfall-runoff initial state.
 
         value : Numeric or np.ndarray
-            The values to set for the operator initial state.
+            The values to set for the rainfall-runoff initial state.
 
         Examples
         --------
@@ -465,13 +465,13 @@ class Model(object):
 
         See Also
         --------
-        Model.opr_initial_states : Get operator initial states for the actual structure of the Model.
+        Model.rr_initial_states : Get rainfall-runoff initial states for the actual structure of the Model.
         """
 
-        key, value = _standardize_set_opr_initial_states_args(self, key, value)
-        ind = np.argwhere(self._parameters.opr_initial_states.keys == key).item()
+        key, value = _standardize_set_rr_initial_states_args(self, key, value)
+        ind = np.argwhere(self._parameters.rr_initial_states.keys == key).item()
 
-        self._parameters.opr_initial_states.values[..., ind] = value
+        self._parameters.rr_initial_states.values[..., ind] = value
 
     def get_serr_mu_parameters(self, key: str) -> np.ndarray:
         """
@@ -585,19 +585,19 @@ class Model(object):
 
         self._parameters.serr_sigma_parameters.values[..., ind] = value
 
-    def get_opr_final_states(self, key: str) -> np.ndarray:
+    def get_rr_final_states(self, key: str) -> np.ndarray:
         """
-        Get the values of an operator model final state.
+        Get the values of a rainfall-runoff model final state.
 
         Parameters
         ----------
         key : str
-            The name of the operator final state.
+            The name of the rainfall-runoff final state.
 
         Returns
         -------
         value : np.ndarray
-            A 2D-array representing the values of the operator final state.
+            A 2D-array representing the values of the rainfall-runoff final state.
 
         Examples
         --------
@@ -605,22 +605,22 @@ class Model(object):
 
         See Also
         --------
-        Model.opr_final_states : Get operator final states for the actual structure of the Model.
+        Model.rr_final_states : Get rainfall-runoff final states for the actual structure of the Model.
         """
 
-        key = _standardize_get_opr_final_states_args(self, key)
-        ind = np.argwhere(self._output.opr_final_states.keys == key).item()
+        key = _standardize_get_rr_final_states_args(self, key)
+        ind = np.argwhere(self._output.rr_final_states.keys == key).item()
 
-        return self._output.opr_final_states.values[..., ind]
+        return self._output.rr_final_states.values[..., ind]
 
-    def get_opr_parameters_bounds(self) -> dict:
+    def get_rr_parameters_bounds(self) -> dict:
         """
-        Get the boundary condition for the operator model parameters.
+        Get the boundary condition for the rainfall-runoff model parameters.
 
         Returns
         -------
         bounds : dict
-            A dictionary representing the boundary condition for each operator parameter for the actual structure of the Model.
+            A dictionary representing the boundary condition for each rainfall-runoff parameter for the actual structure of the Model.
 
         Examples
         --------
@@ -629,18 +629,18 @@ class Model(object):
 
         return {
             key: value
-            for key, value in DEFAULT_BOUNDS_OPR_PARAMETERS.items()
-            if key in STRUCTURE_OPR_PARAMETERS[self.setup.structure]
+            for key, value in DEFAULT_BOUNDS_RR_PARAMETERS.items()
+            if key in STRUCTURE_RR_PARAMETERS[self.setup.structure]
         }
 
-    def get_opr_initial_states_bounds(self) -> dict:
+    def get_rr_initial_states_bounds(self) -> dict:
         """
-        Get the boundary condition for the operator model initial states.
+        Get the boundary condition for the rainfall-runoff model initial states.
 
         Returns
         -------
         bounds : dict
-            A dictionary representing the boundary condition for each operator initial state in the actual structure of the Model.
+            A dictionary representing the boundary condition for each rainfall-runoff initial state in the actual structure of the Model.
 
         Examples
         --------
@@ -649,8 +649,8 @@ class Model(object):
 
         return {
             key: value
-            for key, value in DEFAULT_BOUNDS_OPR_INITIAL_STATES.items()
-            if key in STRUCTURE_OPR_STATES[self.setup.structure]
+            for key, value in DEFAULT_BOUNDS_RR_INITIAL_STATES.items()
+            if key in STRUCTURE_RR_STATES[self.setup.structure]
         }
 
     def get_serr_mu_parameters_bounds(self) -> dict:
@@ -793,10 +793,10 @@ class Model(object):
                 - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
-                    It only applies to the following variables: 'opr_states' and 'q_domain'
+                    It only applies to the following variables: 'rr_states' and 'q_domain'
 
-            opr_states : bool, default False
-                Whether to return operator states for specific time steps.
+            rr_states : bool, default False
+                Whether to return rainfall-runoff states for specific time steps.
 
             q_domain : bool, defaul False
                 Whether to return simulated discharge on the whole domain for specific time steps.
@@ -952,10 +952,10 @@ class Model(object):
                 - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
-                    It only applies to the following variables: 'opr_states' and 'q_domain'
+                    It only applies to the following variables: 'rr_states' and 'q_domain'
 
-            opr_states : bool, default False
-                Whether to return operator states for specific time steps.
+            rr_states : bool, default False
+                Whether to return rainfall-runoff states for specific time steps.
 
             q_domain : bool, defaul False
                 Whether to return simulated discharge on the whole domain for specific time steps.
@@ -1027,7 +1027,7 @@ class Model(object):
         Parameters
         ----------
         multiset : MultipleForwardRun or MultipleOptimize
-            The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
+            The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of rainfall-runoff parameters or initial states.
 
         alpha : Numeric, ListLike, or None, default None
             A regularization parameter that controls the decay rate of the likelihood function. If **alpha** is a list-like object, the L-curve approach will be used to find an optimal value for the regularization parameter.
@@ -1058,10 +1058,10 @@ class Model(object):
                 - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
-                    It only applies to the following variables: 'opr_states' and 'q_domain'
+                    It only applies to the following variables: 'rr_states' and 'q_domain'
 
-            opr_states : bool, default False
-                Whether to return operator states for specific time steps.
+            rr_states : bool, default False
+                Whether to return rainfall-runoff states for specific time steps.
 
             q_domain : bool, defaul False
                 Whether to return simulated discharge on the whole domain for specific time steps.
@@ -1178,10 +1178,10 @@ class Model(object):
                 - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
                 .. note::
-                    It only applies to the following variables: 'opr_states' and 'q_domain'
+                    It only applies to the following variables: 'rr_states' and 'q_domain'
 
-            opr_states : bool, default False
-                Whether to return operator states for specific time steps.
+            rr_states : bool, default False
+                Whether to return rainfall-runoff states for specific time steps.
 
             q_domain : bool, defaul False
                 Whether to return simulated discharge on the whole domain for specific time steps.

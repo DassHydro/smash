@@ -1,8 +1,11 @@
-commit 52d9d9560f0e3560713e5b479897b708160095fe
-Author: Francois Colleoni <francois.colleoni@inrae.fr>
-Date:   Thu Oct 12 12:15:11 2023 +0200
+commit 54ea79e40318428a3375ff2376eb9ad794b264ab
+Merge: dba1dda fb33510
+Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
+Date:   Thu Oct 12 21:06:43 2023 +0200
 
-    FIX PR: Black Python files
+    Merge pull request #91 from DassHydro/enc-auto-wjreg
+    
+    ENC: Add auto wjreg
 
 TEST NAME                                             |STATUS
 bbox_mesh.active_cell                                 |NON MODIFIED
@@ -30,50 +33,70 @@ custom_optimize.gr4-lr.custom_set_5.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_6.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_7.sim_q             |NON MODIFIED
 custom_optimize.gr4-lr.custom_set_8.sim_q             |NON MODIFIED
-custom_optimize.gr4-lr.custom_set_9.sim_q             |ADDED
+custom_optimize.gr4-lr.custom_set_9.sim_q             |NON MODIFIED
 forward_run.gr4-kw.cost                               |NON MODIFIED
 forward_run.gr4-kw.jobs                               |NON MODIFIED
-forward_run.gr4-kw.opr_states.hi                      |NON MODIFIED
-forward_run.gr4-kw.opr_states.hp                      |NON MODIFIED
-forward_run.gr4-kw.opr_states.ht                      |NON MODIFIED
+forward_run.gr4-kw.opr_states.hi                      |DELETED
+forward_run.gr4-kw.opr_states.hp                      |DELETED
+forward_run.gr4-kw.opr_states.ht                      |DELETED
 forward_run.gr4-kw.q_domain                           |NON MODIFIED
+forward_run.gr4-kw.rr_states.hi                       |ADDED
+forward_run.gr4-kw.rr_states.hp                       |ADDED
+forward_run.gr4-kw.rr_states.ht                       |ADDED
 forward_run.gr4-kw.sim_q                              |NON MODIFIED
 forward_run.gr4-lr.cost                               |NON MODIFIED
 forward_run.gr4-lr.jobs                               |NON MODIFIED
-forward_run.gr4-lr.opr_states.hi                      |NON MODIFIED
-forward_run.gr4-lr.opr_states.hlr                     |NON MODIFIED
-forward_run.gr4-lr.opr_states.hp                      |NON MODIFIED
-forward_run.gr4-lr.opr_states.ht                      |NON MODIFIED
+forward_run.gr4-lr.opr_states.hi                      |DELETED
+forward_run.gr4-lr.opr_states.hlr                     |DELETED
+forward_run.gr4-lr.opr_states.hp                      |DELETED
+forward_run.gr4-lr.opr_states.ht                      |DELETED
 forward_run.gr4-lr.q_domain                           |NON MODIFIED
+forward_run.gr4-lr.rr_states.hi                       |ADDED
+forward_run.gr4-lr.rr_states.hlr                      |ADDED
+forward_run.gr4-lr.rr_states.hp                       |ADDED
+forward_run.gr4-lr.rr_states.ht                       |ADDED
 forward_run.gr4-lr.sim_q                              |NON MODIFIED
 forward_run.gr5-kw.cost                               |NON MODIFIED
 forward_run.gr5-kw.jobs                               |NON MODIFIED
-forward_run.gr5-kw.opr_states.hi                      |NON MODIFIED
-forward_run.gr5-kw.opr_states.hp                      |NON MODIFIED
-forward_run.gr5-kw.opr_states.ht                      |NON MODIFIED
+forward_run.gr5-kw.opr_states.hi                      |DELETED
+forward_run.gr5-kw.opr_states.hp                      |DELETED
+forward_run.gr5-kw.opr_states.ht                      |DELETED
 forward_run.gr5-kw.q_domain                           |NON MODIFIED
+forward_run.gr5-kw.rr_states.hi                       |ADDED
+forward_run.gr5-kw.rr_states.hp                       |ADDED
+forward_run.gr5-kw.rr_states.ht                       |ADDED
 forward_run.gr5-kw.sim_q                              |NON MODIFIED
 forward_run.gr5-lr.cost                               |NON MODIFIED
 forward_run.gr5-lr.jobs                               |NON MODIFIED
-forward_run.gr5-lr.opr_states.hi                      |NON MODIFIED
-forward_run.gr5-lr.opr_states.hlr                     |NON MODIFIED
-forward_run.gr5-lr.opr_states.hp                      |NON MODIFIED
-forward_run.gr5-lr.opr_states.ht                      |NON MODIFIED
+forward_run.gr5-lr.opr_states.hi                      |DELETED
+forward_run.gr5-lr.opr_states.hlr                     |DELETED
+forward_run.gr5-lr.opr_states.hp                      |DELETED
+forward_run.gr5-lr.opr_states.ht                      |DELETED
 forward_run.gr5-lr.q_domain                           |NON MODIFIED
+forward_run.gr5-lr.rr_states.hi                       |ADDED
+forward_run.gr5-lr.rr_states.hlr                      |ADDED
+forward_run.gr5-lr.rr_states.hp                       |ADDED
+forward_run.gr5-lr.rr_states.ht                       |ADDED
 forward_run.gr5-lr.sim_q                              |NON MODIFIED
 forward_run.grd-lr.cost                               |NON MODIFIED
 forward_run.grd-lr.jobs                               |NON MODIFIED
-forward_run.grd-lr.opr_states.hlr                     |NON MODIFIED
-forward_run.grd-lr.opr_states.hp                      |NON MODIFIED
-forward_run.grd-lr.opr_states.ht                      |NON MODIFIED
+forward_run.grd-lr.opr_states.hlr                     |DELETED
+forward_run.grd-lr.opr_states.hp                      |DELETED
+forward_run.grd-lr.opr_states.ht                      |DELETED
 forward_run.grd-lr.q_domain                           |NON MODIFIED
+forward_run.grd-lr.rr_states.hlr                      |ADDED
+forward_run.grd-lr.rr_states.hp                       |ADDED
+forward_run.grd-lr.rr_states.ht                       |ADDED
 forward_run.grd-lr.sim_q                              |NON MODIFIED
 forward_run.loieau-lr.cost                            |NON MODIFIED
 forward_run.loieau-lr.jobs                            |NON MODIFIED
-forward_run.loieau-lr.opr_states.ha                   |NON MODIFIED
-forward_run.loieau-lr.opr_states.hc                   |NON MODIFIED
-forward_run.loieau-lr.opr_states.hlr                  |NON MODIFIED
+forward_run.loieau-lr.opr_states.ha                   |DELETED
+forward_run.loieau-lr.opr_states.hc                   |DELETED
+forward_run.loieau-lr.opr_states.hlr                  |DELETED
 forward_run.loieau-lr.q_domain                        |NON MODIFIED
+forward_run.loieau-lr.rr_states.ha                    |ADDED
+forward_run.loieau-lr.rr_states.hc                    |ADDED
+forward_run.loieau-lr.rr_states.hlr                   |ADDED
 forward_run.loieau-lr.sim_q                           |NON MODIFIED
 generate_samples.normal                               |NON MODIFIED
 generate_samples.uniform                              |NON MODIFIED
@@ -110,12 +133,15 @@ model_io.atmos_data.mean_pet                          |NON MODIFIED
 model_io.atmos_data.mean_prcp                         |NON MODIFIED
 model_io.mesh.active_cell                             |NON MODIFIED
 model_io.mesh.flwdir                                  |NON MODIFIED
-model_io.opr_final_states.values                      |NON MODIFIED
-model_io.opr_initial_states.values                    |NON MODIFIED
-model_io.opr_parameters.values                        |NON MODIFIED
+model_io.opr_final_states.values                      |DELETED
+model_io.opr_initial_states.values                    |DELETED
+model_io.opr_parameters.values                        |DELETED
 model_io.physio_data.descriptor                       |NON MODIFIED
 model_io.response.q                                   |NON MODIFIED
 model_io.response_data.q                              |NON MODIFIED
+model_io.rr_final_states.values                       |ADDED
+model_io.rr_initial_states.values                     |ADDED
+model_io.rr_parameters.values                         |ADDED
 model_io.setup.end_time                               |NON MODIFIED
 model_io.setup.start_time                             |NON MODIFIED
 model_io.setup.structure                              |NON MODIFIED

@@ -64,7 +64,7 @@ def _standardize_optimize_args(
     return_options: dict | None,
 ) -> AnyTuple:
     func_name = "optimize"
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
     mapping = _standardize_simulation_mapping(mapping)
@@ -116,7 +116,7 @@ def _standardize_multiple_optimize_args(
     func_name = "optimize"
     samples = _standardize_simulation_samples(model, samples)
 
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
     mapping = _standardize_multiple_optimize_mapping(mapping)
@@ -159,7 +159,7 @@ def _standardize_bayesian_optimize_args(
     return_options: dict | None,
 ) -> AnyTuple:
     func_name = "bayesian_optimize"
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
     mapping = _standardize_bayesian_optimize_mapping(mapping)

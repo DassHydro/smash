@@ -26,6 +26,7 @@ Numerical Optimization
       :toctree: smash/
 
       optimize
+      bayesian_optimize
 
 Run Multiple Optimization
 *************************
@@ -41,25 +42,12 @@ Multiple Sets Estimation
 
       multiset_estimate
 
-Numerical Bayesian Optimization
-*******************************
-.. autosummary::
-      :toctree: smash/
-
-      bayesian_optimize
-
 Default Optimization Options
 ****************************
 .. autosummary::
       :toctree: smash/
 
       default_optimize_options
-
-Default Bayesian Optimization Options
-*************************************
-.. autosummary::
-      :toctree: smash/
-
       default_bayesian_optimize_options
 
 Optimization Control Vector Information
@@ -68,10 +56,4 @@ Optimization Control Vector Information
       :toctree: smash/
 
       optimize_control_info
-
-Bayesian Optimization Control Vector Information
-************************************************
-.. autosummary::
-      :toctree: smash/
-
       bayesian_optimize_control_info

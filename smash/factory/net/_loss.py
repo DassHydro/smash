@@ -31,15 +31,15 @@ def _hcost_prime(
 ):
     # % Set parameters or states
     for i, name in enumerate(parameters):
-        if name in instance.opr_parameters.keys:
-            ind = np.argwhere(instance.opr_parameters.keys == name).item()
+        if name in instance.rr_parameters.keys:
+            ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            instance.opr_parameters.values[..., ind][mask] = y[:, i]
+            instance.rr_parameters.values[..., ind][mask] = y[:, i]
 
         else:
-            ind = np.argwhere(instance.opr_initial_states.keys == name).item()
+            ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            instance.opr_inital_states.values[..., ind][mask] = y[:, i]
+            instance.rr_inital_states.values[..., ind][mask] = y[:, i]
 
     wrap_parameters_to_control(
         instance.setup,
@@ -71,15 +71,15 @@ def _hcost_prime(
 
     grad = []
     for name in parameters:
-        if name in instance.opr_parameters.keys:
-            ind = np.argwhere(instance.opr_parameters.keys == name).item()
+        if name in instance.rr_parameters.keys:
+            ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            grad.append(parameters_b.opr_parameters.values[..., ind][mask])
+            grad.append(parameters_b.rr_parameters.values[..., ind][mask])
 
         else:
-            ind = np.argwhere(instance.opr_initial_states.keys == name).item()
+            ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            grad.append(parameters_b.opr_initial_states.values[..., ind][mask])
+            grad.append(parameters_b.rr_initial_states.values[..., ind][mask])
 
     grad = np.transpose(grad)
 

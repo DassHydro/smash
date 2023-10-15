@@ -1,11 +1,11 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
     STRUCTURE_COMPUTE_CI,
-    DEFAULT_OPR_PARAMETERS,
-    DEFAULT_OPR_INITIAL_STATES,
+    DEFAULT_RR_PARAMETERS,
+    DEFAULT_RR_INITIAL_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
     DEFAULT_SERR_MU_PARAMETERS,
@@ -64,8 +64,8 @@ def _build_setup(setup: SetupDT):
 
     setup.ntime_step = (et - st).total_seconds() / setup.dt
 
-    setup.nop = len(STRUCTURE_OPR_PARAMETERS[setup.structure])
-    setup.nos = len(STRUCTURE_OPR_STATES[setup.structure])
+    setup.nop = len(STRUCTURE_RR_PARAMETERS[setup.structure])
+    setup.nos = len(STRUCTURE_RR_STATES[setup.structure])
     setup.nsep_mu = len(SERR_MU_MAPPING_PARAMETERS[setup.serr_mu_mapping])
     setup.nsep_sigma = len(SERR_SIGMA_MAPPING_PARAMETERS[setup.serr_sigma_mapping])
 
@@ -99,20 +99,20 @@ def _build_parameters(
     parameters: ParametersDT,
 ):
     # % Build parameters
-    parameters.opr_parameters.keys = STRUCTURE_OPR_PARAMETERS[setup.structure]
+    parameters.rr_parameters.keys = STRUCTURE_RR_PARAMETERS[setup.structure]
 
-    for i, key in enumerate(parameters.opr_parameters.keys):
-        value = DEFAULT_OPR_PARAMETERS[key]
+    for i, key in enumerate(parameters.rr_parameters.keys):
+        value = DEFAULT_RR_PARAMETERS[key]
         if key == "llr":
             value *= setup.dt / 3_600
-        parameters.opr_parameters.values[..., i] = value
+        parameters.rr_parameters.values[..., i] = value
 
     # % Build initial states
-    parameters.opr_initial_states.keys = STRUCTURE_OPR_STATES[setup.structure]
+    parameters.rr_initial_states.keys = STRUCTURE_RR_STATES[setup.structure]
 
-    for i, key in enumerate(parameters.opr_initial_states.keys):
-        value = DEFAULT_OPR_INITIAL_STATES[key]
-        parameters.opr_initial_states.values[..., i] = value
+    for i, key in enumerate(parameters.rr_initial_states.keys):
+        value = DEFAULT_RR_INITIAL_STATES[key]
+        parameters.rr_initial_states.values[..., i] = value
 
     # TODO: Add a key in setup to trigger the auto computation of CI (True by default)
     if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
@@ -127,7 +127,7 @@ def _build_parameters(
         # % Scale to 1 (Fortran indexing)
         day_index = day_index - day_index[0] + 1
 
-        ind = np.argwhere(parameters.opr_parameters.keys == "ci").item()
+        ind = np.argwhere(parameters.rr_parameters.keys == "ci").item()
 
         wrap_compute_interception_capacity(
             setup,
@@ -135,7 +135,7 @@ def _build_parameters(
             input_data,
             day_index,
             day_index[-1],
-            parameters.opr_parameters.values[..., ind],
+            parameters.rr_parameters.values[..., ind],
         )  # % Fortran subroutine
 
     # % Build structural error mu parameters
@@ -162,4 +162,4 @@ def _build_output(
     output: OutputDT,
 ):
     # % Build final states
-    output.opr_final_states.keys = STRUCTURE_OPR_STATES[setup.structure]
+    output.rr_final_states.keys = STRUCTURE_RR_STATES[setup.structure]

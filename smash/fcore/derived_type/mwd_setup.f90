@@ -33,8 +33,8 @@
 !%          ``descriptor_name``        Descriptor maps names
 !%          ``ntime_step``             Number of time steps                                   (default: -99)
 !%          ``nd``                     Number of descriptor maps                              (default: -99)
-!%          ``nop``                    Number of operator parameters                          (default: -99)
-!%          ``nos``                    Number of operator states                              (default: -99)
+!%          ``nop``                    Number of rainfall-runoff parameters                   (default: -99)
+!%          ``nos``                    Number of rainfall-runoff states                       (default: -99)
 !%          ``nsep_mu``                Number of structural error parameters for mu           (default: -99)
 !%          ``nsep_sigma``             Number of structural error parameters for sigma        (default: -99)
 !%

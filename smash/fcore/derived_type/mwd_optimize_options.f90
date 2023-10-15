@@ -13,14 +13,14 @@
 !%          ``mapping``                       Control mapping name
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
-!%          ``opr_parameters``                Opr parameters to optimize
-!%          ``l_opr_parameters``              Opr parameters lower bound
-!%          ``u_opr_parameters``              Opr parameters upper bound
-!%          ``opr_parameters_descriptor``     Opr parameters descriptor to use
-!%          ``opr_initial_states``            Opr initial states to optimize
-!%          ``l_opr_initial_states``          Opr initial states lower bound
-!%          ``u_opr_initial_states``          Opr initial states upper bound
-!%          ``opr_initial_states_descriptor`` Opr initial states descriptor use
+!%          ``rr_parameters``                 Rr parameters to optimize
+!%          ``l_rr_parameters``               Rr parameters lower bound
+!%          ``u_rr_parameters``               Rr parameters upper bound
+!%          ``rr_parameters_descriptor``      Rr parameters descriptor to use
+!%          ``rr_initial_states``             Rr initial states to optimize
+!%          ``l_rr_initial_states``           Rr initial states lower bound
+!%          ``u_rr_initial_states``           Rr initial states upper bound
+!%          ``rr_initial_states_descriptor``  Rr initial states descriptor use
 !%          ``serr_mu_parameters``            Serr mu parameters to optimize
 !%          ``l_serr_mu_parameters``          Serr mu parameters lower bound
 !%          ``u_serr_mu_parameters``          Serr mu parameters upper bound
@@ -51,15 +51,15 @@ module mwd_optimize_options
         character(lchar) :: optimizer = "..." !$F90W char
         character(lchar) :: control_tfm = "..." !$F90W char
 
-        integer, dimension(:), allocatable :: opr_parameters
-        real(sp), dimension(:), allocatable :: l_opr_parameters
-        real(sp), dimension(:), allocatable :: u_opr_parameters
-        integer, dimension(:, :), allocatable :: opr_parameters_descriptor
+        integer, dimension(:), allocatable :: rr_parameters
+        real(sp), dimension(:), allocatable :: l_rr_parameters
+        real(sp), dimension(:), allocatable :: u_rr_parameters
+        integer, dimension(:, :), allocatable :: rr_parameters_descriptor
 
-        integer, dimension(:), allocatable :: opr_initial_states
-        real(sp), dimension(:), allocatable :: l_opr_initial_states
-        real(sp), dimension(:), allocatable :: u_opr_initial_states
-        integer, dimension(:, :), allocatable :: opr_initial_states_descriptor
+        integer, dimension(:), allocatable :: rr_initial_states
+        real(sp), dimension(:), allocatable :: l_rr_initial_states
+        real(sp), dimension(:), allocatable :: u_rr_initial_states
+        integer, dimension(:, :), allocatable :: rr_initial_states_descriptor
 
         integer, dimension(:), allocatable :: serr_mu_parameters
         real(sp), dimension(:), allocatable :: l_serr_mu_parameters
@@ -84,29 +84,29 @@ contains
         type(Optimize_OptionsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
 
-        allocate (this%opr_parameters(setup%nop))
-        this%opr_parameters = -99
+        allocate (this%rr_parameters(setup%nop))
+        this%rr_parameters = -99
 
-        allocate (this%l_opr_parameters(setup%nop))
-        this%l_opr_parameters = -99._sp
+        allocate (this%l_rr_parameters(setup%nop))
+        this%l_rr_parameters = -99._sp
 
-        allocate (this%u_opr_parameters(setup%nop))
-        this%u_opr_parameters = -99._sp
+        allocate (this%u_rr_parameters(setup%nop))
+        this%u_rr_parameters = -99._sp
 
-        allocate (this%opr_parameters_descriptor(setup%nd, setup%nop))
-        this%opr_parameters_descriptor = -99
+        allocate (this%rr_parameters_descriptor(setup%nd, setup%nop))
+        this%rr_parameters_descriptor = -99
 
-        allocate (this%opr_initial_states(setup%nos))
-        this%opr_initial_states = -99
+        allocate (this%rr_initial_states(setup%nos))
+        this%rr_initial_states = -99
 
-        allocate (this%l_opr_initial_states(setup%nos))
-        this%l_opr_initial_states = -99._sp
+        allocate (this%l_rr_initial_states(setup%nos))
+        this%l_rr_initial_states = -99._sp
 
-        allocate (this%u_opr_initial_states(setup%nos))
-        this%u_opr_initial_states = -99._sp
+        allocate (this%u_rr_initial_states(setup%nos))
+        this%u_rr_initial_states = -99._sp
 
-        allocate (this%opr_initial_states_descriptor(setup%nd, setup%nos))
-        this%opr_initial_states_descriptor = -99
+        allocate (this%rr_initial_states_descriptor(setup%nd, setup%nos))
+        this%rr_initial_states_descriptor = -99
 
         allocate (this%serr_mu_parameters(setup%nsep_mu))
         this%serr_mu_parameters = -99

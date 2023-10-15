@@ -31,8 +31,8 @@ class MultisetEstimate:
     time_step : pandas.DatetimeIndex
         A pandas.DatetimeIndex containing *n* returned time steps.
 
-    opr_states : list
-        A list of length *n* of Opr_StatesDT for each **time_step**.
+    rr_states : list
+        A list of length *n* of Rr_StatesDT for each **time_step**.
 
     q_domain : numpy.ndarray
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
@@ -105,7 +105,7 @@ def multiset_estimate(
         Model object.
 
     multiset : MultipleForwardRun or MultipleOptimize
-        The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of operator parameters or initial states.
+        The returned object created by the `smash.multiple_forward_run` or `smash.multiple_optimize` method containing information about multiple sets of rainfall-runoff parameters or initial states.
 
     alpha : Numeric, ListLike, or None, default None
         A regularization parameter that controls the decay rate of the likelihood function. If **alpha** is a list-like object, the L-curve approach will be used to find an optimal value for the regularization parameter.
@@ -136,10 +136,10 @@ def multiset_estimate(
             - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
-                It only applies to the following variables: 'opr_states' and 'q_domain'
+                It only applies to the following variables: 'rr_states' and 'q_domain'
 
-        opr_states : bool, default False
-            Whether to return operator states for specific time steps.
+        rr_states : bool, default False
+            Whether to return rainfall-runoff states for specific time steps.
 
         q_domain : bool, defaul False
             Whether to return simulated discharge on the whole domain for specific time steps.
