@@ -11,7 +11,7 @@ from smash.factory.mesh._tools import (
     _xy_to_rowcol,
     _trim_zeros_2d,
 )
-from smash.factory.mesh._flib_mesh import mw_mesh
+from smash.factory.mesh._libmesh import mw_mesh
 
 import numpy as np
 
