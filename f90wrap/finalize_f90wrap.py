@@ -46,7 +46,7 @@ def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
 
 def sed_internal_import(pyf: pathlib.PosixPath):
     """
-    Modify internal relative import of the _flib_fcore library (.so file)
+    Modify internal relative import of the _libfcore library (.so file)
     to match the package structure. Done by using the unix command sed
     in place
 
@@ -57,9 +57,9 @@ def sed_internal_import(pyf: pathlib.PosixPath):
     """
 
     os.system(
-        f'sed -i "0,/import _flib_fcore/s//from smash.fcore import _flib_fcore/" {pyf}'
+        f'sed -i "0,/import _libfcore/s//from smash.fcore import _libfcore/" {pyf}'
     )
-    os.system(f'sed -i "s/from flib_fcore/from smash.fcore/g" {pyf}')
+    os.system(f'sed -i "s/from libfcore/from smash.fcore/g" {pyf}')
 
 
 def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
@@ -285,7 +285,7 @@ def sed_derived_type_procedure(pyf: pathlib.PosixPath):
     content = open(pyf, "r").read()
     procedure = {}
     class_matches = re.findall(
-        '@f90wrap.runtime.register_class\("flib_fcore.(\w+)', content
+        '@f90wrap.runtime.register_class\("libfcore.(\w+)', content
     )
 
     for cm in class_matches:
