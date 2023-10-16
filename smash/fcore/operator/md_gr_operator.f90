@@ -78,7 +78,7 @@ contains
 
     end subroutine gr_exchange
 
-    subroutine gr_threshold_exchange(kexc, ht, aexc, l)
+    subroutine gr_threshold_exchange(kexc, aexc, ht, l)
 
         implicit none
 
@@ -121,20 +121,16 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr_ode_explicit_euler(pn, en, cp, ct, kexc, h, qti)
+    subroutine gr_ode_explicit_euler(pn, en, cp, ct, kexc, hp, ht, qti)
 
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, ct, kexc
-        real(sp), dimension(2), intent(inout) :: h  !% h = (hp, ht)
-        real(sp), intent(inout) :: qti
+        real(sp), intent(inout) :: hp, ht, qti
 
-        real(sp) :: hp, ht, hp_dot, ht_dot, dt
+        real(sp) :: hp_dot, ht_dot, dt
         integer :: i
         integer :: n_subtimesteps = 20
-
-        hp = h(1)  !% trick for aliasing issue TAPENADE
-        ht = h(2)  !% trick for aliasing issue TAPENADE
 
         dt = 1._sp/real(n_subtimesteps, sp)
 
@@ -149,9 +145,6 @@ contains
         end do
 
         qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
-
-        h(1) = hp
-        h(2) = ht
 
     end subroutine gr_ode_explicit_euler
 
@@ -180,23 +173,19 @@ contains
 
     end subroutine solve_linear_system_2vars
 
-    subroutine gr_ode_implicit_euler(pn, en, cp, ct, kexc, h, qti)
+    subroutine gr_ode_implicit_euler(pn, en, cp, ct, kexc, hp, ht, qti)
 
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, ct, kexc
-        real(sp), dimension(2), intent(inout) :: h  !% h=(hp, ht)
-        real(sp), intent(inout) :: qti
+        real(sp), intent(inout) :: hp, ht, qti
 
         real(sp), dimension(2, 2) :: jacob
         real(sp), dimension(2) :: dh, delta_h
-        real(sp) :: hp, ht, hp0, ht0, dt
+        real(sp) :: hp0, ht0, dt
         integer :: i, j
         integer :: n_subtimesteps = 2
         integer :: maxiter = 10
-
-        hp = h(1)  !% trick for aliasing issue TAPENADE
-        ht = h(2)  !% trick for aliasing issue TAPENADE
 
         dt = 1._sp/real(n_subtimesteps, sp)
 
@@ -227,9 +216,6 @@ contains
         end do
 
         qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
-
-        h(1) = hp
-        h(2) = ht
 
     end subroutine gr_ode_implicit_euler
 

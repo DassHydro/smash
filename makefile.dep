@@ -39,6 +39,7 @@ f90: \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
  obj/md_routing_operator.o \
+ obj/md_vic3l_operator.o \
  obj/mw_mask.o \
  obj/mwd_parameters_manipulation.o \
  obj/mw_optimize.o \

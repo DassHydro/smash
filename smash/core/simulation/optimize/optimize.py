@@ -921,8 +921,7 @@ def _multiple_optimize(
             samples_kind[i] = 1
             # % Adding 1 because Fortran uses one based indexing
             samples_ind[i] = (
-                np.argwhere(model._parameters.rr_initial_states.keys == name).item()
-                + 1
+                np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
             )
         # % Should be unreachable
         else:
