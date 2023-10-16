@@ -4,24 +4,24 @@
 !%      ----
 !%
 !%
-!%      - Opr_ParametersDT
+!%      - Rr_ParametersDT
 !%          Matrices containting spatialized parameters of hydrological operators.
 !%          (reservoir max capacity, lag time ...)
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``keys``                   Operator parameters keys
-!%          ``values``                 Operator parameters values
+!%          ``keys``                   Rainfall-runoff parameters keys
+!%          ``values``                 Rainfall-runoff parameters values
 !%
 !%
 !%      Subroutine
 !%      ----------
 !%
-!%      - Opr_ParametersDT_initialise
-!%      - Opr_ParametersDT_copy
+!%      - Rr_ParametersDT_initialise
+!%      - Rr_ParametersDT_copy
 
-module mwd_opr_parameters
+module mwd_rr_parameters
 
     use md_constant !% only: sp, lchar
     use mwd_setup !% only: SetupDT
@@ -29,21 +29,21 @@ module mwd_opr_parameters
 
     implicit none
 
-    type Opr_ParametersDT
+    type Rr_ParametersDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :, :), allocatable :: values
 
-    end type Opr_ParametersDT
+    end type Rr_ParametersDT
 
 contains
 
-    subroutine Opr_ParametersDT_initialise(this, setup, mesh)
+    subroutine Rr_ParametersDT_initialise(this, setup, mesh)
         !% Default parameters value will be handled in Python
 
         implicit none
 
-        type(Opr_ParametersDT), intent(inout) :: this
+        type(Rr_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -53,17 +53,17 @@ contains
         allocate (this%values(mesh%nrow, mesh%ncol, setup%nop))
         this%values = -99._sp
 
-    end subroutine Opr_ParametersDT_initialise
+    end subroutine Rr_ParametersDT_initialise
 
-    subroutine Opr_ParametersDT_copy(this, this_copy)
+    subroutine Rr_ParametersDT_copy(this, this_copy)
 
         implicit none
 
-        type(Opr_ParametersDT), intent(in) :: this
-        type(Opr_ParametersDT), intent(out) :: this_copy
+        type(Rr_ParametersDT), intent(in) :: this
+        type(Rr_ParametersDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Opr_ParametersDT_copy
+    end subroutine Rr_ParametersDT_copy
 
-end module mwd_opr_parameters
+end module mwd_rr_parameters

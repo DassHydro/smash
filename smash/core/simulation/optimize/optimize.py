@@ -95,8 +95,8 @@ class Optimize:
     time_step : pandas.DatetimeIndex
         A pandas.DatetimeIndex containing *n* returned time steps.
 
-    opr_states : list
-        A list of length *n* of Opr_StatesDT for each **time_step**.
+    rr_states : list
+        A list of length *n* of Rr_StatesDT for each **time_step**.
 
     q_domain : numpy.ndarray
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
@@ -183,8 +183,8 @@ class BayesianOptimize:
     time_step : pandas.DatetimeIndex
         A pandas.DatetimeIndex containing *n* returned time steps.
 
-    opr_states : list
-        A list of length *n* of Opr_StatesDT for each **time_step**.
+    rr_states : list
+        A list of length *n* of Rr_StatesDT for each **time_step**.
 
     q_domain : numpy.ndarray
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
@@ -565,10 +565,10 @@ def optimize(
             - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
-                It only applies to the following variables: 'opr_states' and 'q_domain'
+                It only applies to the following variables: 'rr_states' and 'q_domain'
 
-        opr_states : bool, default False
-            Whether to return operator states for specific time steps.
+        rr_states : bool, default False
+            Whether to return rainfall-runoff states for specific time steps.
 
         q_domain : bool, defaul False
             Whether to return simulated discharge on the whole domain for specific time steps.
@@ -799,15 +799,15 @@ def _ann_optimize(
     for i, name in enumerate(optimize_options["parameters"]):
         y_reshape = y[:, i].reshape(desc.shape[:2])
 
-        if name in model.opr_parameters.keys:
-            ind = np.argwhere(model.opr_parameters.keys == name).item()
+        if name in model.rr_parameters.keys:
+            ind = np.argwhere(model.rr_parameters.keys == name).item()
 
-            model.opr_parameters.values[..., ind] = y_reshape
+            model.rr_parameters.values[..., ind] = y_reshape
 
         else:
-            ind = np.argwhere(model.opr_initial_states.keys == name).item()
+            ind = np.argwhere(model.rr_initial_states.keys == name).item()
 
-            model.opr_inital_states.values[..., ind] = y_reshape
+            model.rr_inital_states.values[..., ind] = y_reshape
 
     # % Forward run for updating final states
     wrap_forward_run(
@@ -911,17 +911,17 @@ def _multiple_optimize(
     samples_ind = np.zeros(shape=nv, dtype=np.int32, order="F")
 
     for i, name in enumerate(samples._problem["names"]):
-        if name in model._parameters.opr_parameters.keys:
+        if name in model._parameters.rr_parameters.keys:
             samples_kind[i] = 0
             # % Adding 1 because Fortran uses one based indexing
             samples_ind[i] = (
-                np.argwhere(model._parameters.opr_parameters.keys == name).item() + 1
+                np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
             )
-        elif name in model._parameters.opr_initial_states.keys:
+        elif name in model._parameters.rr_initial_states.keys:
             samples_kind[i] = 1
             # % Adding 1 because Fortran uses one based indexing
             samples_ind[i] = (
-                np.argwhere(model._parameters.opr_initial_states.keys == name).item()
+                np.argwhere(model._parameters.rr_initial_states.keys == name).item()
                 + 1
             )
         # % Should be unreachable
@@ -986,11 +986,11 @@ def _multiple_optimize(
         "parameters"
     ]:  # add calibrated paramters from parameters to samples
         if not op in samples._problem["names"]:
-            if op in model.opr_parameters.keys:
-                value = model.get_opr_parameters(op)[0, 0]
+            if op in model.rr_parameters.keys:
+                value = model.get_rr_parameters(op)[0, 0]
 
-            elif op in model.opr_initial_states.keys:
-                value = model.get_opr_initial_states(op)[0, 0]
+            elif op in model.rr_initial_states.keys:
+                value = model.get_rr_initial_states(op)[0, 0]
 
             # % In case we have other kind of parameters. Should be unreachable.
             else:
@@ -1140,10 +1140,10 @@ def bayesian_optimize(
             - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
-                It only applies to the following variables: 'opr_states' and 'q_domain'
+                It only applies to the following variables: 'rr_states' and 'q_domain'
 
-        opr_states : bool, default False
-            Whether to return operator states for specific time steps.
+        rr_states : bool, default False
+            Whether to return rainfall-runoff states for specific time steps.
 
         q_domain : bool, defaul False
             Whether to return simulated discharge on the whole domain for specific time steps.

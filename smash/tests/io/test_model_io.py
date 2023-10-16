@@ -24,9 +24,9 @@ def generic_model_io(**kwargs) -> dict:
         "response": ["q"],
         "physio_data": ["descriptor"],
         "atmos_data": ["mean_prcp", "mean_pet"],
-        "opr_parameters": ["values"],
-        "opr_initial_states": ["values"],
-        "opr_final_states": ["values"],
+        "rr_parameters": ["values"],
+        "rr_initial_states": ["values"],
+        "rr_final_states": ["values"],
     }
 
     for attr, list_sub_attrs in dict_check.items():

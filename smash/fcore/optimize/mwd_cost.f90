@@ -457,12 +457,12 @@ contains
 
                 jreg_cmpt_values(i) = prior_regularization(parameters)
 
-                ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+                ! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
             case ("smoothing")
 
                 jreg_cmpt_values(i) = smoothing_regularization(setup, mesh, input_data, parameters, options, .false.)
 
-                ! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
+                ! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
             case ("hard-smoothing")
 
                 jreg_cmpt_values(i) = smoothing_regularization(setup, mesh, input_data, parameters, options, .true.)

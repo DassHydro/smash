@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
-    OPR_PARAMETERS,
-    OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
+    RR_PARAMETERS,
+    RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    OPTIMIZABLE_OPR_PARAMETERS,
-    OPTIMIZABLE_OPR_INITIAL_STATES,
+    OPTIMIZABLE_RR_PARAMETERS,
+    OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    FEASIBLE_OPR_PARAMETERS,
-    FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     MAPPING,
@@ -91,13 +91,13 @@ def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> st
 def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
     if isinstance(samples, Samples):
         for key in samples._problem["names"]:
-            if key in model.opr_parameters.keys:
-                l, u = FEASIBLE_OPR_PARAMETERS[key]
-            elif key in model.opr_initial_states.keys:
-                l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+            if key in model.rr_parameters.keys:
+                l, u = FEASIBLE_RR_PARAMETERS[key]
+            elif key in model.rr_initial_states.keys:
+                l, u = FEASIBLE_RR_INITIAL_STATES[key]
             else:
-                available_parameters = list(model.opr_parameters.keys) + list(
-                    model.opr_initial_states.keys
+                available_parameters = list(model.rr_parameters.keys) + list(
+                    model.rr_initial_states.keys
                 )
                 raise ValueError(
                     f"Unknown parameter '{key}' in samples attributes. Choices: {available_parameters}"
@@ -122,15 +122,15 @@ def _standardize_simulation_optimize_options_parameters(
 ) -> np.ndarray:
     is_bayesian = "bayesian" in func_name
 
-    available_opr_parameters = [
+    available_rr_parameters = [
         key
-        for key in STRUCTURE_OPR_PARAMETERS[model.setup.structure]
-        if OPTIMIZABLE_OPR_PARAMETERS[key]
+        for key in STRUCTURE_RR_PARAMETERS[model.setup.structure]
+        if OPTIMIZABLE_RR_PARAMETERS[key]
     ]
-    available_opr_initial_states = [
+    available_rr_initial_states = [
         key
-        for key in STRUCTURE_OPR_STATES[model.setup.structure]
-        if OPTIMIZABLE_OPR_INITIAL_STATES[key]
+        for key in STRUCTURE_RR_STATES[model.setup.structure]
+        if OPTIMIZABLE_RR_INITIAL_STATES[key]
     ]
     available_serr_mu_parameters = [
         key
@@ -142,7 +142,7 @@ def _standardize_simulation_optimize_options_parameters(
         for key in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]
         if OPTIMIZABLE_SERR_SIGMA_PARAMETERS[key]
     ]
-    available_parameters = available_opr_parameters + available_opr_initial_states
+    available_parameters = available_rr_parameters + available_rr_initial_states
 
     if is_bayesian:
         available_parameters.extend(
@@ -152,13 +152,13 @@ def _standardize_simulation_optimize_options_parameters(
     if parameters is None:
         if is_bayesian:
             parameters = np.array(
-                available_opr_parameters
+                available_rr_parameters
                 + available_serr_mu_parameters
                 + available_serr_sigma_parameters,
                 ndmin=1,
             )
         else:
-            parameters = np.array(available_opr_parameters, ndmin=1)
+            parameters = np.array(available_rr_parameters, ndmin=1)
 
     else:
         if isinstance(parameters, (str, list, tuple, np.ndarray)):
@@ -212,8 +212,8 @@ def _standardize_simulation_optimize_options_bounds(
             TypeError("bounds optimize_options must be a dictionary")
 
     parameters_bounds = dict(
-        **model.get_opr_parameters_bounds(),
-        **model.get_opr_initial_states_bounds(),
+        **model.get_rr_parameters_bounds(),
+        **model.get_rr_initial_states_bounds(),
         **model.get_serr_mu_parameters_bounds(),
         **model.get_serr_sigma_parameters_bounds(),
     )
@@ -224,12 +224,12 @@ def _standardize_simulation_optimize_options_bounds(
 
     # % Check that bounds are inside feasible domain and that bounds include parameter domain
     for key, value in bounds.items():
-        if key in model.opr_parameters.keys:
-            arr = model.get_opr_parameters(key)
-            l, u = FEASIBLE_OPR_PARAMETERS[key]
-        elif key in model.opr_initial_states.keys:
-            arr = model.get_opr_initial_states(key)
-            l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+        if key in model.rr_parameters.keys:
+            arr = model.get_rr_parameters(key)
+            l, u = FEASIBLE_RR_PARAMETERS[key]
+        elif key in model.rr_initial_states.keys:
+            arr = model.get_rr_initial_states(key)
+            l, u = FEASIBLE_RR_INITIAL_STATES[key]
         elif key in model.serr_sigma_parameters.keys:
             arr = model.get_serr_sigma_parameters(key)
             l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
@@ -276,7 +276,7 @@ def _standardize_simulation_optimize_options_descriptor(
     model: Model, parameters: np.ndarray, descriptor: dict | None, **kwargs
 ) -> dict:
     desc_linked_parameters = [
-        key for key in parameters if key in OPR_PARAMETERS + OPR_STATES
+        key for key in parameters if key in RR_PARAMETERS + RR_STATES
     ]
     if descriptor is None:
         descriptor = {}
@@ -1135,26 +1135,26 @@ def _standardize_simulation_return_options(
 
 
 def _standardize_simulation_parameters_feasibility(model: Model):
-    for key in model.opr_parameters.keys:
-        arr = model.get_opr_parameters(key)
-        l, u = FEASIBLE_OPR_PARAMETERS[key]
+    for key in model.rr_parameters.keys:
+        arr = model.get_rr_parameters(key)
+        l, u = FEASIBLE_RR_PARAMETERS[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_parameter '{key}'. Rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
-    for key in model.opr_initial_states.keys:
-        arr = model.get_opr_initial_states(key)
-        l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+    for key in model.rr_initial_states.keys:
+        arr = model.get_rr_initial_states(key)
+        l, u = FEASIBLE_RR_INITIAL_STATES[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model opr_initial_states '{key}'. Opr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_states '{key}'. Rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1194,60 +1194,60 @@ def _standardize_simulation_optimize_options_finalize(
     descriptor_present = "descriptor" in optimize_options.keys()
 
     # % Handle parameters
-    # % opr parameters
-    optimize_options["opr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
-    optimize_options["l_opr_parameters"] = np.zeros(
+    # % rr parameters
+    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
+    optimize_options["l_rr_parameters"] = np.zeros(
         shape=model.setup.nop, dtype=np.float32
     )
-    optimize_options["u_opr_parameters"] = np.zeros(
+    optimize_options["u_rr_parameters"] = np.zeros(
         shape=model.setup.nop, dtype=np.float32
     )
 
     if descriptor_present:
-        optimize_options["opr_parameters_descriptor"] = np.zeros(
+        optimize_options["rr_parameters_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nop), dtype=np.int32
         )
 
-    for i, key in enumerate(model.opr_parameters.keys):
+    for i, key in enumerate(model.rr_parameters.keys):
         if key in optimize_options["parameters"]:
-            optimize_options["opr_parameters"][i] = 1
-            optimize_options["l_opr_parameters"][i] = optimize_options["bounds"][key][0]
-            optimize_options["u_opr_parameters"][i] = optimize_options["bounds"][key][1]
+            optimize_options["rr_parameters"][i] = 1
+            optimize_options["l_rr_parameters"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_rr_parameters"][i] = optimize_options["bounds"][key][1]
 
             if descriptor_present:
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
-                        optimize_options["opr_parameters_descriptor"][j, i] = 1
+                        optimize_options["rr_parameters_descriptor"][j, i] = 1
 
-    # % opr initial states
-    optimize_options["opr_initial_states"] = np.zeros(
+    # % rr initial states
+    optimize_options["rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.int32
     )
-    optimize_options["l_opr_initial_states"] = np.zeros(
+    optimize_options["l_rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.float32
     )
-    optimize_options["u_opr_initial_states"] = np.zeros(
+    optimize_options["u_rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.float32
     )
     if descriptor_present:
-        optimize_options["opr_initial_states_descriptor"] = np.zeros(
+        optimize_options["rr_initial_states_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nos), dtype=np.int32
         )
 
-    for i, key in enumerate(model.opr_initial_states.keys):
+    for i, key in enumerate(model.rr_initial_states.keys):
         if key in optimize_options["parameters"]:
-            optimize_options["opr_initial_states"][i] = 1
-            optimize_options["l_opr_initial_states"][i] = optimize_options["bounds"][
+            optimize_options["rr_initial_states"][i] = 1
+            optimize_options["l_rr_initial_states"][i] = optimize_options["bounds"][
                 key
             ][0]
-            optimize_options["u_opr_initial_states"][i] = optimize_options["bounds"][
+            optimize_options["u_rr_initial_states"][i] = optimize_options["bounds"][
                 key
             ][1]
 
             if descriptor_present:
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
-                        optimize_options["opr_initial_states_descriptor"][j, i] = 1
+                        optimize_options["rr_initial_states_descriptor"][j, i] = 1
 
     # % serr mu parameters
     optimize_options["serr_mu_parameters"] = np.zeros(

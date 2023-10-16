@@ -10,7 +10,7 @@
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
 !%          ``response``             ResponseDT
-!%          ``opr_final_states``     Opr_StatesDT
+!%          ``rr_final_states``     Rr_StatesDT
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -25,14 +25,14 @@ module mwd_output
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_response !% only: ResponseDT, ResponseDT_initialise
-    use mwd_opr_states !% only: Opr_StatesDT, Opr_StatesDT_initialise
+    use mwd_rr_states !% only: Rr_StatesDT, Rr_StatesDT_initialise
 
     implicit none
 
     type OutputDT
 
         type(ResponseDT) :: response
-        type(Opr_StatesDT) :: opr_final_states
+        type(Rr_StatesDT) :: rr_final_states
         real(sp) :: cost
 
     end type OutputDT
@@ -48,7 +48,7 @@ contains
         type(MeshDT), intent(in) :: mesh
 
         call ResponseDT_initialise(this%response, setup, mesh)
-        call Opr_StatesDT_initialise(this%opr_final_states, setup, mesh)
+        call Rr_StatesDT_initialise(this%rr_final_states, setup, mesh)
 
     end subroutine OutputDT_initialise
 

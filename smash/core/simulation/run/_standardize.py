@@ -24,7 +24,7 @@ def _standardize_forward_run_args(
     common_options: dict | None,
     return_options: dict | None,
 ) -> AnyTuple:
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
     cost_options = _standardize_simulation_cost_options(
@@ -54,7 +54,7 @@ def _standardize_multiple_forward_run_args(
 ) -> AnyTuple:
     samples = _standardize_simulation_samples(model, samples)
 
-    # % In case model.set_opr_parameters or model.set_opr_initial_states were not used
+    # % In case model.set_rr_parameters or model.set_rr_initial_states were not used
     _standardize_simulation_parameters_feasibility(model)
 
     cost_options = _standardize_simulation_cost_options(

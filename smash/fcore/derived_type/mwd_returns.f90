@@ -11,8 +11,8 @@
 !%          ======================== =======================================
 !%          ``nmts``                 Number of time step to return
 !%          ``mask_time_step``       Mask of time step
-!%          ``opr_states``           Array of Opr_StatesDT
-!%          ``opr_states_flag``      Return flag of opr_states
+!%          ``rr_states``            Array of Rr_StatesDT
+!%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
 !%          ``iter_cost``            Array of cost iteration
@@ -50,7 +50,7 @@ module mwd_returns
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
-    use mwd_opr_states !%only: Opr_StatesDT
+    use mwd_rr_states !%only: Rr_StatesDT
 
     implicit none
 
@@ -60,8 +60,8 @@ module mwd_returns
 
         logical, dimension(:), allocatable :: mask_time_step
 
-        type(Opr_StatesDT), dimension(:), allocatable :: opr_states
-        logical :: opr_states_flag = .false.
+        type(Rr_StatesDT), dimension(:), allocatable :: rr_states
+        logical :: rr_states_flag = .false.
 
         real(sp), dimension(:, :, :), allocatable :: q_domain
         logical :: q_domain_flag = .false.
@@ -134,9 +134,9 @@ contains
 
             select case (wkeys(i))
 
-            case ("opr_states")
-                this%opr_states_flag = .true.
-                allocate (this%opr_states(this%nmts))
+            case ("rr_states")
+                this%rr_states_flag = .true.
+                allocate (this%rr_states(this%nmts))
 
             case ("q_domain")
                 this%q_domain_flag = .true.

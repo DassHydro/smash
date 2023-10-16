@@ -46,7 +46,7 @@ def default_optimize_options(
         A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
 
         parameters : ListLike
-            Operator parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
+            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
 
         bounds : dict
             Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
@@ -55,7 +55,7 @@ def default_optimize_options(
             Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
 
         descriptor : dict
-            A dictionary containing lists of descriptors used for each operator parameter.
+            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
             Only used when **mapping** is 'multi-linear' or 'multi-polynomial'. In case of 'ann', all descriptors will be used.
 
         net : Net
@@ -200,7 +200,7 @@ def default_bayesian_optimize_options(
         A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
 
         parameters : ListLike
-            Operator parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
+            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
 
         bounds : dict
             Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
@@ -209,7 +209,7 @@ def default_bayesian_optimize_options(
             Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
 
         descriptor : dict
-            A dictionary containing lists of descriptors used for each operator parameter.
+            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
             Only used when **mapping** is 'multi-linear' or 'multi-polynomial'.
 
         termination_crit : dict

@@ -8,7 +8,7 @@ import numpy as np
 
 STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "loieau-lr", "grd-lr"]
 
-OPR_PARAMETERS = [
+RR_PARAMETERS = [
     "ci",
     "cp",
     "ct",
@@ -22,10 +22,10 @@ OPR_PARAMETERS = [
     "bkw",
 ]
 
-OPR_STATES = ["hi", "hp", "ht", "ha", "hc", "hlr"]
+RR_STATES = ["hi", "hp", "ht", "ha", "hc", "hlr"]
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_OPR_PARAMETERS = dict(
+STRUCTURE_RR_PARAMETERS = dict(
     zip(
         STRUCTURE_NAME,
         [
@@ -40,7 +40,7 @@ STRUCTURE_OPR_PARAMETERS = dict(
 )
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_OPR_STATES = dict(
+STRUCTURE_RR_STATES = dict(
     zip(
         STRUCTURE_NAME,
         [
@@ -58,17 +58,17 @@ STRUCTURE_OPR_STATES = dict(
 STRUCTURE_COMPUTE_CI = dict(
     zip(
         STRUCTURE_NAME,
-        ["ci" in v for v in STRUCTURE_OPR_PARAMETERS.values()],
+        ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],
     )
 )
 
 ### FEASIBLE PARAMETERS ###
 ###########################
 
-# % Following OPR_PARAMETERS order
-FEASIBLE_OPR_PARAMETERS = dict(
+# % Following RR_PARAMETERS order
+FEASIBLE_RR_PARAMETERS = dict(
     zip(
-        OPR_PARAMETERS,
+        RR_PARAMETERS,
         [
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
@@ -85,10 +85,10 @@ FEASIBLE_OPR_PARAMETERS = dict(
     )
 )
 
-# % Following OPR_STATES order
-FEASIBLE_OPR_INITIAL_STATES = dict(
+# % Following RR_STATES order
+FEASIBLE_RR_INITIAL_STATES = dict(
     zip(
-        OPR_STATES,
+        RR_STATES,
         [
             (0, 1),  # % hi
             (0, 1),  # % hp
@@ -103,12 +103,12 @@ FEASIBLE_OPR_INITIAL_STATES = dict(
 ### DEFAULT PARAMETERS ###
 ##########################
 
-# % Following OPR_PARAMETERS order
+# % Following RR_PARAMETERS order
 # % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
 # % while llr is conversed by a factor depending on the timestep.
-DEFAULT_OPR_PARAMETERS = dict(
+DEFAULT_RR_PARAMETERS = dict(
     zip(
-        OPR_PARAMETERS,
+        RR_PARAMETERS,
         [
             1e-6,  # % ci
             200,  # % cp
@@ -125,10 +125,10 @@ DEFAULT_OPR_PARAMETERS = dict(
     )
 )
 
-# % Following OPR_STATES order
-DEFAULT_OPR_INITIAL_STATES = dict(
+# % Following RR_STATES order
+DEFAULT_RR_INITIAL_STATES = dict(
     zip(
-        OPR_STATES,
+        RR_STATES,
         [
             1e-2,  # % hi
             1e-2,  # % hp
@@ -143,10 +143,10 @@ DEFAULT_OPR_INITIAL_STATES = dict(
 ### DEFAULT BOUNDS PARAMETERS ###
 #################################
 
-# % Following OPR_PARAMETERS order
-DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
+# % Following RR_PARAMETERS order
+DEFAULT_BOUNDS_RR_PARAMETERS = dict(
     zip(
-        OPR_PARAMETERS,
+        RR_PARAMETERS,
         [
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
@@ -163,10 +163,10 @@ DEFAULT_BOUNDS_OPR_PARAMETERS = dict(
     )
 )
 
-# % Following OPR_STATES order
-DEFAULT_BOUNDS_OPR_INITIAL_STATES = dict(
+# % Following RR_STATES order
+DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
     zip(
-        OPR_STATES,
+        RR_STATES,
         [
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
@@ -183,19 +183,19 @@ TOL_BOUNDS = 1e-9
 ### OPTIMIZABLE PARAMETERS ###
 ##############################
 
-# % Following OPR_PARAMETERS order
-OPTIMIZABLE_OPR_PARAMETERS = dict(
+# % Following RR_PARAMETERS order
+OPTIMIZABLE_RR_PARAMETERS = dict(
     zip(
-        OPR_PARAMETERS,
-        [k not in ["ci"] for k in OPR_PARAMETERS],
+        RR_PARAMETERS,
+        [k not in ["ci"] for k in RR_PARAMETERS],
     )
 )
 
-# % Following OPR_STATES order
-OPTIMIZABLE_OPR_INITIAL_STATES = dict(
+# % Following RR_STATES order
+OPTIMIZABLE_RR_INITIAL_STATES = dict(
     zip(
-        OPR_STATES,
-        [True] * len(OPR_STATES),
+        RR_STATES,
+        [True] * len(RR_STATES),
     )
 )
 
@@ -610,14 +610,14 @@ DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
 
 DEFAULT_SIMULATION_RETURN_OPTIONS = {
     "forward_run": {
-        "opr_states": False,
+        "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
         "time_step": "all",
     },
     "optimize": {
-        "opr_states": False,
+        "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
         "iter_projg": False,
@@ -630,7 +630,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
     },
     "bayesian_optimize": {
-        "opr_states": False,
+        "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
         "iter_projg": False,
@@ -644,7 +644,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "time_step": "all",
     },
     "multiset_estimate": {
-        "opr_states": False,
+        "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
@@ -653,4 +653,4 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
     },
 }
 
-SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["opr_states", "q_domain"]
+SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]

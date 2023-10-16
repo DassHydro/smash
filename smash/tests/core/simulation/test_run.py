@@ -20,7 +20,7 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
                 "cost": True,
                 "jobs": True,
                 "q_domain": True,
-                "opr_states": True,
+                "rr_states": True,
             },
         )
 
@@ -39,9 +39,9 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         res[f"forward_run.{instance.setup.structure}.q_domain"] = np.where(
             mask, np.nan, ret.q_domain[..., -1]
         )
-        for i, key in enumerate(model.opr_initial_states.keys):
-            res[f"forward_run.{instance.setup.structure}.opr_states.{key}"] = np.where(
-                mask, np.nan, ret.opr_states[-1].values[..., i]
+        for i, key in enumerate(model.rr_initial_states.keys):
+            res[f"forward_run.{instance.setup.structure}.rr_states.{key}"] = np.where(
+                mask, np.nan, ret.rr_states[-1].values[..., i]
             )
 
     return res
@@ -83,10 +83,10 @@ def test_multiple_forward_run():
 
     for i in range(n_sample):
         for key in samples._problem["names"]:
-            if key in instance.opr_parameters.keys:
-                instance.set_opr_parameters(key, getattr(samples, key)[i])
-            elif key in instance.opr_initial_states.keys:
-                instance.set_opr_initial_states(key, getattr(samples, key)[i])
+            if key in instance.rr_parameters.keys:
+                instance.set_rr_parameters(key, getattr(samples, key)[i])
+            elif key in instance.rr_initial_states.keys:
+                instance.set_rr_initial_states(key, getattr(samples, key)[i])
         instance.forward_run(common_options={"ncpu": ncpu})
         frq[..., i] = instance.response.q.copy()
 

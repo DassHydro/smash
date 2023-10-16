@@ -22,14 +22,14 @@ f90: \
  obj/mwd_mesh.o \
  obj/mwd_serr_sigma_parameters.o \
  obj/mwd_serr_mu_parameters.o \
+ obj/mwd_rr_states.o \
+ obj/mwd_rr_parameters.o \
+ obj/mwd_returns.o \
  obj/mwd_response_data.o \
  obj/mwd_response.o \
  obj/mwd_physio_data.o \
- obj/mwd_opr_states.o \
- obj/mwd_returns.o \
- obj/mwd_output.o \
- obj/mwd_opr_parameters.o \
  obj/mwd_parameters.o \
+ obj/mwd_output.o \
  obj/mwd_sparse_matrix.o \
  obj/mwd_atmos_data.o \
  obj/mwd_u_response_data.o \

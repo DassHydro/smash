@@ -88,10 +88,10 @@ contains
             select case (samples_kind(i))
 
             case (0)
-                parameters%opr_parameters%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_parameters%values(:, :, samples_ind(i)) = sample(i)
 
             case (1)
-                parameters%opr_initial_states%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_initial_states%values(:, :, samples_ind(i)) = sample(i)
 
                 ! Should be unreachable
             case default

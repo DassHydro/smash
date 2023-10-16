@@ -77,8 +77,8 @@ class ForwardRun:
     time_step : pandas.DatetimeIndex
         A pandas.DatetimeIndex containing *n* returned time steps.
 
-    opr_states : list
-        A list of length *n* of Opr_StatesDT for each **time_step**.
+    rr_states : list
+        A list of length *n* of Rr_StatesDT for each **time_step**.
 
     q_domain : numpy.ndarray
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
@@ -202,10 +202,10 @@ def forward_run(
             - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
 
             .. note::
-                It only applies to the following variables: 'opr_states' and 'q_domain'
+                It only applies to the following variables: 'rr_states' and 'q_domain'
 
-        opr_states : bool, default False
-            Whether to return operator states for specific time steps.
+        rr_states : bool, default False
+            Whether to return rainfall-runoff states for specific time steps.
 
         q_domain : bool, defaul False
             Whether to return simulated discharge on the whole domain for specific time steps.
@@ -376,17 +376,17 @@ def _multiple_forward_run(
     samples_ind = np.zeros(shape=nv, dtype=np.int32, order="F")
 
     for i, name in enumerate(samples._problem["names"]):
-        if name in model._parameters.opr_parameters.keys:
+        if name in model._parameters.rr_parameters.keys:
             samples_kind[i] = 0
             # % Adding 1 because Fortran uses one based indexing
             samples_ind[i] = (
-                np.argwhere(model._parameters.opr_parameters.keys == name).item() + 1
+                np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
             )
-        elif name in model._parameters.opr_initial_states.keys:
+        elif name in model._parameters.rr_initial_states.keys:
             samples_kind[i] = 1
             # % Adding 1 because Fortran uses one based indexing
             samples_ind[i] = (
-                np.argwhere(model._parameters.opr_initial_states.keys == name).item()
+                np.argwhere(model._parameters.rr_initial_states.keys == name).item()
                 + 1
             )
         # % Should be unreachable

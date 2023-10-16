@@ -23,13 +23,13 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     type(OptionsDT), intent(in) :: options
     type(ReturnsDT), intent(inout) :: returns
 
-    real(sp), dimension(mesh%nrow, mesh%ncol, setup%nos) :: opr_states_buffer_values
+    real(sp), dimension(mesh%nrow, mesh%ncol, setup%nos) :: rr_states_buffer_values
 
     !% Map control to parameters
     call control_to_parameters(setup, mesh, input_data, parameters, options)
 
     !% Save initial states
-    opr_states_buffer_values = parameters%opr_initial_states%values
+    rr_states_buffer_values = parameters%rr_initial_states%values
 
     !% Simulation
     select case (setup%structure)
@@ -61,8 +61,8 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     end select
 
     !% Assign final states and reset initial states
-    output%opr_final_states%values = parameters%opr_initial_states%values
-    parameters%opr_initial_states%values = opr_states_buffer_values
+    output%rr_final_states%values = parameters%rr_initial_states%values
+    parameters%rr_initial_states%values = rr_states_buffer_values
 
     !% Compute cost
     call compute_cost(setup, mesh, input_data, parameters, output, options, returns)
