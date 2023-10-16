@@ -6,23 +6,51 @@ import numpy as np
 ### MODEL STRUCTURE ###
 #######################
 
-STRUCTURE_NAME = ["gr4-lr", "gr4-kw", "gr5-lr", "gr5-kw", "loieau-lr", "grd-lr"]
-
-RR_PARAMETERS = [
-    "ci",
-    "cp",
-    "ct",
-    "kexc",
-    "aexc",
-    "ca",
-    "cc",
-    "kb",
-    "llr",
-    "akw",
-    "bkw",
+STRUCTURE_NAME = [
+    "gr4-lr",
+    "gr4-kw",
+    "gr5-lr",
+    "gr5-kw",
+    "loieau-lr",
+    "grd-lr",
+    "vic3l-lr",
 ]
 
-RR_STATES = ["hi", "hp", "ht", "ha", "hc", "hlr"]
+RR_PARAMETERS = [
+    "ci",  # % gr
+    "cp",  # % gr
+    "ct",  # % gr
+    "kexc",  # % gr
+    "aexc",  # % gr
+    "ca",  # % loieau
+    "cc",  # % loieau
+    "kb",  # % loieau
+    "b",  # % vic3l
+    "cusl",  # % vic3l
+    "cmsl",  # % vic3l
+    "cbsl",  # % vic3l
+    "ks",  # % vic3l
+    "pbc",  # % vic3l
+    "ds",  # % vic3l
+    "dsm",  # % vic3l
+    "ws",  # % vic3l
+    "llr",  # % lr
+    "akw",  # % kw
+    "bkw",  # % kw
+]
+
+RR_STATES = [
+    "hi",  # % gr
+    "hp",  # % gr
+    "ht",  # % gr
+    "ha",  # % loieau
+    "hc",  # % loieau
+    "hcl",  # % vic3l
+    "husl",  # % vic3l
+    "hmsl",  # % vic3l
+    "hbsl",  # % vic3l
+    "hlr",  # % lr
+]
 
 # % Following STRUCTURE_NAME order
 STRUCTURE_RR_PARAMETERS = dict(
@@ -35,6 +63,18 @@ STRUCTURE_RR_PARAMETERS = dict(
             ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
             ["ca", "cc", "kb", "llr"],  # % loieau-lr
             ["cp", "ct", "llr"],  # % grd-lr
+            [
+                "b",
+                "cusl",
+                "cmsl",
+                "cbsl",
+                "ks",
+                "pbc",
+                "ds",
+                "dsm",
+                "ws",
+                "llr",
+            ],  # % vic3l-lr
         ],
     )
 )
@@ -50,6 +90,7 @@ STRUCTURE_RR_STATES = dict(
             ["hi", "hp", "ht"],  # % gr5-kw
             ["ha", "hc", "hlr"],  # % loieau-lr
             ["hp", "ht", "hlr"],  # % grd-lr
+            ["hcl", "husl", "hmsl", "hbsl", "hlr"],  # % vic3l-lr
         ],
     )
 )
@@ -78,6 +119,15 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ca
             (0, np.inf),  # % cc
             (0, np.inf),  # % kb
+            (0, np.inf),  # % b
+            (0, np.inf),  # % cusl
+            (0, np.inf),  # % cmsl
+            (0, np.inf),  # % cbsl
+            (0, np.inf),  # % ks
+            (0, np.inf),  # % pbc
+            (0, np.inf),  # % ds
+            (0, np.inf),  # % dsm
+            (0, np.inf),  # % ws
             (0, np.inf),  # % llr
             (0, np.inf),  # % akw
             (0, np.inf),  # % bkw
@@ -95,6 +145,10 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % ht
             (0, 1),  # % ha
             (0, 1),  # % hc
+            (0, 1),  # % hcl
+            (0, 1),  # % husl
+            (0, 1),  # % hmsl
+            (0, 1),  # % hbsl
             (0, np.inf),  # % hlr
         ],
     )
@@ -118,6 +172,15 @@ DEFAULT_RR_PARAMETERS = dict(
             200,  # % ca
             500,  # % cc
             1,  # % kb
+            0.1,  # % b
+            100,  # % cusl
+            500,  # % cmsl
+            2000,  # % cbsl
+            20,  # % ks
+            10,  # % pbc
+            1e-2,  # % ds
+            10,  # % dsm
+            0.8,  # % ws
             5,  # % llr
             5,  # % akw
             0.6,  # % bkw
@@ -135,6 +198,10 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % ht
             1e-2,  # % ha
             1e-2,  # % hc
+            1e-2,  # % hcl
+            1e-2,  # % husl
+            1e-2,  # % hmsl
+            1e-6,  # % hbsl
             1e-6,  # % hlr
         ],
     )
@@ -156,6 +223,15 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e3),  # % ca
             (1e-6, 1e3),  # % cc
             (1e-6, 4),  # % kb
+            (1e-3, 0.8),  # % b
+            (1e1, 500),  # % cusl
+            (1e2, 2000),  # % cmsl
+            (1e2, 2000),  # % cbsl
+            (1, 1e5),  # % ks
+            (1, 30),  # % pbc
+            (1e-6, 0.999999),  # % ds
+            (1e-3, 1e5),  # % dsm
+            (1e-6, 0.999999),  # % ws
             (1e-6, 1e3),  # % llr
             (1e-3, 50),  # % akw
             (1e-3, 1),  # % bkw
@@ -173,6 +249,10 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % ht
             (1e-6, 0.999999),  # % ha
             (1e-6, 0.999999),  # % hc
+            (1e-6, 0.999999),  # % hcl
+            (1e-6, 0.999999),  # % husl
+            (1e-6, 0.999999),  # % hmsl
+            (1e-6, 0.999999),  # % hbsl
             (1e-6, 1e3),  # % hlr
         ],
     )
