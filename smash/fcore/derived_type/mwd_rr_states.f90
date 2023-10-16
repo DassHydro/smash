@@ -3,23 +3,23 @@
 !%      Type
 !%      ----
 !%
-!%      - Opr_StatesDT
+!%      - Rr_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``keys``                   Operator states keys
-!%          ``values``                 Operator states values
+!%          ``keys``                   Rainfall-runoff states keys
+!%          ``values``                 Rainfall-runoff states values
 !%
 !§      Subroutine
 !%      ----------
 !%
-!%      - Opr_StatesDT_initialise
-!%      - Opr_StatesDT_copy
+!%      - Rr_StatesDT_initialise
+!%      - Rr_StatesDT_copy
 
-module mwd_opr_states
+module mwd_rr_states
 
     use md_constant !% only: sp, lchar
     use mwd_setup !% only: SetupDT
@@ -27,21 +27,21 @@ module mwd_opr_states
 
     implicit none
 
-    type Opr_StatesDT
+    type Rr_StatesDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :, :), allocatable :: values
 
-    end type Opr_StatesDT
+    end type Rr_StatesDT
 
 contains
 
-    subroutine Opr_StatesDT_initialise(this, setup, mesh)
+    subroutine Rr_StatesDT_initialise(this, setup, mesh)
         !% Default states value will be handled in Python
 
         implicit none
 
-        type(Opr_StatesDT), intent(inout) :: this
+        type(Rr_StatesDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -51,17 +51,17 @@ contains
         allocate (this%values(mesh%nrow, mesh%ncol, setup%nos))
         this%values = -99._sp
 
-    end subroutine Opr_StatesDT_initialise
+    end subroutine Rr_StatesDT_initialise
 
-    subroutine Opr_StatesDT_copy(this, this_copy)
+    subroutine Rr_StatesDT_copy(this, this_copy)
 
         implicit none
 
-        type(Opr_StatesDT), intent(in) :: this
-        type(Opr_StatesDT), intent(out) :: this_copy
+        type(Rr_StatesDT), intent(in) :: this
+        type(Rr_StatesDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Opr_StatesDT_copy
+    end subroutine Rr_StatesDT_copy
 
-end module mwd_opr_states
+end module mwd_rr_states

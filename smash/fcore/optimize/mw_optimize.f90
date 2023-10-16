@@ -392,10 +392,10 @@ contains
             select case (samples_kind(i))
 
             case (0)
-                parameters%opr_parameters%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_parameters%values(:, :, samples_ind(i)) = sample(i)
 
             case (1)
-                parameters%opr_initial_states%values(:, :, samples_ind(i)) = sample(i)
+                parameters%rr_initial_states%values(:, :, samples_ind(i)) = sample(i)
 
                 ! Should be unreachable
             case default
@@ -421,21 +421,21 @@ contains
 
         do i = 1, setup%nop
 
-            if (options%optimize%opr_parameters(i) .ne. 1) cycle
+            if (options%optimize%rr_parameters(i) .ne. 1) cycle
 
             j = j + 1
 
-            optimized_parameters(:, :, j) = parameters%opr_parameters%values(:, :, i)
+            optimized_parameters(:, :, j) = parameters%rr_parameters%values(:, :, i)
 
         end do
 
         do i = 1, setup%nos
 
-            if (options%optimize%opr_initial_states(i) .ne. 1) cycle
+            if (options%optimize%rr_initial_states(i) .ne. 1) cycle
 
             j = j + 1
 
-            optimized_parameters(:, :, j) = parameters%opr_initial_states%values(:, :, i)
+            optimized_parameters(:, :, j) = parameters%rr_initial_states%values(:, :, i)
 
         end do
 
@@ -457,7 +457,7 @@ contains
         real(sp), dimension(size(samples, 2)), intent(inout) :: cost
         real(sp), dimension(mesh%ng, setup%ntime_step, size(samples, 2)), intent(inout) :: q
         real(sp), dimension(mesh%nrow, mesh%ncol, &
-        & sum(options%optimize%opr_parameters) + sum(options%optimize%opr_initial_states), &
+        & sum(options%optimize%rr_parameters) + sum(options%optimize%rr_initial_states), &
         & size(samples, 2)) :: optimized_parameters
 
         integer :: i, iter, niter, ncpu

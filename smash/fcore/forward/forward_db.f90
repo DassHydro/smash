@@ -3031,22 +3031,22 @@ END MODULE MWD_OPTIONS_DIFF
 !%      Type
 !%      ----
 !%
-!%      - Opr_StatesDT
+!%      - Rr_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``keys``                   Operator states keys
-!%          ``values``                 Operator states values
+!%          ``keys``                   Rainfall-runoff states keys
+!%          ``values``                 Rainfall-runoff states values
 !%
 !§      Subroutine
 !%      ----------
 !%
-!%      - Opr_StatesDT_initialise
-!%      - Opr_StatesDT_copy
-MODULE MWD_OPR_STATES_DIFF
+!%      - Rr_StatesDT_initialise
+!%      - Rr_StatesDT_copy
+MODULE MWD_RR_STATES_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
 !% only: SetupDT
@@ -3055,34 +3055,34 @@ MODULE MWD_OPR_STATES_DIFF
   USE MWD_MESH
   IMPLICIT NONE
 !$F90W char-array
-  TYPE OPR_STATESDT
+  TYPE RR_STATESDT
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_STATESDT
-  TYPE OPR_STATESDT_DIFF
+  END TYPE RR_STATESDT
+  TYPE RR_STATESDT_DIFF
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_STATESDT_DIFF
+  END TYPE RR_STATESDT_DIFF
 
 CONTAINS
-  SUBROUTINE OPR_STATESDT_INITIALISE(this, setup, mesh)
+  SUBROUTINE RR_STATESDT_INITIALISE(this, setup, mesh)
     IMPLICIT NONE
-    TYPE(OPR_STATESDT), INTENT(INOUT) :: this
+    TYPE(RR_STATESDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     ALLOCATE(this%keys(setup%nos))
     this%keys = '...'
     ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nos))
     this%values = -99._sp
-  END SUBROUTINE OPR_STATESDT_INITIALISE
+  END SUBROUTINE RR_STATESDT_INITIALISE
 
-  SUBROUTINE OPR_STATESDT_COPY(this, this_copy)
+  SUBROUTINE RR_STATESDT_COPY(this, this_copy)
     IMPLICIT NONE
-    TYPE(OPR_STATESDT), INTENT(IN) :: this
-    TYPE(OPR_STATESDT), INTENT(OUT) :: this_copy
+    TYPE(RR_STATESDT), INTENT(IN) :: this
+    TYPE(RR_STATESDT), INTENT(OUT) :: this_copy
     this_copy = this
-  END SUBROUTINE OPR_STATESDT_COPY
+  END SUBROUTINE RR_STATESDT_COPY
 
-END MODULE MWD_OPR_STATES_DIFF
+END MODULE MWD_RR_STATES_DIFF
 
 !%      (MWD) Module Wrapped and Differentiated.
 !%
@@ -3096,7 +3096,7 @@ END MODULE MWD_OPR_STATES_DIFF
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
 !%          ``response``             ResponseDT
-!%          ``opr_final_states``     Opr_StatesDT
+!%          ``rr_final_states``     Rr_StatesDT
 !%          ======================== =======================================
 !%
 !%      Subroutine
@@ -3113,12 +3113,12 @@ MODULE MWD_OUTPUT_DIFF
   USE MWD_MESH
 !% only: ResponseDT, ResponseDT_initialise
   USE MWD_RESPONSE
-!% only: Opr_StatesDT, Opr_StatesDT_initialise
-  USE MWD_OPR_STATES_DIFF
+!% only: Rr_StatesDT, Rr_StatesDT_initialise
+  USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
   TYPE OUTPUTDT
       TYPE(RESPONSEDT) :: response
-      TYPE(OPR_STATESDT) :: opr_final_states
+      TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
@@ -3133,7 +3133,7 @@ CONTAINS
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     CALL RESPONSEDT_INITIALISE(this%response, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_final_states, setup, mesh)
+    CALL RR_STATESDT_INITIALISE(this%rr_final_states, setup, mesh)
   END SUBROUTINE OUTPUTDT_INITIALISE
 
   SUBROUTINE OUTPUTDT_COPY(this, this_copy)
@@ -3173,7 +3173,7 @@ MODULE MWD_CONTROL_DIFF
 !% only: sp
   USE MD_CONSTANT
   IMPLICIT NONE
-! Four kinds of parameters (opr_parameters, opr_initial_states, serr_mu_parameters, serr_sigma_parameters)
+! Four kinds of parameters (rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters)
 !$F90W char-array
   TYPE CONTROLDT
       INTEGER :: n
@@ -3263,23 +3263,23 @@ END MODULE MWD_CONTROL_DIFF
 !%      ----
 !%
 !%
-!%      - Opr_ParametersDT
+!%      - Rr_ParametersDT
 !%          Matrices containting spatialized parameters of hydrological operators.
 !%          (reservoir max capacity, lag time ...)
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``keys``                   Operator parameters keys
-!%          ``values``                 Operator parameters values
+!%          ``keys``                   Rainfall-runoff parameters keys
+!%          ``values``                 Rainfall-runoff parameters values
 !%
 !%
 !%      Subroutine
 !%      ----------
 !%
-!%      - Opr_ParametersDT_initialise
-!%      - Opr_ParametersDT_copy
-MODULE MWD_OPR_PARAMETERS_DIFF
+!%      - Rr_ParametersDT_initialise
+!%      - Rr_ParametersDT_copy
+MODULE MWD_RR_PARAMETERS_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
 !% only: SetupDT
@@ -3288,34 +3288,34 @@ MODULE MWD_OPR_PARAMETERS_DIFF
   USE MWD_MESH
   IMPLICIT NONE
 !$F90W char-array
-  TYPE OPR_PARAMETERSDT
+  TYPE RR_PARAMETERSDT
       CHARACTER(len=lchar), DIMENSION(:), ALLOCATABLE :: keys
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_PARAMETERSDT
-  TYPE OPR_PARAMETERSDT_DIFF
+  END TYPE RR_PARAMETERSDT
+  TYPE RR_PARAMETERSDT_DIFF
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: values
-  END TYPE OPR_PARAMETERSDT_DIFF
+  END TYPE RR_PARAMETERSDT_DIFF
 
 CONTAINS
-  SUBROUTINE OPR_PARAMETERSDT_INITIALISE(this, setup, mesh)
+  SUBROUTINE RR_PARAMETERSDT_INITIALISE(this, setup, mesh)
     IMPLICIT NONE
-    TYPE(OPR_PARAMETERSDT), INTENT(INOUT) :: this
+    TYPE(RR_PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     ALLOCATE(this%keys(setup%nop))
     this%keys = '...'
     ALLOCATE(this%values(mesh%nrow, mesh%ncol, setup%nop))
     this%values = -99._sp
-  END SUBROUTINE OPR_PARAMETERSDT_INITIALISE
+  END SUBROUTINE RR_PARAMETERSDT_INITIALISE
 
-  SUBROUTINE OPR_PARAMETERSDT_COPY(this, this_copy)
+  SUBROUTINE RR_PARAMETERSDT_COPY(this, this_copy)
     IMPLICIT NONE
-    TYPE(OPR_PARAMETERSDT), INTENT(IN) :: this
-    TYPE(OPR_PARAMETERSDT), INTENT(OUT) :: this_copy
+    TYPE(RR_PARAMETERSDT), INTENT(IN) :: this
+    TYPE(RR_PARAMETERSDT), INTENT(OUT) :: this_copy
     this_copy = this
-  END SUBROUTINE OPR_PARAMETERSDT_COPY
+  END SUBROUTINE RR_PARAMETERSDT_COPY
 
-END MODULE MWD_OPR_PARAMETERS_DIFF
+END MODULE MWD_RR_PARAMETERS_DIFF
 
 !%      (MWD) Module Wrapped and Differentiated.
 !%
@@ -3443,14 +3443,14 @@ END MODULE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !%
 !%      - ParametersDT
 !%          Container for all parameters. The goal is to keep the control vector in sync with the spatial matrices
-!%          of operator parameters and the hyper parameters for mu/sigma of structural erros
+!%          of rainfall-runoff parameters and the hyper parameters for mu/sigma of structural erros
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
 !%          ``control``                ControlDT
-!%          ``opr_parameters``         Opr_ParametersDT
-!%          ``opr_initial_states``     Opr_StatesDT
+!%          ``rr_parameters``          Rr_ParametersDT
+!%          ``rr_initial_states``      Rr_StatesDT
 !%          ``serr_mu_parameters``     Serr_Mu_ParametersDT
 !%          ``serr_sigma_parameters``  Serr_Sigma_ParametersDT
 !%
@@ -3468,10 +3468,10 @@ MODULE MWD_PARAMETERS_DIFF
   USE MWD_MESH
 !% only: ControlDT
   USE MWD_CONTROL_DIFF
-!% only: Opr_ParametersDT, Opr_ParametersDT_initialise
-  USE MWD_OPR_PARAMETERS_DIFF
-!% only: Opr_StatesDT, Opr_StatesDT_initialise
-  USE MWD_OPR_STATES_DIFF
+!% only: Rr_ParametersDT, Rr_ParametersDT_initialise
+  USE MWD_RR_PARAMETERS_DIFF
+!% only: Rr_StatesDT, Rr_StatesDT_initialise
+  USE MWD_RR_STATES_DIFF
 !% only: Serr_Mu_ParametersDT, Serr_Mu_ParametersDT_initialise
   USE MWD_SERR_MU_PARAMETERS_DIFF
 !% only: Serr_Sigma_ParametersDT, Serr_Sigma_ParametersDT_initialise
@@ -3479,15 +3479,15 @@ MODULE MWD_PARAMETERS_DIFF
   IMPLICIT NONE
   TYPE PARAMETERSDT
       TYPE(CONTROLDT) :: control
-      TYPE(OPR_PARAMETERSDT) :: opr_parameters
-      TYPE(OPR_STATESDT) :: opr_initial_states
+      TYPE(RR_PARAMETERSDT) :: rr_parameters
+      TYPE(RR_STATESDT) :: rr_initial_states
       TYPE(SERR_MU_PARAMETERSDT) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT) :: serr_sigma_parameters
   END TYPE PARAMETERSDT
   TYPE PARAMETERSDT_DIFF
       TYPE(CONTROLDT_DIFF) :: control
-      TYPE(OPR_PARAMETERSDT_DIFF) :: opr_parameters
-      TYPE(OPR_STATESDT_DIFF) :: opr_initial_states
+      TYPE(RR_PARAMETERSDT_DIFF) :: rr_parameters
+      TYPE(RR_STATESDT_DIFF) :: rr_initial_states
       TYPE(SERR_MU_PARAMETERSDT_DIFF) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT_DIFF) :: serr_sigma_parameters
   END TYPE PARAMETERSDT_DIFF
@@ -3498,8 +3498,8 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: this
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
-    CALL OPR_PARAMETERSDT_INITIALISE(this%opr_parameters, setup, mesh)
-    CALL OPR_STATESDT_INITIALISE(this%opr_initial_states, setup, mesh)
+    CALL RR_PARAMETERSDT_INITIALISE(this%rr_parameters, setup, mesh)
+    CALL RR_STATESDT_INITIALISE(this%rr_initial_states, setup, mesh)
     CALL SERR_MU_PARAMETERSDT_INITIALISE(this%serr_mu_parameters, setup&
 &                                  , mesh)
     CALL SERR_SIGMA_PARAMETERSDT_INITIALISE(this%serr_sigma_parameters, &
@@ -3528,8 +3528,8 @@ END MODULE MWD_PARAMETERS_DIFF
 !%          ======================== =======================================
 !%          ``nmts``                 Number of time step to return
 !%          ``mask_time_step``       Mask of time step
-!%          ``opr_states``           Array of Opr_StatesDT
-!%          ``opr_states_flag``      Return flag of opr_states
+!%          ``rr_states``            Array of Rr_StatesDT
+!%          ``rr_states_flag``       Return flag of rr_states
 !%          ``q_domain``             Array of discharge
 !%          ``q_domain_flag``        Return flag of q_domain
 !%          ``iter_cost``            Array of cost iteration
@@ -3568,14 +3568,14 @@ MODULE MWD_RETURNS_DIFF
   USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
-!%only: Opr_StatesDT
-  USE MWD_OPR_STATES_DIFF
+!%only: Rr_StatesDT
+  USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
-      TYPE(OPR_STATESDT), DIMENSION(:), ALLOCATABLE :: opr_states
-      LOGICAL :: opr_states_flag=.false.
+      TYPE(RR_STATESDT), DIMENSION(:), ALLOCATABLE :: rr_states
+      LOGICAL :: rr_states_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_domain
       LOGICAL :: q_domain_flag=.false.
       REAL(sp), DIMENSION(:), ALLOCATABLE :: iter_cost
@@ -3626,9 +3626,9 @@ CONTAINS
 ! Variable inside optimize will be allocated on the fly
     DO i=1,SIZE(wkeys)
       SELECT CASE  (wkeys(i)) 
-      CASE ('opr_states') 
-        this%opr_states_flag = .true.
-        ALLOCATE(this%opr_states(this%nmts))
+      CASE ('rr_states') 
+        this%rr_states_flag = .true.
+        ALLOCATE(this%rr_states(this%nmts))
       CASE ('q_domain') 
         this%q_domain_flag = .true.
         ALLOCATE(this%q_domain(mesh%nrow, mesh%ncol, this%nmts))
@@ -5363,35 +5363,35 @@ END MODULE MWD_SIGNATURES_DIFF
 !%      - normalize_inv_control_tfm
 !%      - control_tfm
 !%      - inv_control_tfm
-!%      - uniform_opr_parameters_get_control_size
-!%      - uniform_opr_initial_states_get_control_size
-!%      - distributed_opr_parameters_get_control_size
-!%      - distributed_opr_initial_states_get_control_size
-!%      - multi_linear_opr_parameters_get_control_size
-!%      - multi_linear_opr_initial_states_get_control_size
-!%      - multi_polynomial_opr_parameters_get_control_size
-!%      - multi_polynomial_opr_initial_states_get_control_size
+!%      - uniform_rr_parameters_get_control_size
+!%      - uniform_rr_initial_states_get_control_size
+!%      - distributed_rr_parameters_get_control_size
+!%      - distributed_rr_initial_states_get_control_size
+!%      - multi_linear_rr_parameters_get_control_size
+!%      - multi_linear_rr_initial_states_get_control_size
+!%      - multi_polynomial_rr_parameters_get_control_size
+!%      - multi_polynomial_rr_initial_states_get_control_size
 !%      - serr_mu_parameters_get_control_size
 !%      - get_control_sizes
-!%      - uniform_opr_parameters_fill_control
-!%      - uniform_opr_initial_states_fill_control
-!%      - distributed_opr_parameters_fill_control
-!%      - distributed_opr_initial_states_fill_control
-!%      - multi_linear_opr_parameters_fill_control
-!%      - multi_linear_opr_initial_states_fill_control
-!%      - multi_polynomial_opr_parameters_fill_control
-!%      - multi_polynomial_opr_initial_states_fill_control
+!%      - uniform_rr_parameters_fill_control
+!%      - uniform_rr_initial_states_fill_control
+!%      - distributed_rr_parameters_fill_control
+!%      - distributed_rr_initial_states_fill_control
+!%      - multi_linear_rr_parameters_fill_control
+!%      - multi_linear_rr_initial_states_fill_control
+!%      - multi_polynomial_rr_parameters_fill_control
+!%      - multi_polynomial_rr_initial_states_fill_control
 !%      - serr_mu_parameters_fill_control
 !%      - serr_sigma_parameters_fill_control
 !%      - fill_control
-!%      - uniform_opr_parameters_fill_parameters
-!%      - uniform_opr_initial_states_fill_parameters
-!%      - distributed_opr_parameters_fill_parameters
-!%      - distributed_opr_initial_states_fill_parameters
-!%      - multi_linear_opr_parameters_fill_parameters
-!%      - multi_linear_opr_initial_states_fill_parameters
-!%      - multi_polynomial_opr_parameters_fill_parameters
-!%      - multi_polynomial_opr_initial_states_fill_parameters
+!%      - uniform_rr_parameters_fill_parameters
+!%      - uniform_rr_initial_states_fill_parameters
+!%      - distributed_rr_parameters_fill_parameters
+!%      - distributed_rr_initial_states_fill_parameters
+!%      - multi_linear_rr_parameters_fill_parameters
+!%      - multi_linear_rr_initial_states_fill_parameters
+!%      - multi_polynomial_rr_parameters_fill_parameters
+!%      - multi_polynomial_rr_initial_states_fill_parameters
 !%      - serr_mu_parameters_fill_parameters
 !%      - serr_sigma_parameters_fill_parameters
 !%      - fill_parameters
@@ -5562,7 +5562,7 @@ CONTAINS
     REAL(sp) :: temp
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Opr parameters and Opr initial states
+! Only apply sbs transformation on Rr parameters and Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5604,7 +5604,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Opr parameters and Opr initial states
+! Only apply sbs transformation on Rr parameters and Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5657,7 +5657,7 @@ CONTAINS
     INTRINSIC LOG
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Opr parameters and Opr initial states
+! Only apply sbs transformation on Rr parameters and Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5699,7 +5699,7 @@ CONTAINS
     REAL(sp) :: temp0
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
+! Only apply sbs inv transformation on Rr parameters et Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5742,7 +5742,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
+! Only apply sbs inv transformation on Rr parameters et Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5796,7 +5796,7 @@ CONTAINS
     INTRINSIC EXP
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Opr parameters et Opr initial states
+! Only apply sbs inv transformation on Rr parameters et Rr initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -6028,43 +6028,43 @@ CONTAINS
     END SELECT
   END SUBROUTINE INV_CONTROL_TFM
 
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, n)
+  SUBROUTINE UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
     INTRINSIC SUM
-    n = SUM(options%optimize%opr_parameters)
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE
+    n = SUM(options%optimize%rr_parameters)
+  END SUBROUTINE UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, n)
+  SUBROUTINE UNIFORM_RR_INITIAL_STATES_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
     INTRINSIC SUM
-    n = SUM(options%optimize%opr_initial_states)
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+    n = SUM(options%optimize%rr_initial_states)
+  END SUBROUTINE UNIFORM_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
-&   n)
+  SUBROUTINE DISTRIBUTED_RR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, n&
+& )
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
     INTRINSIC SUM
-    n = SUM(options%optimize%opr_parameters)*mesh%nac
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE
+    n = SUM(options%optimize%rr_parameters)*mesh%nac
+  END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, &
+  SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, &
 &   options, n)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER, INTENT(INOUT) :: n
     INTRINSIC SUM
-    n = SUM(options%optimize%opr_initial_states)*mesh%nac
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+    n = SUM(options%optimize%rr_initial_states)*mesh%nac
+  END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options&
+  SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_GET_CONTROL_SIZE(setup, options&
 &   , n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6074,12 +6074,12 @@ CONTAINS
     INTRINSIC SUM
     n = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + SUM(&
-&         options%optimize%opr_parameters_descriptor(:, i))
+      IF (options%optimize%rr_parameters(i) .NE. 0) n = n + 1 + SUM(&
+&         options%optimize%rr_parameters_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+  SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
 &   options, n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6089,12 +6089,12 @@ CONTAINS
     INTRINSIC SUM
     n = 0
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + SUM&
-&         (options%optimize%opr_initial_states_descriptor(:, i))
+      IF (options%optimize%rr_initial_states(i) .NE. 0) n = n + 1 + SUM(&
+&         options%optimize%rr_initial_states_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
+  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE(setup, &
 &   options, n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6104,13 +6104,13 @@ CONTAINS
     INTRINSIC SUM
     n = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) n = n + 1 + 2*SUM(&
-&         options%optimize%opr_parameters_descriptor(:, i))
+      IF (options%optimize%rr_parameters(i) .NE. 0) n = n + 1 + 2*SUM(&
+&         options%optimize%rr_parameters_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup&
-&   , options, n)
+  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&   options, n)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -6119,10 +6119,10 @@ CONTAINS
     INTRINSIC SUM
     n = 0
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) n = n + 1 + 2*&
-&         SUM(options%optimize%opr_initial_states_descriptor(:, i))
+      IF (options%optimize%rr_initial_states(i) .NE. 0) n = n + 1 + 2*&
+&         SUM(options%optimize%rr_initial_states_descriptor(:, i))
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE
 
   SUBROUTINE SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, n)
     IMPLICIT NONE
@@ -6148,31 +6148,31 @@ CONTAINS
     INTEGER, DIMENSION(:), INTENT(OUT) :: nbk
     SELECT CASE  (options%optimize%mapping) 
     CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_GET_CONTROL_SIZE(options, nbk(1))
-      CALL UNIFORM_OPR_INITIAL_STATES_GET_CONTROL_SIZE(options, nbk(2))
+      CALL UNIFORM_RR_PARAMETERS_GET_CONTROL_SIZE(options, nbk(1))
+      CALL UNIFORM_RR_INITIAL_STATES_GET_CONTROL_SIZE(options, nbk(2))
     CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, &
-&                                                nbk(1))
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, options&
-&                                                    , nbk(2))
+      CALL DISTRIBUTED_RR_PARAMETERS_GET_CONTROL_SIZE(mesh, options, nbk&
+&                                               (1))
+      CALL DISTRIBUTED_RR_INITIAL_STATES_GET_CONTROL_SIZE(mesh, options&
+&                                                   , nbk(2))
     CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
-&                                                 nbk(1))
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&                                                     options, nbk(2))
+      CALL MULTI_LINEAR_RR_PARAMETERS_GET_CONTROL_SIZE(setup, options, &
+&                                                nbk(1))
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&                                                    options, nbk(2))
     CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_GET_CONTROL_SIZE(setup, &
-&                                                     options, nbk(1))
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
-&                                                         options, nbk(2&
-&                                                         ))
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_GET_CONTROL_SIZE(setup, &
+&                                                    options, nbk(1))
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_GET_CONTROL_SIZE(setup, &
+&                                                        options, nbk(2)&
+&                                                       )
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_GET_CONTROL_SIZE(options, nbk(3))
     CALL SERR_SIGMA_PARAMETERS_GET_CONTROL_SIZE(options, nbk(4))
   END SUBROUTINE GET_CONTROL_SIZES
 
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
+  SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters&
 &   , options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6184,23 +6184,23 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
-        parameters%control%x(j) = SUM(parameters%opr_parameters%values(:&
+        parameters%control%x(j) = SUM(parameters%rr_parameters%values(:&
 &         , :, i), mask=ac_mask)/mesh%nac
-        parameters%control%l(j) = options%optimize%l_opr_parameters(i)
-        parameters%control%u(j) = options%optimize%u_opr_parameters(i)
+        parameters%control%l(j) = options%optimize%l_rr_parameters(i)
+        parameters%control%u(j) = options%optimize%u_rr_parameters(i)
         parameters%control%nbd(j) = 2
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
+        parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
+&         i))//'0'
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_CONTROL
+  END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6212,25 +6212,25 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
-        parameters%control%x(j) = SUM(parameters%opr_initial_states%&
+        parameters%control%x(j) = SUM(parameters%rr_initial_states%&
 &         values(:, :, i), mask=ac_mask)/mesh%nac
-        parameters%control%l(j) = options%optimize%l_opr_initial_states(&
-&         i)
-        parameters%control%u(j) = options%optimize%u_opr_initial_states(&
-&         i)
+        parameters%control%l(j) = options%optimize%l_rr_initial_states(i&
+&         )
+        parameters%control%u(j) = options%optimize%u_rr_initial_states(i&
+&         )
         parameters%control%nbd(j) = 2
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+        parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
 &         keys(i))//'0'
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL
+  END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_CONTROL
 
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6240,22 +6240,22 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: n, i, j, row, col
     INTRINSIC TRIM
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters%control%x(j) = parameters%opr_parameters%values&
-&               (row, col, i)
-              parameters%control%l(j) = options%optimize%&
-&               l_opr_parameters(i)
-              parameters%control%u(j) = options%optimize%&
-&               u_opr_parameters(i)
+              parameters%control%x(j) = parameters%rr_parameters%values(&
+&               row, col, i)
+              parameters%control%l(j) = options%optimize%l_rr_parameters&
+&               (i)
+              parameters%control%u(j) = options%optimize%u_rr_parameters&
+&               (i)
               parameters%control%nbd = 2
-              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%opr_parameters%&
+              WRITE(name, '(a,i0,a,i0)') TRIM(parameters%rr_parameters%&
 &             keys(i)), row, '-', col
               parameters%control%name(j) = name
             END IF
@@ -6263,9 +6263,9 @@ CONTAINS
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL
+  END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6275,32 +6275,32 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: n, i, j, row, col
     INTRINSIC TRIM
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters%control%x(j) = parameters%opr_initial_states%&
+              parameters%control%x(j) = parameters%rr_initial_states%&
 &               values(row, col, i)
               parameters%control%l(j) = options%optimize%&
-&               l_opr_initial_states(i)
+&               l_rr_initial_states(i)
               parameters%control%u(j) = options%optimize%&
-&               u_opr_initial_states(i)
+&               u_rr_initial_states(i)
               parameters%control%nbd = 2
               WRITE(name, '(a,i0,a,i0)') TRIM(parameters%&
-&             opr_initial_states%keys(i)), row, '-', col
+&             rr_initial_states%keys(i)), row, '-', col
               parameters%control%name(j) = name
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL
+  END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_CONTROL
 
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6313,34 +6313,34 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
-        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
-&         /mesh%nac
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        y = SUM(parameters%rr_parameters%values(:, :, i), mask=ac_mask)/&
+&         mesh%nac
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
+        parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
+&         i))//'0'
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 1
             parameters%control%x(j) = 0._sp
             parameters%control%nbd(j) = 0
-            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
+            parameters%control%name(j) = TRIM(parameters%rr_parameters%&
 &             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-a'
           END IF
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL
+  END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6353,35 +6353,35 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
-        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
+        y = SUM(parameters%rr_initial_states%values(:, :, i), mask=&
 &         ac_mask)/mesh%nac
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+        parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
 &         keys(i))//'0'
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 1
             parameters%control%x(j) = 0._sp
             parameters%control%nbd(j) = 0
             parameters%control%name(j) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             rr_initial_states%keys(i))//'-'//TRIM(setup%&
 &             descriptor_name(k))//'-a'
           END IF
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL
+  END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_CONTROL
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6394,42 +6394,41 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
-        y = SUM(parameters%opr_parameters%values(:, :, i), mask=ac_mask)&
-&         /mesh%nac
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        y = SUM(parameters%rr_parameters%values(:, :, i), mask=ac_mask)/&
+&         mesh%nac
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_parameters%keys&
-&         (i))//'0'
+        parameters%control%name(j) = TRIM(parameters%rr_parameters%keys(&
+&         i))//'0'
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 2
             parameters%control%x(j-1) = 0._sp
             parameters%control%nbd(j-1) = 0
-            parameters%control%name(j-1) = TRIM(parameters%&
-&             opr_parameters%keys(i))//'-'//TRIM(setup%descriptor_name(k&
-&             ))//'-a'
+            parameters%control%name(j-1) = TRIM(parameters%rr_parameters&
+&             %keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-a'
             parameters%control%x(j) = 1._sp
             parameters%control%l(j) = 0.5_sp
             parameters%control%u(j) = 2._sp
             parameters%control%nbd(j) = 2
-            parameters%control%name(j) = TRIM(parameters%opr_parameters%&
+            parameters%control%name(j) = TRIM(parameters%rr_parameters%&
 &             keys(i))//'-'//TRIM(setup%descriptor_name(k))//'-b'
           END IF
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, &
-&   mesh, parameters, options)
+  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh&
+&   , parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6441,40 +6440,40 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
-        y = SUM(parameters%opr_initial_states%values(:, :, i), mask=&
+        y = SUM(parameters%rr_initial_states%values(:, :, i), mask=&
 &         ac_mask)/mesh%nac
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
         CALL INV_SCALED_SIGMOID(y, l, u, parameters%control%x(j))
         parameters%control%nbd(j) = 0
-        parameters%control%name(j) = TRIM(parameters%opr_initial_states%&
+        parameters%control%name(j) = TRIM(parameters%rr_initial_states%&
 &         keys(i))//'0'
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 2
             parameters%control%x(j-1) = 0._sp
             parameters%control%nbd(j-1) = 0
             parameters%control%name(j-1) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             rr_initial_states%keys(i))//'-'//TRIM(setup%&
 &             descriptor_name(k))//'-a'
             parameters%control%x(j) = 1._sp
             parameters%control%l(j) = 0.5_sp
             parameters%control%u(j) = 2._sp
             parameters%control%nbd(j) = 2
             parameters%control%name(j) = TRIM(parameters%&
-&             opr_initial_states%keys(i))//'-'//TRIM(setup%&
+&             rr_initial_states%keys(i))//'-'//TRIM(setup%&
 &             descriptor_name(k))//'-b'
           END IF
         END DO
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL
 
   SUBROUTINE SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
 &   options)
@@ -6549,26 +6548,26 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     SELECT CASE  (options%optimize%mapping) 
     CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
-&                                        options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                            parameters, options)
+      CALL UNIFORM_RR_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
+&                                       options)
+      CALL UNIFORM_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                           parameters, options)
     CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                            parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                                parameters, options)
+      CALL DISTRIBUTED_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                           parameters, options)
+      CALL DISTRIBUTED_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                               parameters, options)
     CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                             parameters, options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
-&                                                 parameters, options)
+      CALL MULTI_LINEAR_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                            parameters, options)
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                                parameters, options)
     CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_CONTROL(setup, mesh, &
-&                                                 parameters, options)
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_CONTROL(setup, mesh&
-&                                                     , parameters, &
-&                                                     options)
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_CONTROL(setup, mesh, &
+&                                                parameters, options)
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_CONTROL(setup, mesh, &
+&                                                    parameters, options&
+&                                                   )
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_CONTROL(setup, mesh, parameters, &
@@ -6581,12 +6580,12 @@ CONTAINS
     parameters%control%u_bkg = parameters%control%u
   END SUBROUTINE FILL_CONTROL
 
-!  Differentiation of uniform_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP 
-!context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+!  Differentiation of uniform_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   variations   of useful results: *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
 &   parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6597,27 +6596,27 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
         WHERE (ac_mask) 
-          parameters_d%opr_parameters%values(:, :, i) = parameters_d%&
+          parameters_d%rr_parameters%values(:, :, i) = parameters_d%&
 &           control%x(j)
-          parameters%opr_parameters%values(:, :, i) = parameters%control&
-&           %x(j)
+          parameters%rr_parameters%values(:, :, i) = parameters%control%&
+&           x(j)
         END WHERE
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D
+  END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of uniform_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP 
-!context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+!  Differentiation of uniform_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP c
+!ontext):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
 &   parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6629,10 +6628,10 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+      IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -6644,15 +6643,15 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         parameters_b%opr_parameters%values(:, :, i), MASK=ac_mask)
+&         parameters_b%rr_parameters%values(:, :, i), MASK=ac_mask)
         CALL POPINTEGER4(j)
-        WHERE (ac_mask) parameters_b%opr_parameters%values(:, :, i) = &
+        WHERE (ac_mask) parameters_b%rr_parameters%values(:, :, i) = &
 &           0.0_4
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B
+  END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+  SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6662,23 +6661,23 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
-        WHERE (ac_mask) parameters%opr_parameters%values(:, :, i) = &
+        WHERE (ac_mask) parameters%rr_parameters%values(:, :, i) = &
 &           parameters%control%x(j)
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS
+  END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of uniform_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+!  Differentiation of uniform_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Open
+!MP context):
+!   variations   of useful results: *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
 &   parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6689,27 +6688,27 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
         WHERE (ac_mask) 
-          parameters_d%opr_initial_states%values(:, :, i) = parameters_d&
-&           %control%x(j)
-          parameters%opr_initial_states%values(:, :, i) = parameters%&
+          parameters_d%rr_initial_states%values(:, :, i) = parameters_d%&
+&           control%x(j)
+          parameters%rr_initial_states%values(:, :, i) = parameters%&
 &           control%x(j)
         END WHERE
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+  END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
-!  Differentiation of uniform_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
+!  Differentiation of uniform_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Open
+!MP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
 &   parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6721,10 +6720,10 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -6736,15 +6735,15 @@ CONTAINS
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
         parameters_b%control%x(j) = parameters_b%control%x(j) + SUM(&
-&         parameters_b%opr_initial_states%values(:, :, i), MASK=ac_mask)
+&         parameters_b%rr_initial_states%values(:, :, i), MASK=ac_mask)
         CALL POPINTEGER4(j)
-        WHERE (ac_mask) parameters_b%opr_initial_states%values(:, :, i)&
+        WHERE (ac_mask) parameters_b%rr_initial_states%values(:, :, i)&
 &          = 0.0_4
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+  END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_B
 
-  SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+  SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6754,23 +6753,23 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
-        WHERE (ac_mask) parameters%opr_initial_states%values(:, :, i) = &
+        WHERE (ac_mask) parameters%rr_initial_states%values(:, :, i) = &
 &           parameters%control%x(j)
       END IF
     END DO
-  END SUBROUTINE UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS
+  END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS
 
-!  Differentiation of distributed_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+!  Differentiation of distributed_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Open
+!MP context):
+!   variations   of useful results: *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
 &   parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6779,31 +6778,31 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters_d%opr_parameters%values(row, col, i) = &
+              parameters_d%rr_parameters%values(row, col, i) = &
 &               parameters_d%control%x(j)
-              parameters%opr_parameters%values(row, col, i) = parameters&
-&               %control%x(j)
+              parameters%rr_parameters%values(row, col, i) = parameters%&
+&               control%x(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D
+  END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of distributed_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
-!nMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+!  Differentiation of distributed_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Open
+!MP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
 &   parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6813,10 +6812,10 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
     INTEGER :: branch
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+      IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         DO col=1,mesh%ncol
@@ -6841,17 +6840,17 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
               parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&               parameters_b%opr_parameters%values(row, col, i)
-              parameters_b%opr_parameters%values(row, col, i) = 0.0_4
+&               parameters_b%rr_parameters%values(row, col, i)
+              parameters_b%rr_parameters%values(row, col, i) = 0.0_4
               CALL POPINTEGER4(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B
+  END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+  SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
 &   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -6859,30 +6858,30 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters%opr_parameters%values(row, col, i) = parameters&
-&               %control%x(j)
+              parameters%rr_parameters%values(row, col, i) = parameters%&
+&               control%x(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS
+  END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of distributed_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
-! OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&   mesh, parameters, parameters_d, options)
+!  Differentiation of distributed_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE 
+!OpenMP context):
+!   variations   of useful results: *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
+&   , parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6890,32 +6889,32 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters_d%opr_initial_states%values(row, col, i) = &
+              parameters_d%rr_initial_states%values(row, col, i) = &
 &               parameters_d%control%x(j)
-              parameters%opr_initial_states%values(row, col, i) = &
+              parameters%rr_initial_states%values(row, col, i) = &
 &               parameters%control%x(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+  END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
-!  Differentiation of distributed_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
-! OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&   mesh, parameters, parameters_b, options)
+!  Differentiation of distributed_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE 
+!OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
+&   , parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -6924,10 +6923,10 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
     INTEGER :: branch
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         DO col=1,mesh%ncol
@@ -6952,48 +6951,47 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .NE. 0) THEN
               parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&               parameters_b%opr_initial_states%values(row, col, i)
-              parameters_b%opr_initial_states%values(row, col, i) = &
-&               0.0_4
+&               parameters_b%rr_initial_states%values(row, col, i)
+              parameters_b%rr_initial_states%values(row, col, i) = 0.0_4
               CALL POPINTEGER4(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+  END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_B
 
-  SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
-&   , parameters, options)
+  SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&   parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         DO col=1,mesh%ncol
           DO row=1,mesh%nrow
             IF (mesh%active_cell(row, col) .NE. 0) THEN
               j = j + 1
-              parameters%opr_initial_states%values(row, col, i) = &
+              parameters%rr_initial_states%values(row, col, i) = &
 &               parameters%control%x(j)
             END IF
           END DO
         END DO
       END IF
     END DO
-  END SUBROUTINE DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS
+  END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS
 
-!  Differentiation of multi_linear_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Op
-!enMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+!  Differentiation of multi_linear_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   variations   of useful results: *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
 &   input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7006,15 +7004,15 @@ CONTAINS
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
         wa2d_d = parameters_d%control%x(j)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 1
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
@@ -7025,21 +7023,21 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_d%&
-&                          opr_parameters%values(:, :, i))
+&                          rr_parameters%values(:, :, i), parameters_d%&
+&                          rr_parameters%values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of multi_linear_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Op
-!enMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+!  Differentiation of multi_linear_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE Ope
+!nMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
 &   input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7053,10 +7051,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
     INTEGER :: branch
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+      IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -7064,7 +7062,7 @@ CONTAINS
         CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .EQ. 0) &
 &         THEN
             CALL PUSHCONTROL1B(0)
           ELSE
@@ -7078,12 +7076,12 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
-&                     SIZE(parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2))
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL PUSHREAL4ARRAY(parameters%rr_parameters%values(:, :, i), &
+&                     SIZE(parameters%rr_parameters%values, 1)*SIZE(&
+&                     parameters%rr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_parameters%&
 &                        values(:, :, i))
         CALL PUSHCONTROL1B(1)
       END IF
@@ -7091,15 +7089,15 @@ CONTAINS
     DO i=setup%nop,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL POPREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
-&                    SIZE(parameters%opr_parameters%values, 1)*SIZE(&
-&                    parameters%opr_parameters%values, 2))
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL POPREAL4ARRAY(parameters%rr_parameters%values(:, :, i), &
+&                    SIZE(parameters%rr_parameters%values, 1)*SIZE(&
+&                    parameters%rr_parameters%values, 2))
         CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_b%&
-&                          opr_parameters%values(:, :, i))
-        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
+&                          rr_parameters%values(:, :, i), parameters_b%&
+&                          rr_parameters%values(:, :, i))
+        parameters_b%rr_parameters%values(:, :, i) = 0.0_4
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
@@ -7118,9 +7116,9 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+  SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
 &   input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7131,14 +7129,14 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 1
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
@@ -7148,20 +7146,20 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_parameters%&
 &                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS
+  END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of multi_linear_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
+!  Differentiation of multi_linear_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   variations   of useful results: *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
 &   mesh, input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7174,16 +7172,16 @@ CONTAINS
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
         wa2d_d = parameters_d%control%x(j)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 1
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
 &             input_data%physio_data%l_descriptor(k))/(input_data%&
@@ -7193,22 +7191,22 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
         CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_d%opr_initial_states%values(:, :, &
-&                          i))
+&                          rr_initial_states%values(:, :, i), &
+&                          parameters_d%rr_initial_states%values(:, :, i&
+&                          ))
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
-!  Differentiation of multi_linear_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
+!  Differentiation of multi_linear_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
 &   mesh, input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7222,10 +7220,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
     INTEGER :: branch
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -7233,8 +7231,8 @@ CONTAINS
         CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .EQ. 0&
+&         ) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHINTEGER4(j)
@@ -7247,23 +7245,23 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_initial_states%&
+&                        values(:, :, i))
         CALL PUSHCONTROL1B(1)
       END IF
     END DO
     DO i=setup%nos,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
         CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_b%opr_initial_states%values(:, :, &
-&                          i))
-        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
+&                          rr_initial_states%values(:, :, i), &
+&                          parameters_b%rr_initial_states%values(:, :, i&
+&                          ))
+        parameters_b%rr_initial_states%values(:, :, i) = 0.0_4
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
@@ -7282,9 +7280,9 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
+  SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh&
 &   , input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7295,15 +7293,15 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 1
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
 &             input_data%physio_data%l_descriptor(k))/(input_data%&
@@ -7312,20 +7310,20 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_initial_states(i)
-        u = options%optimize%u_opr_initial_states(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
+        l = options%optimize%l_rr_initial_states(i)
+        u = options%optimize%u_rr_initial_states(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_initial_states%&
+&                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS
+  END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS
 
-!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, &
+!  Differentiation of multi_polynomial_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   variations   of useful results: *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D(setup, &
 &   mesh, input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7339,15 +7337,15 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
         wa2d_d = parameters_d%control%x(j)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 2
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
@@ -7367,21 +7365,21 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_d%&
-&                          opr_parameters%values(:, :, i))
+&                          rr_parameters%values(:, :, i), parameters_d%&
+&                          rr_parameters%values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of multi_polynomial_opr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZ
-!E OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, &
+!  Differentiation of multi_polynomial_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
+! OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B(setup, &
 &   mesh, input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7395,10 +7393,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+      IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -7406,7 +7404,7 @@ CONTAINS
         CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .EQ. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .EQ. 0) &
 &         THEN
             CALL PUSHCONTROL1B(0)
           ELSE
@@ -7423,12 +7421,12 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
-&                     SIZE(parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2))
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL PUSHREAL4ARRAY(parameters%rr_parameters%values(:, :, i), &
+&                     SIZE(parameters%rr_parameters%values, 1)*SIZE(&
+&                     parameters%rr_parameters%values, 2))
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_parameters%&
 &                        values(:, :, i))
         CALL PUSHCONTROL1B(1)
       END IF
@@ -7436,15 +7434,15 @@ CONTAINS
     DO i=setup%nop,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL POPREAL4ARRAY(parameters%opr_parameters%values(:, :, i), &
-&                    SIZE(parameters%opr_parameters%values, 1)*SIZE(&
-&                    parameters%opr_parameters%values, 2))
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL POPREAL4ARRAY(parameters%rr_parameters%values(:, :, i), &
+&                    SIZE(parameters%rr_parameters%values, 1)*SIZE(&
+&                    parameters%rr_parameters%values, 2))
         CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_parameters%values(:, :, i), parameters_b%&
-&                          opr_parameters%values(:, :, i))
-        parameters_b%opr_parameters%values(:, :, i) = 0.0_4
+&                          rr_parameters%values(:, :, i), parameters_b%&
+&                          rr_parameters%values(:, :, i))
+        parameters_b%rr_parameters%values(:, :, i) = 0.0_4
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
@@ -7466,9 +7464,9 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh&
+  SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh&
 &   , input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7479,14 +7477,14 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr parameters is first control kind
+! Rr parameters is first control kind
     j = 0
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         j = j + 1
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_parameters_descriptor(k, i) .NE. 0) &
+          IF (options%optimize%rr_parameters_descriptor(k, i) .NE. 0) &
 &         THEN
             j = j + 2
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
@@ -7497,20 +7495,20 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_parameters%&
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_parameters%&
 &                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface no
-!ISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup&
+!  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noI
+!SIZE OpenMP context):
+!   variations   of useful results: *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup&
 &   , mesh, input_data, parameters, parameters_d, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7524,16 +7522,16 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
         wa2d_d = parameters_d%control%x(j)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 2
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
 &             input_data%physio_data%l_descriptor(k))/(input_data%&
@@ -7552,22 +7550,22 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL SCALED_SIGMOIDE2D_D(wa2d, wa2d_d, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_d%opr_initial_states%values(:, :, &
-&                          i))
+&                          rr_initial_states%values(:, :, i), &
+&                          parameters_d%rr_initial_states%values(:, :, i&
+&                          ))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
-!  Differentiation of multi_polynomial_opr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface no
-!ISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_initial_states.values:in
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup&
+!  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noI
+!SIZE OpenMP context):
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
+  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup&
 &   , mesh, input_data, parameters, parameters_b, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7581,10 +7579,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         CALL PUSHINTEGER4(j)
@@ -7592,8 +7590,8 @@ CONTAINS
         CALL PUSHREAL4ARRAY(wa2d, mesh%nrow*mesh%ncol)
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .EQ. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .EQ. 0&
+&         ) THEN
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHINTEGER4(j)
@@ -7609,23 +7607,23 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_initial_states%&
+&                        values(:, :, i))
         CALL PUSHCONTROL1B(1)
       END IF
     END DO
     DO i=setup%nos,1,-1
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
         CALL SCALED_SIGMOIDE2D_B(wa2d, wa2d_b, l, u, parameters%&
-&                          opr_initial_states%values(:, :, i), &
-&                          parameters_b%opr_initial_states%values(:, :, &
-&                          i))
-        parameters_b%opr_initial_states%values(:, :, i) = 0.0_4
+&                          rr_initial_states%values(:, :, i), &
+&                          parameters_b%rr_initial_states%values(:, :, i&
+&                          ))
+        parameters_b%rr_initial_states%values(:, :, i) = 0.0_4
         DO k=setup%nd,1,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
@@ -7647,9 +7645,9 @@ CONTAINS
         CALL POPINTEGER4(j)
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B
 
-  SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+  SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
 &   mesh, input_data, parameters, options)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
@@ -7660,15 +7658,15 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Opr initial states is second control kind
+! Rr initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         j = j + 1
         wa2d = parameters%control%x(j)
         DO k=1,setup%nd
-          IF (options%optimize%opr_initial_states_descriptor(k, i) .NE. &
-&             0) THEN
+          IF (options%optimize%rr_initial_states_descriptor(k, i) .NE. 0&
+&         ) THEN
             j = j + 2
             norm_desc = (input_data%physio_data%descriptor(:, :, k)-&
 &             input_data%physio_data%l_descriptor(k))/(input_data%&
@@ -7678,13 +7676,13 @@ CONTAINS
             wa2d = wa2d + parameters%control%x(j-1)*norm_desc
           END IF
         END DO
-        l = options%optimize%l_opr_parameters(i)
-        u = options%optimize%u_opr_parameters(i)
-        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%opr_initial_states&
-&                        %values(:, :, i))
+        l = options%optimize%l_rr_parameters(i)
+        u = options%optimize%u_rr_parameters(i)
+        CALL SCALED_SIGMOIDE2D(wa2d, l, u, parameters%rr_initial_states%&
+&                        values(:, :, i))
       END IF
     END DO
-  END SUBROUTINE MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS
+  END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS
 
 !  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP cont
 !ext):
@@ -7901,13 +7899,13 @@ CONTAINS
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   variations   of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   SUBROUTINE FILL_PARAMETERS_D(setup, mesh, input_data, parameters, &
 &   parameters_d, options)
@@ -7920,43 +7918,42 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     SELECT CASE  (options%optimize%mapping) 
     CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                             parameters, parameters_d, &
-&                                             options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_d, options)
+      CALL UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                            parameters, parameters_d, &
+&                                            options)
+      CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+&                                                parameters, &
+&                                                parameters_d, options)
     CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_d, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
-&                                                     , parameters, &
+      CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                                parameters, &
+&                                                parameters_d, options)
+      CALL DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh, &
+&                                                    parameters, &
+&                                                    parameters_d, &
+&                                                    options)
+    CASE ('multi-linear') 
+      CALL MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
+&                                                 input_data, parameters&
+&                                                 , parameters_d, &
+&                                                 options)
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
+&                                                     , input_data, &
+&                                                     parameters, &
 &                                                     parameters_d, &
 &                                                     options)
-    CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, &
-&                                                  input_data, &
-&                                                  parameters, &
-&                                                  parameters_d, options&
-&                                                 )
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_d, &
-&                                                      options)
     CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_d, &
-&                                                      options)
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
-&                                                          mesh, &
-&                                                          input_data, &
-&                                                          parameters, &
-&                                                          parameters_d&
-&                                                          , options)
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D(setup, mesh&
+&                                                     , input_data, &
+&                                                     parameters, &
+&                                                     parameters_d, &
+&                                                     options)
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D(setup, &
+&                                                         mesh, &
+&                                                         input_data, &
+&                                                         parameters, &
+&                                                         parameters_d, &
+&                                                         options)
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS_D(setup, mesh, parameters, &
@@ -7966,13 +7963,13 @@ CONTAINS
   END SUBROUTINE FILL_PARAMETERS_D
 
 !  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.control.x:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   SUBROUTINE FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
 &   parameters_b, options)
@@ -7986,52 +7983,49 @@ CONTAINS
     INTEGER :: branch
     SELECT CASE  (options%optimize%mapping) 
     CASE ('uniform') 
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                           parameters, options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
+      CALL UNIFORM_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters&
+&                                          , options)
+      CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                              parameters, options)
       CALL PUSHCONTROL3B(1)
     CASE ('distributed') 
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                   parameters, options)
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
+      CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                              parameters, options)
+      CALL DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                  parameters, options)
       CALL PUSHCONTROL3B(2)
     CASE ('multi-linear') 
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                input_data, parameters&
-&                                                , options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
+      CALL MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                               input_data, parameters, &
+&                                               options)
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                   input_data, &
+&                                                   parameters, options)
       CALL PUSHCONTROL3B(3)
     CASE ('multi-polynomial') 
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                        mesh, &
-&                                                        input_data, &
-&                                                        parameters, &
-&                                                        options)
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                   input_data, &
+&                                                   parameters, options)
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+&                                                       mesh, input_data&
+&                                                       , parameters, &
+&                                                       options)
       CALL PUSHCONTROL3B(4)
     CASE DEFAULT
       CALL PUSHCONTROL3B(0)
@@ -8048,61 +8042,60 @@ CONTAINS
     CALL POPCONTROL3B(branch)
     IF (branch .LT. 2) THEN
       IF (branch .NE. 0) THEN
-        CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
-&                                                   parameters, &
-&                                                   parameters_b, &
-&                                                   options)
-        CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                    parameters%opr_parameters%values, 1)*SIZE(&
-&                    parameters%opr_parameters%values, 2)*SIZE(&
-&                    parameters%opr_parameters%values, 3))
-        CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                               parameters, parameters_b&
-&                                               , options)
-      END IF
-    ELSE IF (branch .EQ. 2) THEN
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
-&                                                     , parameters, &
-&                                                     parameters_b, &
-&                                                     options)
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                                 parameters, &
-&                                                 parameters_b, options)
-    ELSE IF (branch .EQ. 3) THEN
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_b, &
-&                                                      options)
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
-&                                                  input_data, &
+        CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
 &                                                  parameters, &
 &                                                  parameters_b, options&
 &                                                 )
+        CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                    parameters%rr_parameters%values, 1)*SIZE(parameters&
+&                    %rr_parameters%values, 2)*SIZE(parameters%&
+&                    rr_parameters%values, 3))
+        CALL UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                              parameters, parameters_b&
+&                                              , options)
+      END IF
+    ELSE IF (branch .EQ. 2) THEN
+      CALL DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh, &
+&                                                    parameters, &
+&                                                    parameters_b, &
+&                                                    options)
+      CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                  rr_parameters%values, 2)*SIZE(parameters%&
+&                  rr_parameters%values, 3))
+      CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                                parameters, &
+&                                                parameters_b, options)
+    ELSE IF (branch .EQ. 3) THEN
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, mesh&
+&                                                     , input_data, &
+&                                                     parameters, &
+&                                                     parameters_b, &
+&                                                     options)
+      CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                  rr_parameters%values, 2)*SIZE(parameters%&
+&                  rr_parameters%values, 3))
+      CALL MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh, &
+&                                                 input_data, parameters&
+&                                                 , parameters_b, &
+&                                                 options)
     ELSE
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
-&                                                          mesh, &
-&                                                          input_data, &
-&                                                          parameters, &
-&                                                          parameters_b&
-&                                                          , options)
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh&
-&                                                      , input_data, &
-&                                                      parameters, &
-&                                                      parameters_b, &
-&                                                      options)
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_B(setup, &
+&                                                         mesh, &
+&                                                         input_data, &
+&                                                         parameters, &
+&                                                         parameters_b, &
+&                                                         options)
+      CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                  rr_parameters%values, 2)*SIZE(parameters%&
+&                  rr_parameters%values, 3))
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_B(setup, mesh&
+&                                                     , input_data, &
+&                                                     parameters, &
+&                                                     parameters_b, &
+&                                                     options)
     END IF
   END SUBROUTINE FILL_PARAMETERS_B
 
@@ -8116,33 +8109,30 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     SELECT CASE  (options%optimize%mapping) 
     CASE ('uniform') 
-      CALL UNIFORM_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                           parameters, options)
-      CALL UNIFORM_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
+      CALL UNIFORM_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters&
+&                                          , options)
+      CALL UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                              parameters, options)
     CASE ('distributed') 
-      CALL DISTRIBUTED_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                               parameters, options)
-      CALL DISTRIBUTED_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                   parameters, options)
+      CALL DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                              parameters, options)
+      CALL DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                  parameters, options)
     CASE ('multi-linear') 
-      CALL MULTI_LINEAR_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                input_data, parameters&
-&                                                , options)
-      CALL MULTI_LINEAR_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
+      CALL MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                               input_data, parameters, &
+&                                               options)
+      CALL MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS(setup, mesh, &
+&                                                   input_data, &
+&                                                   parameters, options)
     CASE ('multi-polynomial') 
-      CALL MULTI_POLYNOMIAL_OPR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
-&                                                    input_data, &
-&                                                    parameters, options&
-&                                                   )
-      CALL MULTI_POLYNOMIAL_OPR_INITIAL_STATES_FILL_PARAMETERS(setup, &
-&                                                        mesh, &
-&                                                        input_data, &
-&                                                        parameters, &
-&                                                        options)
+      CALL MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS(setup, mesh, &
+&                                                   input_data, &
+&                                                   parameters, options)
+      CALL MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS(setup, &
+&                                                       mesh, input_data&
+&                                                       , parameters, &
+&                                                       options)
     END SELECT
 ! Directly working with hyper parameters
     CALL SERR_MU_PARAMETERS_FILL_PARAMETERS(setup, mesh, parameters, &
@@ -8168,15 +8158,15 @@ CONTAINS
   END SUBROUTINE PARAMETERS_TO_CONTROL
 
 !  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   variations   of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   SUBROUTINE CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters&
 &   , parameters_d, options)
@@ -8199,15 +8189,15 @@ CONTAINS
   END SUBROUTINE CONTROL_TO_PARAMETERS_D
 
 !  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   SUBROUTINE CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters&
 &   , parameters_b, options)
@@ -8223,15 +8213,15 @@ CONTAINS
       CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
 &                   x, 1))
       CALL INV_CONTROL_TFM(parameters, options)
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
       CALL FILL_PARAMETERS(setup, mesh, input_data, parameters, options)
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                  rr_parameters%values, 2)*SIZE(parameters%&
+&                  rr_parameters%values, 3))
       CALL FILL_PARAMETERS_B(setup, mesh, input_data, parameters, &
 &                      parameters_b, options)
       CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
@@ -8553,13 +8543,13 @@ CONTAINS
 
 !  Differentiation of smoothing_regularization in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: res *(parameters.control.x)
-!                *(parameters.opr_parameters.values) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!                *(parameters.rr_parameters.values) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   FUNCTION SMOOTHING_REGULARIZATION_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, hard, res) RESULT (RES_D)
@@ -8590,17 +8580,17 @@ CONTAINS
     CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters_bkg&
 &                          , parameters_bkg_d, options)
     res_d = 0.0_4
-! Loop on opr_parameters
+! Loop on rr_parameters
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         IF (hard) THEN
-          matrix_d = parameters_d%opr_parameters%values(:, :, i)
-          matrix = parameters%opr_parameters%values(:, :, i)
+          matrix_d = parameters_d%rr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i)
         ELSE
-          matrix_d = parameters_d%opr_parameters%values(:, :, i) - &
-&           parameters_bkg_d%opr_parameters%values(:, :, i)
-          matrix = parameters%opr_parameters%values(:, :, i) - &
-&           parameters_bkg%opr_parameters%values(:, :, i)
+          matrix_d = parameters_d%rr_parameters%values(:, :, i) - &
+&           parameters_bkg_d%rr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i) - &
+&           parameters_bkg%rr_parameters%values(:, :, i)
         END IF
         result1_d = SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix&
 &         , matrix_d, result1)
@@ -8608,17 +8598,17 @@ CONTAINS
         res = res + result1
       END IF
     END DO
-! Loop on opr_initial_states
+! Loop on rr_initial_states
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         IF (hard) THEN
-          matrix_d = parameters_d%opr_initial_states%values(:, :, i)
-          matrix = parameters%opr_initial_states%values(:, :, i)
+          matrix_d = parameters_d%rr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i)
         ELSE
-          matrix_d = parameters_d%opr_initial_states%values(:, :, i) - &
-&           parameters_bkg_d%opr_initial_states%values(:, :, i)
-          matrix = parameters%opr_initial_states%values(:, :, i) - &
-&           parameters_bkg%opr_initial_states%values(:, :, i)
+          matrix_d = parameters_d%rr_initial_states%values(:, :, i) - &
+&           parameters_bkg_d%rr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i) - &
+&           parameters_bkg%rr_initial_states%values(:, :, i)
         END IF
         result1_d = SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix&
 &         , matrix_d, result1)
@@ -8630,13 +8620,13 @@ CONTAINS
 
 !  Differentiation of smoothing_regularization in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: res *(parameters.control.x)
-!                *(parameters.opr_parameters.values) *(parameters.opr_initial_states.values)
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!                *(parameters.rr_parameters.values) *(parameters.rr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in
   SUBROUTINE SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, hard, res_b1)
@@ -8673,44 +8663,44 @@ CONTAINS
     CALL CONTROL_TFM(parameters_bkg, options)
     CALL PUSHREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
 &                 control%x, 1))
-    CALL PUSHREAL4ARRAY(parameters_bkg%opr_parameters%values, SIZE(&
-&                 parameters_bkg%opr_parameters%values, 1)*SIZE(&
-&                 parameters_bkg%opr_parameters%values, 2)*SIZE(&
-&                 parameters_bkg%opr_parameters%values, 3))
+    CALL PUSHREAL4ARRAY(parameters_bkg%rr_parameters%values, SIZE(&
+&                 parameters_bkg%rr_parameters%values, 1)*SIZE(&
+&                 parameters_bkg%rr_parameters%values, 2)*SIZE(&
+&                 parameters_bkg%rr_parameters%values, 3))
     CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
 &                        options)
-! Loop on opr_parameters
+! Loop on rr_parameters
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .EQ. 0) THEN
+      IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         IF (hard) THEN
           CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          matrix = parameters%opr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i)
           CALL PUSHCONTROL1B(0)
         ELSE
           CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          matrix = parameters%opr_parameters%values(:, :, i) - &
-&           parameters_bkg%opr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i) - &
+&           parameters_bkg%rr_parameters%values(:, :, i)
           CALL PUSHCONTROL1B(1)
         END IF
         res0 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
         CALL PUSHCONTROL1B(1)
       END IF
     END DO
-! Loop on opr_initial_states
+! Loop on rr_initial_states
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .EQ. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
         CALL PUSHCONTROL1B(0)
       ELSE
         IF (hard) THEN
           CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          matrix = parameters%opr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i)
           CALL PUSHCONTROL1B(0)
         ELSE
           CALL PUSHREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          matrix = parameters%opr_initial_states%values(:, :, i) - &
-&           parameters_bkg%opr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i) - &
+&           parameters_bkg%rr_initial_states%values(:, :, i)
           CALL PUSHCONTROL1B(1)
         END IF
         res1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
@@ -8728,14 +8718,14 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          parameters_b%opr_initial_states%values(:, :, i) = parameters_b&
-&           %opr_initial_states%values(:, :, i) + matrix_b
+          parameters_b%rr_initial_states%values(:, :, i) = parameters_b%&
+&           rr_initial_states%values(:, :, i) + matrix_b
         ELSE
           CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          parameters_b%opr_initial_states%values(:, :, i) = parameters_b&
-&           %opr_initial_states%values(:, :, i) + matrix_b
-          parameters_bkg_b%opr_initial_states%values(:, :, i) = &
-&           parameters_bkg_b%opr_initial_states%values(:, :, i) - &
+          parameters_b%rr_initial_states%values(:, :, i) = parameters_b%&
+&           rr_initial_states%values(:, :, i) + matrix_b
+          parameters_bkg_b%rr_initial_states%values(:, :, i) = &
+&           parameters_bkg_b%rr_initial_states%values(:, :, i) - &
 &           matrix_b
         END IF
       END IF
@@ -8751,21 +8741,21 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 0) THEN
           CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          parameters_b%opr_parameters%values(:, :, i) = parameters_b%&
-&           opr_parameters%values(:, :, i) + matrix_b
+          parameters_b%rr_parameters%values(:, :, i) = parameters_b%&
+&           rr_parameters%values(:, :, i) + matrix_b
         ELSE
           CALL POPREAL4ARRAY(matrix, mesh%nrow*mesh%ncol)
-          parameters_b%opr_parameters%values(:, :, i) = parameters_b%&
-&           opr_parameters%values(:, :, i) + matrix_b
-          parameters_bkg_b%opr_parameters%values(:, :, i) = &
-&           parameters_bkg_b%opr_parameters%values(:, :, i) - matrix_b
+          parameters_b%rr_parameters%values(:, :, i) = parameters_b%&
+&           rr_parameters%values(:, :, i) + matrix_b
+          parameters_bkg_b%rr_parameters%values(:, :, i) = &
+&           parameters_bkg_b%rr_parameters%values(:, :, i) - matrix_b
         END IF
       END IF
     END DO
-    CALL POPREAL4ARRAY(parameters_bkg%opr_parameters%values, SIZE(&
-&                parameters_bkg%opr_parameters%values, 1)*SIZE(&
-&                parameters_bkg%opr_parameters%values, 2)*SIZE(&
-&                parameters_bkg%opr_parameters%values, 3))
+    CALL POPREAL4ARRAY(parameters_bkg%rr_parameters%values, SIZE(&
+&                parameters_bkg%rr_parameters%values, 1)*SIZE(&
+&                parameters_bkg%rr_parameters%values, 2)*SIZE(&
+&                parameters_bkg%rr_parameters%values, 3))
     CALL POPREAL4ARRAY(parameters_bkg%control%x, SIZE(parameters_bkg%&
 &                control%x, 1))
     parameters_b%serr_mu_parameters%values = 0.0_4
@@ -8803,27 +8793,27 @@ CONTAINS
     CALL CONTROL_TFM(parameters_bkg, options)
     CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters_bkg, &
 &                        options)
-! Loop on opr_parameters
+! Loop on rr_parameters
     DO i=1,setup%nop
-      IF (options%optimize%opr_parameters(i) .NE. 0) THEN
+      IF (options%optimize%rr_parameters(i) .NE. 0) THEN
         IF (hard) THEN
-          matrix = parameters%opr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i)
         ELSE
-          matrix = parameters%opr_parameters%values(:, :, i) - &
-&           parameters_bkg%opr_parameters%values(:, :, i)
+          matrix = parameters%rr_parameters%values(:, :, i) - &
+&           parameters_bkg%rr_parameters%values(:, :, i)
         END IF
         result1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
         res = res + result1
       END IF
     END DO
-! Loop on opr_initial_states
+! Loop on rr_initial_states
     DO i=1,setup%nos
-      IF (options%optimize%opr_initial_states(i) .NE. 0) THEN
+      IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
         IF (hard) THEN
-          matrix = parameters%opr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i)
         ELSE
-          matrix = parameters%opr_initial_states%values(:, :, i) - &
-&           parameters_bkg%opr_initial_states%values(:, :, i)
+          matrix = parameters%rr_initial_states%values(:, :, i) - &
+&           parameters_bkg%rr_initial_states%values(:, :, i)
         END IF
         result1 = SMOOTHING_REGULARIZATION_SPATIAL_LOOP(mesh, matrix)
         res = res + result1
@@ -10769,12 +10759,12 @@ CONTAINS
 
 !  Differentiation of classical_compute_jreg in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: jreg
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
 &   parameters, parameters_d, options, options_d, returns, jreg, jreg_d)
@@ -10792,39 +10782,45 @@ CONTAINS
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_d
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
-    jreg_cmpt_values = 0._sp
-    jreg_cmpt_values_d = 0.0_4
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      jreg_d = 0.0_4
+    ELSE
+      jreg_cmpt_values = 0._sp
+      jreg_cmpt_values_d = 0.0_4
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values_d(i) = PRIOR_REGULARIZATION_D(parameters, &
-&         parameters_d, jreg_cmpt_values(i))
-      CASE ('smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
-&         input_data, parameters, parameters_d, options, .false., &
-&         jreg_cmpt_values(i))
-      CASE ('hard-smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh, &
-&         input_data, parameters, parameters_d, options, .true., &
-&         jreg_cmpt_values(i))
-      END SELECT
-    END DO
-    jreg_d = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values_d)
-    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+          jreg_cmpt_values_d(i) = PRIOR_REGULARIZATION_D(parameters, &
+&           parameters_d, jreg_cmpt_values(i))
+        CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh&
+&           , input_data, parameters, parameters_d, options, .false., &
+&           jreg_cmpt_values(i))
+        CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          jreg_cmpt_values_d(i) = SMOOTHING_REGULARIZATION_D(setup, mesh&
+&           , input_data, parameters, parameters_d, options, .true., &
+&           jreg_cmpt_values(i))
+        END SELECT
+      END DO
+      jreg_d = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values_d)
+      jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_D
 
 !  Differentiation of classical_compute_jreg in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: jreg
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
 &   parameters, parameters_b, options, options_b, returns, jreg, jreg_b)
@@ -10842,94 +10838,102 @@ CONTAINS
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values_b
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
     INTEGER :: branch
-    jreg_cmpt_values = 0._sp
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      parameters_b%control%x = 0.0_4
+      parameters_b%rr_parameters%values = 0.0_4
+      parameters_b%rr_initial_states%values = 0.0_4
+    ELSE
+      jreg_cmpt_values = 0._sp
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
-        CALL PUSHCONTROL2B(2)
-      CASE ('smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                     control%x, 1))
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                     parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2)*SIZE(&
-&                     parameters%opr_parameters%values, 3))
-        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                     parameters%opr_initial_states%values, 1)*SIZE(&
-&                     parameters%opr_initial_states%values, 2)*SIZE(&
-&                     parameters%opr_initial_states%values, 3))
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .false.)
-        CALL PUSHCONTROL2B(1)
-      CASE ('hard-smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                     control%x, 1))
-        CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                     parameters%opr_parameters%values, 1)*SIZE(&
-&                     parameters%opr_parameters%values, 2)*SIZE(&
-&                     parameters%opr_parameters%values, 3))
-        CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                     parameters%opr_initial_states%values, 1)*SIZE(&
-&                     parameters%opr_initial_states%values, 2)*SIZE(&
-&                     parameters%opr_initial_states%values, 3))
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .true.)
-        CALL PUSHCONTROL2B(0)
-      CASE DEFAULT
-        CALL PUSHCONTROL2B(3)
-      END SELECT
-    END DO
-    jreg_cmpt_values_b = 0.0_4
-    jreg_cmpt_values_b = options%cost%wjreg_cmpt*jreg_b
-    parameters_b%control%x = 0.0_4
-    parameters_b%opr_parameters%values = 0.0_4
-    parameters_b%opr_initial_states%values = 0.0_4
-    DO i=options%cost%njrc,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .EQ. 0) THEN
-          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                      parameters%opr_initial_states%values, 1)*SIZE(&
-&                      parameters%opr_initial_states%values, 2)*SIZE(&
-&                      parameters%opr_initial_states%values, 3))
-          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                      parameters%opr_parameters%values, 1)*SIZE(&
-&                      parameters%opr_parameters%values, 2)*SIZE(&
-&                      parameters%opr_parameters%values, 3))
-          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                      control%x, 1))
-          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
-&                                   parameters, parameters_b, options, &
-&                                   .true., jreg_cmpt_values_b(i))
-          jreg_cmpt_values_b(i) = 0.0_4
-        ELSE
-          CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                      parameters%opr_initial_states%values, 1)*SIZE(&
-&                      parameters%opr_initial_states%values, 2)*SIZE(&
-&                      parameters%opr_initial_states%values, 3))
-          CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                      parameters%opr_parameters%values, 1)*SIZE(&
-&                      parameters%opr_parameters%values, 2)*SIZE(&
-&                      parameters%opr_parameters%values, 3))
-          CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
-&                      control%x, 1))
-          CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
-&                                   parameters, parameters_b, options, &
-&                                   .false., jreg_cmpt_values_b(i))
+          jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+          CALL PUSHCONTROL2B(2)
+        CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                       control%x, 1))
+          CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                       parameters%rr_parameters%values, 1)*SIZE(&
+&                       parameters%rr_parameters%values, 2)*SIZE(&
+&                       parameters%rr_parameters%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                       parameters%rr_initial_states%values, 1)*SIZE(&
+&                       parameters%rr_initial_states%values, 2)*SIZE(&
+&                       parameters%rr_initial_states%values, 3))
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .false.)
+          CALL PUSHCONTROL2B(1)
+        CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                       control%x, 1))
+          CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                       parameters%rr_parameters%values, 1)*SIZE(&
+&                       parameters%rr_parameters%values, 2)*SIZE(&
+&                       parameters%rr_parameters%values, 3))
+          CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                       parameters%rr_initial_states%values, 1)*SIZE(&
+&                       parameters%rr_initial_states%values, 2)*SIZE(&
+&                       parameters%rr_initial_states%values, 3))
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .true.)
+          CALL PUSHCONTROL2B(0)
+        CASE DEFAULT
+          CALL PUSHCONTROL2B(3)
+        END SELECT
+      END DO
+      jreg_cmpt_values_b = 0.0_4
+      jreg_cmpt_values_b = options%cost%wjreg_cmpt*jreg_b
+      parameters_b%control%x = 0.0_4
+      parameters_b%rr_parameters%values = 0.0_4
+      parameters_b%rr_initial_states%values = 0.0_4
+      DO i=options%cost%njrc,1,-1
+        CALL POPCONTROL2B(branch)
+        IF (branch .LT. 2) THEN
+          IF (branch .EQ. 0) THEN
+            CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE&
+&                        (parameters%rr_initial_states%values, 1)*SIZE(&
+&                        parameters%rr_initial_states%values, 2)*SIZE(&
+&                        parameters%rr_initial_states%values, 3))
+            CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                        parameters%rr_parameters%values, 1)*SIZE(&
+&                        parameters%rr_parameters%values, 2)*SIZE(&
+&                        parameters%rr_parameters%values, 3))
+            CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                        control%x, 1))
+            CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                     parameters, parameters_b, options&
+&                                     , .true., jreg_cmpt_values_b(i))
+            jreg_cmpt_values_b(i) = 0.0_4
+          ELSE
+            CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE&
+&                        (parameters%rr_initial_states%values, 1)*SIZE(&
+&                        parameters%rr_initial_states%values, 2)*SIZE(&
+&                        parameters%rr_initial_states%values, 3))
+            CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                        parameters%rr_parameters%values, 1)*SIZE(&
+&                        parameters%rr_parameters%values, 2)*SIZE(&
+&                        parameters%rr_parameters%values, 3))
+            CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%&
+&                        control%x, 1))
+            CALL SMOOTHING_REGULARIZATION_B(setup, mesh, input_data, &
+&                                     parameters, parameters_b, options&
+&                                     , .false., jreg_cmpt_values_b(i))
+            jreg_cmpt_values_b(i) = 0.0_4
+          END IF
+        ELSE IF (branch .EQ. 2) THEN
+          CALL PRIOR_REGULARIZATION_B(parameters, parameters_b, &
+&                               jreg_cmpt_values_b(i))
           jreg_cmpt_values_b(i) = 0.0_4
         END IF
-      ELSE IF (branch .EQ. 2) THEN
-        CALL PRIOR_REGULARIZATION_B(parameters, parameters_b, &
-&                             jreg_cmpt_values_b(i))
-        jreg_cmpt_values_b(i) = 0.0_4
-      END IF
-    END DO
+      END DO
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters&
@@ -10944,34 +10948,40 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: jreg
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
+    INTRINSIC ALLOCATED
     INTRINSIC SUM
-    jreg_cmpt_values = 0._sp
-    DO i=1,options%cost%njrc
-      SELECT CASE  (options%cost%jreg_cmpt(i)) 
-      CASE ('prior') 
+! Case of forward run
+    IF (.NOT.ALLOCATED(parameters%control%x)) THEN
+      RETURN
+    ELSE
+      jreg_cmpt_values = 0._sp
+      DO i=1,options%cost%njrc
+        SELECT CASE  (options%cost%jreg_cmpt(i)) 
+        CASE ('prior') 
 ! Can be applied to any control
-        jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
-      CASE ('smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .false.)
-      CASE ('hard-smoothing') 
-! Should be only used with distributed mapping. Applied on opr_parameters and opr_initial_states
-        jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
-&         input_data, parameters, options, .true.)
-      END SELECT
-    END DO
-    jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+          jreg_cmpt_values(i) = PRIOR_REGULARIZATION(parameters)
+        CASE ('smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .false.)
+        CASE ('hard-smoothing') 
+! Should be only used with distributed mapping. Applied on rr_parameters and rr_initial_states
+          jreg_cmpt_values(i) = SMOOTHING_REGULARIZATION(setup, mesh, &
+&           input_data, parameters, options, .true.)
+        END SELECT
+      END DO
+      jreg = SUM(options%cost%wjreg_cmpt*jreg_cmpt_values)
+    END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG
 
 !  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_D(setup, mesh, input_data, &
@@ -10992,24 +11002,20 @@ CONTAINS
     REAL(sp) :: jobs_d, jreg_d
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
 &                           output_d, options, returns, jobs, jobs_d)
-    IF (options%cost%wjreg .GT. 0._sp) THEN
-      CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters&
-&                             , parameters_d, options, options_d, &
-&                             returns, jreg, jreg_d)
-    ELSE
-      jreg_d = 0.0_4
-    END IF
+    CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
+&                           parameters_d, options, options_d, returns, &
+&                           jreg, jreg_d)
     output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
 !  Differentiation of classical_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, &
@@ -11028,48 +11034,34 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_b, jreg_b
-    INTEGER :: branch
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    IF (options%cost%wjreg .GT. 0._sp) THEN
-      CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
-&                   x, 1))
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                   parameters%opr_initial_states%values, 1)*SIZE(&
-&                   parameters%opr_initial_states%values, 2)*SIZE(&
-&                   parameters%opr_initial_states%values, 3))
-      CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                           options, returns, jreg)
-      CALL PUSHCONTROL1B(0)
-    ELSE
-      CALL PUSHCONTROL1B(1)
-    END IF
+    CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
+&                 , 1))
+    CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters&
+&                 %rr_parameters%values, 1)*SIZE(parameters%&
+&                 rr_parameters%values, 2)*SIZE(parameters%rr_parameters&
+&                 %values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     jobs_b = output_b%cost
     jreg_b = options%cost%wjreg*output_b%cost
-    CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) THEN
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
-      CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
-&                  , 1))
-      CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters&
-&                             , parameters_b, options, options_b, &
-&                             returns, jreg, jreg_b)
-    ELSE
-      parameters_b%control%x = 0.0_4
-      parameters_b%opr_parameters%values = 0.0_4
-      parameters_b%opr_initial_states%values = 0.0_4
-    END IF
+    CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                parameters%rr_initial_states%values, 1)*SIZE(parameters&
+&                %rr_initial_states%values, 2)*SIZE(parameters%&
+&                rr_initial_states%values, 3))
+    CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters%&
+&                rr_parameters%values, 1)*SIZE(parameters%rr_parameters%&
+&                values, 2)*SIZE(parameters%rr_parameters%values, 3))
+    CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
+&                1))
+    CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
+&                           parameters_b, options, options_b, returns, &
+&                           jreg, jreg_b)
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
 &                           output_b, options, returns, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
@@ -11089,26 +11081,20 @@ CONTAINS
     jreg = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
 &                         , returns, jobs)
-    IF (options%cost%wjreg .GT. 0._sp) CALL CLASSICAL_COMPUTE_JREG(setup&
-&                                                            , mesh, &
-&                                                            input_data&
-&                                                            , &
-&                                                            parameters&
-&                                                            , options, &
-&                                                            returns, &
-&                                                            jreg)
+    CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
+&                         options, returns, jreg)
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
 !  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_D(setup, mesh, input_data, parameters, &
@@ -11137,13 +11123,13 @@ CONTAINS
 
 !  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: output.cost
-!   with respect to varying inputs: *(parameters.control.x) *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(parameters.serr_mu_parameters.values)
+!   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
   SUBROUTINE COMPUTE_COST_B(setup, mesh, input_data, parameters, &
@@ -11165,29 +11151,29 @@ CONTAINS
       CALL BAYESIAN_COMPUTE_COST_B(setup, mesh, input_data, parameters, &
 &                            parameters_b, output, output_b, options, &
 &                            returns)
-      parameters_b%opr_parameters%values = 0.0_4
-      parameters_b%opr_initial_states%values = 0.0_4
+      parameters_b%rr_parameters%values = 0.0_4
+      parameters_b%rr_initial_states%values = 0.0_4
     ELSE
       CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%&
 &                   x, 1))
-      CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                   parameters%opr_parameters%values, 1)*SIZE(parameters&
-&                   %opr_parameters%values, 2)*SIZE(parameters%&
-&                   opr_parameters%values, 3))
-      CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                   parameters%opr_initial_states%values, 1)*SIZE(&
-&                   parameters%opr_initial_states%values, 2)*SIZE(&
-&                   parameters%opr_initial_states%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                   parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                   rr_parameters%values, 2)*SIZE(parameters%&
+&                   rr_parameters%values, 3))
+      CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                   parameters%rr_initial_states%values, 1)*SIZE(&
+&                   parameters%rr_initial_states%values, 2)*SIZE(&
+&                   parameters%rr_initial_states%values, 3))
       CALL CLASSICAL_COMPUTE_COST(setup, mesh, input_data, parameters, &
 &                           output, options, returns)
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
-      CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(&
-&                  parameters%opr_parameters%values, 1)*SIZE(parameters%&
-&                  opr_parameters%values, 2)*SIZE(parameters%&
-&                  opr_parameters%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                  parameters%rr_initial_states%values, 1)*SIZE(&
+&                  parameters%rr_initial_states%values, 2)*SIZE(&
+&                  parameters%rr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(&
+&                  parameters%rr_parameters%values, 1)*SIZE(parameters%&
+&                  rr_parameters%values, 2)*SIZE(parameters%&
+&                  rr_parameters%values, 3))
       CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
 &                  , 1))
       CALL CLASSICAL_COMPUTE_COST_B(setup, mesh, input_data, parameters&
@@ -12853,12 +12839,12 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 
 CONTAINS
 !  Differentiation of gr4_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -12929,31 +12915,31 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_d%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_d%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_d%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_d, ei, ei_d)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_d, ei, ei_d)
             en_d = -ei_d
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_d%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_d%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_d, perc, perc_d)
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE_D(parameters%opr_parameters%values(row, col&
-&                        , 4), parameters_d%opr_parameters%values(row, &
-&                        col, 4), parameters%opr_initial_states%values(&
-&                        row, col, 3), parameters_d%opr_initial_states%&
+            CALL GR_EXCHANGE_D(parameters%rr_parameters%values(row, col&
+&                        , 4), parameters_d%rr_parameters%values(row, &
+&                        col, 4), parameters%rr_initial_states%values(&
+&                        row, col, 3), parameters_d%rr_initial_states%&
 &                        values(row, col, 3), l, l_d)
           ELSE
             pr = 0._sp
@@ -12971,10 +12957,10 @@ CONTAINS
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_d%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_d%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
@@ -13010,12 +12996,12 @@ CONTAINS
 &                               q_d, qup, qup_d)
             CALL LINEAR_ROUTING_D(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 5), &
-&                           parameters_d%opr_parameters%values(row, col&
-&                           , 5), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_d%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_d, qrout, qrout_d)
+&                           %rr_parameters%values(row, col, 5), &
+&                           parameters_d%rr_parameters%values(row, col, &
+&                           5), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_d%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_d, qrout, &
+&                           qrout_d)
             q_d(row, col) = qrout_d + qt_d(row, col)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -13038,12 +13024,12 @@ CONTAINS
   END SUBROUTINE GR4_LR_FORWARD_D
 
 !  Differentiation of gr4_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -13120,29 +13106,29 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             CALL PUSHREAL4(en)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 2))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE(parameters%opr_parameters%values(row, col, &
-&                      4), parameters%opr_initial_states%values(row, col&
-&                      , 3), l)
+            CALL GR_EXCHANGE(parameters%rr_parameters%values(row, col, 4&
+&                      ), parameters%rr_initial_states%values(row, col, &
+&                      3), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -13156,11 +13142,11 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -13193,12 +13179,12 @@ CONTAINS
 &                           dx(row, col), mesh%dy(row, col), mesh%flwacc&
 &                           (row, col), mesh%flwdir, q, qup)
           CALL PUSHREAL4(qup)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  4))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 4&
+&                  ))
           CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row, &
 &                       col), mesh%flwacc(row, col), parameters%&
-&                       opr_parameters%values(row, col, 5), parameters%&
-&                       opr_initial_states%values(row, col, 4), qup, &
+&                       rr_parameters%values(row, col, 5), parameters%&
+&                       rr_initial_states%values(row, col, 4), qup, &
 &                       qrout)
           q(row, col) = qrout + qt(row, col)
           CALL PUSHCONTROL2B(2)
@@ -13231,17 +13217,17 @@ CONTAINS
             qrout_b = q_b(row, col)
             qt_b(row, col) = qt_b(row, col) + q_b(row, col)
             q_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 4))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   4))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 5), &
-&                           parameters_b%opr_parameters%values(row, col&
-&                           , 5), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_b%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_b, qrout, qrout_b)
+&                           %rr_parameters%values(row, col, 5), &
+&                           parameters_b%rr_parameters%values(row, col, &
+&                           5), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_b%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_b, qrout, &
+&                           qrout_b)
             CALL UPSTREAM_DISCHARGE_B(mesh%nrow, mesh%ncol, row, col, &
 &                               mesh%dx(row, col), mesh%dy(row, col), &
 &                               mesh%flwacc(row, col), mesh%flwdir, q, &
@@ -13266,13 +13252,13 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 3&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 3)&
+&                )
           CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_b%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_b%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
@@ -13280,32 +13266,32 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(parameters%opr_parameters%values(row, col&
-&                        , 4), parameters_b%opr_parameters%values(row, &
-&                        col, 4), parameters%opr_initial_states%values(&
-&                        row, col, 3), parameters_b%opr_initial_states%&
+            CALL GR_EXCHANGE_B(parameters%rr_parameters%values(row, col&
+&                        , 4), parameters_b%rr_parameters%values(row, &
+&                        col, 4), parameters%rr_initial_states%values(&
+&                        row, col, 3), parameters_b%rr_initial_states%&
 &                        values(row, col, 3), l, l_b)
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 2))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   2))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_b%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_b%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL POPREAL4(pn)
             CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_b%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_b%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_b%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_b, ei, ei_b)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_b, ei, ei_b)
           END IF
         END IF
       END DO
@@ -13383,23 +13369,23 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE(parameters%opr_parameters%values(row, col, &
-&                      4), parameters%opr_initial_states%values(row, col&
-&                      , 3), l)
+            CALL GR_EXCHANGE(parameters%rr_parameters%values(row, col, 4&
+&                      ), parameters%rr_initial_states%values(row, col, &
+&                      3), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13411,8 +13397,8 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -13442,8 +13428,8 @@ CONTAINS
 &                             flwacc(row, col), mesh%flwdir, q, qup)
             CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row&
 &                         , col), mesh%flwacc(row, col), parameters%&
-&                         opr_parameters%values(row, col, 5), parameters&
-&                         %opr_initial_states%values(row, col, 4), qup, &
+&                         rr_parameters%values(row, col, 5), parameters%&
+&                         rr_initial_states%values(row, col, 4), qup, &
 &                         qrout)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -13463,12 +13449,12 @@ CONTAINS
   END SUBROUTINE GR4_LR_FORWARD
 
 !  Differentiation of gr4_ode_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_ODE_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -13536,12 +13522,12 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_d%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_d%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_d%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_d, ei, ei_d)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_d, ei, ei_d)
             en_d = -ei_d
             en = pet(row, col) - ei
           ELSE
@@ -13554,18 +13540,18 @@ CONTAINS
 !%   Production and Transfer ODE
 !% =============================================================================================== %!
           CALL GR_ODE_IMPLICIT_EULER_D(pn, pn_d, en, en_d, parameters%&
-&                                opr_parameters%values(row, col, 2), &
-&                                parameters_d%opr_parameters%values(row&
-&                                , col, 2), parameters%opr_parameters%&
+&                                rr_parameters%values(row, col, 2), &
+&                                parameters_d%rr_parameters%values(row, &
+&                                col, 2), parameters%rr_parameters%&
 &                                values(row, col, 3), parameters_d%&
-&                                opr_parameters%values(row, col, 3), &
-&                                parameters%opr_parameters%values(row, &
-&                                col, 4), parameters_d%opr_parameters%&
+&                                rr_parameters%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 4), parameters_d%rr_parameters%&
 &                                values(row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 2:3&
-&                                ), parameters_d%opr_initial_states%&
-&                                values(row, col, 2:3), qt(row, col), &
-&                                qt_d(row, col))
+&                                rr_initial_states%values(row, col, 2:3)&
+&                                , parameters_d%rr_initial_states%values&
+&                                (row, col, 2:3), qt(row, col), qt_d(row&
+&                                , col))
         END IF
       END DO
 !~             !$OMP end parallel do
@@ -13591,12 +13577,12 @@ CONTAINS
 &                               q_d, qup, qup_d)
             CALL LINEAR_ROUTING_D(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 5), &
-&                           parameters_d%opr_parameters%values(row, col&
-&                           , 5), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_d%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_d, qrout, qrout_d)
+&                           %rr_parameters%values(row, col, 5), &
+&                           parameters_d%rr_parameters%values(row, col, &
+&                           5), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_d%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_d, qrout, &
+&                           qrout_d)
             q_d(row, col) = qrout_d + qt_d(row, col)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -13619,12 +13605,12 @@ CONTAINS
   END SUBROUTINE GR4_ODE_FORWARD_D
 
 !  Differentiation of gr4_ode_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_ODE_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -13698,11 +13684,11 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             CALL PUSHREAL4(en)
             en = pet(row, col) - ei
@@ -13717,14 +13703,14 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production and Transfer ODE
 !% =============================================================================================== %!
-          CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values(row, &
+          CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values(row, &
 &                       col, 2:3), 2)
-          CALL GR_ODE_IMPLICIT_EULER(pn, en, parameters%opr_parameters%&
+          CALL GR_ODE_IMPLICIT_EULER(pn, en, parameters%rr_parameters%&
 &                              values(row, col, 2), parameters%&
-&                              opr_parameters%values(row, col, 3), &
-&                              parameters%opr_parameters%values(row, col&
-&                              , 4), parameters%opr_initial_states%&
-&                              values(row, col, 2:3), qt(row, col))
+&                              rr_parameters%values(row, col, 3), &
+&                              parameters%rr_parameters%values(row, col&
+&                              , 4), parameters%rr_initial_states%values&
+&                              (row, col, 2:3), qt(row, col))
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
@@ -13749,12 +13735,12 @@ CONTAINS
 &                           dx(row, col), mesh%dy(row, col), mesh%flwacc&
 &                           (row, col), mesh%flwdir, q, qup)
           CALL PUSHREAL4(qup)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  4))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 4&
+&                  ))
           CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row, &
 &                       col), mesh%flwacc(row, col), parameters%&
-&                       opr_parameters%values(row, col, 5), parameters%&
-&                       opr_initial_states%values(row, col, 4), qup, &
+&                       rr_parameters%values(row, col, 5), parameters%&
+&                       rr_initial_states%values(row, col, 4), qup, &
 &                       qrout)
           q(row, col) = qrout + qt(row, col)
           CALL PUSHCONTROL2B(2)
@@ -13787,17 +13773,17 @@ CONTAINS
             qrout_b = q_b(row, col)
             qt_b(row, col) = qt_b(row, col) + q_b(row, col)
             q_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 4))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   4))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 5), &
-&                           parameters_b%opr_parameters%values(row, col&
-&                           , 5), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_b%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_b, qrout, qrout_b)
+&                           %rr_parameters%values(row, col, 5), &
+&                           parameters_b%rr_parameters%values(row, col, &
+&                           5), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_b%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_b, qrout, &
+&                           qrout_b)
             CALL UPSTREAM_DISCHARGE_B(mesh%nrow, mesh%ncol, row, col, &
 &                               mesh%dx(row, col), mesh%dy(row, col), &
 &                               mesh%flwacc(row, col), mesh%flwdir, q, &
@@ -13811,36 +13797,36 @@ CONTAINS
         IF (branch .NE. 0) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          CALL POPREAL4ARRAY(parameters%opr_initial_states%values(row, &
+          CALL POPREAL4ARRAY(parameters%rr_initial_states%values(row, &
 &                      col, 2:3), 2)
           CALL GR_ODE_IMPLICIT_EULER_B(pn, pn_b, en, en_b, parameters%&
-&                                opr_parameters%values(row, col, 2), &
-&                                parameters_b%opr_parameters%values(row&
-&                                , col, 2), parameters%opr_parameters%&
+&                                rr_parameters%values(row, col, 2), &
+&                                parameters_b%rr_parameters%values(row, &
+&                                col, 2), parameters%rr_parameters%&
 &                                values(row, col, 3), parameters_b%&
-&                                opr_parameters%values(row, col, 3), &
-&                                parameters%opr_parameters%values(row, &
-&                                col, 4), parameters_b%opr_parameters%&
+&                                rr_parameters%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 4), parameters_b%rr_parameters%&
 &                                values(row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 2:3&
-&                                ), parameters_b%opr_initial_states%&
-&                                values(row, col, 2:3), qt(row, col), &
-&                                qt_b(row, col))
+&                                rr_initial_states%values(row, col, 2:3)&
+&                                , parameters_b%rr_initial_states%values&
+&                                (row, col, 2:3), qt(row, col), qt_b(row&
+&                                , col))
           qt_b(row, col) = 0.0_4
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(en)
             ei_b = -en_b
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL POPREAL4(pn)
             CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_b%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_b%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_b%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_b, ei, ei_b)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_b, ei, ei_b)
           ELSE
             CALL POPREAL4(en)
             CALL POPREAL4(pn)
@@ -13919,8 +13905,8 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             en = pet(row, col) - ei
           ELSE
@@ -13930,12 +13916,12 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production and Transfer ODE
 !% =============================================================================================== %!
-          CALL GR_ODE_IMPLICIT_EULER(pn, en, parameters%opr_parameters%&
+          CALL GR_ODE_IMPLICIT_EULER(pn, en, parameters%rr_parameters%&
 &                              values(row, col, 2), parameters%&
-&                              opr_parameters%values(row, col, 3), &
-&                              parameters%opr_parameters%values(row, col&
-&                              , 4), parameters%opr_initial_states%&
-&                              values(row, col, 2:3), qt(row, col))
+&                              rr_parameters%values(row, col, 3), &
+&                              parameters%rr_parameters%values(row, col&
+&                              , 4), parameters%rr_initial_states%values&
+&                              (row, col, 2:3), qt(row, col))
         END IF
       END DO
 !~             !$OMP end parallel do
@@ -13959,8 +13945,8 @@ CONTAINS
 &                             flwacc(row, col), mesh%flwdir, q, qup)
             CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row&
 &                         , col), mesh%flwacc(row, col), parameters%&
-&                         opr_parameters%values(row, col, 5), parameters&
-&                         %opr_initial_states%values(row, col, 4), qup, &
+&                         rr_parameters%values(row, col, 5), parameters%&
+&                         rr_initial_states%values(row, col, 4), qup, &
 &                         qrout)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -13980,12 +13966,12 @@ CONTAINS
   END SUBROUTINE GR4_ODE_FORWARD
 
 !  Differentiation of gr4_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -14074,31 +14060,31 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_d%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_d%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_d%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_d, ei, ei_d)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_d, ei, ei_d)
             en_d = -ei_d
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_d%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_d%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_d, perc, perc_d)
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE_D(parameters%opr_parameters%values(row, col&
-&                        , 4), parameters_d%opr_parameters%values(row, &
-&                        col, 4), parameters%opr_initial_states%values(&
-&                        row, col, 3), parameters_d%opr_initial_states%&
+            CALL GR_EXCHANGE_D(parameters%rr_parameters%values(row, col&
+&                        , 4), parameters_d%rr_parameters%values(row, &
+&                        col, 4), parameters%rr_initial_states%values(&
+&                        row, col, 3), parameters_d%rr_initial_states%&
 &                        values(row, col, 3), l, l_d)
           ELSE
             pr = 0._sp
@@ -14116,10 +14102,10 @@ CONTAINS
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_d%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_d%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
@@ -14160,13 +14146,13 @@ CONTAINS
             qijm1_d = q_d(row, col, zq-1)
             qijm1 = q(row, col, zq-1)
             CALL KINEMATIC_WAVE1D_D(setup%dt, mesh%dx(row, col), &
-&                             parameters%opr_parameters%values(row, col&
-&                             , 5), parameters_d%opr_parameters%values(&
-&                             row, col, 5), parameters%opr_parameters%&
-&                             values(row, col, 6), parameters_d%&
-&                             opr_parameters%values(row, col, 6), qlijm1&
-&                             , qlijm1_d, qlij, qlij_d, qim1j, qim1j_d, &
-&                             qijm1, qijm1_d, qij, qij_d)
+&                             parameters%rr_parameters%values(row, col, &
+&                             5), parameters_d%rr_parameters%values(row&
+&                             , col, 5), parameters%rr_parameters%values&
+&                             (row, col, 6), parameters_d%rr_parameters%&
+&                             values(row, col, 6), qlijm1, qlijm1_d, &
+&                             qlij, qlij_d, qim1j, qim1j_d, qijm1, &
+&                             qijm1_d, qij, qij_d)
             q_d(row, col, zq) = qij_d
             q(row, col, zq) = qij
           ELSE
@@ -14189,12 +14175,12 @@ CONTAINS
   END SUBROUTINE GR4_KW_FORWARD_D
 
 !  Differentiation of gr4_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -14285,29 +14271,29 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             CALL PUSHREAL4(en)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 2))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE(parameters%opr_parameters%values(row, col, &
-&                      4), parameters%opr_initial_states%values(row, col&
-&                      , 3), l)
+            CALL GR_EXCHANGE(parameters%rr_parameters%values(row, col, 4&
+&                      ), parameters%rr_initial_states%values(row, col, &
+&                      3), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -14321,11 +14307,11 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -14365,8 +14351,8 @@ CONTAINS
           CALL PUSHREAL4(qijm1)
           qijm1 = q(row, col, zq-1)
           CALL KINEMATIC_WAVE1D(setup%dt, mesh%dx(row, col), parameters%&
-&                         opr_parameters%values(row, col, 5), parameters&
-&                         %opr_parameters%values(row, col, 6), qlijm1, &
+&                         rr_parameters%values(row, col, 5), parameters%&
+&                         rr_parameters%values(row, col, 6), qlijm1, &
 &                         qlij, qim1j, qijm1, qij)
           q(row, col, zq) = qij
           CALL PUSHCONTROL2B(2)
@@ -14399,13 +14385,13 @@ CONTAINS
             qij_b = q_b(row, col, zq)
             q_b(row, col, zq) = 0.0_4
             CALL KINEMATIC_WAVE1D_B(setup%dt, mesh%dx(row, col), &
-&                             parameters%opr_parameters%values(row, col&
-&                             , 5), parameters_b%opr_parameters%values(&
-&                             row, col, 5), parameters%opr_parameters%&
-&                             values(row, col, 6), parameters_b%&
-&                             opr_parameters%values(row, col, 6), qlijm1&
-&                             , qlijm1_b, qlij, qlij_b, qim1j, qim1j_b, &
-&                             qijm1, qijm1_b, qij, qij_b)
+&                             parameters%rr_parameters%values(row, col, &
+&                             5), parameters_b%rr_parameters%values(row&
+&                             , col, 5), parameters%rr_parameters%values&
+&                             (row, col, 6), parameters_b%rr_parameters%&
+&                             values(row, col, 6), qlijm1, qlijm1_b, &
+&                             qlij, qlij_b, qim1j, qim1j_b, qijm1, &
+&                             qijm1_b, qij, qij_b)
             CALL POPREAL4(qijm1)
             q_b(row, col, zq-1) = q_b(row, col, zq-1) + qijm1_b
             CALL POPREAL4(qlij)
@@ -14437,13 +14423,13 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 3&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 3)&
+&                )
           CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_b%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_b%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
@@ -14451,32 +14437,32 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_EXCHANGE_B(parameters%opr_parameters%values(row, col&
-&                        , 4), parameters_b%opr_parameters%values(row, &
-&                        col, 4), parameters%opr_initial_states%values(&
-&                        row, col, 3), parameters_b%opr_initial_states%&
+            CALL GR_EXCHANGE_B(parameters%rr_parameters%values(row, col&
+&                        , 4), parameters_b%rr_parameters%values(row, &
+&                        col, 4), parameters%rr_initial_states%values(&
+&                        row, col, 3), parameters_b%rr_initial_states%&
 &                        values(row, col, 3), l, l_b)
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 2))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   2))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_b%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_b%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL POPREAL4(pn)
             CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_b%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_b%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_b%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_b, ei, ei_b)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_b, ei, ei_b)
           END IF
         END IF
       END DO
@@ -14576,23 +14562,23 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_EXCHANGE(parameters%opr_parameters%values(row, col, &
-&                      4), parameters%opr_initial_states%values(row, col&
-&                      , 3), l)
+            CALL GR_EXCHANGE(parameters%rr_parameters%values(row, col, 4&
+&                      ), parameters%rr_initial_states%values(row, col, &
+&                      3), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -14604,8 +14590,8 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -14638,9 +14624,9 @@ CONTAINS
             qlij = qt(row, col, zq)
             qijm1 = q(row, col, zq-1)
             CALL KINEMATIC_WAVE1D(setup%dt, mesh%dx(row, col), &
-&                           parameters%opr_parameters%values(row, col, 5&
-&                           ), parameters%opr_parameters%values(row, col&
-&                           , 6), qlijm1, qlij, qim1j, qijm1, qij)
+&                           parameters%rr_parameters%values(row, col, 5)&
+&                           , parameters%rr_parameters%values(row, col, &
+&                           6), qlijm1, qlij, qim1j, qijm1, qij)
             q(row, col, zq) = qij
           ELSE
             q(row, col, zq) = qt(row, col, zq)
@@ -14659,12 +14645,12 @@ CONTAINS
   END SUBROUTINE GR4_KW_FORWARD
 
 !  Differentiation of gr5_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -14735,37 +14721,36 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_d%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_d%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_d%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_d, ei, ei_d)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_d, ei, ei_d)
             en_d = -ei_d
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_d%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_d%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_d, perc, perc_d)
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE_D(parameters%opr_parameters%&
-&                                  values(row, col, 4), parameters_d%&
-&                                  opr_parameters%values(row, col, 4), &
-&                                  parameters%opr_initial_states%values(&
+            CALL GR_THRESHOLD_EXCHANGE_D(parameters%rr_parameters%values&
+&                                  (row, col, 4), parameters_d%&
+&                                  rr_parameters%values(row, col, 4), &
+&                                  parameters%rr_initial_states%values(&
 &                                  row, col, 3), parameters_d%&
-&                                  opr_initial_states%values(row, col, 3&
-&                                  ), parameters%opr_parameters%values(&
-&                                  row, col, 5), parameters_d%&
-&                                  opr_parameters%values(row, col, 5), l&
-&                                  , l_d)
+&                                  rr_initial_states%values(row, col, 3)&
+&                                  , parameters%rr_parameters%values(row&
+&                                  , col, 5), parameters_d%rr_parameters&
+&                                  %values(row, col, 5), l, l_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -14782,10 +14767,10 @@ CONTAINS
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_d%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_d%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
@@ -14821,12 +14806,12 @@ CONTAINS
 &                               q_d, qup, qup_d)
             CALL LINEAR_ROUTING_D(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 6), &
-&                           parameters_d%opr_parameters%values(row, col&
-&                           , 6), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_d%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_d, qrout, qrout_d)
+&                           %rr_parameters%values(row, col, 6), &
+&                           parameters_d%rr_parameters%values(row, col, &
+&                           6), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_d%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_d, qrout, &
+&                           qrout_d)
             q_d(row, col) = qrout_d + qt_d(row, col)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -14849,12 +14834,12 @@ CONTAINS
   END SUBROUTINE GR5_LR_FORWARD_D
 
 !  Differentiation of gr5_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -14931,31 +14916,31 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             CALL PUSHREAL4(en)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 2))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE(parameters%opr_parameters%values(&
+            CALL GR_THRESHOLD_EXCHANGE(parameters%rr_parameters%values(&
 &                                row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 3)&
-&                                , parameters%opr_parameters%values(row&
-&                                , col, 5), l)
+&                                rr_initial_states%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 5), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -14969,11 +14954,11 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -15006,12 +14991,12 @@ CONTAINS
 &                           dx(row, col), mesh%dy(row, col), mesh%flwacc&
 &                           (row, col), mesh%flwdir, q, qup)
           CALL PUSHREAL4(qup)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  4))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 4&
+&                  ))
           CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row, &
 &                       col), mesh%flwacc(row, col), parameters%&
-&                       opr_parameters%values(row, col, 6), parameters%&
-&                       opr_initial_states%values(row, col, 4), qup, &
+&                       rr_parameters%values(row, col, 6), parameters%&
+&                       rr_initial_states%values(row, col, 4), qup, &
 &                       qrout)
           q(row, col) = qrout + qt(row, col)
           CALL PUSHCONTROL2B(2)
@@ -15044,17 +15029,17 @@ CONTAINS
             qrout_b = q_b(row, col)
             qt_b(row, col) = qt_b(row, col) + q_b(row, col)
             q_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 4))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   4))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 6), &
-&                           parameters_b%opr_parameters%values(row, col&
-&                           , 6), parameters%opr_initial_states%values(&
-&                           row, col, 4), parameters_b%&
-&                           opr_initial_states%values(row, col, 4), qup&
-&                           , qup_b, qrout, qrout_b)
+&                           %rr_parameters%values(row, col, 6), &
+&                           parameters_b%rr_parameters%values(row, col, &
+&                           6), parameters%rr_initial_states%values(row&
+&                           , col, 4), parameters_b%rr_initial_states%&
+&                           values(row, col, 4), qup, qup_b, qrout, &
+&                           qrout_b)
             CALL UPSTREAM_DISCHARGE_B(mesh%nrow, mesh%ncol, row, col, &
 &                               mesh%dx(row, col), mesh%dy(row, col), &
 &                               mesh%flwacc(row, col), mesh%flwdir, q, &
@@ -15079,13 +15064,13 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 3&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 3)&
+&                )
           CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_b%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_b%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
@@ -15093,37 +15078,36 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_THRESHOLD_EXCHANGE_B(parameters%opr_parameters%&
-&                                  values(row, col, 4), parameters_b%&
-&                                  opr_parameters%values(row, col, 4), &
-&                                  parameters%opr_initial_states%values(&
+            CALL GR_THRESHOLD_EXCHANGE_B(parameters%rr_parameters%values&
+&                                  (row, col, 4), parameters_b%&
+&                                  rr_parameters%values(row, col, 4), &
+&                                  parameters%rr_initial_states%values(&
 &                                  row, col, 3), parameters_b%&
-&                                  opr_initial_states%values(row, col, 3&
-&                                  ), parameters%opr_parameters%values(&
-&                                  row, col, 5), parameters_b%&
-&                                  opr_parameters%values(row, col, 5), l&
-&                                  , l_b)
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 2))
+&                                  rr_initial_states%values(row, col, 3)&
+&                                  , parameters%rr_parameters%values(row&
+&                                  , col, 5), parameters_b%rr_parameters&
+&                                  %values(row, col, 5), l, l_b)
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   2))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_b%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_b%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL POPREAL4(pn)
             CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_b%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_b%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_b%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_b, ei, ei_b)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_b, ei, ei_b)
           END IF
         END IF
       END DO
@@ -15201,25 +15185,25 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE(parameters%opr_parameters%values(&
+            CALL GR_THRESHOLD_EXCHANGE(parameters%rr_parameters%values(&
 &                                row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 3)&
-&                                , parameters%opr_parameters%values(row&
-&                                , col, 5), l)
+&                                rr_initial_states%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 5), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -15231,8 +15215,8 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -15262,8 +15246,8 @@ CONTAINS
 &                             flwacc(row, col), mesh%flwdir, q, qup)
             CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row&
 &                         , col), mesh%flwacc(row, col), parameters%&
-&                         opr_parameters%values(row, col, 6), parameters&
-&                         %opr_initial_states%values(row, col, 4), qup, &
+&                         rr_parameters%values(row, col, 6), parameters%&
+&                         rr_initial_states%values(row, col, 4), qup, &
 &                         qrout)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -15283,12 +15267,12 @@ CONTAINS
   END SUBROUTINE GR5_LR_FORWARD
 
 !  Differentiation of gr5_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -15377,37 +15361,36 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION_D(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_d%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_d%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_d%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_d, ei, ei_d)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_d, ei, ei_d)
             en_d = -ei_d
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_d%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_d%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_d, perc, perc_d)
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE_D(parameters%opr_parameters%&
-&                                  values(row, col, 4), parameters_d%&
-&                                  opr_parameters%values(row, col, 4), &
-&                                  parameters%opr_initial_states%values(&
+            CALL GR_THRESHOLD_EXCHANGE_D(parameters%rr_parameters%values&
+&                                  (row, col, 4), parameters_d%&
+&                                  rr_parameters%values(row, col, 4), &
+&                                  parameters%rr_initial_states%values(&
 &                                  row, col, 3), parameters_d%&
-&                                  opr_initial_states%values(row, col, 3&
-&                                  ), parameters%opr_parameters%values(&
-&                                  row, col, 5), parameters_d%&
-&                                  opr_parameters%values(row, col, 5), l&
-&                                  , l_d)
+&                                  rr_initial_states%values(row, col, 3)&
+&                                  , parameters%rr_parameters%values(row&
+&                                  , col, 5), parameters_d%rr_parameters&
+&                                  %values(row, col, 5), l, l_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -15424,10 +15407,10 @@ CONTAINS
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_d%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_d%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
             qd_d = prd_d + l_d
@@ -15468,13 +15451,13 @@ CONTAINS
             qijm1_d = q_d(row, col, zq-1)
             qijm1 = q(row, col, zq-1)
             CALL KINEMATIC_WAVE1D_D(setup%dt, mesh%dx(row, col), &
-&                             parameters%opr_parameters%values(row, col&
-&                             , 6), parameters_d%opr_parameters%values(&
-&                             row, col, 6), parameters%opr_parameters%&
-&                             values(row, col, 7), parameters_d%&
-&                             opr_parameters%values(row, col, 7), qlijm1&
-&                             , qlijm1_d, qlij, qlij_d, qim1j, qim1j_d, &
-&                             qijm1, qijm1_d, qij, qij_d)
+&                             parameters%rr_parameters%values(row, col, &
+&                             6), parameters_d%rr_parameters%values(row&
+&                             , col, 6), parameters%rr_parameters%values&
+&                             (row, col, 7), parameters_d%rr_parameters%&
+&                             values(row, col, 7), qlijm1, qlijm1_d, &
+&                             qlij, qlij_d, qim1j, qim1j_d, qijm1, &
+&                             qijm1_d, qij, qij_d)
             q_d(row, col, zq) = qij_d
             q(row, col, zq) = qij
           ELSE
@@ -15497,12 +15480,12 @@ CONTAINS
   END SUBROUTINE GR5_KW_FORWARD_D
 
 !  Differentiation of gr5_kw_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GR5_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -15593,31 +15576,31 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL PUSHREAL4(pn)
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             CALL PUSHREAL4(en)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 2))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE(parameters%opr_parameters%values(&
+            CALL GR_THRESHOLD_EXCHANGE(parameters%rr_parameters%values(&
 &                                row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 3)&
-&                                , parameters%opr_parameters%values(row&
-&                                , col, 5), l)
+&                                rr_initial_states%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 5), l)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -15631,11 +15614,11 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
             CALL PUSHCONTROL1B(0)
@@ -15675,8 +15658,8 @@ CONTAINS
           CALL PUSHREAL4(qijm1)
           qijm1 = q(row, col, zq-1)
           CALL KINEMATIC_WAVE1D(setup%dt, mesh%dx(row, col), parameters%&
-&                         opr_parameters%values(row, col, 6), parameters&
-&                         %opr_parameters%values(row, col, 7), qlijm1, &
+&                         rr_parameters%values(row, col, 6), parameters%&
+&                         rr_parameters%values(row, col, 7), qlijm1, &
 &                         qlij, qim1j, qijm1, qij)
           q(row, col, zq) = qij
           CALL PUSHCONTROL2B(2)
@@ -15709,13 +15692,13 @@ CONTAINS
             qij_b = q_b(row, col, zq)
             q_b(row, col, zq) = 0.0_4
             CALL KINEMATIC_WAVE1D_B(setup%dt, mesh%dx(row, col), &
-&                             parameters%opr_parameters%values(row, col&
-&                             , 6), parameters_b%opr_parameters%values(&
-&                             row, col, 6), parameters%opr_parameters%&
-&                             values(row, col, 7), parameters_b%&
-&                             opr_parameters%values(row, col, 7), qlijm1&
-&                             , qlijm1_b, qlij, qlij_b, qim1j, qim1j_b, &
-&                             qijm1, qijm1_b, qij, qij_b)
+&                             parameters%rr_parameters%values(row, col, &
+&                             6), parameters_b%rr_parameters%values(row&
+&                             , col, 6), parameters%rr_parameters%values&
+&                             (row, col, 7), parameters_b%rr_parameters%&
+&                             values(row, col, 7), qlijm1, qlijm1_b, &
+&                             qlij, qlij_b, qim1j, qim1j_b, qijm1, &
+&                             qijm1_b, qij, qij_b)
             CALL POPREAL4(qijm1)
             q_b(row, col, zq-1) = q_b(row, col, zq-1) + qijm1_b
             CALL POPREAL4(qlij)
@@ -15747,13 +15730,13 @@ CONTAINS
             l_b = 0.0_4
             prd_b = 0.0_4
           END IF
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 3&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 3)&
+&                )
           CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 3), &
-&                      parameters_b%opr_parameters%values(row, col, 3), &
-&                      parameters%opr_initial_states%values(row, col, 3)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 3), &
+&                      parameters_b%rr_parameters%values(row, col, 3), &
+&                      parameters%rr_initial_states%values(row, col, 3)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 3), qr, qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
@@ -15761,37 +15744,36 @@ CONTAINS
           l_b = l_b + prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL GR_THRESHOLD_EXCHANGE_B(parameters%opr_parameters%&
-&                                  values(row, col, 4), parameters_b%&
-&                                  opr_parameters%values(row, col, 4), &
-&                                  parameters%opr_initial_states%values(&
+            CALL GR_THRESHOLD_EXCHANGE_B(parameters%rr_parameters%values&
+&                                  (row, col, 4), parameters_b%&
+&                                  rr_parameters%values(row, col, 4), &
+&                                  parameters%rr_initial_states%values(&
 &                                  row, col, 3), parameters_b%&
-&                                  opr_initial_states%values(row, col, 3&
-&                                  ), parameters%opr_parameters%values(&
-&                                  row, col, 5), parameters_b%&
-&                                  opr_parameters%values(row, col, 5), l&
-&                                  , l_b)
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 2))
+&                                  rr_initial_states%values(row, col, 3)&
+&                                  , parameters%rr_parameters%values(row&
+&                                  , col, 5), parameters_b%rr_parameters&
+&                                  %values(row, col, 5), l, l_b)
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   2))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 2), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          2), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 2), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 2), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 2), &
+&                          parameters_b%rr_parameters%values(row, col, 2&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 2), parameters_b%&
+&                          rr_initial_states%values(row, col, 2), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL POPREAL4(pn)
             CALL GR_INTERCEPTION_B(prcp(row, col), pet(row, col), &
-&                            parameters%opr_parameters%values(row, col, &
-&                            1), parameters_b%opr_parameters%values(row&
-&                            , col, 1), parameters%opr_initial_states%&
+&                            parameters%rr_parameters%values(row, col, 1&
+&                            ), parameters_b%rr_parameters%values(row, &
+&                            col, 1), parameters%rr_initial_states%&
 &                            values(row, col, 1), parameters_b%&
-&                            opr_initial_states%values(row, col, 1), pn&
-&                            , pn_b, ei, ei_b)
+&                            rr_initial_states%values(row, col, 1), pn, &
+&                            pn_b, ei, ei_b)
           END IF
         END IF
       END DO
@@ -15891,25 +15873,25 @@ CONTAINS
 !%   Interception module
 !% =============================================================================================== %!
             CALL GR_INTERCEPTION(prcp(row, col), pet(row, col), &
-&                          parameters%opr_parameters%values(row, col, 1)&
-&                          , parameters%opr_initial_states%values(row, &
+&                          parameters%rr_parameters%values(row, col, 1)&
+&                          , parameters%rr_initial_states%values(row, &
 &                          col, 1), pn, ei)
             en = pet(row, col) - ei
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 2), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 2), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 2), pr, perc&
+&                       )
 !% =============================================================================================== %!
 !%   Exchange module
 !% =============================================================================================== %!
-            CALL GR_THRESHOLD_EXCHANGE(parameters%opr_parameters%values(&
+            CALL GR_THRESHOLD_EXCHANGE(parameters%rr_parameters%values(&
 &                                row, col, 4), parameters%&
-&                                opr_initial_states%values(row, col, 3)&
-&                                , parameters%opr_parameters%values(row&
-&                                , col, 5), l)
+&                                rr_initial_states%values(row, col, 3), &
+&                                parameters%rr_parameters%values(row, &
+&                                col, 5), l)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -15921,8 +15903,8 @@ CONTAINS
           prr = 0.9_sp*(pr+perc) + l
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 3), parameters%&
-&                    opr_initial_states%values(row, col, 3), qr)
+&                    rr_parameters%values(row, col, 3), parameters%&
+&                    rr_initial_states%values(row, col, 3), qr)
           IF (0._sp .LT. prd + l) THEN
             qd = prd + l
           ELSE
@@ -15955,9 +15937,9 @@ CONTAINS
             qlij = qt(row, col, zq)
             qijm1 = q(row, col, zq-1)
             CALL KINEMATIC_WAVE1D(setup%dt, mesh%dx(row, col), &
-&                           parameters%opr_parameters%values(row, col, 6&
-&                           ), parameters%opr_parameters%values(row, col&
-&                           , 7), qlijm1, qlij, qim1j, qijm1, qij)
+&                           parameters%rr_parameters%values(row, col, 6)&
+&                           , parameters%rr_parameters%values(row, col, &
+&                           7), qlijm1, qlij, qim1j, qijm1, qij)
             q(row, col, zq) = qij
           ELSE
             q(row, col, zq) = qt(row, col, zq)
@@ -15976,12 +15958,12 @@ CONTAINS
   END SUBROUTINE GR5_KW_FORWARD
 
 !  Differentiation of loieau_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE LOIEAU_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -16065,12 +16047,12 @@ CONTAINS
             en_d = 0.0_4
             pn_d = 0.0_4
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 1), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          1), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 1), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 1), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 1), &
+&                          parameters_d%rr_parameters%values(row, col, 1&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 1), parameters_d%&
+&                          rr_initial_states%values(row, col, 1), pr, &
+&                          pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16085,10 +16067,10 @@ CONTAINS
           prd_d = 0.1_sp*(pr_d+perc_d)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER_D(4._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 2), &
-&                      parameters_d%opr_parameters%values(row, col, 2), &
-&                      parameters%opr_initial_states%values(row, col, 2)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 2), &
+&                      parameters_d%rr_parameters%values(row, col, 2), &
+&                      parameters%rr_initial_states%values(row, col, 2)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 2), qr, qr_d)
           IF (0._sp .LT. prd) THEN
             qd_d = prd_d
@@ -16097,10 +16079,10 @@ CONTAINS
             qd = 0._sp
             qd_d = 0.0_4
           END IF
-          qt_d(row, col) = (qr+qd)*parameters_d%opr_parameters%values(&
-&           row, col, 3) + parameters%opr_parameters%values(row, col, 3)&
-&           *(qr_d+qd_d)
-          qt(row, col) = parameters%opr_parameters%values(row, col, 3)*(&
+          qt_d(row, col) = (qr+qd)*parameters_d%rr_parameters%values(row&
+&           , col, 3) + parameters%rr_parameters%values(row, col, 3)*(&
+&           qr_d+qd_d)
+          qt(row, col) = parameters%rr_parameters%values(row, col, 3)*(&
 &           qr+qd)
         END IF
       END DO
@@ -16127,12 +16109,12 @@ CONTAINS
 &                               q_d, qup, qup_d)
             CALL LINEAR_ROUTING_D(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 4), &
-&                           parameters_d%opr_parameters%values(row, col&
-&                           , 4), parameters%opr_initial_states%values(&
-&                           row, col, 3), parameters_d%&
-&                           opr_initial_states%values(row, col, 3), qup&
-&                           , qup_d, qrout, qrout_d)
+&                           %rr_parameters%values(row, col, 4), &
+&                           parameters_d%rr_parameters%values(row, col, &
+&                           4), parameters%rr_initial_states%values(row&
+&                           , col, 3), parameters_d%rr_initial_states%&
+&                           values(row, col, 3), qup, qup_d, qrout, &
+&                           qrout_d)
             q_d(row, col) = qrout_d + qt_d(row, col)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -16155,12 +16137,12 @@ CONTAINS
   END SUBROUTINE LOIEAU_LR_FORWARD_D
 
 !  Differentiation of loieau_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE LOIEAU_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -16251,12 +16233,12 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 1), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 1), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 1), pr, perc&
+&                       )
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -16270,11 +16252,11 @@ CONTAINS
           prr = 0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL PUSHREAL4(qr)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  2))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 2&
+&                  ))
           CALL GR_TRANSFER(4._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 2), parameters%&
-&                    opr_initial_states%values(row, col, 2), qr)
+&                    rr_parameters%values(row, col, 2), parameters%&
+&                    rr_initial_states%values(row, col, 2), qr)
           IF (0._sp .LT. prd) THEN
             CALL PUSHREAL4(qd)
             qd = prd
@@ -16284,7 +16266,7 @@ CONTAINS
             qd = 0._sp
             CALL PUSHCONTROL1B(1)
           END IF
-          qt(row, col) = parameters%opr_parameters%values(row, col, 3)*(&
+          qt(row, col) = parameters%rr_parameters%values(row, col, 3)*(&
 &           qr+qd)
           CALL PUSHCONTROL1B(1)
         END IF
@@ -16310,12 +16292,12 @@ CONTAINS
 &                           dx(row, col), mesh%dy(row, col), mesh%flwacc&
 &                           (row, col), mesh%flwdir, q, qup)
           CALL PUSHREAL4(qup)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row, &
 &                       col), mesh%flwacc(row, col), parameters%&
-&                       opr_parameters%values(row, col, 4), parameters%&
-&                       opr_initial_states%values(row, col, 3), qup, &
+&                       rr_parameters%values(row, col, 4), parameters%&
+&                       rr_initial_states%values(row, col, 3), qup, &
 &                       qrout)
           q(row, col) = qrout + qt(row, col)
           CALL PUSHCONTROL2B(2)
@@ -16348,17 +16330,17 @@ CONTAINS
             qrout_b = q_b(row, col)
             qt_b(row, col) = qt_b(row, col) + q_b(row, col)
             q_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 3))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   3))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 4), &
-&                           parameters_b%opr_parameters%values(row, col&
-&                           , 4), parameters%opr_initial_states%values(&
-&                           row, col, 3), parameters_b%&
-&                           opr_initial_states%values(row, col, 3), qup&
-&                           , qup_b, qrout, qrout_b)
+&                           %rr_parameters%values(row, col, 4), &
+&                           parameters_b%rr_parameters%values(row, col, &
+&                           4), parameters%rr_initial_states%values(row&
+&                           , col, 3), parameters_b%rr_initial_states%&
+&                           values(row, col, 3), qup, qup_b, qrout, &
+&                           qrout_b)
             CALL UPSTREAM_DISCHARGE_B(mesh%nrow, mesh%ncol, row, col, &
 &                               mesh%dx(row, col), mesh%dy(row, col), &
 &                               mesh%flwacc(row, col), mesh%flwdir, q, &
@@ -16372,10 +16354,10 @@ CONTAINS
         IF (branch .NE. 0) THEN
           row = mesh%path(1, i)
           col = mesh%path(2, i)
-          parameters_b%opr_parameters%values(row, col, 3) = parameters_b&
-&           %opr_parameters%values(row, col, 3) + (qr+qd)*qt_b(row, col)
-          temp_b = parameters%opr_parameters%values(row, col, 3)*qt_b(&
-&           row, col)
+          parameters_b%rr_parameters%values(row, col, 3) = parameters_b%&
+&           rr_parameters%values(row, col, 3) + (qr+qd)*qt_b(row, col)
+          temp_b = parameters%rr_parameters%values(row, col, 3)*qt_b(row&
+&           , col)
           qt_b(row, col) = 0.0_4
           qr_b = temp_b
           qd_b = temp_b
@@ -16387,29 +16369,29 @@ CONTAINS
             CALL POPREAL4(qd)
             prd_b = 0.0_4
           END IF
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 2&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 2)&
+&                )
           CALL POPREAL4(qr)
           CALL GR_TRANSFER_B(4._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 2), &
-&                      parameters_b%opr_parameters%values(row, col, 2), &
-&                      parameters%opr_initial_states%values(row, col, 2)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 2), &
+&                      parameters_b%rr_parameters%values(row, col, 2), &
+&                      parameters%rr_initial_states%values(row, col, 2)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 2), qr, qr_b)
           pr_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           perc_b = 0.1_sp*prd_b + 0.9_sp*prr_b
           CALL POPREAL4(prr)
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 1), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          1), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 1), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 1), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 1), &
+&                          parameters_b%rr_parameters%values(row, col, 1&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 1), parameters_b%&
+&                          rr_initial_states%values(row, col, 1), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -16502,10 +16484,10 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 1), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 1), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 1), pr, perc&
+&                       )
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16516,14 +16498,14 @@ CONTAINS
           prr = 0.9_sp*(pr+perc)
           prd = 0.1_sp*(pr+perc)
           CALL GR_TRANSFER(4._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 2), parameters%&
-&                    opr_initial_states%values(row, col, 2), qr)
+&                    rr_parameters%values(row, col, 2), parameters%&
+&                    rr_initial_states%values(row, col, 2), qr)
           IF (0._sp .LT. prd) THEN
             qd = prd
           ELSE
             qd = 0._sp
           END IF
-          qt(row, col) = parameters%opr_parameters%values(row, col, 3)*(&
+          qt(row, col) = parameters%rr_parameters%values(row, col, 3)*(&
 &           qr+qd)
         END IF
       END DO
@@ -16548,8 +16530,8 @@ CONTAINS
 &                             flwacc(row, col), mesh%flwdir, q, qup)
             CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row&
 &                         , col), mesh%flwacc(row, col), parameters%&
-&                         opr_parameters%values(row, col, 4), parameters&
-&                         %opr_initial_states%values(row, col, 3), qup, &
+&                         rr_parameters%values(row, col, 4), parameters%&
+&                         rr_initial_states%values(row, col, 3), qup, &
 &                         qrout)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -16569,12 +16551,12 @@ CONTAINS
   END SUBROUTINE LOIEAU_LR_FORWARD
 
 !  Differentiation of grd_lr_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: *(parameters.opr_initial_states.values)
+!   variations   of useful results: *(parameters.rr_initial_states.values)
 !                *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GRD_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -16657,12 +16639,12 @@ CONTAINS
             en_d = 0.0_4
             pn_d = 0.0_4
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, parameters%&
-&                          opr_parameters%values(row, col, 1), &
-&                          parameters_d%opr_parameters%values(row, col, &
-&                          1), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 1), &
-&                          parameters_d%opr_initial_states%values(row, &
-&                          col, 1), pr, pr_d, perc, perc_d)
+&                          rr_parameters%values(row, col, 1), &
+&                          parameters_d%rr_parameters%values(row, col, 1&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 1), parameters_d%&
+&                          rr_initial_states%values(row, col, 1), pr, &
+&                          pr_d, perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16675,10 +16657,10 @@ CONTAINS
           prr_d = pr_d + perc_d
           prr = pr + perc
           CALL GR_TRANSFER_D(5._sp, prcp(row, col), prr, prr_d, &
-&                      parameters%opr_parameters%values(row, col, 2), &
-&                      parameters_d%opr_parameters%values(row, col, 2), &
-&                      parameters%opr_initial_states%values(row, col, 2)&
-&                      , parameters_d%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 2), &
+&                      parameters_d%rr_parameters%values(row, col, 2), &
+&                      parameters%rr_initial_states%values(row, col, 2)&
+&                      , parameters_d%rr_initial_states%values(row, col&
 &                      , 2), qr, qr_d)
           qt_d(row, col) = qr_d
           qt(row, col) = qr
@@ -16707,12 +16689,12 @@ CONTAINS
 &                               q_d, qup, qup_d)
             CALL LINEAR_ROUTING_D(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 3), &
-&                           parameters_d%opr_parameters%values(row, col&
-&                           , 3), parameters%opr_initial_states%values(&
-&                           row, col, 3), parameters_d%&
-&                           opr_initial_states%values(row, col, 3), qup&
-&                           , qup_d, qrout, qrout_d)
+&                           %rr_parameters%values(row, col, 3), &
+&                           parameters_d%rr_parameters%values(row, col, &
+&                           3), parameters%rr_initial_states%values(row&
+&                           , col, 3), parameters_d%rr_initial_states%&
+&                           values(row, col, 3), qup, qup_d, qrout, &
+&                           qrout_d)
             q_d(row, col) = qrout_d + qt_d(row, col)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -16735,12 +16717,12 @@ CONTAINS
   END SUBROUTINE GRD_LR_FORWARD_D
 
 !  Differentiation of grd_lr_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values) *(output.response.q)
-!   with respect to varying inputs: *(parameters.opr_parameters.values)
-!                *(parameters.opr_initial_states.values)
-!   Plus diff mem management of: parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in output.response.q:in
+!   gradient     of useful results: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values) *(output.response.q)
+!   with respect to varying inputs: *(parameters.rr_parameters.values)
+!                *(parameters.rr_initial_states.values)
+!   Plus diff mem management of: parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in output.response.q:in
   SUBROUTINE GRD_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -16829,12 +16811,12 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL PUSHREAL4(parameters%opr_initial_states%values(row, col&
+            CALL PUSHREAL4(parameters%rr_initial_states%values(row, col&
 &                    , 1))
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 1), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 1), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 1), pr, perc&
+&                       )
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -16846,11 +16828,11 @@ CONTAINS
 !% =================================================================================================== %!
           CALL PUSHREAL4(prr)
           prr = pr + perc
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  2))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 2&
+&                  ))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 2), parameters%&
-&                    opr_initial_states%values(row, col, 2), qr)
+&                    rr_parameters%values(row, col, 2), parameters%&
+&                    rr_initial_states%values(row, col, 2), qr)
           qt(row, col) = qr
           CALL PUSHCONTROL1B(1)
         END IF
@@ -16876,12 +16858,12 @@ CONTAINS
 &                           dx(row, col), mesh%dy(row, col), mesh%flwacc&
 &                           (row, col), mesh%flwdir, q, qup)
           CALL PUSHREAL4(qup)
-          CALL PUSHREAL4(parameters%opr_initial_states%values(row, col, &
-&                  3))
+          CALL PUSHREAL4(parameters%rr_initial_states%values(row, col, 3&
+&                  ))
           CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row, &
 &                       col), mesh%flwacc(row, col), parameters%&
-&                       opr_parameters%values(row, col, 3), parameters%&
-&                       opr_initial_states%values(row, col, 3), qup, &
+&                       rr_parameters%values(row, col, 3), parameters%&
+&                       rr_initial_states%values(row, col, 3), qup, &
 &                       qrout)
           q(row, col) = qrout + qt(row, col)
           CALL PUSHCONTROL2B(2)
@@ -16914,17 +16896,17 @@ CONTAINS
             qrout_b = q_b(row, col)
             qt_b(row, col) = qt_b(row, col) + q_b(row, col)
             q_b(row, col) = 0.0_4
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 3))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   3))
             CALL POPREAL4(qup)
             CALL LINEAR_ROUTING_B(setup%dt, mesh%dx(row, col), mesh%dy(&
 &                           row, col), mesh%flwacc(row, col), parameters&
-&                           %opr_parameters%values(row, col, 3), &
-&                           parameters_b%opr_parameters%values(row, col&
-&                           , 3), parameters%opr_initial_states%values(&
-&                           row, col, 3), parameters_b%&
-&                           opr_initial_states%values(row, col, 3), qup&
-&                           , qup_b, qrout, qrout_b)
+&                           %rr_parameters%values(row, col, 3), &
+&                           parameters_b%rr_parameters%values(row, col, &
+&                           3), parameters%rr_initial_states%values(row&
+&                           , col, 3), parameters_b%rr_initial_states%&
+&                           values(row, col, 3), qup, qup_b, qrout, &
+&                           qrout_b)
             CALL UPSTREAM_DISCHARGE_B(mesh%nrow, mesh%ncol, row, col, &
 &                               mesh%dx(row, col), mesh%dy(row, col), &
 &                               mesh%flwacc(row, col), mesh%flwdir, q, &
@@ -16940,28 +16922,28 @@ CONTAINS
           col = mesh%path(2, i)
           qr_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
-          CALL POPREAL4(parameters%opr_initial_states%values(row, col, 2&
-&                 ))
+          CALL POPREAL4(parameters%rr_initial_states%values(row, col, 2)&
+&                )
           CALL GR_TRANSFER_B(5._sp, prcp(row, col), prr, prr_b, &
-&                      parameters%opr_parameters%values(row, col, 2), &
-&                      parameters_b%opr_parameters%values(row, col, 2), &
-&                      parameters%opr_initial_states%values(row, col, 2)&
-&                      , parameters_b%opr_initial_states%values(row, col&
+&                      parameters%rr_parameters%values(row, col, 2), &
+&                      parameters_b%rr_parameters%values(row, col, 2), &
+&                      parameters%rr_initial_states%values(row, col, 2)&
+&                      , parameters_b%rr_initial_states%values(row, col&
 &                      , 2), qr, qr_b)
           CALL POPREAL4(prr)
           pr_b = prr_b
           perc_b = prr_b
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
-            CALL POPREAL4(parameters%opr_initial_states%values(row, col&
-&                   , 1))
+            CALL POPREAL4(parameters%rr_initial_states%values(row, col, &
+&                   1))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, parameters%&
-&                          opr_parameters%values(row, col, 1), &
-&                          parameters_b%opr_parameters%values(row, col, &
-&                          1), 9._sp/4._sp, parameters%&
-&                          opr_initial_states%values(row, col, 1), &
-&                          parameters_b%opr_initial_states%values(row, &
-&                          col, 1), pr, pr_b, perc, perc_b)
+&                          rr_parameters%values(row, col, 1), &
+&                          parameters_b%rr_parameters%values(row, col, 1&
+&                          ), 9._sp/4._sp, parameters%rr_initial_states%&
+&                          values(row, col, 1), parameters_b%&
+&                          rr_initial_states%values(row, col, 1), pr, &
+&                          pr_b, perc, perc_b)
             CALL POPREAL4(en)
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
@@ -17054,10 +17036,10 @@ CONTAINS
 !% =============================================================================================== %!
 !%   Production module
 !% =============================================================================================== %!
-            CALL GR_PRODUCTION(pn, en, parameters%opr_parameters%values(&
+            CALL GR_PRODUCTION(pn, en, parameters%rr_parameters%values(&
 &                        row, col, 1), 9._sp/4._sp, parameters%&
-&                        opr_initial_states%values(row, col, 1), pr, &
-&                        perc)
+&                        rr_initial_states%values(row, col, 1), pr, perc&
+&                       )
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -17067,8 +17049,8 @@ CONTAINS
 !% =================================================================================================== %!
           prr = pr + perc
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, parameters%&
-&                    opr_parameters%values(row, col, 2), parameters%&
-&                    opr_initial_states%values(row, col, 2), qr)
+&                    rr_parameters%values(row, col, 2), parameters%&
+&                    rr_initial_states%values(row, col, 2), qr)
           qt(row, col) = qr
         END IF
       END DO
@@ -17093,8 +17075,8 @@ CONTAINS
 &                             flwacc(row, col), mesh%flwdir, q, qup)
             CALL LINEAR_ROUTING(setup%dt, mesh%dx(row, col), mesh%dy(row&
 &                         , col), mesh%flwacc(row, col), parameters%&
-&                         opr_parameters%values(row, col, 3), parameters&
-&                         %opr_initial_states%values(row, col, 3), qup, &
+&                         rr_parameters%values(row, col, 3), parameters%&
+&                         rr_initial_states%values(row, col, 3), qup, &
 &                         qrout)
             q(row, col) = qrout + qt(row, col)
           ELSE
@@ -17119,14 +17101,14 @@ END MODULE MD_FORWARD_STRUCTURE_DIFF
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):in-killed
-!                *(parameters.opr_parameters.values):(loc) *(parameters.opr_initial_states.values):(loc)
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
 !                *(output.response.q):(loc) output.cost:out
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
@@ -17166,17 +17148,17 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
   TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
-& opr_states_buffer_values
+& rr_states_buffer_values
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
-& opr_states_buffer_values_d
+& rr_states_buffer_values_d
 !% Map control to parameters
-  parameters_d%opr_parameters%values = 0.0_4
-  parameters_d%opr_initial_states%values = 0.0_4
+  parameters_d%rr_parameters%values = 0.0_4
+  parameters_d%rr_initial_states%values = 0.0_4
   CALL CONTROL_TO_PARAMETERS_D(setup, mesh, input_data, parameters, &
 &                        parameters_d, options)
 !% Save initial states
-  opr_states_buffer_values_d = parameters_d%opr_initial_states%values
-  opr_states_buffer_values = parameters%opr_initial_states%values
+  rr_states_buffer_values_d = parameters_d%rr_initial_states%values
+  rr_states_buffer_values = parameters%rr_initial_states%values
 !% Simulation
   SELECT CASE  (setup%structure) 
   CASE ('gr4-lr') 
@@ -17204,8 +17186,8 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
     output_d%response%q = 0.0_4
   END SELECT
 !% Assign final states and reset initial states
-  parameters_d%opr_initial_states%values = opr_states_buffer_values_d
-  parameters%opr_initial_states%values = opr_states_buffer_values
+  parameters_d%rr_initial_states%values = rr_states_buffer_values_d
+  parameters%rr_initial_states%values = rr_states_buffer_values
 !% Compute cost
   CALL COMPUTE_COST_D(setup, mesh, input_data, parameters, parameters_d&
 &               , output, output_d, options, options_d, returns)
@@ -17215,14 +17197,14 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):out
-!                *(parameters.opr_parameters.values):(loc) *(parameters.opr_initial_states.values):(loc)
+!                *(parameters.rr_parameters.values):(loc) *(parameters.rr_initial_states.values):(loc)
 !                *(parameters.serr_mu_parameters.values):(loc)
 !                *(parameters.serr_sigma_parameters.values):(loc)
 !                *(output.response.q):(loc) output.cost:in-killed
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
 !                parameters.control.u:in parameters.control.l_bkg:in
-!                parameters.control.u_bkg:in parameters.opr_parameters.values:in
-!                parameters.opr_initial_states.values:in parameters.serr_mu_parameters.values:in
+!                parameters.control.u_bkg:in parameters.rr_parameters.values:in
+!                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
 !                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
@@ -17262,9 +17244,9 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   TYPE(OPTIONSDT_DIFF) :: options_b
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
-& opr_states_buffer_values
+& rr_states_buffer_values
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
-& opr_states_buffer_values_b
+& rr_states_buffer_values_b
   INTEGER :: branch
 !% Map control to parameters
   CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
@@ -17272,62 +17254,62 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
 &                      options)
 !% Save initial states
-  opr_states_buffer_values = parameters%opr_initial_states%values
+  rr_states_buffer_values = parameters%rr_initial_states%values
 !% Simulation
   SELECT CASE  (setup%structure) 
   CASE ('gr4-lr') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GR4_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL3B(1)
   CASE ('gr4-ode') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GR4_ODE_FORWARD(setup, mesh, input_data, parameters, output, &
 &                  options, returns)
     CALL PUSHCONTROL3B(2)
   CASE ('gr4-kw') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GR4_KW_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL3B(3)
   CASE ('gr5-lr') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GR5_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL3B(4)
   CASE ('gr5-kw') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GR5_KW_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL3B(5)
   CASE ('loieau-lr') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL LOIEAU_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                    options, returns)
     CALL PUSHCONTROL3B(6)
   CASE ('grd-lr') 
-    CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                 parameters%opr_initial_states%values, 1)*SIZE(&
-&                 parameters%opr_initial_states%values, 2)*SIZE(&
-&                 parameters%opr_initial_states%values, 3))
+    CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                 parameters%rr_initial_states%values, 1)*SIZE(&
+&                 parameters%rr_initial_states%values, 2)*SIZE(&
+&                 parameters%rr_initial_states%values, 3))
     CALL GRD_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL3B(7)
@@ -17335,17 +17317,17 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
     CALL PUSHCONTROL3B(0)
   END SELECT
 !% Assign final states and reset initial states
-  parameters%opr_initial_states%values = opr_states_buffer_values
+  parameters%rr_initial_states%values = rr_states_buffer_values
 !% Compute cost
   CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1&
 &               ))
-  CALL PUSHREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters%&
-&               opr_parameters%values, 1)*SIZE(parameters%opr_parameters&
-&               %values, 2)*SIZE(parameters%opr_parameters%values, 3))
-  CALL PUSHREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&               parameters%opr_initial_states%values, 1)*SIZE(parameters&
-&               %opr_initial_states%values, 2)*SIZE(parameters%&
-&               opr_initial_states%values, 3))
+  CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters%&
+&               rr_parameters%values, 1)*SIZE(parameters%rr_parameters%&
+&               values, 2)*SIZE(parameters%rr_parameters%values, 3))
+  CALL PUSHREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&               parameters%rr_initial_states%values, 1)*SIZE(parameters%&
+&               rr_initial_states%values, 2)*SIZE(parameters%&
+&               rr_initial_states%values, 3))
   CALL PUSHREAL4ARRAY(parameters%serr_mu_parameters%values, SIZE(&
 &               parameters%serr_mu_parameters%values, 1)*SIZE(parameters&
 &               %serr_mu_parameters%values, 2))
@@ -17360,80 +17342,80 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
   CALL POPREAL4ARRAY(parameters%serr_mu_parameters%values, SIZE(&
 &              parameters%serr_mu_parameters%values, 1)*SIZE(parameters%&
 &              serr_mu_parameters%values, 2))
-  CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&              parameters%opr_initial_states%values, 1)*SIZE(parameters%&
-&              opr_initial_states%values, 2)*SIZE(parameters%&
-&              opr_initial_states%values, 3))
-  CALL POPREAL4ARRAY(parameters%opr_parameters%values, SIZE(parameters%&
-&              opr_parameters%values, 1)*SIZE(parameters%opr_parameters%&
-&              values, 2)*SIZE(parameters%opr_parameters%values, 3))
+  CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&              parameters%rr_initial_states%values, 1)*SIZE(parameters%&
+&              rr_initial_states%values, 2)*SIZE(parameters%&
+&              rr_initial_states%values, 3))
+  CALL POPREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters%&
+&              rr_parameters%values, 1)*SIZE(parameters%rr_parameters%&
+&              values, 2)*SIZE(parameters%rr_parameters%values, 3))
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
 &             )
   CALL COMPUTE_COST_B(setup, mesh, input_data, parameters, parameters_b&
 &               , output, output_b, options, options_b, returns)
-  opr_states_buffer_values_b = 0.0_4
-  opr_states_buffer_values_b = parameters_b%opr_initial_states%values
-  parameters_b%opr_initial_states%values = 0.0_4
+  rr_states_buffer_values_b = 0.0_4
+  rr_states_buffer_values_b = parameters_b%rr_initial_states%values
+  parameters_b%rr_initial_states%values = 0.0_4
   CALL POPCONTROL3B(branch)
   IF (branch .LT. 4) THEN
     IF (branch .LT. 2) THEN
       IF (branch .NE. 0) THEN
-        CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                    parameters%opr_initial_states%values, 1)*SIZE(&
-&                    parameters%opr_initial_states%values, 2)*SIZE(&
-&                    parameters%opr_initial_states%values, 3))
+        CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                    parameters%rr_initial_states%values, 1)*SIZE(&
+&                    parameters%rr_initial_states%values, 2)*SIZE(&
+&                    parameters%rr_initial_states%values, 3))
         CALL GR4_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &                       parameters_b, output, output_b, options, returns&
 &                      )
       END IF
     ELSE IF (branch .EQ. 2) THEN
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                  parameters%rr_initial_states%values, 1)*SIZE(&
+&                  parameters%rr_initial_states%values, 2)*SIZE(&
+&                  parameters%rr_initial_states%values, 3))
       CALL GR4_ODE_FORWARD_B(setup, mesh, input_data, parameters, &
 &                      parameters_b, output, output_b, options, returns)
     ELSE
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                  parameters%rr_initial_states%values, 1)*SIZE(&
+&                  parameters%rr_initial_states%values, 2)*SIZE(&
+&                  parameters%rr_initial_states%values, 3))
       CALL GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &                     parameters_b, output, output_b, options, returns)
     END IF
   ELSE IF (branch .LT. 6) THEN
     IF (branch .EQ. 4) THEN
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                  parameters%rr_initial_states%values, 1)*SIZE(&
+&                  parameters%rr_initial_states%values, 2)*SIZE(&
+&                  parameters%rr_initial_states%values, 3))
       CALL GR5_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &                     parameters_b, output, output_b, options, returns)
     ELSE
-      CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                  parameters%opr_initial_states%values, 1)*SIZE(&
-&                  parameters%opr_initial_states%values, 2)*SIZE(&
-&                  parameters%opr_initial_states%values, 3))
+      CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                  parameters%rr_initial_states%values, 1)*SIZE(&
+&                  parameters%rr_initial_states%values, 2)*SIZE(&
+&                  parameters%rr_initial_states%values, 3))
       CALL GR5_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &                     parameters_b, output, output_b, options, returns)
     END IF
   ELSE IF (branch .EQ. 6) THEN
-    CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                parameters%opr_initial_states%values, 1)*SIZE(&
-&                parameters%opr_initial_states%values, 2)*SIZE(&
-&                parameters%opr_initial_states%values, 3))
+    CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                parameters%rr_initial_states%values, 1)*SIZE(parameters&
+&                %rr_initial_states%values, 2)*SIZE(parameters%&
+&                rr_initial_states%values, 3))
     CALL LOIEAU_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &                      parameters_b, output, output_b, options, returns)
   ELSE
-    CALL POPREAL4ARRAY(parameters%opr_initial_states%values, SIZE(&
-&                parameters%opr_initial_states%values, 1)*SIZE(&
-&                parameters%opr_initial_states%values, 2)*SIZE(&
-&                parameters%opr_initial_states%values, 3))
+    CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
+&                parameters%rr_initial_states%values, 1)*SIZE(parameters&
+&                %rr_initial_states%values, 2)*SIZE(parameters%&
+&                rr_initial_states%values, 3))
     CALL GRD_LR_FORWARD_B(setup, mesh, input_data, parameters, &
 &                   parameters_b, output, output_b, options, returns)
   END IF
-  parameters_b%opr_initial_states%values = parameters_b%&
-&   opr_initial_states%values + opr_states_buffer_values_b
+  parameters_b%rr_initial_states%values = parameters_b%rr_initial_states&
+&   %values + rr_states_buffer_values_b
   CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, 1)&
 &             )
   CALL CONTROL_TO_PARAMETERS_B(setup, mesh, input_data, parameters, &
@@ -17474,12 +17456,12 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
   TYPE(OPTIONSDT), INTENT(IN) :: options
   TYPE(RETURNSDT), INTENT(INOUT) :: returns
   REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, setup%nos) :: &
-& opr_states_buffer_values
+& rr_states_buffer_values
 !% Map control to parameters
   CALL CONTROL_TO_PARAMETERS(setup, mesh, input_data, parameters, &
 &                      options)
 !% Save initial states
-  opr_states_buffer_values = parameters%opr_initial_states%values
+  rr_states_buffer_values = parameters%rr_initial_states%values
 !% Simulation
   SELECT CASE  (setup%structure) 
   CASE ('gr4-lr') 
@@ -17505,8 +17487,8 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
 &                 options, returns)
   END SELECT
 !% Assign final states and reset initial states
-  output%opr_final_states%values = parameters%opr_initial_states%values
-  parameters%opr_initial_states%values = opr_states_buffer_values
+  output%rr_final_states%values = parameters%rr_initial_states%values
+  parameters%rr_initial_states%values = rr_states_buffer_values
 !% Compute cost
   CALL COMPUTE_COST(setup, mesh, input_data, parameters, output, options&
 &             , returns)

@@ -31,8 +31,8 @@ contains
 
     subroutine gr4_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
-        !% - opr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
 
         implicit none
 
@@ -98,8 +98,8 @@ contains
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%values(row, col, 1), &
-                    & parameters%opr_initial_states%values(row, col, 1), pn, ei)
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%rr_parameters%values(row, col, 1), &
+                    & parameters%rr_initial_states%values(row, col, 1), pn, ei)
 
                     en = pet(row, col) - ei
 
@@ -107,15 +107,15 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 2), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 2), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 2), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 2), pr, perc)
 
                     !% =============================================================================================== %!
                     !%   Exchange module
                     !% =============================================================================================== %!
 
-                    call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-                    & parameters%opr_initial_states%values(row, col, 3), l)
+                    call gr_exchange(parameters%rr_parameters%values(row, col, 4), &
+                    & parameters%rr_initial_states%values(row, col, 3), l)
 
                 else
 
@@ -132,8 +132,8 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 3), &
-                & parameters%opr_initial_states%values(row, col, 3), qr)
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 3), &
+                & parameters%rr_initial_states%values(row, col, 3), qr)
 
                 qd = max(0._sp, prd + l)
 
@@ -161,7 +161,7 @@ contains
                     & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
 
                     call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
-                    & parameters%opr_parameters%values(row, col, 5), parameters%opr_initial_states%values(row, col, 4), &
+                    & parameters%rr_parameters%values(row, col, 5), parameters%rr_initial_states%values(row, col, 4), &
                     & qup, qrout)
 
                     q(row, col) = qrout + qt(row, col)
@@ -192,7 +192,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
                 end if
             end if
@@ -204,8 +204,8 @@ contains
 
     subroutine gr4_ode_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
-        !% - opr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
 
         implicit none
 
@@ -271,8 +271,8 @@ contains
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%values(row, col, 1), &
-                    & parameters%opr_initial_states%values(row, col, 1), pn, ei)
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%rr_parameters%values(row, col, 1), &
+                    & parameters%rr_initial_states%values(row, col, 1), pn, ei)
 
                     en = pet(row, col) - ei
 
@@ -286,10 +286,10 @@ contains
                 !%   Production and Transfer ODE
                 !% =============================================================================================== %!
 
-                call gr_ode_implicit_euler(pn, en, parameters%opr_parameters%values(row, col, 2), &
-                & parameters%opr_parameters%values(row, col, 3), &
-                & parameters%opr_parameters%values(row, col, 4), &
-                & parameters%opr_initial_states%values(row, col, 2:3), qt(row, col))
+                call gr_ode_implicit_euler(pn, en, parameters%rr_parameters%values(row, col, 2), &
+                & parameters%rr_parameters%values(row, col, 3), &
+                & parameters%rr_parameters%values(row, col, 4), &
+                & parameters%rr_initial_states%values(row, col, 2:3), qt(row, col))
 
             end do
 !~             !$OMP end parallel do
@@ -313,7 +313,7 @@ contains
                     & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
 
                     call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
-                    & parameters%opr_parameters%values(row, col, 5), parameters%opr_initial_states%values(row, col, 4), &
+                    & parameters%rr_parameters%values(row, col, 5), parameters%rr_initial_states%values(row, col, 4), &
                     & qup, qrout)
 
                     q(row, col) = qrout + qt(row, col)
@@ -344,7 +344,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
                 end if
             end if
@@ -356,8 +356,8 @@ contains
 
     subroutine gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: akw), (6: bkw)
-        !% - opr_states:     (1: hi), (2: hp), (3: ht)
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: akw), (6: bkw)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht)
 
         implicit none
 
@@ -443,8 +443,8 @@ contains
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%values(row, col, 1), &
-                    & parameters%opr_initial_states%values(row, col, 1), pn, ei)
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%rr_parameters%values(row, col, 1), &
+                    & parameters%rr_initial_states%values(row, col, 1), pn, ei)
 
                     en = pet(row, col) - ei
 
@@ -452,15 +452,15 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 2), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 2), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 2), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 2), pr, perc)
 
                     !% =============================================================================================== %!
                     !%   Exchange module
                     !% =============================================================================================== %!
 
-                    call gr_exchange(parameters%opr_parameters%values(row, col, 4), &
-                    & parameters%opr_initial_states%values(row, col, 3), l)
+                    call gr_exchange(parameters%rr_parameters%values(row, col, 4), &
+                    & parameters%rr_initial_states%values(row, col, 3), l)
 
                 else
 
@@ -477,8 +477,8 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 3), &
-                & parameters%opr_initial_states%values(row, col, 3), qr)
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 3), &
+                & parameters%rr_initial_states%values(row, col, 3), qr)
 
                 qd = max(0._sp, prd + l)
 
@@ -509,8 +509,8 @@ contains
                     qlij = qt(row, col, zq)
                     qijm1 = q(row, col, zq - 1)
 
-                    call kinematic_wave1d(setup%dt, mesh%dx(row, col), parameters%opr_parameters%values(row, col, 5), &
-                    & parameters%opr_parameters%values(row, col, 6), qlijm1, qlij, qim1j, qijm1, qij)
+                    call kinematic_wave1d(setup%dt, mesh%dx(row, col), parameters%rr_parameters%values(row, col, 5), &
+                    & parameters%rr_parameters%values(row, col, 6), qlijm1, qlij, qim1j, qijm1, qij)
 
                     q(row, col, zq) = qij
 
@@ -540,7 +540,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q(:, :, zq)
                 end if
             end if
@@ -552,8 +552,8 @@ contains
 
     subroutine gr5_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: llr)
-        !% - opr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: llr)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
 
         implicit none
 
@@ -619,8 +619,8 @@ contains
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%values(row, col, 1), &
-                    & parameters%opr_initial_states%values(row, col, 1), pn, ei)
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%rr_parameters%values(row, col, 1), &
+                    & parameters%rr_initial_states%values(row, col, 1), pn, ei)
 
                     en = pet(row, col) - ei
 
@@ -628,15 +628,15 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 2), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 2), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 2), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 2), pr, perc)
 
                     !% =============================================================================================== %!
                     !%   Exchange module
                     !% =============================================================================================== %!
 
-                    call gr_threshold_exchange(parameters%opr_parameters%values(row, col, 4),&
-                    & parameters%opr_initial_states%values(row, col, 3), parameters%opr_parameters%values(row, col, 5), l)
+                    call gr_threshold_exchange(parameters%rr_parameters%values(row, col, 4),&
+                    & parameters%rr_initial_states%values(row, col, 3), parameters%rr_parameters%values(row, col, 5), l)
 
                 else
 
@@ -653,8 +653,8 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 3), &
-                & parameters%opr_initial_states%values(row, col, 3), qr)
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 3), &
+                & parameters%rr_initial_states%values(row, col, 3), qr)
 
                 qd = max(0._sp, prd + l)
 
@@ -682,7 +682,7 @@ contains
                     & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
 
                     call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
-                    & parameters%opr_parameters%values(row, col, 6), parameters%opr_initial_states%values(row, col, 4), &
+                    & parameters%rr_parameters%values(row, col, 6), parameters%rr_initial_states%values(row, col, 4), &
                     & qup, qrout)
 
                     q(row, col) = qrout + qt(row, col)
@@ -713,7 +713,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
                 end if
             end if
@@ -725,8 +725,8 @@ contains
 
     subroutine gr5_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: akw), (7: bkw)
-        !% - opr_states:     (1: hi), (2: hp), (3: ht)
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: aexc), (6: akw), (7: bkw)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht)
 
         implicit none
 
@@ -812,8 +812,8 @@ contains
                     !%   Interception module
                     !% =============================================================================================== %!
 
-                    call gr_interception(prcp(row, col), pet(row, col), parameters%opr_parameters%values(row, col, 1), &
-                    & parameters%opr_initial_states%values(row, col, 1), pn, ei)
+                    call gr_interception(prcp(row, col), pet(row, col), parameters%rr_parameters%values(row, col, 1), &
+                    & parameters%rr_initial_states%values(row, col, 1), pn, ei)
 
                     en = pet(row, col) - ei
 
@@ -821,15 +821,15 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 2), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 2), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 2), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 2), pr, perc)
 
                     !% =============================================================================================== %!
                     !%   Exchange module
                     !% =============================================================================================== %!
 
-                    call gr_threshold_exchange(parameters%opr_parameters%values(row, col, 4),&
-                    & parameters%opr_initial_states%values(row, col, 3), parameters%opr_parameters%values(row, col, 5), l)
+                    call gr_threshold_exchange(parameters%rr_parameters%values(row, col, 4),&
+                    & parameters%rr_initial_states%values(row, col, 3), parameters%rr_parameters%values(row, col, 5), l)
 
                 else
 
@@ -846,8 +846,8 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 3), &
-                & parameters%opr_initial_states%values(row, col, 3), qr)
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 3), &
+                & parameters%rr_initial_states%values(row, col, 3), qr)
 
                 qd = max(0._sp, prd + l)
 
@@ -878,8 +878,8 @@ contains
                     qlij = qt(row, col, zq)
                     qijm1 = q(row, col, zq - 1)
 
-                    call kinematic_wave1d(setup%dt, mesh%dx(row, col), parameters%opr_parameters%values(row, col, 6), &
-                    & parameters%opr_parameters%values(row, col, 7), qlijm1, qlij, qim1j, qijm1, qij)
+                    call kinematic_wave1d(setup%dt, mesh%dx(row, col), parameters%rr_parameters%values(row, col, 6), &
+                    & parameters%rr_parameters%values(row, col, 7), qlijm1, qlij, qim1j, qijm1, qij)
 
                     q(row, col, zq) = qij
 
@@ -909,7 +909,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q(:, :, zq)
                 end if
             end if
@@ -921,8 +921,8 @@ contains
 
     subroutine loieau_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: ca), (2: cc), (3: kb), (4: llr)
-        !% - opr_states:     (1: ha), (2: hc), (3: hlr)
+        !% - rr_parameters: (1: ca), (2: cc), (3: kb), (4: llr)
+        !% - rr_states:     (1: ha), (2: hc), (3: hlr)
 
         implicit none
 
@@ -996,8 +996,8 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 1), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 1), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 1), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 1), pr, perc)
 
                 else
 
@@ -1013,12 +1013,12 @@ contains
                 prr = 0.9_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(4._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 2), &
-                & parameters%opr_initial_states%values(row, col, 2), qr)
+                call gr_transfer(4._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 2), &
+                & parameters%rr_initial_states%values(row, col, 2), qr)
 
                 qd = max(0._sp, prd)
 
-                qt(row, col) = parameters%opr_parameters%values(row, col, 3)*(qr + qd)
+                qt(row, col) = parameters%rr_parameters%values(row, col, 3)*(qr + qd)
 
             end do
 !~             !$OMP end parallel do
@@ -1042,7 +1042,7 @@ contains
                     & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
 
                     call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
-                    & parameters%opr_parameters%values(row, col, 4), parameters%opr_initial_states%values(row, col, 3), &
+                    & parameters%rr_parameters%values(row, col, 4), parameters%rr_initial_states%values(row, col, 3), &
                     & qup, qrout)
 
                     q(row, col) = qrout + qt(row, col)
@@ -1073,7 +1073,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
                 end if
             end if
@@ -1085,8 +1085,8 @@ contains
 
     subroutine grd_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
-        !% - opr_parameters: (1: cp), (2: ct), (3: llr)
-        !% - opr_states:     (1: hp), (2: ht), (3: hlr)
+        !% - rr_parameters: (1: cp), (2: ct), (3: llr)
+        !% - rr_states:     (1: hp), (2: ht), (3: hlr)
 
         implicit none
 
@@ -1162,8 +1162,8 @@ contains
                     !%   Production module
                     !% =============================================================================================== %!
 
-                    call gr_production(pn, en, parameters%opr_parameters%values(row, col, 1), 9._sp/4._sp, &
-                    & parameters%opr_initial_states%values(row, col, 1), pr, perc)
+                    call gr_production(pn, en, parameters%rr_parameters%values(row, col, 1), 9._sp/4._sp, &
+                    & parameters%rr_initial_states%values(row, col, 1), pr, perc)
 
                 else
 
@@ -1178,8 +1178,8 @@ contains
 
                 prr = pr + perc
 
-                call gr_transfer(5._sp, prcp(row, col), prr, parameters%opr_parameters%values(row, col, 2), &
-                & parameters%opr_initial_states%values(row, col, 2), qr)
+                call gr_transfer(5._sp, prcp(row, col), prr, parameters%rr_parameters%values(row, col, 2), &
+                & parameters%rr_initial_states%values(row, col, 2), qr)
 
                 qt(row, col) = qr
 
@@ -1205,7 +1205,7 @@ contains
                     & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
 
                     call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
-                    & parameters%opr_parameters%values(row, col, 3), parameters%opr_initial_states%values(row, col, 3), &
+                    & parameters%rr_parameters%values(row, col, 3), parameters%rr_initial_states%values(row, col, 3), &
                     & qup, qrout)
 
                     q(row, col) = qrout + qt(row, col)
@@ -1236,7 +1236,7 @@ contains
             if (allocated(returns%mask_time_step)) then
                 if (returns%mask_time_step(i)) then
                     iret = iret + 1
-                    if (returns%opr_states_flag) returns%opr_states(iret) = parameters%opr_initial_states
+                    if (returns%rr_states_flag) returns%rr_states(iret) = parameters%rr_initial_states
                     if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
                 end if
             end if

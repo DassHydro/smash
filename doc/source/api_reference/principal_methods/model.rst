@@ -25,12 +25,12 @@ Attributes
    Model.u_response_data
    Model.physio_data
    Model.atmos_data
-   Model.opr_parameters
-   Model.opr_initial_states
+   Model.rr_parameters
+   Model.rr_initial_states
    Model.serr_mu_parameters
    Model.serr_sigma_parameters
    Model.response
-   Model.opr_final_states
+   Model.rr_final_states
    
 Simulation
 **********
@@ -47,17 +47,17 @@ Parameters/States
 .. autosummary::
    :toctree: smash/
 
-   Model.get_opr_parameters
-   Model.get_opr_initial_states
+   Model.get_rr_parameters
+   Model.get_rr_initial_states
    Model.get_serr_mu_parameters
    Model.get_serr_sigma_parameters
-   Model.get_opr_final_states
-   Model.set_opr_parameters
-   Model.set_opr_initial_states
+   Model.get_rr_final_states
+   Model.set_rr_parameters
+   Model.set_rr_initial_states
    Model.set_serr_mu_parameters
    Model.set_serr_sigma_parameters
-   Model.get_opr_parameters_bounds
-   Model.get_opr_initial_states_bounds
+   Model.get_rr_parameters_bounds
+   Model.get_rr_initial_states_bounds
    Model.get_serr_mu_parameters_bounds
    Model.get_serr_sigma_parameters_bounds
    Model.get_serr_mu

@@ -5,12 +5,12 @@ from smash._constant import (
     SERR_MU_MAPPING_NAME,
     SERR_SIGMA_MAPPING_NAME,
     INPUT_DATA_FORMAT,
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    FEASIBLE_OPR_PARAMETERS,
-    FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
 )
@@ -149,25 +149,25 @@ def _standardize_setup(setup: SetupDT):
         )
 
 
-def _standardize_opr_parameters_key(model: Model, key: str) -> str:
+def _standardize_rr_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    if key.lower() not in STRUCTURE_OPR_PARAMETERS[model.setup.structure]:
+    if key.lower() not in STRUCTURE_RR_PARAMETERS[model.setup.structure]:
         raise ValueError(
-            f"Unknown model opr_parameter '{key}'. Choices: {STRUCTURE_OPR_PARAMETERS[model.setup.structure]}"
+            f"Unknown model rr_parameter '{key}'. Choices: {STRUCTURE_RR_PARAMETERS[model.setup.structure]}"
         )
 
     return key.lower()
 
 
-def _standardize_opr_states_key(model: Model, state_kind: str, key: str) -> str:
+def _standardize_rr_states_key(model: Model, state_kind: str, key: str) -> str:
     if not isinstance(key, str):
         raise TypeError(f"key argument must be a str")
 
-    if key.lower() not in STRUCTURE_OPR_STATES[model.setup.structure]:
+    if key.lower() not in STRUCTURE_RR_STATES[model.setup.structure]:
         raise ValueError(
-            f"Unknown model {state_kind} '{key}'. Choices: {STRUCTURE_OPR_STATES[model.setup.structure]}"
+            f"Unknown model {state_kind} '{key}'. Choices: {STRUCTURE_RR_STATES[model.setup.structure]}"
         )
 
     return key.lower()
@@ -197,7 +197,7 @@ def _standardize_serr_sigma_parameters_key(model: Model, key: str) -> str:
     return key.lower()
 
 
-def _standardize_opr_parameters_value(
+def _standardize_rr_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
@@ -206,7 +206,7 @@ def _standardize_opr_parameters_value(
         )
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_OPR_PARAMETERS[key]
+    l, u = FEASIBLE_RR_PARAMETERS[key]
     l_arr = np.min(arr)
     u_arr = np.max(arr)
 
@@ -216,18 +216,18 @@ def _standardize_opr_parameters_value(
         and value.size != 1
     ):
         raise ValueError(
-            f"Invalid shape for model opr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+            f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
     if l_arr <= l or u_arr >= u:
         raise ValueError(
-            f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model rr_parameter '{key}'. Rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
 
 
-def _standardize_opr_states_value(
+def _standardize_rr_states_value(
     model: Model, state_kind: str, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
@@ -236,7 +236,7 @@ def _standardize_opr_states_value(
         )
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+    l, u = FEASIBLE_RR_INITIAL_STATES[key]
     l_arr = np.min(arr)
     u_arr = np.max(arr)
 
@@ -317,14 +317,14 @@ def _standardize_serr_sigma_parameters_value(
     return value
 
 
-def _standardize_get_opr_parameters_args(model: Model, key: str) -> str:
-    key = _standardize_opr_parameters_key(model, key)
+def _standardize_get_rr_parameters_args(model: Model, key: str) -> str:
+    key = _standardize_rr_parameters_key(model, key)
 
     return key
 
 
-def _standardize_get_opr_initial_states_args(model: Model, key: str) -> str:
-    key = _standardize_opr_states_key(model, "opr_initial_state", key)
+def _standardize_get_rr_initial_states_args(model: Model, key: str) -> str:
+    key = _standardize_rr_states_key(model, "rr_initial_state", key)
 
     return key
 
@@ -341,29 +341,29 @@ def _standardize_get_serr_sigma_parameters_args(model: Model, key: str) -> str:
     return key
 
 
-def _standardize_get_opr_final_states_args(model: Model, key: str) -> str:
-    key = _standardize_opr_states_key(model, "opr_final_state", key)
+def _standardize_get_rr_final_states_args(model: Model, key: str) -> str:
+    key = _standardize_rr_states_key(model, "rr_final_state", key)
 
     return key
 
 
-def _standardize_set_opr_parameters_args(
+def _standardize_set_rr_parameters_args(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> AnyTuple:
-    key = _standardize_opr_parameters_key(model, key)
+    key = _standardize_rr_parameters_key(model, key)
 
-    value = _standardize_opr_parameters_value(model, key, value)
+    value = _standardize_rr_parameters_value(model, key, value)
 
     return (key, value)
 
 
-def _standardize_set_opr_initial_states_args(
+def _standardize_set_rr_initial_states_args(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> AnyTuple:
-    state_kind = "opr_initial_state"
-    key = _standardize_opr_states_key(model, state_kind, key)
+    state_kind = "rr_initial_state"
+    key = _standardize_rr_states_key(model, state_kind, key)
 
-    value = _standardize_opr_states_value(model, state_kind, key, value)
+    value = _standardize_rr_states_value(model, state_kind, key, value)
 
     return (key, value)
 

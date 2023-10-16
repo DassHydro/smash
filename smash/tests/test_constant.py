@@ -4,24 +4,24 @@ from smash._constant import (
     STRUCTURE_NAME,
     SERR_MU_MAPPING_NAME,
     SERR_SIGMA_MAPPING_NAME,
-    OPR_PARAMETERS,
-    OPR_STATES,
+    RR_PARAMETERS,
+    RR_STATES,
     SERR_MU_PARAMETERS,
     SERR_SIGMA_PARAMETERS,
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    FEASIBLE_OPR_PARAMETERS,
-    FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
-    DEFAULT_OPR_PARAMETERS,
-    DEFAULT_OPR_INITIAL_STATES,
+    DEFAULT_RR_PARAMETERS,
+    DEFAULT_RR_INITIAL_STATES,
     DEFAULT_SERR_MU_PARAMETERS,
     DEFAULT_SERR_SIGMA_PARAMETERS,
-    DEFAULT_BOUNDS_OPR_PARAMETERS,
-    DEFAULT_BOUNDS_OPR_INITIAL_STATES,
+    DEFAULT_BOUNDS_RR_PARAMETERS,
+    DEFAULT_BOUNDS_RR_INITIAL_STATES,
     DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
     DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
     INPUT_DATA_FORMAT,
@@ -45,8 +45,8 @@ def test_structure_model():
         "grd-lr",
     ]
 
-    # % Check opr parameters
-    assert OPR_PARAMETERS == [
+    # % Check rr parameters
+    assert RR_PARAMETERS == [
         "ci",
         "cp",
         "ct",
@@ -60,11 +60,11 @@ def test_structure_model():
         "bkw",
     ]
 
-    # % Check opr states
-    assert OPR_STATES == ["hi", "hp", "ht", "ha", "hc", "hlr"]
+    # % Check rr states
+    assert RR_STATES == ["hi", "hp", "ht", "ha", "hc", "hlr"]
 
-    # % Check structure opr parameter
-    assert list(STRUCTURE_OPR_PARAMETERS.values()) == [
+    # % Check structure rr parameter
+    assert list(STRUCTURE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
         ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
         ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
@@ -73,8 +73,8 @@ def test_structure_model():
         ["cp", "ct", "llr"],  # % grd-lr
     ]
 
-    # % Check structure opr state
-    assert list(STRUCTURE_OPR_STATES.values()) == [
+    # % Check structure rr state
+    assert list(STRUCTURE_RR_STATES.values()) == [
         ["hi", "hp", "ht", "hlr"],  # % gr4-lr
         ["hi", "hp", "ht"],  # % gr4-kw
         ["hi", "hp", "ht", "hlr"],  # % gr5-lr
@@ -119,8 +119,8 @@ def test_structure_model():
 
 
 def test_feasible_domain():
-    # % Check feasible opr parameters
-    assert list(FEASIBLE_OPR_PARAMETERS.values()) == [
+    # % Check feasible rr parameters
+    assert list(FEASIBLE_RR_PARAMETERS.values()) == [
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
@@ -134,8 +134,8 @@ def test_feasible_domain():
         (0, np.inf),  # % bkw
     ]
 
-    # % Check feasible opr states
-    assert list(FEASIBLE_OPR_INITIAL_STATES.values()) == [
+    # % Check feasible rr states
+    assert list(FEASIBLE_RR_INITIAL_STATES.values()) == [
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
@@ -159,8 +159,8 @@ def test_feasible_domain():
 
 
 def test_default_parameters():
-    # % Check default opr parameters
-    assert list(DEFAULT_OPR_PARAMETERS.values()) == [
+    # % Check default rr parameters
+    assert list(DEFAULT_RR_PARAMETERS.values()) == [
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
@@ -174,8 +174,8 @@ def test_default_parameters():
         0.6,  # % bkw
     ]
 
-    # % Check default opr states
-    assert list(DEFAULT_OPR_INITIAL_STATES.values()) == [
+    # % Check default rr states
+    assert list(DEFAULT_RR_INITIAL_STATES.values()) == [
         1e-2,  # % hi
         1e-2,  # % hp
         1e-2,  # % ht
@@ -199,8 +199,8 @@ def test_default_parameters():
 
 
 def test_default_bounds_parameters():
-    # % Check default bounds opr parameters
-    assert list(DEFAULT_BOUNDS_OPR_PARAMETERS.values()) == [
+    # % Check default bounds rr parameters
+    assert list(DEFAULT_BOUNDS_RR_PARAMETERS.values()) == [
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
@@ -214,8 +214,8 @@ def test_default_bounds_parameters():
         (1e-3, 1),  # % bkw
     ]
 
-    # % Check default bounds opr states
-    assert list(DEFAULT_BOUNDS_OPR_INITIAL_STATES.values()) == [
+    # % Check default bounds rr states
+    assert list(DEFAULT_BOUNDS_RR_INITIAL_STATES.values()) == [
         (1e-6, 0.999999),  # % hi
         (1e-6, 0.999999),  # % hp
         (1e-6, 0.999999),  # % ht

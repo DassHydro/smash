@@ -71,9 +71,9 @@ def save_model(model: Model, path: str):
             "physio_data",
             "response_data",
             "response",
-            "opr_parameters",
-            "opr_initial_states",
-            "opr_final_states",
+            "rr_parameters",
+            "rr_initial_states",
+            "rr_final_states",
         ]:
             derived_type = getattr(model, derived_type_key)
 
@@ -157,9 +157,9 @@ def read_model(path: str) -> Model:
                     "physio_data",
                     "response_data",
                     "response",
-                    "opr_parameters",
-                    "opr_initial_states",
-                    "opr_final_states",
+                    "rr_parameters",
+                    "rr_initial_states",
+                    "rr_final_states",
                 ]:
                     _parse_hdf5_to_derived_type(
                         f[derived_type_key], getattr(instance, derived_type_key)

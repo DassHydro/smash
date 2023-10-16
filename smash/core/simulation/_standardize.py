@@ -1,18 +1,18 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_OPR_PARAMETERS,
-    STRUCTURE_OPR_STATES,
-    OPR_PARAMETERS,
-    OPR_STATES,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
+    RR_PARAMETERS,
+    RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    OPTIMIZABLE_OPR_PARAMETERS,
-    OPTIMIZABLE_OPR_INITIAL_STATES,
+    OPTIMIZABLE_RR_PARAMETERS,
+    OPTIMIZABLE_RR_INITIAL_STATES,
     OPTIMIZABLE_SERR_MU_PARAMETERS,
     OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    FEASIBLE_OPR_PARAMETERS,
-    FEASIBLE_OPR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     MAPPING,
@@ -29,6 +29,7 @@ from smash._constant import (
     SIGNS,
     JOBS_CMPT,
     JOBS_CMPT_TFM,
+    WJREG_ALIAS,
     JREG_CMPT,
     WEIGHT_ALIAS,
     GAUGE_ALIAS,
@@ -56,7 +57,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, ListLike, AnyTuple
+    from smash._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -90,13 +91,13 @@ def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> st
 def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
     if isinstance(samples, Samples):
         for key in samples._problem["names"]:
-            if key in model.opr_parameters.keys:
-                l, u = FEASIBLE_OPR_PARAMETERS[key]
-            elif key in model.opr_initial_states.keys:
-                l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+            if key in model.rr_parameters.keys:
+                l, u = FEASIBLE_RR_PARAMETERS[key]
+            elif key in model.rr_initial_states.keys:
+                l, u = FEASIBLE_RR_INITIAL_STATES[key]
             else:
-                available_parameters = list(model.opr_parameters.keys) + list(
-                    model.opr_initial_states.keys
+                available_parameters = list(model.rr_parameters.keys) + list(
+                    model.rr_initial_states.keys
                 )
                 raise ValueError(
                     f"Unknown parameter '{key}' in samples attributes. Choices: {available_parameters}"
@@ -121,15 +122,15 @@ def _standardize_simulation_optimize_options_parameters(
 ) -> np.ndarray:
     is_bayesian = "bayesian" in func_name
 
-    available_opr_parameters = [
+    available_rr_parameters = [
         key
-        for key in STRUCTURE_OPR_PARAMETERS[model.setup.structure]
-        if OPTIMIZABLE_OPR_PARAMETERS[key]
+        for key in STRUCTURE_RR_PARAMETERS[model.setup.structure]
+        if OPTIMIZABLE_RR_PARAMETERS[key]
     ]
-    available_opr_initial_states = [
+    available_rr_initial_states = [
         key
-        for key in STRUCTURE_OPR_STATES[model.setup.structure]
-        if OPTIMIZABLE_OPR_INITIAL_STATES[key]
+        for key in STRUCTURE_RR_STATES[model.setup.structure]
+        if OPTIMIZABLE_RR_INITIAL_STATES[key]
     ]
     available_serr_mu_parameters = [
         key
@@ -141,7 +142,7 @@ def _standardize_simulation_optimize_options_parameters(
         for key in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]
         if OPTIMIZABLE_SERR_SIGMA_PARAMETERS[key]
     ]
-    available_parameters = available_opr_parameters + available_opr_initial_states
+    available_parameters = available_rr_parameters + available_rr_initial_states
 
     if is_bayesian:
         available_parameters.extend(
@@ -151,13 +152,13 @@ def _standardize_simulation_optimize_options_parameters(
     if parameters is None:
         if is_bayesian:
             parameters = np.array(
-                available_opr_parameters
+                available_rr_parameters
                 + available_serr_mu_parameters
                 + available_serr_sigma_parameters,
                 ndmin=1,
             )
         else:
-            parameters = np.array(available_opr_parameters, ndmin=1)
+            parameters = np.array(available_rr_parameters, ndmin=1)
 
     else:
         if isinstance(parameters, (str, list, tuple, np.ndarray)):
@@ -211,8 +212,8 @@ def _standardize_simulation_optimize_options_bounds(
             TypeError("bounds optimize_options must be a dictionary")
 
     parameters_bounds = dict(
-        **model.get_opr_parameters_bounds(),
-        **model.get_opr_initial_states_bounds(),
+        **model.get_rr_parameters_bounds(),
+        **model.get_rr_initial_states_bounds(),
         **model.get_serr_mu_parameters_bounds(),
         **model.get_serr_sigma_parameters_bounds(),
     )
@@ -223,12 +224,12 @@ def _standardize_simulation_optimize_options_bounds(
 
     # % Check that bounds are inside feasible domain and that bounds include parameter domain
     for key, value in bounds.items():
-        if key in model.opr_parameters.keys:
-            arr = model.get_opr_parameters(key)
-            l, u = FEASIBLE_OPR_PARAMETERS[key]
-        elif key in model.opr_initial_states.keys:
-            arr = model.get_opr_initial_states(key)
-            l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+        if key in model.rr_parameters.keys:
+            arr = model.get_rr_parameters(key)
+            l, u = FEASIBLE_RR_PARAMETERS[key]
+        elif key in model.rr_initial_states.keys:
+            arr = model.get_rr_initial_states(key)
+            l, u = FEASIBLE_RR_INITIAL_STATES[key]
         elif key in model.serr_sigma_parameters.keys:
             arr = model.get_serr_sigma_parameters(key)
             l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
@@ -275,7 +276,7 @@ def _standardize_simulation_optimize_options_descriptor(
     model: Model, parameters: np.ndarray, descriptor: dict | None, **kwargs
 ) -> dict:
     desc_linked_parameters = [
-        key for key in parameters if key in OPR_PARAMETERS + OPR_STATES
+        key for key in parameters if key in RR_PARAMETERS + RR_STATES
     ]
     if descriptor is None:
         descriptor = {}
@@ -616,7 +617,7 @@ def _standardize_simulation_cost_options_jobs_cmpt(
 
 
 def _standardize_simulation_cost_options_wjobs_cmpt(
-    jobs_cmpt: np.ndarray, wjobs_cmpt: str | Numeric | ListLike, **kwargs
+    jobs_cmpt: np.ndarray, wjobs_cmpt: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wjobs_cmpt, str):
         if wjobs_cmpt == "mean":
@@ -660,7 +661,7 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
 
     else:
         raise TypeError(
-            "wjobs_cmpt cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjobs_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wjobs_cmpt
@@ -711,43 +712,52 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
     return jobs_cmpt_tfm
 
 
-def _standardize_simulation_cost_options_wjreg(wjreg: Numeric, **kwargs) -> float:
-    if isinstance(wjreg, (int, float)):
+def _standardize_simulation_cost_options_wjreg(
+    wjreg: AlphaNumeric, **kwargs
+) -> str | float:
+    if isinstance(wjreg, str):
+        if wjreg.lower() in WJREG_ALIAS:
+            wjreg = wjreg.lower()
+        else:
+            raise ValueError(
+                f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}"
+            )
+
+    elif isinstance(wjreg, (int, float)):
         wjreg = float(wjreg)
         if wjreg < 0:
             raise ValueError("wjreg cost_options must be greater than or equal to 0")
     else:
-        raise TypeError("wjreg cost_options must be of Numeric type (int, float)")
+        raise TypeError(
+            "wjreg cost_options must be of AlphaNumeric type (str, int, float)"
+        )
 
     return wjreg
 
 
 def _standardize_simulation_cost_options_jreg_cmpt(
-    wjreg: float, jreg_cmpt: str | ListLike, **kwargs
+    jreg_cmpt: str | ListLike, **kwargs
 ) -> np.ndarray:
-    if wjreg > 0:
-        if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
-            jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
+    if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
+        jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
 
-            for i, jrc in enumerate(jreg_cmpt):
-                if jrc.lower() in JREG_CMPT:
-                    jreg_cmpt[i] = jrc.lower()
-                else:
-                    raise ValueError(
-                        f"Unknown component '{jrc}' at index {i} in jreg_cmpt cost_options. Choices: {JREG_CMPT}"
-                    )
-        else:
-            raise TypeError(
-                "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-            )
+        for i, jrc in enumerate(jreg_cmpt):
+            if jrc.lower() in JREG_CMPT:
+                jreg_cmpt[i] = jrc.lower()
+            else:
+                raise ValueError(
+                    f"Unknown component '{jrc}' at index {i} in jreg_cmpt cost_options. Choices: {JREG_CMPT}"
+                )
     else:
-        jreg_cmpt = np.empty(shape=0)
+        raise TypeError(
+            "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
+        )
 
     return jreg_cmpt
 
 
 def _standardize_simulation_cost_options_wjreg_cmpt(
-    jreg_cmpt: np.ndarray, wjreg_cmpt: str | Numeric | ListLike, **kwargs
+    jreg_cmpt: np.ndarray, wjreg_cmpt: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wjreg_cmpt, str):
         if wjreg_cmpt == "mean":
@@ -791,7 +801,7 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
 
     else:
         raise TypeError(
-            "wjreg_cmpt cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjreg_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wjreg_cmpt
@@ -840,7 +850,7 @@ def _standardize_simulation_cost_options_gauge(
 
 
 def _standardize_simulation_cost_options_wgauge(
-    gauge: np.ndarray, wgauge: str | Numeric | ListLike, **kwargs
+    gauge: np.ndarray, wgauge: AlphaNumeric | ListLike, **kwargs
 ) -> (np.ndarray, str):
     if isinstance(wgauge, str):
         if wgauge == "mean":
@@ -876,7 +886,7 @@ def _standardize_simulation_cost_options_wgauge(
 
     else:
         raise TypeError(
-            "wgauge cost_options must be a str or Numeric type (int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wgauge cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
         )
 
     return wgauge
@@ -1125,26 +1135,26 @@ def _standardize_simulation_return_options(
 
 
 def _standardize_simulation_parameters_feasibility(model: Model):
-    for key in model.opr_parameters.keys:
-        arr = model.get_opr_parameters(key)
-        l, u = FEASIBLE_OPR_PARAMETERS[key]
+    for key in model.rr_parameters.keys:
+        arr = model.get_rr_parameters(key)
+        l, u = FEASIBLE_RR_PARAMETERS[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model opr_parameter '{key}'. Opr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_parameter '{key}'. Rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
-    for key in model.opr_initial_states.keys:
-        arr = model.get_opr_initial_states(key)
-        l, u = FEASIBLE_OPR_INITIAL_STATES[key]
+    for key in model.rr_initial_states.keys:
+        arr = model.get_rr_initial_states(key)
+        l, u = FEASIBLE_RR_INITIAL_STATES[key]
         l_arr = np.min(arr)
         u_arr = np.max(arr)
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model opr_initial_states '{key}'. Opr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_states '{key}'. Rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1184,60 +1194,60 @@ def _standardize_simulation_optimize_options_finalize(
     descriptor_present = "descriptor" in optimize_options.keys()
 
     # % Handle parameters
-    # % opr parameters
-    optimize_options["opr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
-    optimize_options["l_opr_parameters"] = np.zeros(
+    # % rr parameters
+    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
+    optimize_options["l_rr_parameters"] = np.zeros(
         shape=model.setup.nop, dtype=np.float32
     )
-    optimize_options["u_opr_parameters"] = np.zeros(
+    optimize_options["u_rr_parameters"] = np.zeros(
         shape=model.setup.nop, dtype=np.float32
     )
 
     if descriptor_present:
-        optimize_options["opr_parameters_descriptor"] = np.zeros(
+        optimize_options["rr_parameters_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nop), dtype=np.int32
         )
 
-    for i, key in enumerate(model.opr_parameters.keys):
+    for i, key in enumerate(model.rr_parameters.keys):
         if key in optimize_options["parameters"]:
-            optimize_options["opr_parameters"][i] = 1
-            optimize_options["l_opr_parameters"][i] = optimize_options["bounds"][key][0]
-            optimize_options["u_opr_parameters"][i] = optimize_options["bounds"][key][1]
+            optimize_options["rr_parameters"][i] = 1
+            optimize_options["l_rr_parameters"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_rr_parameters"][i] = optimize_options["bounds"][key][1]
 
             if descriptor_present:
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
-                        optimize_options["opr_parameters_descriptor"][j, i] = 1
+                        optimize_options["rr_parameters_descriptor"][j, i] = 1
 
-    # % opr initial states
-    optimize_options["opr_initial_states"] = np.zeros(
+    # % rr initial states
+    optimize_options["rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.int32
     )
-    optimize_options["l_opr_initial_states"] = np.zeros(
+    optimize_options["l_rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.float32
     )
-    optimize_options["u_opr_initial_states"] = np.zeros(
+    optimize_options["u_rr_initial_states"] = np.zeros(
         shape=model.setup.nos, dtype=np.float32
     )
     if descriptor_present:
-        optimize_options["opr_initial_states_descriptor"] = np.zeros(
+        optimize_options["rr_initial_states_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nos), dtype=np.int32
         )
 
-    for i, key in enumerate(model.opr_initial_states.keys):
+    for i, key in enumerate(model.rr_initial_states.keys):
         if key in optimize_options["parameters"]:
-            optimize_options["opr_initial_states"][i] = 1
-            optimize_options["l_opr_initial_states"][i] = optimize_options["bounds"][
+            optimize_options["rr_initial_states"][i] = 1
+            optimize_options["l_rr_initial_states"][i] = optimize_options["bounds"][
                 key
             ][0]
-            optimize_options["u_opr_initial_states"][i] = optimize_options["bounds"][
+            optimize_options["u_rr_initial_states"][i] = optimize_options["bounds"][
                 key
             ][1]
 
             if descriptor_present:
                 for j, desc in enumerate(model.setup.descriptor_name):
                     if desc in optimize_options["descriptor"][key]:
-                        optimize_options["opr_initial_states_descriptor"][j, i] = 1
+                        optimize_options["rr_initial_states_descriptor"][j, i] = 1
 
     # % serr mu parameters
     optimize_options["serr_mu_parameters"] = np.zeros(
@@ -1303,6 +1313,10 @@ def _standardize_simulation_cost_options_finalize(
         info_event = _mask_event(model=model, **cost_options["event_seg"])
         cost_options["n_event"] = info_event["n"]
         cost_options["mask_event"] = info_event["mask"]
+
+    if isinstance(cost_options.get("wjreg", None), str):
+        cost_options["auto_wjreg"] = cost_options["wjreg"]
+        cost_options["wjreg"] = 0
 
     # % Handle flags send to Fortran
     # % gauge and wgauge

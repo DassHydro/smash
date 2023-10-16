@@ -101,16 +101,16 @@ contains
         call control_tfm(parameters_bkg, options)
         call control_to_parameters(setup, mesh, input_data, parameters_bkg, options)
 
-        ! Loop on opr_parameters
+        ! Loop on rr_parameters
         do i = 1, setup%nop
 
-            if (options%optimize%opr_parameters(i) .eq. 0) cycle
+            if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
             if (hard) then
-                matrix = parameters%opr_parameters%values(:, :, i)
+                matrix = parameters%rr_parameters%values(:, :, i)
 
             else
-                matrix = parameters%opr_parameters%values(:, :, i) - parameters_bkg%opr_parameters%values(:, :, i)
+                matrix = parameters%rr_parameters%values(:, :, i) - parameters_bkg%rr_parameters%values(:, :, i)
 
             end if
 
@@ -118,16 +118,16 @@ contains
 
         end do
 
-        ! Loop on opr_initial_states
+        ! Loop on rr_initial_states
         do i = 1, setup%nos
 
-            if (options%optimize%opr_initial_states(i) .eq. 0) cycle
+            if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
             if (hard) then
-                matrix = parameters%opr_initial_states%values(:, :, i)
+                matrix = parameters%rr_initial_states%values(:, :, i)
 
             else
-                matrix = parameters%opr_initial_states%values(:, :, i) - parameters_bkg%opr_initial_states%values(:, :, i)
+                matrix = parameters%rr_initial_states%values(:, :, i) - parameters_bkg%rr_initial_states%values(:, :, i)
 
             end if
 

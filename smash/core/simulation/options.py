@@ -46,7 +46,7 @@ def default_optimize_options(
         A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
 
         parameters : ListLike
-            Operator parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
+            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
 
         bounds : dict
             Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
@@ -55,7 +55,7 @@ def default_optimize_options(
             Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
 
         descriptor : dict
-            A dictionary containing lists of descriptors used for each operator parameter.
+            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
             Only used when **mapping** is 'multi-linear' or 'multi-polynomial'. In case of 'ann', all descriptors will be used.
 
         net : Net
@@ -143,15 +143,15 @@ def default_optimize_options(
     >>> opt_ann["random_state"] = 11
     >>> model.optimize(mapping="ann", optimize_options=opt_ann)
     </> Optimize
-        At epoch      1    J =  1.150821    |proj g| =  0.000060
-        At epoch      2    J =  1.142061    |proj g| =  0.000067
+        At epoch      1    J =  1.150821    |proj g| =  0.002341
+        At epoch      2    J =  1.142061    |proj g| =  0.002610
         ...
-        At epoch     26    J =  0.103324    |proj g| =  0.000159
-        At epoch     27    J =  0.089769    |proj g| =  0.000235
-        At epoch     28    J =  0.104150    |proj g| =  0.000305
+        At epoch     26    J =  0.103324    |proj g| =  0.005455
+        At epoch     27    J =  0.089769    |proj g| =  0.016618
+        At epoch     28    J =  0.104150    |proj g| =  0.019718
         ...
-        At epoch     36    J =  0.185123    |proj g| =  0.000176
-        At epoch     37    J =  0.179911    |proj g| =  0.000177
+        At epoch     36    J =  0.185123    |proj g| =  0.011936
+        At epoch     37    J =  0.179911    |proj g| =  0.011819
         Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
 
     The training process was terminated after 37 epochs, where the loss did not decrease below the minimal value at epoch 27 for 10 consecutive epochs.
@@ -200,7 +200,7 @@ def default_bayesian_optimize_options(
         A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
 
         parameters : ListLike
-            Operator parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
+            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
 
         bounds : dict
             Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
@@ -209,7 +209,7 @@ def default_bayesian_optimize_options(
             Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
 
         descriptor : dict
-            A dictionary containing lists of descriptors used for each operator parameter.
+            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
             Only used when **mapping** is 'multi-linear' or 'multi-polynomial'.
 
         termination_crit : dict

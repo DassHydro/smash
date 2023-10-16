@@ -121,11 +121,11 @@ def _forward_run_with_estimated_parameters(
             prior_data[p], cost, density[p], alpha
         )
 
-        if p in model.opr_parameters.keys:
-            model.set_opr_parameters(p, param_p)
+        if p in model.rr_parameters.keys:
+            model.set_rr_parameters(p, param_p)
 
-        elif p in model.opr_initial_states.keys:
-            model.set_opr_initial_states(p, param_p)
+        elif p in model.rr_initial_states.keys:
+            model.set_rr_initial_states(p, param_p)
 
         # % In case we have other kind of parameters. Should be unreachable.
         else:
