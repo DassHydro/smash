@@ -3,7 +3,7 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - compute_interception_capacity
+!%      - adjust_interception_capacity
 
 module mw_interception_capacity
 
@@ -19,7 +19,7 @@ module mw_interception_capacity
 
 contains
 
-    subroutine compute_interception_capacity(setup, mesh, input_data, day_index, nday, ci)
+    subroutine adjust_interception_capacity(setup, mesh, input_data, day_index, nday, ci)
 
         implicit none
 
@@ -86,7 +86,7 @@ contains
         !% =========================================================================================================== %!
 
         stt = 0.1_sp
-        stp = 5._sp
+        stp = 3._sp
         step = 0.1_sp
         n = ceiling((stp - stt)/step)
 
@@ -148,6 +148,6 @@ contains
 
         end do
 
-    end subroutine compute_interception_capacity
+    end subroutine adjust_interception_capacity
 
 end module mw_interception_capacity
