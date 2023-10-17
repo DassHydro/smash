@@ -3,7 +3,7 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
-    STRUCTURE_COMPUTE_CI,
+    STRUCTURE_ADJUST_CI,
     DEFAULT_RR_PARAMETERS,
     DEFAULT_RR_INITIAL_STATES,
     SERR_MU_MAPPING_PARAMETERS,
@@ -27,7 +27,7 @@ from smash.fcore._mw_atmos_statistic import (
     compute_mean_atmos as wrap_compute_mean_atmos,
 )
 from smash.fcore._mw_interception_capacity import (
-    compute_interception_capacity as wrap_compute_interception_capacity,
+    adjust_interception_capacity as wrap_adjust_interception_capacity,
 )
 
 import pandas as pd
@@ -114,8 +114,13 @@ def _build_parameters(
         value = DEFAULT_RR_INITIAL_STATES[key]
         parameters.rr_initial_states.values[..., i] = value
 
-    # TODO: Add a key in setup to trigger the auto computation of CI (True by default)
-    if STRUCTURE_COMPUTE_CI[setup.structure] and setup.dt < 86_400:
+    # % If structure contains ci and is at sub daily time step and if user wants the capacity to be adjusted
+    if (
+        STRUCTURE_ADJUST_CI[setup.structure]
+        and setup.dt < 86_400
+        and setup.adjust_interception
+    ):
+        print("</> Adjusting GR interception capacity")
         # % Date
         day_index = pd.date_range(
             start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s"
@@ -129,7 +134,7 @@ def _build_parameters(
 
         ind = np.argwhere(parameters.rr_parameters.keys == "ci").item()
 
-        wrap_compute_interception_capacity(
+        wrap_adjust_interception_capacity(
             setup,
             mesh,
             input_data,
