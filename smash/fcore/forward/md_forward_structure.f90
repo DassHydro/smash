@@ -4,6 +4,7 @@
 !%      ----------
 !%
 !%      - gr4_lr_forward
+!%      - gr4_ode_forward
 !%      - gr4_kw_forward
 !%      - gr5_kw_forward
 !%      - gr5_kw_forward
@@ -24,6 +25,7 @@ module md_forward_structure
     use mwd_sparse_matrix_manipulation !% only: sparse_matrix_to_matrix
     use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
     !% & gr_transfer
+    use md_node_operator !% only: gr_ode_explicit_euler, gr_ode_implicit_euler
     use md_vic3l_operator !% only: vic3l_canopy_evapotranspiration, vic3l_upper_soil_layer_evaporation, &
     !% & vic3l_infiltration, vic3l_drainage, vic3l_baseflow
     use md_routing_operator !% only: upstream_discharge, linear_routing, kinematic_wave1d

@@ -38,6 +38,7 @@ f90: \
  obj/mwd_options.o \
  obj/mw_forward.o \
  obj/md_gr_operator.o \
+ obj/md_node_operator.o \
  obj/md_routing_operator.o \
  obj/md_vic3l_operator.o \
  obj/mw_mask.o \

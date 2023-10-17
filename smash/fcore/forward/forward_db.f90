@@ -11943,6 +11943,23 @@ CONTAINS
     q = (ht_imd-ht)*ct
   END SUBROUTINE GR_TRANSFER
 
+END MODULE MD_GR_OPERATOR_DIFF
+
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - gr_ode_explicit_euler
+!%      - solve_linear_system_2vars
+!%      - gr_ode_implicit_euler
+MODULE MD_NODE_OPERATOR_DIFF
+!% only : sp
+  USE MD_CONSTANT
+  IMPLICIT NONE
+
+CONTAINS
+!% TODO comment
   SUBROUTINE GR_ODE_EXPLICIT_EULER(pn, en, cp, ct, kexc, hp, ht, qti)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
@@ -12328,7 +12345,7 @@ CONTAINS
     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
   END SUBROUTINE GR_ODE_IMPLICIT_EULER
 
-END MODULE MD_GR_OPERATOR_DIFF
+END MODULE MD_NODE_OPERATOR_DIFF
 
 !%      (MD) Module Differentiated.
 !%
@@ -13848,6 +13865,7 @@ END MODULE MD_VIC3L_OPERATOR_DIFF
 !%      ----------
 !%
 !%      - gr4_lr_forward
+!%      - gr4_ode_forward
 !%      - gr4_kw_forward
 !%      - gr5_kw_forward
 !%      - gr5_kw_forward
@@ -13876,6 +13894,8 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
   USE MD_GR_OPERATOR_DIFF
 !% & gr_transfer
+!% only: gr_ode_explicit_euler, gr_ode_implicit_euler
+  USE MD_NODE_OPERATOR_DIFF
 !% only: vic3l_canopy_evapotranspiration, vic3l_upper_soil_layer_evaporation, &
   USE MD_VIC3L_OPERATOR_DIFF
 !% & vic3l_infiltration, vic3l_drainage, vic3l_baseflow
