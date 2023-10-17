@@ -1143,7 +1143,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model rr_parameter '{key}'. Rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.rr_initial_states.keys:
@@ -1154,7 +1154,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model rr_initial_states '{key}'. Rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_states '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1168,7 +1168,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_mu_parameters '{key}'. Serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_mu_parameters '{key}'. serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
     for key in model.serr_sigma_parameters.keys:
         arr = model.get_serr_sigma_parameters(key)
@@ -1181,7 +1181,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_sigma_parameters '{key}'. Serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_sigma_parameters '{key}'. serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
 

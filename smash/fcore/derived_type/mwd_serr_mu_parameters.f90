@@ -3,7 +3,7 @@
 !%      Type
 !%      ----
 !%
-!%      - Serr_Mu_ParametersDT
+!%      - SErr_Mu_ParametersDT
 !%          Vectors containting hyper parameters of the temporalisation function for mu, the mean of structural errors
 !%          (mg0, mg1, ...)
 !%
@@ -17,8 +17,8 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - Serr_Mu_ParametersDT_initialise
-!%      - Serr_Mu_ParametersDT_copy
+!%      - SErr_Mu_ParametersDT_initialise
+!%      - SErr_Mu_ParametersDT_copy
 
 module mwd_serr_mu_parameters
 
@@ -28,20 +28,20 @@ module mwd_serr_mu_parameters
 
     implicit none
 
-    type Serr_Mu_ParametersDT
+    type SErr_Mu_ParametersDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :), allocatable :: values
 
-    end type Serr_Mu_ParametersDT
+    end type SErr_Mu_ParametersDT
 
 contains
 
-    subroutine Serr_Mu_ParametersDT_initialise(this, setup, mesh)
+    subroutine SErr_Mu_ParametersDT_initialise(this, setup, mesh)
 
         implicit none
 
-        type(Serr_Mu_ParametersDT), intent(inout) :: this
+        type(SErr_Mu_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -51,17 +51,17 @@ contains
         allocate (this%values(mesh%ng, setup%nsep_mu))
         this%values = -99._sp
 
-    end subroutine Serr_Mu_ParametersDT_initialise
+    end subroutine SErr_Mu_ParametersDT_initialise
 
-    subroutine Serr_Mu_ParametersDT_copy(this, this_copy)
+    subroutine SErr_Mu_ParametersDT_copy(this, this_copy)
 
         implicit none
 
-        type(Serr_Mu_ParametersDT), intent(in) :: this
-        type(Serr_Mu_ParametersDT), intent(out) :: this_copy
+        type(SErr_Mu_ParametersDT), intent(in) :: this
+        type(SErr_Mu_ParametersDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Serr_Mu_ParametersDT_copy
+    end subroutine SErr_Mu_ParametersDT_copy
 
 end module mwd_serr_mu_parameters

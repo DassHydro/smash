@@ -3,7 +3,7 @@
 !%      Type
 !%      ----
 !%
-!%      - Rr_StatesDT
+!%      - RR_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
 !%
@@ -16,8 +16,8 @@
 !§      Subroutine
 !%      ----------
 !%
-!%      - Rr_StatesDT_initialise
-!%      - Rr_StatesDT_copy
+!%      - RR_StatesDT_initialise
+!%      - RR_StatesDT_copy
 
 module mwd_rr_states
 
@@ -27,21 +27,21 @@ module mwd_rr_states
 
     implicit none
 
-    type Rr_StatesDT
+    type RR_StatesDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :, :), allocatable :: values
 
-    end type Rr_StatesDT
+    end type RR_StatesDT
 
 contains
 
-    subroutine Rr_StatesDT_initialise(this, setup, mesh)
+    subroutine RR_StatesDT_initialise(this, setup, mesh)
         !% Default states value will be handled in Python
 
         implicit none
 
-        type(Rr_StatesDT), intent(inout) :: this
+        type(RR_StatesDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -51,17 +51,17 @@ contains
         allocate (this%values(mesh%nrow, mesh%ncol, setup%nos))
         this%values = -99._sp
 
-    end subroutine Rr_StatesDT_initialise
+    end subroutine RR_StatesDT_initialise
 
-    subroutine Rr_StatesDT_copy(this, this_copy)
+    subroutine RR_StatesDT_copy(this, this_copy)
 
         implicit none
 
-        type(Rr_StatesDT), intent(in) :: this
-        type(Rr_StatesDT), intent(out) :: this_copy
+        type(RR_StatesDT), intent(in) :: this
+        type(RR_StatesDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Rr_StatesDT_copy
+    end subroutine RR_StatesDT_copy
 
 end module mwd_rr_states
