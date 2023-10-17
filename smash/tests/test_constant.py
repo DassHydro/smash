@@ -46,7 +46,7 @@ def test_structure_model():
         "vic3l-lr",
     ]
 
-    # % Check opr parameters
+    # % Check rr parameters
     assert RR_PARAMETERS == [
         "ci",
         "cp",
@@ -70,7 +70,7 @@ def test_structure_model():
         "bkw",
     ]
 
-    # % Check opr states
+    # % Check rr states
     assert RR_STATES == [
         "hi",
         "hp",
