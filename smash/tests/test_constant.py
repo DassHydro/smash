@@ -43,6 +43,7 @@ def test_structure_model():
         "gr5-kw",
         "loieau-lr",
         "grd-lr",
+        "vic3l-lr",
     ]
 
     # % Check rr parameters
@@ -55,13 +56,33 @@ def test_structure_model():
         "ca",
         "cc",
         "kb",
+        "b",
+        "cusl",
+        "cmsl",
+        "cbsl",
+        "ks",
+        "pbc",
+        "ds",
+        "dsm",
+        "ws",
         "llr",
         "akw",
         "bkw",
     ]
 
     # % Check rr states
-    assert RR_STATES == ["hi", "hp", "ht", "ha", "hc", "hlr"]
+    assert RR_STATES == [
+        "hi",
+        "hp",
+        "ht",
+        "ha",
+        "hc",
+        "hcl",
+        "husl",
+        "hmsl",
+        "hbsl",
+        "hlr",
+    ]
 
     # % Check structure rr parameter
     assert list(STRUCTURE_RR_PARAMETERS.values()) == [
@@ -71,6 +92,18 @@ def test_structure_model():
         ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr5-kw
         ["ca", "cc", "kb", "llr"],  # % loieau-lr
         ["cp", "ct", "llr"],  # % grd-lr
+        [
+            "b",
+            "cusl",
+            "cmsl",
+            "cbsl",
+            "ks",
+            "pbc",
+            "ds",
+            "dsm",
+            "ws",
+            "llr",
+        ],  # % vic3l-lr
     ]
 
     # % Check structure rr state
@@ -81,6 +114,7 @@ def test_structure_model():
         ["hi", "hp", "ht"],  # % gr5-kw
         ["ha", "hc", "hlr"],  # % loieau-lr
         ["hp", "ht", "hlr"],  # % grd-lr
+        ["hcl", "husl", "hmsl", "hbsl", "hlr"],  # % vic3l-lr
     ]
 
     # % Check mu mapping name
@@ -129,6 +163,15 @@ def test_feasible_domain():
         (0, np.inf),  # % ca
         (0, np.inf),  # % cc
         (0, np.inf),  # % kb
+        (0, np.inf),  # % b
+        (0, np.inf),  # % cusl
+        (0, np.inf),  # % cmsl
+        (0, np.inf),  # % cbsl
+        (0, np.inf),  # % ks
+        (0, np.inf),  # % pbc
+        (0, np.inf),  # % ds
+        (0, np.inf),  # % dsm
+        (0, np.inf),  # % ws
         (0, np.inf),  # % llr
         (0, np.inf),  # % akw
         (0, np.inf),  # % bkw
@@ -141,6 +184,10 @@ def test_feasible_domain():
         (0, 1),  # % ht
         (0, 1),  # % ha
         (0, 1),  # % hc
+        (0, 1),  # % hcl
+        (0, 1),  # % husl
+        (0, 1),  # % hmsl
+        (0, 1),  # % hbsl
         (0, np.inf),  # % hlr
     ]
 
@@ -169,6 +216,15 @@ def test_default_parameters():
         200,  # % ca
         500,  # % cc
         1,  # % kb
+        0.1,  # % b
+        100,  # % cusl
+        500,  # % cmsl
+        2000,  # % cbsl
+        20,  # % ks
+        10,  # % pbc
+        1e-2,  # % ds
+        10,  # % dsm
+        0.8,  # % ws
         5,  # % llr
         5,  # % akw
         0.6,  # % bkw
@@ -181,6 +237,10 @@ def test_default_parameters():
         1e-2,  # % ht
         1e-2,  # % ha
         1e-2,  # % hc
+        1e-2,  # % hcl
+        1e-2,  # % husl
+        1e-2,  # % hmsl
+        1e-6,  # % hbsl
         1e-6,  # % hlr
     ]
 
@@ -209,6 +269,15 @@ def test_default_bounds_parameters():
         (1e-6, 1e3),  # % ca
         (1e-6, 1e3),  # % cc
         (1e-6, 4),  # % kb
+        (1e-3, 0.8),  # % b
+        (1e1, 500),  # % cusl
+        (1e2, 2000),  # % cmsl
+        (1e2, 2000),  # % cbsl
+        (1, 1e5),  # % ks
+        (1, 30),  # % pbc
+        (1e-6, 0.999999),  # % ds
+        (1e-3, 1e5),  # % dsm
+        (1e-6, 0.999999),  # % ws
         (1e-6, 1e3),  # % llr
         (1e-3, 50),  # % akw
         (1e-3, 1),  # % bkw
@@ -221,6 +290,10 @@ def test_default_bounds_parameters():
         (1e-6, 0.999999),  # % ht
         (1e-6, 0.999999),  # % ha
         (1e-6, 0.999999),  # % hc
+        (1e-6, 0.999999),  # % hcl
+        (1e-6, 0.999999),  # % husl
+        (1e-6, 0.999999),  # % hmsl
+        (1e-6, 0.999999),  # % hbsl
         (1e-6, 1e3),  # % hlr
     ]
 

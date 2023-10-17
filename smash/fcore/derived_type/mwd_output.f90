@@ -10,7 +10,7 @@
 !%          ======================== =======================================
 !%          ``cost``                 Value of cost function
 !%          ``response``             ResponseDT
-!%          ``rr_final_states``     Rr_StatesDT
+!%          ``rr_final_states``      Rr_StatesDT
 !%          ======================== =======================================
 !%
 !%      Subroutine

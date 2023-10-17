@@ -78,7 +78,7 @@ contains
 
     end subroutine gr_exchange
 
-    subroutine gr_threshold_exchange(kexc, ht, aexc, l)
+    subroutine gr_threshold_exchange(kexc, aexc, ht, l)
 
         implicit none
 
