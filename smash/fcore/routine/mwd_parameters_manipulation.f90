@@ -206,7 +206,7 @@ contains
         !% Need lower and upper bound to sbs tfm
         nbd_mask = (parameters%control%nbd(:) .eq. 2)
 
-        ! Only apply sbs transformation on RR parameters and Rr initial states
+        ! Only apply sbs transformation on RR parameters and RR initial states
         do i = 1, sum(parameters%control%nbk(1:2))
 
             if (.not. nbd_mask(i)) cycle
@@ -247,7 +247,7 @@ contains
         !% Need lower and upper bound to sbs tfm
         nbd_mask = (parameters%control%nbd(:) .eq. 2)
 
-        ! Only apply sbs inv transformation on RR parameters et Rr initial states
+        ! Only apply sbs inv transformation on RR parameters et RR initial states
         do i = 1, sum(parameters%control%nbk(1:2))
 
             if (.not. nbd_mask(i)) cycle
@@ -601,7 +601,7 @@ contains
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -674,7 +674,7 @@ contains
         character(lchar) :: name
         integer :: n, i, j, row, col
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -768,7 +768,7 @@ contains
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -873,7 +873,7 @@ contains
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -1078,7 +1078,7 @@ contains
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -1144,7 +1144,7 @@ contains
 
         integer :: i, j, row, col
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -1230,7 +1230,7 @@ contains
         real(sp) :: l, u
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos
@@ -1326,7 +1326,7 @@ contains
         real(sp) :: l, u
         real(sp), dimension(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
 
-        ! Rr initial states is second control kind
+        ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
         do i = 1, setup%nos

@@ -5564,7 +5564,7 @@ CONTAINS
     REAL(sp) :: temp
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on RR parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5606,7 +5606,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on RR parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5659,7 +5659,7 @@ CONTAINS
     INTRINSIC LOG
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on RR parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5701,7 +5701,7 @@ CONTAINS
     REAL(sp) :: temp0
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on RR parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5744,7 +5744,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on RR parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5798,7 +5798,7 @@ CONTAINS
     INTRINSIC EXP
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on RR parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -6214,7 +6214,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6277,7 +6277,7 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: n, i, j, row, col
     INTRINSIC TRIM
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6355,7 +6355,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6442,7 +6442,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6690,7 +6690,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6722,7 +6722,7 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -6755,7 +6755,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6891,7 +6891,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6925,7 +6925,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -6971,7 +6971,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7174,7 +7174,7 @@ CONTAINS
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7222,7 +7222,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -7301,7 +7301,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7530,7 +7530,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7587,7 +7587,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -7672,7 +7672,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
