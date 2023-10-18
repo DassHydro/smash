@@ -4,7 +4,7 @@
 !%      ----------
 !%
 !%      - gr4_lr_forward
-!%      - gr4_ode_forward
+!%      - gr4_lr_ss_forward
 !%      - gr4_kw_forward
 !%      - gr5_kw_forward
 !%      - gr5_kw_forward
@@ -25,7 +25,7 @@ module md_forward_structure
     use mwd_sparse_matrix_manipulation !% only: sparse_matrix_to_matrix
     use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
     !% & gr_transfer
-    use md_node_operator !% only: gr_ode_explicit_euler, gr_ode_implicit_euler
+    use md_neural_ode_operator !% only: gr_ode_implicit_euler
     use md_vic3l_operator !% only: vic3l_canopy_evapotranspiration, vic3l_upper_soil_layer_evaporation, &
     !% & vic3l_infiltration, vic3l_drainage, vic3l_baseflow
     use md_routing_operator !% only: upstream_discharge, linear_routing, kinematic_wave1d
@@ -221,7 +221,7 @@ contains
 
     end subroutine gr4_lr_forward
 
-    subroutine gr4_ode_forward(setup, mesh, input_data, parameters, output, options, returns)
+    subroutine gr4_lr_ss_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:
         !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
         !% - rr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
@@ -315,7 +315,7 @@ contains
                 end if
 
                 !% =============================================================================================== %!
-                !%   Production and Transfer ODE
+                !%   Production and Transfer State-Space
                 !% =============================================================================================== %!
 
                 call gr_ode_implicit_euler(pn, en, cp(row, col), ct(row, col), kexc(row, col), &
@@ -390,7 +390,7 @@ contains
 
         end do !% [ END DO TIME ]
 
-    end subroutine gr4_ode_forward
+    end subroutine gr4_lr_ss_forward
 
     subroutine gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:

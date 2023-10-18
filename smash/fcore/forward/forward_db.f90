@@ -11950,34 +11950,13 @@ END MODULE MD_GR_OPERATOR_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - gr_ode_explicit_euler
 !%      - solve_linear_system_2vars
-!%      - gr_ode_implicit_euler
-MODULE MD_NODE_OPERATOR_DIFF
+MODULE MD_ALGEBRA_DIFF
 !% only : sp
   USE MD_CONSTANT
   IMPLICIT NONE
 
 CONTAINS
-!% TODO comment
-  SUBROUTINE GR_ODE_EXPLICIT_EULER(pn, en, cp, ct, kexc, hp, ht, qti)
-    IMPLICIT NONE
-    REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
-    REAL(sp), INTENT(INOUT) :: hp, ht, qti
-    REAL(sp) :: hp_dot, ht_dot, dt
-    INTEGER :: i
-    INTEGER, SAVE :: n_subtimesteps=20
-    INTRINSIC REAL
-    dt = 1._sp/REAL(n_subtimesteps, sp)
-    DO i=1,n_subtimesteps
-      hp_dot = ((1._sp-hp**2)*pn-hp*(2._sp-hp)*en)/cp
-      ht_dot = (0.9_sp*pn*hp**2-ct*ht**5+kexc*ht**3.5_sp)/ct
-      hp = hp + dt*hp_dot
-      ht = ht + dt*ht_dot
-    END DO
-    qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
-  END SUBROUTINE GR_ODE_EXPLICIT_EULER
-
 !  Differentiation of solve_linear_system_2vars in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: x
 !   with respect to varying inputs: x a b
@@ -12087,9 +12066,42 @@ CONTAINS
     END IF
   END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS
 
+END MODULE MD_ALGEBRA_DIFF
+
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - gr_ode_implicit_euler
+MODULE MD_NEURAL_ODE_OPERATOR_DIFF
+!% only : sp
+  USE MD_CONSTANT
+!% only: solve_linear_system_2vars
+  USE MD_ALGEBRA_DIFF
+  IMPLICIT NONE
+! subroutine gr_ode_explicit_euler(pn, en, cp, ct, kexc, hp, ht, qti)
+!     implicit none
+!     real(sp), intent(in) :: pn, en, cp, ct, kexc
+!     real(sp), intent(inout) :: hp, ht, qti
+!     real(sp) :: hp_dot, ht_dot, dt
+!     integer :: i
+!     integer :: n_subtimesteps = 20
+!     dt = 1._sp/real(n_subtimesteps, sp)
+!     do i = 1, n_subtimesteps
+!         hp_dot = ((1._sp - hp**2)*pn - hp*(2._sp - hp)*en)/cp
+!         ht_dot = (0.9_sp*pn*hp**2 - ct*ht**5 + kexc*ht**3.5_sp)/ct
+!         hp = hp + dt*hp_dot
+!         ht = ht + dt*ht_dot
+!     end do
+!     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
+! end subroutine gr_ode_explicit_euler
+
+CONTAINS
 !  Differentiation of gr_ode_implicit_euler in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: hp ht qti
 !   with respect to varying inputs: kexc hp ht en cp pn ct
+!% TODO comment
   SUBROUTINE GR_ODE_IMPLICIT_EULER_D(pn, pn_d, en, en_d, cp, cp_d, ct, &
 &   ct_d, kexc, kexc_d, hp, hp_d, ht, ht_d, qti, qti_d)
     IMPLICIT NONE
@@ -12169,6 +12181,7 @@ CONTAINS
 !  Differentiation of gr_ode_implicit_euler in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: kexc hp ht cp ct qti
 !   with respect to varying inputs: kexc hp ht en cp pn ct
+!% TODO comment
   SUBROUTINE GR_ODE_IMPLICIT_EULER_B(pn, pn_b, en, en_b, cp, cp_b, ct, &
 &   ct_b, kexc, kexc_b, hp, hp_b, ht, ht_b, qti, qti_b)
     IMPLICIT NONE
@@ -12308,6 +12321,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR_ODE_IMPLICIT_EULER_B
 
+!% TODO comment
   SUBROUTINE GR_ODE_IMPLICIT_EULER(pn, en, cp, ct, kexc, hp, ht, qti)
     IMPLICIT NONE
     REAL(sp), INTENT(IN) :: pn, en, cp, ct, kexc
@@ -12345,7 +12359,7 @@ CONTAINS
     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
   END SUBROUTINE GR_ODE_IMPLICIT_EULER
 
-END MODULE MD_NODE_OPERATOR_DIFF
+END MODULE MD_NEURAL_ODE_OPERATOR_DIFF
 
 !%      (MD) Module Differentiated.
 !%
@@ -13865,7 +13879,7 @@ END MODULE MD_VIC3L_OPERATOR_DIFF
 !%      ----------
 !%
 !%      - gr4_lr_forward
-!%      - gr4_ode_forward
+!%      - gr4_lr_ss_forward
 !%      - gr4_kw_forward
 !%      - gr5_kw_forward
 !%      - gr5_kw_forward
@@ -13894,8 +13908,8 @@ MODULE MD_FORWARD_STRUCTURE_DIFF
 !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
   USE MD_GR_OPERATOR_DIFF
 !% & gr_transfer
-!% only: gr_ode_explicit_euler, gr_ode_implicit_euler
-  USE MD_NODE_OPERATOR_DIFF
+!% only: gr_ode_implicit_euler
+  USE MD_NEURAL_ODE_OPERATOR_DIFF
 !% only: vic3l_canopy_evapotranspiration, vic3l_upper_soil_layer_evaporation, &
   USE MD_VIC3L_OPERATOR_DIFF
 !% & vic3l_infiltration, vic3l_drainage, vic3l_baseflow
@@ -14521,13 +14535,13 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_LR_FORWARD
 
-!  Differentiation of gr4_ode_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
+!  Differentiation of gr4_lr_ss_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
-  SUBROUTINE GR4_ODE_FORWARD_D(setup, mesh, input_data, parameters, &
+  SUBROUTINE GR4_LR_SS_FORWARD_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
 !% =============================================================================================================== %!
@@ -14628,7 +14642,7 @@ CONTAINS
             pn_d = 0.0_4
           END IF
 !% =============================================================================================== %!
-!%   Production and Transfer ODE
+!%   Production and Transfer State-Space
 !% =============================================================================================== %!
           CALL GR_ODE_IMPLICIT_EULER_D(pn, pn_d, en, en_d, cp(row, col)&
 &                                , cp_d(row, col), ct(row, col), ct_d(&
@@ -14682,16 +14696,16 @@ CONTAINS
 &         (g, 2))
       END DO
     END DO
-  END SUBROUTINE GR4_ODE_FORWARD_D
+  END SUBROUTINE GR4_LR_SS_FORWARD_D
 
-!  Differentiation of gr4_ode_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
+!  Differentiation of gr4_lr_ss_forward in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
-  SUBROUTINE GR4_ODE_FORWARD_B(setup, mesh, input_data, parameters, &
+  SUBROUTINE GR4_LR_SS_FORWARD_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
 !% =============================================================================================================== %!
@@ -14792,7 +14806,7 @@ CONTAINS
             CALL PUSHCONTROL1B(1)
           END IF
 !% =============================================================================================== %!
-!%   Production and Transfer ODE
+!%   Production and Transfer State-Space
 !% =============================================================================================== %!
           CALL PUSHREAL4(ht(row, col))
           CALL PUSHREAL4(hp(row, col))
@@ -14937,10 +14951,10 @@ CONTAINS
 &     rr_parameters%values(:, :, 2) + cp_b
     parameters_b%rr_parameters%values(:, :, 1) = parameters_b%&
 &     rr_parameters%values(:, :, 1) + ci_b
-  END SUBROUTINE GR4_ODE_FORWARD_B
+  END SUBROUTINE GR4_LR_SS_FORWARD_B
 
-  SUBROUTINE GR4_ODE_FORWARD(setup, mesh, input_data, parameters, output&
-&   , options, returns)
+  SUBROUTINE GR4_LR_SS_FORWARD(setup, mesh, input_data, parameters, &
+&   output, options, returns)
     IMPLICIT NONE
 !% =============================================================================================================== %!
 !%   Store optional returns
@@ -15018,7 +15032,7 @@ CONTAINS
             en = 0._sp
           END IF
 !% =============================================================================================== %!
-!%   Production and Transfer ODE
+!%   Production and Transfer State-Space
 !% =============================================================================================== %!
           CALL GR_ODE_IMPLICIT_EULER(pn, en, cp(row, col), ct(row, col)&
 &                              , kexc(row, col), hp(row, col), ht(row, &
@@ -15069,7 +15083,7 @@ CONTAINS
       output%rr_final_states%values(:, :, 3) = ht
       output%rr_final_states%values(:, :, 4) = hlr
     END DO
-  END SUBROUTINE GR4_ODE_FORWARD
+  END SUBROUTINE GR4_LR_SS_FORWARD
 
 !  Differentiation of gr4_kw_forward in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: *(output.response.q)
@@ -18983,9 +18997,9 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
   CASE ('gr4-lr') 
     CALL GR4_LR_FORWARD_D(setup, mesh, input_data, parameters, &
 &                   parameters_d, output, output_d, options, returns)
-  CASE ('gr4-ode') 
-    CALL GR4_ODE_FORWARD_D(setup, mesh, input_data, parameters, &
-&                    parameters_d, output, output_d, options, returns)
+  CASE ('gr4-lr-ss') 
+    CALL GR4_LR_SS_FORWARD_D(setup, mesh, input_data, parameters, &
+&                      parameters_d, output, output_d, options, returns)
   CASE ('gr4-kw') 
     CALL GR4_KW_FORWARD_D(setup, mesh, input_data, parameters, &
 &                   parameters_d, output, output_d, options, returns)
@@ -19074,9 +19088,9 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
     CALL GR4_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
     CALL PUSHCONTROL4B(1)
-  CASE ('gr4-ode') 
-    CALL GR4_ODE_FORWARD(setup, mesh, input_data, parameters, output, &
-&                  options, returns)
+  CASE ('gr4-lr-ss') 
+    CALL GR4_LR_SS_FORWARD(setup, mesh, input_data, parameters, output, &
+&                    options, returns)
     CALL PUSHCONTROL4B(2)
   CASE ('gr4-kw') 
     CALL GR4_KW_FORWARD(setup, mesh, input_data, parameters, output, &
@@ -19148,8 +19162,9 @@ SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 &                                        output, output_b, options, &
 &                                        returns)
     ELSE IF (branch .EQ. 2) THEN
-      CALL GR4_ODE_FORWARD_B(setup, mesh, input_data, parameters, &
-&                      parameters_b, output, output_b, options, returns)
+      CALL GR4_LR_SS_FORWARD_B(setup, mesh, input_data, parameters, &
+&                        parameters_b, output, output_b, options, &
+&                        returns)
     ELSE
       CALL GR4_KW_FORWARD_B(setup, mesh, input_data, parameters, &
 &                     parameters_b, output, output_b, options, returns)
@@ -19219,9 +19234,9 @@ SUBROUTINE BASE_FORWARD_RUN_NODIFF(setup, mesh, input_data, parameters, &
   CASE ('gr4-lr') 
     CALL GR4_LR_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
-  CASE ('gr4-ode') 
-    CALL GR4_ODE_FORWARD(setup, mesh, input_data, parameters, output, &
-&                  options, returns)
+  CASE ('gr4-lr-ss') 
+    CALL GR4_LR_SS_FORWARD(setup, mesh, input_data, parameters, output, &
+&                    options, returns)
   CASE ('gr4-kw') 
     CALL GR4_KW_FORWARD(setup, mesh, input_data, parameters, output, &
 &                 options, returns)
