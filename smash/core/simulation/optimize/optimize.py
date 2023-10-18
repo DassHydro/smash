@@ -128,19 +128,19 @@ class Optimize:
         - 'wjreg_opt' : float
             The optimal wjreg value.
 
-        - 'distance' : np.ndarray
+        - 'distance' : numpy.ndarray
             An array of shape *(6,)* representing the L-Curve distance for each optimization cycle (the maximum distance corresponds to the optimal wjreg).
 
-        - 'cost' : np.ndarray
+        - 'cost' : numpy.ndarray
             An array of shape *(6,)* representing the cost values for each optimization cycle.
 
-        - 'jobs' : np.ndarray
+        - 'jobs' : numpy.ndarray
             An array of shape *(6,)* representing the jobs values for each optimization cycle.
 
-        - 'jreg' : np.ndarray
+        - 'jreg' : numpy.ndarray
             An array of shape *(6,)* representing the jreg values for each optimization cycle.
 
-        - 'wjreg' : np.ndarray
+        - 'wjreg' : numpy.ndarray
             An array of shape *(6,)* representing the wjreg values for each optimization cycle.
 
     Notes
@@ -210,10 +210,10 @@ class BayesianOptimize:
     log_h : float
         Log h component value.
 
-    serr_mu : np.ndarray
+    serr_mu : numpy.ndarray
         An array of shape *(ng, ntime_step)* representing the mean of structural errors for each gauge and each **time_step**.
 
-    serr_sigma : np.ndarray
+    serr_sigma : numpy.ndarray
         An array of shape *(ng, ntime_step)* representing the standard deviation of structural errors for each gauge and each **time_step**.
         sigma
 
@@ -609,7 +609,43 @@ def optimize(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Optimize Model by default:
+
+    >>> model_0 = smash.optimize(model)
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
+        At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
+        At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
+        At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
+        At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
+        At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
+
+    Optimize Model using multi-polynomial mapping:
+
+    >>> model_mp = smash.optimize(
+    ...     model,
+    ...     mapping="multi-polynomial",
+    ...     optimize_options={"termination_crit": {"maxiter": 10}}
+    ... )
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.643190    |proj g| =      0.324890
+        At iterate      1    nfg =     3    J =      0.560466    |proj g| =      0.296777
+        At iterate      2    nfg =     4    J =      0.488252    |proj g| =      1.132820
+        At iterate      3    nfg =     5    J =      0.287419    |proj g| =      2.057277
+        At iterate      4    nfg =     6    J =      0.192892    |proj g| =      0.275596
+        At iterate      5    nfg =     7    J =      0.130223    |proj g| =      0.141640
+        At iterate      6    nfg =     8    J =      0.126984    |proj g| =      0.153503
+        At iterate      7    nfg =     9    J =      0.120759    |proj g| =      0.055677
+        At iterate      8    nfg =    10    J =      0.120558    |proj g| =      0.080532
+        At iterate      9    nfg =    11    J =      0.119077    |proj g| =      0.033449
+        At iterate     10    nfg =    13    J =      0.118234    |proj g| =      0.049613
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
 
     See Also
     --------
@@ -853,7 +889,35 @@ def multiple_optimize(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> from smash.factory import generate_samples
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Define sampling problem and generate samples:
+
+    >>> problem = {
+    ...            'num_vars': 4,
+    ...            'names': ['cp', 'ct', 'kexc', 'llr'],
+    ...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+    ... }
+    >>> sr = generate_samples(problem, n=3, random_state=11)
+
+    Run multiple optimization processes:
+
+    >>> mopt = smash.multiple_optimize(
+    ...     model,
+    ...     samples=sr,
+    ...     optimize_options={"termination_crit": {"maxiter": 2}}
+    ... )
+    </> Multiple Optimize
+        Optimize 3/3 (100%)
+
+    Get the cost values through multiple runs of optimization:
+
+    >>> mopt.cost
+    array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
 
     See Also
     --------
@@ -1186,7 +1250,43 @@ def bayesian_optimize(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Optimize Model using Bayesian approach with default parameters:
+
+    >>> model_0 = smash.bayesian_optimize(model)
+    </> Bayesian Optimize
+        At iterate      0    nfg =     1    J =     26.510803    ddx = 0.64
+        At iterate      1    nfg =    68    J =      2.536702    ddx = 0.64
+        At iterate      2    nfg =   136    J =      2.402311    ddx = 0.16
+        At iterate      3    nfg =   202    J =      2.329653    ddx = 0.16
+        At iterate      4    nfg =   270    J =      2.277469    ddx = 0.04
+        At iterate      5    nfg =   343    J =      2.271495    ddx = 0.02
+        At iterate      6    nfg =   416    J =      2.270596    ddx = 0.01
+        At iterate      7    nfg =   488    J =      2.269927    ddx = 0.01
+        At iterate      8    nfg =   561    J =      2.269505    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
+
+    Customize cost options based on prior control:
+
+    >>> model_custom = smash.bayesian_optimize(
+    ...     model,
+    ...     cost_options={"control_prior": {"cp0": ["Gaussian", [200, 100]]}}
+    ... )
+    </> Bayesian Optimize
+        At iterate      0    nfg =     1    J =     26.514641    ddx = 0.64
+        At iterate      1    nfg =    68    J =      2.541262    ddx = 0.64
+        At iterate      2    nfg =   136    J =      2.406871    ddx = 0.16
+        At iterate      3    nfg =   202    J =      2.334373    ddx = 0.16
+        At iterate      4    nfg =   270    J =      2.282225    ddx = 0.04
+        At iterate      5    nfg =   343    J =      2.276267    ddx = 0.02
+        At iterate      6    nfg =   416    J =      2.275376    ddx = 0.01
+        At iterate      7    nfg =   488    J =      2.274719    ddx = 0.01
+        At iterate      8    nfg =   561    J =      2.274309    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
 
     See Also
     --------

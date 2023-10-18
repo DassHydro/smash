@@ -322,8 +322,8 @@ def generate_samples(
 
     >>> problem = {
     ...             'num_vars': 4,
-    ...             'names': ['cp', 'cft', 'kexc', 'llr'],
-    ...             'bounds': [[1,2000], [1,1000], [-20,5], [1,1000]]
+    ...             'names': ['cp', 'ct', 'kexc', 'llr'],
+    ...             'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
     ... }
 
     Generate samples:
@@ -331,7 +331,7 @@ def generate_samples(
     >>> from smash.factory import generate_samples
     >>> sr = generate_samples(problem, n=3, random_state=99)
     >>> sr.to_dataframe()  # convert Samples object to pandas.DataFrame
-                cp         cft       kexc         llr
+                cp         ct       kexc         llr
     0  1344.884839   32.414941 -12.559438    7.818907
     1   976.668720  808.241913 -18.832607  770.023235
     2  1651.164853  566.051802   4.765685  747.020334
