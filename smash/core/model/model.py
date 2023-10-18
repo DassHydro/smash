@@ -503,13 +503,13 @@ class Model(object):
         Create a deepcopy of Model:
 
         >>> model_dc = model.copy()
-        >>> model_dc.rr_parameters.values[..., 0] = 20
+        >>> model_dc.set_rr_parameters("cp", 100)
 
-        >>> model_dc.rr_parameters.values[0, 0, 0]
-        20.0
+        >>> model_dc.get_rr_parameters("cp")[0, 0]
+        100.0
 
-        >>> model.rr_parameters.values[0, 0, 0]
-        1e-06
+        >>> model.get_rr_parameters("cp")[0, 0]
+        200.0
         """
 
         return self.__copy__()
