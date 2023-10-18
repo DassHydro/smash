@@ -13,20 +13,20 @@
 !%          ``mapping``                       Control mapping name
 !%          ``optimizer``                     Optimizer name
 !%          ``control_tfm``                   Type of transformation applied to control
-!%          ``rr_parameters``                 Rr parameters to optimize
-!%          ``l_rr_parameters``               Rr parameters lower bound
-!%          ``u_rr_parameters``               Rr parameters upper bound
-!%          ``rr_parameters_descriptor``      Rr parameters descriptor to use
-!%          ``rr_initial_states``             Rr initial states to optimize
-!%          ``l_rr_initial_states``           Rr initial states lower bound
-!%          ``u_rr_initial_states``           Rr initial states upper bound
-!%          ``rr_initial_states_descriptor``  Rr initial states descriptor use
-!%          ``serr_mu_parameters``            Serr mu parameters to optimize
-!%          ``l_serr_mu_parameters``          Serr mu parameters lower bound
-!%          ``u_serr_mu_parameters``          Serr mu parameters upper bound
-!%          ``serr_sigma_parameters``         Serr sigma parameters to optimize
-!%          ``l_serr_sigma_parameters``       Serr sigma parameters lower bound
-!%          ``u_serr_sigma_parameters``       Serr sigma parameters upper bound
+!%          ``rr_parameters``                 RR parameters to optimize
+!%          ``l_rr_parameters``               RR parameters lower bound
+!%          ``u_rr_parameters``               RR parameters upper bound
+!%          ``rr_parameters_descriptor``      RR parameters descriptor to use
+!%          ``rr_initial_states``             RR initial states to optimize
+!%          ``l_rr_initial_states``           RR initial states lower bound
+!%          ``u_rr_initial_states``           RR initial states upper bound
+!%          ``rr_initial_states_descriptor``  RR initial states descriptor use
+!%          ``serr_mu_parameters``            SErr mu parameters to optimize
+!%          ``l_serr_mu_parameters``          SErr mu parameters lower bound
+!%          ``u_serr_mu_parameters``          SErr mu parameters upper bound
+!%          ``serr_sigma_parameters``         SErr sigma parameters to optimize
+!%          ``l_serr_sigma_parameters``       SErr sigma parameters lower bound
+!%          ``u_serr_sigma_parameters``       SErr sigma parameters upper bound
 !%          ``maxiter``                       Maximum number of iterations
 !%          ``factr``                         LBFGSB cost function criterion
 !%          ``pgtol``                         LBFGSB gradient criterion

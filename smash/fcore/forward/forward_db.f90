@@ -3033,7 +3033,7 @@ END MODULE MWD_OPTIONS_DIFF
 !%      Type
 !%      ----
 !%
-!%      - Rr_StatesDT
+!%      - RR_StatesDT
 !%        Matrices containting spatialized states of hydrological operators.
 !%        (reservoir level ...) The matrices are updated at each time step.
 !%
@@ -3046,8 +3046,8 @@ END MODULE MWD_OPTIONS_DIFF
 !§      Subroutine
 !%      ----------
 !%
-!%      - Rr_StatesDT_initialise
-!%      - Rr_StatesDT_copy
+!%      - RR_StatesDT_initialise
+!%      - RR_StatesDT_copy
 MODULE MWD_RR_STATES_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
@@ -3265,7 +3265,7 @@ END MODULE MWD_CONTROL_DIFF
 !%      ----
 !%
 !%
-!%      - Rr_ParametersDT
+!%      - RR_ParametersDT
 !%          Matrices containting spatialized parameters of hydrological operators.
 !%          (reservoir max capacity, lag time ...)
 !%
@@ -3279,8 +3279,8 @@ END MODULE MWD_CONTROL_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - Rr_ParametersDT_initialise
-!%      - Rr_ParametersDT_copy
+!%      - RR_ParametersDT_initialise
+!%      - RR_ParametersDT_copy
 MODULE MWD_RR_PARAMETERS_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
@@ -3324,7 +3324,7 @@ END MODULE MWD_RR_PARAMETERS_DIFF
 !%      Type
 !%      ----
 !%
-!%      - Serr_Mu_ParametersDT
+!%      - SErr_Mu_ParametersDT
 !%          Vectors containting hyper parameters of the temporalisation function for mu, the mean of structural errors
 !%          (mg0, mg1, ...)
 !%
@@ -3338,8 +3338,8 @@ END MODULE MWD_RR_PARAMETERS_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - Serr_Mu_ParametersDT_initialise
-!%      - Serr_Mu_ParametersDT_copy
+!%      - SErr_Mu_ParametersDT_initialise
+!%      - SErr_Mu_ParametersDT_copy
 MODULE MWD_SERR_MU_PARAMETERS_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
@@ -3383,7 +3383,7 @@ END MODULE MWD_SERR_MU_PARAMETERS_DIFF
 !%      Type
 !%      ----
 !%
-!%      - Serr_Sigma_ParametersDT
+!%      - SErr_Sigma_ParametersDT
 !%          Vectors containting hyper parameters of the temporalisation function for sigma, the standard deviation for structural
 ! errors
 !%          (sg0, sg1, sg2, ...)
@@ -3398,8 +3398,8 @@ END MODULE MWD_SERR_MU_PARAMETERS_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - Serr_Sigma_ParametersDT_initialise
-!%      - Serr_Sigma_ParametersDT_copy
+!%      - SErr_Sigma_ParametersDT_initialise
+!%      - SErr_Sigma_ParametersDT_copy
 MODULE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !% only: sp, lchar
   USE MD_CONSTANT
@@ -3451,10 +3451,10 @@ END MODULE MWD_SERR_SIGMA_PARAMETERS_DIFF
 !%          `Variables`                Description
 !%          ========================== =====================================
 !%          ``control``                ControlDT
-!%          ``rr_parameters``          Rr_ParametersDT
-!%          ``rr_initial_states``      Rr_StatesDT
-!%          ``serr_mu_parameters``     Serr_Mu_ParametersDT
-!%          ``serr_sigma_parameters``  Serr_Sigma_ParametersDT
+!%          ``rr_parameters``          RR_ParametersDT
+!%          ``rr_initial_states``      RR_StatesDT
+!%          ``serr_mu_parameters``     SErr_Mu_ParametersDT
+!%          ``serr_sigma_parameters``  SErr_Sigma_ParametersDT
 !%
 !§      Subroutine
 !%      ----------
@@ -3470,13 +3470,13 @@ MODULE MWD_PARAMETERS_DIFF
   USE MWD_MESH
 !% only: ControlDT
   USE MWD_CONTROL_DIFF
-!% only: Rr_ParametersDT, Rr_ParametersDT_initialise
+!% only: RR_ParametersDT, RR_ParametersDT_initialise
   USE MWD_RR_PARAMETERS_DIFF
-!% only: Rr_StatesDT, Rr_StatesDT_initialise
+!% only: RR_StatesDT, RR_StatesDT_initialise
   USE MWD_RR_STATES_DIFF
-!% only: Serr_Mu_ParametersDT, Serr_Mu_ParametersDT_initialise
+!% only: SErr_Mu_ParametersDT, SErr_Mu_ParametersDT_initialise
   USE MWD_SERR_MU_PARAMETERS_DIFF
-!% only: Serr_Sigma_ParametersDT, Serr_Sigma_ParametersDT_initialise
+!% only: SErr_Sigma_ParametersDT, SErr_Sigma_ParametersDT_initialise
   USE MWD_SERR_SIGMA_PARAMETERS_DIFF
   IMPLICIT NONE
   TYPE PARAMETERSDT
@@ -5564,7 +5564,7 @@ CONTAINS
     REAL(sp) :: temp
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Rr parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5606,7 +5606,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Rr parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5659,7 +5659,7 @@ CONTAINS
     INTRINSIC LOG
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs transformation on Rr parameters and Rr initial states
+! Only apply sbs transformation on RR parameters and RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5701,7 +5701,7 @@ CONTAINS
     REAL(sp) :: temp0
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Rr parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -5744,7 +5744,7 @@ CONTAINS
     INTEGER :: branch
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Rr parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (.NOT.nbd_mask(i)) THEN
         CALL PUSHCONTROL2B(0)
@@ -5798,7 +5798,7 @@ CONTAINS
     INTRINSIC EXP
 !% Need lower and upper bound to sbs tfm
     nbd_mask = parameters%control%nbd(:) .EQ. 2
-! Only apply sbs inv transformation on Rr parameters et Rr initial states
+! Only apply sbs inv transformation on RR parameters et RR initial states
     DO i=1,SUM(parameters%control%nbk(1:2))
       IF (nbd_mask(i)) THEN
         IF (parameters%control%l_bkg(i) .LT. 0._sp) THEN
@@ -6186,7 +6186,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6214,7 +6214,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6242,7 +6242,7 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: n, i, j, row, col
     INTRINSIC TRIM
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6277,7 +6277,7 @@ CONTAINS
     CHARACTER(len=lchar) :: name
     INTEGER :: n, i, j, row, col
     INTRINSIC TRIM
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6315,7 +6315,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6355,7 +6355,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6396,7 +6396,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6442,7 +6442,7 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC TRIM
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6487,7 +6487,7 @@ CONTAINS
     INTEGER :: i, j, k
     INTRINSIC SUM
     INTRINSIC TRIM
-! Serr mu parameters is third control kind
+! SErr mu parameters is third control kind
     j = SUM(parameters%control%nbk(1:2))
     DO i=1,setup%nsep_mu
       IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
@@ -6519,7 +6519,7 @@ CONTAINS
     INTEGER :: i, j, k
     INTRINSIC SUM
     INTRINSIC TRIM
-! Serr sigma parameters is fourth control kind
+! SErr sigma parameters is fourth control kind
     j = SUM(parameters%control%nbk(1:3))
     DO i=1,setup%nsep_sigma
       IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
@@ -6598,7 +6598,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6630,7 +6630,7 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
@@ -6663,7 +6663,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6690,7 +6690,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6722,7 +6722,7 @@ CONTAINS
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTEGER :: branch
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -6755,7 +6755,7 @@ CONTAINS
     INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     ac_mask = mesh%active_cell(:, :) .EQ. 1
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6780,7 +6780,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6814,7 +6814,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
     INTEGER :: branch
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
@@ -6860,7 +6860,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -6891,7 +6891,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -6925,7 +6925,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -6971,7 +6971,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, row, col
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7006,7 +7006,7 @@ CONTAINS
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -7053,7 +7053,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
     INTEGER :: branch
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
@@ -7131,7 +7131,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -7174,7 +7174,7 @@ CONTAINS
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7222,7 +7222,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -7301,7 +7301,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7345,7 +7345,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -7401,7 +7401,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .EQ. 0) THEN
@@ -7485,7 +7485,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr parameters is first control kind
+! RR parameters is first control kind
     j = 0
     DO i=1,setup%nop
       IF (options%optimize%rr_parameters(i) .NE. 0) THEN
@@ -7530,7 +7530,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_d, norm_desc_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: temp
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7587,7 +7587,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d_b, norm_desc_b
     INTEGER :: branch
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .EQ. 0) THEN
@@ -7672,7 +7672,7 @@ CONTAINS
     INTEGER :: i, j, k
     REAL(sp) :: l, u
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: wa2d, norm_desc
-! Rr initial states is second control kind
+! RR initial states is second control kind
     j = parameters%control%nbk(1)
     DO i=1,setup%nos
       IF (options%optimize%rr_initial_states(i) .NE. 0) THEN
@@ -7713,7 +7713,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
     INTRINSIC SUM
-! Serr mu parameters is third control kind
+! SErr mu parameters is third control kind
     j = SUM(parameters%control%nbk(1:2))
     parameters_d%serr_mu_parameters%values = 0.0_4
     DO i=1,setup%nsep_mu
@@ -7747,7 +7747,7 @@ CONTAINS
     INTEGER :: i, j, k
     INTRINSIC SUM
     INTEGER :: branch
-! Serr mu parameters is third control kind
+! SErr mu parameters is third control kind
     j = SUM(parameters%control%nbk(1:2))
     DO i=1,setup%nsep_mu
       IF (options%optimize%serr_mu_parameters(i) .EQ. 0) THEN
@@ -7790,7 +7790,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
     INTRINSIC SUM
-! Serr mu parameters is third control kind
+! SErr mu parameters is third control kind
     j = SUM(parameters%control%nbk(1:2))
     DO i=1,setup%nsep_mu
       IF (options%optimize%serr_mu_parameters(i) .NE. 0) THEN
@@ -7820,7 +7820,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
     INTRINSIC SUM
-! Serr mu parameters is fourth control kind
+! SErr mu parameters is fourth control kind
     j = SUM(parameters%control%nbk(1:3))
     parameters_d%serr_sigma_parameters%values = 0.0_4
     DO i=1,setup%nsep_sigma
@@ -7854,7 +7854,7 @@ CONTAINS
     INTEGER :: i, j, k
     INTRINSIC SUM
     INTEGER :: branch
-! Serr mu parameters is fourth control kind
+! SErr mu parameters is fourth control kind
     j = SUM(parameters%control%nbk(1:3))
     DO i=1,setup%nsep_sigma
       IF (options%optimize%serr_sigma_parameters(i) .EQ. 0) THEN
@@ -7897,7 +7897,7 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     INTEGER :: i, j, k
     INTRINSIC SUM
-! Serr mu parameters is fourth control kind
+! SErr mu parameters is fourth control kind
     j = SUM(parameters%control%nbk(1:3))
     DO i=1,setup%nsep_sigma
       IF (options%optimize%serr_sigma_parameters(i) .NE. 0) THEN
