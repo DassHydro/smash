@@ -4,7 +4,7 @@
 !%      ----
 !%
 !%
-!%      - Rr_ParametersDT
+!%      - RR_ParametersDT
 !%          Matrices containting spatialized parameters of hydrological operators.
 !%          (reservoir max capacity, lag time ...)
 !%
@@ -18,8 +18,8 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - Rr_ParametersDT_initialise
-!%      - Rr_ParametersDT_copy
+!%      - RR_ParametersDT_initialise
+!%      - RR_ParametersDT_copy
 
 module mwd_rr_parameters
 
@@ -29,21 +29,21 @@ module mwd_rr_parameters
 
     implicit none
 
-    type Rr_ParametersDT
+    type RR_ParametersDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :, :), allocatable :: values
 
-    end type Rr_ParametersDT
+    end type RR_ParametersDT
 
 contains
 
-    subroutine Rr_ParametersDT_initialise(this, setup, mesh)
+    subroutine RR_ParametersDT_initialise(this, setup, mesh)
         !% Default parameters value will be handled in Python
 
         implicit none
 
-        type(Rr_ParametersDT), intent(inout) :: this
+        type(RR_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -53,17 +53,17 @@ contains
         allocate (this%values(mesh%nrow, mesh%ncol, setup%nop))
         this%values = -99._sp
 
-    end subroutine Rr_ParametersDT_initialise
+    end subroutine RR_ParametersDT_initialise
 
-    subroutine Rr_ParametersDT_copy(this, this_copy)
+    subroutine RR_ParametersDT_copy(this, this_copy)
 
         implicit none
 
-        type(Rr_ParametersDT), intent(in) :: this
-        type(Rr_ParametersDT), intent(out) :: this_copy
+        type(RR_ParametersDT), intent(in) :: this
+        type(RR_ParametersDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Rr_ParametersDT_copy
+    end subroutine RR_ParametersDT_copy
 
 end module mwd_rr_parameters

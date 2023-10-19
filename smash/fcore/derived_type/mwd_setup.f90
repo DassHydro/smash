@@ -10,11 +10,12 @@
 !%          `Variables`                Description
 !%          ========================== =====================================
 !%          ``structure``              Hydrological model structure                           (default: 'gr4-lr')
-!%          ``serr_mu_mapping``        Mapping for structural error model                     (default: 'zero')
-!%          ``serr_sigma_mapping``     Mapping for structural error model                     (default: 'linear')
+!%          ``serr_mu_mapping``        Mapping for structural error model                     (default: 'Zero')
+!%          ``serr_sigma_mapping``     Mapping for structural error model                     (default: 'Linear')
 !%          ``dt``                     Solver time step        [s]                            (default: 3600)
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
+!%          ``adjust_interception``    Adjust interception reservoir capacity                 (default: .true.)
 !%          ``read_qobs``              Read observed discharge                                (default: .false.)
 !%          ``qobs_directory``         Observed discharge directory path                      (default: '...')
 !%          ``read_prcp``              Read precipitation                                     (default: .false.)
@@ -57,13 +58,15 @@ module mwd_setup
         !% SetupDT Derived Type.
 
         character(lchar) :: structure = "gr4-lr" !$F90W char
-        character(lchar) :: serr_mu_mapping = "zero" !$F90W char
-        character(lchar) :: serr_sigma_mapping = "linear" !$F90W char
+        character(lchar) :: serr_mu_mapping = "Zero" !$F90W char
+        character(lchar) :: serr_sigma_mapping = "Linear" !$F90W char
 
         real(sp) :: dt = 3600._sp
 
         character(lchar) :: start_time = "..." !$F90W char
         character(lchar) :: end_time = "..." !$F90W char
+
+        logical :: adjust_interception = .true.
 
         logical :: read_qobs = .false.
         character(lchar) :: qobs_directory = "..." !$F90W char

@@ -102,19 +102,19 @@ def optimize_control_info(
         - n : int
             The size of the control vector.
 
-        - nbk : np.ndarray
+        - nbk : numpy.ndarray
             An array of shape *(4,)* containing the number of elements by kind (rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters) of the control vector (``sum(nbk) = n``).
 
-        - x : np.ndarray
+        - x : numpy.ndarray
             An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
 
-        - l : np.ndarray
+        - l : numpy.ndarray
             An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
 
-        - u : np.ndarray
+        - u : numpy.ndarray
             An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
 
-        - nbd : np.ndarray
+        - nbd : numpy.ndarray
             An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
 
             - 0: unbounded
@@ -122,20 +122,20 @@ def optimize_control_info(
             - 2: both lower and upper bounds
             - 3: only upper bound
 
-        - name : np.ndarray
+        - name : numpy.ndarray
             An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
             - <key>0: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states ('cp0', 'llr0', 'ht0', etc).
             - <key><row>-<col>: Spatially distributed parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in the spatial domain ('cp1-1', 'llr20-2', 'ht3-12', etc). It's one based indexing.
             - <key>-<desc>-<kind>: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) ('cp-slope-a', 'llr-slope-b', 'ht-dd-a').
 
-        - x_bkg : np.ndarray
+        - x_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background values of the control vector.
 
-        - l_bkg : np.ndarray
+        - l_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background lower bounds of the control vector.
 
-        - u_bkg : np.ndarray
+        - u_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background upper bounds of the control vector.
 
     Exemples:
@@ -225,19 +225,19 @@ def bayesian_optimize_control_info(
         - n : int
             The size of the control vector.
 
-        - nbk : np.ndarray
+        - nbk : numpy.ndarray
             An array of shape *(4,)* containing the number of elements by kind (rr_parameters, rr_initial_states, serr_mu_parameters, serr_sigma_parameters) of the control vector (``sum(nbk) = n``).
 
-        - x : np.ndarray
+        - x : numpy.ndarray
             An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
 
-        - l : np.ndarray
+        - l : numpy.ndarray
             An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
 
-        - u : np.ndarray
+        - u : numpy.ndarray
             An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
 
-        - nbd : np.ndarray
+        - nbd : numpy.ndarray
             An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
 
             - 0: unbounded
@@ -245,7 +245,7 @@ def bayesian_optimize_control_info(
             - 2: both lower and upper bounds
             - 3: only upper bound
 
-        - name : np.ndarray
+        - name : numpy.ndarray
             An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
             - <key>0: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states ('cp0', 'llr0', 'ht0', etc).
@@ -253,13 +253,13 @@ def bayesian_optimize_control_info(
             - <key>-<desc>-<kind>: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) ('cp-slope-a', 'llr-slope-b', 'ht-dd-a').
             - <key>-<code>: Structural error parameter where ``<key>`` is the name of any structural error mu or sigma parameters and ``<code>`` the corresponding gauge ('sg0-V3524010', 'sg1-V3524010', etc)
 
-        - x_bkg : np.ndarray
+        - x_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background values of the control vector.
 
-        - l_bkg : np.ndarray
+        - l_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background lower bounds of the control vector.
 
-        - u_bkg : np.ndarray
+        - u_bkg : numpy.ndarray
             An array of shape *(n,)* containing the background upper bounds of the control vector.
 
     Exemples:

@@ -3,7 +3,7 @@
 !%      Type
 !%      ----
 !%
-!%      - Serr_Sigma_ParametersDT
+!%      - SErr_Sigma_ParametersDT
 !%          Vectors containting hyper parameters of the temporalisation function for sigma, the standard deviation for structural errors
 !%          (sg0, sg1, sg2, ...)
 !%
@@ -17,8 +17,8 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - Serr_Sigma_ParametersDT_initialise
-!%      - Serr_Sigma_ParametersDT_copy
+!%      - SErr_Sigma_ParametersDT_initialise
+!%      - SErr_Sigma_ParametersDT_copy
 
 module mwd_serr_sigma_parameters
 
@@ -28,20 +28,20 @@ module mwd_serr_sigma_parameters
 
     implicit none
 
-    type Serr_Sigma_ParametersDT
+    type SErr_Sigma_ParametersDT
 
         character(lchar), dimension(:), allocatable :: keys !$F90W char-array
         real(sp), dimension(:, :), allocatable :: values
 
-    end type Serr_Sigma_ParametersDT
+    end type SErr_Sigma_ParametersDT
 
 contains
 
-    subroutine Serr_Sigma_ParametersDT_initialise(this, setup, mesh)
+    subroutine SErr_Sigma_ParametersDT_initialise(this, setup, mesh)
 
         implicit none
 
-        type(Serr_Sigma_ParametersDT), intent(inout) :: this
+        type(SErr_Sigma_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
@@ -51,17 +51,17 @@ contains
         allocate (this%values(mesh%ng, setup%nsep_sigma))
         this%values = -99._sp
 
-    end subroutine Serr_Sigma_ParametersDT_initialise
+    end subroutine SErr_Sigma_ParametersDT_initialise
 
-    subroutine Serr_Sigma_ParametersDT_copy(this, this_copy)
+    subroutine SErr_Sigma_ParametersDT_copy(this, this_copy)
 
         implicit none
 
-        type(Serr_Sigma_ParametersDT), intent(in) :: this
-        type(Serr_Sigma_ParametersDT), intent(out) :: this_copy
+        type(SErr_Sigma_ParametersDT), intent(in) :: this
+        type(SErr_Sigma_ParametersDT), intent(out) :: this_copy
 
         this_copy = this
 
-    end subroutine Serr_Sigma_ParametersDT_copy
+    end subroutine SErr_Sigma_ParametersDT_copy
 
 end module mwd_serr_sigma_parameters

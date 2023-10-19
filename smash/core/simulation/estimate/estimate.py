@@ -44,19 +44,19 @@ class MultisetEstimate:
         Cost observation component value.
 
     lcurve_multiset : dict
-        A dictionary containing the multiset estimate lcurve data. The elements are:
-
-        mahal_dist : float or numpy.ndarray
-            TODO TH: Fill
-
-        cost : float or numpy.ndarray
-            TODO TH: Fill
+        A dictionary containing the multiset estimate L-curve data. The elements are:
 
         alpha : float or numpy.ndarray
-            TODO TH: Fill
+            The value of regularization parameter or the list of regularization parameters to be optimized.
+
+        cost : float or numpy.ndarray
+            The corresponding cost value(s).
+
+        mahal_dist : float or numpy.ndarray
+            The corresponding Mahalanobis distance value(s).
 
         alpha_opt : float
-            TODO TH: Fill
+            The optimal value of the regularization parameter.
 
     Notes
     -----
@@ -151,7 +151,7 @@ def multiset_estimate(
             Whether to return jobs (observation component of cost) value.
 
         lcurve_multiset : bool, default False
-            Whether to return the multiset estimate lcurve.
+            Whether to return the multiset estimate L-curve.
 
         .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
 
@@ -165,7 +165,38 @@ def multiset_estimate(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> from smash.factory import generate_samples
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Define sampling problem and generate samples:
+
+    >>> problem = {
+    ...            'num_vars': 4,
+    ...            'names': ['cp', 'ct', 'kexc', 'llr'],
+    ...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+    ... }
+    >>> sr = generate_samples(problem, n=100, random_state=11)
+
+    Run Model with multiple sets of parameters:
+
+    >>> mfr = smash.multiple_forward_run(model, samples=sr)
+    </> Multiple Forward Run
+        Forward Run 100/100 (100%)
+
+    Estimate Model on multiple sets of solutions:
+
+    >>> model_estim = smash.multiset_estimate(model, multiset=mfr)
+    </> Multiple Set Estimate
+        L-curve Computing: 100%|████████████████████████████████████████| 50/50 [00:02<00:00, 17.75it/s]
+
+    Compute the NSE of the estimated Model:
+
+    >>> nse = smash.metrics(model_estim, metric="nse")
+    >>> nse
+    array([0.43292588, 0.76361799, 0.85534292])
 
     See Also
     --------

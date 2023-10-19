@@ -99,7 +99,7 @@ STRUCTURE_RR_STATES = dict(
 )
 
 # % Following STRUCTURE_NAME order
-STRUCTURE_COMPUTE_CI = dict(
+STRUCTURE_ADJUST_CI = dict(
     zip(
         STRUCTURE_NAME,
         ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],

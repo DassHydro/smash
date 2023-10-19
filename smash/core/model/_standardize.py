@@ -29,6 +29,7 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_setup import SetupDT
 
 
+# % TODO: rewrite this standardize with type checking
 def _standardize_setup(setup: SetupDT):
     if setup.structure.lower() in STRUCTURE_NAME:
         setup.structure = setup.structure.lower()
