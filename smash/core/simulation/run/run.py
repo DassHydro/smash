@@ -228,7 +228,25 @@ def forward_run(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Run the forward hydrological model:
+
+    >>> model_fwd = smash.forward_run(model)
+    </> Forward Run
+
+    Get the simulated discharges:
+
+    >>> model_fwd.response.q
+    array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
+            3.2118713e+01, 3.1965160e+01],
+        [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
+            7.8704414e+00, 7.8388391e+00],
+        [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
+            2.0847433e+00, 2.0762112e+00]], dtype=float32)
 
     See Also
     --------
@@ -332,7 +350,31 @@ def multiple_forward_run(
 
     Examples
     --------
-    TODO: Fill
+    >>> import smash
+    >>> from smash.factory import load_dataset
+    >>> from smash.factory import generate_samples
+    >>> setup, mesh = load_dataset("cance")
+    >>> model = smash.Model(setup, mesh)
+
+    Define sampling problem and generate samples:
+
+    >>> problem = {
+    ...            'num_vars': 4,
+    ...            'names': ['cp', 'ct', 'kexc', 'llr'],
+    ...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+    ... }
+    >>> sr = generate_samples(problem, n=5, random_state=11)
+
+    Run Model with multiple sets of parameters:
+
+    >>> mfr = smash.multiple_forward_run(model, samples=sr)
+    </> Multiple Forward Run
+        Forward Run 5/5 (100%)
+
+    Get the cost values through multiple forward runs:
+
+    >>> mfr.cost
+    array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
 
     See Also
     --------

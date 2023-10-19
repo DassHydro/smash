@@ -59,7 +59,7 @@ def metrics(
 
     Returns
     -------
-    res : np.ndarray
+    res : numpy.ndarray
         A 1D-array of shape *(n,)* representing the computed evaluation metric for *n* catchment(s).
 
     Examples

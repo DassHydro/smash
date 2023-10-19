@@ -82,10 +82,12 @@ class Model(object):
     Parameters
     ----------
     setup : dict
-        Model initialization setup dictionary (TODO: add reference).
+        Model initialization setup dictionary.
+        TODO FC: exlpain attributes.
 
     mesh : dict
-        Model initialization mesh dictionary (TODO: add reference).
+        Model initialization mesh dictionary.
+        TODO FC: exlpain attributes.
 
     See Also
     --------
@@ -102,9 +104,10 @@ class Model(object):
     >>> from smash.factory import load_dataset
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
-    </> Reading precipitation: 100%|█████████| 1440/1440 [00:00<00:00, 10512.83it/s]
-    </> Reading daily interannual pet: 100%|███| 366/366 [00:00<00:00, 13638.56it/s]
-    </> Disaggregating daily interannual pet: 100%|█| 1440/1440 [00:00<00:00, 129442
+    </> Reading precipitation: 100%|█████████████████████████████| 1440/1440 [00:00<00:00, 10323.28it/s]
+    </> Reading daily interannual pet: 100%|███████████████████████| 366/366 [00:00<00:00, 13735.82it/s]
+    </> Disaggregating daily interannual pet: 100%|█████████████| 1440/1440 [00:00<00:00, 132565.08it/s]
+    </> Adjusting GR interception capacity
     """
 
     def __init__(self, setup: dict | None, mesh: dict | None):
@@ -160,7 +163,30 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.setup.<TAB>
+        model.setup.adjust_interception     model.setup.pet_directory
+        model.setup.copy()                  model.setup.pet_format
+        model.setup.daily_interannual_pet   model.setup.prcp_conversion_factor
+        model.setup.descriptor_directory    model.setup.prcp_directory
+        model.setup.descriptor_format       model.setup.prcp_format
+        model.setup.descriptor_name         model.setup.qobs_directory
+        model.setup.dt                      model.setup.read_descriptor
+        model.setup.end_time                model.setup.read_pet
+        model.setup.from_handle(            model.setup.read_prcp
+        model.setup.nd                      model.setup.read_qobs
+        model.setup.nop                     model.setup.serr_mu_mapping
+        model.setup.nos                     model.setup.serr_sigma_mapping
+        model.setup.nsep_mu                 model.setup.sparse_storage
+        model.setup.nsep_sigma              model.setup.start_time
+        model.setup.ntime_step              model.setup.structure
+        model.setup.pet_conversion_factor
         """
 
         return self._setup
@@ -176,7 +202,26 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.mesh.<TAB>
+        model.mesh.active_cell           model.mesh.local_active_cell
+        model.mesh.area                  model.mesh.nac
+        model.mesh.area_dln              model.mesh.ncol
+        model.mesh.code                  model.mesh.ng
+        model.mesh.copy()                model.mesh.nrow
+        model.mesh.dx                    model.mesh.path
+        model.mesh.dy                    model.mesh.rowcol_to_ind_sparse
+        model.mesh.flwacc                model.mesh.xmin
+        model.mesh.flwdir                model.mesh.xres
+        model.mesh.flwdst                model.mesh.ymax
+        model.mesh.from_handle(          model.mesh.yres
+        model.mesh.gauge_pos
         """
 
         return self._mesh
@@ -192,7 +237,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.response_data.<TAB>
+        model.response_data.copy()        model.response_data.q
+        model.response_data.from_handle(
         """
 
         return self._input_data.response_data
@@ -208,7 +262,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.u_response_data.<TAB>
+        model.u_response_data.copy()        model.u_response_data.q_stdev
+        model.u_response_data.from_handle(
         """
 
         return self._input_data.u_response_data
@@ -224,7 +287,17 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.physio_data.<TAB>
+        model.physio_data.copy()        model.physio_data.l_descriptor
+        model.physio_data.descriptor    model.physio_data.u_descriptor
+        model.physio_data.from_handle(
         """
 
         return self._input_data.physio_data
@@ -240,7 +313,19 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.atmos_data.<TAB>
+        model.atmos_data.copy()                    model.atmos_data.mean_prcp
+        model.atmos_data.from_handle(              model.atmos_data.pet
+        model.atmos_data.init_array_sparse_pet()   model.atmos_data.prcp
+        model.atmos_data.init_array_sparse_prcp()  model.atmos_data.sparse_pet
+        model.atmos_data.mean_pet
         """
 
         return self._input_data.atmos_data
@@ -256,7 +341,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.rr_parameters.<TAB>
+        model.rr_parameters.copy()        model.rr_parameters.keys
+        model.rr_parameters.from_handle(  model.rr_parameters.values
         """
 
         return self._parameters.rr_parameters
@@ -272,7 +366,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.rr_initial_states.<TAB>
+        model.rr_initial_states.copy()        model.rr_initial_states.keys
+        model.rr_initial_states.from_handle(  model.rr_initial_states.values
         """
 
         return self._parameters.rr_initial_states
@@ -288,7 +391,17 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.serr_mu_parameters.<TAB>
+        model.serr_mu_parameters.copy()        model.serr_mu_parameters.keys
+        model.serr_mu_parameters.from_handle(  model.serr_mu_parameters.values
+
         """
 
         return self._parameters.serr_mu_parameters
@@ -304,7 +417,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.serr_sigma_parameters.<TAB>
+        model.serr_sigma_parameters.copy()        model.serr_sigma_parameters.keys
+        model.serr_sigma_parameters.from_handle(  model.serr_sigma_parameters.values
         """
 
         return self._parameters.serr_sigma_parameters
@@ -320,7 +442,15 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.response.<TAB>
+        model.response.copy()        model.response.from_handle(  model.response.q
         """
 
         return self._output.response
@@ -336,7 +466,16 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+
+        >>> model.rr_final_states.<TAB>
+        model.rr_final_states.copy()        model.rr_final_states.keys
+        model.rr_final_states.from_handle(  model.rr_final_states.values
         """
 
         return self._output.rr_final_states
@@ -356,7 +495,21 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        Create a deepcopy of Model:
+
+        >>> model_dc = model.copy()
+        >>> model_dc.set_rr_parameters("cp", 100)
+
+        >>> model_dc.get_rr_parameters("cp")[0, 0]
+        100.0
+
+        >>> model.get_rr_parameters("cp")[0, 0]
+        200.0
         """
 
         return self.__copy__()
@@ -372,12 +525,19 @@ class Model(object):
 
         Returns
         -------
-        value : np.ndarray
+        value : numpy.ndarray
             A 2D-array representing the values of the rainfall-runoff parameter.
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> cp = model.get_rr_parameters("cp")
+        >>> cp.shape
+        (28, 28)
 
         See Also
         --------
@@ -405,7 +565,14 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> model.set_rr_parameters("cp", 150)
+        >>> model.get_rr_parameters("cp")[0, 0]
+        150.0
 
         See Also
         --------
@@ -428,12 +595,19 @@ class Model(object):
 
         Returns
         -------
-        value : np.ndarray
+        value : numpy.ndarray
             A 2D-array representing the values of the rainfall-runoff initial state.
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> hp = model.get_rr_initial_states("hp")
+        >>> hp.shape
+        (28, 28)
 
         See Also
         --------
@@ -461,7 +635,14 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> model.set_rr_initial_states("hp", 0.5)
+        >>> model.get_rr_initial_states("hp")[0, 0]
+        0.55
 
         See Also
         --------
@@ -484,12 +665,12 @@ class Model(object):
 
         Returns
         -------
-        value : np.ndarray
+        value : numpy.ndarray
             A 2D-array representing the values of the structural error mu parameter.
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
 
         See Also
         --------
@@ -517,7 +698,7 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
 
         See Also
         --------
@@ -540,12 +721,12 @@ class Model(object):
 
         Returns
         -------
-        value : np.ndarray
+        value : numpy.ndarray
             A 2D-array representing the values of the structural error sigma parameter.
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
 
         See Also
         --------
@@ -573,7 +754,7 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
 
         See Also
         --------
@@ -596,12 +777,33 @@ class Model(object):
 
         Returns
         -------
-        value : np.ndarray
+        value : numpy.ndarray
             A 2D-array representing the values of the rainfall-runoff final state.
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> model.forward_run()
+
+        >>> ht = model.get_rr_final_states("ht")
+        >>> ht
+        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.2807956 , 0.28895575, 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      ],
+               ...
+               [0.3043022 , 0.3066468 , 0.30687398, 0.30758098, 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
+                0.01      , 0.01      , 0.01      ]], dtype=float32)
 
         See Also
         --------
@@ -624,7 +826,15 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> bounds = model.get_rr_parameters_bounds()
+        >>> bounds
+        {'ci': (1e-06, 100.0), 'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0),
+         'kexc': (-50, 50), 'llr': (1e-06, 1000.0)}
         """
 
         return {
@@ -644,7 +854,15 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        >>> import smash
+        >>> from smash.factory import load_dataset
+        >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
+
+        >>> bounds = model.get_rr_initial_states_bounds()
+        >>> bounds
+        {'hi': (1e-06, 0.999999), 'hp': (1e-06, 0.999999),
+         'ht': (1e-06, 0.999999), 'hlr': (1e-06, 1000.0)}
         """
 
         return {
@@ -664,7 +882,7 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
         """
 
         return {
@@ -684,7 +902,7 @@ class Model(object):
 
         Examples
         --------
-        TODO: Fill
+        TODO FC: Fill
         """
 
         return {
@@ -694,6 +912,18 @@ class Model(object):
         }
 
     def get_serr_mu(self) -> np.ndarray:
+        """
+        Get the mu value by applying the mu mapping to mu parameters.
+
+        Returns
+        -------
+        value : numpy.ndarray
+            An array of shape *(ng, ntime_step)* representing the values of mu for each gauge and each timestep.
+
+        Examples
+        --------
+        TODO FC: Fill
+        """
         serr_mu = np.zeros(
             shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
         )
@@ -701,6 +931,18 @@ class Model(object):
         return serr_mu
 
     def get_serr_sigma(self) -> np.ndarray:
+        """
+        Get the sigma value by applying the sigma mapping to sigma parameters.
+
+        Returns
+        -------
+        value : numpy.ndarray
+            An array of shape *(ng, ntime_step)* representing the values of sigma for each gauge and each timestep.
+
+        Examples
+        --------
+        TODO FC: Fill
+        """
         serr_sigma = np.zeros(
             shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
         )
@@ -1104,7 +1346,7 @@ class Model(object):
         cost_options: dict | None = None,
         common_options: dict | None = None,
         return_options: dict | None = None,
-    ):
+    ) -> BayesianOptimize | None:
         """
         Model bayesian assimilation using numerical optimization algorithms.
 
