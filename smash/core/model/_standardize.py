@@ -401,10 +401,13 @@ def _standardize_set_serr_sigma_parameters_args(
 
 
 def _standardize_set_nn_parameters_initializer(initializer: str) -> str:
-    if initializer not in WB_INITIALIZER:
-        raise ValueError(
-            f"Unknown initializer: {initializer}. Choices {WB_INITIALIZER}"
-        )
+    if isinstance(initializer, str):
+        if initializer not in WB_INITIALIZER:
+            raise ValueError(
+                f"Unknown initializer: {initializer}. Choices {WB_INITIALIZER}"
+            )
+    else:
+        raise TypeError("initializer argument must be a str")
 
     return initializer.lower()
 
