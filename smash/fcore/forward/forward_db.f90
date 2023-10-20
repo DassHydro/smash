@@ -3476,6 +3476,8 @@ MODULE MWD_PARAMETERS_DIFF
   USE MWD_SERR_MU_PARAMETERS_DIFF
 !% only: SErr_Sigma_ParametersDT, SErr_Sigma_ParametersDT_initialise
   USE MWD_SERR_SIGMA_PARAMETERS_DIFF
+!% only: NN_ParametersDT, NN_ParametersDT_initialise
+  USE MWD_NN_PARAMETERS
   IMPLICIT NONE
   TYPE PARAMETERSDT
       TYPE(CONTROLDT) :: control
@@ -3483,6 +3485,7 @@ MODULE MWD_PARAMETERS_DIFF
       TYPE(RR_STATESDT) :: rr_initial_states
       TYPE(SERR_MU_PARAMETERSDT) :: serr_mu_parameters
       TYPE(SERR_SIGMA_PARAMETERSDT) :: serr_sigma_parameters
+      TYPE(NN_PARAMETERSDT) :: nn_parameters
   END TYPE PARAMETERSDT
   TYPE PARAMETERSDT_DIFF
       TYPE(CONTROLDT_DIFF) :: control
@@ -3504,6 +3507,7 @@ CONTAINS
 &                                  , mesh)
     CALL SERR_SIGMA_PARAMETERSDT_INITIALISE(this%serr_sigma_parameters, &
 &                                     setup, mesh)
+    CALL NN_PARAMETERSDT_INITIALISE(this%nn_parameters, setup)
   END SUBROUTINE PARAMETERSDT_INITIALISE
 
   SUBROUTINE PARAMETERSDT_COPY(this, this_copy)
@@ -11951,6 +11955,7 @@ END MODULE MD_GR_OPERATOR_DIFF
 !%      ----------
 !%
 !%      - solve_linear_system_2vars
+!%      - multiply_matrix_2d_1d
 MODULE MD_ALGEBRA_DIFF
 !% only : sp
   USE MD_CONSTANT
@@ -12066,6 +12071,23 @@ CONTAINS
     END IF
   END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS
 
+  SUBROUTINE MULTIPLY_MATRIX_2D_1D(a, x, b)
+    IMPLICIT NONE
+    REAL(sp), DIMENSION(:, :), INTENT(IN) :: a
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:), INTENT(INOUT) :: b
+    INTEGER :: m, n, i, j
+    INTRINSIC SIZE
+    m = SIZE(a, 1)
+    n = SIZE(a, 2)
+    b = 0._sp
+    DO j=1,n
+      DO i=1,m
+        b(i) = b(i) + a(i, j)*x(j)
+      END DO
+    END DO
+  END SUBROUTINE MULTIPLY_MATRIX_2D_1D
+
 END MODULE MD_ALGEBRA_DIFF
 
 !%      (MD) Module Differentiated.
@@ -12074,28 +12096,15 @@ END MODULE MD_ALGEBRA_DIFF
 !%      ----------
 !%
 !%      - gr_ode_implicit_euler
+!%      - feedforward_nn
 MODULE MD_NEURAL_ODE_OPERATOR_DIFF
 !% only : sp
   USE MD_CONSTANT
-!% only: solve_linear_system_2vars
+!% only: solve_linear_system_2vars, multiply_matrix_2d_1d
   USE MD_ALGEBRA_DIFF
+!% only: NN_ParametersDT
+  USE MWD_NN_PARAMETERS
   IMPLICIT NONE
-! subroutine gr_ode_explicit_euler(pn, en, cp, ct, kexc, hp, ht, qti)
-!     implicit none
-!     real(sp), intent(in) :: pn, en, cp, ct, kexc
-!     real(sp), intent(inout) :: hp, ht, qti
-!     real(sp) :: hp_dot, ht_dot, dt
-!     integer :: i
-!     integer :: n_subtimesteps = 20
-!     dt = 1._sp/real(n_subtimesteps, sp)
-!     do i = 1, n_subtimesteps
-!         hp_dot = ((1._sp - hp**2)*pn - hp*(2._sp - hp)*en)/cp
-!         ht_dot = (0.9_sp*pn*hp**2 - ct*ht**5 + kexc*ht**3.5_sp)/ct
-!         hp = hp + dt*hp_dot
-!         ht = ht + dt*ht_dot
-!     end do
-!     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
-! end subroutine gr_ode_explicit_euler
 
 CONTAINS
 !  Differentiation of gr_ode_implicit_euler in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -12358,6 +12367,48 @@ CONTAINS
  100 CONTINUE
     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
   END SUBROUTINE GR_ODE_IMPLICIT_EULER
+
+! subroutine gr_ode_explicit_euler(pn, en, cp, ct, kexc, hp, ht, qti)
+!     implicit none
+!     real(sp), intent(in) :: pn, en, cp, ct, kexc
+!     real(sp), intent(inout) :: hp, ht, qti
+!     real(sp) :: hp_dot, ht_dot, dt
+!     integer :: i
+!     integer :: n_subtimesteps = 20
+!     dt = 1._sp/real(n_subtimesteps, sp)
+!     do i = 1, n_subtimesteps
+!         hp_dot = ((1._sp - hp**2)*pn - hp*(2._sp - hp)*en)/cp
+!         ht_dot = (0.9_sp*pn*hp**2 - ct*ht**5 + kexc*ht**3.5_sp)/ct
+!         hp = hp + dt*hp_dot
+!         ht = ht + dt*ht_dot
+!     end do
+!     qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
+! end subroutine gr_ode_explicit_euler
+  SUBROUTINE FEEDFORWARD_NN(nn, x, y)
+    IMPLICIT NONE
+    TYPE(NN_PARAMETERSDT), INTENT(INOUT) :: nn
+    REAL(sp), DIMENSION(:), INTENT(IN) :: x
+    REAL(sp), DIMENSION(:), INTENT(OUT) :: y
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    DO i=1,SIZE(x)
+      nn%layers(1)%x(i) = x(i)
+    END DO
+    DO i=1,nn%n_layers
+      CALL MULTIPLY_MATRIX_2D_1D(nn%layers(i)%weight, nn%layers(i)%x, nn&
+&                          %layers(i)%y)
+      DO j=1,SIZE(nn%layers(i)%bias)
+        nn%layers(i)%y(j) = nn%layers(i)%y(j) + nn%layers(i)%bias(j)
+        IF (i .LT. nn%n_layers) THEN
+!% TODO: add acivation function hidden nn%layers
+          nn%layers(i+1)%x(j) = nn%layers(i)%y(j)
+        ELSE
+!% TODO: add acivation function last layer
+          y(j) = nn%layers(i)%y(j)
+        END IF
+      END DO
+    END DO
+  END SUBROUTINE FEEDFORWARD_NN
 
 END MODULE MD_NEURAL_ODE_OPERATOR_DIFF
 

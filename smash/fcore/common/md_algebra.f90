@@ -4,6 +4,7 @@
 !%      ----------
 !%
 !%      - solve_linear_system_2vars
+!%      - multiply_matrix_2d_1d
 
 module md_algebra
 
@@ -37,5 +38,29 @@ contains
         end if
 
     end subroutine solve_linear_system_2vars
+
+    subroutine multiply_matrix_2d_1d(a, x, b)
+        !% Multiply 2D matrix (m, n) with 1D vector (n,) producing a 1D vector of (m,)
+
+        implicit none
+
+        real(sp), dimension(:, :), intent(in) :: a
+        real(sp), dimension(:), intent(in) :: x
+        real(sp), dimension(:), intent(inout) :: b
+
+        integer :: m, n, i, j
+
+        m = size(a, 1)
+        n = size(a, 2)
+
+        b = 0._sp
+
+        do j = 1, n
+            do i = 1, m
+                b(i) = b(i) + a(i, j)*x(j)
+            end do
+        end do
+
+    end subroutine multiply_matrix_2d_1d
 
 end module md_algebra

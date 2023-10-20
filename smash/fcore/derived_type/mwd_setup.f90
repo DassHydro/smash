@@ -32,12 +32,14 @@
 !%          ``descriptor_format``      Descriptor maps format                                 (default: .false.)
 !%          ``descriptor_directory``   Descriptor maps directory                              (default: "...")
 !%          ``descriptor_name``        Descriptor maps names
+!%          ``hidden_neuron``          Number of neurons in hidden layers
 !%          ``ntime_step``             Number of time steps                                   (default: -99)
 !%          ``nd``                     Number of descriptor maps                              (default: -99)
 !%          ``nop``                    Number of rainfall-runoff parameters                   (default: -99)
 !%          ``nos``                    Number of rainfall-runoff states                       (default: -99)
 !%          ``nsep_mu``                Number of structural error parameters for mu           (default: -99)
 !%          ``nsep_sigma``             Number of structural error parameters for sigma        (default: -99)
+!%          ``nhl``                    Number of hidden layers of the neural network          (default: -99)
 !%
 !%      Subroutine
 !%      ----------
@@ -88,6 +90,7 @@ module mwd_setup
         character(lchar) :: descriptor_format = "tif" !$F90W char
         character(lchar) :: descriptor_directory = "..." !$F90W char
         character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
+        integer, allocatable, dimension(:) :: hidden_neuron
 
         integer :: ntime_step = -99
         integer :: nd = -99
@@ -95,12 +98,13 @@ module mwd_setup
         integer :: nos = -99
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
+        integer :: nhl = -99
 
     end type SetupDT
 
 contains
 
-    subroutine SetupDT_initialise(this, nd)
+    subroutine SetupDT_initialise(this, nd, nhl)
 
         !% Notes
         !% -----
@@ -110,11 +114,17 @@ contains
 
         type(SetupDT), intent(inout) :: this
         integer, intent(in) :: nd
+        integer, intent(in) :: nhl
 
         this%nd = nd
 
-        allocate (this%descriptor_name(this%nd))
+        allocate (this%descriptor_name(nd))
         this%descriptor_name = "..."
+
+        this%nhl = nhl
+
+        allocate (this%hidden_neuron(nhl))
+        this%hidden_neuron = -99
 
     end subroutine SetupDT_initialise
 

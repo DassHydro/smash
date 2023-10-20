@@ -106,6 +106,11 @@ STRUCTURE_ADJUST_CI = dict(
     )
 )
 
+### NEURAL ODE STATE-SPACE STRUCTURE ###
+########################################
+
+NN_STATE_SPACE_STRUCTURES = ["gr4-lr-ss"]
+
 ### FEASIBLE PARAMETERS ###
 ###########################
 

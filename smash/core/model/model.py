@@ -114,8 +114,9 @@ class Model(object):
         if setup and mesh:
             if isinstance(setup, dict):
                 nd = np.array(setup.get("descriptor_name", [])).size
+                nhl = np.array(setup.get("hidden_neuron", [])).size
 
-                self.setup = SetupDT(nd)
+                self.setup = SetupDT(nd, nhl)
 
                 _map_dict_to_object(setup, self.setup)
 
@@ -434,6 +435,22 @@ class Model(object):
     @serr_sigma_parameters.setter
     def serr_sigma_parameters(self, value):
         self._parameters.serr_sigma_parameters = value
+
+    @property
+    def nn_parameters(self):
+        """
+        Get neural network parameters for the actual state-space structure of the Model.
+
+        Examples
+        --------
+        TODO TH: Fill
+        """
+
+        return self._parameters.nn_parameters
+
+    @nn_parameters.setter
+    def nn_parameters(self, value):
+        self._parameters.nn_parameters = value
 
     @property
     def response(self):

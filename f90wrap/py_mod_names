@@ -7,6 +7,7 @@
 	"mwd_cost_options": "_mwd_cost_options",
 	"mwd_input_data": "_mwd_input_data",
 	"mwd_mesh": "_mwd_mesh",
+	"mwd_nn_parameters": "_mwd_nn_parameters",
 	"mwd_optimize_options": "_mwd_optimize_options",
 	"mwd_options": "_mwd_options",
 	"mwd_output": "_mwd_output",

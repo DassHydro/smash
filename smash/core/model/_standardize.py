@@ -13,6 +13,7 @@ from smash._constant import (
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
+    NN_STATE_SPACE_STRUCTURES,
 )
 
 import pandas as pd
@@ -148,6 +149,9 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError(
             f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
+    
+    if setup.structure in NN_STATE_SPACE_STRUCTURES and setup.nhl == 0:
+        warnings.warn(f"Neural networks are used with no hidden layers in the {setup.structure} structure")
 
 
 def _standardize_rr_parameters_key(model: Model, key: str) -> str:
