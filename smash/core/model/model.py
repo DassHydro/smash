@@ -29,6 +29,8 @@ from smash.core.model._standardize import (
     _standardize_set_rr_initial_states_args,
     _standardize_set_serr_mu_parameters_args,
     _standardize_set_serr_sigma_parameters_args,
+    _standardize_set_nn_parameters_weight_args,
+    _standardize_set_nn_parameters_bias_args,
 )
 from smash.core.simulation.run.run import _forward_run
 from smash.core.simulation.run._standardize import _standardize_forward_run_args
@@ -967,6 +969,56 @@ class Model(object):
             self.setup, self.mesh, self._parameters, self._output, serr_sigma
         )
         return serr_sigma
+
+    def get_nn_parameters_weight(self) -> list[np.ndarray]:
+        """
+        TODO TH: Fill
+        """
+
+        return [layer.weight for layer in self._parameters.nn_parameters.layers]
+
+    def get_nn_parameters_bias(self) -> list[np.ndarray]:
+        """
+        TODO TH: Fill
+        """
+
+        return [layer.bias for layer in self._parameters.nn_parameters.layers]
+
+    def set_nn_parameters_weight(
+        self, initializer: str, random_state: int | None = None
+    ):
+        """
+        TODO TH: Fill
+        """
+
+        initializer, random_state = _standardize_set_nn_parameters_weight_args(
+            initializer, random_state
+        )
+
+        if random_state is not None:
+            np.random.seed(random_state)
+
+        for layer in self._parameters.nn_parameters.layers:
+            # TODO TH: Write a generic initialization function
+            if initializer == "uniform":
+                layer.weight = np.random.uniform(-1, 1, layer.weight.shape)
+
+    def set_nn_parameters_bias(self, initializer: str, random_state: int | None = None):
+        """
+        TODO TH: Fill
+        """
+
+        initializer, random_state = _standardize_set_nn_parameters_bias_args(
+            initializer, random_state
+        )
+
+        if random_state is not None:
+            np.random.seed(random_state)
+
+        for layer in self._parameters.nn_parameters.layers:
+            # TODO TH: Write a generic initialization function
+            if initializer == "uniform":
+                layer.bias = np.random.uniform(-1, 1, layer.bias.shape)
 
     def forward_run(
         self,

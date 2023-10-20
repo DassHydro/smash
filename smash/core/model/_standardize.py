@@ -14,6 +14,7 @@ from smash._constant import (
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     NN_STATE_SPACE_STRUCTURES,
+    WB_INITIALIZER,
 )
 
 import pandas as pd
@@ -28,6 +29,10 @@ if TYPE_CHECKING:
     from smash._typing import AnyTuple, Numeric
     from smash.core.model.model import Model
     from smash.fcore._mwd_setup import SetupDT
+
+from smash.factory.samples._standardize import (
+    _standardize_generate_samples_random_state,
+)
 
 
 # % TODO: rewrite this standardize with type checking
@@ -149,9 +154,11 @@ def _standardize_setup(setup: SetupDT):
         raise ValueError(
             f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
         )
-    
+
     if setup.structure in NN_STATE_SPACE_STRUCTURES and setup.nhl == 0:
-        warnings.warn(f"Neural networks are used with no hidden layers in the {setup.structure} structure")
+        warnings.warn(
+            f"Neural networks are used with no hidden layers in the {setup.structure} structure"
+        )
 
 
 def _standardize_rr_parameters_key(model: Model, key: str) -> str:
@@ -391,3 +398,33 @@ def _standardize_set_serr_sigma_parameters_args(
     value = _standardize_serr_sigma_parameters_value(model, key, value)
 
     return (key, value)
+
+
+def _standardize_set_nn_parameters_initializer(initializer: str) -> str:
+    if initializer not in WB_INITIALIZER:
+        raise ValueError(
+            f"Unknown initializer: {initializer}. Choices {WB_INITIALIZER}"
+        )
+
+    return initializer.lower()
+
+
+def _standardize_set_nn_parameters_random_state(
+    random_state: Numeric | None,
+) -> int | None:
+    return _standardize_generate_samples_random_state(random_state)
+
+
+def _standardize_set_nn_parameters_weight_args(
+    initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    initializer = _standardize_set_nn_parameters_initializer(initializer)
+    random_state = _standardize_set_nn_parameters_random_state(random_state)
+
+    return (initializer, random_state)
+
+
+def _standardize_set_nn_parameters_bias_args(
+    initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    return _standardize_set_nn_parameters_weight_args(initializer, random_state)

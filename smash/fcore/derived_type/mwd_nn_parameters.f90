@@ -10,7 +10,7 @@
 !%          `Variables`              Description
 !%          ======================== =============================================
 !%          ``weight``               Weight at current layer of the neural network
-!%          ``layers``               Bias at current layer of the neural network
+!%          ``bias``                 Bias at current layer of the neural network
 !%          ``x``                    Input at current layer of the neural network
 !%          ``y``                    Output at current layer of the neural network
 !%          ======================== =============================================
@@ -68,10 +68,10 @@ contains
         integer, intent(in) :: n_in
 
         allocate (this%weight(n_neuron, n_in))
-        this%weight = -99._sp
+        this%weight = 0._sp ! zero initialization weights
 
         allocate (this%bias(n_neuron))
-        this%bias = -99._sp
+        this%bias = 0._sp ! zero initialization biases
 
         allocate (this%x(n_in))
         this%x = -99._sp
