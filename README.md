@@ -1,7 +1,7 @@
 <h1 align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash_dark.svg">
-  <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash.svg" width="300">
+  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/logo_smash_dark.svg">
+  <img src="doc/source/_static/logo_smash.svg" width="300">
 </picture>
 </h1><br>
 
@@ -20,3 +20,10 @@
 - **Tapenade** source code: https://gitlab.inria.fr/tapenade/tapenade.git
 
 Whether you are managing water resources or conducting research on hydrological models, **smash** can provide an easy-to-use yet powerful solution for your work. See [this documentation](https://smash.recover.inrae.fr/getting_started/index.html) for the installation instructions.
+
+<h1 align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/corporate_logo_dark.svg">
+  <img src="doc/source/_static/corporate_logo.svg" width="500">
+</picture>
+</h1><br>
