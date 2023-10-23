@@ -11955,7 +11955,7 @@ END MODULE MD_GR_OPERATOR_DIFF
 !%      ----------
 !%
 !%      - solve_linear_system_2vars
-!%      - multiply_matrix_2d_1d
+!%      - dot_product_2d_1d
 MODULE MD_ALGEBRA_DIFF
 !% only : sp
   USE MD_CONSTANT
@@ -12071,7 +12071,7 @@ CONTAINS
     END IF
   END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS
 
-  SUBROUTINE MULTIPLY_MATRIX_2D_1D(a, x, b)
+  SUBROUTINE DOT_PRODUCT_2D_1D(a, x, b)
     IMPLICIT NONE
     REAL(sp), DIMENSION(:, :), INTENT(IN) :: a
     REAL(sp), DIMENSION(:), INTENT(IN) :: x
@@ -12086,7 +12086,7 @@ CONTAINS
         b(i) = b(i) + a(i, j)*x(j)
       END DO
     END DO
-  END SUBROUTINE MULTIPLY_MATRIX_2D_1D
+  END SUBROUTINE DOT_PRODUCT_2D_1D
 
 END MODULE MD_ALGEBRA_DIFF
 
@@ -12100,7 +12100,7 @@ END MODULE MD_ALGEBRA_DIFF
 MODULE MD_NEURAL_ODE_OPERATOR_DIFF
 !% only : sp
   USE MD_CONSTANT
-!% only: solve_linear_system_2vars, multiply_matrix_2d_1d
+!% only: solve_linear_system_2vars, dot_product_2d_1d
   USE MD_ALGEBRA_DIFF
 !% only: NN_ParametersDT
   USE MWD_NN_PARAMETERS
@@ -12391,19 +12391,23 @@ CONTAINS
     REAL(sp), DIMENSION(:), INTENT(OUT) :: y
     INTEGER :: i, j
     INTRINSIC SIZE
+    INTRINSIC MAX
     DO i=1,SIZE(x)
       nn%layers(1)%x(i) = x(i)
     END DO
     DO i=1,nn%n_layers
-      CALL MULTIPLY_MATRIX_2D_1D(nn%layers(i)%weight, nn%layers(i)%x, nn&
-&                          %layers(i)%y)
+      CALL DOT_PRODUCT_2D_1D(nn%layers(i)%weight, nn%layers(i)%x, nn%&
+&                      layers(i)%y)
       DO j=1,SIZE(nn%layers(i)%bias)
         nn%layers(i)%y(j) = nn%layers(i)%y(j) + nn%layers(i)%bias(j)
         IF (i .LT. nn%n_layers) THEN
-!% TODO: add acivation function hidden nn%layers
-          nn%layers(i+1)%x(j) = nn%layers(i)%y(j)
+          IF (0._sp .LT. nn%layers(i)%y(j)) THEN
+            nn%layers(i+1)%x(j) = nn%layers(i)%y(j)
+          ELSE
+            nn%layers(i+1)%x(j) = 0._sp
+          END IF
         ELSE
-!% TODO: add acivation function last layer
+!% TODO: add activation function output layer
           y(j) = nn%layers(i)%y(j)
         END IF
       END DO

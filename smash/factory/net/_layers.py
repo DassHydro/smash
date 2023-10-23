@@ -103,46 +103,48 @@ class Scale(Layer):
         return self.input_shape
 
 
-def _wb_initialization(layer: Layer, attr: str):
-    fin = layer.input_shape[0]
-    fout = layer.neurons
-
-    if attr == "bias":
-        initializer = layer.bias_initializer
-        shape = (1, fout)
-
-    else:
-        initializer = layer.kernel_initializer
-        shape = (fin, fout)
-
+def _initialize_nn_parameter(n_in: int, n_neuron: int, initializer: str) -> np.ndarray:
     split_inizer = initializer.split("_")
 
     if split_inizer[-1] == "uniform":
         if split_inizer[0] == "glorot":
-            limit = np.sqrt(6 / (fin + fout))
+            limit = np.sqrt(6 / (n_in + n_neuron))
 
         elif split_inizer[0] == "he":
-            limit = np.sqrt(6 / fin)
+            limit = np.sqrt(6 / n_in)
 
         else:
-            limit = 1 / np.sqrt(fin)
+            limit = 1 / np.sqrt(n_in)
 
-        setattr(layer, attr, np.random.uniform(-limit, limit, shape))
+        value = np.random.uniform(-limit, limit, (n_in, n_neuron))
 
     elif split_inizer[-1] == "normal":
         if split_inizer[0] == "glorot":
-            std = np.sqrt(2 / (fin + fout))
+            std = np.sqrt(2 / (n_in + n_neuron))
 
         elif split_inizer[0] == "he":
-            std = np.sqrt(2 / fin)
+            std = np.sqrt(2 / n_in)
 
         else:
             std = 0.01
 
-        setattr(layer, attr, np.random.normal(0, std, shape))
+        value = np.random.normal(0, std, (n_in, n_neuron))
 
     else:
-        setattr(layer, attr, np.zeros(shape))
+        value = np.zeros((n_in, n_neuron))
+
+    return value
+
+
+def _set_initialized_wb_to_layer(layer: Layer, kind: str):
+    n_in = 1 if kind == "bias" else layer.input_shape[0]
+    n_neuron = layer.neurons
+
+    initializer = layer.bias_initializer if kind == "bias" else layer.kernel_initializer
+
+    value = _initialize_nn_parameter(n_in, n_neuron, initializer)
+
+    setattr(layer, kind, value)
 
 
 class Dense(Layer):
@@ -203,8 +205,8 @@ class Dense(Layer):
 
     def _initialize(self, optimizer: function):
         # Initialize weights and biases
-        _wb_initialization(self, "weight")
-        _wb_initialization(self, "bias")
+        _set_initialized_wb_to_layer(self, "weight")
+        _set_initialized_wb_to_layer(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
@@ -308,10 +310,10 @@ class TanH:
 
 class ReLU:
     def __call__(self, x):
-        return np.where(x >= 0, x, 0)
+        value = np.where(x >= 0, x, 0)
 
     def gradient(self, x):
-        return np.where(x >= 0, 1, 0)
+        value = np.where(x >= 0, 1, 0)
 
 
 class LeakyReLU:
@@ -319,10 +321,10 @@ class LeakyReLU:
         self.alpha = alpha
 
     def __call__(self, x):
-        return np.where(x >= 0, x, self.alpha * x)
+        value = np.where(x >= 0, x, self.alpha * x)
 
     def gradient(self, x):
-        return np.where(x >= 0, 1, self.alpha)
+        value = np.where(x >= 0, 1, self.alpha)
 
 
 class ELU:
@@ -330,10 +332,10 @@ class ELU:
         self.alpha = alpha
 
     def __call__(self, x):
-        return np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
+        value = np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
 
     def gradient(self, x):
-        return np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
+        value = np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
 
 
 class SELU:
@@ -350,7 +352,7 @@ class SELU:
 
 class SoftPlus:
     def __call__(self, x):
-        return np.log(1 + np.exp(x))
+        value = np.log(1 + np.exp(x))
 
     def gradient(self, x):
         return 1 / (1 + np.exp(-x))

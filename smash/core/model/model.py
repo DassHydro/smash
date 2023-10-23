@@ -47,6 +47,8 @@ from smash.core.simulation.estimate._standardize import (
     _standardize_multiset_estimate_args,
 )
 
+from smash.factory.net._layers import _initialize_nn_parameter
+
 from smash.fcore._mwd_setup import SetupDT
 from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_input_data import Input_DataDT
@@ -972,7 +974,7 @@ class Model(object):
 
     def get_nn_parameters_weight(self) -> list[np.ndarray]:
         """
-        TODO TH: Fill
+        TODO TH: Fill (transposed weight)
         """
 
         return [layer.weight for layer in self._parameters.nn_parameters.layers]
@@ -985,25 +987,28 @@ class Model(object):
         return [layer.bias for layer in self._parameters.nn_parameters.layers]
 
     def set_nn_parameters_weight(
-        self, initializer: str, random_state: int | None = None
+        self, initializer: str = "glorot_uniform", random_state: int | None = None
     ):
         """
-        TODO TH: Fill
+        TODO TH: Fill (transposed weight)
         """
 
         initializer, random_state = _standardize_set_nn_parameters_weight_args(
             initializer, random_state
         )
 
-        if random_state is not None:
+        if (random_state is not None) and (initializer != "zeros"):
             np.random.seed(random_state)
 
         for layer in self._parameters.nn_parameters.layers:
-            # TODO TH: Write a generic initialization function
-            if initializer == "uniform":
-                layer.weight = np.random.uniform(-1, 1, layer.weight.shape)
+            (n_neuron, n_in) = layer.weight.shape
+            value = _initialize_nn_parameter(n_in, n_neuron, initializer)
 
-    def set_nn_parameters_bias(self, initializer: str, random_state: int | None = None):
+            layer.weight = np.transpose(value)
+
+    def set_nn_parameters_bias(
+        self, initializer: str = "zeros", random_state: int | None = None
+    ):
         """
         TODO TH: Fill
         """
@@ -1012,13 +1017,14 @@ class Model(object):
             initializer, random_state
         )
 
-        if random_state is not None:
+        if (random_state is not None) and (initializer != "zeros"):
             np.random.seed(random_state)
 
         for layer in self._parameters.nn_parameters.layers:
-            # TODO TH: Write a generic initialization function
-            if initializer == "uniform":
-                layer.bias = np.random.uniform(-1, 1, layer.bias.shape)
+            n_neuron = layer.bias.shape[0]
+            value = _initialize_nn_parameter(1, n_neuron, initializer)
+
+            layer.bias = value.flatten()
 
     def forward_run(
         self,

@@ -6,24 +6,24 @@
 !%      - NN_Parameters_LayerDT
 !%          Layer containing weight and bias of the neural network
 !%
-!%          ======================== =============================================
+!%          ======================== ========================================================
 !%          `Variables`              Description
-!%          ======================== =============================================
-!%          ``weight``               Weight at current layer of the neural network
+!%          ======================== ========================================================
+!%          ``weight``               Transposed weight at current layer of the neural network
 !%          ``bias``                 Bias at current layer of the neural network
 !%          ``x``                    Input at current layer of the neural network
 !%          ``y``                    Output at current layer of the neural network
-!%          ======================== =============================================
+!%          ======================== ========================================================
 !%
 !%      - NN_ParametersDT
 !%          Contain multiple layers of the neural network
 !%
-!%          ======================== =============================================
+!%          ======================== ========================================================
 !%          `Variables`              Description
-!%          ======================== =============================================
+!%          ======================== ========================================================
 !%          ``layers``               Layers containing weights and biases
 !%          ``n_layers``             Number of layers of the neural network
-!%          ======================== =============================================
+!%          ======================== ========================================================
 !%
 !%      Subroutine
 !%      ----------

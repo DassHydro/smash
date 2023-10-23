@@ -9,7 +9,7 @@
 module md_neural_ode_operator
 
     use md_constant !% only : sp
-    use md_algebra !% only: solve_linear_system_2vars, multiply_matrix_2d_1d
+    use md_algebra !% only: solve_linear_system_2vars, dot_product_2d_1d
     use mwd_nn_parameters !% only: NN_ParametersDT
 
     implicit none
@@ -108,16 +108,15 @@ contains
 
         do i = 1, nn%n_layers
 
-            call multiply_matrix_2d_1d(nn%layers(i)%weight, nn%layers(i)%x, nn%layers(i)%y)
+            call dot_product_2d_1d(nn%layers(i)%weight, nn%layers(i)%x, nn%layers(i)%y)
 
             do j = 1, size(nn%layers(i)%bias)
                 nn%layers(i)%y(j) = nn%layers(i)%y(j) + nn%layers(i)%bias(j)
 
                 if (i .lt. nn%n_layers) then
-                    !% TODO: add acivation function hidden nn%layers
-                    nn%layers(i + 1)%x(j) = nn%layers(i)%y(j)
+                    nn%layers(i + 1)%x(j) = max(0._sp, nn%layers(i)%y(j)) ! ReLU activation
                 else
-                    !% TODO: add acivation function last layer
+                    !% TODO: add activation function output layer
                     y(j) = nn%layers(i)%y(j)
                 end if
 

@@ -4,7 +4,7 @@
 !%      ----------
 !%
 !%      - solve_linear_system_2vars
-!%      - multiply_matrix_2d_1d
+!%      - dot_product_2d_1d
 
 module md_algebra
 
@@ -39,7 +39,7 @@ contains
 
     end subroutine solve_linear_system_2vars
 
-    subroutine multiply_matrix_2d_1d(a, x, b)
+    subroutine dot_product_2d_1d(a, x, b)
         !% Multiply 2D matrix (m, n) with 1D vector (n,) producing a 1D vector of (m,)
 
         implicit none
@@ -61,6 +61,6 @@ contains
             end do
         end do
 
-    end subroutine multiply_matrix_2d_1d
+    end subroutine dot_product_2d_1d
 
 end module md_algebra

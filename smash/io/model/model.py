@@ -133,7 +133,9 @@ def read_model(path: str) -> Model:
             if f.attrs.get("_save_func") == "save_model":
                 instance = smash.Model(None, None)
 
-                instance.setup = SetupDT(f["setup"].attrs["nd"])
+                instance.setup = SetupDT(
+                    f["setup"].attrs["nd"], f["setup"].attrs["nhl"]
+                )
 
                 _parse_hdf5_to_derived_type(f["setup"], instance.setup)
 
