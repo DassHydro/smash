@@ -310,10 +310,10 @@ class TanH:
 
 class ReLU:
     def __call__(self, x):
-        value = np.where(x >= 0, x, 0)
+        return np.where(x >= 0, x, 0)
 
     def gradient(self, x):
-        value = np.where(x >= 0, 1, 0)
+        return np.where(x >= 0, 1, 0)
 
 
 class LeakyReLU:
@@ -321,10 +321,10 @@ class LeakyReLU:
         self.alpha = alpha
 
     def __call__(self, x):
-        value = np.where(x >= 0, x, self.alpha * x)
+        return np.where(x >= 0, x, self.alpha * x)
 
     def gradient(self, x):
-        value = np.where(x >= 0, 1, self.alpha)
+        return np.where(x >= 0, 1, self.alpha)
 
 
 class ELU:
@@ -332,10 +332,10 @@ class ELU:
         self.alpha = alpha
 
     def __call__(self, x):
-        value = np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
+        return np.where(x >= 0.0, x, self.alpha * (np.exp(x) - 1))
 
     def gradient(self, x):
-        value = np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
+        return np.where(x >= 0.0, 1, self.__call__(x) + self.alpha)
 
 
 class SELU:
@@ -352,7 +352,7 @@ class SELU:
 
 class SoftPlus:
     def __call__(self, x):
-        value = np.log(1 + np.exp(x))
+        return np.log(1 + np.exp(x))
 
     def gradient(self, x):
         return 1 / (1 + np.exp(-x))
