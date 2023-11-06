@@ -102,7 +102,7 @@ contains
         call control_to_parameters(setup, mesh, input_data, parameters_bkg, options)
 
         ! Loop on rr_parameters
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -119,7 +119,7 @@ contains
         end do
 
         ! Loop on rr_initial_states
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 

@@ -45,10 +45,10 @@ contains
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
 
-        allocate (this%keys(setup%nos))
+        allocate (this%keys(setup%nrrs))
         this%keys = "..."
 
-        allocate (this%values(mesh%nrow, mesh%ncol, setup%nos))
+        allocate (this%values(mesh%nrow, mesh%ncol, setup%nrrs))
         this%values = -99._sp
 
     end subroutine RR_StatesDT_initialise

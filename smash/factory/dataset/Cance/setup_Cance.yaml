@@ -1,4 +1,5 @@
-structure: gr4-lr
+hydrological_module: gr4
+routing_module: lr
 
 dt: 3_600
 start_time: 2014-09-15 00:00

@@ -13,6 +13,11 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
     ncpu = max(1, os.cpu_count() - 1)
 
     for model in model_structure:
+        # % There is no snow data for the Cance dataset.
+        # % TODO: Add a dataset to test snow module
+        if model.setup.snow_module_present:
+            continue
+
         instance, ret = smash.forward_run(
             model,
             common_options={"verbose": False, "ncpu": ncpu},

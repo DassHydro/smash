@@ -1195,17 +1195,17 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % Handle parameters
     # % rr parameters
-    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
+    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nrrp, dtype=np.int32)
     optimize_options["l_rr_parameters"] = np.zeros(
-        shape=model.setup.nop, dtype=np.float32
+        shape=model.setup.nrrp, dtype=np.float32
     )
     optimize_options["u_rr_parameters"] = np.zeros(
-        shape=model.setup.nop, dtype=np.float32
+        shape=model.setup.nrrp, dtype=np.float32
     )
 
     if descriptor_present:
         optimize_options["rr_parameters_descriptor"] = np.zeros(
-            shape=(model.setup.nd, model.setup.nop), dtype=np.int32
+            shape=(model.setup.nd, model.setup.nrrp), dtype=np.int32
         )
 
     for i, key in enumerate(model.rr_parameters.keys):
@@ -1221,17 +1221,17 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % rr initial states
     optimize_options["rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.int32
+        shape=model.setup.nrrs, dtype=np.int32
     )
     optimize_options["l_rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.float32
+        shape=model.setup.nrrs, dtype=np.float32
     )
     optimize_options["u_rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.float32
+        shape=model.setup.nrrs, dtype=np.float32
     )
     if descriptor_present:
         optimize_options["rr_initial_states_descriptor"] = np.zeros(
-            shape=(model.setup.nd, model.setup.nos), dtype=np.int32
+            shape=(model.setup.nd, model.setup.nrrs), dtype=np.int32
         )
 
     for i, key in enumerate(model.rr_initial_states.keys):

@@ -4,12 +4,20 @@ import smash
 
 import numpy as np
 import pytest
+import sys
 
 
 def generic_model_io(**kwargs) -> dict:
     setup, mesh = smash.factory.load_dataset("Cance")
 
+    # % Disable stdout
+    # % TODO: replace this by adding a verbose argument at Model initialisation
+    sys.stdout = open("/dev/null", "w")
+
     model = smash.Model(setup, mesh)
+
+    # % Enable stdout
+    sys.stdout = sys.__stdout__
 
     smash.io.save_model(model, "tmp_model.hdf5")
 

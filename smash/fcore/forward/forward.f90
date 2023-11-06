@@ -9,8 +9,7 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_parameters_manipulation !% only: control_to_parameters
-    use md_forward_structure !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, &
-    !& loieau_lr_forward, grd_lr_forward
+    use md_simulation !% only: simulation
     use mwd_cost !% only: compute_cost
 
     implicit none
@@ -27,37 +26,7 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     call control_to_parameters(setup, mesh, input_data, parameters, options)
 
     !% Simulation
-    select case (setup%structure)
-
-    case ("gr4-lr")
-
-        call gr4_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("gr4-kw")
-
-        call gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("gr5-lr")
-
-        call gr5_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("gr5-kw")
-
-        call gr5_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("loieau-lr")
-
-        call loieau_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("grd-lr")
-
-        call grd_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    case ("vic3l-lr")
-
-        call vic3l_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
-
-    end select
+    call simulation(setup, mesh, input_data, parameters, output, options, returns)
 
     !% Compute cost
     call compute_cost(setup, mesh, input_data, parameters, output, options, returns)

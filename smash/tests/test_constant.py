@@ -1,15 +1,21 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_NAME,
-    SERR_MU_MAPPING_NAME,
-    SERR_SIGMA_MAPPING_NAME,
+    SNOW_MODULE,
+    HYDROLOGICAL_MODULE,
+    ROUTING_MODULE,
+    SNOW_MODULE_RR_PARAMETERS,
+    SNOW_MODULE_RR_STATES,
+    HYDROLOGICAL_MODULE_RR_PARAMETERS,
+    HYDROLOGICAL_MODULE_RR_STATES,
+    ROUTING_MODULE_RR_PARAMETERS,
+    ROUTING_MODULE_RR_STATES,
     RR_PARAMETERS,
     RR_STATES,
+    SERR_MU_MAPPING,
+    SERR_SIGMA_MAPPING,
     SERR_MU_PARAMETERS,
     SERR_SIGMA_PARAMETERS,
-    STRUCTURE_RR_PARAMETERS,
-    STRUCTURE_RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
     FEASIBLE_RR_PARAMETERS,
@@ -34,94 +40,103 @@ from smash._constant import (
 import numpy as np
 
 
-def test_structure_model():
-    # % Check structure name
-    assert STRUCTURE_NAME == [
-        "gr4-lr",
-        "gr4-kw",
-        "gr5-lr",
-        "gr5-kw",
-        "loieau-lr",
-        "grd-lr",
-        "vic3l-lr",
+def test_module_name():
+    # % Check snow module name
+    assert SNOW_MODULE == ["zero", "ssn"]
+
+    # % Check hydrological module
+    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "grd", "loieau", "vic3l"]
+
+    # % Check routing module
+    assert ROUTING_MODULE == ["lag0", "lr", "kw"]
+
+
+def test_module_parameters():
+    # % Check snow module rr parameters
+    assert list(SNOW_MODULE_RR_PARAMETERS.values()) == [
+        [],  # % zero
+        ["kmlt"],  # % ssn
     ]
 
-    # % Check rr parameters
-    assert RR_PARAMETERS == [
-        "ci",
-        "cp",
-        "ct",
-        "kexc",
-        "aexc",
-        "ca",
-        "cc",
-        "kb",
-        "b",
-        "cusl",
-        "cmsl",
-        "cbsl",
-        "ks",
-        "pbc",
-        "ds",
-        "dsm",
-        "ws",
-        "llr",
-        "akw",
-        "bkw",
+    # % Check snow module rr states
+    assert list(SNOW_MODULE_RR_STATES.values()) == [
+        [],  # % zero
+        ["hs"],  # % ssn
     ]
 
-    # % Check rr states
-    assert RR_STATES == [
-        "hi",
-        "hp",
-        "ht",
-        "ha",
-        "hc",
-        "hcl",
-        "husl",
-        "hmsl",
-        "hbsl",
-        "hlr",
+    # % Check hydrological module rr parameters
+    assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
+        ["ci", "cp", "ct", "kexc"],  # % gr4
+        ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+        ["cp", "ct"],  # % grd
+        ["ca", "cc", "kb"],  # % loieau
+        ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
     ]
 
-    # % Check structure rr parameter
-    assert list(STRUCTURE_RR_PARAMETERS.values()) == [
-        ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
-        ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
-        ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
-        ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr5-kw
-        ["ca", "cc", "kb", "llr"],  # % loieau-lr
-        ["cp", "ct", "llr"],  # % grd-lr
-        [
-            "b",
-            "cusl",
-            "cmsl",
-            "cbsl",
-            "ks",
-            "pbc",
-            "ds",
-            "dsm",
-            "ws",
-            "llr",
-        ],  # % vic3l-lr
+    # % Check hydrological module rr states
+    assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
+        ["hi", "hp", "ht"],  # % gr4
+        ["hi", "hp", "ht"],  # % gr5
+        ["hp", "ht"],  # % grd
+        ["ha", "hc"],  # % loieau
+        ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
     ]
 
-    # % Check structure rr state
-    assert list(STRUCTURE_RR_STATES.values()) == [
-        ["hi", "hp", "ht", "hlr"],  # % gr4-lr
-        ["hi", "hp", "ht"],  # % gr4-kw
-        ["hi", "hp", "ht", "hlr"],  # % gr5-lr
-        ["hi", "hp", "ht"],  # % gr5-kw
-        ["ha", "hc", "hlr"],  # % loieau-lr
-        ["hp", "ht", "hlr"],  # % grd-lr
-        ["hcl", "husl", "hmsl", "hbsl", "hlr"],  # % vic3l-lr
+    # % Check routing module rr parameters
+    assert list(ROUTING_MODULE_RR_PARAMETERS.values()) == [[], ["llr"], ["akw", "bkw"]]
+
+    # % Check routing module rr states
+    assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
+
+
+def test_parameters():
+    # % Check rainfall-runoff parameters
+    RR_PARAMETERS == [
+        "kmlt",  # % ssn
+        "ci",  # % (gr4, gr5)
+        "cp",  # % (gr4, gr5, grd)
+        "ct",  # % (gr4, gr5, grd)
+        "kexc",  # % (gr4, gr5)
+        "aexc",  # % gr5
+        "ca",  # % loieau
+        "cc",  # % loieau
+        "kb",  # % loieau
+        "b",  # % vic3l
+        "cusl",  # % vic3l
+        "cmsl",  # % vic3l
+        "cbsl",  # % vic3l
+        "ks",  # % vic3l
+        "pbc",  # % vic3l
+        "ds",  # % vic3l
+        "dsm",  # % vic3l
+        "ws",  # % vic3l
+        "llr",  # % lr
+        "akw",  # % kw
+        "bkw",  # % kw
     ]
 
+    # % Check rainfall-runoff states
+    RR_STATES == [
+        "hs",  # % ssn
+        "hi",  # % (gr4, gr5)
+        "hp",  # % (gr4, gr5, grd)
+        "ht",  # % (gr4, gr5, grd)
+        "ha",  # % loieau
+        "hc",  # % loieau
+        "hcl",  # % vic3l
+        "husl",  # % vic3l
+        "hmsl",  # % vic3l
+        "hbsl",  # % vic3l
+        "hlr",  # % lr
+    ]
+
+
+def test_structural_error_mapping_name():
     # % Check mu mapping name
-    assert SERR_MU_MAPPING_NAME == ["Zero", "Constant", "Linear"]
+    assert SERR_MU_MAPPING == ["Zero", "Constant", "Linear"]
 
     # % Check sigma mapping name
-    assert SERR_SIGMA_MAPPING_NAME == [
+    assert SERR_SIGMA_MAPPING == [
         "Constant",
         "Linear",
         "Power",
@@ -129,12 +144,8 @@ def test_structure_model():
         "Gaussian",
     ]
 
-    # % Check serr mu parameters
-    assert SERR_MU_PARAMETERS == ["mg0", "mg1"]
 
-    # % Check serr mu parameters
-    assert SERR_SIGMA_PARAMETERS == ["sg0", "sg1", "sg2"]
-
+def test_structural_error_mapping_parameters():
     # % Check mu mapping parameters
     assert list(SERR_MU_MAPPING_PARAMETERS.values()) == [
         [],  # % zero
@@ -152,9 +163,18 @@ def test_structure_model():
     ]
 
 
+def test_structural_error_parameters():
+    # % Check serr mu parameters
+    assert SERR_MU_PARAMETERS == ["mg0", "mg1"]
+
+    # % Check serr sigma parameters
+    assert SERR_SIGMA_PARAMETERS == ["sg0", "sg1", "sg2"]
+
+
 def test_feasible_domain():
     # % Check feasible rr parameters
     assert list(FEASIBLE_RR_PARAMETERS.values()) == [
+        (0, np.inf),  # % kmlt
         (0, np.inf),  # % ci
         (0, np.inf),  # % cp
         (0, np.inf),  # % ct
@@ -179,6 +199,7 @@ def test_feasible_domain():
 
     # % Check feasible rr states
     assert list(FEASIBLE_RR_INITIAL_STATES.values()) == [
+        (0, np.inf),  # % hs
         (0, 1),  # % hi
         (0, 1),  # % hp
         (0, 1),  # % ht
@@ -208,6 +229,7 @@ def test_feasible_domain():
 def test_default_parameters():
     # % Check default rr parameters
     assert list(DEFAULT_RR_PARAMETERS.values()) == [
+        1,  # % kmlt
         1e-6,  # % ci
         200,  # % cp
         500,  # % ct
@@ -232,6 +254,7 @@ def test_default_parameters():
 
     # % Check default rr states
     assert list(DEFAULT_RR_INITIAL_STATES.values()) == [
+        1e-6,  # % hs
         1e-2,  # % hi
         1e-2,  # % hp
         1e-2,  # % ht
@@ -261,6 +284,7 @@ def test_default_parameters():
 def test_default_bounds_parameters():
     # % Check default bounds rr parameters
     assert list(DEFAULT_BOUNDS_RR_PARAMETERS.values()) == [
+        (1e-6, 1e1),  # % kmlt
         (1e-6, 1e2),  # % ci
         (1e-6, 1e3),  # % cp
         (1e-6, 1e3),  # % ct
@@ -285,6 +309,7 @@ def test_default_bounds_parameters():
 
     # % Check default bounds rr states
     assert list(DEFAULT_BOUNDS_RR_INITIAL_STATES.values()) == [
+        (1e-6, 1e3),  # % hs
         (1e-6, 0.999999),  # % hi
         (1e-6, 0.999999),  # % hp
         (1e-6, 0.999999),  # % ht

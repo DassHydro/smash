@@ -1,9 +1,13 @@
 from __future__ import annotations
 
 from smash._constant import (
-    STRUCTURE_NAME,
-    SERR_MU_MAPPING_NAME,
-    SERR_SIGMA_MAPPING_NAME,
+    SNOW_MODULE,
+    HYDROLOGICAL_MODULE,
+    ROUTING_MODULE,
+    DEFAULT_MODEL_SETUP,
+    STRUCTURE,
+    SERR_MU_MAPPING,
+    SERR_SIGMA_MAPPING,
     INPUT_DATA_FORMAT,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
@@ -15,6 +19,10 @@ from smash._constant import (
     FEASIBLE_SERR_SIGMA_PARAMETERS,
 )
 
+from smash.fcore._mwd_sparse_matrix_manipulation import (
+    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
+)
+
 import pandas as pd
 import numpy as np
 import os
@@ -24,130 +32,460 @@ import errno
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, Numeric
+    from smash._typing import AnyTuple, Numeric, ListLike
     from smash.core.model.model import Model
-    from smash.fcore._mwd_setup import SetupDT
 
 
-# % TODO: rewrite this standardize with type checking
-def _standardize_setup(setup: SetupDT):
-    if setup.structure.lower() in STRUCTURE_NAME:
-        setup.structure = setup.structure.lower()
+def _standardize_model_setup_bool(key: str, value: bool) -> bool:
+    if not isinstance(value, bool):
+        raise TypeError(f"{key} model setup must be a boolean")
+
+    return value
+
+
+def _standardize_model_setup_directory(read: bool, key: str, value: str | None) -> str:
+    directory_kind = key.split("_")[0]
+
+    if read:
+        if value is None:
+            raise ValueError(
+                f"{key} model setup must be defined if read_{directory_kind} is set to True"
+            )
+        elif isinstance(value, str):
+            if not os.path.exists(value):
+                raise FileNotFoundError(
+                    f"No such file or directory '{value}' for {key} model setup"
+                )
+        else:
+            raise TypeError(f"{key} model setup must be a str")
     else:
-        raise ValueError(
-            f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
-        )
-    if setup.serr_mu_mapping.capitalize() in SERR_MU_MAPPING_NAME:
-        setup.serr_mu_mapping = setup.serr_mu_mapping.capitalize()
+        value = "..."
+
+    return value
+
+
+def _standardize_model_setup_format(key: str, value: str) -> str:
+    if isinstance(value, str):
+        if value.lower() in INPUT_DATA_FORMAT:
+            value = value.lower()
+        else:
+            raise ValueError(
+                f"Unkown format '{value}' for {key} in model setup. Choices: {INPUT_DATA_FORMAT}"
+            )
+
     else:
-        raise ValueError(
-            f"Unknown serr_mu_mapping '{setup.serr_mu_mapping}'. Choices: {SERR_MU_MAPPING_NAME}"
-        )
+        raise TypeError(f"{key} model setup must be a str")
 
-    if setup.serr_sigma_mapping.capitalize() in SERR_SIGMA_MAPPING_NAME:
-        setup.serr_sigma_mapping = setup.serr_sigma_mapping.capitalize()
+    return value
+
+
+def _standardize_model_setup_conversion_factor(key: str, value: Numeric) -> float:
+    if isinstance(value, (int, float)):
+        value = float(value)
+        if value <= 0:
+            raise ValueError(f"{key} model setup must be greater than 0")
+
     else:
-        raise ValueError(
-            f"Unknown serr_sigma_mapping '{setup.serr_sigma_mapping}'. Choices: {SERR_SIGMA_MAPPING_NAME}"
+        raise TypeError(f"{key} model setup must be of Numeric type (int, float)")
+
+    return value
+
+
+def _standardize_model_setup_snow_module(snow_module: str, **kwargs) -> str:
+    if isinstance(snow_module, str):
+        if snow_module.lower() in SNOW_MODULE:
+            snow_module = snow_module.lower()
+
+        else:
+            raise ValueError(
+                f"Unknown snow module '{snow_module}' for snow_module in model setup. Choices: {SNOW_MODULE}"
+            )
+
+    else:
+        raise TypeError("snow_module model setup must be a str")
+
+    return snow_module
+
+
+def _standardize_model_setup_hydrological_module(
+    hydrological_module: str, **kwargs
+) -> str:
+    if isinstance(hydrological_module, str):
+        if hydrological_module.lower() in HYDROLOGICAL_MODULE:
+            hydrological_module = hydrological_module.lower()
+        else:
+            raise ValueError(
+                f"Unknown hydrological module '{hydrological_module}' for hydrological_module in model setup. Choices: {HYDROLOGICAL_MODULE}"
+            )
+    else:
+        raise TypeError("hydrological_module model setup must be a str")
+
+    return hydrological_module
+
+
+def _standardize_model_setup_routing_module(routing_module: str, **kwargs) -> str:
+    if isinstance(routing_module, str):
+        if routing_module.lower() in ROUTING_MODULE:
+            routing_module = routing_module.lower()
+        else:
+            raise ValueError(
+                f"Unknown routing module '{routing_module}' for routing_module in model setup. Choices: {ROUTING_MODULE}"
+            )
+    else:
+        raise TypeError("routing_module model setup must be a str")
+
+    return routing_module
+
+
+def _standardize_model_setup_serr_mu_mapping(serr_mu_mapping: str, **kwargs) -> str:
+    if isinstance(serr_mu_mapping, str):
+        if serr_mu_mapping.capitalize() in SERR_MU_MAPPING:
+            serr_mu_mapping = serr_mu_mapping.capitalize()
+        else:
+            raise ValueError(
+                f"Unknown structural error mu mapping '{serr_mu_mapping}' for serr_mu_mapping in model setup. Choices: {SERR_MU_MAPPING}"
+            )
+    else:
+        raise TypeError("serr_mu_mapping model setup must be a str")
+
+    return serr_mu_mapping
+
+
+def _standardize_model_setup_serr_sigma_mapping(
+    serr_sigma_mapping: str, **kwargs
+) -> str:
+    if isinstance(serr_sigma_mapping, str):
+        if serr_sigma_mapping.capitalize() in SERR_SIGMA_MAPPING:
+            serr_sigma_mapping = serr_sigma_mapping.capitalize()
+        else:
+            raise ValueError(
+                f"Unknown structural error sigma mapping '{serr_sigma_mapping}' for serr_sigma_mapping in model setup. Choices: {SERR_SIGMA_MAPPING}"
+            )
+    else:
+        raise TypeError("serr_sigma_mapping model setup must be a str")
+
+    return serr_sigma_mapping
+
+
+def _standardize_model_setup_dt(dt: Numeric, **kwargs) -> float:
+    if isinstance(dt, (int, float)):
+        dt = float(dt)
+        if dt <= 0:
+            raise ValueError("dt model setup must be greater than 0")
+    else:
+        raise TypeError("dt model setup must be of Numeric type (int, float)")
+
+    return dt
+
+
+def _standardize_model_setup_start_time(
+    start_time: str | pd.Timestamp | None, **kwargs
+) -> pd.Timestamp:
+    if start_time is None:
+        raise ValueError("start_time model setup must be defined")
+    elif isinstance(start_time, str):
+        try:
+            start_time = pd.Timestamp(start_time)
+        except:
+            raise ValueError(
+                f"start_time '{start_time}' model setup is an invalid date"
+            )
+    elif isinstance(start_time, pd.Timestamp):
+        pass
+
+    else:
+        raise TypeError(
+            f"start_time model setup must be a str or pandas.Timestamp object"
         )
 
-    if setup.dt < 0:
-        raise ValueError("argument dt is lower than 0")
+    return start_time
 
-    if not setup.dt in [900, 3_600, 86_400]:
+
+def _standardize_model_setup_end_time(
+    start_time: pd.Timestamp, end_time: str | pd.Timestamp | None, **kwargs
+) -> pd.Timestamp:
+    if end_time is None:
+        raise ValueError("end_time model setup must be defined")
+    elif isinstance(end_time, str):
+        try:
+            end_time = pd.Timestamp(end_time)
+        except:
+            raise ValueError(f"end_time '{end_time}' model setup is an invalid date")
+    elif isinstance(end_time, pd.Timestamp):
+        pass
+
+    else:
+        raise TypeError(
+            f"end_time model setup must be a str or pandas.Timestamp object"
+        )
+
+    # Check that end_time is after start_time
+    if (end_time - start_time).total_seconds() <= 0:
+        raise ValueError(
+            f"end_time model setup '{end_time}' corresponds to a date earlier or equal to start_time model setup '{start_time}'"
+        )
+
+    return end_time
+
+
+def _standardize_model_setup_adjust_interception(
+    adjust_interception: bool, **kwrags
+) -> bool:
+    return _standardize_model_setup_bool("adjust_interception", adjust_interception)
+
+
+def _standardize_model_setup_read_qobs(read_qobs: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_qobs", read_qobs)
+
+
+def _standardize_model_setup_qobs_directory(
+    read_qobs: bool, qobs_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_qobs, "qobs_directory", qobs_directory
+    )
+
+
+def _standardize_model_setup_read_prcp(read_prcp: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_prcp", read_prcp)
+
+
+def _standardize_model_setup_prcp_format(prcp_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("prcp_format", prcp_format)
+
+
+def _standardize_model_setup_prcp_conversion_factor(
+    prcp_conversion_factor: str, **kwargs
+) -> str:
+    return _standardize_model_setup_conversion_factor(
+        "prcp_conversion_factor", prcp_conversion_factor
+    )
+
+
+def _standardize_model_setup_prcp_directory(
+    read_prcp: bool, prcp_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_prcp, "prcp_directory", prcp_directory
+    )
+
+
+def _standardize_model_setup_read_pet(read_pet: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_pet", read_pet)
+
+
+def _standardize_model_setup_pet_format(pet_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("pet_format", pet_format)
+
+
+def _standardize_model_setup_pet_conversion_factor(
+    pet_conversion_factor: str, **kwargs
+) -> str:
+    return _standardize_model_setup_conversion_factor(
+        "pet_conversion_factor", pet_conversion_factor
+    )
+
+
+def _standardize_model_setup_pet_directory(
+    read_pet: bool, pet_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(read_pet, "pet_directory", pet_directory)
+
+
+def _standardize_model_setup_daily_interannual_pet(
+    daily_interannual_pet: bool, **kwargs
+) -> bool:
+    return _standardize_model_setup_bool("daily_interannual_pet", daily_interannual_pet)
+
+
+def _standardize_model_setup_read_snow(
+    snow_module: str, read_snow: bool, **kwrags
+) -> bool:
+    read_snow = _standardize_model_setup_bool("read_snow", read_snow)
+
+    if read_snow and snow_module == "zero":
+        raise ValueError(
+            f"read_snow model setup can not be set to True if no snow module has been selected"
+        )
+
+    return read_snow
+
+
+def _standardize_model_setup_snow_format(snow_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("snow_format", snow_format)
+
+
+def _standardize_model_setup_snow_conversion_factor(
+    snow_conversion_factor: str, **kwargs
+) -> str:
+    return _standardize_model_setup_conversion_factor(
+        "snow_conversion_factor", snow_conversion_factor
+    )
+
+
+def _standardize_model_setup_snow_directory(
+    read_snow: bool, snow_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_snow, "snow_directory", snow_directory
+    )
+
+
+def _standardize_model_setup_read_temp(
+    snow_module: str, read_temp: bool, **kwrags
+) -> bool:
+    read_temp = _standardize_model_setup_bool("read_temp", read_temp)
+
+    if read_temp and snow_module == "zero":
+        raise ValueError(
+            f"read_temp model setup can not be set to True if no snow module has been selected"
+        )
+
+    return read_temp
+
+
+def _standardize_model_setup_temp_format(temp_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("temp_format", temp_format)
+
+
+def _standardize_model_setup_temp_directory(
+    read_temp: bool, temp_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_temp, "temp_directory", temp_directory
+    )
+
+
+def _standardize_model_setup_prcp_partitioning(
+    snow_module: str,
+    read_snow: bool,
+    read_temp: bool,
+    prcp_partitioning: bool,
+    **kwargs,
+) -> bool:
+    prcp_partitioning = _standardize_model_setup_bool(
+        "prcp_partitioning", prcp_partitioning
+    )
+
+    if prcp_partitioning and snow_module == "zero":
+        raise ValueError(
+            f"prcp_partitioning model setup can not be set to True if no snow module has been selected (snow_module is set to 'zero')"
+        )
+
+    if prcp_partitioning and not read_temp:
+        raise ValueError(
+            f"prcp_partitioning model setup can not be set to True if no temperature data is read (read_temp is set to False)"
+        )
+
+    if prcp_partitioning and read_snow:
         warnings.warn(
-            "argument dt is not set to a classical value (900, 3600, 86400 seconds)",
-            UserWarning,
+            f"prcp_partitioning and read_snow model setup are set to True. The snow data read will be summed with the precipitation and re-partitioned"
         )
 
-    if setup.start_time == "...":
-        raise ValueError("argument start_time is not defined")
+    return prcp_partitioning
 
-    if setup.end_time == "...":
-        raise ValueError("argument end_time is not defined")
 
-    try:
-        st = pd.Timestamp(setup.start_time)
-    except:
-        raise ValueError("argument start_time is not a valid date")
+def _standardize_model_setup_sparse_storage(sparse_storage: bool, **kwargs) -> bool:
+    return _standardize_model_setup_bool("sparse_storage", sparse_storage)
 
-    try:
-        et = pd.Timestamp(setup.end_time)
-    except:
-        raise ValueError("argument end_time is not a valid date")
 
-    if (et - st).total_seconds() <= 0:
-        raise ValueError(
-            "argument end_time corresponds to a date earlier or equal to argument start_time"
+def _standardize_model_setup_read_descriptor(read_descriptor: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("read_descriptor", read_descriptor)
+
+
+def _standardize_model_setup_descriptor_format(descriptor_format: str, **kwargs) -> str:
+    return _standardize_model_setup_format("descriptor_format", descriptor_format)
+
+
+def _standardize_model_setup_descriptor_directory(
+    read_descriptor: bool, descriptor_directory: str | None, **kwargs
+) -> str:
+    return _standardize_model_setup_directory(
+        read_descriptor, "descriptor_directory", descriptor_directory
+    )
+
+
+def _standardize_model_setup_descriptor_name(
+    descriptor_name: ListLike | None, **kwargs
+) -> np.ndarray:
+    if descriptor_name is None:
+        descriptor_name = np.empty(shape=0)
+    elif isinstance(descriptor_name, (list, tuple, np.ndarray)):
+        descriptor_name = np.array(descriptor_name, ndmin=1)
+    else:
+        raise TypeError(
+            "descriptor_name model setup must be of ListLike type (List, Tuple, np.ndarray)"
         )
 
-    if setup.read_qobs and setup.qobs_directory == "...":
-        raise ValueError("argument read_qobs is True and qobs_directory is not defined")
+    return descriptor_name
 
-    if setup.read_qobs and not os.path.exists(setup.qobs_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.qobs_directory,
-        )
 
-    if setup.read_prcp and setup.prcp_directory == "...":
-        raise ValueError("argument read_prcp is True and prcp_directory is not defined")
+def _standardize_model_setup(setup: dict) -> dict:
+    if isinstance(setup, dict):
+        pop_keys = []
+        for key in setup.keys():
+            if key not in DEFAULT_MODEL_SETUP.keys():
+                pop_keys.append(key)
+                warnings.warn(
+                    f"Unknown model setup key '{key}'. Choices: {list(DEFAULT_MODEL_SETUP.keys())}"
+                )
 
-    if setup.read_prcp and not os.path.exists(setup.prcp_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.prcp_directory,
-        )
+        for key in pop_keys:
+            setup.pop(key)
 
-    if setup.prcp_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown prcp_format '{setup.prcp_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
+    else:
+        raise TypeError("setup model argument must be a dictionary")
 
-    if setup.prcp_conversion_factor < 0:
-        raise ValueError("argument prcp_conversion_factor is lower than 0")
+    for key, value in DEFAULT_MODEL_SETUP.items():
+        setup.setdefault(key, value)
+        func = eval(f"_standardize_model_setup_{key}")
+        setup[key] = func(**setup)
 
-    if setup.read_pet and setup.pet_directory == "...":
-        raise ValueError("argument read_pet is True and pet_directory is not defined")
+    return setup
 
-    if setup.read_pet and not os.path.exists(setup.pet_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.pet_directory,
-        )
 
-    if setup.pet_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown pet_format '{setup.pet_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
+def _standardize_model_setup_finalize(setup: dict):
+    setup["structure"] = "-".join(
+        [
+            setup["snow_module"],
+            setup["hydrological_module"],
+            setup["routing_module"],
+        ]
+    )
 
-    if setup.pet_conversion_factor < 0:
-        raise ValueError("argument pet_conversion_factor is lower than 0")
+    setup["snow_module_present"] = setup["snow_module"] != "zero"
 
-    if setup.read_descriptor and setup.descriptor_directory == "...":
-        raise ValueError(
-            "argument read_descriptor is True and descriptor_directory is not defined"
-        )
+    setup["ntime_step"] = int(
+        (setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"]
+    )
+    setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
+    setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
+    setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
+    setup["nsep_sigma"] = len(
+        SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]]
+    )
+    setup["nd"] = setup["descriptor_name"].size
 
-    if setup.read_descriptor and not os.path.exists(setup.descriptor_directory):
-        raise FileNotFoundError(
-            errno.ENOENT,
-            os.strerror(errno.ENOENT),
-            setup.descriptor_directory,
-        )
+    setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
+    setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")
 
-    if setup.read_descriptor and setup.nd == 0:
-        raise ValueError(
-            "argument read_descriptor is True and descriptor_name is not defined"
-        )
 
-    if setup.descriptor_format not in INPUT_DATA_FORMAT:
-        raise ValueError(
-            f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
+# % We assume that users use smash.factory.generate_mesh to generate the mesh
+# % Otherwise, good luck !
+def _standardize_model_mesh(mesh: dict) -> dict:
+    if not isinstance(mesh, dict):
+        raise TypeError("mesh model argument must be a dictionary")
+    return mesh
+
+
+def _standardize_model_args(setup: dict, mesh: dict) -> AnyTuple:
+    setup = _standardize_model_setup(setup)
+
+    _standardize_model_setup_finalize(setup)
+
+    mesh = _standardize_model_mesh(mesh)
+
+    return (setup, mesh)
 
 
 def _standardize_rr_parameters_key(model: Model, key: str) -> str:

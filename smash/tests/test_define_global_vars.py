@@ -1,5 +1,5 @@
 import smash
-from smash._constant import STRUCTURE_NAME
+from smash._constant import STRUCTURE
 
 import h5py
 import pytest
@@ -19,8 +19,12 @@ pytest.sparse_model = smash.Model(setup, mesh)
 pytest.model_structure = []
 pytest.sparse_model_structure = []
 
-for structure in STRUCTURE_NAME:
-    setup["structure"] = structure
+for structure in STRUCTURE:
+    (
+        setup["snow_module"],
+        setup["hydrological_module"],
+        setup["routing_module"],
+    ) = structure.split("-")
     setup["sparse_storage"] = False
     pytest.model_structure.append(smash.Model(setup, mesh))
     setup["sparse_storage"] = True

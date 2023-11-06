@@ -3,6 +3,16 @@
 !%      Subroutine
 !%      ----------
 !%
+!%      - get_serr_mu
+!%      - get_serr_sigma
+!%      - get_rr_parameters
+!%      - get_rr_states
+!%      - get_serr_mu_parameters
+!%      - get_serr_sigma_parameters
+!%      - set_rr_parameters
+!%      - set_rr_states
+!%      - set_serr_mu_parameters
+!%      - set_serr_sigma_parameters
 !%      - sigmoide
 !%      - inv_sigmoide
 !%      - scaled_sigmoide
@@ -56,6 +66,10 @@ module mwd_parameters_manipulation
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_parameters !% only: ParametersDT
+    use mwd_rr_parameters !% only: RR_ParametersDT
+    use mwd_rr_states !% only: RR_StatesDT
+    use mwd_serr_mu_parameters !% only: SErr_Mu_ParametersDT
+    use mwd_serr_sigma_parameters !% only: SErr_Sigma_ParametersDT
     use mwd_output !% only: OutputDT
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
@@ -116,6 +130,214 @@ contains
 
     end subroutine get_serr_sigma
     !$AD end-exclude
+
+    subroutine get_rr_parameters(rr_parameters, key, vle)
+
+        implicit none
+
+        type(RR_ParametersDT), intent(in) :: rr_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:, :), intent(inout) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(rr_parameters%keys)
+
+            if (trim(rr_parameters%keys(i)) .eq. key) then
+
+                vle = rr_parameters%values(:, :, i)
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine get_rr_parameters
+
+    subroutine get_rr_states(rr_states, key, vle)
+
+        implicit none
+
+        type(RR_StatesDT), intent(in) :: rr_states
+        character(*), intent(in) :: key
+        real(sp), dimension(:, :), intent(inout) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(rr_states%keys)
+
+            if (trim(rr_states%keys(i)) .eq. key) then
+
+                vle = rr_states%values(:, :, i)
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine get_rr_states
+
+    subroutine get_serr_mu_parameters(serr_mu_parameters, key, vle)
+
+        implicit none
+
+        type(SErr_Mu_ParametersDT), intent(in) :: serr_mu_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(inout) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(serr_mu_parameters%keys)
+
+            if (trim(serr_mu_parameters%keys(i)) .eq. key) then
+
+                vle = serr_mu_parameters%values(:, i)
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine get_serr_mu_parameters
+
+    subroutine get_serr_sigma_parameters(serr_sigma_parameters, key, vle)
+
+        implicit none
+
+        type(SErr_Sigma_ParametersDT), intent(in) :: serr_sigma_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(inout) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(serr_sigma_parameters%keys)
+
+            if (trim(serr_sigma_parameters%keys(i)) .eq. key) then
+
+                vle = serr_sigma_parameters%values(:, i)
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine get_serr_sigma_parameters
+
+    subroutine set_rr_parameters(rr_parameters, key, vle)
+
+        implicit none
+
+        type(RR_ParametersDT), intent(inout) :: rr_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:, :), intent(in) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(rr_parameters%keys)
+
+            if (trim(rr_parameters%keys(i)) .eq. key) then
+
+                rr_parameters%values(:, :, i) = vle
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine set_rr_parameters
+
+    subroutine set_rr_states(rr_states, key, vle)
+
+        implicit none
+
+        type(RR_StatesDT), intent(inout) :: rr_states
+        character(*), intent(in) :: key
+        real(sp), dimension(:, :), intent(in) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(rr_states%keys)
+
+            if (trim(rr_states%keys(i)) .eq. key) then
+
+                rr_states%values(:, :, i) = vle
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine set_rr_states
+
+    subroutine set_serr_mu_parameters(serr_mu_parameters, key, vle)
+
+        implicit none
+
+        type(SErr_Mu_ParametersDT), intent(inout) :: serr_mu_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(in) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(serr_mu_parameters%keys)
+
+            if (trim(serr_mu_parameters%keys(i)) .eq. key) then
+
+                serr_mu_parameters%values(:, i) = vle
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine set_serr_mu_parameters
+
+    subroutine set_serr_sigma_parameters(serr_sigma_parameters, key, vle)
+
+        implicit none
+
+        type(SErr_Sigma_ParametersDT), intent(inout) :: serr_sigma_parameters
+        character(*), intent(in) :: key
+        real(sp), dimension(:), intent(in) :: vle
+
+        integer :: i
+
+        ! Linear search on keys
+        do i = 1, size(serr_sigma_parameters%keys)
+
+            if (trim(serr_sigma_parameters%keys(i)) .eq. key) then
+
+                serr_sigma_parameters%values(:, i) = vle
+                return
+
+            end if
+
+        end do
+
+        ! Should be unreachable
+
+    end subroutine set_serr_sigma_parameters
 
     subroutine sigmoide(x, res)
 
@@ -417,7 +639,7 @@ contains
 
         n = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -439,7 +661,7 @@ contains
 
         n = 0
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -461,7 +683,7 @@ contains
 
         n = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -483,7 +705,7 @@ contains
 
         n = 0
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -571,7 +793,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -604,7 +826,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -635,7 +857,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -677,7 +899,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -722,7 +944,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -771,7 +993,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -820,7 +1042,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -876,7 +1098,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -1048,7 +1270,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -1081,7 +1303,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -1111,7 +1333,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -1147,7 +1369,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -1186,7 +1408,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -1233,7 +1455,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
@@ -1280,7 +1502,7 @@ contains
         ! RR parameters is first control kind
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .eq. 0) cycle
 
@@ -1329,7 +1551,7 @@ contains
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .eq. 0) cycle
 
