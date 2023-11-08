@@ -11,8 +11,6 @@
 !%          ======================== ========================================================
 !%          ``weight``               Transposed weight at current layer of the neural network
 !%          ``bias``                 Bias at current layer of the neural network
-!%          ``x``                    Input at current layer of the neural network
-!%          ``y``                    Output at current layer of the neural network
 !%          ======================== ========================================================
 !%
 !%      - NN_ParametersDT
@@ -22,6 +20,7 @@
 !%          `Variables`              Description
 !%          ======================== ========================================================
 !%          ``layers``               Layers containing weights and biases
+!%          ``neurons``              Number of neurons of the neural network
 !%          ``n_layers``             Number of layers of the neural network
 !%          ======================== ========================================================
 !%
@@ -45,14 +44,12 @@ module mwd_nn_parameters
         real(sp), dimension(:, :), allocatable :: weight
         real(sp), dimension(:), allocatable :: bias
 
-        real(sp), dimension(:), allocatable :: x
-        real(sp), dimension(:), allocatable :: y
-
     end type NN_Parameters_LayerDT
 
     type NN_ParametersDT
 
         type(NN_Parameters_LayerDT), dimension(:), allocatable :: layers
+        integer, dimension(:), allocatable :: neurons
         integer :: n_layers
 
     end type NN_ParametersDT
@@ -68,16 +65,10 @@ contains
         integer, intent(in) :: n_in
 
         allocate (this%weight(n_neuron, n_in))
-        this%weight = 0._sp ! zero initialization weights
+        this%weight = -99._sp
 
         allocate (this%bias(n_neuron))
-        this%bias = 0._sp ! zero initialization biases
-
-        allocate (this%x(n_in))
-        this%x = -99._sp
-
-        allocate (this%y(n_neuron))
-        this%y = -99._sp
+        this%bias = -99._sp
 
     end subroutine NN_Parameters_LayerDT_initialise
 
@@ -99,32 +90,31 @@ contains
         type(NN_ParametersDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
 
-        integer :: i
-        integer :: n_in = 4
-        integer :: n_out = 2
+        integer :: i, n_in_layer
+        integer :: n_in = 4  ! fixed NN input size
+        integer :: n_out = 5  ! fixed NN output size
 
         this%n_layers = setup%nhl + 1
 
         allocate (this%layers(this%n_layers))
+        allocate (this%neurons(this%n_layers + 1))
 
-        if (setup%nhl .gt. 0) then
+        this%neurons(1) = n_in
 
-            call NN_Parameters_LayerDT_initialise(this%layers(1), setup%hidden_neuron(1), n_in)
+        n_in_layer = n_in
 
-            do i = 2, setup%nhl
+        do i = 1, setup%nhl
 
-                call NN_Parameters_LayerDT_initialise(this%layers(i), setup%hidden_neuron(i), &
-                & setup%hidden_neuron(i - 1))
+            call NN_Parameters_LayerDT_initialise(this%layers(i), setup%hidden_neuron(i), n_in_layer)
+            n_in_layer = setup%hidden_neuron(i)
 
-            end do
+            this%neurons(i + 1) = setup%hidden_neuron(i)
 
-            call NN_Parameters_LayerDT_initialise(this%layers(this%n_layers), n_out, &
-            & setup%hidden_neuron(setup%nhl))
+        end do
 
-        else
-            call NN_Parameters_LayerDT_initialise(this%layers(1), n_out, n_in)
+        call NN_Parameters_LayerDT_initialise(this%layers(this%n_layers), n_out, n_in_layer)
 
-        end if
+        this%neurons(this%n_layers + 1) = n_out
 
     end subroutine NN_ParametersDT_initialise
 

@@ -9,8 +9,8 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_parameters_manipulation !% only: control_to_parameters
-    use md_forward_structure !% only: gr4_lr_forward, gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, &
-    !& loieau_lr_forward, grd_lr_forward
+    use md_forward_structure !% only: gr4_lr_forward, gr4_ode_lr_forward, gr4_neural_ode_lr_forward &
+    !& gr4_kw_forward, gr5_lr_forward, gr5_kw_forward, loieau_lr_forward, grd_lr_forward
     use mwd_cost !% only: compute_cost
 
     implicit none
@@ -33,9 +33,13 @@ subroutine base_forward_run(setup, mesh, input_data, parameters, output, options
 
         call gr4_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
-    case ("gr4-lr-ss")
+    case ("gr4-ode-lr")
 
-        call gr4_lr_ss_forward(setup, mesh, input_data, parameters, output, options, returns)
+        call gr4_ode_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+
+    case ("gr4-neural-ode-lr")
+
+        call gr4_neural_ode_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
 
     case ("gr4-kw")
 

@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from smash._constant import (
     STRUCTURE_NAME,
+    NN_STRUCTURE_NAME,
     SERR_MU_MAPPING_NAME,
     SERR_SIGMA_MAPPING_NAME,
     INPUT_DATA_FORMAT,
@@ -13,7 +14,6 @@ from smash._constant import (
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
-    NN_STATE_SPACE_STRUCTURES,
     WB_INITIALIZER,
 )
 
@@ -39,10 +39,15 @@ from smash.factory.samples._standardize import (
 def _standardize_setup(setup: SetupDT):
     if setup.structure.lower() in STRUCTURE_NAME:
         setup.structure = setup.structure.lower()
+        if setup.structure in NN_STRUCTURE_NAME and setup.nhl == 0:
+            warnings.warn(
+                f"Neural networks are used with no hidden layers in the {setup.structure} structure"
+            )
     else:
         raise ValueError(
             f"Unknown structure '{setup.structure}'. Choices: {STRUCTURE_NAME}"
         )
+
     if setup.serr_mu_mapping.capitalize() in SERR_MU_MAPPING_NAME:
         setup.serr_mu_mapping = setup.serr_mu_mapping.capitalize()
     else:
@@ -153,11 +158,6 @@ def _standardize_setup(setup: SetupDT):
     if setup.descriptor_format not in INPUT_DATA_FORMAT:
         raise ValueError(
             f"Unknown descriptor_format '{setup.descriptor_format}'. Choices: {INPUT_DATA_FORMAT}"
-        )
-
-    if setup.structure in NN_STATE_SPACE_STRUCTURES and setup.nhl == 0:
-        warnings.warn(
-            f"Neural networks are used with no hidden layers in the {setup.structure} structure"
         )
 
 

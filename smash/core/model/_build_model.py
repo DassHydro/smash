@@ -4,6 +4,7 @@ from smash._constant import (
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
     STRUCTURE_ADJUST_CI,
+    NN_STRUCTURE_NAME,
     DEFAULT_RR_PARAMETERS,
     DEFAULT_RR_INITIAL_STATES,
     SERR_MU_MAPPING_PARAMETERS,
@@ -160,6 +161,12 @@ def _build_parameters(
     for i, key in enumerate(parameters.serr_sigma_parameters.keys):
         value = DEFAULT_SERR_SIGMA_PARAMETERS[key]
         parameters.serr_sigma_parameters.values[..., i] = value
+
+    # % Initalize weights and biases of ANN if neural ode state-space structure is used
+    if setup.structure in NN_STRUCTURE_NAME:
+        for layer in parameters.nn_parameters.layers:
+            layer.weight = 0  # zero init
+            layer.bias = 0  # zero init
 
 
 def _build_output(

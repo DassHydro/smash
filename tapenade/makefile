@@ -37,6 +37,12 @@ post-sed:
 	# Therefore, just seding the two derived type affected.
 	sed -i 's/TYPE(PARAMETERSDT_DIFF)/TYPE(PARAMETERSDT)/g' $(ADJ_FILE)
 	sed -i 's/TYPE(OUTPUTDT_DIFF)/TYPE(OUTPUTDT)/g' $(ADJ_FILE)
+	# Handle errors with neural network derived type
+	sed -i 's/SIZE(parameters_b%nn_parameters%layers(ii1)%weight/SIZE(parameters_b%nn_parameters%layers/g' $(ADJ_FILE)
+	sed -i 's/SIZE(parameters_b%nn_parameters%layers(ii1)%bias/SIZE(parameters_b%nn_parameters%layers/g' $(ADJ_FILE)
+	sed -i 's/SIZE(parameters_d%nn_parameters%layers(ii1)%weight/SIZE(parameters_d%nn_parameters%layers/g' $(ADJ_FILE)
+	sed -i 's/SIZE(parameters_d%nn_parameters%layers(ii1)%bias/SIZE(parameters_d%nn_parameters%layers/g' $(ADJ_FILE)
+
 mv:
 	# mv
 	mv $(ADJ_FILE) $(SRC)/forward/.

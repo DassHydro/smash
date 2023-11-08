@@ -8,7 +8,8 @@ import numpy as np
 
 STRUCTURE_NAME = [
     "gr4-lr",
-    "gr4-lr-ss",
+    "gr4-ode-lr",
+    "gr4-neural-ode-lr",
     "gr4-kw",
     "gr5-lr",
     "gr5-kw",
@@ -16,6 +17,10 @@ STRUCTURE_NAME = [
     "grd-lr",
     "vic3l-lr",
 ]
+
+NN_STRUCTURE_NAME = [
+    "gr4-neural-ode-lr"
+]  # , "gr4-neural-ode-kw", "gr4-nn-alg-lr", "gr4-nn-alg-kw"]
 
 RR_PARAMETERS = [
     "ci",  # % gr
@@ -59,7 +64,8 @@ STRUCTURE_RR_PARAMETERS = dict(
         STRUCTURE_NAME,
         [
             ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
-            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr-ss
+            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-ode-lr
+            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-neural-ode-lr
             ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
             ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
             ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
@@ -87,7 +93,8 @@ STRUCTURE_RR_STATES = dict(
         STRUCTURE_NAME,
         [
             ["hi", "hp", "ht", "hlr"],  # % gr4-lr
-            ["hi", "hp", "ht", "hlr"],  # % gr4-lr-ss
+            ["hi", "hp", "ht", "hlr"],  # % gr4-ode-lr
+            ["hi", "hp", "ht", "hlr"],  # % gr4-neural-ode-lr
             ["hi", "hp", "ht"],  # % gr4-kw
             ["hi", "hp", "ht", "hlr"],  # % gr5-lr
             ["hi", "hp", "ht"],  # % gr5-kw
@@ -105,11 +112,6 @@ STRUCTURE_ADJUST_CI = dict(
         ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],
     )
 )
-
-### NEURAL ODE STATE-SPACE STRUCTURE ###
-########################################
-
-NN_STATE_SPACE_STRUCTURES = ["gr4-lr-ss"]
 
 ### FEASIBLE PARAMETERS ###
 ###########################

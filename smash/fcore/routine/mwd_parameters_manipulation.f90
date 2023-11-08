@@ -24,6 +24,7 @@
 !%      - multi_polynomial_rr_parameters_get_control_size
 !%      - multi_polynomial_rr_initial_states_get_control_size
 !%      - serr_mu_parameters_get_control_size
+!%      - nn_parameters_get_control_size
 !%      - get_control_sizes
 !%      - uniform_rr_parameters_fill_control
 !%      - uniform_rr_initial_states_fill_control
@@ -35,6 +36,7 @@
 !%      - multi_polynomial_rr_initial_states_fill_control
 !%      - serr_mu_parameters_fill_control
 !%      - serr_sigma_parameters_fill_control
+!%      - nn_parameters_fill_control
 !%      - fill_control
 !%      - uniform_rr_parameters_fill_parameters
 !%      - uniform_rr_initial_states_fill_parameters
@@ -46,6 +48,7 @@
 !%      - multi_polynomial_rr_initial_states_fill_parameters
 !%      - serr_mu_parameters_fill_parameters
 !%      - serr_sigma_parameters_fill_parameters
+!%      - nn_parameters_fill_parameters
 !%      - fill_parameters
 
 module mwd_parameters_manipulation
@@ -515,6 +518,32 @@ contains
 
     end subroutine serr_sigma_parameters_get_control_size
 
+    subroutine nn_parameters_get_control_size(setup, n)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        integer, intent(inout) :: n
+
+        integer :: i, n_in_layer
+        integer :: n_in = 4  ! fixed NN input size
+        integer :: n_out = 5  ! fixed NN output size
+
+        n = 0
+
+        n_in_layer = n_in
+
+        do i = 1, setup%nhl
+
+            n = n + setup%hidden_neuron(i)*(n_in_layer + 1)
+            n_in_layer = setup%hidden_neuron(i)
+
+        end do
+
+        n = n + n_out*(n_in_layer + 1)
+
+    end subroutine nn_parameters_get_control_size
+
     subroutine get_control_sizes(setup, mesh, options, nbk)
 
         implicit none
@@ -551,6 +580,8 @@ contains
         ! Directly working with hyper parameters
         call serr_mu_parameters_get_control_size(options, nbk(3))
         call serr_sigma_parameters_get_control_size(options, nbk(4))
+
+        call nn_parameters_get_control_size(setup, nbk(5))
 
     end subroutine get_control_sizes
 
@@ -986,6 +1017,48 @@ contains
 
     end subroutine serr_sigma_parameters_fill_control
 
+    subroutine nn_parameters_fill_control(setup, parameters)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(ParametersDT), intent(inout) :: parameters
+
+        character(lchar) :: name
+        integer :: i, j, k, l
+
+        j = sum(parameters%control%nbk(1:4))
+
+        do i = 1, setup%nhl + 1
+
+            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+
+                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+
+                    j = j + 1
+                    parameters%control%x(j) = parameters%nn_parameters%layers(i)%weight(l, k)
+                    parameters%control%nbd(j) = 0
+                    write (name, '(a,i0,a,i0,a,i0)') "layer", i, "weight", l, "-", k
+                    parameters%control%name(j) = name
+
+                end do
+
+            end do
+
+            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
+
+                j = j + 1
+                parameters%control%x(j) = parameters%nn_parameters%layers(i)%bias(k)
+                parameters%control%nbd(j) = 0
+                write (name, '(a,i0,a,i0)') "layer", i, "bias", k
+                parameters%control%name(j) = name
+
+            end do
+
+        end do
+
+    end subroutine nn_parameters_fill_control
+
     subroutine fill_control(setup, mesh, input_data, parameters, options)
 
         implicit none
@@ -1023,6 +1096,8 @@ contains
         ! Directly working with hyper parameters
         call serr_mu_parameters_fill_control(setup, mesh, parameters, options)
         call serr_sigma_parameters_fill_control(setup, mesh, parameters, options)
+
+        call nn_parameters_fill_control(setup, parameters)
 
         ! Store background
         parameters%control%x_bkg = parameters%control%x
@@ -1425,6 +1500,41 @@ contains
 
     end subroutine serr_sigma_parameters_fill_parameters
 
+    subroutine nn_parameters_fill_parameters(setup, parameters)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(ParametersDT), intent(inout) :: parameters
+
+        integer :: i, j, k, l
+
+        j = sum(parameters%control%nbk(1:4))
+
+        do i = 1, setup%nhl + 1
+
+            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+
+                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+
+                    j = j + 1
+                    parameters%nn_parameters%layers(i)%weight(l, k) = parameters%control%x(j)
+
+                end do
+
+            end do
+
+            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
+
+                j = j + 1
+                parameters%nn_parameters%layers(i)%bias(k) = parameters%control%x(j)
+
+            end do
+
+        end do
+
+    end subroutine nn_parameters_fill_parameters
+
     subroutine fill_parameters(setup, mesh, input_data, parameters, options)
 
         implicit none
@@ -1462,6 +1572,8 @@ contains
         ! Directly working with hyper parameters
         call serr_mu_parameters_fill_parameters(setup, mesh, parameters, options)
         call serr_sigma_parameters_fill_parameters(setup, mesh, parameters, options)
+
+        call nn_parameters_fill_parameters(setup, parameters)
 
     end subroutine fill_parameters
 

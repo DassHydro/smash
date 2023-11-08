@@ -41,6 +41,7 @@ contains
 
     subroutine dot_product_2d_1d(a, x, b)
         !% Multiply 2D matrix (m, n) with 1D vector (n,) producing a 1D vector of (m,)
+        !% This routine accepts all arguments x and b with size(x)>=n and size(b)>=m 
 
         implicit none
 
@@ -48,15 +49,12 @@ contains
         real(sp), dimension(:), intent(in) :: x
         real(sp), dimension(:), intent(inout) :: b
 
-        integer :: m, n, i, j
-
-        m = size(a, 1)
-        n = size(a, 2)
+        integer :: i, j
 
         b = 0._sp
 
-        do j = 1, n
-            do i = 1, m
+        do j = 1, size(a, 2)
+            do i = 1, size(a, 1)
                 b(i) = b(i) + a(i, j)*x(j)
             end do
         end do
