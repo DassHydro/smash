@@ -12,6 +12,7 @@ module md_routing_operator
     use md_constant !% only : sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_options !% only: OptionsDT
 
     implicit none
 
@@ -123,7 +124,7 @@ contains
 
     end subroutine kinematic_wave1d
 
-    subroutine lag0_timestep(setup, mesh, qt, q)
+    subroutine lag0_timestep(setup, mesh, options, qt, q)
 
         implicit none
 
@@ -131,33 +132,60 @@ contains
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(in) :: qt
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(inout) :: q
 
-        integer :: i, row, col
+        integer :: i, j, row, col
         real(sp) :: qup
 
         q(:, :, zq) = qt(:, :, zq)
 
-        ! TODO: replace this loop with loop on routing partitions
-        do i = 1, mesh%nrow*mesh%ncol
+        ! Skip the first partition because boundary cells are not routed
+        do i = 2, mesh%npar
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+            ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+            ! is duplicated ... Maybe there is another way to do it.
+            if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+                !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+                !$OMP& shared(setup, mesh, qt, q, i) &
+                !$OMP& private(j, row, col, qup)
+                do j = 1, mesh%ncpar(i)
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
 
-            if (mesh%flwacc(row, col) .le. mesh%dx(row, col)*mesh%dy(row, col)) cycle
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-            call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
 
-            q(row, col, zq) = q(row, col, zq) + qup
+                    q(row, col, zq) = q(row, col, zq) + qup
+
+                end do
+                !$OMP end parallel do
+
+            else
+
+                do j = 1, mesh%ncpar(i)
+
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
+
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
+
+                    q(row, col, zq) = q(row, col, zq) + qup
+
+                end do
+
+            end if
 
         end do
 
     end subroutine lag0_timestep
 
-    subroutine lr_timestep(setup, mesh, qt, llr, hlr, q)
+    subroutine lr_timestep(setup, mesh, options, qt, llr, hlr, q)
 
         implicit none
 
@@ -165,36 +193,64 @@ contains
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(in) :: qt
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: llr
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hlr
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(inout) :: q
 
-        integer :: i, row, col
+        integer :: i, j, row, col, ncpu
         real(sp) :: qup
 
         q(:, :, zq) = qt(:, :, zq)
 
-        ! TODO: replace this loop with loop on routing partitions
-        do i = 1, mesh%nrow*mesh%ncol
+        ! Skip the first partition because boundary cells are not routed
+        do i = 2, mesh%npar
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+            ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+            ! is duplicated ... Maybe there is another way to do it.
+            if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+                !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+                !$OMP& shared(setup, mesh, qt, llr, hlr, q, i) &
+                !$OMP& private(j, row, col, qup)
+                do j = 1, mesh%ncpar(i)
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
 
-            if (mesh%flwacc(row, col) .le. mesh%dx(row, col)*mesh%dy(row, col)) cycle
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-            call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
 
-            call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
-            & llr(row, col), hlr(row, col), qup, q(row, col, zq))
+                    call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
+                    & llr(row, col), hlr(row, col), qup, q(row, col, zq))
+
+                end do
+                !$OMP end parallel do
+
+            else
+
+                do j = 1, mesh%ncpar(i)
+
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
+
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qup)
+
+                    call linear_routing(mesh%dx(row, col), mesh%dy(row, col), setup%dt, mesh%flwacc(row, col), &
+                    & llr(row, col), hlr(row, col), qup, q(row, col, zq))
+
+                end do
+
+            end if
 
         end do
 
     end subroutine lr_timestep
 
-    subroutine kw_timestep(setup, mesh, qt, akw, bkw, q)
+    subroutine kw_timestep(setup, mesh, options, qt, akw, bkw, q)
 
         implicit none
 
@@ -202,33 +258,65 @@ contains
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(in) :: qt
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: akw, bkw
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(inout) :: q
 
-        integer :: i, row, col
+        integer :: i, j, row, col
         real(sp) :: qlijm1, qlij, qim1j, qijm1
 
         q(:, :, zq) = qt(:, :, zq)
 
-        ! TODO: replace this loop with loop on routing partitions
-        do i = 1, mesh%nrow*mesh%ncol
+        ! Skip the first partition because boundary cells are not routed
+        do i = 2, mesh%npar
 
-            row = mesh%path(1, i)
-            col = mesh%path(2, i)
+            ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+            ! is duplicated ... Maybe there is another way to do it.
+            if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+                !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+                !$OMP& shared(setup, mesh, qt, akw, bkw, q, i) &
+                !$OMP& private(j, row, col, qlijm1, qlij, qim1j, qijm1)
+                do j = 1, mesh%ncpar(i)
 
-            if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
 
-            if (mesh%flwacc(row, col) .le. mesh%dx(row, col)*mesh%dy(row, col)) cycle
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-            qlijm1 = qt(row, col, zq - 1)
-            qlij = qt(row, col, zq)
-            qijm1 = q(row, col, zq - 1)
+                    qlijm1 = qt(row, col, zq - 1)
+                    qlij = qt(row, col, zq)
+                    qijm1 = q(row, col, zq - 1)
 
-            call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qim1j)
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qim1j)
 
-            call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
-            & akw(row, col), bkw(row, col), qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+                    call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
+                    & akw(row, col), bkw(row, col), qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+
+                end do
+                !$OMP end parallel do
+
+            else
+
+                do j = 1, mesh%ncpar(i)
+
+                    row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
+                    col = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 2)
+
+                    if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                    qlijm1 = qt(row, col, zq - 1)
+                    qlij = qt(row, col, zq)
+                    qijm1 = q(row, col, zq - 1)
+
+                    call upstream_discharge(row, col, mesh%flwdir, q(:, :, zq), qim1j)
+
+                    call kinematic_wave1d(mesh%dx(row, col), mesh%dy(row, col), setup%dt, &
+                    & akw(row, col), bkw(row, col), qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+
+                end do
+
+            end if
 
         end do
 

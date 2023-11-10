@@ -10,7 +10,7 @@ import os
 def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
     res = {}
 
-    ncpu = max(1, os.cpu_count() - 1)
+    ncpu = min(5, os.cpu_count())
 
     for model in model_structure:
         # % There is no snow data for the Cance dataset.
@@ -74,7 +74,7 @@ def test_sparse_forward_run():
 
 def test_multiple_forward_run():
     instance = pytest.model.copy()
-    ncpu = max(1, os.cpu_count() - 1)
+    ncpu = min(5, os.cpu_count())
 
     problem = {
         "num_vars": 5,

@@ -20,9 +20,13 @@
 !%          ``flwdir``               Flow directions
 !%          ``flwacc``               Flow accumulation                                             [m2]
 !%          ``flwdst``               Flow distances from main outlet(s)                            [m]
+!%          ``npar``                 Number of partition
+!%          ``ncpar``                Number of cells per partition
+!%          ``cscpar``               Cumulative sum of cells per partition
+!%          ``cpar_to_rowcol``       Matrix linking partition cell (c) to (row, col)
+!%          ``flwpar``               Flow partitions
 !%          ``nac``                  Number of active cell
 !%          ``active_cell``          Mask of active cell
-!%          ``path``                 Solver path
 !%          ``ng``                   Number of gauge
 !%          ``gauge_pos``            Gauge position
 !%          ``code``                 Gauge code
@@ -62,7 +66,11 @@ module mwd_mesh
         real(sp), dimension(:, :), allocatable :: flwacc
         real(sp), dimension(:, :), allocatable :: flwdst
 
-        integer, dimension(:, :), allocatable :: path !$F90W index-array
+        integer :: npar
+        integer, dimension(:), allocatable :: ncpar
+        integer, dimension(:), allocatable :: cscpar
+        integer, dimension(:, :), allocatable :: cpar_to_rowcol !$F90W index-array
+        integer, dimension(:, :), allocatable :: flwpar
 
         integer :: nac
         integer, dimension(:, :), allocatable :: active_cell
@@ -80,16 +88,17 @@ module mwd_mesh
 
 contains
 
-    subroutine MeshDT_initialise(this, setup, nrow, ncol, ng)
+    subroutine MeshDT_initialise(this, setup, nrow, ncol, npar, ng)
 
         implicit none
 
         type(MeshDT), intent(inout) :: this
         type(SetupDT), intent(inout) :: setup
-        integer, intent(in) :: nrow, ncol, ng
+        integer, intent(in) :: nrow, ncol, npar, ng
 
         this%nrow = nrow
         this%ncol = ncol
+        this%npar = npar
         this%ng = ng
 
         this%xres = -99._sp
@@ -113,8 +122,17 @@ contains
         allocate (this%flwdst(this%nrow, this%ncol))
         this%flwdst = -99._sp
 
-        allocate (this%path(2, this%nrow*this%ncol))
-        this%path = -99
+        allocate (this%ncpar(this%npar))
+        this%ncpar = -99
+
+        allocate (this%cscpar(this%npar))
+        this%cscpar = -99
+
+        allocate (this%cpar_to_rowcol(this%nrow*this%ncol, 2))
+        this%cpar_to_rowcol = -99
+
+        allocate (this%flwpar(this%nrow, this%ncol))
+        this%flwpar = -99
 
         allocate (this%active_cell(this%nrow, this%ncol))
         this%active_cell = -99

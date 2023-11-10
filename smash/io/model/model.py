@@ -141,6 +141,7 @@ def read_model(path: str) -> Model:
                     instance.setup,
                     f["mesh"].attrs["nrow"],
                     f["mesh"].attrs["ncol"],
+                    f["mesh"].attrs["npar"],
                     f["mesh"].attrs["ng"],
                 )
 

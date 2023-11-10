@@ -8,7 +8,7 @@ flwdir = load_dataset("flwdir")
 bbox_France = (100_000, 1_250_000, 6_050_000, 7_125_000)
 
 mesh = generate_mesh(
-    path=flwdir,
+    flwdir_path=flwdir,
     bbox=bbox_France,
 )
 

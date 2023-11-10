@@ -3,6 +3,7 @@ module md_snow_operator
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_options !% only: OptionsDT
 
     implicit none
 
@@ -26,12 +27,13 @@ contains
 
     end subroutine simple_snow
 
-    subroutine ssn_timestep(setup, mesh, snow, temp, kmlt, hs, mlt)
+    subroutine ssn_timestep(setup, mesh, options, snow, temp, kmlt, hs, mlt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: snow, temp
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: kmlt
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hs
@@ -39,6 +41,9 @@ contains
 
         integer :: row, col
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, snow, temp, kmlt, hs, mlt) &
+        !$OMP& private(row, col)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -56,6 +61,7 @@ contains
 
             end do
         end do
+        !$OMP end parallel do
 
     end subroutine ssn_timestep
 

@@ -119,7 +119,9 @@ class Model(object):
 
             _map_dict_to_object(setup, self.setup)
 
-            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
+            self.mesh = MeshDT(
+                self.setup, mesh["nrow"], mesh["ncol"], mesh["npar"], mesh["ng"]
+            )
 
             _map_dict_to_object(mesh, self.mesh)
 

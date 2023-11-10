@@ -84,6 +84,7 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_descriptor:
         _read_descriptor(setup, mesh, input_data)
 
+    print("</> Computing mean atmospheric data")
     wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
 
 

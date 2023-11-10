@@ -18,6 +18,7 @@ module md_gr_operator
     use md_constant !% only : sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_options !% only: OptionsDT
 
     implicit none
 
@@ -132,12 +133,13 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr4_timestep(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
@@ -146,6 +148,9 @@ contains
         integer :: row, col
         real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -176,20 +181,22 @@ contains
 
                 qt(row, col) = qr + qd
 
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
             end do
         end do
-
-        ! Transform from mm/dt to m3/s
-        qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+        !$OMP end parallel do
 
     end subroutine gr4_timestep
 
-    subroutine gr5_timestep(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt)
+    subroutine gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc, aexc
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hi, hp, ht
@@ -198,6 +205,9 @@ contains
         integer :: row, col
         real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt) &
+        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -228,28 +238,33 @@ contains
 
                 qt(row, col) = qr + qd
 
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
             end do
         end do
-
-        ! Transform from mm/dt to m3/s
-        qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+        !$OMP end parallel do
 
     end subroutine gr5_timestep
 
-    subroutine grd_timestep(setup, mesh, prcp, pet, cp, ct, hp, ht, qt)
+    subroutine grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: cp, ct
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hp, ht
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
 
         integer :: row, col
-        real(sp) :: ei, pn, en, pr, perc, l, prr, qr
+        real(sp) :: ei, pn, en, pr, perc, prr, qr
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, cp, ct, hp, ht, qt) &
+        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, qr)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -278,28 +293,33 @@ contains
 
                 qt(row, col) = qr
 
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
             end do
         end do
-
-        ! Transform from mm/dt to m3/s
-        qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+        !$OMP end parallel do
 
     end subroutine grd_timestep
 
-    subroutine loieau_timestep(setup, mesh, prcp, pet, ca, cc, kb, ha, hc, qt)
+    subroutine loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: ca, cc, kb
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: ha, hc
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
 
         integer :: row, col
-        real(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd
+        real(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, ca, cc, kb, ha, hc, qt) &
+        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -331,11 +351,12 @@ contains
 
                 qt(row, col) = kb(row, col)*(qr + qd)
 
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
             end do
         end do
-
-        ! Transform from mm/dt to m3/s
-        qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+        !$OMP end parallel do
 
     end subroutine loieau_timestep
 

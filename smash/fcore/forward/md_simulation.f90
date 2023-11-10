@@ -328,7 +328,7 @@ contains
 
                 ! Get extended atmospheric data ; snow and temp
                 call get_extended_atmos_data_timestep(setup, mesh, input_data, t, snow, temp)
-                call ssn_timestep(setup, mesh, snow, temp, kmlt, hs, mlt)
+                call ssn_timestep(setup, mesh, options, snow, temp, kmlt, hs, mlt)
 
                 prcp = prcp + mlt
 
@@ -340,7 +340,7 @@ contains
                 ! 'gr4' module
             case ("gr4")
 
-                call gr4_timestep(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt(:, :, zq))
+                call gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt(:, :, zq))
 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
@@ -349,7 +349,7 @@ contains
                 ! 'gr5' module
             case ("gr5")
 
-                call gr5_timestep(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt(:, :, zq))
+                call gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt(:, :, zq))
 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
@@ -358,7 +358,7 @@ contains
                 ! 'grd' module
             case ("grd")
 
-                call grd_timestep(setup, mesh, prcp, pet, cp, ct, hp, ht, qt(:, :, zq))
+                call grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt(:, :, zq))
 
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
@@ -366,7 +366,7 @@ contains
                 ! 'loieau' module
             case ("loieau")
 
-                call loieau_timestep(setup, mesh, prcp, pet, ca, cc, kb, ha, hc, qt(:, :, zq))
+                call loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt(:, :, zq))
 
                 call set_rr_states(output%rr_final_states, "ha", ha)
                 call set_rr_states(output%rr_final_states, "hc", hc)
@@ -374,7 +374,7 @@ contains
                 ! 'vic3l' module
             case ("vic3l")
 
-                call vic3l_timestep(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, &
+                call vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, &
                 & hcl, husl, hmsl, hbsl, qt(:, :, zq))
 
                 call set_rr_states(output%rr_final_states, "hcl", hcl)
@@ -390,19 +390,19 @@ contains
                 ! 'lag0' module
             case ("lag0")
 
-                call lag0_timestep(setup, mesh, qt, q)
+                call lag0_timestep(setup, mesh, options, qt, q)
 
                 ! 'lr' module
             case ("lr")
 
-                call lr_timestep(setup, mesh, qt, llr, hlr, q)
+                call lr_timestep(setup, mesh, options, qt, llr, hlr, q)
 
                 call set_rr_states(output%rr_final_states, "hlr", hlr)
 
                 ! 'kw' module
             case ("kw")
 
-                call kw_timestep(setup, mesh, qt, akw, bkw, q)
+                call kw_timestep(setup, mesh, options, qt, akw, bkw, q)
 
             end select
 
