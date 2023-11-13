@@ -124,7 +124,7 @@ contains
         this%nhl = nhl
 
         allocate (this%hidden_neuron(max(0, nhl)))
-        this%hidden_neuron = 16
+        this%hidden_neuron = 16  ! TODO: Handle this with Python constant (when merging git)
 
     end subroutine SetupDT_initialise
 

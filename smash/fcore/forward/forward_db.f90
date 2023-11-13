@@ -6678,30 +6678,28 @@ CONTAINS
     INTEGER :: i, j, k, l
     INTRINSIC SUM
     INTRINSIC SIZE
-    IF (parameters%control%nbk(5) .GT. 0) THEN
-      j = SUM(parameters%control%nbk(1:4))
-      DO i=1,setup%nhl+1
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
-          DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
-            j = j + 1
-            parameters%control%x(j) = parameters%nn_parameters%layers(i)&
-&             %weight(l, k)
-            parameters%control%nbd(j) = 0
-            WRITE(name, '(a,i0,a,i0,a,i0)') 'layer', i, 'weight', l, '-'&
-&           , k
-            parameters%control%name(j) = name
-          END DO
-        END DO
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+    j = SUM(parameters%control%nbk(1:4))
+    DO i=1,setup%nhl+1
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
+        DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
           j = j + 1
           parameters%control%x(j) = parameters%nn_parameters%layers(i)%&
-&           bias(k)
+&           weight(l, k)
           parameters%control%nbd(j) = 0
-          WRITE(name, '(a,i0,a,i0)') 'layer', i, 'bias', k
+          WRITE(name, '(a,i0,a,i0,a,i0)') 'layer', i, 'weight', l, '-', &
+&         k
           parameters%control%name(j) = name
         END DO
       END DO
-    END IF
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+        j = j + 1
+        parameters%control%x(j) = parameters%nn_parameters%layers(i)%&
+&         bias(k)
+        parameters%control%nbd(j) = 0
+        WRITE(name, '(a,i0,a,i0)') 'layer', i, 'bias', k
+        parameters%control%name(j) = name
+      END DO
+    END DO
   END SUBROUTINE NN_PARAMETERS_FILL_CONTROL
 
   SUBROUTINE FILL_CONTROL(setup, mesh, input_data, parameters, options)
@@ -8092,40 +8090,31 @@ CONTAINS
     INTRINSIC SUM
     INTRINSIC SIZE
     INTEGER :: ii1
-    IF (parameters%control%nbk(5) .GT. 0) THEN
-      j = SUM(parameters%control%nbk(1:4))
-      DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
-        parameters_d%nn_parameters%layers(ii1)%weight = 0.0_4
-      END DO
-      DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
-        parameters_d%nn_parameters%layers(ii1)%bias = 0.0_4
-      END DO
-      DO i=1,setup%nhl+1
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
-          DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
-            j = j + 1
-            parameters_d%nn_parameters%layers(i)%weight(l, k) = &
-&             parameters_d%control%x(j)
-            parameters%nn_parameters%layers(i)%weight(l, k) = parameters&
-&             %control%x(j)
-          END DO
-        END DO
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+    j = SUM(parameters%control%nbk(1:4))
+    DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
+      parameters_d%nn_parameters%layers(ii1)%weight = 0.0_4
+    END DO
+    DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
+      parameters_d%nn_parameters%layers(ii1)%bias = 0.0_4
+    END DO
+    DO i=1,setup%nhl+1
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
+        DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
           j = j + 1
-          parameters_d%nn_parameters%layers(i)%bias(k) = parameters_d%&
-&           control%x(j)
-          parameters%nn_parameters%layers(i)%bias(k) = parameters%&
+          parameters_d%nn_parameters%layers(i)%weight(l, k) = &
+&           parameters_d%control%x(j)
+          parameters%nn_parameters%layers(i)%weight(l, k) = parameters%&
 &           control%x(j)
         END DO
       END DO
-    ELSE
-      DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
-        parameters_d%nn_parameters%layers(ii1)%weight = 0.0_4
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+        j = j + 1
+        parameters_d%nn_parameters%layers(i)%bias(k) = parameters_d%&
+&         control%x(j)
+        parameters%nn_parameters%layers(i)%bias(k) = parameters%control%&
+&         x(j)
       END DO
-      DO ii1=1,SIZE(parameters_d%nn_parameters%layers, 1)
-        parameters_d%nn_parameters%layers(ii1)%bias = 0.0_4
-      END DO
-    END IF
+    END DO
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D
 
 !  Differentiation of nn_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -8146,43 +8135,41 @@ CONTAINS
     INTEGER :: ad_to
     INTEGER :: ad_to0
     INTEGER :: ad_to1
-    IF (parameters%control%nbk(5) .GT. 0) THEN
-      j = SUM(parameters%control%nbk(1:4))
-      DO i=1,setup%nhl+1
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
-          DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
-            CALL PUSHINTEGER4(j)
-            j = j + 1
-          END DO
-          CALL PUSHINTEGER4(l - 1)
-        END DO
-        CALL PUSHINTEGER4(k - 1)
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+    j = SUM(parameters%control%nbk(1:4))
+    DO i=1,setup%nhl+1
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
+        DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
           CALL PUSHINTEGER4(j)
           j = j + 1
         END DO
-        CALL PUSHINTEGER4(k - 1)
+        CALL PUSHINTEGER4(l - 1)
       END DO
-      DO i=setup%nhl+1,1,-1
-        CALL POPINTEGER4(ad_to1)
-        DO k=ad_to1,1,-1
+      CALL PUSHINTEGER4(k - 1)
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+        CALL PUSHINTEGER4(j)
+        j = j + 1
+      END DO
+      CALL PUSHINTEGER4(k - 1)
+    END DO
+    DO i=setup%nhl+1,1,-1
+      CALL POPINTEGER4(ad_to1)
+      DO k=ad_to1,1,-1
+        parameters_b%control%x(j) = parameters_b%control%x(j) + &
+&         parameters_b%nn_parameters%layers(i)%bias(k)
+        parameters_b%nn_parameters%layers(i)%bias(k) = 0.0_4
+        CALL POPINTEGER4(j)
+      END DO
+      CALL POPINTEGER4(ad_to0)
+      DO k=ad_to0,1,-1
+        CALL POPINTEGER4(ad_to)
+        DO l=ad_to,1,-1
           parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&           parameters_b%nn_parameters%layers(i)%bias(k)
-          parameters_b%nn_parameters%layers(i)%bias(k) = 0.0_4
+&           parameters_b%nn_parameters%layers(i)%weight(l, k)
+          parameters_b%nn_parameters%layers(i)%weight(l, k) = 0.0_4
           CALL POPINTEGER4(j)
         END DO
-        CALL POPINTEGER4(ad_to0)
-        DO k=ad_to0,1,-1
-          CALL POPINTEGER4(ad_to)
-          DO l=ad_to,1,-1
-            parameters_b%control%x(j) = parameters_b%control%x(j) + &
-&             parameters_b%nn_parameters%layers(i)%weight(l, k)
-            parameters_b%nn_parameters%layers(i)%weight(l, k) = 0.0_4
-            CALL POPINTEGER4(j)
-          END DO
-        END DO
       END DO
-    END IF
+    END DO
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_B
 
   SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS(setup, parameters)
@@ -8192,23 +8179,21 @@ CONTAINS
     INTEGER :: i, j, k, l
     INTRINSIC SUM
     INTRINSIC SIZE
-    IF (parameters%control%nbk(5) .GT. 0) THEN
-      j = SUM(parameters%control%nbk(1:4))
-      DO i=1,setup%nhl+1
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
-          DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
-            j = j + 1
-            parameters%nn_parameters%layers(i)%weight(l, k) = parameters&
-&             %control%x(j)
-          END DO
-        END DO
-        DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+    j = SUM(parameters%control%nbk(1:4))
+    DO i=1,setup%nhl+1
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%weight, 2)
+        DO l=1,SIZE(parameters%nn_parameters%layers(i)%weight, 1)
           j = j + 1
-          parameters%nn_parameters%layers(i)%bias(k) = parameters%&
+          parameters%nn_parameters%layers(i)%weight(l, k) = parameters%&
 &           control%x(j)
         END DO
       END DO
-    END IF
+      DO k=1,SIZE(parameters%nn_parameters%layers(i)%bias)
+        j = j + 1
+        parameters%nn_parameters%layers(i)%bias(k) = parameters%control%&
+&         x(j)
+      END DO
+    END DO
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
