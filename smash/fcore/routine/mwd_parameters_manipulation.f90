@@ -540,7 +540,7 @@ contains
 
         end do
 
-        n = n + n_out*(n_in_layer + 1)
+        if (setup%nhl .ge. 0) n = n + n_out*(n_in_layer + 1)
 
     end subroutine nn_parameters_get_control_size
 
@@ -1027,35 +1027,39 @@ contains
         character(lchar) :: name
         integer :: i, j, k, l
 
-        j = sum(parameters%control%nbk(1:4))
+        if (parameters%control%nbk(5) .gt. 0) then
 
-        do i = 1, setup%nhl + 1
+            j = sum(parameters%control%nbk(1:4))
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+            do i = 1, setup%nhl + 1
 
-                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+                do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+
+                    do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+
+                        j = j + 1
+                        parameters%control%x(j) = parameters%nn_parameters%layers(i)%weight(l, k)
+                        parameters%control%nbd(j) = 0
+                        write (name, '(a,i0,a,i0,a,i0)') "layer", i, "weight", l, "-", k
+                        parameters%control%name(j) = name
+
+                    end do
+
+                end do
+
+                do k = 1, size(parameters%nn_parameters%layers(i)%bias)
 
                     j = j + 1
-                    parameters%control%x(j) = parameters%nn_parameters%layers(i)%weight(l, k)
+                    parameters%control%x(j) = parameters%nn_parameters%layers(i)%bias(k)
                     parameters%control%nbd(j) = 0
-                    write (name, '(a,i0,a,i0,a,i0)') "layer", i, "weight", l, "-", k
+                    write (name, '(a,i0,a,i0)') "layer", i, "bias", k
                     parameters%control%name(j) = name
 
                 end do
 
             end do
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
-
-                j = j + 1
-                parameters%control%x(j) = parameters%nn_parameters%layers(i)%bias(k)
-                parameters%control%nbd(j) = 0
-                write (name, '(a,i0,a,i0)') "layer", i, "bias", k
-                parameters%control%name(j) = name
-
-            end do
-
-        end do
+        end if
 
     end subroutine nn_parameters_fill_control
 
@@ -1509,29 +1513,33 @@ contains
 
         integer :: i, j, k, l
 
-        j = sum(parameters%control%nbk(1:4))
+        if (parameters%control%nbk(5) .gt. 0) then
 
-        do i = 1, setup%nhl + 1
+            j = sum(parameters%control%nbk(1:4))
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+            do i = 1, setup%nhl + 1
 
-                do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+                do k = 1, size(parameters%nn_parameters%layers(i)%weight, 2)
+
+                    do l = 1, size(parameters%nn_parameters%layers(i)%weight, 1)
+
+                        j = j + 1
+                        parameters%nn_parameters%layers(i)%weight(l, k) = parameters%control%x(j)
+
+                    end do
+
+                end do
+
+                do k = 1, size(parameters%nn_parameters%layers(i)%bias)
 
                     j = j + 1
-                    parameters%nn_parameters%layers(i)%weight(l, k) = parameters%control%x(j)
+                    parameters%nn_parameters%layers(i)%bias(k) = parameters%control%x(j)
 
                 end do
 
             end do
 
-            do k = 1, size(parameters%nn_parameters%layers(i)%bias)
-
-                j = j + 1
-                parameters%nn_parameters%layers(i)%bias(k) = parameters%control%x(j)
-
-            end do
-
-        end do
+        end if
 
     end subroutine nn_parameters_fill_parameters
 

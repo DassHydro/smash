@@ -10,6 +10,7 @@ STRUCTURE_NAME = [
     "gr4-lr",
     "gr4-ode-lr",
     "gr4-neural-ode-lr",
+    "gr4-nn-alg-lr",
     "gr4-kw",
     "gr5-lr",
     "gr5-kw",
@@ -19,7 +20,8 @@ STRUCTURE_NAME = [
 ]
 
 NN_STRUCTURE_NAME = [
-    "gr4-neural-ode-lr"
+    "gr4-neural-ode-lr",
+    "gr4-nn-alg-lr",
 ]  # , "gr4-neural-ode-kw", "gr4-nn-alg-lr", "gr4-nn-alg-kw"]
 
 RR_PARAMETERS = [
@@ -66,6 +68,7 @@ STRUCTURE_RR_PARAMETERS = dict(
             ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
             ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-ode-lr
             ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-neural-ode-lr
+            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-nn-alg-lr
             ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
             ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
             ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
@@ -95,6 +98,7 @@ STRUCTURE_RR_STATES = dict(
             ["hi", "hp", "ht", "hlr"],  # % gr4-lr
             ["hi", "hp", "ht", "hlr"],  # % gr4-ode-lr
             ["hi", "hp", "ht", "hlr"],  # % gr4-neural-ode-lr
+            ["hi", "hp", "ht", "hlr"],  # % gr4-nn-alg-lr
             ["hi", "hp", "ht"],  # % gr4-kw
             ["hi", "hp", "ht", "hlr"],  # % gr5-lr
             ["hi", "hp", "ht"],  # % gr5-kw

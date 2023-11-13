@@ -6,6 +6,7 @@
 !%      - gr4_lr_forward
 !%      - gr4_ode_lr_forward
 !%      - gr4_neural_ode_lr_forward
+!%      - gr4_nn_alg_lr_forward
 !%      - gr4_kw_forward
 !%      - gr5_kw_forward
 !%      - gr5_kw_forward
@@ -26,7 +27,7 @@ module md_forward_structure
     use mwd_sparse_matrix_manipulation !% only: sparse_matrix_to_matrix
     use md_gr_operator !% only: gr_interception, gr_production, gr_exchange, gr_threshold_exchange, &
     !% & gr_transfer
-    use md_nn_ode_operator !% only: gr_ode, gr_neural_ode
+    use md_nn_ode_operator !% only: gr_ode, gr_neural_ode, gr_nn_alg
     use md_vic3l_operator !% only: vic3l_canopy_evapotranspiration, vic3l_upper_soil_layer_evaporation, &
     !% & vic3l_infiltration, vic3l_drainage, vic3l_baseflow
     use md_routing_operator !% only: upstream_discharge, linear_routing, kinematic_wave1d
@@ -564,6 +565,179 @@ contains
         end do !% [ END DO TIME ]
 
     end subroutine gr4_neural_ode_lr_forward
+
+    subroutine gr4_nn_alg_lr_forward(setup, mesh, input_data, parameters, output, options, returns)
+        !% Note:
+        !% - rr_parameters: (1: ci), (2: cp), (3: ct), (4: kexc), (5: llr)
+        !% - rr_states:     (1: hi), (2: hp), (3: ht), (4: hlr)
+
+        implicit none
+
+        !% =================================================================================================================== %!
+        !%   Derived Type Variables
+        !% =================================================================================================================== %!
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(ParametersDT), intent(inout) :: parameters
+        type(OutputDT), intent(inout) :: output
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+
+        !% =================================================================================================================== %!
+        !%   Local Variables
+        !% =================================================================================================================== %!
+
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet, q, qt
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: ci, cp, ct, kexc, llr
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: hi, hp, ht, hlr
+        real(sp) :: ei, pn, en, qup, qrout
+        integer :: t, i, row, col, g, iret
+
+        !% =================================================================================================================== %!
+        !%  Initialise parameters
+        !% =================================================================================================================== %!
+
+        ci = parameters%rr_parameters%values(:, :, 1)
+        cp = parameters%rr_parameters%values(:, :, 2)
+        ct = parameters%rr_parameters%values(:, :, 3)
+        kexc = parameters%rr_parameters%values(:, :, 4)
+        llr = parameters%rr_parameters%values(:, :, 5)
+
+        hi = parameters%rr_initial_states%values(:, :, 1)
+        hp = parameters%rr_initial_states%values(:, :, 2)
+        ht = parameters%rr_initial_states%values(:, :, 3)
+        hlr = parameters%rr_initial_states%values(:, :, 4)
+
+        iret = 0
+        do t = 1, setup%ntime_step !% [ DO TIME ]
+
+            !% =============================================================================================================== %!
+            !%  Getting Precipitation and PET at time step
+            !% =============================================================================================================== %!
+
+            if (setup%sparse_storage) then
+
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_prcp(t), prcp)
+                call sparse_matrix_to_matrix(mesh, input_data%atmos_data%sparse_pet(t), pet)
+
+            else
+
+                prcp = input_data%atmos_data%prcp(:, :, t)
+                pet = input_data%atmos_data%pet(:, :, t)
+
+            end if
+
+!~             !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~             !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns, prcp, pet, qt) &
+!~             !$OMP& private(i, row, col, ei, pn, en, pr, perc, l, prr, prd, qr, qd)
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+
+                !% ======================================================================================================= %!
+                !%   Global/Local active cell
+                !% ======================================================================================================= %!
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then !% [ IF NO PRCP GAP ]
+
+                    !% =============================================================================================== %!
+                    !%   Interception module
+                    !% =============================================================================================== %!
+
+                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, ei)
+
+                    en = pet(row, col) - ei
+
+                else
+                    pn = 0._sp
+                    en = 0._sp
+
+                end if
+
+                !% =============================================================================================== %!
+                !%   Production and Transfer with NN (stepwise approx)
+                !% =============================================================================================== %!
+
+                call gr_nn_alg(parameters%nn_parameters%layers, &
+                & parameters%nn_parameters%neurons, pn, en, cp(row, col), 9._sp/4._sp, &
+                & ct(row, col), kexc(row, col), 5._sp, prcp(row, col), &
+                & hp(row, col), ht(row, col), qt(row, col))
+
+            end do
+!~             !$OMP end parallel do
+
+            qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+
+            do i = 1, mesh%nrow*mesh%ncol !% [ DO SPACE ]
+
+                row = mesh%path(1, i)
+                col = mesh%path(2, i)
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle !% [ CYCLE ACTIVE CELL ]
+
+                if (mesh%flwacc(row, col) .gt. mesh%dx(row, col)*mesh%dy(row, col)) then !% [ IF BC ]
+
+                    !% =================================================================================================== %!
+                    !%   Routing module
+                    !% =================================================================================================== %!
+
+                    call upstream_discharge(mesh%nrow, mesh%ncol, row, col, mesh%dx(row, col), &
+                    & mesh%dy(row, col), mesh%flwacc(row, col), mesh%flwdir, q, qup)
+
+                    call linear_routing(setup%dt, mesh%dx(row, col), mesh%dy(row, col), mesh%flwacc(row, col), &
+                    & llr(row, col), hlr(row, col), qup, qrout)
+
+                    q(row, col) = qrout + qt(row, col)
+
+                else
+
+                    q(row, col) = qt(row, col)
+
+                end if !% [ END IF BC ]
+
+            end do !% [ END DO SPACE ]
+
+            !% =============================================================================================================== %!
+            !%   Store simulated discharge at gauge
+            !% =============================================================================================================== %!
+
+            do g = 1, mesh%ng
+
+                output%response%q(g, t) = q(mesh%gauge_pos(g, 1), mesh%gauge_pos(g, 2))
+
+            end do
+
+            !% =============================================================================================================== %!
+            !%   Store states
+            !% =============================================================================================================== %!
+
+            output%rr_final_states%values(:, :, 1) = hi
+            output%rr_final_states%values(:, :, 2) = hp
+            output%rr_final_states%values(:, :, 3) = ht
+            output%rr_final_states%values(:, :, 4) = hlr
+
+            !% =============================================================================================================== %!
+            !%   Store optional returns
+            !% =============================================================================================================== %!
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(i)) then
+                    iret = iret + 1
+                    if (returns%rr_states_flag) returns%rr_states(iret) = output%rr_final_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
+
+        end do !% [ END DO TIME ]
+
+    end subroutine gr4_nn_alg_lr_forward
 
     subroutine gr4_kw_forward(setup, mesh, input_data, parameters, output, options, returns)
         !% Note:

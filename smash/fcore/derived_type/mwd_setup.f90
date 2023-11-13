@@ -123,8 +123,8 @@ contains
 
         this%nhl = nhl
 
-        allocate (this%hidden_neuron(nhl))
-        this%hidden_neuron = -99
+        allocate (this%hidden_neuron(max(0, nhl)))
+        this%hidden_neuron = 16
 
     end subroutine SetupDT_initialise
 

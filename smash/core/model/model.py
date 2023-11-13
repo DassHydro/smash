@@ -3,6 +3,7 @@ from __future__ import annotations
 from smash._constant import (
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    NN_STRUCTURE_NAME,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
     DEFAULT_BOUNDS_RR_PARAMETERS,
@@ -118,7 +119,12 @@ class Model(object):
         if setup and mesh:
             if isinstance(setup, dict):
                 nd = np.array(setup.get("descriptor_name", [])).size
-                nhl = np.array(setup.get("hidden_neuron", [])).size
+
+                structure = setup.get("structure", None)
+                nhl = -1
+                if isinstance(structure, str):
+                    if structure in NN_STRUCTURE_NAME:
+                        nhl = np.array(setup.get("hidden_neuron", [0])).size
 
                 self.setup = SetupDT(nd, nhl)
 

@@ -21,7 +21,6 @@
 !%          ======================== ========================================================
 !%          ``layers``               Layers containing weights and biases
 !%          ``neurons``              Number of neurons of the neural network
-!%          ``n_layers``             Number of layers of the neural network
 !%          ======================== ========================================================
 !%
 !%      Subroutine
@@ -50,7 +49,6 @@ module mwd_nn_parameters
 
         type(NN_Parameters_LayerDT), dimension(:), allocatable :: layers
         integer, dimension(:), allocatable :: neurons
-        integer :: n_layers
 
     end type NN_ParametersDT
 
@@ -94,10 +92,8 @@ contains
         integer :: n_in = 4  ! fixed NN input size
         integer :: n_out = 5  ! fixed NN output size
 
-        this%n_layers = setup%nhl + 1
-
-        allocate (this%layers(this%n_layers))
-        allocate (this%neurons(this%n_layers + 1))
+        allocate (this%layers(setup%nhl + 1))
+        allocate (this%neurons(setup%nhl + 2))
 
         this%neurons(1) = n_in
 
@@ -112,9 +108,12 @@ contains
 
         end do
 
-        call NN_Parameters_LayerDT_initialise(this%layers(this%n_layers), n_out, n_in_layer)
+        if (setup%nhl .ge. 0) then
 
-        this%neurons(this%n_layers + 1) = n_out
+            call NN_Parameters_LayerDT_initialise(this%layers(setup%nhl + 1), n_out, n_in_layer)
+            this%neurons(setup%nhl + 2) = n_out
+
+        end if
 
     end subroutine NN_ParametersDT_initialise
 
