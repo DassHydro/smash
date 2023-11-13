@@ -1,4 +1,5 @@
-structure: gr4-lr
+hydrological_module: gr4
+routing_module: lr
 
 dt: 3_600
 start_time: 2012-01-01 00:00
@@ -14,5 +15,3 @@ pet_format: tif
 pet_conversion_factor: 1
 daily_interannual_pet: True
 pet_directory: pet
-
-save_qsim_domain: True

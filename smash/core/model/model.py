@@ -13,13 +13,13 @@ from smash._constant import (
 
 from smash.core.model._build_model import (
     _map_dict_to_object,
-    _build_setup,
     _build_mesh,
     _build_input_data,
     _build_parameters,
     _build_output,
 )
 from smash.core.model._standardize import (
+    _standardize_model_args,
     _standardize_get_rr_parameters_args,
     _standardize_get_rr_initial_states_args,
     _standardize_get_serr_mu_parameters_args,
@@ -112,27 +112,18 @@ class Model(object):
 
     def __init__(self, setup: dict | None, mesh: dict | None):
         if setup and mesh:
-            if isinstance(setup, dict):
-                nd = np.array(setup.get("descriptor_name", [])).size
+            args = [deepcopy(arg) for arg in [setup, mesh]]
+            setup, mesh = _standardize_model_args(*args)
 
-                self.setup = SetupDT(nd)
+            self.setup = SetupDT(setup["nd"])
 
-                _map_dict_to_object(setup, self.setup)
+            _map_dict_to_object(setup, self.setup)
 
-                _build_setup(self.setup)
+            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
 
-            else:
-                raise TypeError(f"setup argument must be dict")
+            _map_dict_to_object(mesh, self.mesh)
 
-            if isinstance(mesh, dict):
-                self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["ng"])
-
-                _map_dict_to_object(mesh, self.mesh)
-
-                _build_mesh(self.setup, self.mesh)
-
-            else:
-                raise TypeError(f"mesh argument must be dict")
+            _build_mesh(self.setup, self.mesh)
 
             self._input_data = Input_DataDT(self.setup, self.mesh)
 

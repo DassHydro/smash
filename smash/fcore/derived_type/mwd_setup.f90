@@ -4,40 +4,52 @@
 !%      ----
 !%
 !%      - SetupDT
-!%          All user setup informations
+!%          All user setup informations. See default values in _constant.py DEFAULT_SETUP
 !%
 !%          ========================== =====================================
 !%          `Variables`                Description
 !%          ========================== =====================================
-!%          ``structure``              Hydrological model structure                           (default: 'gr4-lr')
-!%          ``serr_mu_mapping``        Mapping for structural error model                     (default: 'Zero')
-!%          ``serr_sigma_mapping``     Mapping for structural error model                     (default: 'Linear')
-!%          ``dt``                     Solver time step        [s]                            (default: 3600)
-!%          ``start_time``             Simulation start time   [%Y%m%d%H%M]                   (default: '...')
-!%          ``end_time``               Simulation end time     [%Y%m%d%H%M]                   (default: '...')
-!%          ``adjust_interception``    Adjust interception reservoir capacity                 (default: .true.)
-!%          ``read_qobs``              Read observed discharge                                (default: .false.)
-!%          ``qobs_directory``         Observed discharge directory path                      (default: '...')
-!%          ``read_prcp``              Read precipitation                                     (default: .false.)
-!%          ``prcp_format``            Precipitation format                                   (default: 'tif')
-!%          ``prcp_conversion_factor`` Precipitation conversion factor                        (default: 1)
-!%          ``prcp_directory``         Precipiation directory path                            (default: '...')
-!%          ``read_pet``               Read potential evapotranspiration                      (default: .false.)
-!%          ``pet_format``             Potential evapotranspiration format                    (default: 'tif')
-!%          ``pet_conversion_factor``  Potential evapotranpisration conversion factor         (default: 1)
-!%          ``pet_directory``          Potential evapotranspiration directory path            (default: '...')
-!%          ``daily_interannual_pet``  Read daily interannual potential evapotranspiration    (default: .false.)
-!%          ``sparse_storage``         Forcing sparse storage                                 (default: .false.)
-!%          ``read_descriptor``        Read descriptor map(s)                                 (default: .false.)
-!%          ``descriptor_format``      Descriptor maps format                                 (default: .false.)
-!%          ``descriptor_directory``   Descriptor maps directory                              (default: "...")
+!%          ``snow_module``            Snow module
+!%          ``hydrological_module``    Hydrological module
+!%          ``routing_module``         Routing module
+!%          ``serr_mu_mapping``        Mapping for structural error model
+!%          ``serr_sigma_mapping``     Mapping for structural error model
+!%          ``dt``                     Solver time step        [s]
+!%          ``start_time``             Simulation start time   [%Y%m%d%H%M]
+!%          ``end_time``               Simulation end time     [%Y%m%d%H%M]
+!%          ``adjust_interception``    Adjust interception reservoir capacity
+!%          ``read_qobs``              Read observed discharge
+!%          ``qobs_directory``         Observed discharge directory path
+!%          ``read_prcp``              Read precipitation
+!%          ``prcp_format``            Precipitation format
+!%          ``prcp_conversion_factor`` Precipitation conversion factor
+!%          ``prcp_directory``         Precipiation directory path
+!%          ``read_pet``               Read potential evapotranspiration
+!%          ``pet_format``             Potential evapotranspiration format
+!%          ``pet_conversion_factor``  Potential evapotranpisration conversion factor
+!%          ``pet_directory``          Potential evapotranspiration directory path
+!%          ``daily_interannual_pet``  Read daily interannual potential evapotranspiration
+!%          ``read_snow``              Read snow
+!%          ``snow_format``            Snow format
+!%          ``snow_conversion_factor`` Snow conversion factor
+!%          ``snow_directory``         Snow directory path
+!%          ``read_temp``              Read temperatur
+!%          ``temp_format``            Temperature format
+!%          ``temp_directory``         Temperature directory path
+!%          ``prcp_partitioning``      Precipitation partitioning
+!%          ``sparse_storage``         Forcing sparse storage
+!%          ``read_descriptor``        Read descriptor map(s)
+!%          ``descriptor_format``      Descriptor maps format
+!%          ``descriptor_directory``   Descriptor maps directory
 !%          ``descriptor_name``        Descriptor maps names
-!%          ``ntime_step``             Number of time steps                                   (default: -99)
-!%          ``nd``                     Number of descriptor maps                              (default: -99)
-!%          ``nop``                    Number of rainfall-runoff parameters                   (default: -99)
-!%          ``nos``                    Number of rainfall-runoff states                       (default: -99)
-!%          ``nsep_mu``                Number of structural error parameters for mu           (default: -99)
-!%          ``nsep_sigma``             Number of structural error parameters for sigma        (default: -99)
+!%          ``structure``              Structure combaining all modules
+!%          ``snow_module_present``    Presence of snow module
+!%          ``ntime_step``             Number of time steps
+!%          ``nd``                     Number of descriptor maps
+!%          ``nrrp``                   Number of rainfall-runoff parameters
+!%          ``nrrs``                   Number of rainfall-runoff states
+!%          ``nsep_mu``                Number of structural error parameters for mu
+!%          ``nsep_sigma``             Number of structural error parameters for sigma
 !%
 !%      Subroutine
 !%      ----------
@@ -57,11 +69,15 @@ module mwd_setup
         !% -----
         !% SetupDT Derived Type.
 
-        character(lchar) :: structure = "gr4-lr" !$F90W char
-        character(lchar) :: serr_mu_mapping = "Zero" !$F90W char
-        character(lchar) :: serr_sigma_mapping = "Linear" !$F90W char
+        ! User variables
+        character(lchar) :: snow_module = "..." !$F90W char
+        character(lchar) :: hydrological_module = "..." !$F90W char
+        character(lchar) :: routing_module = "..."!$F90W char
 
-        real(sp) :: dt = 3600._sp
+        character(lchar) :: serr_mu_mapping = "..." !$F90W char
+        character(lchar) :: serr_sigma_mapping = "..." !$F90W char
+
+        real(sp) :: dt = -99._sp
 
         character(lchar) :: start_time = "..." !$F90W char
         character(lchar) :: end_time = "..." !$F90W char
@@ -72,27 +88,42 @@ module mwd_setup
         character(lchar) :: qobs_directory = "..." !$F90W char
 
         logical :: read_prcp = .false.
-        character(lchar) :: prcp_format = "tif" !$F90W char
+        character(lchar) :: prcp_format = "..." !$F90W char
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..." !$F90W char
 
         logical :: read_pet = .false.
-        character(lchar) :: pet_format = "tif" !$F90W char
+        character(lchar) :: pet_format = "..." !$F90W char
         real(sp) :: pet_conversion_factor = 1._sp
         character(lchar) :: pet_directory = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
 
+        logical :: read_snow = .false.
+        character(lchar) :: snow_format = "..." !$F90W char
+        real(sp) :: snow_conversion_factor = 1._sp
+        character(lchar) :: snow_directory = "..." !$F90W char
+
+        logical :: read_temp = .false.
+        character(lchar) :: temp_format = "..." !$F90W char
+        character(lchar) :: temp_directory = "..." !$F90W char
+
+        logical :: prcp_partitioning = .false.
+
         logical :: sparse_storage = .false.
 
         logical :: read_descriptor = .false.
-        character(lchar) :: descriptor_format = "tif" !$F90W char
+        character(lchar) :: descriptor_format = "..." !$F90W char
         character(lchar) :: descriptor_directory = "..." !$F90W char
         character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
 
+        ! Post processed variables
+        character(lchar) :: structure = "..." !$F90W char
+        logical :: snow_module_present = .false.
+
         integer :: ntime_step = -99
         integer :: nd = -99
-        integer :: nop = -99
-        integer :: nos = -99
+        integer :: nrrp = -99
+        integer :: nrrs = -99
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
 

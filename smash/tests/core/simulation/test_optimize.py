@@ -14,12 +14,29 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
     ncpu = max(1, os.cpu_count() - 1)
 
     for model in model_structure:
+        # % There is no snow data for the Cance dataset.
+        # % TODO: Add a dataset to test snow module
+        if model.setup.snow_module_present:
+            continue
+
+        # % With VIC, remove ["cusl", "cbsl", "ks", "ds", "dsm"]
+        if model.setup.hydrological_module == "vic3l":
+            parameters = [
+                key
+                for key in model.rr_parameters.keys
+                if key not in ["cusl", "cbsl", "ks", "ds", "dsm"]
+            ]
+        # % Else default parameters
+        else:
+            parameters = None
+
         for mp in MAPPING:
             if mp == "ann":
                 instance = smash.optimize(
                     model,
                     mapping=mp,
                     optimize_options={
+                        "parameters": parameters,
                         "learning_rate": 0.01,
                         "random_state": 11,
                         "termination_crit": {"epochs": 3},
@@ -31,7 +48,10 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 instance, ret = smash.optimize(
                     model,
                     mapping=mp,
-                    optimize_options={"termination_crit": {"maxiter": 1}},
+                    optimize_options={
+                        "parameters": parameters,
+                        "termination_crit": {"maxiter": 1},
+                    },
                     common_options={"ncpu": ncpu, "verbose": False},
                     return_options={"iter_cost": True, "control_vector": True},
                 )

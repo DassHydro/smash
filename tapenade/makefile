@@ -34,8 +34,10 @@ bd:
 post-sed:
 	# sed
 	# Tapenade creates new derived type when not all values inside the derived type are used inside the graph.
-	# Therefore, just seding the two derived type affected.
+	# Therefore, just seding the derived types affected.
 	sed -i 's/TYPE(PARAMETERSDT_DIFF)/TYPE(PARAMETERSDT)/g' $(ADJ_FILE)
+	sed -i 's/TYPE(RR_PARAMETERSDT_DIFF)/TYPE(RR_PARAMETERSDT)/g' $(ADJ_FILE)
+	sed -i 's/TYPE(RR_STATESDT_DIFF)/TYPE(RR_STATESDT)/g' $(ADJ_FILE)
 	sed -i 's/TYPE(OUTPUTDT_DIFF)/TYPE(OUTPUTDT)/g' $(ADJ_FILE)
 mv:
 	# mv

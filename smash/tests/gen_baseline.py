@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import smash
-from smash._constant import STRUCTURE_NAME
+from smash._constant import STRUCTURE
 
 import argparse
 import glob
@@ -141,6 +141,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 
 if __name__ == "__main__":
     # % Disable stderr
+    # % Disable tqdm progress bar (printed to standard error)
     sys.stderr = open("/dev/null", "w")
 
     args = parser()
@@ -153,13 +154,24 @@ if __name__ == "__main__":
         os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r"
     )["sim_q"][:]
 
+    # % Disable stdout
+    # % TODO: replace this by adding a verbose argument at Model initialisation
+    sys.stdout = open("/dev/null", "w")
+
     model = smash.Model(setup, mesh)
 
     model_structure = []
 
-    for structure in STRUCTURE_NAME:
-        setup["structure"] = structure
+    for structure in STRUCTURE:
+        (
+            setup["snow_module"],
+            setup["hydrological_module"],
+            setup["routing_module"],
+        ) = structure.split("-")
         model_structure.append(smash.Model(setup, mesh))
+
+    # % Enable stdout
+    sys.stdout = sys.__stdout__
 
     module_names = sorted(glob.glob("**/test_*.py", recursive=True))
 
