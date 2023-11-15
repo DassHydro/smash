@@ -147,6 +147,38 @@ class Model(object):
 
         return copy
 
+    def __repr__(self):
+        # % Nested function. This avoids duplicating the attribute check.
+        def _valid_attr(obj, attr):
+            if attr.startswith("_"):
+                return False
+            try:
+                value = getattr(obj, attr)
+            except:
+                return False
+            if callable(value):
+                return False
+
+            return True
+
+        ret = [self.__class__.__name__]
+        for attr in dir(self):
+            if not _valid_attr(self, attr):
+                continue
+            value = getattr(self, attr)
+
+            sub_attr_list = [
+                sub_attr for sub_attr in dir(value) if _valid_attr(value, sub_attr)
+            ]
+
+            # % Do not print too much attributes
+            if len(sub_attr_list) > 4:
+                sub_attr_list = sub_attr_list[0:2] + ["..."] + sub_attr_list[-3:-1]
+
+            ret.append(f"    {attr}: {sub_attr_list}")
+
+        return "\n".join(ret)
+
     @property
     def setup(self):
         """
