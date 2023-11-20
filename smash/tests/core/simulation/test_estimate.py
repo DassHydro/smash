@@ -11,7 +11,7 @@ import os
 def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
     res = {}
 
-    ncpu = min(5, os.cpu_count())
+    ncpu = min(5, max(1, os.cpu_count() - 1))
 
     problem = {
         "num_vars": 3,

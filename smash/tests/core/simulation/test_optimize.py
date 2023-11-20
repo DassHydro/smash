@@ -11,7 +11,7 @@ import os
 def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
     res = {}
 
-    ncpu = min(5, os.cpu_count())
+    ncpu = min(5, max(1, os.cpu_count() - 1))
 
     for model in model_structure:
         # % There is no snow data for the Cance dataset.
@@ -92,7 +92,7 @@ def test_sparse_optimize():
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     res = {}
 
-    ncpu = min(5, os.cpu_count())
+    ncpu = min(5, max(1, os.cpu_count() - 1))
 
     custom_sets = [
         # % Test custom optimize_options
@@ -248,7 +248,7 @@ def test_custom_optimize():
 
 def test_multiple_optimize():
     instance = pytest.model.copy()
-    ncpu = min(5, os.cpu_count())
+    ncpu = min(5, max(1, os.cpu_count() - 1))
 
     problem = {
         "num_vars": 5,
