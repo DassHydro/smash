@@ -3,6 +3,7 @@ module md_vic3l_operator
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_options !% only: OptionsDT
 
     implicit none
 
@@ -163,12 +164,13 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_timestep(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
+    subroutine vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hcl, husl, hmsl, hbsl
@@ -177,6 +179,9 @@ contains
         integer :: row, col
         real(sp) :: pn, en, qr, qb
 
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl, hbsl, qt) &
+        !$OMP& private(row, col, pn, en, qr, qb)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -205,11 +210,12 @@ contains
 
                 qt(row, col) = qr + qb
 
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
             end do
         end do
-
-        ! Transform from mm/dt to m3/s
-        qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
+        !$OMP end parallel do
 
     end subroutine vic3l_timestep
 

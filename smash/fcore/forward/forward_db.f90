@@ -11579,6 +11579,8 @@ MODULE MD_GR_OPERATOR_DIFF
   USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -11657,15 +11659,20 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     temp_b = hi_b/ci
+!$OMP ATOMIC update
     prcp_b = prcp_b + temp_b
     ei_b = -temp_b - en_b
     pn_b = pn_b - temp_b
+!$OMP ATOMIC update
     ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(pn)
+!$OMP ATOMIC update
       prcp_b = prcp_b + pn_b
+!$OMP ATOMIC update
       ci_b = ci_b - (1._sp-hi)*pn_b
+!$OMP ATOMIC update
       hi_b = hi_b + ci*pn_b
       ei_b = ei_b - pn_b
     ELSE
@@ -11673,8 +11680,11 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       prcp_b = prcp_b + ei_b
+!$OMP ATOMIC update
       hi_b = hi_b + ci*ei_b
+!$OMP ATOMIC update
       ci_b = ci_b + hi*ei_b
     END IF
   END SUBROUTINE GR_INTERCEPTION_B
@@ -11814,6 +11824,7 @@ CONTAINS
     inv_cp = 1._sp/cp
     perc_b = perc_b - inv_cp*hp_b
     inv_cp_b = -(perc*hp_b)
+!$OMP ATOMIC update
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
@@ -11824,6 +11835,7 @@ CONTAINS
       pn_b = pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
+!$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
@@ -11837,12 +11849,14 @@ CONTAINS
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
     temp_b0 = -(temp0*temp1*temp_b3/temp3)
+!$OMP ATOMIC update
     hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
 &     temp_b0
     ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
     en_b = inv_cp*temp_b5 + inv_cp*temp_b4
+!$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
@@ -11851,10 +11865,12 @@ CONTAINS
     temp_b = ps_b/temp0
     temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
     temp_b1 = -(temp2*temp1*temp_b/temp0)
+!$OMP ATOMIC update
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
 &     pn*temp_b2 + pn*temp_b0
+!$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
@@ -11909,7 +11925,9 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*l_b
+!$OMP ATOMIC update
     ht_b = ht_b + 3.5_sp*ht**2.5*kexc*l_b
   END SUBROUTINE GR_EXCHANGE_B
 
@@ -11949,8 +11967,11 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + (ht-aexc)*l_b
+!$OMP ATOMIC update
     ht_b = ht_b + kexc*l_b
+!$OMP ATOMIC update
     aexc_b = aexc_b - kexc*l_b
   END SUBROUTINE GR_THRESHOLD_EXCHANGE_B
 
@@ -12141,6 +12162,7 @@ CONTAINS
     pwy2 = -nm1
     d1pnm1 = 1._sp/nm1
     pwy3 = -d1pnm1
+!$OMP ATOMIC update
     ht_b = ht_b - ct*q_b
     pwr3_b = ht_b/ct
     IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
@@ -12159,8 +12181,10 @@ CONTAINS
     END IF
     ht_imd_b = ct*q_b + ct*pwx1_b
     IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
+!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
     ELSE
+!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*&
 &       ht_b/ct**2 + ht_imd*pwx1_b
     END IF
@@ -12174,6 +12198,7 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ht_b = ht_imd_b
       pr_imd_b = ht_imd_b/ct
+!$OMP ATOMIC update
       ct_b = ct_b - pr_imd*ht_imd_b/ct**2
     ELSE
       ht_b = 0.0_4
@@ -12198,11 +12223,14 @@ CONTAINS
       ELSE
         pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
       END IF
+!$OMP ATOMIC update
       ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
       IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
 &     THEN
+!$OMP   ATOMIC update
         ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
       ELSE
+!$OMP   ATOMIC update
         ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
       END IF
       pr_b = 0.0_4
@@ -12260,12 +12288,13 @@ CONTAINS
 !   variations   of useful results: qt hi hp ht
 !   with respect to varying inputs: kexc qt prcp hi hp ht ci cp
 !                ct
-  SUBROUTINE GR4_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ci, ci_d, cp&
-&   , cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt, &
-&   qt_d)
+  SUBROUTINE GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
+&   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht, &
+&   ht_d, qt, qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12282,6 +12311,13 @@ CONTAINS
     REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
+    REAL(sp) :: temp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(prcp_d, ci_d&
+!$OMP&, cp_d, ct_d, kexc_d, hi_d, hp_d, ht_d, qt_d), PRIVATE(row, col, &
+!$OMP&pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, &
+!$OMP&perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(&
+!$OMP&                                       static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12321,24 +12357,26 @@ CONTAINS
           END IF
           qt_d(row, col) = qr_d + qd_d
           qt(row, col) = qr + qd
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          qt_d(row, col) = temp*qt_d(row, col)/setup%dt
+          qt(row, col) = temp*(qt(row, col)/setup%dt)
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GR4_TIMESTEP_D
 
 !  Differentiation of gr4_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: kexc qt hi hp ht ci cp ct
 !   with respect to varying inputs: kexc qt prcp hi hp ht ci cp
 !                ct
-  SUBROUTINE GR4_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ci, ci_b, cp&
-&   , cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt, &
-&   qt_b)
+  SUBROUTINE GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
+&   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht, &
+&   ht_b, qt, qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12356,7 +12394,13 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(row, col, pn, en, &
+!$OMP&pr, perc, l, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -12395,12 +12439,36 @@ CONTAINS
         END IF
       END DO
     END DO
-    qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(en)
+!$OMP END PARALLEL
     prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(prcp_b, ci_b, cp_b&
+!$OMP&, ct_b, kexc_b, hi_b, hp_b, ht_b, qt_b), PRIVATE(row, col, pn, en&
+!$OMP&, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, perc_b&
+!$OMP&, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start)
+    CALL POPREAL4(en)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    l_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          qt_b(row, col) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           qt_b(row, col)/setup%dt
           qr_b = qt_b(row, col)
           qd_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
@@ -12439,13 +12507,15 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE GR4_TIMESTEP_B
 
-  SUBROUTINE GR4_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, &
-&   hp, ht, qt)
+  SUBROUTINE GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&   kexc, hi, hp, ht, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
 &   , kexc
@@ -12455,6 +12525,9 @@ CONTAINS
     INTEGER :: row, col
     REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
     INTRINSIC MAX
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(row, col, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12481,23 +12554,25 @@ CONTAINS
             qd = 0._sp
           END IF
           qt(row, col) = qr + qd
+! Transform from mm/dt to m3/s
+          qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(&
+&           row, col)/setup%dt
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GR4_TIMESTEP
 
 !  Differentiation of gr5_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: qt hi hp ht
 !   with respect to varying inputs: aexc kexc qt prcp hi hp ht
 !                ci cp ct
-  SUBROUTINE GR5_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ci, ci_d, cp&
-&   , cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, hi_d, hp, hp_d, ht&
-&   , ht_d, qt, qt_d)
+  SUBROUTINE GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
+&   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, hi_d, hp&
+&   , hp_d, ht, ht_d, qt, qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12514,6 +12589,13 @@ CONTAINS
     REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
+    REAL(sp) :: temp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt), SHARED(prcp_d&
+!$OMP&, ci_d, cp_d, ct_d, kexc_d, aexc_d, hi_d, hp_d, ht_d, qt_d), &
+!$OMP&PRIVATE(row, col, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(&
+!$OMP&pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(&
+!$OMP&temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12554,12 +12636,13 @@ CONTAINS
           END IF
           qt_d(row, col) = qr_d + qd_d
           qt(row, col) = qr + qd
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          qt_d(row, col) = temp*qt_d(row, col)/setup%dt
+          qt(row, col) = temp*(qt(row, col)/setup%dt)
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GR5_TIMESTEP_D
 
 !  Differentiation of gr5_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -12567,12 +12650,13 @@ CONTAINS
 !                ct
 !   with respect to varying inputs: aexc kexc qt prcp hi hp ht
 !                ci cp ct
-  SUBROUTINE GR5_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ci, ci_b, cp&
-&   , cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, hi, hi_b, hp, hp_b, ht&
-&   , ht_b, qt, qt_b)
+  SUBROUTINE GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
+&   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, hi, hi_b, hp&
+&   , hp_b, ht, ht_b, qt, qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12590,7 +12674,14 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt), PRIVATE(row, col, pn&
+!$OMP&, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(chunk_start, &
+!$OMP&chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -12630,12 +12721,36 @@ CONTAINS
         END IF
       END DO
     END DO
-    qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(en)
+!$OMP END PARALLEL
     prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt), SHARED(prcp_b, ci_b&
+!$OMP&, cp_b, ct_b, kexc_b, aexc_b, hi_b, hp_b, ht_b, qt_b), PRIVATE(row&
+!$OMP&, col, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b&
+!$OMP&, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+    CALL POPREAL4(en)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    l_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          qt_b(row, col) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           qt_b(row, col)/setup%dt
           qr_b = qt_b(row, col)
           qd_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
@@ -12675,13 +12790,15 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE GR5_TIMESTEP_B
 
-  SUBROUTINE GR5_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc&
-&   , hi, hp, ht, qt)
+  SUBROUTINE GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&   kexc, aexc, hi, hp, ht, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
 &   , kexc, aexc
@@ -12691,6 +12808,9 @@ CONTAINS
     INTEGER :: row, col
     REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
     INTRINSIC MAX
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt), PRIVATE(row, &
+!$OMP&col, pn, en, pr, perc, l, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12718,21 +12838,23 @@ CONTAINS
             qd = 0._sp
           END IF
           qt(row, col) = qr + qd
+! Transform from mm/dt to m3/s
+          qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(&
+&           row, col)/setup%dt
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GR5_TIMESTEP
 
 !  Differentiation of grd_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: qt hp ht
 !   with respect to varying inputs: qt prcp hp ht cp ct
-  SUBROUTINE GRD_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, cp, cp_d, ct&
-&   , ct_d, hp, hp_d, ht, ht_d, qt, qt_d)
+  SUBROUTINE GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
+&   , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt, qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
@@ -12743,10 +12865,16 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_d
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: temp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, cp, ct, hp, ht, qt), SHARED(prcp_d, cp_d, ct_d, hp_d, &
+!$OMP&ht_d, qt_d), PRIVATE(row, col, ei, pn, en, pr, perc, prr, qr), &
+!$OMP&PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, qr_d), PRIVATE(temp&
+!$OMP&), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12785,22 +12913,24 @@ CONTAINS
 &                      ), qr, qr_d)
           qt_d(row, col) = qr_d
           qt(row, col) = qr
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          qt_d(row, col) = temp*qt_d(row, col)/setup%dt
+          qt(row, col) = temp*(qt(row, col)/setup%dt)
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GRD_TIMESTEP_D
 
 !  Differentiation of grd_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: qt hp ht cp ct
 !   with respect to varying inputs: qt prcp hp ht cp ct
-  SUBROUTINE GRD_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, cp, cp_b, ct&
-&   , ct_b, hp, hp_b, ht, ht_b, qt, qt_b)
+  SUBROUTINE GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
+&   , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
@@ -12811,12 +12941,18 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_b
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, cp, ct, hp, ht, qt), PRIVATE(row, col, ei, pn, en, pr, perc, &
+!$OMP&prr, qr), PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -12856,16 +12992,38 @@ CONTAINS
           CALL PUSHREAL4(ht(row, col))
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, ct(row, col), ht(&
 &                    row, col), qr)
+! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
     END DO
-    qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(en)
+!$OMP END PARALLEL
     prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, cp, ct, hp, ht, qt), SHARED(prcp_b, cp_b, ct_b, hp_b, ht_b, &
+!$OMP&qt_b), PRIVATE(row, col, ei, pn, en, pr, perc, prr, qr), PRIVATE(&
+!$OMP&ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+    CALL POPREAL4(en)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    ei_b = 0.0_4
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    prr_b = 0.0_4
+    qr_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          qt_b(row, col) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           qt_b(row, col)/setup%dt
           qr_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
           CALL POPREAL4(ht(row, col))
@@ -12886,32 +13044,41 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL4(pn)
+!$OMP         ATOMIC update
               prcp_b(row, col) = prcp_b(row, col) + pn_b
               ei_b = ei_b - pn_b
             ELSE
               CALL POPREAL4(pn)
             END IF
             CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) prcp_b(row, col) = prcp_b(row, col) + &
-&               ei_b
+            IF (branch .EQ. 0) THEN
+!$OMP         ATOMIC update
+              prcp_b(row, col) = prcp_b(row, col) + ei_b
+            END IF
           END IF
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE GRD_TIMESTEP_B
 
-  SUBROUTINE GRD_TIMESTEP(setup, mesh, prcp, pet, cp, ct, hp, ht, qt)
+  SUBROUTINE GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
+&   ht, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hp, ht
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, qr
+    REAL(sp) :: ei, pn, en, pr, perc, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, cp, ct, hp, ht, qt), PRIVATE(row, col, ei, pn, en, pr, &
+!$OMP&perc, prr, qr), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -12939,21 +13106,23 @@ CONTAINS
           CALL GR_TRANSFER(5._sp, prcp(row, col), prr, ct(row, col), ht(&
 &                    row, col), qr)
           qt(row, col) = qr
+! Transform from mm/dt to m3/s
+          qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(&
+&           row, col)/setup%dt
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE GRD_TIMESTEP
 
 !  Differentiation of loieau_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: qt ha hc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ca, ca_d&
-&   , cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d)
+  SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
+&   ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
@@ -12965,10 +13134,16 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_d
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
+    REAL(sp) :: temp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ca, cc, kb, ha, hc, qt), SHARED(prcp_d, ca_d, cc_d, &
+!$OMP&kb_d, ha_d, hc_d, qt_d), PRIVATE(row, col, ei, pn, en, pr, perc, &
+!$OMP&prr, prd, qr, qd), PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, &
+!$OMP&prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13017,22 +13192,24 @@ CONTAINS
           qt_d(row, col) = (qr+qd)*kb_d(row, col) + kb(row, col)*(qr_d+&
 &           qd_d)
           qt(row, col) = kb(row, col)*(qr+qd)
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          qt_d(row, col) = temp*qt_d(row, col)/setup%dt
+          qt(row, col) = temp*(qt(row, col)/setup%dt)
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE LOIEAU_TIMESTEP_D
 
 !  Differentiation of loieau_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: kb qt ha hc ca cc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ca, ca_b&
-&   , cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b)
+  SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
+&   ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
@@ -13043,13 +13220,19 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_b
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
     REAL(sp) :: temp_b
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ca, cc, kb, ha, hc, qt), PRIVATE(row, col, ei, pn, en, pr, &
+!$OMP&perc, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -13104,12 +13287,41 @@ CONTAINS
         END IF
       END DO
     END DO
-    qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(en)
+    CALL PUSHREAL4(qr)
+    CALL PUSHREAL4(qd)
+!$OMP END PARALLEL
     prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, ca, cc, kb, ha, hc, qt), SHARED(prcp_b, ca_b, cc_b, kb_b, &
+!$OMP&ha_b, hc_b, qt_b), PRIVATE(row, col, ei, pn, en, pr, perc, prr, &
+!$OMP&prd, qr, qd), PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b&
+!$OMP&, qr_b, qd_b), PRIVATE(branch, chunk_end, chunk_start), PRIVATE(&
+!$OMP&temp_b)
+    CALL POPREAL4(qd)
+    CALL POPREAL4(qr)
+    CALL POPREAL4(en)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    ei_b = 0.0_4
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          qt_b(row, col) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           qt_b(row, col)/setup%dt
+!$OMP     ATOMIC update
           kb_b(row, col) = kb_b(row, col) + (qr+qd)*qt_b(row, col)
           temp_b = kb(row, col)*qt_b(row, col)
           qt_b(row, col) = 0.0_4
@@ -13142,33 +13354,41 @@ CONTAINS
             CALL POPCONTROL1B(branch)
             IF (branch .EQ. 0) THEN
               CALL POPREAL4(pn)
+!$OMP         ATOMIC update
               prcp_b(row, col) = prcp_b(row, col) + pn_b
               ei_b = ei_b - pn_b
             ELSE
               CALL POPREAL4(pn)
             END IF
             CALL POPCONTROL1B(branch)
-            IF (branch .EQ. 0) prcp_b(row, col) = prcp_b(row, col) + &
-&               ei_b
+            IF (branch .EQ. 0) THEN
+!$OMP         ATOMIC update
+              prcp_b(row, col) = prcp_b(row, col) + ei_b
+            END IF
           END IF
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE LOIEAU_TIMESTEP_B
 
-  SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, prcp, pet, ca, cc, kb, ha, hc&
-&   , qt)
+  SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
+&   , ha, hc, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha, hc
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, ca, cc, kb, ha, hc, qt), PRIVATE(row, col, ei, pn, en, &
+!$OMP&pr, perc, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -13202,11 +13422,12 @@ CONTAINS
             qd = 0._sp
           END IF
           qt(row, col) = kb(row, col)*(qr+qd)
+! Transform from mm/dt to m3/s
+          qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(&
+&           row, col)/setup%dt
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE LOIEAU_TIMESTEP
 
 END MODULE MD_GR_OPERATOR_DIFF
@@ -13226,6 +13447,8 @@ MODULE MD_ROUTING_OPERATOR_DIFF
   USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -13298,8 +13521,10 @@ CONTAINS
     DO i=8,1,-1
       CALL POPCONTROL2B(branch)
       IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) q2d_b(row_imd, col_imd) = q2d_b(row_imd, &
-&           col_imd) + qup_b
+        IF (branch .NE. 1) THEN
+!$OMP     ATOMIC update
+          q2d_b(row_imd, col_imd) = q2d_b(row_imd, col_imd) + qup_b
+        END IF
       END IF
       CALL POPINTEGER4(col_imd)
       CALL POPINTEGER4(row_imd)
@@ -13385,9 +13610,11 @@ CONTAINS
     arg1 = -(dt/(llr*60._sp))
     arg1 = -(dt/(llr*60._sp))
     temp_b = (flwacc-dx*dy)*1e-3_sp*q_b/dt
+!$OMP ATOMIC update
     hlr_b = hlr_b - temp_b
     hlr_imd_b = temp_b + EXP(arg1)*hlr_b
     arg1_b = EXP(arg1)*hlr_imd*hlr_b
+!$OMP ATOMIC update
     llr_b = llr_b + dt*arg1_b/(llr**2*60._sp)
     hlr_b = hlr_imd_b
     qup_b = hlr_imd_b
@@ -13598,6 +13825,7 @@ CONTAINS
     temp_b = dtddx*n3_b/2._sp
     wqlijm1_b = temp_b
     wqlij_b = temp_b
+!$OMP ATOMIC update
     akw_b = akw_b + bkw*pwr1*d2_b
     pwr1_b = akw*bkw*d2_b
     IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
@@ -13613,6 +13841,7 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     bkw_b = bkw_b + akw*pwr1*d2_b + pwy1_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -13703,33 +13932,52 @@ CONTAINS
 !  Differentiation of lag0_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: q
 !   with respect to varying inputs: q qt
-  SUBROUTINE LAG0_TIMESTEP_D(setup, mesh, qt, qt_d, q, q_d)
+  SUBROUTINE LAG0_TIMESTEP_D(setup, mesh, options, qt, qt_d, q, q_d)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_d
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     REAL(sp) :: qup_d
     q_d(:, :, zq) = qt_d(:, :, zq)
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_d(:, :, zq), qup, qup_d)
-          q_d(row, col, zq) = q_d(row, col, zq) + qup_d
-          q(row, col, zq) = q(row, col, zq) + qup
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, q, i), SHARED(qt_d, q_d), PRIVATE(j, row, col, qup), PRIVATE(&
+!$OMP&qup_d), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qup, qup_d)
+            q_d(row, col, zq) = q_d(row, col, zq) + qup_d
+            q(row, col, zq) = q(row, col, zq) + qup
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qup, qup_d)
+            q_d(row, col, zq) = q_d(row, col, zq) + qup_d
+            q(row, col, zq) = q(row, col, zq) + qup
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE LAG0_TIMESTEP_D
@@ -13737,74 +13985,149 @@ CONTAINS
 !  Differentiation of lag0_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: q qt
 !   with respect to varying inputs: q qt
-  SUBROUTINE LAG0_TIMESTEP_B(setup, mesh, qt, qt_b, q, q_b)
+  SUBROUTINE LAG0_TIMESTEP_B(setup, mesh, options, qt, qt_b, q, q_b)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_b
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     REAL(sp) :: qup_b
+    INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+    INTEGER :: ad_to0
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%local_active_cell(&
-&         row, col) .EQ. 0) THEN
-        CALL PUSHCONTROL2B(1)
-      ELSE IF (mesh%flwacc(row, col) .LE. mesh%dx(row, col)*mesh%dy(row&
-&         , col)) THEN
-        CALL PUSHCONTROL2B(0)
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&q, i), PRIVATE(j, row, col, qup), PRIVATE(ad_to, chunk_start, &
+!$OMP&chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            q(row, col, zq) = q(row, col, zq) + qup
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHINTEGER4(i)
+!$OMP   END PARALLEL
+        CALL PUSHCONTROL1B(1)
       ELSE
-        CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), qup)
-        q(row, col, zq) = q(row, col, zq) + qup
-        CALL PUSHCONTROL2B(2)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            q(row, col, zq) = q(row, col, zq) + qup
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    DO i=mesh%nrow*mesh%ncol,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) THEN
-          row = mesh%path(1, i)
-          col = mesh%path(2, i)
-          qup_b = q_b(row, col, zq)
-          CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_b(:, :, zq), qup, qup_b)
-        END IF
+    DO i=mesh%npar,2,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPINTEGER4(ad_to0)
+        DO j=ad_to0,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            qup_b = q_b(row, col, zq)
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qup, qup_b)
+          END IF
+        END DO
+      ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&q, i), SHARED(qt_b, q_b), PRIVATE(j, row, col, qup), PRIVATE(qup_b&
+!$OMP&), PRIVATE(ad_to, branch, chunk_end, chunk_start)
+        CALL POPINTEGER4(i)
+        qup_b = 0.0_4
+        CALL POPINTEGER4(ad_to)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            qup_b = q_b(row, col, zq)
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qup, qup_b)
+          END IF
+        END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     qt_b(:, :, zq) = qt_b(:, :, zq) + q_b(:, :, zq)
     q_b(:, :, zq) = 0.0_4
   END SUBROUTINE LAG0_TIMESTEP_B
 
-  SUBROUTINE LAG0_TIMESTEP(setup, mesh, qt, q)
+  SUBROUTINE LAG0_TIMESTEP(setup, mesh, options, qt, q)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
-&                           qup)
-          q(row, col, zq) = q(row, col, zq) + qup
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, q, i), PRIVATE(j, row, col, qup), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            q(row, col, zq) = q(row, col, zq) + qup
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            q(row, col, zq) = q(row, col, zq) + qup
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE LAG0_TIMESTEP
@@ -13812,12 +14135,13 @@ CONTAINS
 !  Differentiation of lr_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: hlr q
 !   with respect to varying inputs: hlr q qt llr
-  SUBROUTINE LR_TIMESTEP_D(setup, mesh, qt, qt_d, llr, llr_d, hlr, hlr_d&
-&   , q, q_d)
+  SUBROUTINE LR_TIMESTEP_D(setup, mesh, options, qt, qt_d, llr, llr_d, &
+&   hlr, hlr_d, q, q_d)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: llr
@@ -13826,27 +14150,48 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_d
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col, ncpu
     REAL(sp) :: qup
     REAL(sp) :: qup_d
     q_d(:, :, zq) = qt_d(:, :, zq)
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_d(:, :, zq), qup, qup_d)
-          CALL LINEAR_ROUTING_D(mesh%dx(row, col), mesh%dy(row, col), &
-&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
-&                         , llr_d(row, col), hlr(row, col), hlr_d(row, &
-&                         col), qup, qup_d, q(row, col, zq), q_d(row, &
-&                         col, zq))
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, llr, hlr, q, i), SHARED(qt_d, llr_d, hlr_d, q_d), PRIVATE(j, &
+!$OMP&row, col, qup), PRIVATE(qup_d), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qup, qup_d)
+            CALL LINEAR_ROUTING_D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, mesh%flwacc(row, col), llr(row, &
+&                           col), llr_d(row, col), hlr(row, col), hlr_d(&
+&                           row, col), qup, qup_d, q(row, col, zq), q_d(&
+&                           row, col, zq))
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qup, qup_d)
+            CALL LINEAR_ROUTING_D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, mesh%flwacc(row, col), llr(row, &
+&                           col), llr_d(row, col), hlr(row, col), hlr_d(&
+&                           row, col), qup, qup_d, q(row, col, zq), q_d(&
+&                           row, col, zq))
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE LR_TIMESTEP_D
@@ -13854,12 +14199,13 @@ CONTAINS
 !  Differentiation of lr_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: hlr q qt llr
 !   with respect to varying inputs: hlr q qt llr
-  SUBROUTINE LR_TIMESTEP_B(setup, mesh, qt, qt_b, llr, llr_b, hlr, hlr_b&
-&   , q, q_b)
+  SUBROUTINE LR_TIMESTEP_B(setup, mesh, options, qt, qt_b, llr, llr_b, &
+&   hlr, hlr_b, q, q_b)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: llr
@@ -13868,79 +14214,166 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_b
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col, ncpu
     REAL(sp) :: qup
     REAL(sp) :: qup_b
+    INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+    INTEGER :: ad_to0
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%local_active_cell(&
-&         row, col) .EQ. 0) THEN
-        CALL PUSHCONTROL2B(1)
-      ELSE IF (mesh%flwacc(row, col) .LE. mesh%dx(row, col)*mesh%dy(row&
-&         , col)) THEN
-        CALL PUSHCONTROL2B(0)
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&llr, hlr, q, i), PRIVATE(j, row, col, qup), PRIVATE(ad_to, &
+!$OMP&chunk_start, chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            CALL PUSHREAL4(qup)
+            CALL PUSHREAL4(hlr(row, col))
+            CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
+&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
+&                         , hlr(row, col), qup, q(row, col, zq))
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHINTEGER4(i)
+!$OMP   END PARALLEL
+        CALL PUSHCONTROL1B(1)
       ELSE
-        CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), qup)
-        CALL PUSHREAL4(qup)
-        CALL PUSHREAL4(hlr(row, col))
-        CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), setup%&
-&                     dt, mesh%flwacc(row, col), llr(row, col), hlr(row&
-&                     , col), qup, q(row, col, zq))
-        CALL PUSHCONTROL2B(2)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            CALL PUSHREAL4(qup)
+            CALL PUSHREAL4(hlr(row, col))
+            CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
+&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
+&                         , hlr(row, col), qup, q(row, col, zq))
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    DO i=mesh%nrow*mesh%ncol,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) THEN
-          row = mesh%path(1, i)
-          col = mesh%path(2, i)
-          CALL POPREAL4(hlr(row, col))
-          CALL POPREAL4(qup)
-          CALL LINEAR_ROUTING_B(mesh%dx(row, col), mesh%dy(row, col), &
-&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
-&                         , llr_b(row, col), hlr(row, col), hlr_b(row, &
-&                         col), qup, qup_b, q(row, col, zq), q_b(row, &
-&                         col, zq))
-          CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_b(:, :, zq), qup, qup_b)
-        END IF
+    DO i=mesh%npar,2,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPINTEGER4(ad_to0)
+        DO j=ad_to0,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            CALL POPREAL4(hlr(row, col))
+            CALL POPREAL4(qup)
+            CALL LINEAR_ROUTING_B(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, mesh%flwacc(row, col), llr(row, &
+&                           col), llr_b(row, col), hlr(row, col), hlr_b(&
+&                           row, col), qup, qup_b, q(row, col, zq), q_b(&
+&                           row, col, zq))
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qup, qup_b)
+          END IF
+        END DO
+      ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&llr, hlr, q, i), SHARED(qt_b, llr_b, hlr_b, q_b), PRIVATE(j, row, &
+!$OMP&col, qup), PRIVATE(qup_b), PRIVATE(ad_to, branch, chunk_end, &
+!$OMP&chunk_start)
+        CALL POPINTEGER4(i)
+        qup_b = 0.0_4
+        CALL POPINTEGER4(ad_to)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            CALL POPREAL4(hlr(row, col))
+            CALL POPREAL4(qup)
+            CALL LINEAR_ROUTING_B(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, mesh%flwacc(row, col), llr(row, &
+&                           col), llr_b(row, col), hlr(row, col), hlr_b(&
+&                           row, col), qup, qup_b, q(row, col, zq), q_b(&
+&                           row, col, zq))
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qup, qup_b)
+          END IF
+        END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     qt_b(:, :, zq) = qt_b(:, :, zq) + q_b(:, :, zq)
     q_b(:, :, zq) = 0.0_4
   END SUBROUTINE LR_TIMESTEP_B
 
-  SUBROUTINE LR_TIMESTEP(setup, mesh, qt, llr, hlr, q)
+  SUBROUTINE LR_TIMESTEP(setup, mesh, options, qt, llr, hlr, q)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=1
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: llr
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col, ncpu
     REAL(sp) :: qup
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
-&                           qup)
-          CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
-&                       setup%dt, mesh%flwacc(row, col), llr(row, col), &
-&                       hlr(row, col), qup, q(row, col, zq))
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, llr, hlr, q, i), PRIVATE(j, row, col, qup), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
+&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
+&                         , hlr(row, col), qup, q(row, col, zq))
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qup)
+            CALL LINEAR_ROUTING(mesh%dx(row, col), mesh%dy(row, col), &
+&                         setup%dt, mesh%flwacc(row, col), llr(row, col)&
+&                         , hlr(row, col), qup, q(row, col, zq))
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE LR_TIMESTEP
@@ -13948,12 +14381,13 @@ CONTAINS
 !  Differentiation of kw_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: q
 !   with respect to varying inputs: q bkw qt akw
-  SUBROUTINE KW_TIMESTEP_D(setup, mesh, qt, qt_d, akw, akw_d, bkw, bkw_d&
-&   , q, q_d)
+  SUBROUTINE KW_TIMESTEP_D(setup, mesh, options, qt, qt_d, akw, akw_d, &
+&   bkw, bkw_d, q, q_d)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=2
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: akw, bkw
@@ -13961,34 +14395,63 @@ CONTAINS
 &   bkw_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_d
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     REAL(sp) :: qlijm1_d, qlij_d, qim1j_d, qijm1_d
     q_d(:, :, zq) = qt_d(:, :, zq)
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          qlijm1_d = qt_d(row, col, zq-1)
-          qlijm1 = qt(row, col, zq-1)
-          qlij_d = qt_d(row, col, zq)
-          qlij = qt(row, col, zq)
-          qijm1_d = q_d(row, col, zq-1)
-          qijm1 = q(row, col, zq-1)
-          CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_d(:, :, zq), qim1j, qim1j_d)
-          CALL KINEMATIC_WAVE1D_D(mesh%dx(row, col), mesh%dy(row, col), &
-&                           setup%dt, akw(row, col), akw_d(row, col), &
-&                           bkw(row, col), bkw_d(row, col), qlijm1, &
-&                           qlijm1_d, qlij, qlij_d, qim1j, qim1j_d, &
-&                           qijm1, qijm1_d, q(row, col, zq), q_d(row, &
-&                           col, zq))
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, akw, bkw, q, i), SHARED(qt_d, akw_d, bkw_d, q_d), PRIVATE(j, &
+!$OMP&row, col, qlijm1, qlij, qim1j, qijm1), PRIVATE(qlijm1_d, qlij_d, &
+!$OMP&qim1j_d, qijm1_d), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            qlijm1_d = qt_d(row, col, zq-1)
+            qlijm1 = qt(row, col, zq-1)
+            qlij_d = qt_d(row, col, zq)
+            qlij = qt(row, col, zq)
+            qijm1_d = q_d(row, col, zq-1)
+            qijm1 = q(row, col, zq-1)
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qim1j, qim1j_d)
+            CALL KINEMATIC_WAVE1D_D(mesh%dx(row, col), mesh%dy(row, col)&
+&                             , setup%dt, akw(row, col), akw_d(row, col)&
+&                             , bkw(row, col), bkw_d(row, col), qlijm1, &
+&                             qlijm1_d, qlij, qlij_d, qim1j, qim1j_d, &
+&                             qijm1, qijm1_d, q(row, col, zq), q_d(row, &
+&                             col, zq))
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            qlijm1_d = qt_d(row, col, zq-1)
+            qlijm1 = qt(row, col, zq-1)
+            qlij_d = qt_d(row, col, zq)
+            qlij = qt(row, col, zq)
+            qijm1_d = q_d(row, col, zq-1)
+            qijm1 = q(row, col, zq-1)
+            CALL UPSTREAM_DISCHARGE_D(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_d(:, :, zq), qim1j, qim1j_d)
+            CALL KINEMATIC_WAVE1D_D(mesh%dx(row, col), mesh%dy(row, col)&
+&                             , setup%dt, akw(row, col), akw_d(row, col)&
+&                             , bkw(row, col), bkw_d(row, col), qlijm1, &
+&                             qlijm1_d, qlij, qlij_d, qim1j, qim1j_d, &
+&                             qijm1, qijm1_d, q(row, col, zq), q_d(row, &
+&                             col, zq))
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE KW_TIMESTEP_D
@@ -13996,104 +14459,217 @@ CONTAINS
 !  Differentiation of kw_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: q bkw qt akw
 !   with respect to varying inputs: q bkw qt akw
-  SUBROUTINE KW_TIMESTEP_B(setup, mesh, qt, qt_b, akw, akw_b, bkw, bkw_b&
-&   , q, q_b)
+  SUBROUTINE KW_TIMESTEP_B(setup, mesh, options, qt, qt_b, akw, akw_b, &
+&   bkw, bkw_b, q, q_b)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=2
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq) :: qt_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: akw, bkw
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: akw_b, bkw_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_b
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     REAL(sp) :: qlijm1_b, qlij_b, qim1j_b, qijm1_b
+    INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+    INTEGER :: ad_to0
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%local_active_cell(&
-&         row, col) .EQ. 0) THEN
-        CALL PUSHCONTROL2B(1)
-      ELSE IF (mesh%flwacc(row, col) .LE. mesh%dx(row, col)*mesh%dy(row&
-&         , col)) THEN
-        CALL PUSHCONTROL2B(0)
-      ELSE
-        qlijm1 = qt(row, col, zq-1)
-        qlij = qt(row, col, zq)
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&akw, bkw, q, i), PRIVATE(j, row, col, qlijm1, qlij, qim1j, qijm1)&
+!$OMP&, PRIVATE(ad_to, chunk_start, chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            qlijm1 = qt(row, col, zq-1)
+            qlij = qt(row, col, zq)
+            CALL PUSHREAL4(qijm1)
+            qijm1 = q(row, col, zq-1)
+            CALL PUSHREAL4(qim1j)
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qim1j)
+            CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, akw(row, col), bkw(row, col), &
+&                           qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
         CALL PUSHREAL4(qijm1)
-        qijm1 = q(row, col, zq-1)
+        CALL PUSHINTEGER4(i)
         CALL PUSHREAL4(qim1j)
-        CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
-&                         qim1j)
-        CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
-&                       setup%dt, akw(row, col), bkw(row, col), qlijm1, &
-&                       qlij, qim1j, qijm1, q(row, col, zq))
-        CALL PUSHCONTROL2B(2)
+        CALL PUSHINTEGER4(options%comm%ncpu)
+!$OMP   END PARALLEL
+        CALL PUSHCONTROL1B(1)
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0) THEN
+            CALL PUSHCONTROL1B(0)
+          ELSE
+            qlijm1 = qt(row, col, zq-1)
+            qlij = qt(row, col, zq)
+            CALL PUSHREAL4(qijm1)
+            qijm1 = q(row, col, zq-1)
+            CALL PUSHREAL4(qim1j)
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qim1j)
+            CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, akw(row, col), bkw(row, col), &
+&                           qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+            CALL PUSHCONTROL1B(1)
+          END IF
+        END DO
+        CALL PUSHINTEGER4(j - 1)
+        CALL PUSHCONTROL1B(0)
       END IF
     END DO
-    DO i=mesh%nrow*mesh%ncol,1,-1
-      CALL POPCONTROL2B(branch)
-      IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) THEN
-          row = mesh%path(1, i)
-          col = mesh%path(2, i)
-          qlij = qt(row, col, zq)
-          qlijm1 = qt(row, col, zq-1)
-          CALL KINEMATIC_WAVE1D_B(mesh%dx(row, col), mesh%dy(row, col), &
-&                           setup%dt, akw(row, col), akw_b(row, col), &
-&                           bkw(row, col), bkw_b(row, col), qlijm1, &
-&                           qlijm1_b, qlij, qlij_b, qim1j, qim1j_b, &
-&                           qijm1, qijm1_b, q(row, col, zq), q_b(row, &
-&                           col, zq))
-          q_b(row, col, zq) = 0.0_4
-          CALL POPREAL4(qim1j)
-          CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq), &
-&                             q_b(:, :, zq), qim1j, qim1j_b)
-          CALL POPREAL4(qijm1)
-          q_b(row, col, zq-1) = q_b(row, col, zq-1) + qijm1_b
-          qt_b(row, col, zq) = qt_b(row, col, zq) + qlij_b
-          qt_b(row, col, zq-1) = qt_b(row, col, zq-1) + qlijm1_b
-        END IF
+    DO i=mesh%npar,2,-1
+      CALL POPCONTROL1B(branch)
+      IF (branch .EQ. 0) THEN
+        CALL POPINTEGER4(ad_to0)
+        DO j=ad_to0,1,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            qlij = qt(row, col, zq)
+            qlijm1 = qt(row, col, zq-1)
+            CALL KINEMATIC_WAVE1D_B(mesh%dx(row, col), mesh%dy(row, col)&
+&                             , setup%dt, akw(row, col), akw_b(row, col)&
+&                             , bkw(row, col), bkw_b(row, col), qlijm1, &
+&                             qlijm1_b, qlij, qlij_b, qim1j, qim1j_b, &
+&                             qijm1, qijm1_b, q(row, col, zq), q_b(row, &
+&                             col, zq))
+            q_b(row, col, zq) = 0.0_4
+            CALL POPREAL4(qim1j)
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qim1j, qim1j_b)
+            CALL POPREAL4(qijm1)
+            q_b(row, col, zq-1) = q_b(row, col, zq-1) + qijm1_b
+            qt_b(row, col, zq) = qt_b(row, col, zq) + qlij_b
+            qt_b(row, col, zq-1) = qt_b(row, col, zq-1) + qlijm1_b
+          END IF
+        END DO
+      ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, qt, &
+!$OMP&akw, bkw, q, i), SHARED(qt_b, akw_b, bkw_b, q_b), PRIVATE(j, row, &
+!$OMP&col, qlijm1, qlij, qim1j, qijm1), PRIVATE(qlijm1_b, qlij_b, &
+!$OMP&qim1j_b, qijm1_b), PRIVATE(ad_to, branch, chunk_end, chunk_start)
+        CALL POPINTEGER4(options%comm%ncpu)
+        CALL POPREAL4(qim1j)
+        CALL POPINTEGER4(i)
+        CALL POPREAL4(qijm1)
+        qlijm1_b = 0.0_4
+        qlij_b = 0.0_4
+        qim1j_b = 0.0_4
+        qijm1_b = 0.0_4
+        CALL POPINTEGER4(ad_to)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
+          CALL POPCONTROL1B(branch)
+          IF (branch .NE. 0) THEN
+            row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+            col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+            qlij = qt(row, col, zq)
+            qlijm1 = qt(row, col, zq-1)
+            CALL KINEMATIC_WAVE1D_B(mesh%dx(row, col), mesh%dy(row, col)&
+&                             , setup%dt, akw(row, col), akw_b(row, col)&
+&                             , bkw(row, col), bkw_b(row, col), qlijm1, &
+&                             qlijm1_b, qlij, qlij_b, qim1j, qim1j_b, &
+&                             qijm1, qijm1_b, q(row, col, zq), q_b(row, &
+&                             col, zq))
+            q_b(row, col, zq) = 0.0_4
+            CALL POPREAL4(qim1j)
+            CALL UPSTREAM_DISCHARGE_B(row, col, mesh%flwdir, q(:, :, zq)&
+&                               , q_b(:, :, zq), qim1j, qim1j_b)
+            CALL POPREAL4(qijm1)
+!$OMP       ATOMIC update
+            q_b(row, col, zq-1) = q_b(row, col, zq-1) + qijm1_b
+!$OMP       ATOMIC update
+            qt_b(row, col, zq) = qt_b(row, col, zq) + qlij_b
+!$OMP       ATOMIC update
+            qt_b(row, col, zq-1) = qt_b(row, col, zq-1) + qlijm1_b
+          END IF
+        END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     qt_b(:, :, zq) = qt_b(:, :, zq) + q_b(:, :, zq)
     q_b(:, :, zq) = 0.0_4
   END SUBROUTINE KW_TIMESTEP_B
 
-  SUBROUTINE KW_TIMESTEP(setup, mesh, qt, akw, bkw, q)
+  SUBROUTINE KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
     IMPLICIT NONE
     INTEGER, PARAMETER :: zq=2
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: akw, bkw
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
-    INTEGER :: i, row, col
+    INTEGER :: i, j, row, col
     REAL(sp) :: qlijm1, qlij, qim1j, qijm1
     q(:, :, zq) = qt(:, :, zq)
-! TODO: replace this loop with loop on routing partitions
-    DO i=1,mesh%nrow*mesh%ncol
-      row = mesh%path(1, i)
-      col = mesh%path(2, i)
-      IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
-&         local_active_cell(row, col) .EQ. 0)) THEN
-        IF (mesh%flwacc(row, col) .GT. mesh%dx(row, col)*mesh%dy(row, &
-&           col)) THEN
-          qlijm1 = qt(row, col, zq-1)
-          qlij = qt(row, col, zq)
-          qijm1 = q(row, col, zq-1)
-          CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
-&                           qim1j)
-          CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
-&                         setup%dt, akw(row, col), bkw(row, col), qlijm1&
-&                         , qlij, qim1j, qijm1, q(row, col, zq))
-        END IF
+! Skip the first partition because boundary cells are not routed
+    DO i=2,mesh%npar
+! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
+! is duplicated ... Maybe there is another way to do it.
+      IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&qt, akw, bkw, q, i), PRIVATE(j, row, col, qlijm1, qlij, qim1j, &
+!$OMP&qijm1), SCHEDULE(static)
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            qlijm1 = qt(row, col, zq-1)
+            qlij = qt(row, col, zq)
+            qijm1 = q(row, col, zq-1)
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qim1j)
+            CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, akw(row, col), bkw(row, col), &
+&                           qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+          END IF
+        END DO
+      ELSE
+        DO j=1,mesh%ncpar(i)
+          row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
+          col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
+          IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
+&             local_active_cell(row, col) .EQ. 0)) THEN
+            qlijm1 = qt(row, col, zq-1)
+            qlij = qt(row, col, zq)
+            qijm1 = q(row, col, zq-1)
+            CALL UPSTREAM_DISCHARGE(row, col, mesh%flwdir, q(:, :, zq), &
+&                             qim1j)
+            CALL KINEMATIC_WAVE1D(mesh%dx(row, col), mesh%dy(row, col), &
+&                           setup%dt, akw(row, col), bkw(row, col), &
+&                           qlijm1, qlij, qim1j, qijm1, q(row, col, zq))
+          END IF
+        END DO
       END IF
     END DO
   END SUBROUTINE KW_TIMESTEP
@@ -14107,6 +14683,8 @@ MODULE MD_SNOW_OPERATOR_DIFF
   USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -14170,14 +14748,19 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
+!$OMP ATOMIC update
     mlt_b = mlt_b - hs_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       hs_b = hs_b + mlt_b
       mlt_b = 0.0_4
     END IF
     CALL POPCONTROL1B(branch)
-    IF (branch .EQ. 0) kmlt_b = kmlt_b + temp*mlt_b
+    IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
+      kmlt_b = kmlt_b + temp*mlt_b
+    END IF
   END SUBROUTINE SIMPLE_SNOW_B
 
   SUBROUTINE SIMPLE_SNOW(snow, temp, kmlt, hs, mlt)
@@ -14204,11 +14787,12 @@ CONTAINS
 !  Differentiation of ssn_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: mlt hs
 !   with respect to varying inputs: mlt hs kmlt
-  SUBROUTINE SSN_TIMESTEP_D(setup, mesh, snow, temp, kmlt, kmlt_d, hs, &
-&   hs_d, mlt, mlt_d)
+  SUBROUTINE SSN_TIMESTEP_D(setup, mesh, options, snow, temp, kmlt, &
+&   kmlt_d, hs, hs_d, mlt, mlt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: snow, temp
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: kmlt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: kmlt_d
@@ -14217,6 +14801,9 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: mlt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: mlt_d
     INTEGER :: row, col
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&snow, temp, kmlt, hs, mlt), SHARED(kmlt_d, hs_d, mlt_d), PRIVATE(&
+!$OMP&row, col), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14238,11 +14825,12 @@ CONTAINS
 !  Differentiation of ssn_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: mlt hs kmlt
 !   with respect to varying inputs: mlt hs kmlt
-  SUBROUTINE SSN_TIMESTEP_B(setup, mesh, snow, temp, kmlt, kmlt_b, hs, &
-&   hs_b, mlt, mlt_b)
+  SUBROUTINE SSN_TIMESTEP_B(setup, mesh, options, snow, temp, kmlt, &
+&   kmlt_b, hs, hs_b, mlt, mlt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: snow, temp
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: kmlt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: kmlt_b
@@ -14252,7 +14840,13 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: mlt_b
     INTEGER :: row, col
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, snow, &
+!$OMP&temp, kmlt, hs, mlt), PRIVATE(row, col), PRIVATE(chunk_start, &
+!$OMP&chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -14268,7 +14862,12 @@ CONTAINS
         END IF
       END DO
     END DO
-    DO col=mesh%ncol,1,-1
+!$OMP END PARALLEL
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, snow, &
+!$OMP&temp, kmlt, hs, mlt), SHARED(kmlt_b, hs_b, mlt_b), PRIVATE(row, &
+!$OMP&col), PRIVATE(branch, chunk_end, chunk_start)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
@@ -14284,17 +14883,22 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE SSN_TIMESTEP_B
 
-  SUBROUTINE SSN_TIMESTEP(setup, mesh, snow, temp, kmlt, hs, mlt)
+  SUBROUTINE SSN_TIMESTEP(setup, mesh, options, snow, temp, kmlt, hs, &
+&   mlt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: snow, temp
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: kmlt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hs
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: mlt
     INTEGER :: row, col
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&snow, temp, kmlt, hs, mlt), PRIVATE(row, col), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14320,6 +14924,8 @@ MODULE MD_VIC3L_OPERATOR_DIFF
   USE MWD_SETUP
 !% only: MeshDT
   USE MWD_MESH
+!% only: OptionsDT
+  USE MWD_OPTIONS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -14433,13 +15039,16 @@ CONTAINS
     IF (branch .NE. 0) hcl_b = 0.0_4
     CALL POPREAL4(hcl)
     temp_b = hcl_b/ccl
+!$OMP ATOMIC update
     prcp_b = prcp_b + temp_b
     ec_b = -temp_b - en_b
     pn_b = pn_b - temp_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(pn)
+!$OMP ATOMIC update
       prcp_b = prcp_b + pn_b
+!$OMP ATOMIC update
       hcl_b = hcl_b + ccl*pn_b
       ec_b = ec_b - pn_b
     ELSE
@@ -14447,13 +15056,17 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       prcp_b = prcp_b + ec_b
+!$OMP ATOMIC update
       hcl_b = hcl_b + ccl*ec_b
     ELSE
       pwr1_b = pet*ec_b
       IF (.NOT.(hcl .LE. 0.0 .AND. (2._sp/3._sp .EQ. 0.0 .OR. 2._sp/&
-&         3._sp .NE. INT(2._sp/3._sp)))) hcl_b = hcl_b + 2._sp*hcl**(&
-&         2._sp/3._sp-1)*pwr1_b/3._sp
+&         3._sp .NE. INT(2._sp/3._sp)))) THEN
+!$OMP   ATOMIC update
+        hcl_b = hcl_b + 2._sp*hcl**(2._sp/3._sp-1)*pwr1_b/3._sp
+      END IF
     END IF
   END SUBROUTINE VIC3L_CANOPY_INTERCEPTION_B
 
@@ -14634,10 +15247,13 @@ CONTAINS
       es = es
     END IF
     es_b = -(husl_b/cusl)
+!$OMP ATOMIC update
     cusl_b = cusl_b + es*husl_b/cusl**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       husl_b = husl_b + cusl*es_b
+!$OMP ATOMIC update
       cusl_b = cusl_b + husl*es_b
       es_b = 0.0_4
     END IF
@@ -14652,6 +15268,7 @@ CONTAINS
       DO i=npe,1,-1
         pwr1 = ratio**i
         temp_b = pe_value_b/(i+b)
+!$OMP   ATOMIC update
         b_b = b_b + (pwr1-b*pwr1/(i+b))*temp_b
         pwr1_b = b*temp_b
         IF (.NOT.(ratio .LE. 0.0 .AND. (i .EQ. 0.0 .OR. i .NE. INT(i)))&
@@ -14660,7 +15277,10 @@ CONTAINS
       pwr1_b = -as_b
       IF (.NOT.(ratio .LE. 0.0 .AND. (b .EQ. 0.0 .OR. b .NE. INT(b)))) &
 &       ratio_b = ratio_b + b*ratio**(b-1)*pwr1_b
-      IF (.NOT.ratio .LE. 0.0) b_b = b_b + ratio**b*LOG(ratio)*pwr1_b
+      IF (.NOT.ratio .LE. 0.0) THEN
+!$OMP   ATOMIC update
+        b_b = b_b + ratio**b*LOG(ratio)*pwr1_b
+      END IF
       pwy1 = 1._sp/(1._sp+b)
       pwr1 = pwx1**pwy1
       ifl0_b = -(ratio_b/iflm)
@@ -14683,8 +15303,11 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     b_b = b_b + cusl*iflm_b - pwy1_b/(b+1._sp)**2
+!$OMP ATOMIC update
     husl_b = husl_b - pwx1_b
+!$OMP ATOMIC update
     cusl_b = cusl_b + (b+1._sp)*iflm_b
   END SUBROUTINE VIC3L_UPPER_SOIL_LAYER_EVAPORATION_B
 
@@ -14891,14 +15514,18 @@ CONTAINS
     pn_b = qr_b
     ifl_usl_b = husl_b/cusl - qr_b
     ifl_msl_b = qr_b + hmsl_b/cmsl
+!$OMP ATOMIC update
     cmsl_b = cmsl_b - ifl_msl*hmsl_b/cmsl**2
+!$OMP ATOMIC update
     cusl_b = cusl_b - ifl_usl*husl_b/cusl**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       ifl_b = ifl_msl_b
       ifl_usl_b = ifl_usl_b - ifl_msl_b
     ELSE
+!$OMP ATOMIC update
       hmsl_b = hmsl_b - cmsl*ifl_msl_b
+!$OMP ATOMIC update
       cmsl_b = cmsl_b + (1._sp-hmsl)*ifl_msl_b
       ifl_b = 0.0_4
     END IF
@@ -14906,7 +15533,9 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ifl_b = ifl_b + ifl_usl_b
     ELSE
+!$OMP ATOMIC update
       husl_b = husl_b - cusl*ifl_usl_b
+!$OMP ATOMIC update
       cusl_b = cusl_b + (1._sp-husl)*ifl_usl_b
     END IF
     CALL POPCONTROL1B(branch)
@@ -14934,6 +15563,7 @@ CONTAINS
       ELSE
         pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
       END IF
+!$OMP ATOMIC update
       b_b = b_b + pwy1_b
       temp_b = -(pwx1_b/iflm)
       ifl0_b = temp_b
@@ -14961,13 +15591,18 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     b_b = b_b + cumsl*iflm_b - pwy1_b/(b+1._sp)**2
     humsl_b = -pwx1_b
     cumsl_b = cumsl_b + (b+1._sp)*iflm_b - wumsl*humsl_b/cumsl**2
     wumsl_b = wumsl_b + humsl_b/cumsl
+!$OMP ATOMIC update
     husl_b = husl_b + cusl*wumsl_b
+!$OMP ATOMIC update
     cusl_b = cusl_b + husl*wumsl_b + cumsl_b
+!$OMP ATOMIC update
     hmsl_b = hmsl_b + cmsl*wumsl_b
+!$OMP ATOMIC update
     cmsl_b = cmsl_b + hmsl*wumsl_b + cumsl_b
   END SUBROUTINE VIC3L_INFILTRATION_B
 
@@ -15119,7 +15754,9 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     d_b = hl_b/cl - hu_b/cu
+!$OMP ATOMIC update
     cl_b = cl_b - d*hl_b/cl**2
+!$OMP ATOMIC update
     cu_b = cu_b + d*hu_b/cu**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -15130,6 +15767,7 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       cl_b = cl_b + y1_b
       wl_b = -y1_b
       wu_b = 0.0_4
@@ -15137,17 +15775,28 @@ CONTAINS
       wu_b = y1_b
       wl_b = 0.0_4
     END IF
+!$OMP ATOMIC update
     hl_b = hl_b + cl*wl_b
+!$OMP ATOMIC update
     cl_b = cl_b + hl*wl_b
+!$OMP ATOMIC update
     hu_b = hu_b + cu*wu_b
+!$OMP ATOMIC update
     cu_b = cu_b + hu*wu_b
+!$OMP ATOMIC update
     ks_b = ks_b + hpbc*d_b
     hpbc_b = ks*d_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       IF (.NOT.(hu .LE. 0.0 .AND. (pbc .EQ. 0.0 .OR. pbc .NE. INT(pbc)))&
-&     ) hu_b = hu_b + pbc*hu**(pbc-1)*hpbc_b
-      IF (.NOT.hu .LE. 0.0) pbc_b = pbc_b + hu**pbc*LOG(hu)*hpbc_b
+&     ) THEN
+!$OMP   ATOMIC update
+        hu_b = hu_b + pbc*hu**(pbc-1)*hpbc_b
+      END IF
+      IF (.NOT.hu .LE. 0.0) THEN
+!$OMP   ATOMIC update
+        pbc_b = pbc_b + hu**pbc*LOG(hu)*hpbc_b
+      END IF
     END IF
   END SUBROUTINE VIC3L_DRAINAGE_2L_B
 
@@ -15314,20 +15963,27 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     qb_b = qb_b - hbsl_b/cbsl
+!$OMP ATOMIC update
     cbsl_b = cbsl_b + qb*hbsl_b/cbsl**2
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + cbsl*qb_b
+!$OMP ATOMIC update
       cbsl_b = cbsl_b + hbsl*qb_b
       qb_b = 0.0_4
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       temp1 = hbsl/ws
+!$OMP ATOMIC update
       dsm_b = dsm_b + ds*temp1*qb_b
+!$OMP ATOMIC update
       ds_b = ds_b + dsm*temp1*qb_b
       temp_b1 = dsm*ds*qb_b/ws
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + temp_b1
+!$OMP ATOMIC update
       ws_b = ws_b - temp1*temp_b1
     ELSE
       temp = hbsl/ws
@@ -15335,11 +15991,15 @@ CONTAINS
       temp1 = ds/ws
       temp_b = dsm*ds*qb_b/ws
       temp_b0 = temp0**2._sp*qb_b
+!$OMP ATOMIC update
       dsm_b = dsm_b + ds*temp*qb_b + (1._sp-temp1)*temp_b0
       temp_b2 = 2._sp*temp0*dsm*(1._sp-temp1)*qb_b/(1._sp-ws)
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + temp_b2 + temp_b
       temp_b1 = -(dsm*temp_b0/ws)
+!$OMP ATOMIC update
       ds_b = ds_b + dsm*temp*qb_b + temp_b1
+!$OMP ATOMIC update
       ws_b = ws_b + (temp0-1.0)*temp_b2 - temp1*temp_b1 - temp*temp_b
     END IF
   END SUBROUTINE VIC3L_BASEFLOW_B
@@ -15368,13 +16028,14 @@ CONTAINS
 !   variations   of useful results: hbsl qt hcl husl hmsl
 !   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
 !                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, b, b_d, &
-&   cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, pbc_d, dsm&
-&   , dsm_d, ds, ds_d, ws, ws_d, hcl, hcl_d, husl, husl_d, hmsl, hmsl_d&
-&   , hbsl, hbsl_d, qt, qt_d)
+  SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
+&   , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, &
+&   pbc_d, dsm, dsm_d, ds, ds_d, ws, ws_d, hcl, hcl_d, husl, husl_d, &
+&   hmsl, hmsl_d, hbsl, hbsl_d, qt, qt_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
@@ -15390,6 +16051,13 @@ CONTAINS
     INTEGER :: row, col
     REAL(sp) :: pn, en, qr, qb
     REAL(sp) :: pn_d, en_d, qr_d, qb_d
+    REAL(sp) :: temp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
+!$OMP&hmsl, hbsl, qt), SHARED(prcp_d, b_d, cusl_d, cmsl_d, cbsl_d, ks_d&
+!$OMP&, pbc_d, ds_d, dsm_d, ws_d, hcl_d, husl_d, hmsl_d, hbsl_d, qt_d), &
+!$OMP&PRIVATE(row, col, pn, en, qr, qb), PRIVATE(pn_d, en_d, qr_d, qb_d)&
+!$OMP&, PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15428,12 +16096,13 @@ CONTAINS
 &                         row, col), hbsl_d(row, col), qb, qb_d)
           qt_d(row, col) = qr_d + qb_d
           qt(row, col) = qr + qb
+! Transform from mm/dt to m3/s
+          temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
+          qt_d(row, col) = temp*qt_d(row, col)/setup%dt
+          qt(row, col) = temp*(qt(row, col)/setup%dt)
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt_d = mesh%dx*1e-3_sp*mesh%dy*qt_d/setup%dt
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE VIC3L_TIMESTEP_D
 
 !  Differentiation of vic3l_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -15441,13 +16110,14 @@ CONTAINS
 !                ks cbsl pbc husl dsm hmsl b
 !   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
 !                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, b, b_b, &
-&   cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, pbc_b, dsm&
-&   , dsm_b, ds, ds_b, ws, ws_b, hcl, hcl_b, husl, husl_b, hmsl, hmsl_b&
-&   , hbsl, hbsl_b, qt, qt_b)
+  SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, b&
+&   , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, &
+&   pbc_b, dsm, dsm_b, ds, ds_b, ws, ws_b, hcl, hcl_b, husl, husl_b, &
+&   hmsl, hmsl_b, hbsl, hbsl_b, qt, qt_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
@@ -15464,7 +16134,14 @@ CONTAINS
     REAL(sp) :: pn, en, qr, qb
     REAL(sp) :: pn_b, en_b, qr_b, qb_b
     INTEGER :: branch
-    DO col=1,mesh%ncol
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl, &
+!$OMP&hbsl, qt), PRIVATE(row, col, pn, en, qr, qb), PRIVATE(chunk_start&
+!$OMP&, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15500,16 +16177,34 @@ CONTAINS
           CALL PUSHREAL4(hbsl(row, col))
           CALL VIC3L_BASEFLOW(cbsl(row, col), ds(row, col), dsm(row, col&
 &                       ), ws(row, col), hbsl(row, col), qb)
+! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
     END DO
-    qt_b = mesh%dx*1e-3_sp*mesh%dy*qt_b/setup%dt
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(en)
+!$OMP END PARALLEL
     prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
+!$OMP&pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl, &
+!$OMP&hbsl, qt), SHARED(prcp_b, b_b, cusl_b, cmsl_b, cbsl_b, ks_b, pbc_b&
+!$OMP&, ds_b, dsm_b, ws_b, hcl_b, husl_b, hmsl_b, hbsl_b, qt_b), PRIVATE&
+!$OMP&(row, col, pn, en, qr, qb), PRIVATE(pn_b, en_b, qr_b, qb_b), &
+!$OMP&PRIVATE(branch, chunk_end, chunk_start)
+    CALL POPREAL4(en)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    qr_b = 0.0_4
+    qb_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
+          qt_b(row, col) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
+&           qt_b(row, col)/setup%dt
           qr_b = qt_b(row, col)
           qb_b = qt_b(row, col)
           qt_b(row, col) = 0.0_4
@@ -15554,13 +16249,15 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE VIC3L_TIMESTEP_B
 
-  SUBROUTINE VIC3L_TIMESTEP(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl&
-&   , ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
+  SUBROUTINE VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
+&   cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OPTIONSDT), INTENT(IN) :: options
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
 &   cmsl, cbsl, ks, pbc, ds, dsm, ws
@@ -15569,6 +16266,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
     REAL(sp) :: pn, en, qr, qb
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
+!$OMP&hmsl, hbsl, qt), PRIVATE(row, col, pn, en, qr, qb), SCHEDULE(static&
+!$OMP&                                    )
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15593,11 +16294,12 @@ CONTAINS
           CALL VIC3L_BASEFLOW(cbsl(row, col), ds(row, col), dsm(row, col&
 &                       ), ws(row, col), hbsl(row, col), qb)
           qt(row, col) = qr + qb
+! Transform from mm/dt to m3/s
+          qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(&
+&           row, col)/setup%dt
         END IF
       END DO
     END DO
-! Transform from mm/dt to m3/s
-    qt = qt*1e-3_sp*mesh%dx*mesh%dy/setup%dt
   END SUBROUTINE VIC3L_TIMESTEP
 
 END MODULE MD_VIC3L_OPERATOR_DIFF
@@ -16096,8 +16798,8 @@ CONTAINS
 ! Get extended atmospheric data ; snow and temp
         CALL GET_EXTENDED_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t&
 &                                       , snow, temp)
-        CALL SSN_TIMESTEP_D(setup, mesh, snow, temp, kmlt, kmlt_d, hs, &
-&                     hs_d, mlt, mlt_d)
+        CALL SSN_TIMESTEP_D(setup, mesh, options, snow, temp, kmlt, &
+&                     kmlt_d, hs, hs_d, mlt, mlt_d)
         prcp_d = mlt_d
         prcp = prcp + mlt
       CASE DEFAULT
@@ -16107,42 +16809,43 @@ CONTAINS
       SELECT CASE  (setup%hydrological_module) 
       CASE ('gr4') 
 ! 'gr4' module
-        CALL GR4_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ci, ci_d, cp&
-&                     , cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d&
-&                     , ht, ht_d, qt(:, :, zq), qt_d(:, :, zq))
+        CALL GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
+&                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d&
+&                     , hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :, zq)&
+&                    )
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('gr5') 
 ! 'gr5' module
-        CALL GR5_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ci, ci_d, cp&
-&                     , cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, &
-&                     hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :&
-&                     , zq))
+        CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
+&                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
+&                     aexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
+&                     , qt_d(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('grd') 
 ! 'grd' module
-        CALL GRD_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, cp, cp_d, ct&
-&                     , ct_d, hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, &
-&                     :, zq))
+        CALL GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
+&                     , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
+&                     , qt_d(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
-        CALL LOIEAU_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, ca, ca_d&
-&                        , cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt(:&
-&                        , :, zq), qt_d(:, :, zq))
+        CALL LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
+&                        ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, &
+&                        hc_d, qt(:, :, zq), qt_d(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
 ! 'vic3l' module
-        CALL VIC3L_TIMESTEP_D(setup, mesh, prcp, prcp_d, pet, b, b_d, &
-&                       cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, &
-&                       ks_d, pbc, pbc_d, ds, ds_d, dsm, dsm_d, ws, ws_d&
-&                       , hcl, hcl_d, husl, husl_d, hmsl, hmsl_d, hbsl, &
-&                       hbsl_d, qt(:, :, zq), qt_d(:, :, zq))
+        CALL VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
+&                       , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d&
+&                       , ks, ks_d, pbc, pbc_d, ds, ds_d, dsm, dsm_d, ws&
+&                       , ws_d, hcl, hcl_d, husl, husl_d, hmsl, hmsl_d, &
+&                       hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
@@ -16152,16 +16855,16 @@ CONTAINS
       SELECT CASE  (setup%routing_module) 
       CASE ('lag0') 
 ! 'lag0' module
-        CALL LAG0_TIMESTEP_D(setup, mesh, qt, qt_d, q, q_d)
+        CALL LAG0_TIMESTEP_D(setup, mesh, options, qt, qt_d, q, q_d)
       CASE ('lr') 
 ! 'lr' module
-        CALL LR_TIMESTEP_D(setup, mesh, qt, qt_d, llr, llr_d, hlr, hlr_d&
-&                    , q, q_d)
+        CALL LR_TIMESTEP_D(setup, mesh, options, qt, qt_d, llr, llr_d, &
+&                    hlr, hlr_d, q, q_d)
         CALL SET_RR_STATES(output%rr_final_states, 'hlr', hlr)
       CASE ('kw') 
 ! 'kw' module
-        CALL KW_TIMESTEP_D(setup, mesh, qt, qt_d, akw, akw_d, bkw, bkw_d&
-&                    , q, q_d)
+        CALL KW_TIMESTEP_D(setup, mesh, options, qt, qt_d, akw, akw_d, &
+&                    bkw, bkw_d, q, q_d)
       END SELECT
 ! Store variables
       CALL STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, q(&
@@ -16505,7 +17208,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL SSN_TIMESTEP(setup, mesh, snow, temp, kmlt, hs, mlt)
+        CALL SSN_TIMESTEP(setup, mesh, options, snow, temp, kmlt, hs, &
+&                   mlt)
         prcp = prcp + mlt
         CALL PUSHCONTROL1B(1)
       CASE DEFAULT
@@ -16539,8 +17243,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GR4_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, &
-&                   hp, ht, qt(:, :, zq))
+        CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&                   kexc, hi, hp, ht, qt(:, :, zq))
         CALL PUSHCONTROL3B(1)
       CASE ('gr5') 
 ! 'gr5' module
@@ -16568,8 +17272,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GR5_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc&
-&                   , hi, hp, ht, qt(:, :, zq))
+        CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&                   kexc, aexc, hi, hp, ht, qt(:, :, zq))
         CALL PUSHCONTROL3B(2)
       CASE ('grd') 
 ! 'grd' module
@@ -16591,8 +17295,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GRD_TIMESTEP(setup, mesh, prcp, pet, cp, ct, hp, ht, qt(:, &
-&                   :, zq))
+        CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
+&                   ht, qt(:, :, zq))
         CALL PUSHCONTROL3B(3)
       CASE ('loieau') 
 ! 'loieau' module
@@ -16614,8 +17318,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL LOIEAU_TIMESTEP(setup, mesh, prcp, pet, ca, cc, kb, ha, hc&
-&                      , qt(:, :, zq))
+        CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
+&                      , ha, hc, qt(:, :, zq))
         CALL PUSHCONTROL3B(4)
       CASE ('vic3l') 
 ! 'vic3l' module
@@ -16649,9 +17353,9 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL VIC3L_TIMESTEP(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl&
-&                     , ks, pbc, ds, dsm, ws, hcl, husl, hmsl, hbsl, qt(&
-&                     :, :, zq))
+        CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
+&                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
+&                     , hbsl, qt(:, :, zq))
         CALL PUSHCONTROL3B(5)
       CASE DEFAULT
         CALL PUSHCONTROL3B(0)
@@ -16666,7 +17370,7 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL LAG0_TIMESTEP(setup, mesh, qt, q)
+        CALL LAG0_TIMESTEP(setup, mesh, options, qt, q)
         CALL PUSHCONTROL2B(1)
       CASE ('lr') 
 ! 'lr' module
@@ -16682,7 +17386,7 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL LR_TIMESTEP(setup, mesh, qt, llr, hlr, q)
+        CALL LR_TIMESTEP(setup, mesh, options, qt, llr, hlr, q)
         CALL PUSHCONTROL2B(2)
       CASE ('kw') 
 ! 'kw' module
@@ -16692,7 +17396,7 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL KW_TIMESTEP(setup, mesh, qt, akw, bkw, q)
+        CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
         CALL PUSHCONTROL2B(3)
       CASE DEFAULT
         CALL PUSHCONTROL2B(0)
@@ -16709,7 +17413,7 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)&
 &                                         *SIZE(q, 3))
-          CALL LAG0_TIMESTEP_B(setup, mesh, qt, qt_b, q, q_b)
+          CALL LAG0_TIMESTEP_B(setup, mesh, options, qt, qt_b, q, q_b)
         END IF
       ELSE IF (branch .EQ. 2) THEN
         CALL POPCONTROL1B(branch)
@@ -16718,14 +17422,14 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*&
 &                                       SIZE(q, 3))
-        CALL LR_TIMESTEP_B(setup, mesh, qt, qt_b, llr, llr_b, hlr, hlr_b&
-&                    , q, q_b)
+        CALL LR_TIMESTEP_B(setup, mesh, options, qt, qt_b, llr, llr_b, &
+&                    hlr, hlr_b, q, q_b)
       ELSE
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*&
 &                                       SIZE(q, 3))
-        CALL KW_TIMESTEP_B(setup, mesh, qt, qt_b, akw, akw_b, bkw, bkw_b&
-&                    , q, q_b)
+        CALL KW_TIMESTEP_B(setup, mesh, options, qt, qt_b, akw, akw_b, &
+&                    bkw, bkw_b, q, q_b)
       END IF
       CALL POPCONTROL3B(branch)
       IF (branch .LT. 3) THEN
@@ -16744,9 +17448,10 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
 &                                         )*SIZE(qt, 2))
-          CALL GR4_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ci, ci_b, &
-&                       cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, &
-&                       hp_b, ht, ht_b, qt(:, :, zq), qt_b(:, :, zq))
+          CALL GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
+&                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, &
+&                       hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:, &
+&                       :, zq))
         ELSE
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi&
@@ -16760,10 +17465,10 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
 &                                         )*SIZE(qt, 2))
-          CALL GR5_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ci, ci_b, &
-&                       cp, cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, &
-&                       hi, hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b&
-&                       (:, :, zq))
+          CALL GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
+&                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc&
+&                       , aexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt(:, :&
+&                       , zq), qt_b(:, :, zq))
         END IF
       ELSE IF (branch .EQ. 3) THEN
         CALL POPCONTROL1B(branch)
@@ -16775,9 +17480,9 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL GRD_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, cp, cp_b, ct&
-&                     , ct_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:, &
-&                     :, zq))
+        CALL GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
+&                     , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt(:, :, zq)&
+&                     , qt_b(:, :, zq))
       ELSE IF (branch .EQ. 4) THEN
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(ha, SIZE(ha, 1)*SIZE(ha, 2&
@@ -16788,9 +17493,9 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL LOIEAU_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, ca, ca_b&
-&                        , cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt(:&
-&                        , :, zq), qt_b(:, :, zq))
+        CALL LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
+&                        ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, &
+&                        hc_b, qt(:, :, zq), qt_b(:, :, zq))
       ELSE
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(hcl, SIZE(hcl, 1)*SIZE(hcl&
@@ -16807,11 +17512,11 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL VIC3L_TIMESTEP_B(setup, mesh, prcp, prcp_b, pet, b, b_b, &
-&                       cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, &
-&                       ks_b, pbc, pbc_b, ds, ds_b, dsm, dsm_b, ws, ws_b&
-&                       , hcl, hcl_b, husl, husl_b, hmsl, hmsl_b, hbsl, &
-&                       hbsl_b, qt(:, :, zq), qt_b(:, :, zq))
+        CALL VIC3L_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, b&
+&                       , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b&
+&                       , ks, ks_b, pbc, pbc_b, ds, ds_b, dsm, dsm_b, ws&
+&                       , ws_b, hcl, hcl_b, husl, husl_b, hmsl, hmsl_b, &
+&                       hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :, zq))
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
@@ -16819,8 +17524,8 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(hs, SIZE(hs, 1)*SIZE(hs, 2&
 &                                       ))
-        CALL SSN_TIMESTEP_B(setup, mesh, snow, temp, kmlt, kmlt_b, hs, &
-&                     hs_b, mlt, mlt_b)
+        CALL SSN_TIMESTEP_B(setup, mesh, options, snow, temp, kmlt, &
+&                     kmlt_b, hs, hs_b, mlt, mlt_b)
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(snow, SIZE(snow, 1)*SIZE(&
 &                                       snow, 2))
@@ -17268,42 +17973,43 @@ CONTAINS
 ! Get extended atmospheric data ; snow and temp
         CALL GET_EXTENDED_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t&
 &                                       , snow, temp)
-        CALL SSN_TIMESTEP(setup, mesh, snow, temp, kmlt, hs, mlt)
+        CALL SSN_TIMESTEP(setup, mesh, options, snow, temp, kmlt, hs, &
+&                   mlt)
         prcp = prcp + mlt
       END SELECT
 ! Hydrological module
       SELECT CASE  (setup%hydrological_module) 
       CASE ('gr4') 
 ! 'gr4' module
-        CALL GR4_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, &
-&                   hp, ht, qt(:, :, zq))
+        CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&                   kexc, hi, hp, ht, qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('gr5') 
 ! 'gr5' module
-        CALL GR5_TIMESTEP(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc&
-&                   , hi, hp, ht, qt(:, :, zq))
+        CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
+&                   kexc, aexc, hi, hp, ht, qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('grd') 
 ! 'grd' module
-        CALL GRD_TIMESTEP(setup, mesh, prcp, pet, cp, ct, hp, ht, qt(:, &
-&                   :, zq))
+        CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
+&                   ht, qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
-        CALL LOIEAU_TIMESTEP(setup, mesh, prcp, pet, ca, cc, kb, ha, hc&
-&                      , qt(:, :, zq))
+        CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
+&                      , ha, hc, qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
 ! 'vic3l' module
-        CALL VIC3L_TIMESTEP(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl&
-&                     , ks, pbc, ds, dsm, ws, hcl, husl, hmsl, hbsl, qt(&
-&                     :, :, zq))
+        CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
+&                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
+&                     , hbsl, qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
@@ -17313,14 +18019,14 @@ CONTAINS
       SELECT CASE  (setup%routing_module) 
       CASE ('lag0') 
 ! 'lag0' module
-        CALL LAG0_TIMESTEP(setup, mesh, qt, q)
+        CALL LAG0_TIMESTEP(setup, mesh, options, qt, q)
       CASE ('lr') 
 ! 'lr' module
-        CALL LR_TIMESTEP(setup, mesh, qt, llr, hlr, q)
+        CALL LR_TIMESTEP(setup, mesh, options, qt, llr, hlr, q)
         CALL SET_RR_STATES(output%rr_final_states, 'hlr', hlr)
       CASE ('kw') 
 ! 'kw' module
-        CALL KW_TIMESTEP(setup, mesh, qt, akw, bkw, q)
+        CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
       END SELECT
 ! Store variables
       CALL STORE_TIMESTEP(mesh, output, returns, t, iret, q(:, :, zq))

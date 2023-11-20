@@ -7,7 +7,6 @@ from smash.factory.mesh._tools import (
     _get_transform,
     _get_srs,
     _get_array,
-    _get_path,
     _xy_to_rowcol,
     _trim_zeros_2d,
 )
@@ -180,18 +179,22 @@ def _generate_mesh_from_xy(
     row_dln = row_dln - srow
     col_dln = col_dln - scol
 
-    flwacc = mw_mesh.flow_accumulation(flwdir, dx, dy)
+    flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
 
     flwdst = mw_mesh.flow_distance(flwdir, dx, dy, row_dln, col_dln, area_dln)
-
-    path = _get_path(flwacc)
 
     flwdst = np.ma.masked_array(flwdst, mask=flwdir.mask)
 
     flwacc = np.ma.masked_array(flwacc, mask=flwdir.mask)
 
+    npar = np.max(flwpar)
+    ncpar, cscpar, cpar_to_rowcol = mw_mesh.flow_partition_variable(npar, flwpar)
+    flwpar = np.ma.masked_array(flwpar, mask=flwdir.mask)
+
+    nac = np.count_nonzero(~flwdir.mask)
     active_cell = 1 - flwdir.mask.astype(np.int32)
 
+    ng = x.size
     gauge_pos = np.column_stack((row_dln, col_dln))
 
     mesh = {
@@ -206,10 +209,14 @@ def _generate_mesh_from_xy(
         "flwdir": flwdir,
         "flwdst": flwdst,
         "flwacc": flwacc,
-        "nac": np.count_nonzero(active_cell),
+        "npar": npar,
+        "ncpar": ncpar,
+        "cscpar": cscpar,
+        "cpar_to_rowcol": cpar_to_rowcol,
+        "flwpar": flwpar,
+        "nac": nac,
         "active_cell": active_cell,
-        "path": path,
-        "ng": x.size,
+        "ng": ng,
         "gauge_pos": gauge_pos,
         "code": code,
         "area": area,
@@ -241,12 +248,15 @@ def _generate_mesh_from_bbox(
         dx = np.zeros(shape=flwdir.shape, dtype=np.float32) + xres
         dy = np.zeros(shape=flwdir.shape, dtype=np.float32) + yres
 
-    flwacc = mw_mesh.flow_accumulation(flwdir, dx, dy)
-
-    path = _get_path(flwacc)
+    flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
 
     flwacc = np.ma.masked_array(flwacc, mask=flwdir.mask)
 
+    npar = np.max(flwpar)
+    ncpar, cscpar, cpar_to_rowcol = mw_mesh.flow_partition_variable(npar, flwpar)
+    flwpar = np.ma.masked_array(flwpar, mask=flwdir.mask)
+
+    nac = np.count_nonzero(~flwdir.mask)
     active_cell = 1 - flwdir.mask.astype(np.int32)
 
     mesh = {
@@ -260,10 +270,14 @@ def _generate_mesh_from_bbox(
         "dy": dy,
         "flwdir": flwdir,
         "flwacc": flwacc,
-        "nac": np.count_nonzero(active_cell),
+        "npar": npar,
+        "ncpar": ncpar,
+        "cscpar": cscpar,
+        "cpar_to_rowcol": cpar_to_rowcol,
+        "flwpar": flwpar,
+        "nac": nac,
         "active_cell": active_cell,
         "ng": 0,
-        "path": path,
     }
 
     return mesh

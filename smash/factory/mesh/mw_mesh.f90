@@ -123,20 +123,20 @@ contains
 
     end subroutine catchment_dln
 
-    subroutine fill_nipd(nrow, ncol, flwdir, nipd)
+    subroutine fill_nidp(nrow, ncol, flwdir, nidp)
 
         implicit none
 
         integer, intent(in) :: nrow, ncol
         integer, dimension(nrow, ncol), intent(in) :: flwdir
-        integer, dimension(nrow, ncol), intent(inout) :: nipd
+        integer, dimension(nrow, ncol), intent(inout) :: nidp
 
         integer, dimension(8) :: drow = (/1, 1, 0, -1, -1, -1, 0, 1/)
         integer, dimension(8) :: dcol = (/0, -1, -1, -1, 0, 1, 1, 1/)
 
         integer :: row, col, row_imd, col_imd, i
 
-        nipd = 0
+        nidp = 0
 
         do col = 1, ncol
 
@@ -149,7 +149,7 @@ contains
 
                     if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) cycle
 
-                    if (flwdir(row_imd, col_imd) .eq. i) nipd(row, col) = nipd(row, col) + 1
+                    if (flwdir(row_imd, col_imd) .eq. i) nidp(row, col) = nidp(row, col) + 1
 
                 end do
 
@@ -157,22 +157,22 @@ contains
 
         end do
 
-    end subroutine fill_nipd
+    end subroutine fill_nidp
 
-    recursive subroutine downstream_cell_flwacc(nrow, ncol, flwdir, nipd, row, col, flwacc)
+    recursive subroutine acc_par_downstream_cell(nrow, ncol, flwdir, nidp, row, col, flwacc, flwpar)
 
         implicit none
 
         integer, intent(in) :: nrow, ncol
         integer, dimension(nrow, ncol), intent(in) :: flwdir
-        integer, dimension(nrow, ncol), intent(inout) :: nipd
+        integer, dimension(nrow, ncol), intent(inout) :: nidp
         integer, intent(in) :: row, col
         real(4), dimension(nrow, ncol), intent(inout) :: flwacc
-
-        integer, dimension(8) :: drow = (/-1, -1, 0, 1, 1, 1, 0, -1/)
-        integer, dimension(8) :: dcol = (/0, 1, 1, 1, 0, -1, -1, -1/)
+        integer, dimension(nrow, ncol), intent(inout) :: flwpar
 
         integer :: fd, row_imd, col_imd
+        integer, dimension(8) :: drow = (/-1, -1, 0, 1, 1, 1, 0, -1/)
+        integer, dimension(8) :: dcol = (/0, 1, 1, 1, 0, -1, -1, -1/)
 
         fd = flwdir(row, col)
 
@@ -186,49 +186,52 @@ contains
         if (row_imd .lt. 1 .or. row_imd .gt. nrow .or. col_imd .lt. 1 .or. col_imd .gt. ncol) return
 
         !% Check pit
-        if (abs(flwdir(row, col) - flwdir(row_imd, col_imd)) .eq. 4) return
+        if (abs(fd - flwdir(row_imd, col_imd)) .eq. 4) return
 
         flwacc(row_imd, col_imd) = flwacc(row_imd, col_imd) + flwacc(row, col)
+        flwpar(row_imd, col_imd) = max(flwpar(row_imd, col_imd), flwpar(row, col) + 1)
 
-        if (nipd(row_imd, col_imd) .gt. 1) then
+        if (nidp(row_imd, col_imd) .gt. 1) then
 
-            nipd(row_imd, col_imd) = nipd(row_imd, col_imd) - 1
+            nidp(row_imd, col_imd) = nidp(row_imd, col_imd) - 1
 
         else
 
-            call downstream_cell_flwacc(nrow, ncol, flwdir, nipd, row_imd, col_imd, flwacc)
+            call acc_par_downstream_cell(nrow, ncol, flwdir, nidp, row_imd, col_imd, flwacc, flwpar)
 
         end if
 
-    end subroutine downstream_cell_flwacc
+    end subroutine acc_par_downstream_cell
 
-    subroutine flow_accumulation(nrow, ncol, flwdir, dx, dy, flwacc)
+    subroutine flow_accumulation_partition(nrow, ncol, flwdir, dx, dy, flwacc, flwpar)
 
         implicit none
 
         integer, intent(in) :: nrow, ncol
-        integer, dimension(nrow, ncol), intent(in) :: flwdir
+        integer, dimension(nrow, ncol), intent(in):: flwdir
         real(4), dimension(nrow, ncol), intent(in) :: dx, dy
         real(4), dimension(nrow, ncol), intent(out) :: flwacc
+        integer, dimension(nrow, ncol), intent(out) :: flwpar
 
-        integer, dimension(nrow, ncol) :: nipd
         integer :: row, col
+        integer, dimension(nrow, ncol) :: nidp
+
+        call fill_nidp(nrow, ncol, flwdir, nidp)
 
         flwacc = dx*dy
-
-        call fill_nipd(nrow, ncol, flwdir, nipd)
+        flwpar = 1
 
         do col = 1, ncol
 
             do row = 1, nrow
 
-                if (nipd(row, col) .eq. 0) call downstream_cell_flwacc(nrow, ncol, flwdir, nipd, row, col, flwacc)
+                if (nidp(row, col) .eq. 0) call acc_par_downstream_cell(nrow, ncol, flwdir, nidp, row, col, flwacc, flwpar)
 
             end do
 
         end do
 
-    end subroutine flow_accumulation
+    end subroutine flow_accumulation_partition
 
     !% Works for small array
     function argsort_i(a, asc) result(b)
@@ -421,5 +424,48 @@ contains
         col_dln = col_dln - 1
 
     end subroutine flow_distance
+
+    subroutine flow_partition_variable(nrow, ncol, npar, flwpar, ncpar, cscpar, cpar_to_rowcol)
+
+        implicit none
+
+        integer, intent(in) :: nrow, ncol, npar
+        integer, dimension(nrow, ncol), intent(in) :: flwpar
+        integer, dimension(npar), intent(out) :: ncpar, cscpar
+        integer, dimension(nrow*ncol, 2), intent(out) :: cpar_to_rowcol
+
+        integer :: row, col, fp, ind
+
+        ncpar = 0
+        cscpar = 0
+
+        do col = 1, ncol
+
+            do row = 1, nrow
+
+                fp = flwpar(row, col)
+                if (fp .eq. npar) cycle
+                cscpar(fp + 1:npar) = cscpar(fp + 1:npar) + 1
+
+            end do
+
+        end do
+
+        do col = 1, ncol
+
+            do row = 1, nrow
+
+                fp = flwpar(row, col)
+                ncpar(fp) = ncpar(fp) + 1
+                ind = cscpar(fp) + ncpar(fp)
+
+                !% Transform from FORTRAN to Python index
+                cpar_to_rowcol(ind, :) = (/row - 1, col - 1/)
+
+            end do
+
+        end do
+
+    end subroutine flow_partition_variable
 
 end module mw_mesh
