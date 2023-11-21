@@ -1,47 +1,32 @@
-commit 2b0429876bb2d9c675865e18220ca98835449122
-Author: Francois Colleoni <francois.colleoni@inrae.fr>
-Date:   Mon Nov 6 14:57:51 2023 +0100
+commit 9a4882f6a6f58b3f021a4c21114088c68f5850b0
+Merge: 7108962 323cf61
+Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
+Date:   Mon Nov 20 12:52:15 2023 +0100
 
-    ENC: Add snow module ; MAINT: Model initialisation and forward run
+    Merge pull request #100 from DassHydro/enc-parallel-forward-run
     
-    This commit contributes to:
-    
-    - Add a snow module (ssn). A simple snow module of 1 parameter.
-    - Add a precipitation partitinoning method based on the S-shaped curve of MORDOR
-    - Add snow and temperature atmospheric variables and their by-product
-    - Add standardize for model setup dictionary
-    - Split the model structure into 3 modules (snow, hydrological and routing)
-      One structure contains one snow, hydrological and routing module ('ssn-gr4-lr')
-      At the moment, the product of all the 3 modules is possible
-    - Make the simulation more maintainable by creating a module-dependent routine
-    - Rename setup%nop to setup%nrrp and setup%nos to setup%nrrs
-    - Update dataset yaml setup files
-    - Update test
-    
-    Since the structure names have changed, it is difficult to compare the tests.
-    It has been tested locally that all the tests linked to the simulation on similar structures
-    but with different names now give the same result.
+    ENC: Add parallel forward run
 
 TEST NAME                                                 |STATUS
 bbox_mesh.active_cell                                     |NON MODIFIED
-bbox_mesh.cpar_to_rowcol                                  |ADDED
-bbox_mesh.cscpar                                          |ADDED
+bbox_mesh.cpar_to_rowcol                                  |NON MODIFIED
+bbox_mesh.cscpar                                          |NON MODIFIED
 bbox_mesh.dx                                              |NON MODIFIED
 bbox_mesh.dy                                              |NON MODIFIED
 bbox_mesh.flwacc                                          |NON MODIFIED
 bbox_mesh.flwdir                                          |NON MODIFIED
-bbox_mesh.flwpar                                          |ADDED
+bbox_mesh.flwpar                                          |NON MODIFIED
 bbox_mesh.nac                                             |NON MODIFIED
 bbox_mesh.ncol                                            |NON MODIFIED
-bbox_mesh.ncpar                                           |ADDED
+bbox_mesh.ncpar                                           |NON MODIFIED
 bbox_mesh.ng                                              |NON MODIFIED
-bbox_mesh.npar                                            |ADDED
+bbox_mesh.npar                                            |NON MODIFIED
 bbox_mesh.nrow                                            |NON MODIFIED
 bbox_mesh.xmin                                            |NON MODIFIED
 bbox_mesh.xres                                            |NON MODIFIED
 bbox_mesh.ymax                                            |NON MODIFIED
 bbox_mesh.yres                                            |NON MODIFIED
-custom_bayesian_optimize.zero-gr4-lr.custom_set_1.sim_q   |MODIFIED
+custom_bayesian_optimize.zero-gr4-lr.custom_set_1.sim_q   |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_2.sim_q   |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_3.sim_q   |NON MODIFIED
 custom_bayesian_optimize.zero-gr4-lr.custom_set_4.sim_q   |NON MODIFIED
@@ -169,22 +154,21 @@ mesh_io.active_cell                                       |NON MODIFIED
 mesh_io.area                                              |NON MODIFIED
 mesh_io.area_dln                                          |NON MODIFIED
 mesh_io.code                                              |NON MODIFIED
-mesh_io.cpar_to_rowcol                                    |ADDED
-mesh_io.cscpar                                            |ADDED
+mesh_io.cpar_to_rowcol                                    |NON MODIFIED
+mesh_io.cscpar                                            |NON MODIFIED
 mesh_io.dx                                                |NON MODIFIED
 mesh_io.dy                                                |NON MODIFIED
 mesh_io.flwacc                                            |NON MODIFIED
 mesh_io.flwdir                                            |NON MODIFIED
 mesh_io.flwdst                                            |NON MODIFIED
-mesh_io.flwpar                                            |ADDED
+mesh_io.flwpar                                            |NON MODIFIED
 mesh_io.gauge_pos                                         |NON MODIFIED
 mesh_io.nac                                               |NON MODIFIED
 mesh_io.ncol                                              |NON MODIFIED
-mesh_io.ncpar                                             |ADDED
+mesh_io.ncpar                                             |NON MODIFIED
 mesh_io.ng                                                |NON MODIFIED
-mesh_io.npar                                              |ADDED
+mesh_io.npar                                              |NON MODIFIED
 mesh_io.nrow                                              |NON MODIFIED
-mesh_io.path                                              |DELETED
 mesh_io.xmin                                              |NON MODIFIED
 mesh_io.xres                                              |NON MODIFIED
 mesh_io.ymax                                              |NON MODIFIED
@@ -197,6 +181,38 @@ metrics.mse                                               |NON MODIFIED
 metrics.nnse                                              |NON MODIFIED
 metrics.nse                                               |NON MODIFIED
 metrics.rmse                                              |NON MODIFIED
+model_ddt_io.mesh.active_cell                             |ADDED
+model_ddt_io.mesh.area                                    |ADDED
+model_ddt_io.mesh.code                                    |ADDED
+model_ddt_io.mesh.dx                                      |ADDED
+model_ddt_io.mesh.dy                                      |ADDED
+model_ddt_io.mesh.gauge_pos                               |ADDED
+model_ddt_io.mesh.xmin                                    |ADDED
+model_ddt_io.mesh.xres                                    |ADDED
+model_ddt_io.mesh.ymax                                    |ADDED
+model_ddt_io.mesh.yres                                    |ADDED
+model_ddt_io.physio_data.descriptor                       |ADDED
+model_ddt_io.response.q                                   |ADDED
+model_ddt_io.response_data.q                              |ADDED
+model_ddt_io.rr_final_states.keys                         |ADDED
+model_ddt_io.rr_final_states.values                       |ADDED
+model_ddt_io.rr_initial_states.keys                       |ADDED
+model_ddt_io.rr_initial_states.values                     |ADDED
+model_ddt_io.rr_parameters.keys                           |ADDED
+model_ddt_io.rr_parameters.values                         |ADDED
+model_ddt_io.serr_mu_parameters.keys                      |ADDED
+model_ddt_io.serr_mu_parameters.values                    |ADDED
+model_ddt_io.serr_sigma_parameters.keys                   |ADDED
+model_ddt_io.serr_sigma_parameters.values                 |ADDED
+model_ddt_io.setup.descriptor_name                        |ADDED
+model_ddt_io.setup.dt                                     |ADDED
+model_ddt_io.setup.end_time                               |ADDED
+model_ddt_io.setup.hydrological_module                    |ADDED
+model_ddt_io.setup.routing_module                         |ADDED
+model_ddt_io.setup.serr_mu_mapping                        |ADDED
+model_ddt_io.setup.serr_sigma_mapping                     |ADDED
+model_ddt_io.setup.snow_module                            |ADDED
+model_ddt_io.setup.start_time                             |ADDED
 model_io.atmos_data.mean_pet                              |NON MODIFIED
 model_io.atmos_data.mean_prcp                             |NON MODIFIED
 model_io.mesh.active_cell                                 |NON MODIFIED
@@ -455,20 +471,20 @@ xy_mesh.active_cell                                       |NON MODIFIED
 xy_mesh.area                                              |NON MODIFIED
 xy_mesh.area_dln                                          |NON MODIFIED
 xy_mesh.code                                              |NON MODIFIED
-xy_mesh.cpar_to_rowcol                                    |ADDED
-xy_mesh.cscpar                                            |ADDED
+xy_mesh.cpar_to_rowcol                                    |NON MODIFIED
+xy_mesh.cscpar                                            |NON MODIFIED
 xy_mesh.dx                                                |NON MODIFIED
 xy_mesh.dy                                                |NON MODIFIED
 xy_mesh.flwacc                                            |NON MODIFIED
 xy_mesh.flwdir                                            |NON MODIFIED
 xy_mesh.flwdst                                            |NON MODIFIED
-xy_mesh.flwpar                                            |ADDED
+xy_mesh.flwpar                                            |NON MODIFIED
 xy_mesh.gauge_pos                                         |NON MODIFIED
 xy_mesh.nac                                               |NON MODIFIED
 xy_mesh.ncol                                              |NON MODIFIED
-xy_mesh.ncpar                                             |ADDED
+xy_mesh.ncpar                                             |NON MODIFIED
 xy_mesh.ng                                                |NON MODIFIED
-xy_mesh.npar                                              |ADDED
+xy_mesh.npar                                              |NON MODIFIED
 xy_mesh.nrow                                              |NON MODIFIED
 xy_mesh.xmin                                              |NON MODIFIED
 xy_mesh.xres                                              |NON MODIFIED

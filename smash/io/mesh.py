@@ -1,20 +1,24 @@
 from __future__ import annotations
 
+from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
 from smash.io._error import ReadHDF5MethodError
-
-from smash.io.mesh._parse import _parse_hdf5_to_mesh_dict, _parse_mesh_dict_to_hdf5
 
 import os
 import errno
 import h5py
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Any
+
 
 __all__ = ["save_mesh", "read_mesh"]
 
 
-def save_mesh(mesh: dict, path: str):
+def save_mesh(mesh: dict[str, Any], path: str):
     """
-    Save the Model initialization mesh dictionary.
+    Save the Model initialization mesh dictionary to HDF5.
 
     Parameters
     ----------
@@ -26,7 +30,7 @@ def save_mesh(mesh: dict, path: str):
 
     See Also
     --------
-    read_mesh : Read the Model initialization mesh dictionary.
+    read_mesh : Read the Model initialization mesh dictionary from HDF5.
 
     Examples
     --------
@@ -36,29 +40,22 @@ def save_mesh(mesh: dict, path: str):
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh:
+    Save mesh to HDF5:
 
     >>> save_mesh(mesh, "mesh.hdf5")
-
-    Read mesh:
-
-    >>> mesh_rld = read_mesh("mesh.hdf5")
-    >>> mesh_rld
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """
 
     if not path.endswith(".hdf5"):
-        path = path + ".hdf5"
+        path += ".hdf5"
 
-    with h5py.File(path, "w") as f:
-        _parse_mesh_dict_to_hdf5(mesh, f)
+    with h5py.File(path, "w") as h5:
+        _dump_dict("mesh", mesh, h5)
+        h5.attrs["_save_func"] = "save_mesh"
 
-        f.attrs["_save_func"] = "save_mesh"
 
-
-def read_mesh(path: str) -> dict:
+def read_mesh(path: str) -> dict[str, Any]:
     """
-    Read the Model initialization mesh dictionary.
+    Read the Model initialization mesh dictionary from HDF5.
 
     Parameters
     ----------
@@ -68,7 +65,7 @@ def read_mesh(path: str) -> dict:
     Returns
     -------
     mesh : dict
-        A mesh dictionary loaded from HDF5 file.
+        A mesh dictionary loaded from HDF5.
 
     Raises
     ------
@@ -79,7 +76,7 @@ def read_mesh(path: str) -> dict:
 
     See Also
     --------
-    save_mesh : Save the Model initialization mesh dictionary.
+    save_mesh : Save the Model initialization mesh dictionary to HDF5.
 
     Examples
     --------
@@ -89,26 +86,27 @@ def read_mesh(path: str) -> dict:
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh:
+    Save mesh to HDF5:
 
     >>> save_mesh(mesh, "mesh.hdf5")
 
-    Read mesh:
+    Read mesh from HDF5:
 
     >>> mesh_rld = read_mesh("mesh.hdf5")
     >>> mesh_rld
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
     """
 
-    if os.path.isfile(path):
-        with h5py.File(path, "r") as f:
-            if f.attrs.get("_save_func") == "save_mesh":
-                return _parse_hdf5_to_mesh_dict(f)
-
-            else:
-                raise ReadHDF5MethodError(
-                    f"Unable to read '{path}' with 'read_mesh' method. The file may not have been created with 'save_mesh' method."
-                )
-
-    else:
+    if not os.path.isfile(path):
         raise FileNotFoundError(errno.ENOENT, os.strerror(errno.ENOENT), path)
+
+    with h5py.File(path, "r") as h5:
+        if h5.attrs.get("_save_func") == "save_mesh":
+            mesh = _load_hdf5_to_dict(h5["mesh"])
+
+        else:
+            raise ReadHDF5MethodError(
+                f"Unable to read '{path}' with 'read_mesh' method. The file may not have been created with 'save_mesh' method."
+            )
+
+    return mesh

@@ -98,6 +98,21 @@ contains
 
     end subroutine Sparse_MatrixDT_initialise_array
 
+    ! To manually alloc from Python in place. ControlDT_initialise is used as
+    ! __init__ method (implemented by f90wrap automatically)
+    subroutine Sparse_MatrixDT_alloc(this, n, coo_fmt, zvalue)
+
+        implicit none
+
+        type(Sparse_MatrixDT), intent(inout) :: this
+        integer, intent(in) :: n
+        logical, intent(in) :: coo_fmt
+        real(sp), intent(in) :: zvalue
+
+        call Sparse_MatrixDT_initialise(this, n, coo_fmt, zvalue)
+
+    end subroutine Sparse_MatrixDT_alloc
+
     subroutine Sparse_MatrixDT_copy(this, this_copy)
 
         implicit none

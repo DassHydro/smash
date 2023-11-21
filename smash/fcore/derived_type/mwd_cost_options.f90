@@ -122,7 +122,7 @@ contains
 
     end subroutine Cost_OptionsDT_copy
 
-    subroutine Cost_OptionsDT_allocate_control_prior(this, n, npar)
+    subroutine Cost_OptionsDT_alloc_control_prior(this, n, npar)
 
         implicit none
 
@@ -137,6 +137,6 @@ contains
             call PriorType_initialise(this%control_prior(i), npar(i))
         end do
 
-    end subroutine Cost_OptionsDT_allocate_control_prior
+    end subroutine Cost_OptionsDT_alloc_control_prior
 
 end module mwd_cost_options

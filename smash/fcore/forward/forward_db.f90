@@ -2951,7 +2951,7 @@ CONTAINS
     this_copy = this
   END SUBROUTINE COST_OPTIONSDT_COPY
 
-  SUBROUTINE COST_OPTIONSDT_ALLOCATE_CONTROL_PRIOR(this, n, npar)
+  SUBROUTINE COST_OPTIONSDT_ALLOC_CONTROL_PRIOR(this, n, npar)
     IMPLICIT NONE
     TYPE(COST_OPTIONSDT), INTENT(INOUT) :: this
     INTEGER, INTENT(IN) :: n
@@ -2961,7 +2961,7 @@ CONTAINS
     DO i=1,n
       CALL PRIORTYPE_INITIALISE(this%control_prior(i), npar(i))
     END DO
-  END SUBROUTINE COST_OPTIONSDT_ALLOCATE_CONTROL_PRIOR
+  END SUBROUTINE COST_OPTIONSDT_ALLOC_CONTROL_PRIOR
 
 END MODULE MWD_COST_OPTIONS_DIFF
 
@@ -3242,7 +3242,7 @@ CONTAINS
     this_copy = this
   END SUBROUTINE CONTROLDT_COPY
 
-! To manually deallocate from Python. ControlDT_finalize is used as
+! To manually deallocate from Python. ControlDT_finalise is used as
 ! __del__ method for garbage collecting (implemented by f90wrap automatically)
   SUBROUTINE CONTROLDT_DEALLOC(this)
     IMPLICIT NONE

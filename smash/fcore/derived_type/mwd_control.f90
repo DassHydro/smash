@@ -126,7 +126,7 @@ contains
 
     end subroutine ControlDT_copy
 
-    ! To manually deallocate from Python. ControlDT_finalize is used as
+    ! To manually deallocate from Python. ControlDT_finalise is used as
     ! __del__ method for garbage collecting (implemented by f90wrap automatically)
     subroutine ControlDT_dealloc(this)
 

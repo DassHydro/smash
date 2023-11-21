@@ -10,3 +10,7 @@ tapenade/*~
 
 **/tmp*
 tmp*
+
+**/.coverage
+.coverage
+**/htmlcov

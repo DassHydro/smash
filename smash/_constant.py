@@ -862,3 +862,41 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
 }
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
+
+### IO ###
+##########
+
+MODEL_DDT_IO_ATTR_KEYS = {
+    "setup": [
+        "snow_module",
+        "hydrological_module",
+        "routing_module",
+        "serr_mu_mapping",
+        "serr_sigma_mapping",
+        "start_time",
+        "end_time",
+        "dt",
+        "descriptor_name",
+    ],
+    "mesh": [
+        "xres",
+        "yres",
+        "xmin",
+        "ymax",
+        "dx",
+        "dy",
+        "active_cell",
+        "gauge_pos",
+        "code",
+        "area",
+    ],
+    "response_data": ["q"],
+    "physio_data": ["descriptor"],
+    "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
+    "rr_parameters": ["keys", "values"],
+    "rr_initial_states": ["keys", "values"],
+    "serr_mu_parameters": ["keys", "values"],
+    "serr_sigma_parameters": ["keys", "values"],
+    "response": ["q"],
+    "rr_final_states": ["keys", "values"],
+}
