@@ -122,6 +122,10 @@ doc-clean:
 test:
 	cd $(TESTS_DIR) ; pytest
 
+#% Testing code with pytest and coverage
+test-coverage:
+	cd $(TESTS_DIR) ; pytest --cov-report term --cov-report html --cov=smash
+
 #% Generate baseline for test with args (see argparser in gen_baseline.py)
 test-baseline:
 	cd $(TESTS_DIR) ; python3 gen_baseline.py $(args)
