@@ -4,7 +4,7 @@ from smash._constant import (
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
 )
 
-from smash.core.model._build_model import _map_dict_to_object
+from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 
 from smash.core.simulation.run._standardize import (
     _standardize_multiple_forward_run_args,
@@ -285,13 +285,13 @@ def _forward_run(
     )
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Map return_options dict to derived type
-    _map_dict_to_object(return_options, wrap_returns)
+    _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     wrap_forward_run(
         model.setup,
@@ -407,10 +407,10 @@ def _multiple_forward_run(
     )
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Generate samples info
     nv = samples._problem["num_vars"]

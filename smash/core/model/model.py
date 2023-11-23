@@ -12,7 +12,7 @@ from smash._constant import (
 )
 
 from smash.core.model._build_model import (
-    _map_dict_to_object,
+    _map_dict_to_fortran_derived_type,
     _build_mesh,
     _build_input_data,
     _build_parameters,
@@ -117,13 +117,13 @@ class Model(object):
 
             self.setup = SetupDT(setup["nd"])
 
-            _map_dict_to_object(setup, self.setup)
+            _map_dict_to_fortran_derived_type(setup, self.setup)
 
             self.mesh = MeshDT(
                 self.setup, mesh["nrow"], mesh["ncol"], mesh["npar"], mesh["ng"]
             )
 
-            _map_dict_to_object(mesh, self.mesh)
+            _map_dict_to_fortran_derived_type(mesh, self.mesh)
 
             _build_mesh(self.setup, self.mesh)
 

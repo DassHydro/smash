@@ -6,7 +6,7 @@ from smash._constant import (
     CONTROL_PRIOR_DISTRIBUTION_PARAMETERS,
 )
 
-from smash.core.model._build_model import _map_dict_to_object
+from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 
 from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
@@ -263,10 +263,10 @@ def _get_control_info(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     wrap_parameters_to_control(
         model.setup, model.mesh, model._input_data, model._parameters, wrap_options
@@ -697,16 +697,16 @@ def _optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Map return_options dict to derived type
-    _map_dict_to_object(return_options, wrap_returns)
+    _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     auto_wjreg = cost_options.get("auto_wjreg", None)
 
@@ -961,13 +961,13 @@ def _multiple_optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Generate samples info
     nv = samples._problem["num_vars"]
@@ -1111,11 +1111,11 @@ def _handle_bayesian_optimize_control_prior(
 
     # % allocate control prior
     npar = np.array([p["par"].size for p in control_prior.values()], dtype=np.int32)
-    options.cost.allocate_control_prior(model._parameters.control.n, npar)
+    options.cost.alloc_control_prior(model._parameters.control.n, npar)
 
     # % map control prior dict to derived type array
     for i, prior in enumerate(control_prior.values()):
-        _map_dict_to_object(prior, options.cost.control_prior[i])
+        _map_dict_to_fortran_derived_type(prior, options.cost.control_prior[i])
 
 
 def bayesian_optimize(
@@ -1338,17 +1338,19 @@ def _bayesian_optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
     # % Control prior handled after
-    _map_dict_to_object(cost_options, wrap_options.cost, skip=["control_prior"])
+    _map_dict_to_fortran_derived_type(
+        cost_options, wrap_options.cost, skip=["control_prior"]
+    )
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Map return_options dict to derived type
-    _map_dict_to_object(return_options, wrap_returns)
+    _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     # % Control prior check
     _handle_bayesian_optimize_control_prior(

@@ -33,6 +33,7 @@ from smash.fcore._mw_interception_capacity import (
 
 import pandas as pd
 import numpy as np
+from f90wrap.runtime import FortranDerivedType
 
 from typing import TYPE_CHECKING
 
@@ -45,15 +46,31 @@ if TYPE_CHECKING:
 
 
 # % TODO: Move this function to a generic common function file
-def _map_dict_to_object(dct: dict, obj: object, skip: list = []):
+def _map_dict_to_fortran_derived_type(
+    dct: dict, fdt: FortranDerivedType, skip: list = []
+):
     for key, value in dct.items():
         if key in skip:
             continue
-        if hasattr(obj, key):
-            setattr(obj, key, value)
-        # % Apply to the same object and not sub-object
-        elif isinstance(value, dict):
-            _map_dict_to_object(value, obj)
+
+        if isinstance(value, dict):
+            if hasattr(fdt, key):
+                sub_fdt = getattr(fdt, key)
+                if isinstance(sub_fdt, FortranDerivedType):
+                    _map_dict_to_fortran_derived_type(value, sub_fdt)
+
+                # % Should be unreachable
+                else:
+                    pass
+
+            # % Same FortranDerivedType if key does not exist
+            # % Recursive call
+            else:
+                _map_dict_to_fortran_derived_type(value, fdt)
+
+        else:
+            if hasattr(fdt, key):
+                setattr(fdt, key, value)
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
