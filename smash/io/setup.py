@@ -9,7 +9,7 @@ __all__ = ["save_setup", "read_setup"]
 
 def save_setup(setup: dict, path: str):
     """
-    Save the Model initialization setup dictionary tp YAML.
+    Save the Model initialization setup dictionary to YAML.
 
     Parameters
     ----------
