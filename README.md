@@ -1,11 +1,11 @@
 <h1 align="center">
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/corporate_logo_dark.svg">
-  <img src="doc/source/_static/corporate_logo.svg" width="300", hspace=50>
+  <img src="doc/source/_static/corporate_logo.svg" width="300", hspace=30>
 </picture>
 <picture>
   <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/logo_smash_dark.svg">
-  <img src="doc/source/_static/logo_smash.svg" width="300", hspace=50>
+  <img src="doc/source/_static/logo_smash.svg" width="300", hspace=30>
 </picture>
 </h1><br>
 
