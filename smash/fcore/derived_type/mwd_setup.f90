@@ -24,18 +24,22 @@
 !%          ``prcp_format``            Precipitation format
 !%          ``prcp_conversion_factor`` Precipitation conversion factor
 !%          ``prcp_directory``         Precipiation directory path
+!%          ``prcp_access``            Precipiation access tree
 !%          ``read_pet``               Read potential evapotranspiration
 !%          ``pet_format``             Potential evapotranspiration format
 !%          ``pet_conversion_factor``  Potential evapotranpisration conversion factor
 !%          ``pet_directory``          Potential evapotranspiration directory path
+!%          ``pet_access``             Potential evapotranspiration access tree
 !%          ``daily_interannual_pet``  Read daily interannual potential evapotranspiration
 !%          ``read_snow``              Read snow
 !%          ``snow_format``            Snow format
 !%          ``snow_conversion_factor`` Snow conversion factor
 !%          ``snow_directory``         Snow directory path
+!%          ``snow_access``            Snow access tree
 !%          ``read_temp``              Read temperatur
 !%          ``temp_format``            Temperature format
 !%          ``temp_directory``         Temperature directory path
+!%          ``temp_access``            Temperature access tree
 !%          ``prcp_partitioning``      Precipitation partitioning
 !%          ``sparse_storage``         Forcing sparse storage
 !%          ``read_descriptor``        Read descriptor map(s)
@@ -91,21 +95,25 @@ module mwd_setup
         character(lchar) :: prcp_format = "..." !$F90W char
         real(sp) :: prcp_conversion_factor = 1._sp
         character(lchar) :: prcp_directory = "..." !$F90W char
+        character(lchar) :: prcp_access = "..." !$F90W char
 
         logical :: read_pet = .false.
         character(lchar) :: pet_format = "..." !$F90W char
         real(sp) :: pet_conversion_factor = 1._sp
         character(lchar) :: pet_directory = "..." !$F90W char
+        character(lchar) :: pet_access = "..." !$F90W char
         logical :: daily_interannual_pet = .false.
 
         logical :: read_snow = .false.
         character(lchar) :: snow_format = "..." !$F90W char
         real(sp) :: snow_conversion_factor = 1._sp
         character(lchar) :: snow_directory = "..." !$F90W char
+        character(lchar) :: snow_access = "..." !$F90W char
 
         logical :: read_temp = .false.
         character(lchar) :: temp_format = "..." !$F90W char
         character(lchar) :: temp_directory = "..." !$F90W char
+        character(lchar) :: temp_access = "..." !$F90W char
 
         logical :: prcp_partitioning = .false.
 

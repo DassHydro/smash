@@ -19,15 +19,11 @@ from smash._constant import (
     FEASIBLE_SERR_SIGMA_PARAMETERS,
 )
 
-from smash.fcore._mwd_sparse_matrix_manipulation import (
-    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
-)
-
 import pandas as pd
 import numpy as np
 import os
 import warnings
-import errno
+import datetime
 
 from typing import TYPE_CHECKING
 
@@ -87,6 +83,13 @@ def _standardize_model_setup_conversion_factor(key: str, value: Numeric) -> floa
 
     else:
         raise TypeError(f"{key} model setup must be of Numeric type (int, float)")
+
+    return value
+
+
+def _standardize_model_setup_access(key: str, value: str) -> str:
+    if not isinstance(value, str):
+        raise TypeError(f"{key} model setup must be a str")
 
     return value
 
@@ -179,7 +182,7 @@ def _standardize_model_setup_dt(dt: Numeric, **kwargs) -> float:
 
 
 def _standardize_model_setup_start_time(
-    start_time: str | pd.Timestamp | None, **kwargs
+    start_time: str | datetime.date | pd.Timestamp | None, **kwargs
 ) -> pd.Timestamp:
     if start_time is None:
         raise ValueError("start_time model setup must be defined")
@@ -190,19 +193,24 @@ def _standardize_model_setup_start_time(
             raise ValueError(
                 f"start_time '{start_time}' model setup is an invalid date"
             )
+    elif isinstance(start_time, datetime.date):
+        start_time = pd.Timestamp(start_time)
+
     elif isinstance(start_time, pd.Timestamp):
         pass
 
     else:
         raise TypeError(
-            f"start_time model setup must be a str or pandas.Timestamp object"
+            f"start_time model setup must be a str, datetime.date object or pandas.Timestamp object"
         )
 
     return start_time
 
 
 def _standardize_model_setup_end_time(
-    start_time: pd.Timestamp, end_time: str | pd.Timestamp | None, **kwargs
+    start_time: pd.Timestamp,
+    end_time: str | datetime.date | pd.Timestamp | None,
+    **kwargs,
 ) -> pd.Timestamp:
     if end_time is None:
         raise ValueError("end_time model setup must be defined")
@@ -211,12 +219,15 @@ def _standardize_model_setup_end_time(
             end_time = pd.Timestamp(end_time)
         except:
             raise ValueError(f"end_time '{end_time}' model setup is an invalid date")
+    elif isinstance(end_time, datetime.date):
+        end_time = pd.Timestamp(end_time)
+
     elif isinstance(end_time, pd.Timestamp):
         pass
 
     else:
         raise TypeError(
-            f"end_time model setup must be a str or pandas.Timestamp object"
+            f"end_time model setup must be a str, datetime.date object or pandas.Timestamp object"
         )
 
     # Check that end_time is after start_time
@@ -270,6 +281,10 @@ def _standardize_model_setup_prcp_directory(
     )
 
 
+def _standardize_model_setup_prcp_access(prcp_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("prcp_access", prcp_access)
+
+
 def _standardize_model_setup_read_pet(read_pet: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_pet", read_pet)
 
@@ -290,6 +305,10 @@ def _standardize_model_setup_pet_directory(
     read_pet: bool, pet_directory: str | None, **kwargs
 ) -> str:
     return _standardize_model_setup_directory(read_pet, "pet_directory", pet_directory)
+
+
+def _standardize_model_setup_pet_access(pet_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("pet_access", pet_access)
 
 
 def _standardize_model_setup_daily_interannual_pet(
@@ -331,6 +350,10 @@ def _standardize_model_setup_snow_directory(
     )
 
 
+def _standardize_model_setup_snow_access(snow_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("snow_access", snow_access)
+
+
 def _standardize_model_setup_read_temp(
     snow_module: str, read_temp: bool, **kwrags
 ) -> bool:
@@ -354,6 +377,10 @@ def _standardize_model_setup_temp_directory(
     return _standardize_model_setup_directory(
         read_temp, "temp_directory", temp_directory
     )
+
+
+def _standardize_model_setup_temp_access(temp_access: str, **kwargs) -> str:
+    return _standardize_model_setup_access("temp_access", temp_access)
 
 
 def _standardize_model_setup_prcp_partitioning(

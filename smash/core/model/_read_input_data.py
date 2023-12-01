@@ -12,6 +12,7 @@ from tqdm import tqdm
 import pandas as pd
 import numpy as np
 from osgeo import gdal
+import re
 
 from typing import TYPE_CHECKING
 
@@ -22,31 +23,78 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_input_data import Input_DataDT
 
 
-def _index_files_containing_date(
+def _get_date_regex_pattern(dt: float, daily_interannual: bool) -> str:
+    if daily_interannual:
+        # % Match %m%d
+        pattern = 2 * r"\d{2}"
+
+    else:
+        # % Match %Y%m%d%H%M
+        if dt < 86_400:
+            pattern = r"\d{4}" + 4 * r"\d{2}"
+        # % Match %Y%m%d
+        elif dt == 86_400:
+            pattern = r"\d{4}" + 2 * r"\d{2}"
+        # % Should be unreachable
+        else:
+            pass
+
+    return pattern
+
+
+def _find_index_files_containing_date(
     files: ListLike, date: pd.Timestamp, dt: float, daily_interannual: bool = False
-):
-    for i, s in enumerate(files):
-        if date.strftime("%Y%m%d%H%M") in s:
-            return i
-        # % Allow %Y%m%d at daily time step
-        elif dt == 86_400 and date.strftime("%Y%m%d") in s:
-            return i
-        # % Allow %m%d when reading daily interannual
-        elif daily_interannual and date.strftime("%m%d") in s:
-            return i
-
-    return -1
-
-
-def _adjust_left_files_by_date(
-    files: ListLike, date_range: pd.DatetimeIndex, dt: float
-):
-    n = 0
+) -> int:
     ind = -1
-    while ind == -1 and n < len(date_range):
-        ind = _index_files_containing_date(files, date_range[n], dt)
+    regex_pattern = _get_date_regex_pattern(dt, daily_interannual)
+    for i, f in enumerate(files):
+        re_match = re.search(regex_pattern, f)
+        if daily_interannual:
+            fdate = pd.Timestamp(f"{date.year}{re_match.group()}")
+        else:
+            fdate = pd.Timestamp(re_match.group())
+        if fdate < date:
+            continue
+        elif fdate == date:
+            ind = i
+        elif fdate > date:
+            break
+    return ind
 
-        n += 1
+
+def _get_atmos_files(
+    dir: str,
+    fmt: str,
+    access: str,
+    date_range: pd.DatetimeIndex,
+    daily_interannual: bool = False,
+) -> list[str]:
+    # Set to drop duplicates after strftime
+    date_range_strftime_access = (
+        set(date_range.strftime(access)) if access else {""}
+    )
+
+    files = []
+    for date_strftime_access in date_range_strftime_access:
+        files.extend(
+            glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True)
+        )
+
+    files = sorted(files)
+
+    # Return all files if daily interannual (336 files max)
+    if daily_interannual:
+        return files
+
+    else:
+        # % Adjust list by removing files that are ealier than start_time
+        regex_pattern = _get_date_regex_pattern(date_range.freq.n, daily_interannual)
+        for i, f in enumerate(files):
+            re_match = re.search(regex_pattern, f)
+            fdate = pd.Timestamp(re_match.group())
+            if fdate >= date_range[0]:
+                ind = i
+                break
 
     return files[ind:]
 
@@ -79,14 +127,12 @@ def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> np.ndarray:
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     start_time = pd.Timestamp(setup.start_time)
     end_time = pd.Timestamp(setup.end_time)
-    ind_miss = np.zeros(shape=mesh.ng, dtype=np.int32)
+    miss = []
 
     for i, c in enumerate(mesh.code):
         f = glob.glob(f"{setup.qobs_directory}/**/*{c}*.csv", recursive=True)
 
         if f:
-            ind_miss[i] = 1
-
             dat = pd.read_csv(f[0])
             try:
                 file_start_time = pd.Timestamp(dat.columns[0])
@@ -115,8 +161,8 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
                 ind_start_dat:ind_end_dat, 0
             ]
-
-    miss = [mesh.code[i] for i, im in enumerate(ind_miss) if not im]
+        else:
+            miss.append(c)
 
     if miss:
         warnings.warn(f"Missing {len(miss)} observed discharge file(s): {miss}")
@@ -129,16 +175,18 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
+    miss = []
 
     if setup.prcp_format == "tif":
-        files = sorted(glob.glob(f"{setup.prcp_directory}/**/*tif*", recursive=True))
-
-        files = _adjust_left_files_by_date(files, date_range, setup.dt)
+        files = _get_atmos_files(
+            setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range
+        )
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
-            ind = _index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
+                miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(
                         shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
@@ -153,8 +201,6 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                 else:
                     input_data.atmos_data.prcp[..., i] = np.float32(-99)
-
-                warnings.warn(f"Missing precipitation file for date {date}")
 
             else:
                 matrix = (
@@ -173,11 +219,14 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 else:
                     input_data.atmos_data.prcp[..., i] = matrix
 
-                files.pop(ind)
+                files = files[ind + 1 :]
 
     # % WIP
     elif setup.prcp_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
+
+    if miss:
+        warnings.warn(f"Missing {len(miss)} precipitation file(s) for date(s): {miss}")
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -186,12 +235,16 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
+    miss = []
 
     if setup.pet_format == "tif":
-        files = sorted(glob.glob(f"{setup.pet_directory}/**/*tif*", recursive=True))
-
-        if not setup.daily_interannual_pet:
-            files = _adjust_left_files_by_date(files, date_range, setup.dt)
+        files = _get_atmos_files(
+            setup.pet_directory,
+            setup.pet_format,
+            setup.pet_access,
+            date_range,
+            setup.daily_interannual_pet,
+        )
 
         if setup.daily_interannual_pet:
             leap_year_days = pd.date_range(
@@ -220,16 +273,13 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 tqdm(leap_year_days, desc="</> Reading daily interannual pet")
             ):
                 if day.day_of_year in date_range.day_of_year:
-                    ind = _index_files_containing_date(
+                    ind = _find_index_files_containing_date(
                         files, day, setup.dt, setup.daily_interannual_pet
                     )
 
                     if ind == -1:
+                        miss.append(day.strftime("%m-%d"))
                         missing_day = np.append(missing_day, day.day_of_year)
-
-                        warnings.warn(
-                            f"Missing daily interannual pet file for date {day.strftime('%m%d')}"
-                        )
 
                     else:
                         matrix_dip[..., i] = (
@@ -237,7 +287,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                             * setup.pet_conversion_factor
                         )
 
-                        files.pop(ind)
+                        files = files[ind + 1 :]
 
             for i, date in enumerate(
                 tqdm(date_range, desc="</> Disaggregating daily interannual pet")
@@ -274,9 +324,12 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
-                ind = _index_files_containing_date(files, date, setup.dt)
+                ind = _find_index_files_containing_date(
+                    files, date, setup.dt, setup.daily_interannual_pet
+                )
 
                 if ind == -1:
+                    miss.append(date.strftime("%Y-%m-%d %H:%M"))
                     if setup.sparse_storage:
                         matrix = np.zeros(
                             shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
@@ -291,8 +344,6 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                     else:
                         input_data.atmos_data.pet[..., i] = np.float32(-99)
-
-                    warnings.warn(f"Missing pet file for date {date}")
 
                 else:
                     matrix = (
@@ -311,11 +362,15 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     else:
                         input_data.atmos_data.pet[..., i] = matrix
 
-                    files.pop(ind)
+                    files = files[ind + 1 :]
 
     # % WIP
     elif setup.pet_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
+
+    if miss:
+        pet_kind = "daily interannual" if setup.daily_interannual_pet else ""
+        warnings.warn(f"Missing {len(miss)} {pet_kind} pet file(s) for date(s): {miss}")
 
 
 def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -324,16 +379,18 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
+    miss = []
 
     if setup.snow_format == "tif":
-        files = sorted(glob.glob(f"{setup.snow_directory}/**/*tif*", recursive=True))
-
-        files = _adjust_left_files_by_date(files, date_range, setup.dt)
+        files = _get_atmos_files(
+            setup.snow_directory, setup.snow_format, setup.snow_access, date_range
+        )
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading snow")):
-            ind = _index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
+                miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(
                         shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
@@ -348,8 +405,6 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                 else:
                     input_data.atmos_data.snow[..., i] = np.float32(-99)
-
-                warnings.warn(f"Missing snow file for date {date}")
 
             else:
                 matrix = (
@@ -368,11 +423,14 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 else:
                     input_data.atmos_data.snow[..., i] = matrix
 
-                files.pop(ind)
+                files = files[ind + 1 :]
 
     # % WIP
     elif setup.snow_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
+
+    if miss:
+        warnings.warn(f"Missing {len(miss)} snow file(s) for date(s): {miss}")
 
 
 def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -381,16 +439,18 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
+    miss = []
 
     if setup.temp_format == "tif":
-        files = sorted(glob.glob(f"{setup.temp_directory}/**/*tif*", recursive=True))
-
-        files = _adjust_left_files_by_date(files, date_range, setup.dt)
+        files = _get_atmos_files(
+            setup.temp_directory, setup.temp_format, setup.temp_access, date_range
+        )
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading temperature")):
-            ind = _index_files_containing_date(files, date, setup.dt)
+            ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
+                miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(
                         shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
@@ -407,8 +467,6 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 else:
                     input_data.atmos_data.temp[..., i] = np.float32(-99)
 
-                warnings.warn(f"Missing temperature file for date {date}")
-
             else:
                 matrix = _read_windowed_raster(files[ind], mesh)
 
@@ -423,14 +481,18 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 else:
                     input_data.atmos_data.temp[..., i] = matrix
 
-                files.pop(ind)
+                files = files[ind + 1 :]
 
     # % WIP
     elif setup.temp_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
 
+    if miss:
+        warnings.warn(f"Missing {len(miss)} temperature file(s) for date(s): {miss}")
+
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
+    miss = []
     for i, name in enumerate(setup.descriptor_name):
         path = glob.glob(
             f"{setup.descriptor_directory}/**/{name}.tif*",
@@ -438,9 +500,7 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         )
 
         if len(path) == 0:
-            warnings.warn(
-                f"No descriptor file '{name}.tif' in recursive root directory '{setup.descriptor_directory}'"
-            )
+            miss.append(name)
 
         else:
             input_data.physio_data.descriptor[..., i] = _read_windowed_raster(
@@ -452,3 +512,6 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.u_descriptor[i] = np.max(
                 input_data.physio_data.descriptor[..., i]
             )
+
+    if miss:
+        warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}")
