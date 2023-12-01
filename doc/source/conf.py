@@ -45,6 +45,7 @@ extensions = [
     "sphinx.ext.autodoc",
     "sphinx.ext.duration",
     "sphinx.ext.autosummary",
+    "sphinx.ext.intersphinx",
     "numpydoc",
     "sphinx_design",
     "IPython.sphinxext.ipython_directive",
@@ -119,15 +120,25 @@ html_static_path = ["_static"]
 
 version = release
 
+# -- Options for intersphinx extension ---------------------------------------
+
+intersphinx_mapping = {
+    "python": ("https://docs.python.org/3", None),
+    "numpy": ("https://numpy.org/doc/stable", None),
+    "pandas": ("https://pandas.pydata.org/docs", None),
+}
+
+
 # https://stackoverflow.com/questions/26134026/how-to-get-the-current-checked-out-git-branch-name-through-pygit2
 def get_active_branch_name():
-
     head_dir = pathlib.Path("../.git/HEAD")
-    with head_dir.open("r") as f: content = f.read().splitlines()
+    with head_dir.open("r") as f:
+        content = f.read().splitlines()
 
     for line in content:
         if line[0:4] == "ref:":
             return line.partition("refs/heads/")[2]
+
 
 # based on numpy doc/source/conf.py
 def linkcode_resolve(domain, info):
@@ -186,6 +197,4 @@ def linkcode_resolve(domain, info):
     if "+" in smash.__version__:
         return f"https://github.com/DassHydro/smash/blob/{branch}/smash/{fn}{linespec}"
     else:
-        return (
-            f"https://github.com/DassHydro/smash/blob/v{smash.__version__}/smash/{fn}{linespec}"
-        )
+        return f"https://github.com/DassHydro/smash/blob/v{smash.__version__}/smash/{fn}{linespec}"

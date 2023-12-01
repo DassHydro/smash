@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from smash._typing import Numeric
+from smash.util._typing import Numeric
 
 from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 

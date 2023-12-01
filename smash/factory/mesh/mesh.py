@@ -17,7 +17,7 @@ import numpy as np
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import FilePath, ListLike, Numeric, AlphaNumeric
+    from smash.util._typing import FilePath, ListLike, Numeric, AlphaNumeric
     from osgeo import gdal
 
 __all__ = ["generate_mesh"]

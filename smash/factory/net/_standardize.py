@@ -5,7 +5,7 @@ from smash._constant import LAYER_NAME, ACTIVATION_FUNCTION
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple
+    from smash.util._typing import AnyTuple
 
 
 def _standardize_add_layer(layer: str) -> str:

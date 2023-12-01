@@ -24,7 +24,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-    from smash._typing import ListLike
+    from smash.util._typing import ListLike
 
 import numpy as np
 import pandas as pd

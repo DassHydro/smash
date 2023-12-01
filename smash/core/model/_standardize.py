@@ -28,7 +28,7 @@ import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, Numeric, ListLike
+    from smash.util._typing import AnyTuple, Numeric, ListLike
     from smash.core.model.model import Model
 
 
@@ -587,7 +587,7 @@ def _standardize_rr_parameters_value(
 
     if l_arr <= l or u_arr >= u:
         raise ValueError(
-            f"Invalid value for model rr_parameter '{key}'. Rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
@@ -617,7 +617,7 @@ def _standardize_rr_states_value(
 
     if l_arr <= l or u_arr >= u:
         raise ValueError(
-            f"Invalid value for model {state_kind} '{key}'. {state_kind.capitalize()} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
@@ -642,12 +642,12 @@ def _standardize_serr_mu_parameters_value(
         and value.size != 1
     ):
         raise ValueError(
-            f"Invalid shape for model serr_mu_parameters '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
         )
 
     if l_arr <= l or u_arr >= u:
         raise ValueError(
-            f"Invalid value for model serr_mu_parameters '{key}'. Serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value
@@ -672,12 +672,12 @@ def _standardize_serr_sigma_parameters_value(
         and value.size != 1
     ):
         raise ValueError(
-            f"Invalid shape for model serr_sigma_parameters '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
         )
 
     if l_arr <= l or u_arr >= u:
         raise ValueError(
-            f"Invalid value for model serr_sigma_parameters '{key}'. Serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
         )
 
     return value

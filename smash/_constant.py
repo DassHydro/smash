@@ -822,13 +822,14 @@ DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
 
 DEFAULT_SIMULATION_RETURN_OPTIONS = {
     "forward_run": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
-        "time_step": "all",
     },
     "optimize": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
@@ -839,9 +840,9 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "jobs": False,
         "jreg": False,
         "lcurve_wjreg": False,
-        "time_step": "all",
     },
     "bayesian_optimize": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
@@ -853,15 +854,14 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "log_h": False,
         "serr_mu": False,
         "serr_sigma": False,
-        "time_step": "all",
     },
     "multiset_estimate": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
         "lcurve_multiset": False,
-        "time_step": "all",
     },
 }
 

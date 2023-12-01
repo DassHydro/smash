@@ -16,7 +16,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
-    from smash._typing import Numeric
+    from smash.util._typing import Numeric
 
 __all__ = ["hydrograph_segmentation"]
 

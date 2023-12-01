@@ -6,6 +6,11 @@ from smash._constant import (
 
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 
+from smash.core.simulation._doc import (
+    _forward_run_doc_appender,
+    _smash_forward_run_doc_substitution,
+)
+
 from smash.core.simulation.run._standardize import (
     _standardize_multiple_forward_run_args,
 )
@@ -23,6 +28,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
 
@@ -120,140 +126,14 @@ class ForwardRun:
             return self.__class__.__name__ + "()"
 
 
+@_smash_forward_run_doc_substitution
+@_forward_run_doc_appender
 def forward_run(
     model: Model,
-    cost_options: dict | None = None,
-    common_options: dict | None = None,
-    return_options: dict | None = None,
+    cost_options: dict[str, Any] | None = None,
+    common_options: dict[str, Any] | None = None,
+    return_options: dict[str, Any] | None = None,
 ) -> Model | (Model, ForwardRun):
-    """
-    Run the forward Model.
-
-    Parameters
-    ----------
-    model : Model
-        Model object.
-
-    cost_options : dict or None, default None
-        Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-        jobs_cmpt : str or ListLike, default 'nse'
-            Type of observation objective function(s) to be computed. Should be one or a sequence of any of
-
-            - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures-based error metrics)
-
-            .. hint::
-                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
-
-        jobs_cmpt_tfm : str or ListLike, default 'keep'
-            Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
-
-            - 'keep' : No transformation
-            - 'sqrt' : Square root transformation
-            - 'inv' : Multiplicative inverse transformation
-
-        wjobs_cmpt : str, Numeric, or ListLike, default 'mean'
-            The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
-
-        gauge : str or ListLike, default 'dws'
-            Type of gauge to be computed. There are two ways to specify it:
-
-            - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            - An alias among 'all' (all gauge codes) and 'dws' (most downstream gauge code(s)).
-
-        wgauge : str or ListLike, default 'mean'
-            Type of gauge weights. There are two ways to specify it:
-
-            - A sequence of value whose size must be equal to the number of gauges optimized.
-            - An alias among 'mean', 'lquartile' (1st quantile or lower quantile), 'median', or 'uquartile' (3rd quantile or upper quantile).
-
-        event_seg : dict, default {'peak_quant': 0.995, 'max_duration': 240}
-            A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
-            See `smash.hydrograph_segmentation` for more.
-
-        end_warmup : str or pandas.Timestamp, default model.setup.start_time
-            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    common_options : dict or None, default None
-        Dictionary containing common options with two elements:
-
-        verbose : bool, default False
-            Whether to display information about the running method.
-
-        ncpu : bool, default 1
-            Whether to perform a parallel computation.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    return_options : dict or None, default None
-        Dictionary containing return options to save intermediate variables. The elements are:
-
-        time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
-            Returned time steps. There are five ways to specify it:
-
-            - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
-            - An alias among 'all' (return all time steps).
-            - A pandas.Timestamp object.
-            - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
-
-            .. note::
-                It only applies to the following variables: 'rr_states' and 'q_domain'
-
-        rr_states : bool, default False
-            Whether to return rainfall-runoff states for specific time steps.
-
-        q_domain : bool, defaul False
-            Whether to return simulated discharge on the whole domain for specific time steps.
-
-        cost : bool, default False
-            Whether to return cost value.
-
-        jobs : bool, default False
-            Whether to return jobs (observation component of cost) value.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    Returns
-    -------
-    ret_model : Model
-        The Model with forward run outputs.
-
-    ret_forward_run : ForwardRun or None, default None
-        It returns a `smash.ForwardRun` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
-
-    Examples
-    --------
-    >>> import smash
-    >>> from smash.factory import load_dataset
-    >>> setup, mesh = load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-
-    Run the forward hydrological model:
-
-    >>> model_fwd = smash.forward_run(model)
-    </> Forward Run
-
-    Get the simulated discharges:
-
-    >>> model_fwd.response.q
-    array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
-            3.2118713e+01, 3.1965160e+01],
-        [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
-            7.8704414e+00, 7.8388391e+00],
-        [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
-            2.0847433e+00, 2.0762112e+00]], dtype=float32)
-
-    See Also
-    --------
-    Model.forward_run : Run the forward Model.
-    smash.ForwardRun : Represents forward run optional results.
-    """
-
     wmodel = model.copy()
 
     ret_forward_run = wmodel.forward_run(cost_options, common_options, return_options)

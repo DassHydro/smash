@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Iterator
-    from smash._typing import Numeric
+    from smash.util._typing import Numeric
 
 
 __all__ = ["Samples", "generate_samples"]

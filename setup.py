@@ -35,6 +35,7 @@ setup(
         "smash.tests.core.simulation",
         "smash.tests.factory",
         "smash.tests.io",
+        "smash.util",
     ],
     package_data={"smash": ["smash/fcore/*.so", "smash/factory/mesh/*.so"]},
     include_package_data=True,
