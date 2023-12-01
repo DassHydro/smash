@@ -71,7 +71,7 @@ def _get_atmos_files(
 ) -> list[str]:
     # Set to drop duplicates after strftime
     date_range_strftime_access = (
-        set(date_range.strftime(access)) if not access == "" else {""}
+        set(date_range.strftime(access)) if access else {""}
     )
 
     files = []
