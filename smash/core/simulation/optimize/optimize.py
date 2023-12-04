@@ -13,6 +13,8 @@ from smash.core.simulation._doc import (
     _smash_optimize_doc_substitution,
     _bayesian_optimize_doc_appender,
     _smash_bayesian_optimize_doc_substitution,
+    _multiple_optimize_doc_appender,
+    _smash_multiple_optimize_doc_substitution,
 )
 
 from smash.core.simulation.optimize._standardize import (
@@ -37,6 +39,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
+    from numpy.typing import NDArray
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
     from smash.factory.samples.samples import Samples
@@ -46,33 +49,34 @@ __all__ = [
     "MultipleOptimize",
     "Optimize",
     "BayesianOptimize",
+    "multiple_optimize",
     "optimize",
     "bayesian_optimize",
-    "multiple_optimize",
 ]
 
 
 class MultipleOptimize:
     """
-    Represents multiple optimize computation result.
+    Represents multiple optimize result.
 
     Attributes
     ----------
-    cost : numpy.ndarray
+    cost : `numpy.ndarray`
         An array of shape *(n,)* representing cost values from *n* simulations.
 
-    q : numpy.ndarray
-        An array of shape *(..., n)* representing simulated discharges from *n* simulations.
+    q : `numpy.ndarray`
+        An array of shape *(ng, ntime_step, n)* representing simulated discharges from *n* simulations.
 
-    parameters : dict
-        A dictionary containing optimized parameters and/or initial states. Each key represents an array of shape *(..., n)* corresponding to a specific parameter or state.
+    parameters : `dict[str, np.ndarray]`
+        A dictionary containing optimized rainfall-runoff parameters and/or initial states.
+        Each key represents an array of shape *(nrow, ncol, n)* corresponding to a specific rainfall-runoff parameter or initial state.
 
     See Also
     --------
-    multiple_optimize : Run multiple optimization processes with different starting points, yielding multiple solutions.
+    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple solutions.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, NDArray[np.float32]] | None = None):
         if data is None:
             data = {}
 
@@ -671,71 +675,17 @@ def _ann_optimize(
     return net
 
 
+@_smash_multiple_optimize_doc_substitution
+@_multiple_optimize_doc_appender
 def multiple_optimize(
     model: Model,
     samples: Samples,
     mapping: str = "uniform",
     optimizer: str | None = None,
-    optimize_options: dict | None = None,
-    cost_options: dict | None = None,
-    common_options: dict | None = None,
+    optimize_options: dict[str, Any] | None = None,
+    cost_options: dict[str, Any] | None = None,
+    common_options: dict[str, Any] | None = None,
 ) -> MultipleOptimize:
-    """
-    Run multiple optimization processes with different starting points, yielding multiple solutions.
-
-    Parameters
-    ----------
-    model : Model
-        Model object.
-
-    samples : Samples
-        The samples created by the `smash.factory.generate_samples` method.
-
-    mapping, optimizer, optimize_options, cost_options, common_options : multiple types
-        Optimization settings. Refer to `smash.optimize` or `Model.optimize` for details on these arguments.
-
-    Returns
-    -------
-    mopt : MultipleOptimize
-        The multiple optimize results represented as a `MultipleOptimize` object.
-
-    Examples
-    --------
-    >>> import smash
-    >>> from smash.factory import load_dataset
-    >>> from smash.factory import generate_samples
-    >>> setup, mesh = load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-
-    Define sampling problem and generate samples:
-
-    >>> problem = {
-    ...            'num_vars': 4,
-    ...            'names': ['cp', 'ct', 'kexc', 'llr'],
-    ...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
-    ... }
-    >>> sr = generate_samples(problem, n=3, random_state=11)
-
-    Run multiple optimization processes:
-
-    >>> mopt = smash.multiple_optimize(
-    ...     model,
-    ...     samples=sr,
-    ...     optimize_options={"termination_crit": {"maxiter": 2}}
-    ... )
-    </> Multiple Optimize
-        Optimize 3/3 (100%)
-
-    Get the cost values through multiple runs of optimization:
-
-    >>> mopt.cost
-    array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
-
-    See Also
-    --------
-    Samples : Represents the generated samples result.
-    """
-
     args_options = [
         deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
     ]

@@ -1022,6 +1022,199 @@ array([[2.8263923e-04, 2.6972688e-04, 2.5154054e-04, ..., 2.2405909e+01,
 """
 )
 
+_multiple_forward_run_doc = (
+    """
+Run the forward Model with multiple sets of parameters.
+
+.. hint::
+    See a detailed explanation on the multiple forward run usage in (TODO FC: link user guide) section.
+
+Parameters
+----------
+model : `Model <smash.Model>`
+    Primary data structure of the hydrological model `smash`.
+
+samples : `Samples <smash.Samples>`
+    Represents the generated samples result.
+
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["forward_run"].keys(),
+        nindent=1,
+    )
+    + """
+common_options : `dict[str, Any]` or None, default None
+    Dictionary containing common options with two elements:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COMMON_OPTIONS_BASE_DOC, DEFAULT_SIMULATION_COMMON_OPTIONS.keys(), nindent=1
+    )
+    + """
+
+Returns
+-------
+multiple_forward_run : `MultipleForwardRun <smash.MultipleForwardRun>`
+    It returns an object containing the results of the multiple forward run.
+
+See Also
+--------
+Samples : Represents the generated samples result.
+MultipleForwardRun : Represents the multiple forward run result.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> from smash.factory import generate_samples
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Define sampling problem and generate samples
+
+>>> problem = {
+...            'num_vars': 4,
+...            'names': ['cp', 'ct', 'kexc', 'llr'],
+...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+... }
+>>> sr = generate_samples(problem, n=5, random_state=11)
+
+Run Model with multiple sets of parameters
+
+>>> mfr = smash.multiple_forward_run(model, samples=sr)
+</> Multiple Forward Run
+    Forward Run 5/5 (100%)
+
+Get the cost values through multiple forward runs
+
+>>> mfr.cost
+array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
+    """
+)
+
+_multiple_optimize_doc = (
+    """
+Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple solutions.
+
+.. hint::
+    See a detailed explanation on the multiple optimize usage in (TODO FC: link user guide) section.
+
+Parameters
+----------
+model : `Model <smash.Model>`
+    Primary data structure of the hydrological model `smash`.
+
+samples : `Samples <smash.Samples>`
+    Represents the generated samples result.
+
+mapping : `str`, default 'uniform'
+    Type of mapping. Should be one of 
+    
+    - ``'uniform'`` 
+    - ``'distributed'``
+    - ``'multi-linear'``
+    - ``'multi-polynomial'``
+
+    .. hint::
+        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+
+optimizer : `str` or None, default None
+    Name of optimizer. Should be one of 
+    
+    - ``'sbs'`` (``'uniform'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+
+    .. note::
+        If not given, a default optimizer will be set depending on the optimization mapping:
+
+        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+
+    .. hint::
+        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process. 
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        [
+            "parameters",
+            "bounds",
+            "control_tfm",
+            "descriptor",
+            "termination_crit",
+        ],
+        nindent=1,
+    )
+    + """ 
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["optimize"].keys(),
+        nindent=1,
+    )
+    + """
+common_options : `dict[str, Any]` or None, default None
+    Dictionary containing common options with two elements:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COMMON_OPTIONS_BASE_DOC, DEFAULT_SIMULATION_COMMON_OPTIONS.keys(), nindent=1
+    )
+    + """
+
+Returns
+-------
+multiple_optimize : `MultipleOptimize <smash.MultipleOptimize>`
+    It returns an object containing the results of the multiple optimize.
+
+See Also
+--------
+Samples : Represents the generated samples result.
+MultipleOptimize : Represents the multiple optimize result.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> from smash.factory import generate_samples
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Define sampling problem and generate samples
+
+>>> problem = {
+...            'num_vars': 4,
+...            'names': ['cp', 'ct', 'kexc', 'llr'],
+...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
+... }
+>>> sr = generate_samples(problem, n=3, random_state=11)
+
+Run multiple optimization processes
+
+>>> mopt = smash.multiple_optimize(
+...     model,
+...     samples=sr,
+...     optimize_options={"termination_crit": {"maxiter": 2}}
+... )
+</> Multiple Optimize
+    Optimize 3/3 (100%(percent)s)
+
+Get the cost values through multiple runs of optimization
+
+>>> mopt.cost
+array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
+"""
+)
+
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
     model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
@@ -1103,5 +1296,17 @@ _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_return="",
     model_example_func="model.bayesian_optimize()",
     model_example_response="model",
+    percent="%",
+)
+
+_multiple_forward_run_doc_appender = DocAppender(_multiple_forward_run_doc, indents=0)
+
+_multiple_optimize_doc_appender = DocAppender(_multiple_optimize_doc, indents=0)
+_smash_multiple_optimize_doc_substitution = DocSubstitution(
+    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_serr_mu_parameters="",
+    parameters_serr_sigma_parameters="",
+    parameters_note_serr_parameters="",
+    bounds_get_serr_parameters_bounds="",
     percent="%",
 )

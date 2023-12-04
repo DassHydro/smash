@@ -13,8 +13,8 @@ Forward Run
 
       forward_run
 
-Run Multiple Forward Model
-**************************
+Multiple Forward Run 
+********************
 .. autosummary::
       :toctree: smash/
 
@@ -28,8 +28,8 @@ Numerical Optimization
       optimize
       bayesian_optimize
 
-Run Multiple Optimization
-*************************
+Multiple Numerical Optimization
+*******************************
 .. autosummary::
       :toctree: smash/
 
