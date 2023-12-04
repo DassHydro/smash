@@ -941,7 +941,6 @@ def bayesian_optimize(
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
 ) -> Model | (Model, BayesianOptimize):
-
     wmodel = model.copy()
 
     ret_bayesian_optimize = wmodel.bayesian_optimize(

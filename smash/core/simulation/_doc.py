@@ -15,20 +15,22 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str`, `list[str, ...]` or None, default None
         """,
         """
-        A sequence of parameter names. Any name defined in:
+        Name of parameters to optimize. Should be one or a sequence of any key of:
 
         - `Model.rr_parameters`
         - `Model.rr_initial_states`
         %(parameters_serr_mu_parameters)s
         %(parameters_serr_sigma_parameters)s
 
-        **parameters** can be specified as follows:
-
-        - ``parameters="cp"``
-        - ``parameters=["cp", "ct", "kexc", "llr"]``
+        >>> optimize_options = {
+            "parameters": "cp",
+        }
+        >>> optimize_options = {
+            "parameters": ["cp", "ct", "kexc", "llr"],
+        }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`, %(parameters_note_serr_parameters)s will be optimized.
+            If not given, all parameters in `Model.rr_parameters`%(parameters_note_serr_parameters)s will be optimized.
         """,
     ),
     "bounds": (
@@ -36,18 +38,21 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `dict[str, tuple[float, float]]` or None, default None
         """,
         """
-        Bounds on optimized parameters. 
-        A dictionary where the keys represent parameter names, and the values are pairs of ``(min, max)`` 
+        Bounds on optimized parameters. A dictionary where the keys represent parameter names, and the values are pairs of ``(min, max)`` 
         values (i.e., a list or tuple) with ``min`` lower than ``max``. The keys must be included in **parameters**.
 
-        **bounds** can be specified as follows:
-
-        - ``bounds={"cp": (1, 2000)}``
-        - ``bounds={"cp": (1, 2000), "ct": (1, 1000), "kexc": (-10, 5), "llr": (1, 1000)}``
+        >>> optimize_options = {
+            "bounds": {
+                "cp": (1, 2000),
+                "ct": (1, 1000),
+                "kexc": (-10, 5), 
+                "llr": (1, 1000)
+            },
+        }
 
         .. note::
             If not given, default bounds will be applied to each parameter. 
-            See `Model.get_rr_parameters_bounds`, `Model.get_rr_initial_states_bounds`, %(bounds_get_serr_parameters_bounds)s
+            See `Model.get_rr_parameters_bounds`, `Model.get_rr_initial_states_bounds`%(bounds_get_serr_parameters_bounds)s
         """,
     ),
     "control_tfm": (
@@ -55,7 +60,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `str` or None, default None
         """,
         """
-        Transformation methods applied to the control vector. Should be one of:
+        Transformation method applied to the control vector. Should be one of:
         
         - ``'keep'`` (all **optimizer**)
         - ``'normalize'`` (``'sbs'`` or ``'lbfgsb'`` **optimizer** only)
@@ -67,6 +72,9 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
             - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
             - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
             - **optimizer** = ``'ann'``; **control_tfm** = ``'keep'``
+
+        .. hint::
+            See a detailed explanation on the control vector transformation in (TODO FC: link Math/Num) section.
         """,
     ),
     "descriptor": (
@@ -74,13 +82,17 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `dict[str, list[str, ...]]` or None, default None
         """,
         """
-        Descriptors linked to optimized parameters.
-        A dictionary where the keys represent parameter names, and the values are list of descriptor names. The keys must be included in **parameters**.
+        Descriptors linked to optimized parameters. A dictionary where the keys represent parameter names, and the values are list of descriptor names.
+        The keys must be included in **parameters**.
 
-        **descriptor** can be specified as follows:
-
-        - ``descriptor={"cp": ["slope", "dd"]}``
-        - ``descriptor={"cp": ["slope", "dd"], "ct": ["slope"], "kexc": ["slope", "dd"], "llr": ["dd"]}``
+        >>> optimize_options = {
+            "descriptor": {
+                "cp": ["slope", "dd"],
+                "ct": ["slope"],
+                "kexc": ["slope", "dd"],
+                "llr": ["dd"],
+            },
+        }
 
         .. note::
             If not given, all descriptors will be used for each parameter.
@@ -96,7 +108,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         
         .. note::
             If not given, a default neural network will be used. This option is only used when **mapping** is ``'ann'``.
-            Refer to `Net <smash.factory.Net>` to learn how to create a customized neural network for training.
+            See `Net <smash.factory.Net>` to learn how to create a customized neural network for training.
         """,
     ),
     "learning_rate": (
@@ -134,10 +146,17 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         - ``'epochs'``: The number of training epochs for the neural network. Only used when **mapping** is ``'ann'``.
         - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early stopping is disabled, and the training continues for the full number of epochs. Only used when **mapping** is ``'ann'``.
         
-        **termination_crit** can be specified as follows:
-
-        - ``termination_crit={"maxiter": 10, "factr": 1e6}``
-        - ``termination_crit={"epochs": 200}``
+        >>> optimize_options = {
+            "termination_crit": {
+                "maxiter": 10,
+                "factr": 1e6,
+            },
+        }
+        >>> optimize_options = {
+            "termination_crit": {
+                "epochs": 200,
+            },
+        }
 
         .. note::
             If not given, default values are set to each elements.
@@ -157,10 +176,12 @@ COST_OPTIONS_BASE_DOC = {
         - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'`` (continuous signatures-based error metrics)
         - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'`` (flood event signatures-based error metrics)
 
-        **jobs_cmpt** can be specified as follows:
-
-        - ``jobs_cmpt="nse"`` (mono-criteria)
-        - ``jobs_cmpt=["nse", "Epf"]`` (multi-criteria)
+        >>> cost_options = {
+            "jobs_cmpt": "nse",
+        }
+        >>> cost_options = {
+            "jobs_cmpt": ["nse", "Epf"],
+        }
 
         .. hint::
             See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
@@ -173,14 +194,16 @@ COST_OPTIONS_BASE_DOC = {
         """
         Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
 
-        - ``'keep'`` : No transformation
-        - ``'sqrt'`` : Square root transformation
-        - ``'inv'`` : Multiplicative inverse transformation
+        - ``'keep'`` : No transformation :math:`f:x \\rightarrow x`
+        - ``'sqrt'`` : Square root transformation :math:`f:x \\rightarrow \sqrt{x}`
+        - ``'inv'`` : Multiplicative inverse transformation :math:`f:x \\rightarrow \\frac{1}{x}`
 
-        **jobs_cmpt_tfm** can be specified as follows:
-
-        - ``jobs_cmpt_tfm="keep"``
-        - ``jobs_cmpt_tfm=["keep", "inv"]``
+        >>> cost_options = {
+            "jobs_cmpt_tfm": "inv",
+        }
+        >>> cost_options = {
+            "jobs_cmpt_tfm": ["keep", "inv"],
+        }
 
         .. note::
             If **jobs_cmpt** is a multi-criteria and only one transformation is choosen in **jobs_cmpt_tfm**. The transformation will be applied to each 
@@ -193,20 +216,22 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         The corresponding weighting of observation objective functions in case of multi-criteria 
-            (i.e., a sequence of objective functions to compute). There are two ways to specify it:
+        (i.e., a sequence of objective functions to compute). There are two ways to specify it:
 
+        - An alias among ``'mean'``
         - A sequence of value whose size must be equal to the number of observation objective function(s) in **jobs_cmpt**
-        - An alias among ``'mean'``.
 
-        **wjobs_cmpt** can be specified as follows:
-
-        - ``wjobs_cmpt=[0.25, 0.75]``
-        - ``wjobs_cmpt="mean"``
+        >>> cost_options = {
+            "wjobs_cmpt": "mean",
+        }
+        >>> cost_options = {
+            "wjobs_cmpt": [0.7, 0.3],
+        }
         """,
     ),
     "wjreg": (
         """
-        `float`, default 0
+        `float` or `str`, default 0
         """,
         """
         The weighting of regularization term. There are two ways to specify it:
@@ -214,10 +239,12 @@ COST_OPTIONS_BASE_DOC = {
         - A value greater than or equal to 0
         - An alias among ``'fast'`` or ``'lcurve'``. **wjreg** will be auto-computed by one of these methods.
 
-        **wjreg** can be specified as follows:
-
-        - ``wjreg=0.0001``
-        - ``wjreg="lcurve"``
+        >>> cost_options = {
+            "wjreg": 1e-4,
+        }
+        >>> cost_options = {
+            "wjreg": "lcurve",
+        }
 
         .. hint::
             See a detailed explanation on the weighting of regularization term in (TODO FC: link Math/Num) section.
@@ -234,10 +261,12 @@ COST_OPTIONS_BASE_DOC = {
         - ``'smoothing'``
         - ``'hard-smoothing'``
 
-        **jreg_cmpt** can be specified as follows:
-
-        - ``jreg_cmpt="prior"`` (mono-regularization)
-        - ``jreg_cmpt=["prior", "smoothing"]`` (multi-regularization)
+        >>> cost_options = {
+            "jreg_cmpt": "prior",
+        }
+        >>> cost_options = {
+            "jreg_cmpt": ["prior", "smoothing"],
+        }
 
         .. hint::
             See a detailed explanation on the regularization function in (TODO FC: link Math/Num) section.
@@ -251,13 +280,15 @@ COST_OPTIONS_BASE_DOC = {
         The corresponding weighting of regularization functions in case of multi-regularization
         (i.e., a sequence of regularization functions to compute). There are two ways to specify it:
 
+        - An alias among ``'mean'``
         - A sequence of value whose size must be equal to the number of regularization function(s) in **jreg_cmpt**
-        - An alias among ``'mean'``.
 
-        **wjreg_cmpt** can be specified as follows:
-
-        - ``wjreg_cmpt=[2, 1]``
-        - ``wjreg_cmpt="mean"``
+        >>> cost_options = {
+            "wjreg_cmpt": "mean",
+        }
+        >>> cost_options = {
+            "wjreg_cmpt": [1., 2.],
+        }
         """,
     ),
     "gauge": (
@@ -267,13 +298,18 @@ COST_OPTIONS_BASE_DOC = {
         """
         Type of gauge to be computed. There are two ways to specify it:
 
-        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the `Model.mesh`.
-        - An alias among ``'all'`` (all gauge codes) or ``'dws'`` (most downstream gauge code(s)).
+        - An alias among ``'all'`` (all gauge codes) or ``'dws'`` (most downstream gauge code(s))
+        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the `Model.mesh`
 
-        **gauge** can be specified as follows:
-
-        - ``gauge=["V3524010", "V3515010"]``
-        - ``gauge="dws"``
+        >>> cost_options = {
+            "gauge": "dws",
+        }
+        >>> cost_options = {
+            "gauge": "V3524010",
+        }
+        >>> cost_options = {
+            "gauge": ["V3524010", "V3515010"],
+        }
         """,
     ),
     "wgauge": (
@@ -283,13 +319,15 @@ COST_OPTIONS_BASE_DOC = {
         """
         Type of gauge weights. There are two ways to specify it:
 
-        - A sequence of value whose size must be equal to the number of gauges optimized in **gauge**.
-        - An alias among ``'mean'``, ``'lquartile'`` (1st quantile or lower quantile), ``'median'``, or ``'uquartile'`` (3rd quantile or upper quantile).
+        - An alias among ``'mean'``, ``'lquartile'`` (1st quantile or lower quantile), ``'median'``, or ``'uquartile'`` (3rd quantile or upper quantile)
+        - A sequence of value whose size must be equal to the number of gauges optimized in **gauge**
 
-        **wgauge** can be specified as follows:
-
-        - ``wgauge=[0.6, 0.4]``
-        - ``wgauge="mean"``
+        >>> cost_options = {
+            "wgauge": "mean",
+        }
+        >>> cost_options = {
+            "wgauge": [0.6, 0.4]",
+        }
         """,
     ),
     "control_prior": (
@@ -310,17 +348,19 @@ COST_OPTIONS_BASE_DOC = {
         - ``'LogNormal'``,   [mean_log, standard_deviation_log] (2)
         - ``'Triangle'``,    [peak, lower_bound, higher_bound]  (3)
 
-        .. hint::
-            See a detailed explanation on the distribution in (TODO BR: add link Math/Num) section.
-
-        **control_prior** can be specified as follows:
-
-        - ``control_prior={"cp0": ["Gaussian", [200, 100]]}``
-        - ``control_prior={"cp0": ["Gaussian", [200, 100]], "kexc0": ["Gaussian", [0, 5]]}``
+        >>> cost_options = {
+            control_prior: {
+                "cp0": ["Gaussian", [200, 100]],
+                "kexc0": ["Gaussian", [0, 5]],
+            }
+        }
 
         .. note::
             If not given, ``'FlatPrior'`` is applied to each control vector parameter (i.e. equivalent to no prior).
-        """
+
+        .. hint::
+            See a detailed explanation on the distribution in (TODO BR: add link Math/Num) section.
+        """,
     ),
     "event_seg": (
         """
@@ -328,7 +368,17 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
-        See `hydrograph_segmentation <smash.hydrograph_segmentation>` for more.
+
+        >>> cost_options = {
+            event_seg = {
+                "peak_quant": 0.998,
+                "max_duration": 120,
+            }
+        }
+
+        .. hint::
+            See `hydrograph_segmentation <smash.hydrograph_segmentation>` for more.
+
         """,
     ),
     "end_warmup": (
@@ -337,9 +387,16 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         The end of the warm-up period, which must be between the start time and the end time defined in `Model.setup`.
+
+        >>> cost_options = {
+            "end_warmup": "1997-12-21",
+        }
+        >>> cost_options = {
+            "end_warmup": pd.Timestamp("19971221"),
+        }
         
         .. note::
-            If not given, it is set to be equal to the Model start time.
+            If not given, it is set to be equal to the `Model.setup` start time.
         """,
     ),
 }
@@ -358,7 +415,7 @@ COMMON_OPTIONS_BASE_DOC = {
         `int`, default 1
         """,
         """
-        Whether to perform a parallel computation.
+        Number of CPU(s) to perform a parallel computation.
         """,
     ),
 }
@@ -371,19 +428,31 @@ RETURN_OPTIONS_BASE_DOC = {
         """
         Returned time steps. There are five ways to specify it:
 
-        - A date as a string which respect `pandas.Timestamp` format
+        - An alias among ``'all'`` (return all time steps).
+        - A date as string which respect `pandas.Timestamp` format
         - A `pandas.Timestamp`.
         - A `pandas.DatetimeIndex`.
-        - A sequence of dates as a string.
-        - An alias among ``'all'`` (return all time steps).
+        - A sequence of dates as strings.
 
-        **time_step** can be specified as follows:
-
-        - ``time_step="1997-12-21"``
-        - ``time_step=pd.Timestamp("1997-12-21")``
-        - ``time_step=pd.date_range(start="1997-12-21", end="1998-12-21", freq="1D")`` (one year at daily time step)
-        - ``time_step=["1998-05-23", "1998-05-24", "1998-05-25"]``
-        - ``time_step="all"``
+        >>> return_options = {
+            "time_step": "all",
+        }
+        >>> return_options = {
+            "time_step": "1997-12-21",
+        }
+        >>> return_options = {
+            "time_step": pd.Timestamp("19971221"),
+        }
+        >>> return_options = {
+            "time_step": pd.date_range(
+                start="1997-12-21",
+                end="1998-12-21",
+                freq="1D"
+            ),
+        }
+        >>> return_options = {
+            "time_step": ["1998-05-23", "1998-05-24", "1998-05-25"],
+        }
 
         .. note::
             It only applies to the following variables: ``'rr_states'`` and ``'q_domain'``
@@ -519,6 +588,7 @@ RETURN_OPTIONS_BASE_DOC = {
     ),
 }
 
+
 def _gen_docstring_from_base_doc(
     base_doc: dict[str, tuple(str, str)], keys: list[str], nindent: int = 0
 ) -> str:
@@ -592,14 +662,14 @@ Run the direct Model
 >>> %(model_example_func)s
 </> Forward Run
 
-Get the simulated discharges:
+Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
 array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
         3.2118713e+01, 3.1965160e+01],
-    [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
+       [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
         7.8704414e+00, 7.8388391e+00],
-    [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
+       [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
         2.0847433e+00, 2.0762112e+00]], dtype=float32)
 """
 )
@@ -642,6 +712,9 @@ optimizer : `str` or None, default None
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
         - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
+
+    .. hint::
+        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 
@@ -720,14 +793,14 @@ Optimize the Model
     At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
-Get the simulated discharges:
+Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
 array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
         3.2118713e+01, 3.1965160e+01],
-    [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
+       [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
         7.8704414e+00, 7.8388391e+00],
-    [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
+       [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
         2.0847433e+00, 2.0762112e+00]], dtype=float32)
 """
 )
@@ -794,7 +867,7 @@ Examples
 >>> setup, mesh = load_dataset("cance")
 >>> model = smash.Model(setup, mesh)
 
-Define sampling problem and generate samples:
+Define sampling problem and generate samples
 
 >>> problem = {
 ...    'num_vars': 4,
@@ -803,19 +876,19 @@ Define sampling problem and generate samples:
 ... }
 >>> sr = generate_samples(problem, n=100, random_state=11)
 
-Run Model with multiple sets of parameters:
+Run Model with multiple sets of parameters
 
 >>> mfr = smash.multiple_forward_run(model, samples=sr)
 </> Multiple Forward Run
     Forward Run 100/100 (100%(percent)s)
 
-Estimate Model on multiple sets of solutions:
+Estimate Model on multiple sets of solutions
 
 >>> %(model_example_func)s
 </> Multiple Set Estimate
     L-curve Computing: 100%(percent)s|████████████████████████████████████████| 50/50 [00:02<00:00, 17.75it/s]
 
-Get the simulated discharges:
+Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
 array([[9.4456947e-05, 9.3808041e-05, 9.3033530e-05, ..., 1.7851851e+01,
@@ -1013,8 +1086,8 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters="`Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
-    bounds_get_serr_parameters_bounds="`Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
     model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_bayes_opt = smash.bayesian_optimize()",
     model_example_response="model_bayes_opt",
@@ -1025,8 +1098,8 @@ _model_bayesian_optimize_doc_substitution = DocSubstitution(
     default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
-    parameters_note_serr_parameters="`Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
-    bounds_get_serr_parameters_bounds="`Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
     model_return="",
     model_example_func="model.bayesian_optimize()",
     model_example_response="model",
