@@ -8,7 +8,7 @@ import numpy as np
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, Numeric
+    from smash.util._typing import AnyTuple, Numeric
 
 
 # TODO: Check bounds and num_vars

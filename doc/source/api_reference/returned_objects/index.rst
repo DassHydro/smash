@@ -6,15 +6,23 @@ Returned Objects
 
 .. currentmodule:: smash
 
+Simulation
+**********
 .. autosummary::
-      :toctree: smash/
+    :toctree: smash/
 
-      Signatures
-      PrecipitationIndices
-      Samples
-      MultipleForwardRun
-      MultipleOptimize
-      ForwardRun
-      Optimize
-      MultisetEstimate
-      BayesianOptimize
+    Samples
+    MultipleForwardRun
+    MultipleOptimize
+    ForwardRun
+    Optimize
+    MultisetEstimate
+    BayesianOptimize
+
+Signal Analysis
+***************
+.. autosummary::
+    :toctree: smash/
+    
+    Signatures
+    PrecipitationIndices

@@ -21,7 +21,7 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
-    from smash._typing import AnyTuple
+    from smash.util._typing import AnyTuple
 
 
 def _standardize_multiple_optimize_mapping(mapping: str) -> str:

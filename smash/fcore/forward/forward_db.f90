@@ -3377,8 +3377,8 @@ END MODULE MWD_SERR_MU_PARAMETERS_DIFF
 !%      ----
 !%
 !%      - SErr_Sigma_ParametersDT
-!%          Vectors containting hyper parameters of the temporalisation function for sigma, the standard deviation for structural
-! errors
+!%          Vectors containting hyper parameters of the temporalisation function for sigma, the standard deviation of structural 
+!errors
 !%          (sg0, sg1, sg2, ...)
 !%
 !%          ======================== =============================================

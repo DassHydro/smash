@@ -23,7 +23,7 @@ and navigate to the working directory:
 
     cd smash
 
-Now you can proceed with building the code and installing dependencies. You have multiple options, such as using `Anaconda <https://www.anaconda.com/>`__, your own Python environment, or `Docker <https://docs.docker.com/engine/install/>`__.
+Now you can proceed with building the code and installing dependencies. You have the options to use `Anaconda <https://www.anaconda.com/>`__ or your own environment.
 
 **********************
 Anaconda (recommended)
@@ -87,8 +87,11 @@ Your own environment
 
     .. code-block:: none
 
+        sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
         sudo apt-get update
         sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev python3-pip
+        pip3 install wheel numpy
+        pip3 install gdal==$(gdal-config --version)
         pip3 install -r requirements.txt
 
 2. **Build**
@@ -108,32 +111,6 @@ Your own environment
     .. code-block:: python
 
         import smash
-
-******
-Docker
-******
-
-.. image:: ../_static/logo_docker.png
-    :width: 175
-    :align: center
-
-.. warning::
-
-    Section in development
-
-    1. **Build image**
-        Build `docker <https://docs.docker.com/engine/install/>`__ image:
-
-        .. code-block:: none
-
-            docker build --network=host -t smash .
-
-    2. **Run**
-        Run image:
-
-        .. code-block ::
-
-            docker run smash
 
 ---------
 Tutorials

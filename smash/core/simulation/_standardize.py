@@ -57,7 +57,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
+    from smash.util._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -1154,7 +1154,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model rr_initial_states '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1168,7 +1168,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_mu_parameters '{key}'. serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
     for key in model.serr_sigma_parameters.keys:
         arr = model.get_serr_sigma_parameters(key)
@@ -1181,7 +1181,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_sigma_parameters '{key}'. serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
 

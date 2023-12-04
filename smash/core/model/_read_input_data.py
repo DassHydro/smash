@@ -17,7 +17,7 @@ import re
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import ListLike, FilePath
+    from smash.util._typing import ListLike, FilePath
     from smash.fcore._mwd_setup import SetupDT
     from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_input_data import Input_DataDT

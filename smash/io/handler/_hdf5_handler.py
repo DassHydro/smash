@@ -10,7 +10,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
-    from smash._typing import AlphaNumeric
+    from smash.util._typing import AlphaNumeric
     from smash.core.model.model import Model
 
 

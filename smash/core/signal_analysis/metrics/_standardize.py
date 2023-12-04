@@ -8,7 +8,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.fcore._mwd_setup import SetupDT
-    from smash._typing import AnyTuple
+    from smash.util._typing import AnyTuple
 
 
 def _standardize_metrics_metric(metric: str) -> str:

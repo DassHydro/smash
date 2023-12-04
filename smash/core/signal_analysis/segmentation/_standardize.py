@@ -5,7 +5,7 @@ from smash._constant import DOMAIN
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, Numeric
+    from smash.util._typing import AnyTuple, Numeric
 
 
 def _standardize_hydrograph_segmentation_peak_quant(peak_quant: float) -> float:
