@@ -9,6 +9,7 @@ from smash.core.simulation._standardize import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any
     from smash.core.model.model import Model
 
 __all__ = ["default_optimize_options", "default_bayesian_optimize_options"]
@@ -18,104 +19,164 @@ def default_optimize_options(
     model: Model,
     mapping: str = "uniform",
     optimizer: str | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """
-    Get the default optimization options for the Model object.
+    Default optimize options of Model.
 
     Parameters
     ----------
-    model : Model
-        Model object.
+    model : `Model <smash.Model>`
+        Primary data structure of the hydrological model `smash`.
 
-    mapping : str, default 'uniform'
-        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
+    mapping : `str`, default 'uniform'
+        Type of mapping. Should be one of
 
-    optimizer : str or None, default None
-        Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
+        - ``'uniform'``
+        - ``'distributed'``
+        - ``'multi-linear'``
+        - ``'multi-polynomial'``
+        - ``'ann'``
+
+        .. hint::
+            See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+
+    optimizer : `str` or None, default None
+        Name of optimizer. Should be one of
+
+        - ``'sbs'`` (``'uniform'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+        - ``'sgd'`` (``'ann'`` **mapping** only)
+        - ``'adam'`` (``'ann'`` **mapping** only)
+        - ``'adagrad'`` (``'ann'`` **mapping** only)
+        - ``'rmsprop'`` (``'ann'`` **mapping** only)
 
         .. note::
             If not given, a default optimizer will be set depending on the optimization mapping:
 
-            - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
-            - **mapping** = 'ann'; **optimizer** = 'adam'
+            - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+            - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
+
+        .. hint::
+            See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
 
     Returns
     -------
-    optimize_options : dict
-        A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
+    optimize_options : `dict[str, Any]`
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
+        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
 
-        parameters : ListLike
-            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
-
-        bounds : dict
-            Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
-
-        control_tfm : str
-            Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
-
-        descriptor : dict
-            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
-            Only used when **mapping** is 'multi-linear' or 'multi-polynomial'. In case of 'ann', all descriptors will be used.
-
-        net : Net
-            The neural network used to learn the descriptors-to-parameters mapping. Only used when **mapping** is 'ann'.
-
-            .. hint::
-                Refer to `smash.factory.Net` to learn how to create a customized neural network for training.
-
-        learning_rate : float
-            The learning rate used for weight updates during training. Only used when **mapping** is 'ann'.
-
-        random_state : int
-            A random seed used to initialize weights. A value of None indicates that weights will be initialized with a random seed. Only used when **mapping** is 'ann'.
-
-        termination_crit : dict
-            Termination criteria. The keys are:
-
-            - 'maxiter': The maximum number of iterations. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
-            - 'factr': An additional termination criterion based on cost values. Only used when **optimizer** is 'lbfgsb'.
-            - 'pgtol': An additional termination criterion based on the projected gradient of the cost function. Only used when **optimizer** is 'lbfgsb'.
-            - 'epochs': The number of training epochs for the neural network. Only used when **mapping** is 'ann'.
-            - 'early_stopping': A positive number to stop training when the loss function does not decrease below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early stopping is disabled, and the training continues for the full number of epochs. Only used when **mapping** is 'ann'.
+    See Also
+    --------
+    smash.optimize : Model assimilation using numerical optimization algorithms.
 
     Examples
     --------
-    >>> import smash
     >>> from smash.factory import load_dataset
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Get the default optimiaztion options for multi-linear mapping:
+    Get the default optimization options for ``'uniform'`` mapping
 
-    >>> opt_ml = smash.default_optimize_options(model, mapping="multi-linear")
-    >>> opt_ml
+    >>> opt_u = smash.default_optimize_options(model, mapping="uniform")
+    >>> opt_u
     {
         'parameters': ['cp', 'ct', 'kexc', 'llr'],
         'bounds': {
-                    'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0),
-                    'kexc': (-50, 50), 'llr': (1e-06, 1000.0)
-                  },
-        'control_tfm': 'normalize',
-        'descriptor': {
-                        'cp': array(['slope', 'dd'], dtype='<U5'),
-                        'ct': array(['slope', 'dd'], dtype='<U5'),
-                        'kexc': array(['slope', 'dd'], dtype='<U5'),
-                        'llr': array(['slope', 'dd'], dtype='<U5')
-                      },
-        'termination_crit': {'maxiter': 100, 'factr': 1000000.0, 'pgtol': 1e-12}
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50},
     }
 
-    For ANN-based mapping:
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+    It's equivalent to set **optimize_options** to None (which is the default value)
+
+    >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
+        At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
+        At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
+        At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
+        At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
+        At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
+
+    Customize the optimize options dictionary by removing ``'kexc'`` from the optimized parameters
+
+    >>> opt_u["parameters"].remove("kexc")
+    >>> opt_u
+    {
+        'parameters': ['cp', 'ct', 'llr'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50},
+    }
+
+    Run the optimize method
+
+    >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+    ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options. Choices: ['cp', 'ct', 'llr']
+
+    An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also ``kexc`` from bounds
+
+    >>> opt_u["bounds"].pop("kexc")
+    (-50, 50)
+
+    .. note::
+        The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__ returns the value associated to the removed key
+
+    >>> opt_u
+    {
+        'parameters': ['cp', 'ct', 'llr'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'llr': (1e-06, 1000.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50},
+    }
+
+    Run again the optimize method to see the differences linked to a change in control vector
+
+    >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
+    </> Optimize
+        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
+        At iterate      1    nfg =    17    J =      0.111053    ddx = 0.64
+        At iterate      2    nfg =    33    J =      0.081869    ddx = 0.32
+        At iterate      3    nfg =    49    J =      0.048932    ddx = 0.16
+        At iterate      4    nfg =    65    J =      0.048322    ddx = 0.04
+        At iterate      5    nfg =    85    J =      0.046548    ddx = 0.02
+        At iterate      6    nfg =   105    J =      0.046372    ddx = 0.01
+        At iterate      7    nfg =   123    J =      0.046184    ddx = 0.01
+        At iterate      8    nfg =   142    J =      0.046049    ddx = 0.01
+        At iterate      9    nfg =   161    J =      0.045862    ddx = 0.01
+        At iterate     10    nfg =   180    J =      0.045674    ddx = 0.01
+        At iterate     11    nfg =   200    J =      0.045624    ddx = 0.01
+        At iterate     12    nfg =   219    J =      0.045537    ddx = 0.00
+        CONVERGENCE: DDX < 0.01
+
+    Get the default optimization options for a different mapping
 
     >>> opt_ann = smash.default_optimize_options(model, mapping="ann")
     >>> opt_ann
     {
         'parameters': ['cp', 'ct', 'kexc', 'llr'],
         'bounds': {
-                    'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0),
-                    'kexc': (-50, 50), 'llr': (1e-06, 1000.0)
-                  },
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0)
+        },
         'net':
             +----------------------------------------------------------+
             | Layer Type            Input/Output Shape  Num Parameters |
@@ -135,7 +196,7 @@ def default_optimize_options(
         'termination_crit': {'epochs': 200, 'early_stopping': 0}
     }
 
-    Customize the optimization options and optimize the Model:
+    Again, customize the optimize options and optimize the Model
 
     >>> opt_ann["learning_rate"] = 0.004
     >>> opt_ann["termination_crit"]["epochs"] = 40
@@ -155,13 +216,8 @@ def default_optimize_options(
         Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
 
     The training process was terminated after 37 epochs, where the loss did not decrease below the minimal value at epoch 27 for 10 consecutive epochs.
-    The optimal parameters are thus recorded at epoch 27:
-
-    >>> metric = smash.metrics(model)
-    >>> 1 - metric[0]  # cost at downstream gauge, which was calibrated
-    0.08976912498474121
+    The optimal parameters are thus recorded at epoch 27
     """
-
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 
     return _standardize_simulation_optimize_options(
@@ -175,78 +231,131 @@ def default_bayesian_optimize_options(
     optimizer: str | None = None,
 ) -> dict:
     """
-    Get the default bayesian optimization options for the Model object.
+    Default bayesian optimize options of Model.
 
     Parameters
     ----------
-    model : Model
-        Model object.
+    model : `Model <smash.Model>`
+        Primary data structure of the hydrological model `smash`.
 
-    mapping : str, default 'uniform'
-        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
+    mapping : `str`, default 'uniform'
+        Type of mapping. Should be one of
 
-    optimizer : str or None, default None
-        Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
+        - ``'uniform'``
+        - ``'distributed'``
+        - ``'multi-linear'``
+        - ``'multi-polynomial'``
+
+        .. hint::
+            See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+
+    optimizer : `str` or None, default None
+        Name of optimizer. Should be one of
+
+        - ``'sbs'`` (``'uniform'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
 
         .. note::
             If not given, a default optimizer will be set depending on the optimization mapping:
 
-            - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
+            - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+
+        .. hint::
+            See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
 
     Returns
     -------
-    optimize_options : dict
-        A dictionary containing optimization options for optimizing the Model object. The specific keys returned depend on the chosen mapping and optimizer. All possible keys are:
-
-        parameters : ListLike
-            Rainfall-runoff parameter(s) and/or initial state(s) to be optimized. It must consist of the parameters defined in the Model setup.
-
-        bounds : dict
-            Bounds on the optimized parameters. This is a dictionary where the keys represent parameter and/or state names, and the values are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``.
-
-        control_tfm : str
-            Transformation methods applied to the control vector: 'keep', 'normalize', 'sbs'. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
-
-        descriptor : dict
-            A dictionary containing lists of descriptors used for each rainfall-runoff parameter.
-            Only used when **mapping** is 'multi-linear' or 'multi-polynomial'.
-
-        termination_crit : dict
-            Termination criteria. The keys are:
-
-            - 'maxiter': The maximum number of iterations. Only used when **optimizer** is 'sbs' or 'lbfgsb'.
-            - 'factr': An additional termination criterion based on cost values. Only used when **optimizer** is 'lbfgsb'.
-            - 'pgtol': An additional termination criterion based on the projected gradient of the cost function. Only used when **optimizer** is 'lbfgsb'.
+    optimize_options : `dict[str, Any]`
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
+        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
 
     Examples
     --------
-    >>> import smash
     >>> from smash.factory import load_dataset
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Get the default bayesian optimiaztion options for multi-linear mapping:
+    Get the default bayesian optimization options for ``'uniform'`` mapping
 
-    >>> bay_opt_ml = smash.default_bayesian_optimize_options(model, mapping="multi-linear")
-    >>> bay_opt_ml
-        {
-            'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
-            'bounds': {
-                        'cp': (1e-06, 1000.0), 'ct': (1e-06, 1000.0),
-                        'kexc': (-50, 50), 'llr': (1e-06, 1000.0),
-                        'sg0': (1e-06, 1000.0), 'sg1': (1e-06, 10.0)
-                      },
-            'control_tfm': 'normalize',
-            'descriptor': {
-                            'cp': array(['slope', 'dd'], dtype='<U5'),
-                            'ct': array(['slope', 'dd'], dtype='<U5'),
-                            'kexc': array(['slope', 'dd'], dtype='<U5'),
-                            'llr': array(['slope', 'dd'], dtype='<U5'),
-                            'sg0': array(['slope', 'dd'], dtype='<U5'),
-                            'sg1': array(['slope', 'dd'], dtype='<U5')
-                          },
-            'termination_crit': {'maxiter': 100, 'factr': 1000000.0, 'pgtol': 1e-12}}
+    >>> opt_u = smash.default_bayesian_optimize_options(model, mapping="uniform")
+    >>> opt_u
+    {
+        'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0),
+            'sg0': (1e-06, 1000.0),
+            'sg1': (1e-06, 10.0)
+        },
+        'control_tfm': 'sbs',
+        'termination_crit': {'maxiter': 50},
+    }
+
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+    It's equivalent to set **optimize_options** to None (which is the default value)
+
+    >>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)
+    </> Bayesian Optimize
+        At iterate      0    nfg =     1    J =     26.510803    ddx = 0.64
+        At iterate      1    nfg =    68    J =      2.536702    ddx = 0.64
+        At iterate      2    nfg =   136    J =      2.402311    ddx = 0.16
+        At iterate      3    nfg =   202    J =      2.329653    ddx = 0.16
+        At iterate      4    nfg =   270    J =      2.277469    ddx = 0.04
+        At iterate      5    nfg =   343    J =      2.271495    ddx = 0.02
+        At iterate      6    nfg =   416    J =      2.270596    ddx = 0.01
+        At iterate      7    nfg =   488    J =      2.269927    ddx = 0.01
+        At iterate      8    nfg =   561    J =      2.269505    ddx = 0.01
+        CONVERGENCE: DDX < 0.01
+
+    Get the default bayesian optimization options for a different mapping
+
+    >>> opt_ml = smash.default_bayesian_optimize_options(model, mapping="multi-linear")
+    >>> opt_ml
+    {
+        'parameters': ['cp', 'ct', 'kexc', 'llr', 'sg0', 'sg1'],
+        'bounds': {
+            'cp': (1e-06, 1000.0),
+            'ct': (1e-06, 1000.0),
+            'kexc': (-50, 50),
+            'llr': (1e-06, 1000.0),
+            'sg0': (1e-06, 1000.0),
+            'sg1': (1e-06, 10.0)
+        },
+        'control_tfm': 'normalize',
+        'descriptor': {
+            'cp': array(['slope', 'dd'], dtype='<U5'),
+            'ct': array(['slope', 'dd'], dtype='<U5'),
+            'kexc': array(['slope', 'dd'], dtype='<U5'),
+            'llr': array(['slope', 'dd'], dtype='<U5')
+        },
+        'termination_crit': {'maxiter': 100, 'factr': 1000000.0, 'pgtol': 1e-12},
+    }
+
+    Customize the bayesian optimize options and optimize the Model
+
+    >>> opt_ml["bounds"]["cp"] = (1, 2000)
+    >>> opt_ml["bounds"]["sg0"] = (1e-3, 100)
+    >>> opt_ml["descriptor"]["cp"] = "slope"
+    >>> opt_ml["termination_crit"]["maxiter"] = 10
+    >>> model.optimize(mapping="multi-linear", optimize_options=opt_ml)
+    </> Bayesian Optimize
+        At iterate      0    nfg =     1    J =     26.510801    |proj g| =     51.156681
+        At iterate      1    nfg =     2    J =      4.539526    |proj g| =      2.556828
+        At iterate      2    nfg =     4    J =      4.361516    |proj g| =      2.209623
+        At iterate      3    nfg =     5    J =      4.102887    |proj g| =      1.631524
+        At iterate      4    nfg =     6    J =      3.968790    |proj g| =      1.408150
+        At iterate      5    nfg =     7    J =      3.944855    |proj g| =      1.280883
+        At iterate      6    nfg =     8    J =      3.926999    |proj g| =      1.158015
+        At iterate      7    nfg =     9    J =      3.909628    |proj g| =      1.107825
+        At iterate      8    nfg =    10    J =      3.800612    |proj g| =      0.996645
+        At iterate      9    nfg =    11    J =      3.663789    |proj g| =      0.984840
+        At iterate     10    nfg =    12    J =      3.505583    |proj g| =      0.504640
+        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
+
+    The optimization process was terminated after 10 iterations, the maximal value we defined.
     """
 
     mapping, optimizer = _standardize_default_bayesian_optimize_options_args(
