@@ -1,35 +1,174 @@
 from __future__ import annotations
 
 import numpy as np
+import itertools
+
+### FUNCTIONS TO GENERATE CONSTANTS ###
+#######################################
 
 
-### MODEL STRUCTURE ###
-#######################
+def get_structure() -> list[str]:
+    product = itertools.product(SNOW_MODULE, HYDROLOGICAL_MODULE, ROUTING_MODULE)
+    product = ["-".join(module) for module in product]
 
-STRUCTURE_NAME = [
-    "gr4-lr",
-    "gr4-ode-lr",
-    "gr4-neural-ode-lr",
-    "gr4-nn-alg-lr",
-    "gr4-kw",
-    "gr5-lr",
-    "gr5-kw",
-    "loieau-lr",
-    "grd-lr",
-    "vic3l-lr",
+    return product
+
+
+def get_rr_parameters_from_structure(structure: str) -> list[str]:
+    rr_parameters = []
+    [
+        rr_parameters.extend(MODULE_RR_PARAMETERS[module])
+        for module in structure.split("-")
+    ]
+
+    return rr_parameters
+
+
+def get_rr_states_from_structure(structure: str) -> list[str]:
+    rr_states = []
+    [rr_states.extend(MODULE_RR_STATES[module]) for module in structure.split("-")]
+
+    return rr_states
+
+
+### MODULE ###
+##############
+
+SNOW_MODULE = ["zero", "ssn"]
+
+HYDROLOGICAL_MODULE = [
+    "gr4",
+    "gr4_mlp_alg",
+    "gr4_ode",
+    "gr4_mlp_ode",
+    "gr5",
+    "grd",
+    "loieau",
+    "vic3l",
 ]
 
-NN_STRUCTURE_NAME = [
-    "gr4-neural-ode-lr",
-    "gr4-nn-alg-lr",
-]  # , "gr4-neural-ode-kw", "gr4-nn-alg-lr", "gr4-nn-alg-kw"]
+ROUTING_MODULE = ["lag0", "lr", "kw"]
+
+MODULE = SNOW_MODULE + HYDROLOGICAL_MODULE + ROUTING_MODULE
+
+# % Following SNOW_MODULE order
+SNOW_MODULE_RR_PARAMETERS = dict(
+    zip(
+        SNOW_MODULE,
+        [
+            [],  # % zero
+            ["kmlt"],  # % ssn
+        ],
+    )
+)
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["ci", "cp", "ct", "kexc"],  # % gr4
+            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_alg
+            ["ci", "cp", "ct", "kexc"],  # % gr4_ode
+            ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_ode
+            ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+            ["cp", "ct"],  # % grd
+            ["ca", "cc", "kb"],  # % loieau
+            ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
+        ],
+    )
+)
+
+# % Following ROUTING_MODULE order
+ROUTING_MODULE_RR_PARAMETERS = dict(
+    zip(ROUTING_MODULE, [[], ["llr"], ["akw", "bkw"]])  # % lag0  # % lr  # % kw
+)
+
+# % Following MODULE order
+MODULE_RR_PARAMETERS = dict(
+    **SNOW_MODULE_RR_PARAMETERS,
+    **HYDROLOGICAL_MODULE_RR_PARAMETERS,
+    **ROUTING_MODULE_RR_PARAMETERS,
+)
+
+# % Following SNOW_MODULE order
+SNOW_MODULE_RR_STATES = dict(
+    zip(
+        SNOW_MODULE,
+        [
+            [],  # % zero
+            ["hs"],  # % ssn
+        ],
+    )
+)
+
+# % Following HYDROLOGICAL_MODULE order
+HYDROLOGICAL_MODULE_RR_STATES = dict(
+    zip(
+        HYDROLOGICAL_MODULE,
+        [
+            ["hi", "hp", "ht"],  # % gr4
+            ["hi", "hp", "ht"],  # % gr4_mlp_alg
+            ["hi", "hp", "ht"],  # % gr4_ode
+            ["hi", "hp", "ht"],  # % gr4_mlp_ode
+            ["hi", "hp", "ht"],  # % gr5
+            ["hp", "ht"],  # % grd
+            ["ha", "hc"],  # % loieau
+            ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
+        ],
+    )
+)
+
+# % Following ROUTING_MODULE order
+ROUTING_MODULE_RR_STATES = dict(
+    zip(ROUTING_MODULE, [[], ["hlr"], []])  # % lag0  # % lr  # % kw
+)
+
+# % Following MODULE order
+MODULE_RR_STATES = dict(
+    **SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES
+)
+
+### STRUCTURE ###
+#################
+
+# % Product of all modules (snow, hydrological, routing)
+STRUCTURE = get_structure()
+
+# % Following STRUCTURE order
+STRUCTURE_RR_PARAMETERS = dict(
+    zip(
+        STRUCTURE,
+        [get_rr_parameters_from_structure(s) for s in STRUCTURE],
+    )
+)
+
+# % Following STRUCTURE order
+STRUCTURE_RR_STATES = dict(
+    zip(
+        STRUCTURE,
+        [get_rr_states_from_structure(s) for s in STRUCTURE],
+    )
+)
+
+# % Following STRUCTURE order
+STRUCTURE_ADJUST_CI = dict(
+    zip(
+        STRUCTURE,
+        ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],
+    )
+)
+
+## PARAMETERS NAME ###
+######################
 
 RR_PARAMETERS = [
-    "ci",  # % gr
-    "cp",  # % gr
-    "ct",  # % gr
-    "kexc",  # % gr
-    "aexc",  # % gr
+    "kmlt",  # % ssn
+    "ci",  # % (gr4, gr5)
+    "cp",  # % (gr4, gr5, grd)
+    "ct",  # % (gr4, gr5, grd)
+    "kexc",  # % (gr4, gr5)
+    "aexc",  # % gr5
     "ca",  # % loieau
     "cc",  # % loieau
     "kb",  # % loieau
@@ -48,9 +187,10 @@ RR_PARAMETERS = [
 ]
 
 RR_STATES = [
-    "hi",  # % gr
-    "hp",  # % gr
-    "ht",  # % gr
+    "hs",  # % ssn
+    "hi",  # % (gr4, gr5)
+    "hp",  # % (gr4, gr5, grd)
+    "ht",  # % (gr4, gr5, grd)
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
@@ -60,63 +200,6 @@ RR_STATES = [
     "hlr",  # % lr
 ]
 
-# % Following STRUCTURE_NAME order
-STRUCTURE_RR_PARAMETERS = dict(
-    zip(
-        STRUCTURE_NAME,
-        [
-            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-lr
-            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-ode-lr
-            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-neural-ode-lr
-            ["ci", "cp", "ct", "kexc", "llr"],  # % gr4-nn-alg-lr
-            ["ci", "cp", "ct", "kexc", "akw", "bkw"],  # % gr4-kw
-            ["ci", "cp", "ct", "kexc", "aexc", "llr"],  # % gr5-lr
-            ["ci", "cp", "ct", "kexc", "aexc", "akw", "bkw"],  # % gr4-kw
-            ["ca", "cc", "kb", "llr"],  # % loieau-lr
-            ["cp", "ct", "llr"],  # % grd-lr
-            [
-                "b",
-                "cusl",
-                "cmsl",
-                "cbsl",
-                "ks",
-                "pbc",
-                "ds",
-                "dsm",
-                "ws",
-                "llr",
-            ],  # % vic3l-lr
-        ],
-    )
-)
-
-# % Following STRUCTURE_NAME order
-STRUCTURE_RR_STATES = dict(
-    zip(
-        STRUCTURE_NAME,
-        [
-            ["hi", "hp", "ht", "hlr"],  # % gr4-lr
-            ["hi", "hp", "ht", "hlr"],  # % gr4-ode-lr
-            ["hi", "hp", "ht", "hlr"],  # % gr4-neural-ode-lr
-            ["hi", "hp", "ht", "hlr"],  # % gr4-nn-alg-lr
-            ["hi", "hp", "ht"],  # % gr4-kw
-            ["hi", "hp", "ht", "hlr"],  # % gr5-lr
-            ["hi", "hp", "ht"],  # % gr5-kw
-            ["ha", "hc", "hlr"],  # % loieau-lr
-            ["hp", "ht", "hlr"],  # % grd-lr
-            ["hcl", "husl", "hmsl", "hbsl", "hlr"],  # % vic3l-lr
-        ],
-    )
-)
-
-# % Following STRUCTURE_NAME order
-STRUCTURE_ADJUST_CI = dict(
-    zip(
-        STRUCTURE_NAME,
-        ["ci" in v for v in STRUCTURE_RR_PARAMETERS.values()],
-    )
-)
-
 ### FEASIBLE PARAMETERS ###
 ###########################
 
@@ -125,6 +208,7 @@ FEASIBLE_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,
         [
+            (0, np.inf),  # % kmlt
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
@@ -154,6 +238,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
     zip(
         RR_STATES,
         [
+            (0, np.inf),  # % hs
             (0, 1),  # % hi
             (0, 1),  # % hp
             (0, 1),  # % ht
@@ -178,6 +263,7 @@ DEFAULT_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,
         [
+            1,  # % kmlt
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
@@ -207,6 +293,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
     zip(
         RR_STATES,
         [
+            1e-6,  # % hs
             1e-2,  # % hi
             1e-2,  # % hp
             1e-2,  # % ht
@@ -229,6 +316,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,
         [
+            (1e-6, 1e1),  # % kmlt
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
@@ -258,6 +346,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
     zip(
         RR_STATES,
         [
+            (1e-6, 1e3),  # % hs
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
             (1e-6, 0.999999),  # % ht
@@ -296,18 +385,18 @@ OPTIMIZABLE_RR_INITIAL_STATES = dict(
 ### STRUCTURAL ERROR (SERR) MODEL ###
 #####################################
 
-SERR_MU_MAPPING_NAME = ["Zero", "Constant", "Linear"]
+SERR_MU_MAPPING = ["Zero", "Constant", "Linear"]
 
-SERR_SIGMA_MAPPING_NAME = ["Constant", "Linear", "Power", "Exponential", "Gaussian"]
+SERR_SIGMA_MAPPING = ["Constant", "Linear", "Power", "Exponential", "Gaussian"]
 
 SERR_MU_PARAMETERS = ["mg0", "mg1"]
 
 SERR_SIGMA_PARAMETERS = ["sg0", "sg1", "sg2"]
 
-# % Following SERR_MU_MAPPING_NAME order
+# % Following SERR_MU_MAPPING order
 SERR_MU_MAPPING_PARAMETERS = dict(
     zip(
-        SERR_MU_MAPPING_NAME,
+        SERR_MU_MAPPING,
         [
             [],  # % zero
             ["mg0"],  # % constant
@@ -316,10 +405,10 @@ SERR_MU_MAPPING_PARAMETERS = dict(
     )
 )
 
-# % Following SERR_SIGMA_MAPPING_NAME order
+# % Following SERR_SIGMA_MAPPING order
 SERR_SIGMA_MAPPING_PARAMETERS = dict(
     zip(
-        SERR_SIGMA_MAPPING_NAME,
+        SERR_SIGMA_MAPPING,
         [
             ["sg0"],  # % constant
             ["sg0", "sg1"],  # % linear
@@ -428,8 +517,58 @@ OPTIMIZABLE_SERR_SIGMA_PARAMETERS = dict(
     )
 )
 
-### READ INPUT DATA ###
-#######################
+### SETUP ###
+#############
+
+DEFAULT_MODEL_SETUP = {
+    "snow_module": "zero",
+    "hydrological_module": "gr4",
+    "routing_module": "lr",
+    "serr_mu_mapping": "Zero",
+    "serr_sigma_mapping": "Linear",
+    "dt": 3_600,
+    "start_time": None,
+    "end_time": None,
+    "adjust_interception": True,
+    "read_qobs": False,
+    "qobs_directory": None,
+    "read_prcp": False,
+    "prcp_format": "tif",
+    "prcp_conversion_factor": 1,
+    "prcp_directory": None,
+    "prcp_access": "",
+    "read_pet": False,
+    "pet_format": "tif",
+    "pet_conversion_factor": 1,
+    "pet_directory": None,
+    "pet_access": "",
+    "daily_interannual_pet": False,
+    "read_snow": False,
+    "snow_format": "tif",
+    "snow_conversion_factor": 1,
+    "snow_directory": None,
+    "snow_access": "",
+    "read_temp": False,
+    "temp_format": "tif",
+    "temp_directory": None,
+    "temp_access": "",
+    "prcp_partitioning": False,
+    "sparse_storage": False,
+    "read_descriptor": False,
+    "descriptor_format": "tif",
+    "descriptor_directory": None,
+    "descriptor_name": None,
+    "hidden_neuron": 16,
+}
+
+
+### MESH ###
+############
+
+D8_VALUE = np.arange(1, 9)
+
+### INPUT DATA ###
+##################
 
 INPUT_DATA_FORMAT = ["tif", "nc"]
 
@@ -467,11 +606,6 @@ RATIO_PET_HOURLY = np.array(
 ###############
 
 DATASET_NAME = ["flwdir", "cance", "lez", "france"]
-
-### MESH ###
-############
-
-D8_VALUE = np.arange(1, 9)
 
 
 ### SIGNATURES ###
@@ -704,13 +838,14 @@ DEFAULT_SIMULATION_COMMON_OPTIONS = {"ncpu": 1, "verbose": True}
 
 DEFAULT_SIMULATION_RETURN_OPTIONS = {
     "forward_run": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
-        "time_step": "all",
     },
     "optimize": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
@@ -721,9 +856,9 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "jobs": False,
         "jreg": False,
         "lcurve_wjreg": False,
-        "time_step": "all",
     },
     "bayesian_optimize": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "iter_cost": False,
@@ -735,16 +870,54 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "log_h": False,
         "serr_mu": False,
         "serr_sigma": False,
-        "time_step": "all",
     },
     "multiset_estimate": {
+        "time_step": "all",
         "rr_states": False,
         "q_domain": False,
         "cost": False,
         "jobs": False,
         "lcurve_multiset": False,
-        "time_step": "all",
     },
 }
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
+
+### IO ###
+##########
+
+MODEL_DDT_IO_ATTR_KEYS = {
+    "setup": [
+        "snow_module",
+        "hydrological_module",
+        "routing_module",
+        "serr_mu_mapping",
+        "serr_sigma_mapping",
+        "start_time",
+        "end_time",
+        "dt",
+        "descriptor_name",
+        "hidden_neuron",
+    ],
+    "mesh": [
+        "xres",
+        "yres",
+        "xmin",
+        "ymax",
+        "dx",
+        "dy",
+        "active_cell",
+        "gauge_pos",
+        "code",
+        "area",
+    ],
+    "response_data": ["q"],
+    "physio_data": ["descriptor"],
+    "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
+    "rr_parameters": ["keys", "values"],
+    "rr_initial_states": ["keys", "values"],
+    "serr_mu_parameters": ["keys", "values"],
+    "serr_sigma_parameters": ["keys", "values"],
+    "response": ["q"],
+    "rr_final_states": ["keys", "values"],
+}

@@ -9,7 +9,7 @@ __all__ = ["save_setup", "read_setup"]
 
 def save_setup(setup: dict, path: str):
     """
-    Save the Model initialization setup dictionary.
+    Save the Model initialization setup dictionary to YAML.
 
     Parameters
     ----------
@@ -21,7 +21,7 @@ def save_setup(setup: dict, path: str):
 
     See Also
     --------
-    read_setup : Read the Model initialization setup dictionary.
+    read_setup : Read the Model initialization setup dictionary from YAML.
 
     Examples
     --------
@@ -31,15 +31,9 @@ def save_setup(setup: dict, path: str):
     >>> setup
     {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup:
+    Save setup to YAML:
 
     >>> save_setup(setup, "setup.yaml")
-
-    Read setup (the reloaded setup keys will be alphabetically sorted):
-
-    >>> setup_rld = read_setup("setup.yaml")
-    >>> setup_rld
-    {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
     """
 
     if not path.endswith(".yaml"):
@@ -51,7 +45,7 @@ def save_setup(setup: dict, path: str):
 
 def read_setup(path: str) -> dict:
     """
-    Read the Model initialization setup dictionary.
+    Read the Model initialization setup dictionary from YAML.
 
     Parameters
     ----------
@@ -61,11 +55,11 @@ def read_setup(path: str) -> dict:
     Returns
     -------
     setup : dict
-        A setup dictionary loaded from YAML file.
+        A setup dictionary loaded from YAML.
 
     See Also
     --------
-    save_setup : Save the Model initialization setup dictionary.
+    save_setup : Save the Model initialization setup dictionary to YAML.
 
     Examples
     --------
@@ -75,11 +69,11 @@ def read_setup(path: str) -> dict:
     >>> setup
     {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup:
+    Save setup to YAML:
 
     >>> save_setup(setup, "setup.yaml")
 
-    Read setup (the reloaded setup keys will be alphabetically sorted):
+    Read setup from YAML (the reloaded setup keys will be alphabetically sorted):
 
     >>> setup_rld = read_setup("setup.yaml")
     >>> setup_rld

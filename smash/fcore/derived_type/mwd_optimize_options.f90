@@ -84,28 +84,28 @@ contains
         type(Optimize_OptionsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
 
-        allocate (this%rr_parameters(setup%nop))
+        allocate (this%rr_parameters(setup%nrrp))
         this%rr_parameters = -99
 
-        allocate (this%l_rr_parameters(setup%nop))
+        allocate (this%l_rr_parameters(setup%nrrp))
         this%l_rr_parameters = -99._sp
 
-        allocate (this%u_rr_parameters(setup%nop))
+        allocate (this%u_rr_parameters(setup%nrrp))
         this%u_rr_parameters = -99._sp
 
-        allocate (this%rr_parameters_descriptor(setup%nd, setup%nop))
+        allocate (this%rr_parameters_descriptor(setup%nd, setup%nrrp))
         this%rr_parameters_descriptor = -99
 
-        allocate (this%rr_initial_states(setup%nos))
+        allocate (this%rr_initial_states(setup%nrrs))
         this%rr_initial_states = -99
 
-        allocate (this%l_rr_initial_states(setup%nos))
+        allocate (this%l_rr_initial_states(setup%nrrs))
         this%l_rr_initial_states = -99._sp
 
-        allocate (this%u_rr_initial_states(setup%nos))
+        allocate (this%u_rr_initial_states(setup%nrrs))
         this%u_rr_initial_states = -99._sp
 
-        allocate (this%rr_initial_states_descriptor(setup%nd, setup%nos))
+        allocate (this%rr_initial_states_descriptor(setup%nd, setup%nrrs))
         this%rr_initial_states_descriptor = -99
 
         allocate (this%serr_mu_parameters(setup%nsep_mu))

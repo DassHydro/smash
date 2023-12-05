@@ -107,14 +107,3 @@ def _get_srs(flwdir_dataset: gdal.Dataset, epsg: int) -> osr.SpatialReference:
             )
 
     return srs
-
-
-def _get_path(flwacc: np.ndarray) -> np.ndarray:
-    ind_path = np.unravel_index(np.argsort(flwacc, axis=None), flwacc.shape)
-
-    path = np.zeros(shape=(2, flwacc.size), dtype=np.int32, order="F")
-
-    path[0, :] = ind_path[0]
-    path[1, :] = ind_path[1]
-
-    return path

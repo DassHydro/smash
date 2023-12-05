@@ -11,7 +11,7 @@ from smash.core.signal_analysis.segmentation._standardize import (
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import AnyTuple, ListLike
+    from smash.util._typing import AnyTuple, ListLike
 
 import warnings
 

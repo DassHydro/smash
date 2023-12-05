@@ -26,6 +26,11 @@ Additionally, the following sub-packages provide access to essential tools and f
     sub-packages/io
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     returned_objects/index
+
+.. toctree::
+    :maxdepth: 2
+
+    fortran/index

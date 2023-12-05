@@ -4,7 +4,6 @@ from smash._constant import (
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
     STRUCTURE_ADJUST_CI,
-    NN_STRUCTURE_NAME,
     DEFAULT_RR_PARAMETERS,
     DEFAULT_RR_INITIAL_STATES,
     SERR_MU_MAPPING_PARAMETERS,
@@ -17,15 +16,16 @@ from smash.core.model._read_input_data import (
     _read_qobs,
     _read_prcp,
     _read_pet,
+    _read_snow,
+    _read_temp,
     _read_descriptor,
 )
-from smash.core.model._standardize import _standardize_setup
-
 from smash.fcore._mwd_sparse_matrix_manipulation import (
     compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
 )
 from smash.fcore._mw_atmos_statistic import (
     compute_mean_atmos as wrap_compute_mean_atmos,
+    compute_prcp_partitioning as wrap_compute_prcp_partitioning,
 )
 from smash.fcore._mw_interception_capacity import (
     adjust_interception_capacity as wrap_adjust_interception_capacity,
@@ -33,6 +33,7 @@ from smash.fcore._mw_interception_capacity import (
 
 import pandas as pd
 import numpy as np
+from f90wrap.runtime import FortranDerivedType
 
 from typing import TYPE_CHECKING
 
@@ -44,31 +45,32 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_output import OutputDT
 
 
-# TODO: Move this function to a generic common function file
-def _map_dict_to_object(dct: dict, obj: object, skip: list = []):
+# % TODO: Move this function to a generic common function file
+def _map_dict_to_fortran_derived_type(
+    dct: dict, fdt: FortranDerivedType, skip: list = []
+):
     for key, value in dct.items():
         if key in skip:
             continue
-        if hasattr(obj, key):
-            setattr(obj, key, value)
-        # % Apply to the same object and not sub-object
-        elif isinstance(value, dict):
-            _map_dict_to_object(value, obj)
 
+        if isinstance(value, dict):
+            if hasattr(fdt, key):
+                sub_fdt = getattr(fdt, key)
+                if isinstance(sub_fdt, FortranDerivedType):
+                    _map_dict_to_fortran_derived_type(value, sub_fdt)
 
-def _build_setup(setup: SetupDT):
-    _standardize_setup(setup)
+                # % Should be unreachable
+                else:
+                    pass
 
-    st = pd.Timestamp(setup.start_time)
+            # % Same FortranDerivedType if key does not exist
+            # % Recursive call
+            else:
+                _map_dict_to_fortran_derived_type(value, fdt)
 
-    et = pd.Timestamp(setup.end_time)
-
-    setup.ntime_step = (et - st).total_seconds() / setup.dt
-
-    setup.nop = len(STRUCTURE_RR_PARAMETERS[setup.structure])
-    setup.nos = len(STRUCTURE_RR_STATES[setup.structure])
-    setup.nsep_mu = len(SERR_MU_MAPPING_PARAMETERS[setup.serr_mu_mapping])
-    setup.nsep_sigma = len(SERR_SIGMA_MAPPING_PARAMETERS[setup.serr_sigma_mapping])
+        else:
+            if hasattr(fdt, key):
+                setattr(fdt, key, value)
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
@@ -87,9 +89,19 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_pet:
         _read_pet(setup, mesh, input_data)
 
+    if setup.read_snow:
+        _read_snow(setup, mesh, input_data)
+
+    if setup.read_temp:
+        _read_temp(setup, mesh, input_data)
+
+    if setup.prcp_partitioning:
+        wrap_compute_prcp_partitioning(setup, mesh, input_data)  # % Fortran subroutine
+
     if setup.read_descriptor:
         _read_descriptor(setup, mesh, input_data)
 
+    print("</> Computing mean atmospheric data")
     wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
 
 
@@ -102,6 +114,13 @@ def _build_parameters(
     # % Build parameters
     parameters.rr_parameters.keys = STRUCTURE_RR_PARAMETERS[setup.structure]
 
+    # % TODO: May be change this with a constant containing lambda functions such as
+    # % SCALE_RR_PARAMETERS = [
+    # % ...
+    # % "llr": lambda x, dt, dx: x * dt / 3_600
+    # % ...
+    # % ]
+    # % parameters.rr_parameters.values = SCALE_RR_PARAMETRS[key](DEFAULT_RR_PARAMETERS[key], setup.dt, mesh.dx)
     for i, key in enumerate(parameters.rr_parameters.keys):
         value = DEFAULT_RR_PARAMETERS[key]
         if key == "llr":
@@ -163,7 +182,7 @@ def _build_parameters(
         parameters.serr_sigma_parameters.values[..., i] = value
 
     # % Initalize weights and biases of ANN if neural ode state-space structure is used
-    if setup.structure in NN_STRUCTURE_NAME:
+    if setup.nhl > -1:
         for layer in parameters.nn_parameters.layers:
             layer.weight = 0  # zero init
             layer.bias = 0  # zero init

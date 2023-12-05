@@ -6,7 +6,14 @@ from smash._constant import (
     CONTROL_PRIOR_DISTRIBUTION_PARAMETERS,
 )
 
-from smash.core.model._build_model import _map_dict_to_object
+from smash.core.model._build_model import _map_dict_to_fortran_derived_type
+
+from smash.core.simulation._doc import (
+    _optimize_doc_appender,
+    _smash_optimize_doc_substitution,
+    _bayesian_optimize_doc_appender,
+    _smash_bayesian_optimize_doc_substitution,
+)
 
 from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
@@ -29,6 +36,7 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
     from smash.factory.samples.samples import Samples
@@ -263,10 +271,10 @@ def _get_control_info(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     wrap_parameters_to_control(
         model.setup, model.mesh, model._input_data, model._parameters, wrap_options
@@ -446,213 +454,17 @@ def _get_lcurve_wjreg(
     return wjreg, lcurve
 
 
+@_smash_optimize_doc_substitution
+@_optimize_doc_appender
 def optimize(
     model: Model,
     mapping: str = "uniform",
     optimizer: str | None = None,
-    optimize_options: dict | None = None,
-    cost_options: dict | None = None,
-    common_options: dict | None = None,
-    return_options: dict | None = None,
+    optimize_options: dict[str, Any] | None = None,
+    cost_options: dict[str, Any] | None = None,
+    common_options: dict[str, Any] | None = None,
+    return_options: dict[str, Any] | None = None,
 ) -> Model | (Model, Optimize):
-    """
-    Model assimilation using numerical optimization algorithms.
-
-    Parameters
-    ----------
-    model : Model
-        Model object.
-
-    mapping : str, default 'uniform'
-        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial', 'ann'.
-
-    optimizer : str or None, default None
-        Name of optimizer. Should be one of 'sbs', 'lbfgsb', 'sgd', 'adam', 'adagrad', 'rmsprop'.
-
-        .. note::
-            If not given, a default optimizer will be set depending on the optimization mapping:
-
-            - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
-            - **mapping** = 'ann'; **optimizer** = 'adam'
-
-    optimize_options : dict or None, default None
-        Dictionary containing optimization options for fine-tuning the optimization process.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_optimize_options` for more.
-
-    cost_options : dict or None, default None
-        Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-        jobs_cmpt : str or ListLike, default 'nse'
-            Type of observation objective function(s) to be minimized. Should be one or a sequence of any of
-
-            - 'nse', 'nnse', 'kge', 'mae', 'mape', 'mse', 'rmse', 'lgrm' (classical evaluation metrics)
-            - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures-based error metrics)
-            - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures-based error metrics)
-
-            .. hint::
-                See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
-
-        jobs_cmpt_tfm : str or ListLike, default 'keep'
-            Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
-
-            - 'keep' : No transformation
-            - 'sqrt' : Square root transformation
-            - 'inv' : Multiplicative inverse transformation
-
-        wjobs_cmpt : AlphaNumeric or ListLike, default 'mean'
-            The corresponding weighting of observation objective functions in case of multi-criteria (i.e., a sequence of objective functions to compute). The default is set to the average weighting.
-
-        wjreg : Numeric, default 0
-            The weighting of regularization term. There are two ways to specify it:
-
-            - A numeric value greater than or equal to 0
-            - An alias among 'fast' or 'lcurve'. **wjreg** will be auto-computed by one of these methods.
-
-        jreg_cmpt : str or ListLike, default 'prior'
-            Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
-
-            - 'prior' : Squared difference between control and control background
-            - 'smoothing' : Spatial derivative **not** penalized by background
-            - 'hard-smoothing' : Spatial derivative penalized by background
-
-        wjreg_cmpt : AlphaNumeric or ListLike, default 'mean'
-            The corresponding weighting of regularization functions in case of multi-regularization (i.e., a sequence of regularization functions to compute). The default is set to the average weighting.
-
-        gauge : str or ListLike, default 'dws'
-            Type of gauge to be computed. There are two ways to specify it:
-
-            - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
-
-        wgauge : AlphaNumeric or ListLike, default 'mean'
-            Type of gauge weights. There are two ways to specify it:
-
-            - A sequence of value whose size must be equal to the number of gauges optimized.
-            - An alias among 'mean', 'lquartile' (1st quantile or lower quantile), 'median', or 'uquartile' (3rd quantile or upper quantile).
-
-        event_seg : dict, default {'peak_quant': 0.995, 'max_duration': 240}
-            A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
-            See `smash.hydrograph_segmentation` for more.
-
-        end_warmup : str or pandas.Timestamp, default model.setup.start_time
-            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    common_options : dict or None, default None
-        Dictionary containing common options with two elements:
-
-        verbose : bool, default False
-            Whether to display information about the running method.
-
-        ncpu : bool, default 1
-            Whether to perform a parallel computation.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    return_options : dict or None, default None
-        Dictionary containing return options to save intermediate variables. The elements are:
-
-        time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
-            Returned time steps. There are five ways to specify it:
-
-            - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
-            - An alias among 'all' (return all time steps).
-            - A pandas.Timestamp object.
-            - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
-
-            .. note::
-                It only applies to the following variables: 'rr_states' and 'q_domain'
-
-        rr_states : bool, default False
-            Whether to return rainfall-runoff states for specific time steps.
-
-        q_domain : bool, defaul False
-            Whether to return simulated discharge on the whole domain for specific time steps.
-
-        iter_cost : bool, default False
-            Whether to return cost iteration values.
-
-        iter_projg : bool, default False
-            Whether to return infinity norm of the projected gardient iteration values.
-
-        control_vector : bool, default False
-            Whether to return control vector at end of optimization. In case of optimization with ANN-based mapping, the control vector is represented in `smash.factory.Net.layers` instead.
-
-        net : Net, default False
-            Whether to return the trained neural network `smash.factory.Net`. Only used with ANN-based mapping.
-
-        cost : bool, default False
-            Whether to return cost value.
-
-        jobs : bool, default False
-            Whether to return jobs (observation component of cost) value.
-
-        jreg : bool, default False
-            Whether to return jreg (regularization component of cost) value.
-
-        lcurve_wjreg : bool, default False
-            Whether to return the wjreg lcurve. Only used if **wjreg** in cost_options is equal to 'lcurve'.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    Returns
-    -------
-    ret_model : Model
-        The Model with optimized outputs.
-
-    ret_optimize : Optimize or None, default None
-        It returns a `smash.Optimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
-
-    Examples
-    --------
-    >>> import smash
-    >>> from smash.factory import load_dataset
-    >>> setup, mesh = load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-
-    Optimize Model by default:
-
-    >>> model_0 = smash.optimize(model)
-    </> Optimize
-        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-        At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-        At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
-        CONVERGENCE: DDX < 0.01
-
-    Optimize Model using multi-polynomial mapping:
-
-    >>> model_mp = smash.optimize(
-    ...     model,
-    ...     mapping="multi-polynomial",
-    ...     optimize_options={"termination_crit": {"maxiter": 10}}
-    ... )
-    </> Optimize
-        At iterate      0    nfg =     1    J =      0.643190    |proj g| =      0.324890
-        At iterate      1    nfg =     3    J =      0.560466    |proj g| =      0.296777
-        At iterate      2    nfg =     4    J =      0.488252    |proj g| =      1.132820
-        At iterate      3    nfg =     5    J =      0.287419    |proj g| =      2.057277
-        At iterate      4    nfg =     6    J =      0.192892    |proj g| =      0.275596
-        At iterate      5    nfg =     7    J =      0.130223    |proj g| =      0.141640
-        At iterate      6    nfg =     8    J =      0.126984    |proj g| =      0.153503
-        At iterate      7    nfg =     9    J =      0.120759    |proj g| =      0.055677
-        At iterate      8    nfg =    10    J =      0.120558    |proj g| =      0.080532
-        At iterate      9    nfg =    11    J =      0.119077    |proj g| =      0.033449
-        At iterate     10    nfg =    13    J =      0.118234    |proj g| =      0.049613
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
-
-    See Also
-    --------
-    Model.optimize : Model assimilation using numerical optimization algorithms.
-    Optimize : Represents optimize optional results.
-    """
-
     wmodel = model.copy()
 
     ret_optimize = wmodel.optimize(
@@ -697,16 +509,16 @@ def _optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Map return_options dict to derived type
-    _map_dict_to_object(return_options, wrap_returns)
+    _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     auto_wjreg = cost_options.get("auto_wjreg", None)
 
@@ -961,13 +773,13 @@ def _multiple_optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
-    _map_dict_to_object(cost_options, wrap_options.cost)
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Generate samples info
     nv = samples._problem["num_vars"]
@@ -1111,189 +923,24 @@ def _handle_bayesian_optimize_control_prior(
 
     # % allocate control prior
     npar = np.array([p["par"].size for p in control_prior.values()], dtype=np.int32)
-    options.cost.allocate_control_prior(model._parameters.control.n, npar)
+    options.cost.alloc_control_prior(model._parameters.control.n, npar)
 
     # % map control prior dict to derived type array
     for i, prior in enumerate(control_prior.values()):
-        _map_dict_to_object(prior, options.cost.control_prior[i])
+        _map_dict_to_fortran_derived_type(prior, options.cost.control_prior[i])
 
 
+@_smash_bayesian_optimize_doc_substitution
+@_bayesian_optimize_doc_appender
 def bayesian_optimize(
     model: Model,
     mapping: str = "uniform",
     optimizer: str | None = None,
-    optimize_options: dict | None = None,
-    cost_options: dict | None = None,
-    common_options: dict | None = None,
-    return_options: dict | None = None,
+    optimize_options: dict[str, Any] | None = None,
+    cost_options: dict[str, Any] | None = None,
+    common_options: dict[str, Any] | None = None,
+    return_options: dict[str, Any] | None = None,
 ) -> Model | (Model, BayesianOptimize):
-    """
-    Model bayesian assimilation using numerical optimization algorithms.
-
-    Parameters
-    ----------
-    model : Model
-        Model object.
-
-    mapping : str, default 'uniform'
-        Type of mapping. Should be one of 'uniform', 'distributed', 'multi-linear', 'multi-polynomial'.
-
-    optimizer : str or None, default None
-        Name of optimizer. Should be one of 'sbs', 'lbfgsb'.
-
-        .. note::
-            If not given, a default optimizer will be set depending on the optimization mapping:
-
-            - **mapping** = 'uniform'; **optimizer** = 'sbs'
-            - **mapping** = 'distributed', 'multi-linear', or 'multi-polynomial'; **optimizer** = 'lbfgsb'
-
-    optimize_options : dict or None, default None
-        Dictionary containing optimization options for fine-tuning the optimization process.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See the returned parameters in `smash.default_bayesian_optimize_options` for more.
-
-    cost_options : dict or None, default None
-        Dictionary containing computation cost options for simulated and observed responses. The elements are:
-
-        gauge : str or ListLike, default 'dws'
-            Type of gauge to be computed. There are two ways to specify it:
-
-            - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the Model mesh.
-            - An alias among 'all' (all gauge codes) or 'dws' (most downstream gauge code(s)).
-
-        control_prior: dict or None, default None
-            A dictionary containing the type of prior to link to control parameters. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), see `smash.bayesian_optimize_control_info` to retrieve control parameters names.
-            The values are ListLike of length 2 containing distribution information (i.e. distribution name and parameters). Below, the set of available distributions and the associated number of parameters:
-
-            - 'FlatPrior',   []                                 (0)
-            - 'Uniform',     [lower_bound, higher_bound]        (2)
-            - 'Gaussian',    [mean, standard_deviation]         (2)
-            - 'Exponential', [threshold, scale]                 (2)
-            - 'LogNormal',   [mean_log, standard_deviation_log] (2)
-            - 'Triangle',    [peak, lower_bound, higher_bound]  (3)
-
-            .. note:: If not given, a 'FlatPrior' is set to each control parameters (equivalent to no prior)
-
-        end_warmup : str or pandas.Timestamp, default model.setup.start_time
-            The end of the warm-up period, which must be between the start time and the end time defined in the Model setup. By default, it is set to be equal to the start time.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    common_options : dict or None, default None
-        Dictionary containing common options with two elements:
-
-        verbose : bool, default False
-            Whether to display information about the running method.
-
-        ncpu : bool, default 1
-            Whether to perform a parallel computation.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    return_options : dict or None, default None
-        Dictionary containing return options to save intermediate variables. The elements are:
-
-        time_step : str, pandas.Timestamp, pandas.DatetimeIndex or ListLike, default 'all'
-            Returned time steps. There are five ways to specify it:
-
-            - A date as a character string which respect pandas.Timestamp format (i.e., '1997-12-21', '19971221', etc.).
-            - An alias among 'all' (return all time steps).
-            - A pandas.Timestamp object.
-            - A pandas.DatetimeIndex object.
-            - A sequence of dates as character string or pandas.Timestamp (i.e., ['1998-05-23', '1998-05-24'])
-
-            .. note::
-                It only applies to the following variables: 'rr_states' and 'q_domain'
-
-        rr_states : bool, default False
-            Whether to return rainfall-runoff states for specific time steps.
-
-        q_domain : bool, defaul False
-            Whether to return simulated discharge on the whole domain for specific time steps.
-
-        iter_cost : bool, default False
-            Whether to return cost iteration values.
-
-        iter_projg : bool, default False
-            Whether to return infinity norm of the projected gardient iteration values.
-
-        control_vector : bool, default False
-            Whether to return control vector at end of optimization.
-
-        cost : bool, default False
-            Whether to return cost value.
-
-        log_lkh : bool, default False
-            Whether to return log likelihood component value.
-
-        log_prior : bool, default False
-            Whether to return log prior component value.
-
-        log_h : bool, default False
-            Whether to return log h component value.
-
-        serr_mu : bool, default False
-            Whether to return mu, the mean of structural errors. It can also be returned directly from the Model object using the `model.get_serr_mu` method.
-
-        serr_sigma : bool, default False
-            Whether to return sigma, the standard deviation of structural errors. It can also be returned directly from the Model object using the `model.get_serr_sigma` method.
-
-        .. note:: If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element.
-
-    Returns
-    -------
-    ret_model : Model
-        The Model with bayesian optimized outputs.
-
-    ret_bayesian_optimize : BayesianOptimize or None, default None
-        It returns a `smash.BayesianOptimize` object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
-
-    Examples
-    --------
-    >>> import smash
-    >>> from smash.factory import load_dataset
-    >>> setup, mesh = load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-
-    Optimize Model using Bayesian approach with default parameters:
-
-    >>> model_0 = smash.bayesian_optimize(model)
-    </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     26.510803    ddx = 0.64
-        At iterate      1    nfg =    68    J =      2.536702    ddx = 0.64
-        At iterate      2    nfg =   136    J =      2.402311    ddx = 0.16
-        At iterate      3    nfg =   202    J =      2.329653    ddx = 0.16
-        At iterate      4    nfg =   270    J =      2.277469    ddx = 0.04
-        At iterate      5    nfg =   343    J =      2.271495    ddx = 0.02
-        At iterate      6    nfg =   416    J =      2.270596    ddx = 0.01
-        At iterate      7    nfg =   488    J =      2.269927    ddx = 0.01
-        At iterate      8    nfg =   561    J =      2.269505    ddx = 0.01
-        CONVERGENCE: DDX < 0.01
-
-    Customize cost options based on prior control:
-
-    >>> model_custom = smash.bayesian_optimize(
-    ...     model,
-    ...     cost_options={"control_prior": {"cp0": ["Gaussian", [200, 100]]}}
-    ... )
-    </> Bayesian Optimize
-        At iterate      0    nfg =     1    J =     26.514641    ddx = 0.64
-        At iterate      1    nfg =    68    J =      2.541262    ddx = 0.64
-        At iterate      2    nfg =   136    J =      2.406871    ddx = 0.16
-        At iterate      3    nfg =   202    J =      2.334373    ddx = 0.16
-        At iterate      4    nfg =   270    J =      2.282225    ddx = 0.04
-        At iterate      5    nfg =   343    J =      2.276267    ddx = 0.02
-        At iterate      6    nfg =   416    J =      2.275376    ddx = 0.01
-        At iterate      7    nfg =   488    J =      2.274719    ddx = 0.01
-        At iterate      8    nfg =   561    J =      2.274309    ddx = 0.01
-        CONVERGENCE: DDX < 0.01
-
-    See Also
-    --------
-    Model.bayesian_optimize : Model bayesian assimilation using numerical optimization algorithms.
-    BayesianOptimize : Represents bayesian optimize optional results.
-    """
-
     wmodel = model.copy()
 
     ret_bayesian_optimize = wmodel.bayesian_optimize(
@@ -1338,17 +985,19 @@ def _bayesian_optimize(
     )
 
     # % Map optimize_options dict to derived type
-    _map_dict_to_object(optimize_options, wrap_options.optimize)
+    _map_dict_to_fortran_derived_type(optimize_options, wrap_options.optimize)
 
     # % Map cost_options dict to derived type
     # % Control prior handled after
-    _map_dict_to_object(cost_options, wrap_options.cost, skip=["control_prior"])
+    _map_dict_to_fortran_derived_type(
+        cost_options, wrap_options.cost, skip=["control_prior"]
+    )
 
     # % Map common_options dict to derived type
-    _map_dict_to_object(common_options, wrap_options.comm)
+    _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
 
     # % Map return_options dict to derived type
-    _map_dict_to_object(return_options, wrap_returns)
+    _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     # % Control prior check
     _handle_bayesian_optimize_control_prior(

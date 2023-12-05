@@ -34,7 +34,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol) :: matrix_prcp, matrix_pet, h, daily_cumulated, sub_daily_cumulated
         real(sp), dimension(:), allocatable :: cmax
         real(sp), dimension(:, :, :), allocatable :: diff
-        real(sp) :: stt, stp, step, ec, pth
+        real(sp) :: stt, stp, step, pn, en, ei
         integer :: i, j, ind, row, col, n
 
         !% =========================================================================================================== %!
@@ -119,9 +119,19 @@ contains
 
                         if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                        call gr_interception(matrix_prcp(row, col), matrix_pet(row, col), cmax(i), &
-                        & h(row, col), pth, ec)
-                        sub_daily_cumulated(row, col) = sub_daily_cumulated(row, col) + ec
+                        if (matrix_prcp(row, col) .ge. 0._sp .and. matrix_pet(row, col) .ge. 0._sp) then
+
+                            call gr_interception(matrix_prcp(row, col), matrix_pet(row, col), cmax(i), &
+                            & h(row, col), pn, en)
+                            ei = matrix_pet(row, col) - en
+
+                        else
+
+                            ei = 0._sp
+
+                        end if
+
+                        sub_daily_cumulated(row, col) = sub_daily_cumulated(row, col) + ei
 
                     end do
 
@@ -133,9 +143,9 @@ contains
 
         end do
 
-        do row = 1, mesh%ncol
+        do col = 1, mesh%ncol
 
-            do col = 1, mesh%nrow
+            do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 

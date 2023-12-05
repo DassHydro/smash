@@ -10,7 +10,7 @@ import os
 def generic_custom_bayesian_optimize(model: smash.Model, **kwargs) -> dict:
     res = {}
 
-    ncpu = max(1, os.cpu_count() - 1)
+    ncpu = min(5, max(1, os.cpu_count() - 1))
 
     custom_sets = [
         # % Test custom optimize_options

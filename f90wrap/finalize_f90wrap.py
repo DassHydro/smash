@@ -16,7 +16,19 @@ REPR_METHOD = """
                 continue
             if callable(value):
                 continue
-            ret.append(f"    {attr}: {repr(value)}")
+            elif isinstance(value, f90wrap.runtime.FortranDerivedTypeArray):
+                n = len(value)
+                nrepr = 4
+                if n == 0:
+                    continue
+                else:
+                    repr_value = [value[0].__class__.__name__] * min(n, nrepr)
+                if n > nrepr:
+                    repr_value.insert(2, "...")
+                repr_value = repr(repr_value)
+            else:
+                repr_value = repr(value)
+            ret.append(f"    {attr}: {repr_value}")
         return "\n".join(ret)
 """
 

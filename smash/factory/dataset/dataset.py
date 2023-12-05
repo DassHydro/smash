@@ -2,8 +2,8 @@ from __future__ import annotations
 
 from smash._constant import DATASET_NAME
 
-from smash.io.mesh.mesh import read_mesh
-from smash.io.setup.setup import read_setup
+from smash.io.mesh import read_mesh
+from smash.io.setup import read_setup
 
 import os
 

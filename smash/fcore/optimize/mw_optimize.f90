@@ -419,7 +419,7 @@ contains
 
         j = 0
 
-        do i = 1, setup%nop
+        do i = 1, setup%nrrp
 
             if (options%optimize%rr_parameters(i) .ne. 1) cycle
 
@@ -429,7 +429,7 @@ contains
 
         end do
 
-        do i = 1, setup%nos
+        do i = 1, setup%nrrs
 
             if (options%optimize%rr_initial_states(i) .ne. 1) cycle
 

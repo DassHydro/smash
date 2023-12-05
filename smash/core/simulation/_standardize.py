@@ -57,7 +57,7 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
+    from smash.util._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
     from smash.core.model.model import Model
 
 
@@ -1154,7 +1154,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model rr_initial_states '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1168,7 +1168,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_mu_parameters '{key}'. serr_mu_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
     for key in model.serr_sigma_parameters.keys:
         arr = model.get_serr_sigma_parameters(key)
@@ -1181,7 +1181,7 @@ def _standardize_simulation_parameters_feasibility(model: Model):
 
         if l_arr <= l or u_arr >= u:
             raise ValueError(
-                f"Invalid value for model serr_sigma_parameters '{key}'. serr_sigma_parameters domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
             )
 
 
@@ -1195,17 +1195,17 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % Handle parameters
     # % rr parameters
-    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nop, dtype=np.int32)
+    optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nrrp, dtype=np.int32)
     optimize_options["l_rr_parameters"] = np.zeros(
-        shape=model.setup.nop, dtype=np.float32
+        shape=model.setup.nrrp, dtype=np.float32
     )
     optimize_options["u_rr_parameters"] = np.zeros(
-        shape=model.setup.nop, dtype=np.float32
+        shape=model.setup.nrrp, dtype=np.float32
     )
 
     if descriptor_present:
         optimize_options["rr_parameters_descriptor"] = np.zeros(
-            shape=(model.setup.nd, model.setup.nop), dtype=np.int32
+            shape=(model.setup.nd, model.setup.nrrp), dtype=np.int32
         )
 
     for i, key in enumerate(model.rr_parameters.keys):
@@ -1221,17 +1221,17 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % rr initial states
     optimize_options["rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.int32
+        shape=model.setup.nrrs, dtype=np.int32
     )
     optimize_options["l_rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.float32
+        shape=model.setup.nrrs, dtype=np.float32
     )
     optimize_options["u_rr_initial_states"] = np.zeros(
-        shape=model.setup.nos, dtype=np.float32
+        shape=model.setup.nrrs, dtype=np.float32
     )
     if descriptor_present:
         optimize_options["rr_initial_states_descriptor"] = np.zeros(
-            shape=(model.setup.nd, model.setup.nos), dtype=np.int32
+            shape=(model.setup.nd, model.setup.nrrs), dtype=np.int32
         )
 
     for i, key in enumerate(model.rr_initial_states.keys):

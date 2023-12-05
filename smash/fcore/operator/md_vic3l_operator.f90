@@ -1,6 +1,9 @@
 module md_vic3l_operator
 
     use md_constant !% only: sp
+    use mwd_setup !% only: SetupDT
+    use mwd_mesh !% only: MeshDT
+    use mwd_options !% only: OptionsDT
 
     implicit none
 
@@ -22,7 +25,10 @@ contains
 
         en = pet - ec
 
-        hcl = min(0.999999_sp, hcl + (prcp - ec - pn)/ccl)
+        hcl = hcl + (prcp - ec - pn)/ccl
+
+        hcl = min(0.999999_sp, hcl)
+        hcl = max(1e-6_sp, hcl)
 
     end subroutine vic3l_canopy_interception
 
@@ -52,7 +58,7 @@ contains
 
             pe_value = 1._sp
             do i = 1, npe
-                pe_value = pe_value + b*ratio**i/(b + i)
+                pe_value = pe_value + b*(ratio**i)/(b + i)
             end do
 
             beta = as + (1._sp - as)*(1._sp - ratio)*pe_value
@@ -157,5 +163,60 @@ contains
         hbsl = hbsl - qb/cbsl
 
     end subroutine vic3l_baseflow
+
+    subroutine vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hcl, husl, hmsl, hbsl
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+
+        integer :: row, col
+        real(sp) :: pn, en, qr, qb
+
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl, hbsl, qt) &
+        !$OMP& private(row, col, pn, en, qr, qb)
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+
+                    ! Canopy maximum capacity is (0.2 * LAI). Here we fix maximum capacity to 1 mm
+                    call vic3l_canopy_interception(prcp(row, col), pet(row, col), 1._sp, hcl(row, col), pn, en)
+
+                    call vic3l_upper_soil_layer_evaporation(en, b(row, col), cusl(row, col), husl(row, col))
+
+                    call vic3l_infiltration(pn, b(row, col), cusl(row, col), cmsl(row, col), husl(row, col), &
+                    & hmsl(row, col), qr)
+
+                    call vic3l_drainage(cusl(row, col), cmsl(row, col), cbsl(row, col), ks(row, col), pbc(row, col), &
+                    & husl(row, col), hmsl(row, col), hbsl(row, col))
+
+                else
+
+                    qr = 0._sp
+
+                end if
+
+                call vic3l_baseflow(cbsl(row, col), ds(row, col), dsm(row, col), ws(row, col), hbsl(row, col), qb)
+
+                qt(row, col) = qr + qb
+
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+            end do
+        end do
+        !$OMP end parallel do
+
+    end subroutine vic3l_timestep
 
 end module md_vic3l_operator

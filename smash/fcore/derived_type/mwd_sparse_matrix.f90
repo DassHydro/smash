@@ -50,6 +50,8 @@ contains
         logical, intent(in) :: coo_fmt
         real(sp), intent(in) :: zvalue
 
+        call Sparse_MatrixDT_finalise(this)
+
         this%n = n
         this%coo_fmt = coo_fmt
         this%zvalue = zvalue
@@ -65,6 +67,51 @@ contains
         end if
 
     end subroutine Sparse_MatrixDT_initialise
+
+    subroutine Sparse_MatrixDT_finalise(this)
+
+        implicit none
+
+        type(Sparse_MatrixDT), intent(inout) :: this
+
+        if (allocated(this%values)) deallocate (this%values)
+        if (allocated(this%indices)) deallocate (this%indices)
+
+    end subroutine Sparse_MatrixDT_finalise
+
+    subroutine Sparse_MatrixDT_initialise_array(this, n, coo_fmt, zvalue)
+
+        implicit none
+
+        type(Sparse_MatrixDT), dimension(:), intent(inout) :: this
+        integer, intent(in) :: n
+        logical, intent(in) :: coo_fmt
+        real(sp), intent(in) :: zvalue
+
+        integer :: i
+
+        do i = 1, size(this)
+
+            call Sparse_MatrixDT_initialise(this(i), n, coo_fmt, zvalue)
+
+        end do
+
+    end subroutine Sparse_MatrixDT_initialise_array
+
+    ! To manually alloc from Python in place. ControlDT_initialise is used as
+    ! __init__ method (implemented by f90wrap automatically)
+    subroutine Sparse_MatrixDT_alloc(this, n, coo_fmt, zvalue)
+
+        implicit none
+
+        type(Sparse_MatrixDT), intent(inout) :: this
+        integer, intent(in) :: n
+        logical, intent(in) :: coo_fmt
+        real(sp), intent(in) :: zvalue
+
+        call Sparse_MatrixDT_initialise(this, n, coo_fmt, zvalue)
+
+    end subroutine Sparse_MatrixDT_alloc
 
     subroutine Sparse_MatrixDT_copy(this, this_copy)
 
