@@ -286,9 +286,17 @@ def _get_control_info(
 
     ret = {}
     for attr in dir(model._parameters.control):
-        if attr.startswith("_") or callable(getattr(model._parameters.control, attr)):
+        if attr.startswith("_"):
             continue
-        ret[attr] = getattr(model._parameters.control, attr)
+        value = getattr(model._parameters.control, attr)
+        if callable(value):
+            continue
+        if hasattr(value, "copy"):
+            value = value.copy()
+        ret[attr] = value
+
+    # Manually dealloc the control
+    model._parameters.control.dealloc()
 
     return ret
 

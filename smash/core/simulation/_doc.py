@@ -9,6 +9,10 @@ from smash._constant import (
 )
 from smash.util._doctools import DocAppender, DocSubstitution
 
+# TODO: mapping and optimizer arguments are duplicated between each docstrings.
+# Maybe create intermediate variables to store this with or without ann optimizer.
+# Idem for control_info between bayesian_optimize and optimize
+
 OPTIMIZE_OPTIONS_BASE_DOC = {
     "parameters": (
         """
@@ -336,7 +340,7 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         Prior applied to the control vector.
-        A dictionary containing the type of prior to link to control vector. The keys are any control parameter name (i.e. 'cp0', 'cp1-1', 'cp-slope-a', etc), 
+        A dictionary containing the type of prior to link to control vector. The keys are any control parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc), 
         see `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` to retrieve control parameters names.
         The values are list of length 2 containing distribution information (i.e. distribution name and parameters). 
         Below, the set of available distributions and the associated number of parameters:
@@ -1215,6 +1219,359 @@ array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
 """
 )
 
+_optimize_control_info_doc = (
+    """
+Information on the optimisation control vector of Model.
+
+Parameters
+----------
+model : `Model <smash.Model>`
+    Primary data structure of the hydrological model `smash`.
+
+mapping : `str`, default 'uniform'
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
+    - ``'distributed'``
+    - ``'multi-linear'``
+    - ``'multi-polynomial'``
+
+    .. hint::
+        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+
+optimizer : `str` or None, default None
+    Name of optimizer. Should be one of
+
+    - ``'sbs'`` (``'uniform'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+
+    .. note::
+        If not given, a default optimizer will be set depending on the optimization mapping:
+
+        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+
+    .. hint::
+        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process. 
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        [
+            "parameters",
+            "bounds",
+            "control_tfm",
+            "descriptor",
+            "termination_crit",
+        ],
+        nindent=1,
+    )
+    + """ 
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["optimize"].keys(),
+        nindent=1,
+    )
+    + """
+Returns
+-------
+control_info : `dict[str, Any]`
+    A dictionary containing optimize control information of Model. The elements are:
+
+    - n : `int`
+        The size of the control vector.
+
+    - nbk : `numpy.ndarray`
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`, `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control vector (``sum(nbk) = n``).
+
+    - x : `numpy.ndarray`
+        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+
+    - l : `numpy.ndarray`
+        An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
+
+    - u : `numpy.ndarray`
+        An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
+
+    - nbd : `numpy.ndarray`
+        An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
+
+        - ``0``: unbounded
+        - ``1``: only lower bound
+        - ``2``: both lower and upper bounds
+        - ``3``: only upper bound
+
+    - name : `numpy.ndarray`
+        An array of shape *(n,)* containing the names of the control vector. The naming convention is:
+
+        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
+        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``, ``'llr-slope-b'``, ``'ht-dd-a'``).
+
+    - x_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background values of the control vector.
+
+    - l_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background lower bounds of the control vector.
+
+    - u_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background upper bounds of the control vector.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Default optimize control vector information
+
+>>> control_info = smash.optimize_control_info(model)
+>>> control_info
+{
+    'l': array([-13.815511 , -13.815511 ,  -4.6052704, -13.815511 ], dtype=float32),
+    'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06], dtype=float32),
+    'n': 4,
+    'name': array(['cp0', 'ct0', 'kexc0', 'llr0'], dtype='<U5'),
+    'nbd': array([2, 2, 2, 2], dtype=int32),
+    'nbk': array([4, 0, 0, 0], dtype=int32),
+    'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32), 
+    'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32), 
+    'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32), 
+    'x_bkg': array([200., 500.,   0.,   5.], dtype=float32),
+}
+
+This gives a direct indication of what the optimizer takes as input, depending on the optimisation configuration set up.
+4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``).
+Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
+
+With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp`` and ``kexc`` with different descriptors
+
+>>> control_info = smash.optimize_control_info(
+        model,
+        mapping="multi-linear",
+        optimize_options={
+            "parameters": ["cp", "kexc"],
+            "descriptor": {"kexc": ["dd"]},
+        },
+    )
+>>> control_info
+{
+    'l': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'l_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'n': 5,
+    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a'], dtype='<U10'),
+    'nbd': array([0, 0, 0, 0, 0], dtype=int32),
+    'nbk': array([5, 0, 0, 0], dtype=int32),
+    'u': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'u_bkg': array([-99., -99., -99., -99., -99.], dtype=float32),
+    'x': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
+    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
+}
+
+5 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) 
+and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors 
+(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``)
+"""
+)
+
+_bayesian_optimize_control_info_doc = (
+    """
+Information on the bayesian optimisation control vector of Model.
+
+Parameters
+----------
+model : `Model <smash.Model>`
+    Primary data structure of the hydrological model `smash`.
+
+mapping : `str`, default 'uniform'
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
+    - ``'distributed'``
+    - ``'multi-linear'``
+    - ``'multi-polynomial'``
+
+    .. hint::
+        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+
+optimizer : `str` or None, default None
+    Name of optimizer. Should be one of
+
+    - ``'sbs'`` (``'uniform'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+
+    .. note::
+        If not given, a default optimizer will be set depending on the optimization mapping:
+
+        - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+
+    .. hint::
+        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+
+optimize_options : `dict[str, Any]` or None, default None
+    Dictionary containing optimization options for fine-tuning the optimization process. 
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+
+"""
+    + _gen_docstring_from_base_doc(
+        OPTIMIZE_OPTIONS_BASE_DOC,
+        [
+            "parameters",
+            "bounds",
+            "control_tfm",
+            "descriptor",
+            "termination_crit",
+        ],
+        nindent=1,
+    )
+    + """ 
+cost_options : `dict[str, Any]` or None, default None
+    Dictionary containing computation cost options for simulated and observed responses. The elements are:
+
+"""
+    + _gen_docstring_from_base_doc(
+        COST_OPTIONS_BASE_DOC,
+        DEFAULT_SIMULATION_COST_OPTIONS["bayesian_optimize"].keys(),
+        nindent=1,
+    )
+    + """
+Returns
+-------
+control_info : `dict[str, Any]`
+    A dictionary containing optimize control information of Model. The elements are:
+
+    - n : `int`
+        The size of the control vector.
+
+    - nbk : `numpy.ndarray`
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`, `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control vector (``sum(nbk) = n``).
+
+    - x : `numpy.ndarray`
+        An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
+
+    - l : `numpy.ndarray`
+        An array of shape *(n,)* containing the lower bounds of the control vector (it can be transformed).
+
+    - u : `numpy.ndarray`
+        An array of shape *(n,)* containing the upper bounds of the control vector (it can be transformed).
+
+    - nbd : `numpy.ndarray`
+        An array of shape *(n,)* containing the type of bounds of the control vector. The values are:
+
+        - ``0``: unbounded
+        - ``1``: only lower bound
+        - ``2``: both lower and upper bounds
+        - ``3``: only upper bound
+
+    - name : `numpy.ndarray`
+        An array of shape *(n,)* containing the names of the control vector. The naming convention is:
+
+        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
+        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``, ``'llr-slope-b'``, ``'ht-dd-a'``).
+        - ``<key>-<code>``: Structural error parameter where ``<key>`` is the name of any structural error mu or sigma parameters and ``<code>``, the corresponding gauge (``'sg0-V3524010'``, ``'sg1-V3524010'``, etc)
+
+    - x_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background values of the control vector.
+
+    - l_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background lower bounds of the control vector.
+
+    - u_bkg : `numpy.ndarray`
+        An array of shape *(n,)* containing the background upper bounds of the control vector.
+
+Examples
+--------
+>>> from smash.factory import load_dataset
+>>> setup, mesh = load_dataset("cance")
+>>> model = smash.Model(setup, mesh)
+
+Default optimize control vector information
+
+>>> control_info = smash.bayesian_optimize_control_info(model)
+>>> control_info
+{
+    'l': array([-1.3815511e+01, -1.3815511e+01, -4.6052704e+00, -1.3815511e+01, 1.0000000e-06, 1.0000000e-06], dtype=float32),
+    'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
+    'n': 6,
+    'name': array(['cp0', 'ct0', 'kexc0', 'llr0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
+    'nbd': array([2, 2, 2, 2, 2, 2], dtype=int32),
+    'nbk': array([4, 0, 0, 2], dtype=int32),
+    'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ], dtype=float32),
+    'u_bkg': array([1000., 1000.,   50., 1000., 1000.,   10.], dtype=float32),
+    'x': array([5.2983174, 6.214608 , 0.       , 1.609438 , 1.       , 0.2      ], dtype=float32),
+    'x_bkg': array([2.e+02, 5.e+02, 0.e+00, 5.e+00, 1.e+00, 2.e-01], dtype=float32),
+}
+
+This gives a direct indication of what the optimizer takes as input, depending on the optimisation configuration set up.
+4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``, ``'sg1-V3524010'``)
+Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
+
+With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and
+optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural error sigma parameters ``sg0`` and ``sg1``.
+
+>>> control_info = smash.bayesian_optimize_control_info(
+        model,
+        mapping="multi-linear",
+        optimize_options={
+            "parameters": ["cp", "kexc", "sg0", "sg1"],
+            "descriptor": {"kexc": ["dd"]},
+        },
+    )
+>>> control_info
+{
+    'l': array([-99., -99., -99., -99., -99.,   0.,   0.], dtype=float32),
+    'l_bkg': array([-9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01,  1.0e-06, 1.0e-06], dtype=float32),
+    'n': 7,
+    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
+    'nbd': array([0, 0, 0, 0, 0, 2, 2], dtype=int32),
+    'nbk': array([5, 0, 0, 2], dtype=int32),
+    'u': array([-99., -99., -99., -99., -99.,   1.,   1.], dtype=float32),
+    'u_bkg': array([ -99.,  -99.,  -99.,  -99.,  -99., 1000.,   10.], dtype=float32),
+    'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,  1.9999903e-02], dtype=float32),
+    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ], dtype=float32),
+}
+
+7 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) 
+and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors 
+(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``) and the 2 structural error sigma parameters
+(``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
+
+Retrieving information from the control vector is particularly useful for defining priors on the parameters.
+During a bayesian optimisation, it is possible to define these priors in the **cost_options** argument within
+the ``'control_prior'`` key. The problem is that we don't know the control vector in advance until we've filled in all
+the optimisation options. This is why we can define all the optimisation options in the 
+`bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` method, retrieve the names of the parameters 
+that make up the control vector and then call the optimisation function, assigning the priors we want to.
+
+Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially uniform optimization
+
+>>> model.bayesian_optimize(
+        cost_options={
+            "control_prior": {"cp0": ["Gaussian", [200, 100]], "kexc0": ["Gaussian", [0, 5]]}
+        },
+    )
+</> Bayesian Optimize
+    At iterate      0    nfg =     1    J =     29.988619    ddx = 0.64
+    At iterate      1    nfg =    68    J =      2.749650    ddx = 0.64
+    At iterate      2    nfg =   135    J =      2.580721    ddx = 0.32
+    At iterate      3    nfg =   202    J =      2.473113    ddx = 0.16
+    At iterate      4    nfg =   269    J =      2.432616    ddx = 0.08
+    At iterate      5    nfg =   342    J =      2.430271    ddx = 0.02
+    At iterate      6    nfg =   416    J =      2.429243    ddx = 0.01
+    CONVERGENCE: DDX < 0.01
+"""
+)
+
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
     model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
@@ -1309,4 +1666,24 @@ _smash_multiple_optimize_doc_substitution = DocSubstitution(
     parameters_note_serr_parameters="",
     bounds_get_serr_parameters_bounds="",
     percent="%",
+)
+
+_optimize_control_info_doc_appender = DocAppender(_optimize_control_info_doc, indents=0)
+_smash_optimize_control_info_doc_substitution = DocSubstitution(
+    default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
+    parameters_serr_mu_parameters="",
+    parameters_serr_sigma_parameters="",
+    parameters_note_serr_parameters="",
+    bounds_get_serr_parameters_bounds="",
+)
+
+_bayesian_optimize_control_info_doc_appender = DocAppender(
+    _bayesian_optimize_control_info_doc, indents=0
+)
+_smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
+    default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
+    parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
+    parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
+    parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
 )
