@@ -341,13 +341,24 @@ class Net(object):
             random_state=random_state,
         )
 
+        # % Initialize optimizer for NN in the forward hydrological model if used
+        ind = PY_OPTIMIZER.index(optimizer.lower())
+        func = eval(PY_OPTIMIZER_CLASS[ind])
+
+        opt_weight = [
+            func(**{"learning_rate": learning_rate})
+            for i in range(instance.setup.nhl + 1)
+        ]
+        opt_bias = copy.deepcopy(opt_weight)
+
         # % Train model
         for epo in tqdm(range(epochs), desc="    Training"):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred
-            init_loss_grad = _hcost_prime(
+            # and get the gradient of NN in the forward hydrological model
+            init_loss_grad, nn_parameters_b = _hcost_prime(
                 y_pred, parameters, mask, instance, wrap_options, wrap_returns
             )
 
@@ -375,10 +386,24 @@ class Net(object):
                     ):  # stop training if the loss values do not decrease through early_stopping consecutive epochs
                         break
 
-            # backpropagation and calculate infinity norm of the projected gradient
-            loss_grad = self._backward_pass(
-                init_loss_grad, inplace=True if epo < epochs - 1 else False
-            )  # do not update weights at the last epoch
+            # backpropagation and weights update
+            if epo < epochs - 1:
+                # update weights of NN in the forward model
+                for i in range(instance.setup.nhl + 1):
+                    instance.nn_parameters.layers[i].weight = opt_weight[i].update(
+                        instance.nn_parameters.layers[i].weight,
+                        nn_parameters_b[i]["weight"],
+                    )
+                    instance.nn_parameters.layers[i].bias = opt_bias[i].update(
+                        instance.nn_parameters.layers[i].bias,
+                        nn_parameters_b[i]["bias"],
+                    )
+                # backpropagation and update weights regionalization NN
+                loss_grad = self._backward_pass(init_loss_grad, inplace=True)
+            else:  # do not update weights at the last epoch
+                loss_grad = self._backward_pass(init_loss_grad, inplace=False)
+
+            # calculate projected gradient for regionalization NN
             self.history["proj_grad"].append(_inf_norm(loss_grad))
 
             if verbose:

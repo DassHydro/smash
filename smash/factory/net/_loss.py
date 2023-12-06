@@ -15,9 +15,10 @@ if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.fcore._mwd_options import OptionsDT
     from smash.fcore._mwd_returns import ReturnsDT
+    from smash.util._typing import AnyTuple
 
 
-def _hcost(instance: Model):
+def _hcost(instance: Model) -> float:
     return instance._output.cost
 
 
@@ -28,7 +29,7 @@ def _hcost_prime(
     instance: Model,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
-):
+) -> AnyTuple:
     # % Set parameters or states
     for i, name in enumerate(parameters):
         if name in instance.rr_parameters.keys:
@@ -41,6 +42,7 @@ def _hcost_prime(
 
             instance.rr_inital_states.values[..., ind][mask] = y[:, i]
 
+    # % Run adjoint model
     wrap_parameters_to_control(
         instance.setup,
         instance.mesh,
@@ -69,6 +71,7 @@ def _hcost_prime(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
     )
 
+    # % Get the gradient of NN for regionalization
     grad = []
     for name in parameters:
         if name in instance.rr_parameters.keys:
@@ -83,8 +86,14 @@ def _hcost_prime(
 
     grad = np.transpose(grad)
 
-    return grad
+    # % Get the gradient of NN in the forward hydrological model if used
+    grad_h = [
+        {"weight": layer.weight, "bias": layer.bias}
+        for layer in parameters_b.nn_parameters.layers
+    ]
+
+    return grad, grad_h
 
 
-def _inf_norm(grad: np.ndarray):
+def _inf_norm(grad: np.ndarray) -> float:
     return np.amax(np.abs(grad))
