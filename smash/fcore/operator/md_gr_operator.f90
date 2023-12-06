@@ -265,7 +265,7 @@ contains
     end subroutine gr_production_transfer_ode
 
     subroutine gr_production_transfer_mlp_ode(layers, neurons, pn, en, cp, ct, kexc, hp, ht, qti)
-        !% Solve state-space ODE system with explicit Euler and neural network
+        !% Solve state-space ODE system with explicit Euler and MLP
 
         implicit none
 
@@ -278,7 +278,7 @@ contains
         real(sp), dimension(5) :: output_layer  ! fixed NN output size
         real(sp) :: dt, fhp, fht
         integer :: i
-        integer :: n_subtimesteps = 8
+        integer :: n_subtimesteps = 4
 
         input_layer(1) = hp
         input_layer(2) = ht
@@ -382,9 +382,10 @@ contains
         integer :: row, col
         real(sp) :: pn, en
 
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en)
+        !% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -410,7 +411,7 @@ contains
 
             end do
         end do
-        !$OMP end parallel do
+!~        !$OMP end parallel do
 
     end subroutine gr4_mlp_alg_timestep
 
@@ -429,9 +430,10 @@ contains
         integer :: row, col
         real(sp) :: pn, en
 
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en)
+        !% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -456,7 +458,7 @@ contains
 
             end do
         end do
-        !$OMP end parallel do
+!~        !$OMP end parallel do
 
     end subroutine gr4_ode_timestep
 
@@ -477,9 +479,10 @@ contains
         integer :: row, col
         real(sp) :: pn, en
 
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en)
+        !% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -504,7 +507,7 @@ contains
 
             end do
         end do
-        !$OMP end parallel do
+!~        !$OMP end parallel do
 
     end subroutine gr4_mlp_ode_timestep
 

@@ -12199,7 +12199,6 @@ CONTAINS
     DO j=ad_to0,1,-1
       CALL POPINTEGER4(ad_to)
       DO i=ad_to,1,-1
-!$OMP   ATOMIC update
         a_b(i, j) = a_b(i, j) + x(j)*b_b(i)
         x_b(j) = x_b(j) + a(i, j)*b_b(i)
       END DO
@@ -12390,7 +12389,6 @@ CONTAINS
             f_out_b(j) = 0.01_sp*f_out_b(j)
           END IF
         END IF
-!$OMP   ATOMIC update
         layers_b(i)%bias(j) = layers_b(i)%bias(j) + f_out_b(j)
       END DO
       CALL DOT_PRODUCT_2D_1D_B(layers(i)%weight, layers_b(i)%weight, &
@@ -12561,7 +12559,6 @@ CONTAINS
 !$OMP ATOMIC update
     prcp_b = prcp_b + temp_b
     ei_b = -temp_b - en_b
-!$OMP ATOMIC update
     pn_b = pn_b - temp_b
 !$OMP ATOMIC update
     ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
@@ -13514,9 +13511,7 @@ CONTAINS
     d1pnm1 = 1._sp/nm1
     pwy3 = -d1pnm1
     ht_imd_b = ct*qti_b
-!$OMP ATOMIC update
     ht_b = ht_b - ct*qti_b
-!$OMP ATOMIC update
     ct_b = ct_b + (ht_imd-ht)*qti_b
     max1_b = qti_b
     CALL POPCONTROL1B(branch)
@@ -13528,10 +13523,8 @@ CONTAINS
     output_layer_b = 0.0_4
     temp_b4 = 0.1_sp*qd_b
     temp_b3 = ht**3.5_sp*qd_b
-!$OMP ATOMIC update
     ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*qd_b
     output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
-!$OMP ATOMIC update
     kexc_b = kexc_b + output_layer(5)*temp_b3
     output_layer_b(3) = output_layer_b(3) + pr*temp_b4
     pr_b = output_layer(3)*temp_b4
@@ -13556,10 +13549,8 @@ CONTAINS
       pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
     END IF
     IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
-!$OMP ATOMIC update
       ct_b = ct_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
     ELSE
-!$OMP ATOMIC update
       ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*ht_b/ct**2 + ht_imd*&
 &       pwx1_b
     END IF
@@ -13572,7 +13563,6 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ht_b = ht_imd_b
       pr_imd_b = ht_imd_b/ct
-!$OMP ATOMIC update
       ct_b = ct_b - pr_imd*ht_imd_b/ct**2
     ELSE
       ht_b = 0.0_4
@@ -13582,10 +13572,8 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       temp_b4 = 0.9_sp*pr_imd_b
       temp_b3 = ht**3.5_sp*pr_imd_b
-!$OMP ATOMIC update
       ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*pr_imd_b
       output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
-!$OMP ATOMIC update
       kexc_b = kexc_b + output_layer(5)*temp_b3
       output_layer_b(3) = output_layer_b(3) + pr*temp_b4
       pr_b = pr_b + output_layer(3)*temp_b4
@@ -13608,14 +13596,11 @@ CONTAINS
       ELSE
         pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
       END IF
-!$OMP ATOMIC update
       ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
       IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
 &     THEN
-!$OMP   ATOMIC update
         ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
       ELSE
-!$OMP   ATOMIC update
         ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
       END IF
       pwx1 = 1._sp + (hp_imd/beta)**4
@@ -13625,14 +13610,12 @@ CONTAINS
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
     hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
 &     4
-!$OMP ATOMIC update
     cp_b = cp_b + perc*hp_b/cp**2 + hp_imd*(1._sp-pwr1)*perc_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       pn_b = pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
-!$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
@@ -13651,12 +13634,10 @@ CONTAINS
     temp_b1 = (1.0-TANH(temp1)**2)*temp5*temp_b/cp
     temp_b0 = -(temp5*temp0*temp_b/temp2)
     temp_b3 = (1.0-TANH(temp4)**2)*(1._sp-hp)*temp_b0/cp
-!$OMP ATOMIC update
     hp_b = hp_b + hp_imd_b - hp*cp*temp0*temp_b - temp3*temp_b0
     output_layer_b(1) = output_layer_b(1) + ps*temp_b4
     ps_b = output_layer(1)*temp_b4
     output_layer_b(2) = output_layer_b(2) - es*temp_b4
-!$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b2 - (output_layer(1)*ps-output_layer(2)*es)*&
 &     temp_b4/cp - temp4*temp_b3 - temp1*temp_b1
     temp = pn/cp
@@ -13671,18 +13652,14 @@ CONTAINS
 &                    input_layer_b, output_layer, output_layer_b)
     en_b = temp_b3 + temp_b1 + input_layer_b(4)
     temp_b1 = -(temp4*temp3*temp_b/temp1)
-!$OMP ATOMIC update
     hp_b = hp_b + cp*temp_b2 + temp0*temp_b1 - 2*hp*cp*temp3*temp_b + &
 &     input_layer_b(1)
     temp_b2 = (1.0-TANH(temp)**2)*hp*temp_b1/cp
-!$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp3*temp_b - temp*temp_b2 - temp2*&
 &     temp_b0
-!$OMP ATOMIC update
     pn_b = pn_b + temp_b2 + temp_b0 + input_layer_b(3)
     input_layer_b(4) = 0.0_4
     input_layer_b(3) = 0.0_4
-!$OMP ATOMIC update
     ht_b = ht_b + input_layer_b(2)
     input_layer_b(2) = 0.0_4
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_B
@@ -13956,14 +13933,10 @@ CONTAINS
  100  CALL PUSHCONTROL1B(1)
       CALL PUSHINTEGER4(ad_count)
  110 CONTINUE
-!$OMP ATOMIC update
     ct_b = ct_b + ht**5*qti_b
-!$OMP ATOMIC update
     ht_b = ht_b + (5*ht**4*ct+3.5_sp*ht**2.5*kexc)*qti_b
     pn_b = hp**2*0.1_sp*qti_b
-!$OMP ATOMIC update
     hp_b = hp_b + 2*hp*pn*0.1_sp*qti_b
-!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*qti_b
     en_b = 0.0_4
     dh_b = 0.0_4
@@ -14003,64 +13976,46 @@ CONTAINS
         tmp_j_b = dt*jacob_b(2, 2)
         jacob_b(2, 2) = 0.0_4
         temp_b = -(ht**2.5_sp*3.5_sp*tmp_j_b/ct)
-!$OMP   ATOMIC update
         kexc_b = kexc_b + temp_b
-!$OMP   ATOMIC update
         ct_b = ct_b - kexc*temp_b/ct
         CALL POPREAL4(jacob(2, 1))
         temp_b = dt*1.8_sp*jacob_b(2, 1)/ct
         jacob_b(2, 1) = 0.0_4
-!$OMP   ATOMIC update
         pn_b = pn_b + hp*temp_b
-!$OMP   ATOMIC update
         hp_b = hp_b + pn*temp_b
-!$OMP   ATOMIC update
         ct_b = ct_b - pn*hp*temp_b/ct
         CALL POPREAL4(jacob(1, 2))
         jacob_b(1, 2) = 0.0_4
         CALL POPREAL4(jacob(1, 1))
         temp_b = dt*2._sp*jacob_b(1, 1)/cp
         jacob_b(1, 1) = 0.0_4
-!$OMP   ATOMIC update
         hp_b = hp_b + (pn-en)*temp_b
-!$OMP   ATOMIC update
         pn_b = pn_b + hp*temp_b
-!$OMP   ATOMIC update
         en_b = en_b + (1.0-hp)*temp_b
-!$OMP   ATOMIC update
         cp_b = cp_b - (hp*(pn-en)+en)*temp_b/cp
         CALL POPREAL4(dh(2))
         ht0_b = ht0_b - dh_b(2)
         temp_b = dt*dh_b(2)/ct
         fht_b = temp_b
-!$OMP   ATOMIC update
         ht_b = ht_b + (4*ht**3*5._sp-2.5_sp*ht**1.5*kexc*3.5_sp/ct)*&
 &         tmp_j_b + dh_b(2) + (5*ht**4*ct-3.5_sp*ht**2.5*kexc)*fht_b
         dh_b(2) = 0.0_4
-!$OMP   ATOMIC update
         ct_b = ct_b + ht**5*fht_b - fht*temp_b/ct
         CALL POPREAL4(fht)
-!$OMP   ATOMIC update
         kexc_b = kexc_b - ht**3.5_sp*fht_b
         fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
         CALL POPREAL4(dh(1))
         hp0_b = hp0_b - dh_b(1)
         temp_b = -(dt*dh_b(1)/cp)
         fhp_b = temp_b
-!$OMP   ATOMIC update
         pn_b = pn_b + (1._sp-hp**2)*fhp_b - hp**2*0.9_sp*fht_b
-!$OMP   ATOMIC update
         hp_b = hp_b + dh_b(1) - 2*hp*pn*0.9_sp*fht_b + (hp*en-en*(2._sp-&
 &         hp)-2*hp*pn)*fhp_b
         dh_b(1) = 0.0_4
-!$OMP   ATOMIC update
         cp_b = cp_b - fhp*temp_b/cp
-!$OMP   ATOMIC update
         en_b = en_b - hp*(2._sp-hp)*fhp_b
  120  CONTINUE
-!$OMP ATOMIC update
       ht_b = ht_b + ht0_b
-!$OMP ATOMIC update
       hp_b = hp_b + hp0_b
     END DO
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B
@@ -14136,7 +14091,7 @@ CONTAINS
     REAL(sp) :: dt, fhp, fht
     REAL(sp) :: fhp_d, fht_d
     INTEGER :: i
-    INTEGER, SAVE :: n_subtimesteps=8
+    INTEGER, SAVE :: n_subtimesteps=4
     INTRINSIC REAL
     REAL(sp) :: temp
     REAL(sp) :: temp0
@@ -14223,7 +14178,7 @@ CONTAINS
     REAL(sp) :: dt, fhp, fht
     REAL(sp) :: fhp_b, fht_b
     INTEGER :: i
-    INTEGER, SAVE :: n_subtimesteps=8
+    INTEGER, SAVE :: n_subtimesteps=4
     INTRINSIC REAL
     REAL(sp) :: temp_b
     REAL(sp) :: temp_b0
@@ -14271,14 +14226,10 @@ CONTAINS
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
-!$OMP ATOMIC update
     ct_b = ct_b + ht**5*qti_b
-!$OMP ATOMIC update
     ht_b = ht_b + (5*ht**4*ct+3.5_sp*ht**2.5*kexc)*qti_b
     pn_b = hp**2*0.1_sp*qti_b
-!$OMP ATOMIC update
     hp_b = hp_b + 2*hp*pn*0.1_sp*qti_b
-!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*qti_b
     en_b = 0.0_4
     output_layer_b = 0.0_4
@@ -14290,23 +14241,18 @@ CONTAINS
       CALL POPREAL4(ht)
       temp_b1 = dt*ht_b/ct
       fht_b = temp_b1
-!$OMP ATOMIC update
       hp_b = hp_b + 2*hp*output_layer(3)*pn*0.9_sp*fht_b
       temp_b0 = -(ht**5*fht_b)
-!$OMP ATOMIC update
       ct_b = ct_b + output_layer(4)*temp_b0 - fht*temp_b1/ct
       CALL POPREAL4(fht)
       temp_b1 = hp**2*0.9_sp*fht_b
-!$OMP ATOMIC update
       ht_b = ht_b + (3.5_sp*ht**2.5*output_layer(5)*kexc-5*ht**4*&
 &       output_layer(4)*ct)*fht_b
       temp_b = ht**3.5_sp*fht_b
       output_layer_b(5) = output_layer_b(5) + kexc*temp_b
-!$OMP ATOMIC update
       kexc_b = kexc_b + output_layer(5)*temp_b
       output_layer_b(4) = output_layer_b(4) + ct*temp_b0
       output_layer_b(3) = output_layer_b(3) + pn*temp_b1
-!$OMP ATOMIC update
       pn_b = pn_b + output_layer(3)*temp_b1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) hp_b = 0.0_4
@@ -14315,34 +14261,26 @@ CONTAINS
       CALL POPREAL4(hp)
       temp_b1 = dt*hp_b/cp
       fhp_b = temp_b1
-!$OMP ATOMIC update
       cp_b = cp_b - fhp*temp_b1/cp
       CALL POPREAL4(fhp)
       temp_b = (1._sp-hp**2)*fhp_b
       temp_b0 = -(output_layer(2)*(2._sp-hp)*fhp_b)
       temp_b1 = -(en*hp*fhp_b)
-!$OMP ATOMIC update
       hp_b = hp_b + en*temp_b0 - 2*hp*output_layer(1)*pn*fhp_b - &
 &       output_layer(2)*temp_b1
       output_layer_b(2) = output_layer_b(2) + (2._sp-hp)*temp_b1
-!$OMP ATOMIC update
       en_b = en_b + hp*temp_b0
       output_layer_b(1) = output_layer_b(1) + pn*temp_b
-!$OMP ATOMIC update
       pn_b = pn_b + output_layer(1)*temp_b
     END DO
     CALL FEEDFORWARD_MLP_B(layers, layers_b, neurons, input_layer, &
 &                    input_layer_b, output_layer, output_layer_b)
-!$OMP ATOMIC update
     en_b = en_b + input_layer_b(4)
     input_layer_b(4) = 0.0_4
-!$OMP ATOMIC update
     pn_b = pn_b + input_layer_b(3)
     input_layer_b(3) = 0.0_4
-!$OMP ATOMIC update
     ht_b = ht_b + input_layer_b(2)
     input_layer_b(2) = 0.0_4
-!$OMP ATOMIC update
     hp_b = hp_b + input_layer_b(1)
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B
 
@@ -14359,7 +14297,7 @@ CONTAINS
     REAL(sp), DIMENSION(5) :: output_layer
     REAL(sp) :: dt, fhp, fht
     INTEGER :: i
-    INTEGER, SAVE :: n_subtimesteps=8
+    INTEGER, SAVE :: n_subtimesteps=4
     INTRINSIC REAL
     input_layer(1) = hp
     input_layer(2) = ht
@@ -14669,6 +14607,7 @@ CONTAINS
 &   layers_d, neurons, prcp, prcp_d, pet, ci, ci_d, cp, cp_d, ct, ct_d, &
 &   kexc, kexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt, qt_d)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -14691,11 +14630,10 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_d, en_d
     REAL(sp) :: temp
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), &
-!$OMP&SHARED(layers_d, prcp_d, ci_d, cp_d, ct_d, kexc_d, hi_d, hp_d, &
-!$OMP&ht_d, qt_d), PRIVATE(row, col, pn, en), PRIVATE(pn_d, en_d), &
-!$OMP&PRIVATE(temp), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14741,6 +14679,7 @@ CONTAINS
 &   layers_b, neurons, prcp, prcp_b, pet, ci, ci_b, cp, cp_b, ct, ct_b, &
 &   kexc, kexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt, qt_b)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -14763,13 +14702,11 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(&
-!$OMP&row, col, pn, en), PRIVATE(chunk_start, chunk_end)
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_start,chunk_end
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
+    DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -14803,19 +14740,8 @@ CONTAINS
         END IF
       END DO
     END DO
-    CALL PUSHREAL4(en)
-!$OMP END PARALLEL
     prcp_b = 0.0_4
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(&
-!$OMP&layers_b, prcp_b, ci_b, cp_b, ct_b, kexc_b, hi_b, hp_b, ht_b, qt_b&
-!$OMP&), PRIVATE(row, col, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch&
-!$OMP&, chunk_end, chunk_start)
-    CALL POPREAL4(en)
-    pn_b = 0.0_4
-    en_b = 0.0_4
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_end,chunk_start,-1
+    DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -14851,12 +14777,12 @@ CONTAINS
         END IF
       END DO
     END DO
-!$OMP END PARALLEL
   END SUBROUTINE GR4_MLP_ALG_TIMESTEP_B
 
   SUBROUTINE GR4_MLP_ALG_TIMESTEP(setup, mesh, options, layers, neurons&
 &   , prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -14870,9 +14796,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
     REAL(sp) :: pn, en
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), &
-!$OMP&PRIVATE(row, col, pn, en), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14906,6 +14833,7 @@ CONTAINS
 &   , ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht&
 &   , ht_d, qt, qt_d)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -14925,10 +14853,10 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_d, en_d
     REAL(sp) :: temp
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(prcp_d, ci_d&
-!$OMP&, cp_d, ct_d, kexc_d, hi_d, hp_d, ht_d, qt_d), PRIVATE(row, col, &
-!$OMP&pn, en), PRIVATE(pn_d, en_d), PRIVATE(temp), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14969,6 +14897,7 @@ CONTAINS
 &   , ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht&
 &   , ht_b, qt, qt_b)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -14988,13 +14917,11 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
-!$OMP&pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(row, col, pn, en)&
-!$OMP&, PRIVATE(chunk_start, chunk_end)
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_start,chunk_end
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
+    DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15026,16 +14953,8 @@ CONTAINS
         END IF
       END DO
     END DO
-!$OMP END PARALLEL
     prcp_b = 0.0_4
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, prcp, &
-!$OMP&pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(prcp_b, ci_b, cp_b&
-!$OMP&, ct_b, kexc_b, hi_b, hp_b, ht_b, qt_b), PRIVATE(row, col, pn, en)&
-!$OMP&, PRIVATE(pn_b, en_b), PRIVATE(branch, chunk_end, chunk_start)
-    pn_b = 0.0_4
-    en_b = 0.0_4
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_end,chunk_start,-1
+    DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15068,12 +14987,12 @@ CONTAINS
         END IF
       END DO
     END DO
-!$OMP END PARALLEL
   END SUBROUTINE GR4_ODE_TIMESTEP_B
 
   SUBROUTINE GR4_ODE_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, &
 &   ct, kexc, hi, hp, ht, qt)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -15085,9 +15004,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
     REAL(sp) :: pn, en
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(row, col, pn&
-!$OMP&, en), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15120,6 +15040,7 @@ CONTAINS
 &   layers_d, neurons, prcp, prcp_d, pet, ci, ci_d, cp, cp_d, ct, ct_d, &
 &   kexc, kexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt, qt_d)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -15142,11 +15063,10 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_d, en_d
     REAL(sp) :: temp
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), &
-!$OMP&SHARED(layers_d, prcp_d, ci_d, cp_d, ct_d, kexc_d, hi_d, hp_d, &
-!$OMP&ht_d, qt_d), PRIVATE(row, col, pn, en), PRIVATE(pn_d, en_d), &
-!$OMP&PRIVATE(temp), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15191,6 +15111,7 @@ CONTAINS
 &   layers_b, neurons, prcp, prcp_b, pet, ci, ci_b, cp, cp_b, ct, ct_b, &
 &   kexc, kexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt, qt_b)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -15213,13 +15134,11 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
-    INTEGER :: chunk_start
-    INTEGER :: chunk_end
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), PRIVATE(&
-!$OMP&row, col, pn, en), PRIVATE(chunk_start, chunk_end)
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_start,chunk_end
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
+    DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15252,17 +15171,8 @@ CONTAINS
         END IF
       END DO
     END DO
-!$OMP END PARALLEL
     prcp_b = 0.0_4
-!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), SHARED(&
-!$OMP&layers_b, prcp_b, ci_b, cp_b, ct_b, kexc_b, hi_b, hp_b, ht_b, qt_b&
-!$OMP&), PRIVATE(row, col, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch&
-!$OMP&, chunk_end, chunk_start)
-    pn_b = 0.0_4
-    en_b = 0.0_4
-    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
-    DO col=chunk_end,chunk_start,-1
+    DO col=mesh%ncol,1,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15297,12 +15207,12 @@ CONTAINS
         END IF
       END DO
     END DO
-!$OMP END PARALLEL
   END SUBROUTINE GR4_MLP_ODE_TIMESTEP_B
 
   SUBROUTINE GR4_MLP_ODE_TIMESTEP(setup, mesh, options, layers, neurons&
 &   , prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
     IMPLICIT NONE
+!~        !$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
@@ -15316,9 +15226,10 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
     INTEGER :: row, col
     REAL(sp) :: pn, en
-!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt), &
-!$OMP&PRIVATE(row, col, pn, en), SCHEDULE(static)
+!% TODO: Fix bugs with OMP and TAPENADE here
+!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
+!~        !$OMP& private(row, col, pn, en)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
