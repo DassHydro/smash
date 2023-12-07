@@ -1,0 +1,50 @@
+[build-system]
+requires = ["setuptools", "setuptools-scm", "versioneer[toml]"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "smash"
+dynamic = ["version", "dependencies"]
+description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology."
+readme = "README.md"
+authors = [
+    {name = "INRAE RECOVER RHAX Team", email = "pierre.javelle@inrae.fr"},
+]
+requires-python = ">=3.8"
+license = {text = "GPL-3.0"}
+classifiers = [
+    'Development Status :: 5 - Production/Stable',  
+    'Intended Audience :: Science/Research',
+    'Intended Audience :: Developers',
+    'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
+    'Programming Language :: Fortran',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3',
+    'Programming Language :: Python :: 3.8',
+    'Programming Language :: Python :: 3.9',
+    'Programming Language :: Python :: 3.10',
+    'Programming Language :: Python :: 3.11',
+    'Programming Language :: Python :: 3 :: Only',
+    'Topic :: Scientific/Engineering',
+    'Operating System :: Unix',
+]
+
+[tool.setuptools.packages.find]
+include = ["smash", "smash.*"]
+namespaces = false
+
+[tool.setuptools.dynamic]
+dependencies = {file = ["requirements.txt"]}
+optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+
+[project.urls]
+documentation = "https://smash.recover.inrae.fr"
+repository = "https://github.com/DassHydro/smash"
+
+[tool.versioneer]
+VCS = "git"
+style = "pep440"
+versionfile_source = "smash/_version.py"
+versionfile_build = "smash/_version.py"
+tag_prefix = "v"
+parentdir_prefix = "smash-"
