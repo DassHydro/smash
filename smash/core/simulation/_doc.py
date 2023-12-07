@@ -340,7 +340,7 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         Prior applied to the control vector.
-        A dictionary containing the type of prior to link to control vector. The keys are any control parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc), 
+        A dictionary containing the type of prior to link to control vector. The keys are any control parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), 
         see `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` to retrieve control parameters names.
         The values are list of length 2 containing distribution information (i.e. distribution name and parameters). 
         Below, the set of available distributions and the associated number of parameters:
@@ -1221,7 +1221,7 @@ array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
 
 _optimize_control_info_doc = (
     """
-Information on the optimisation control vector of Model.
+Information on the optimization control vector of Model.
 
 Parameters
 ----------
@@ -1348,7 +1348,7 @@ Default optimize control vector information
     'x_bkg': array([200., 500.,   0.,   5.], dtype=float32),
 }
 
-This gives a direct indication of what the optimizer takes as input, depending on the optimisation configuration set up.
+This gives a direct indication of what the optimizer takes as input, depending on the optimization configuration set up.
 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``).
 Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
 
@@ -1384,7 +1384,7 @@ and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of th
 
 _bayesian_optimize_control_info_doc = (
     """
-Information on the bayesian optimisation control vector of Model.
+Information on the bayesian optimization control vector of Model.
 
 Parameters
 ----------
@@ -1512,7 +1512,7 @@ Default optimize control vector information
     'x_bkg': array([2.e+02, 5.e+02, 0.e+00, 5.e+00, 1.e+00, 2.e-01], dtype=float32),
 }
 
-This gives a direct indication of what the optimizer takes as input, depending on the optimisation configuration set up.
+This gives a direct indication of what the optimizer takes as input, depending on the optimization configuration set up.
 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``, ``'sg1-V3524010'``)
 Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
 
@@ -1547,11 +1547,11 @@ and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of th
 (``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
 
 Retrieving information from the control vector is particularly useful for defining priors on the parameters.
-During a bayesian optimisation, it is possible to define these priors in the **cost_options** argument within
+During a bayesian optimization, it is possible to define these priors in the **cost_options** argument within
 the ``'control_prior'`` key. The problem is that we don't know the control vector in advance until we've filled in all
-the optimisation options. This is why we can define all the optimisation options in the 
+the optimization options. This is why we can define all the optimization options in the 
 `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` method, retrieve the names of the parameters 
-that make up the control vector and then call the optimisation function, assigning the priors we want to.
+that make up the control vector and then call the optimization function, assigning the priors we want to.
 
 Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially uniform optimization
 
