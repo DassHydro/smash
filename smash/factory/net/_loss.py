@@ -88,7 +88,7 @@ def _hcost_prime(
 
     # % Get the gradient of NN in the forward hydrological model if used
     grad_h = [
-        {"weight": layer.weight, "bias": layer.bias}
+        {"weight": layer.weight.copy(), "bias": layer.bias.copy()}
         for layer in parameters_b.nn_parameters.layers
     ]
 
