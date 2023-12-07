@@ -102,7 +102,7 @@ class Model(object):
 
     Parameters
     ----------
-    setup : `dict`
+    setup : `dict[str, Any]`
         Model initialization setup dictionary. The elements are:
 
         snow_module : `str`, default 'zero'
@@ -134,7 +134,7 @@ class Model(object):
             - ``'Constant'`` (TODO BR: link Math/Num)
             - ``'Linear'`` (TODO BR: link Math/Num)
 
-        serr_sigma_mapping : `str`, default 'Zero'
+        serr_sigma_mapping : `str`, default 'Linear'
             Name of structural error sigma mapping. Should be one of:
 
             - ``'Constant'`` (TODO BR: link Math/Num)
@@ -283,7 +283,7 @@ class Model(object):
             List of descriptor name.
             This option is ``mandatory`` if **read_descriptor** is set to True.
 
-    mesh : dict
+    mesh : `dict[str, Any]`
         Model initialization mesh dictionary.
 
         .. note::
@@ -437,7 +437,7 @@ class Model(object):
         >>> model.setup.dt, model.setup.hydrological_module
         (3600.0, 'gr4')
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.setup.<TAB>
         model.setup.adjust_interception     model.setup.prcp_partitioning
@@ -509,7 +509,7 @@ class Model(object):
         [2, 1, 1, 8, 5, 5, 6, 2, 1, 1, 4, 3, 2, 2, 7, 1, 2, 2, 2, 1, 4, 3,
         2, 1, 3, 2, 2, 5]], dtype=int32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.mesh.<TAB>
         model.mesh.active_cell           model.mesh.gauge_pos
@@ -550,7 +550,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model response data.
+        Access to Model response data
 
         >>> model.response_data
         Response_DataDT
@@ -559,7 +559,7 @@ class Model(object):
             [ 0.094,  0.094,  0.094, ...,  1.588,  1.578,  1.568]],
             dtype=float32)
 
-        Access to a specific gauge observed discharge time serie.
+        Access to a specific gauge observed discharge time serie
 
         >>> model.mesh.code
         array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
@@ -569,7 +569,7 @@ class Model(object):
         >>> model.response_data.q[ind, :]
         array([ 1.237,  1.232,  1.224, ..., 22.951, 22.813, 22.691], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.response_data.<TAB>
         model.response_data.copy()        model.response_data.q
@@ -600,7 +600,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model response data uncertainties.
+        Access to Model response data uncertainties
 
         >>> model.u_response_data
         U_Response_DataDT
@@ -608,7 +608,7 @@ class Model(object):
                [0., 0., 0., ..., 0., 0., 0.],
                [0., 0., 0., ..., 0., 0., 0.]], dtype=float32)
 
-        Access to a specific gauge discharge uncertainties (standard deviation of independent error) time serie.
+        Access to a specific gauge discharge uncertainties (standard deviation of independent error) time serie
 
         >>> model.mesh.code
         array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
@@ -627,7 +627,7 @@ class Model(object):
                [0.0094, 0.0094, 0.0094, ..., 0.1588, 0.1578, 0.1568]],
               dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.response_data.<TAB>
         model.response_data.copy()        model.response_data.q_stdev
@@ -656,7 +656,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model physiograhic data.
+        Access to Model physiograhic data
 
         >>> model.physio_data
         Physio_DataDT
@@ -682,7 +682,7 @@ class Model(object):
                 2.60070384e-01, 4.05688077e-01, 1.29338336e+00, 1.35517049e+00]],
               dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.physio_data.<TAB>
         model.physio_data.copy()        model.physio_data.l_descriptor
@@ -737,7 +737,7 @@ class Model(object):
             ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``, optionally) and vice versa
             if the sparse_storage option has not been chosen. (TODO FC: link to user guide to handle sparse data)
 
-        Access to a specific gauge mean precipitation time serie.
+        Access to a specific gauge mean precipitation time serie
 
         >>> model.mesh.code
         array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
@@ -757,7 +757,7 @@ class Model(object):
                 0.90000004, 0.8       , 0.6       , 0.4       , 0.4       ,
                 0.1       , 0.1       , 0.1       ]], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.atmos_data.<TAB>
         model.atmos_data.copy()                    model.atmos_data.mean_temp
@@ -798,7 +798,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model rainfall-runoff parameters.
+        Access to Model rainfall-runoff parameters
 
         >>> model.rr_parameters
         RR_ParametersDT
@@ -809,7 +809,7 @@ class Model(object):
                 ...
                 [1.0e-06, 2.0e+02, 5.0e+02, 0.0e+00, 5.0e+00]]], dtype=float32)
 
-        Access to a specific rainfall-runoff parameter grid with the getter method `get_rr_parameters <Model.get_rr_parameters>`.
+        Access to a specific rainfall-runoff parameter grid with the getter method `get_rr_parameters <Model.get_rr_parameters>`
 
         >>> model.get_rr_parameters("cp")
         array([[200., 200., 200., 200., 200., 200., 200., 200., 200., 200., 200.,
@@ -817,7 +817,7 @@ class Model(object):
                 ...
                 200., 200., 200., 200., 200., 200.]], dtype=float32)
 
-        Set a value to a specific rainfall-runoff parameter grid with the setter method `set_rr_parameters <Model.set_rr_parameters>`.
+        Set a value to a specific rainfall-runoff parameter grid with the setter method `set_rr_parameters <Model.set_rr_parameters>`
 
         >>> model.set_rr_parameters("cp", 273)
         >>> model.get_rr_parameters("cp")
@@ -826,7 +826,7 @@ class Model(object):
                 ...
                 273., 273., 273., 273., 273., 273.]], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.rr_parameters.<TAB>
         model.rr_parameters.copy()        model.rr_parameters.keys
@@ -860,7 +860,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model rainfall-runoff initial states.
+        Access to Model rainfall-runoff initial states
 
         >>> model.rr_initial_states
         RR_States
@@ -871,7 +871,7 @@ class Model(object):
                 ...
                 [1.e-02, 1.e-02, 1.e-02, 1.e-06]]], dtype=float32)
 
-        Access to a specific rainfall-runoff initial state grid with the getter method `get_rr_initial_states <Model.get_rr_initial_states>`.
+        Access to a specific rainfall-runoff initial state grid with the getter method `get_rr_initial_states <Model.get_rr_initial_states>`
 
         >>> model.get_rr_initial_states("hp")
         array([[0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
@@ -879,7 +879,7 @@ class Model(object):
                 ...
                 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]], dtype=float32)
 
-        Set a value to a specific rainfall-runoff initial state grid with the setter method `set_rr_initial_states <Model.set_rr_initial_states>`.
+        Set a value to a specific rainfall-runoff initial state grid with the setter method `set_rr_initial_states <Model.set_rr_initial_states>`
 
         >>> model.set_rr_initial_states("hp", 0.29)
         >>> model.get_rr_initial_states("hp")
@@ -888,7 +888,7 @@ class Model(object):
                 ...
                 0.29, 0.29, 0.29, 0.29, 0.29, 0.29]], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.rr_initial_states.<TAB>
         model.rr_initial_states.copy()        model.rr_initial_states.keys
@@ -921,12 +921,12 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model structural error mu parameters.
+        Access to Model structural error mu parameters
 
         >>> model.serr_mu_parameters
         SErr_Mu_ParametersDT
@@ -943,18 +943,18 @@ class Model(object):
                 keys: array([], dtype=float64)
                 values: array([], shape=(3, 0), dtype=float32)
 
-        Access to a specific structural error mu parameter vector with the getter method `get_serr_mu_parameters <Model.get_serr_mu_parameters>`.
+        Access to a specific structural error mu parameter vector with the getter method `get_serr_mu_parameters <Model.get_serr_mu_parameters>`
 
         >>> model.get_serr_mu_parameters("mg0")
         array([0., 0., 0.], dtype=float32)
 
-        Set a value to a specific structural error mu parameter vector with the setter method `set_serr_mu_parameters <Model.set_serr_mu_parameters>`.
+        Set a value to a specific structural error mu parameter vector with the setter method `set_serr_mu_parameters <Model.set_serr_mu_parameters>`
 
         >>> model.set_serr_mu_parameters("mg0", 11)
         >>> model.get_serr_mu_parameters("mg0")
         array([11., 11., 11.], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.serr_mu_parameters.<TAB>
         model.serr_mu_parameters.copy()        model.serr_mu_parameters.keys
@@ -987,7 +987,7 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Access to Model structural error sigma parameters.
+        Access to Model structural error sigma parameters
 
         >>> model.serr_sigma_parameters
         SErr_Sigma_ParametersDT
@@ -996,18 +996,18 @@ class Model(object):
                [1. , 0.2],
                [1. , 0.2]], dtype=float32)
 
-        Access to a specific structural error sigma parameter vector with the getter method `get_serr_sigma_parameters <Model.get_serr_sigma_parameters>`.
+        Access to a specific structural error sigma parameter vector with the getter method `get_serr_sigma_parameters <Model.get_serr_sigma_parameters>`
 
         >>> model.get_serr_sigma_parameters("sg0")
         array([1., 1., 1.], dtype=float32)
 
-        Set a value to a specific structural error sigma parameter vector with the setter method `set_serr_sigma_parameters <Model.set_serr_sigma_parameters>`.
+        Set a value to a specific structural error sigma parameter vector with the setter method `set_serr_sigma_parameters <Model.set_serr_sigma_parameters>`
 
         >>> model.set_serr_sigma_parameters("sg0", 5.4)
         >>> model.get_serr_sigma_parameters("sg0")
         array([5.4, 5.4, 5.4], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.serr_sigma_parameters.<TAB>
         model.serr_sigma_parameters.copy()        model.serr_sigma_parameters.keys
@@ -1036,7 +1036,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model response.
+        Access to Model response
 
         >>> model.response
         ResponseDT
@@ -1049,7 +1049,7 @@ class Model(object):
         >>> model.forward_run()
         </> Forward Run
 
-        Access to a specific gauge simulated discharge time serie.
+        Access to a specific gauge simulated discharge time serie
 
         >>> model.mesh.code
         array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
@@ -1060,7 +1060,7 @@ class Model(object):
         array([1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
                3.2118713e+01, 3.1965160e+01], dtype=float32)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.response.<TAB>
         model.response.copy()        model.response.q
@@ -1093,7 +1093,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to Model rainfall-runoff final states.
+        Access to Model rainfall-runoff final states
 
         >>> model.rr_final_states
         RR_StatesDT
@@ -1108,7 +1108,7 @@ class Model(object):
         >>> model.forward_run()
         </> Forward Run
 
-        Access to a specific rainfall-runoff final state grid with the getter method `get_rr_final_states <Model.get_rr_final_states>`.
+        Access to a specific rainfall-runoff final state grid with the getter method `get_rr_final_states <Model.get_rr_final_states>`
 
         >>> model.get_rr_final_states("hp")
         array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
@@ -1120,7 +1120,7 @@ class Model(object):
         .. note::
             Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states. They are generated after any kind of simulation (i.e. forward_run, optimize, ...)
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.rr_final_states.<TAB>
         model.rr_final_states.copy()        model.rr_final_states.keys
@@ -1135,7 +1135,7 @@ class Model(object):
 
     def copy(self) -> Model:
         """
-        Create a deep copy of the Model.
+        Create a deep copy of Model.
 
         Returns
         -------
@@ -1148,7 +1148,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Create a shallow copy of Model.
+        Create a shallow copy of Model
 
         >>> model_sc = model
 
@@ -1172,7 +1172,7 @@ class Model(object):
                 ...
                 63., 63.]], dtype=float32)
 
-        Create a deep copy of Model.
+        Create a deep copy of Model
 
         >>> model_dc = model.copy()
 
@@ -1223,7 +1223,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to a specific rainfall-runoff parameter grid.
+        Access to a specific rainfall-runoff parameter grid
 
         >>> model.get_rr_parameters("cp")
         array([[200., 200., 200., 200., 200., 200., 200., 200., 200., 200., 200.,
@@ -1232,9 +1232,9 @@ class Model(object):
                 200., 200., 200., 200., 200., 200.]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below) but is simpler to use.
+            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below) but is simpler to use
 
-        Access the rainfall-runoff parameter keys.
+        Access the rainfall-runoff parameter keys
 
         >>> model.rr_parameters.keys
         array(['ci', 'cp', 'ct', 'kexc', 'llr'], dtype='<U4')
@@ -1245,7 +1245,7 @@ class Model(object):
         >>> ind
         1
 
-        Slice the ``rr_parameters.values`` array on the last axis.
+        Slice the ``rr_parameters.values`` array on the last axis
 
         >>> model.rr_parameters.values[..., ind]
         array([[200., 200., 200., 200., 200., 200., 200., 200., 200., 200., 200.,
@@ -1285,7 +1285,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Set a specific value to a rainfall-runoff parameter grid.
+        Set a specific value to a rainfall-runoff parameter grid
 
         >>> model.set_rr_parameters("cp", 150)
 
@@ -1327,7 +1327,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
 
-        Access the rainfall-runoff parameter keys.
+        Access the rainfall-runoff parameter keys
 
         >>> model.rr_parameters.keys
         array(['ci', 'cp', 'ct', 'kexc', 'llr'], dtype='<U4')
@@ -1401,7 +1401,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to a specific rainfall-runoff initial state grid.
+        Access to a specific rainfall-runoff initial state grid
 
         >>> model.get_rr_initial_states("hp")
         array([[0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
@@ -1410,9 +1410,9 @@ class Model(object):
                 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown below) but is simpler to use.
+            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown below) but is simpler to use
 
-        Access the rainfall-runoff state keys.
+        Access the rainfall-runoff state keys
 
         >>> model.rr_initial_states.keys
         array(['hi', 'hp', 'ht', 'hlr'], dtype='<U3')
@@ -1423,7 +1423,7 @@ class Model(object):
         >>> ind
         1
 
-        Slice the ``rr_initial_states.values`` array on the last axis.
+        Slice the ``rr_initial_states.values`` array on the last axis
 
         >>> model.rr_initial_states.values[..., ind]
         array([[0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
@@ -1463,7 +1463,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Set a specific value to a rainfall-runoff initial state grid.
+        Set a specific value to a rainfall-runoff initial state grid
 
         >>> model.set_rr_initial_states("hp", 0.22)
 
@@ -1504,9 +1504,9 @@ class Model(object):
               dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
+            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown below) and change the values but is simpler and ``safer`` to use
 
-        Access the rainfall-runoff initial state keys.
+        Access the rainfall-runoff initial state keys
 
         >>> model.rr_initial_states.keys
         array(['hi', 'hp', 'ht', 'hlr'], dtype='<U3')
@@ -1545,7 +1545,7 @@ class Model(object):
         >>> model.set_rr_initial_states("hp", 21)
         ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not included in the feasible domain ]0, 1[
 
-        Finally, trying to run the Model with a value greater than 1 set to the rainfall-runoff initial state ``'hp'`` leads to the same error.
+        Finally, trying to run the Model with a value greater than 1 set to the rainfall-runoff initial state ``'hp'`` leads to the same error
 
         >>> model.forward_run()
         ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not included in the feasible domain ]0, 1[
@@ -1579,12 +1579,12 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
 
-        Access to a specific structural error mu parameter vector.
+        Access to a specific structural error mu parameter vector
 
         >>> model.get_serr_mu_parameters("mg0")
         array([0., 0., 0.], dtype=float32)
@@ -1592,7 +1592,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown below) but is simpler to use.
 
-        Access the structural error mu parameter keys.
+        Access the structural error mu parameter keys
 
         >>> model.serr_mu_parameters.keys
         array(['mg0', 'mg1'], dtype='<U3')
@@ -1603,7 +1603,7 @@ class Model(object):
         >>> ind
         0
 
-        Slice the ``serr_mu_parameters.values`` array on the last axis.
+        Slice the ``serr_mu_parameters.values`` array on the last axis
 
         >>> model.serr_mu_parameters.values[..., ind]
         array([0., 0., 0.], dtype=float32)
@@ -1639,12 +1639,12 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
 
-        Set a specific value to a structural error mu parameter vector.
+        Set a specific value to a structural error mu parameter vector
 
         >>> model.set_serr_mu_parameters("mg0", 10)
 
@@ -1653,7 +1653,7 @@ class Model(object):
         >>> model.get_serr_mu_parameters("mg0")
         array([10., 10., 10.], dtype=float32)
 
-        Set a vector with a shape equivalent to the structural error mu parameter.
+        Set a vector with a shape equivalent to the structural error mu parameter
 
         Get the structural error mu parameter size (equivalent to the number of gauge ``model.mesh.ng``)
 
@@ -1676,7 +1676,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
 
-        Access the structual error mu parameter keys.
+        Access the structual error mu parameter keys
 
         >>> model.serr_mu_parameters.keys
         array(['mg0', 'mg1'], dtype='<U3')
@@ -1728,7 +1728,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        Access to a specific structural error sigma parameter vector.
+        Access to a specific structural error sigma parameter vector
 
         >>> model.get_serr_sigma_parameters("sg0")
         array([1., 1., 1.], dtype=float32)
@@ -1736,7 +1736,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown below) but is simpler to use.
 
-        Access the structural error sigma parameter keys.
+        Access the structural error sigma parameter keys
 
         >>> model.serr_sigma_parameters.keys
         array(['sg0', 'sg1'], dtype='<U3')
@@ -1747,7 +1747,7 @@ class Model(object):
         >>> ind
         0
 
-        Slice the ``serr_sigma_parameters.values`` array on the last axis.
+        Slice the ``serr_sigma_parameters.values`` array on the last axis
 
         >>> model.serr_sigma_parameters.values[..., ind]
         array([1., 1., 1.], dtype=float32)
@@ -1783,7 +1783,7 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set a specific value to a structural error sigma parameter vector.
+        Set a specific value to a structural error sigma parameter vector
 
         >>> model.set_serr_sigma_parameters("sg0", 2)
 
@@ -1792,7 +1792,7 @@ class Model(object):
         >>> model.get_serr_sigma_parameters("sg0")
         array([2., 2., 2.], dtype=float32)
 
-        Set a vector with a shape equivalent to the structural error sigma parameter.
+        Set a vector with a shape equivalent to the structural error sigma parameter
 
         Get the structural error sigma parameter size (equivalent to the number of gauge ``model.mesh.ng``)
 
@@ -1815,7 +1815,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
 
-        Access the structual error sigma parameter keys.
+        Access the structual error sigma parameter keys
 
         >>> model.serr_sigma_parameters.keys
         array(['sg0', 'sg1'], dtype='<U3')
@@ -1848,7 +1848,7 @@ class Model(object):
         >>> model.set_serr_sigma_parameters("sg0", -1)
         ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1] is not included in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the structural error mu parameter ``'sg0'`` leads to the same error.
+        Finally, trying to run the Model with a negative value set to the structural error mu parameter ``'sg0'`` leads to the same error
 
         >>> model.forward_run()
         ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1] is not included in the feasible domain ]0, inf[
@@ -1887,7 +1887,7 @@ class Model(object):
 
         >>> model.forward_run()
 
-        Access to a specific rainfall-runoff final state grid.
+        Access to a specific rainfall-runoff final state grid
 
         >>> model.get_rr_final_states("hp")
         array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
@@ -1899,7 +1899,7 @@ class Model(object):
         .. note::
             This method is equivalent to directly slicing the ``rr_final_states.values`` array (as shown below) but is simpler to use.
 
-        Access the rainfall-runoff state keys.
+        Access the rainfall-runoff state keys
 
         >>> model.rr_final_states.keys
         array(['hi', 'hp', 'ht', 'hlr'], dtype='<U3')
@@ -1910,7 +1910,7 @@ class Model(object):
         >>> ind
         1
 
-        Slice the ``rr_final_states.values`` array on the last axis.
+        Slice the ``rr_final_states.values`` array on the last axis
 
         >>> model.rr_final_states.values[..., ind]
         array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
@@ -1931,7 +1931,7 @@ class Model(object):
 
         Returns
         -------
-        bounds : `dict`
+        bounds : `dict[str, tuple[float, float]]`
             A dictionary representing the boundary condition for each rainfall-runoff parameter.
 
         Examples
@@ -1961,7 +1961,7 @@ class Model(object):
 
         Returns
         -------
-        bounds : `dict`
+        bounds : `dict[str, tuple[float, float]]`
             A dictionary representing the boundary condition for each rainfall-runoff initial state.
 
         Examples
@@ -1991,7 +1991,7 @@ class Model(object):
 
         Returns
         -------
-        bounds : `dict`
+        bounds : `dict[str, tuple[float, float]]`
             A dictionary representing the boundary condition for each structural error mu parameter.
 
         Examples
@@ -2024,7 +2024,7 @@ class Model(object):
 
         Returns
         -------
-        bounds : `dict`
+        bounds : `dict[str, tuple[float, float]]`
             A dictionary representing the boundary condition for each structural error sigma parameter.
 
         Examples
@@ -2061,7 +2061,7 @@ class Model(object):
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
@@ -2128,7 +2128,7 @@ class Model(object):
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
 
-        The structural error sigma mapping is set to ``'Linear'``.
+        The structural error sigma mapping is set to ``'Linear'``
 
         >>> model.setup.serr_sigma_mapping
         'Linear'
