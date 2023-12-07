@@ -9,6 +9,7 @@ from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (
     _forward_run_doc_appender,
     _smash_forward_run_doc_substitution,
+    _multiple_forward_run_doc_appender,
 )
 
 from smash.core.simulation.run._standardize import (
@@ -29,6 +30,7 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from typing import Any
+    from numpy.typing import NDArray
     from smash.core.model.model import Model
     from smash.factory.samples.samples import Samples
 
@@ -37,22 +39,22 @@ __all__ = ["MultipleForwardRun", "ForwardRun", "forward_run", "multiple_forward_
 
 class MultipleForwardRun:
     """
-    Represents multiple forward run computation result.
+    Represents multiple forward run result.
 
     Attributes
     ----------
-    cost : numpy.ndarray
+    cost : `numpy.ndarray`
         An array of shape *(n,)* representing cost values from *n* simulations.
 
-    q : numpy.ndarray
-        An array of shape *(..., n)* representing simulated discharges from *n* simulations.
+    q : `numpy.ndarray`
+        An array of shape *(ng, ntime_step, n)* representing simulated discharges from *n* simulations.
 
     See Also
     --------
     multiple_forward_run : Run the forward Model with multiple sets of parameters.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, NDArray[np.float32]] | None = None):
         if data is None:
             data = {}
 
@@ -203,64 +205,13 @@ def _forward_run(
         return ForwardRun(ret)
 
 
+@_multiple_forward_run_doc_appender
 def multiple_forward_run(
     model: Model,
     samples: Samples,
-    cost_options: dict | None = None,
-    common_options: dict | None = None,
+    cost_options: dict[str, Any] | None = None,
+    common_options: dict[str, Any] | None = None,
 ) -> MultipleForwardRun:
-    """
-    Run the forward Model with multiple sets of parameters.
-
-    Parameters
-    ----------
-    model : Model
-        Model object.
-
-    samples : Samples
-        The samples created by the `smash.factory.generate_samples` method.
-
-    cost_options, common_options : multiple types
-        Forward run settings. Refer to `smash.forward_run` or `Model.forward_run` for details on these arguments.
-
-    Returns
-    -------
-    mfr : MultipleForwardRun
-        The multiple forward run results represented as a `MultipleForwardRun` object.
-
-    Examples
-    --------
-    >>> import smash
-    >>> from smash.factory import load_dataset
-    >>> from smash.factory import generate_samples
-    >>> setup, mesh = load_dataset("cance")
-    >>> model = smash.Model(setup, mesh)
-
-    Define sampling problem and generate samples:
-
-    >>> problem = {
-    ...            'num_vars': 4,
-    ...            'names': ['cp', 'ct', 'kexc', 'llr'],
-    ...            'bounds': [[1, 2000], [1, 1000], [-20, 5], [1, 1000]]
-    ... }
-    >>> sr = generate_samples(problem, n=5, random_state=11)
-
-    Run Model with multiple sets of parameters:
-
-    >>> mfr = smash.multiple_forward_run(model, samples=sr)
-    </> Multiple Forward Run
-        Forward Run 5/5 (100%)
-
-    Get the cost values through multiple forward runs:
-
-    >>> mfr.cost
-    array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
-
-    See Also
-    --------
-    Samples : Represents the generated samples result.
-    """
-
     args_options = [deepcopy(arg) for arg in [cost_options, common_options]]
 
     args = _standardize_multiple_forward_run_args(model, samples, *args_options)
