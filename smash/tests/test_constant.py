@@ -45,7 +45,16 @@ def test_module_name():
     assert SNOW_MODULE == ["zero", "ssn"]
 
     # % Check hydrological module
-    assert HYDROLOGICAL_MODULE == ["gr4", "gr5", "grd", "loieau", "vic3l"]
+    assert HYDROLOGICAL_MODULE == [
+    "gr4",
+    "gr4_mlp_alg",
+    "gr4_ode",
+    "gr4_mlp_ode",
+    "gr5",
+    "grd",
+    "loieau",
+    "vic3l",
+]
 
     # % Check routing module
     assert ROUTING_MODULE == ["lag0", "lr", "kw"]
@@ -67,6 +76,9 @@ def test_module_parameters():
     # % Check hydrological module rr parameters
     assert list(HYDROLOGICAL_MODULE_RR_PARAMETERS.values()) == [
         ["ci", "cp", "ct", "kexc"],  # % gr4
+        ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_alg
+        ["ci", "cp", "ct", "kexc"],  # % gr4_ode
+        ["ci", "cp", "ct", "kexc"],  # % gr4_mlp_ode
         ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
         ["cp", "ct"],  # % grd
         ["ca", "cc", "kb"],  # % loieau
@@ -76,6 +88,9 @@ def test_module_parameters():
     # % Check hydrological module rr states
     assert list(HYDROLOGICAL_MODULE_RR_STATES.values()) == [
         ["hi", "hp", "ht"],  # % gr4
+        ["hi", "hp", "ht"],  # % gr4_mlp_alg
+        ["hi", "hp", "ht"],  # % gr4_ode
+        ["hi", "hp", "ht"],  # % gr4_mlp_ode
         ["hi", "hp", "ht"],  # % gr5
         ["hp", "ht"],  # % grd
         ["ha", "hc"],  # % loieau

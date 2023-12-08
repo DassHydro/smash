@@ -16,10 +16,13 @@ from smash.core.simulation._standardize import (
 
 from smash._constant import MAPPING
 
+import warnings
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
+    from smash.fcore._mwd_setup import SetupDT
     from smash.factory.samples.samples import Samples
     from smash.util._typing import AnyTuple
 
@@ -54,6 +57,19 @@ def _standardize_bayesian_optimize_mapping(mapping: str) -> str:
     return mapping.lower()
 
 
+def _standardize_optimize_optimizer(
+    mapping: str, optimizer: str, setup: SetupDT
+) -> str:
+    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+
+    if setup.nhl > -1 and optimizer == "sbs":
+        warnings.warn(
+            f"The SBS optimizer is not suitable for the {setup.hydrological_module} module. You may want to use another optimizer"
+        )
+
+    return optimizer
+
+
 def _standardize_optimize_args(
     model: Model,
     mapping: str,
@@ -69,7 +85,7 @@ def _standardize_optimize_args(
 
     mapping = _standardize_simulation_mapping(mapping)
 
-    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+    optimizer = _standardize_optimize_optimizer(mapping, optimizer, model.setup)
 
     optimize_options = _standardize_simulation_optimize_options(
         model, func_name, mapping, optimizer, optimize_options
@@ -121,7 +137,7 @@ def _standardize_multiple_optimize_args(
 
     mapping = _standardize_multiple_optimize_mapping(mapping)
 
-    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+    optimizer = _standardize_optimize_optimizer(mapping, optimizer, model.setup)
 
     optimize_options = _standardize_simulation_optimize_options(
         model, func_name, mapping, optimizer, optimize_options
@@ -164,7 +180,7 @@ def _standardize_bayesian_optimize_args(
 
     mapping = _standardize_bayesian_optimize_mapping(mapping)
 
-    optimizer = _standardize_simulation_optimizer(mapping, optimizer)
+    optimizer = _standardize_optimize_optimizer(mapping, optimizer, model.setup)
 
     optimize_options = _standardize_simulation_optimize_options(
         model, func_name, mapping, optimizer, optimize_options

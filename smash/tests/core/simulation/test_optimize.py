@@ -45,9 +45,13 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 )
 
             else:
+                # Ignore SBS optimizer if the forward model uses NN
+                opt = "lbfgsb" if model.setup.nhl > -1 else None
+
                 instance, ret = smash.optimize(
                     model,
                     mapping=mp,
+                    optimizer=opt,
                     optimize_options={
                         "parameters": parameters,
                         "termination_crit": {"maxiter": 1},
@@ -228,6 +232,13 @@ def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:
     ]
 
     for i, kwargs in enumerate(custom_sets):
+        optimizer = kwargs.get(
+            "optimizer",
+            "sbs" if kwargs.get("mapping", "uniform") == "uniform" else "...",
+        )
+        if model.setup.nhl > -1 and optimizer == "sbs":
+            continue  # ignore SBS optimizer if the forward model uses NN
+
         instance = smash.optimize(model, **kwargs)
 
         qsim = instance.response.q[:].flatten()
