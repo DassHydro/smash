@@ -5,35 +5,42 @@ import os
 import re
 
 REPR_METHOD = """
-    def __repr__(self):
-        ret = [self.__class__.__name__]
-        for attr in dir(self):
-            if attr.startswith("_"):
+def __repr__(self):
+    ret = [self.__class__.__name__]
+    for attr in dir(self):
+        if attr.startswith("_"):
+            continue
+        try:
+            value = getattr(self, attr)
+        except:
+            continue
+        if callable(value):
+            continue
+        elif isinstance(value, f90wrap.runtime.FortranDerivedTypeArray):
+            n = len(value)
+            nrepr = 4
+            if n == 0:
                 continue
-            try:
-                value = getattr(self, attr)
-            except:
-                continue
-            if callable(value):
-                continue
-            elif isinstance(value, f90wrap.runtime.FortranDerivedTypeArray):
-                n = len(value)
-                nrepr = 4
-                if n == 0:
-                    continue
-                else:
-                    repr_value = [value[0].__class__.__name__] * min(n, nrepr)
-                if n > nrepr:
-                    repr_value.insert(2, "...")
-                repr_value = repr(repr_value)
             else:
-                repr_value = repr(value)
-            ret.append(f"    {attr}: {repr_value}")
-        return "\n".join(ret)
+                repr_value = [value[0].__class__.__name__] * min(n, nrepr)
+            if n > nrepr:
+                repr_value.insert(2, "...")
+            repr_value = repr(repr_value)
+        else:
+            repr_value = repr(value)
+        ret.append(f"    {attr}: {repr_value}")
+    return "%(new_line)s".join(ret)
 """
 
 
-def get_pyf90_couple_files(py_mod_names: dict) -> list[tuple]:
+def indent(text: str | None, indents: int = 1) -> str:
+    if not text or not isinstance(text, str):
+        return ""
+    jointext = "".join(["\n"] + ["    "] * indents)
+    return jointext.join(text.split("\n"))
+
+
+def get_pyf90_couple_files(py_mod_names: dict[str, str]) -> list[tuple[str, str]]:
     """
     Get Python / Fortran file pairs from f90wrap
 
@@ -74,7 +81,7 @@ def sed_internal_import(pyf: pathlib.PosixPath):
     os.system(f'sed -i "s/from libfcore/from smash.fcore/g" {pyf}')
 
 
-def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[list]:
+def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
     """
     Get the flagged derived type attributes in Fortran
 
@@ -332,12 +339,20 @@ def sed_repr_method(pyf: pathlib.PosixPath):
     Done by using the unix command sed in place
     """
 
-    method = "\\\t" + REPR_METHOD.strip()
-    method = method.replace("\n", r"\n")
-    method = method.replace('"\\n"', r'"\\n"')
+    n_indents = 1
+
+    # indent start
+    repr_method = "\\\t" * n_indents + REPR_METHOD.strip()
+
+    # indent each new line
+    repr_method = indent(repr_method, indents=n_indents)
+
+    # replace new lines by raw new lines
+    repr_method = repr_method.replace("\n", r"\n")
+    repr_method = repr_method.replace("%(new_line)s", r"\\n")
 
     # Sed command that removes lines between def _str__ and join(ret) and replaces by REPR_METHOD
-    os.system(f"sed -i '/def __str__(self):/,/join(ret)/c{method}' {pyf}")
+    os.system(f"sed -i '/def __str__(self):/,/join(ret)/c{repr_method}' {pyf}")
 
 
 def sed_tab(pyf: pathlib.PosixPath):
