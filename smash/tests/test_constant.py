@@ -46,15 +46,15 @@ def test_module_name():
 
     # % Check hydrological module
     assert HYDROLOGICAL_MODULE == [
-    "gr4",
-    "gr4_mlp_alg",
-    "gr4_ode",
-    "gr4_mlp_ode",
-    "gr5",
-    "grd",
-    "loieau",
-    "vic3l",
-]
+        "gr4",
+        "gr4_mlp_alg",
+        "gr4_ode",
+        "gr4_mlp_ode",
+        "gr5",
+        "grd",
+        "loieau",
+        "vic3l",
+    ]
 
     # % Check routing module
     assert ROUTING_MODULE == ["lag0", "lr", "kw"]
