@@ -10,22 +10,23 @@ import h5py
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from smash.util._typing import FilePath
     from typing import Any
 
 
 __all__ = ["save_mesh", "read_mesh"]
 
 
-def save_mesh(mesh: dict[str, Any], path: str):
+def save_mesh(mesh: dict[str, Any], path: FilePath):
     """
     Save the Model initialization mesh dictionary to HDF5.
 
     Parameters
     ----------
-    mesh : dict
+    mesh : `dict[str, Any]`
         The mesh dictionary to be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file.
 
-    path : str
+    path : `str`
         The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
 
     See Also
@@ -40,7 +41,7 @@ def save_mesh(mesh: dict[str, Any], path: str):
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh to HDF5:
+    Save mesh to HDF5
 
     >>> save_mesh(mesh, "mesh.hdf5")
     """
@@ -53,18 +54,18 @@ def save_mesh(mesh: dict[str, Any], path: str):
         h5.attrs["_save_func"] = "save_mesh"
 
 
-def read_mesh(path: str) -> dict[str, Any]:
+def read_mesh(path: FilePath) -> dict[str, Any]:
     """
     Read the Model initialization mesh dictionary from HDF5.
 
     Parameters
     ----------
-    path : str
+    path : `str`
         The file path.
 
     Returns
     -------
-    mesh : dict
+    mesh : `dict[str, Any]`
         A mesh dictionary loaded from HDF5.
 
     Raises
@@ -86,11 +87,11 @@ def read_mesh(path: str) -> dict[str, Any]:
     >>> mesh
     {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
-    Save mesh to HDF5:
+    Save mesh to HDF5
 
     >>> save_mesh(mesh, "mesh.hdf5")
 
-    Read mesh from HDF5:
+    Read mesh from HDF5
 
     >>> mesh_rld = read_mesh("mesh.hdf5")
     >>> mesh_rld

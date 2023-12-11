@@ -8,13 +8,13 @@ Input/Output
 
 This sub-package provides methods for handling input and output operations related to data objects.
 
-Model
+Setup
 *****
 .. autosummary::
       :toctree: smash/
 
-      save_model
-      read_model
+      save_setup
+      read_setup
 
 Mesh
 ****
@@ -24,10 +24,18 @@ Mesh
       save_mesh
       read_mesh
 
-Setup
+Model
 *****
 .. autosummary::
       :toctree: smash/
 
-      save_setup
-      read_setup
+      save_model
+      read_model
+
+Model Derived Data Types
+************************
+.. autosummary::
+      :toctree: smash/
+
+      save_model_ddt
+      read_model_ddt
