@@ -104,55 +104,56 @@ class Optimize:
 
     Attributes
     ----------
-    time_step : pandas.DatetimeIndex
-        A pandas.DatetimeIndex containing *n* returned time steps.
+    time_step : `pandas.DatetimeIndex`
+        A list of length *n* containing the returned time steps.
 
-    rr_states : list
-        A list of length *n* of Rr_StatesDT for each **time_step**.
+    rr_states : `FortranDerivedTypeArray`
+        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
-    q_domain : numpy.ndarray
+    q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
 
-    iter_cost : numpy.ndarray
+    iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
-    iter_projg : numpy.ndarray
+    iter_projg : `numpy.ndarray`
         An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
 
-    control_vector : numpy.ndarray
+    control_vector : `numpy.ndarray`
         An array of shape *(k,)* representing the control vector at end of optimization.
 
-    net : Net
-        The trained neural network `smash.factory.Net`.
+    net : `Net <smash.factory.Net>`
+        The trained neural network.
 
-    cost : float
+    cost : `float`
         Cost value.
 
-    jobs : float
+    jobs : `float`
         Cost observation component value.
 
-    jreg : float
+    jreg : `float`
         Cost regularization component value.
 
-    lcurve_wjreg : dict
+    lcurve_wjreg : `dict[str, Any]`
         A dictionary containing the wjreg lcurve data. The elements are:
 
-        - 'wjreg_opt' : float
+        wjreg_opt : `float`
             The optimal wjreg value.
 
-        - 'distance' : numpy.ndarray
-            An array of shape *(6,)* representing the L-Curve distance for each optimization cycle (the maximum distance corresponds to the optimal wjreg).
+        distance : `numpy.ndarray`
+            An array of shape *(6,)* representing the L-Curve distance for each optimization cycle
+            (the maximum distance corresponds to the optimal wjreg).
 
-        - 'cost' : numpy.ndarray
+        cost : `numpy.ndarray`
             An array of shape *(6,)* representing the cost values for each optimization cycle.
 
-        - 'jobs' : numpy.ndarray
+        jobs : `numpy.ndarray`
             An array of shape *(6,)* representing the jobs values for each optimization cycle.
 
-        - 'jreg' : numpy.ndarray
+        jreg : `numpy.ndarray`
             An array of shape *(6,)* representing the jreg values for each optimization cycle.
 
-        - 'wjreg' : numpy.ndarray
+        wjreg : `numpy.ndarray`
             An array of shape *(6,)* representing the wjreg values for each optimization cycle.
 
     Notes
@@ -164,7 +165,7 @@ class Optimize:
     smash.optimize : Model assimilation using numerical optimization algorithms.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, Any] | None = None):
         if data is None:
             data = {}
 
@@ -192,42 +193,41 @@ class BayesianOptimize:
 
     Attributes
     ----------
-    time_step : pandas.DatetimeIndex
-        A pandas.DatetimeIndex containing *n* returned time steps.
+    time_step : `pandas.DatetimeIndex`
+        A list of length *n* containing the returned time steps.
 
-    rr_states : list
-        A list of length *n* of Rr_StatesDT for each **time_step**.
+    rr_states : `FortranDerivedTypeArray`
+        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
-    q_domain : numpy.ndarray
+    q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
 
-    iter_cost : numpy.ndarray
+    iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
-    iter_projg : numpy.ndarray
+    iter_projg : `numpy.ndarray`
         An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
 
-    control_vector : numpy.ndarray
+    control_vector : `numpy.ndarray`
         An array of shape *(k,)* representing the control vector at end of optimization.
 
-    cost : float
+    cost : `float`
         Cost value.
 
-    log_lkh : float
+    log_lkh : `float`
         Log likelihood component value.
 
-    log_prior : float
+    log_prior : `float`
         Log prior component value.
 
-    log_h : float
+    log_h : `float`
         Log h component value.
 
-    serr_mu : numpy.ndarray
+    serr_mu : `numpy.ndarray`
         An array of shape *(ng, ntime_step)* representing the mean of structural errors for each gauge and each **time_step**.
 
-    serr_sigma : numpy.ndarray
+    serr_sigma : `numpy.ndarray`
         An array of shape *(ng, ntime_step)* representing the standard deviation of structural errors for each gauge and each **time_step**.
-        sigma
 
     Notes
     -----
@@ -238,7 +238,7 @@ class BayesianOptimize:
     smash.bayesian_optimize : Model bayesian assimilation using numerical optimization algorithms.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, Any] | None = None):
         if data is None:
             data = {}
 

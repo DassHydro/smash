@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-from smash._constant import SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS
-
 from smash.core.simulation._doc import (
     _multiset_estimate_doc_appender,
     _smash_multiset_estimate_doc_substitution,
@@ -34,34 +32,34 @@ class MultisetEstimate:
 
     Attributes
     ----------
-    time_step : pandas.DatetimeIndex
-        A pandas.DatetimeIndex containing *n* returned time steps.
+    time_step : `pandas.DatetimeIndex`
+        A list of length *n* containing the returned time steps.
 
-    rr_states : list
-        A list of length *n* of Rr_StatesDT for each **time_step**.
+    rr_states : `FortranDerivedTypeArray`
+        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
-    q_domain : numpy.ndarray
+    q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
 
-    cost : float
+    cost : `float`
         Cost value.
 
-    jobs : float
+    jobs : `float`
         Cost observation component value.
 
-    lcurve_multiset : dict
+    lcurve_multiset : dict[str, Any]
         A dictionary containing the multiset estimate L-curve data. The elements are:
 
-        alpha : float or numpy.ndarray
+        alpha : `float` or `numpy.ndarray`
             The value of regularization parameter or the list of regularization parameters to be optimized.
 
-        cost : float or numpy.ndarray
+        cost : `float` or `numpy.ndarray`
             The corresponding cost value(s).
 
-        mahal_dist : float or numpy.ndarray
+        mahal_dist : `float` or `numpy.ndarray`
             The corresponding Mahalanobis distance value(s).
 
-        alpha_opt : float
+        alpha_opt : `float`
             The optimal value of the regularization parameter.
 
     Notes
@@ -73,7 +71,7 @@ class MultisetEstimate:
     smash.multiset_estimate : Model assimilation using Bayesian-like estimation on multiple sets of solutions.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, Any] | None = None):
         if data is None:
             data = {}
 

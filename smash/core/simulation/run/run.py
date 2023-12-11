@@ -82,19 +82,19 @@ class ForwardRun:
 
     Attributes
     ----------
-    time_step : pandas.DatetimeIndex
-        A pandas.DatetimeIndex containing *n* returned time steps.
+    time_step : `pandas.DatetimeIndex`
+        A list of length *n* containing the returned time steps.
 
-    rr_states : list
-        A list of length *n* of Rr_StatesDT for each **time_step**.
+    rr_states : `FortranDerivedTypeArray`
+        A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
-    q_domain : numpy.ndarray
+    q_domain : `numpy.ndarray`
         An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
 
-    cost : float
+    cost : `float`
         Cost value.
 
-    jobs : float
+    jobs : `float`
         Cost observation component value.
 
     Notes
@@ -106,7 +106,7 @@ class ForwardRun:
     smash.forward_run : Run the forward Model.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, Any] | None = None):
         if data is None:
             data = {}
 

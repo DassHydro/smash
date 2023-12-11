@@ -11,7 +11,9 @@ from smash.util._doctools import DocAppender, DocSubstitution
 
 # TODO: mapping and optimizer arguments are duplicated between each docstrings.
 # Maybe create intermediate variables to store this with or without ann optimizer.
-# Idem for control_info between bayesian_optimize and optimize
+
+# TODO: store the docstring for each returned variable and then applied it
+# for each optional return object (ForwardRun, Optimize, etc.)
 
 OPTIMIZE_OPTIONS_BASE_DOC = {
     "parameters": (
