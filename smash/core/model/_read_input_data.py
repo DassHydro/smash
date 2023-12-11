@@ -70,9 +70,7 @@ def _get_atmos_files(
     daily_interannual: bool = False,
 ) -> list[str]:
     # Set to drop duplicates after strftime
-    date_range_strftime_access = (
-        set(date_range.strftime(access)) if access else {""}
-    )
+    date_range_strftime_access = set(date_range.strftime(access)) if access else {""}
 
     files = []
     for date_strftime_access in date_range_strftime_access:
