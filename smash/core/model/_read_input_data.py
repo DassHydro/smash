@@ -70,9 +70,7 @@ def _get_atmos_files(
     daily_interannual: bool = False,
 ) -> list[str]:
     # Set to drop duplicates after strftime
-    date_range_strftime_access = (
-        set(date_range.strftime(access)) if access else {""}
-    )
+    date_range_strftime_access = set(date_range.strftime(access)) if access else {""}
 
     files = []
     for date_strftime_access in date_range_strftime_access:
@@ -512,6 +510,14 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.u_descriptor[i] = np.max(
                 input_data.physio_data.descriptor[..., i]
             )
+            # % Check if descriptors are uniform
+            if (
+                input_data.physio_data.l_descriptor[i]
+                == input_data.physio_data.u_descriptor[i]
+            ):
+                raise ValueError(
+                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform optimization"
+                )
 
     if miss:
         warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}")
