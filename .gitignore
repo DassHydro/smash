@@ -43,8 +43,21 @@ coverage.xml
 .pytest_cache/
 cover/
 
-# f2py files
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Fortran module files
+*.mod
+*.smod
+
+# Fortran wrapping files
 .f2py*
+src.*
+f90wrap*.f90
+**/fcore/_m*.py
 
 # Tapenade files
 tapenade/*.msg*
@@ -53,3 +66,6 @@ tapenade/*~
 
 # Temporary files
 tmp*
+
+# Documentation files
+doc/source/api_reference/**/smash
