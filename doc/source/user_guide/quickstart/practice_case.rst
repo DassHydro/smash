@@ -34,14 +34,9 @@ Imports
     
 .. warning::
 
-    - The wrapping of Fortran code in Python requires the use of the 
-    `f90wrap <https://github.com/jameskermode/f90wrap>`__ package, which
-     itself uses `f2py <https://numpy.org/doc/stable/f2py/>`__. Thus, the
-     `NumPy <https://numpy.org/>`__ package is essential in the management 
-     of arguments. A knowledge of this package is advised in the use of `smash`.
+    - The wrapping of Fortran code in Python requires the use of the `f90wrap <https://github.com/jameskermode/f90wrap>`__ package, which itself uses `f2py <https://numpy.org/doc/stable/f2py/>`__. Thus, the `NumPy <https://numpy.org/>`__ package is essential in the management of arguments. A knowledge of this package is advised in the use of `smash`.
     
-    - The `Matplotlib <https://matplotlib.org/>`__ package is the visualization 
-    package used in the `smash` documentation but any tool can be used.
+    - The `Matplotlib <https://matplotlib.org/>`__ package is the visualization package used in the `smash` documentation but any tool can be used.
     
 ---------------------   
 Model object creation
@@ -79,8 +74,7 @@ A minimal ``setup`` configuration is:
     }
     
     
-- The default model is ``gr4``. The hydrological model can be selected from : ["gr4", "gr5", "grd", "loieau", "vic3l"],
-For more details on the models, refer to ...
+- The default model is ``gr4``. The hydrological model can be selected from : ["gr4", "gr5", "grd", "loieau", "vic3l"], for more details on the models, refer to ...
 
 - If the user wants to take account observed discharges, the option ``read_qobs`` must be activated, and the path of the discharge data ``qobs_directory`` filled. 
 
@@ -127,9 +121,7 @@ Once ``setup`` and ``mesh`` are filled in, a :class:`.Model` object can be creat
 
 .. note::
     
-    - Each key and associated values that can be passed into the ``mesh`` 
-    dictionary are detailed in the User Guide section: 
-    :ref:`Model initialization <user_guide.others.model_initialization.mesh>`.
+    - Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.others.model_initialization.mesh>`.
     
 -------------
 Viewing Model
