@@ -23,15 +23,15 @@ class PrecipitationIndices:
 
     Attributes
     ----------
-    std : numpy.ndarray
+    std : `numpy.ndarray`
         The precipitation spatial standard deviation.
-    d1 : numpy.ndarray
+    d1 : `numpy.ndarray`
         The first scaled moment :cite:p:`zocatelli_2011`.
-    d2 : numpy.ndarray
+    d2 : `numpy.ndarray`
         The second scaled moment :cite:p:`zocatelli_2011`.
-    vg : numpy.ndarray
+    vg : `numpy.ndarray`
         The vertical gap :cite:p:`emmanuel_2015`.
-    hg : numpy.ndarray
+    hg : `numpy.ndarray`
         The horizontal gap :cite:p:`emmanuel_2015`.
 
     See Also
@@ -60,35 +60,37 @@ class PrecipitationIndices:
         else:
             return self.__class__.__name__ + "()"
 
-    def to_numpy(self, axis=0):
+    def to_numpy(self, axis: int = 0):
         """
-        Convert the `PrecipitationIndices` object to a numpy.ndarray.
+        Convert the `PrecipitationIndices` object to a `numpy.ndarray`.
 
         The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
-        based on the names of the precipitation indices (d1, d2, hg, std, vg).
+        based on the names of the precipitation indices (``'d1'``, ``'d2'``, ``'hg'``, ``'std'``, ``'vg'``).
 
         Parameters
         ----------
-        axis : int, default 0
+        axis : `int`, default 0
             The axis along which the precipitation arrays will be joined.
 
         Returns
         -------
-        res : numpy.ndarray
-            The `PrecipitationIndices` object as a numpy.ndarray.
+        res : `numpy.ndarray`
+            It returns the `PrecipitationIndices` object as a `numpy.ndarray`.
 
         Examples
         --------
-        >>> import smash
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
-        >>> prcpind = smash.precipitation_indices(model)
 
-        Convert the result to a numpy.ndarray:
+        Compute precipitation indices
 
-        >>> prcpind_tonumpy = prcpind.to_numpy(axis=-1)
-        >>> prcpind_tonumpy
+        >>> prcp_ind = smash.precipitation_indices(model)
+
+        Convert the result to a `numpy.ndarray`
+
+        >>> prcp_ind_np = prcp_ind.to_numpy(axis=-1)
+        >>> prcp_ind_np
         array([[[nan, nan, nan, nan, nan],
                 [nan, nan, nan, nan, nan],
                 [nan, nan, nan, nan, nan],
@@ -97,8 +99,20 @@ class PrecipitationIndices:
                 [nan, nan, nan, nan, nan],
                 [nan, nan, nan, nan, nan]]], dtype=float32)
 
-        >>> prcpind_tonumpy.shape
+        >>> prcp_ind_np.shape
         (3, 1440, 5)
+
+        Access a specific precipitation indice
+
+        >>> prcp_ind_keys = sorted(["std", "d1", "d2", "vg", "hg"])
+        >>> ind = prcp_ind_keys.index("d1")
+        >>> ind
+        0
+
+        >>> prcp_ind_np[..., ind]
+        array([[nan, nan, nan, ..., nan, nan, nan],
+               [nan, nan, nan, ..., nan, nan, nan],
+               [nan, nan, nan, ..., nan, nan, nan]], dtype=float32)
         """
 
         keys = sorted({"std", "d1", "d2", "vg", "hg"})
@@ -110,35 +124,40 @@ def precipitation_indices(
     model: Model,
 ) -> PrecipitationIndices:
     """
-    Compute precipitation indices of the Model object.
+    Compute precipitation indices of Model.
 
     5 precipitation indices are calculated for each gauge and each time step:
 
-    - ``std`` : The precipitation spatial standard deviation.
-    - ``d1`` : The first scaled moment, :cite:p:`zocatelli_2011`.
-    - ``d2`` : The second scaled moment, :cite:p:`zocatelli_2011`.
-    - ``vg`` : The vertical gap :cite:p:`emmanuel_2015`.
-    - ``hg`` : The horizontal gap :cite:p:`emmanuel_2015`.
+    - ``'std'`` : the precipitation spatial standard deviation
+    - ``'d1'`` : the first scaled moment, :cite:p:`zocatelli_2011`
+    - ``'d2'`` : the second scaled moment, :cite:p:`zocatelli_2011`
+    - ``'vg'`` : the vertical gap :cite:p:`emmanuel_2015`
+    - ``'hg'`` : the horizontal gap :cite:p:`emmanuel_2015`
 
     .. hint::
-        See the (TODO: Fill) for more.
+        See a detailed explanation on the precipitation indices usage in the (TODO FC: link user guide) section.
+
+    Parameters
+    ----------
+    model : `Model <smash.Model>`
+        Primary data structure of the hydrological model `smash`.
 
     Returns
     -------
-    res : PrecipitationIndices
-        The precipitation indices results represented as a `PrecipitationIndices` object.
+    precipitation_indices : `PrecipitationIndices <smash.PrecipitationIndices>`
+        It returns an object containing the results of the precipitation indices computation.
+
+    See Also
+    --------
+    PrecipitationIndices : Represents precipitation indices computation result.
 
     Examples
     --------
-    Examples
-    --------
-    >>> import smash
     >>> from smash.factory import load_dataset
-    >>> import numpy as np
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Compute precipitation indices:
+    Compute precipitation indices
 
     >>> prcp_ind = smash.precipitation_indices(model)
     >>> prcp_ind
@@ -148,23 +167,47 @@ def precipitation_indices(
     std: <class 'numpy.ndarray'>
     vg: <class 'numpy.ndarray'>
 
-    Each attribute is a numpy.ndarray of shape (number of gauge, number of time step):
+    Each attribute is a `numpy.ndarray` of shape *(ng, ntime_step)* (i.e. number of gauges, number of time steps)
 
-    >>> prcp_ind.d1.shape
-    (3, 1440)
+    Access a specific precipitation indice
 
-    NaN value means that there is no precipitation at this specific gauge and time step. Using numpy.where to find the index where precipitation indices were calculated on the most downstream gauge for the first scaled moment:
+    >>> prcp_ind.d1
+    array([[nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan],
+           [nan, nan, nan, ..., nan, nan, nan]], dtype=float32)
 
-    >>> ind = np.argwhere(~np.isnan(prcp_ind.d1[0,:])).squeeze()
+    .. note::
+        NaN value means that there is no precipitation at this specific gauge and time step.
 
-    Viewing the first scaled moment on the first time step where rainfall occured on the most downstream gauge:
+    Access a specific precipitation indice for a single gauge
 
-    >>> prcp_ind.d1[0, ind[0]]
-    1.209175
+    >>> ind = np.argwhere(model.mesh.code == "V3524010").item()
+    >>> ind
+    0
 
-    See Also
-    --------
-    PrecipitationIndices : Represents precipitation indices computation result.
+    >>> d1g = prcp_ind.d1[ind, :]
+    >>> d1g
+    array([nan, nan, nan, ..., nan, nan, nan], dtype=float32)
+
+    Access the time steps where rainfall occured for a specific precipitation indice and a single gauge
+
+    >>> ind = np.argwhere(~np.isnan(d1g))
+    >>> ind
+    array([[  11],
+           [  12],
+           ...
+           [1410],
+           [1411]])
+
+    >>> d1gts = d1g[ind]
+    >>> d1gts
+    array([[1.2091751 ],
+           [0.83805513],
+           ...
+           [0.89658403],
+           [0.48382276]], dtype=float32)
+    >>> d1gts[0].item(), d1gts[1].item()
+    (1.2091751098632812, 0.8380551338195801)
     """
 
     # % Initialise result

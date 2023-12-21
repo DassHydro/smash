@@ -20,15 +20,16 @@ from smash.core.signal_analysis.signatures._standardize import (
 
 from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
 
+import numpy as np
+import pandas as pd
+import warnings
+
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.util._typing import ListLike
-
-import numpy as np
-import pandas as pd
-import warnings
+    from typing import Any
 
 
 __all__ = ["Signatures", "signatures"]
@@ -40,21 +41,21 @@ class Signatures:
 
     Attributes
     ----------
-    cont : dict
+    cont : `pandas.DataFrame`
         A dataframe representing observed or simulated continuous signatures.
         The column names consist of the catchment code and studied signature names.
 
-    event : dict
+    event : `pandas.DataFrame`
         A dataframe representing observed or simulated flood event signatures.
-        The column names consist of the catchment code, the season that event occurrs, the beginning/end of each event and studied signature names.
+        The column names consist of the catchment code, the season that event occurrs,
+        the beginning/end of each event and studied signature names.
 
     See Also
     --------
-    smash.signatures : Compute simulated or observed hydrological signatures of the Model.
-
+    smash.signatures : Compute simulated or observed hydrological signatures of Model.
     """
 
-    def __init__(self, data: dict | None = None):
+    def __init__(self, data: dict[str, pd.DataFrame] | None = None):
         if data is None:
             data = {}
 
@@ -78,43 +79,46 @@ class Signatures:
 
 def signatures(
     model: Model,
-    sign: str | ListLike | None = None,
-    event_seg: dict | None = None,
+    sign: str | ListLike[str] | None = None,
+    event_seg: dict[str, Any] | None = None,
     domain: str = "obs",
 ):
     """
-    Compute simulated or observed hydrological signatures of the Model.
+    Compute simulated or observed hydrological signatures of Model.
 
     .. hint::
-        See the (TODO: Fill) for more.
+        See a detailed explanation on the signatures usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
-    model : Model
-        Model object.
+    model : `Model <smash.Model>`
+        Primary data structure of the hydrological model `smash`.
 
-    sign : str, list of str or None, default None
+    sign : `str`, `list[str, ...]` or None, default None
         Define signature(s) to compute. Should be one of
 
-        - 'Crc', 'Crchf', 'Crclf', 'Crch2r', 'Cfp2', 'Cfp10', 'Cfp50', 'Cfp90' (continuous signatures)
-        - 'Eff', 'Ebf', 'Erc', 'Erchf', 'Erclf', 'Erch2r', 'Elt', 'Epf' (flood event signatures)
+        - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'`` (continuous signatures-based error metrics)
+        - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'`` (flood event signatures-based error metrics)
 
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
 
-    event_seg : dict or None, default None
-        A dictionary of event segmentation options when calculating flood event signatures. The keys are 'peak_quant', 'max_duration', and 'by'.
+    event_seg : `dict[str, Any]` or None, default None
+        A dictionary of event segmentation options when calculating flood event signatures.
+        The keys are ``'peak_quant'``, ``'max_duration'``, and ``'by'``.
 
         .. note::
-            If not given, default values will be set for all elements. If a specific element is not given in the dictionary, a default value will be set for that element. See `smash.hydrograph_segmentation` for more.
+            If not given, default values will be set for all elements.
+            If a specific element is not given in the dictionary, a default value will be set for that element.
+            See `smash.hydrograph_segmentation` for more.
 
-    domain : str, default 'obs'
-        Compute observed (obs) or simulated (sim) signatures.
+    domain : `str`, default 'obs'
+        Compute observed (``'obs'``) or simulated (``'sim'``) signatures.
 
     Returns
     -------
-    res : Signatures
-        The signatures computation results represented as a `Signatures` object.
+    signatures : `Signatures <smash.Signatures>`
+        It returns an object containing the results of the signatures computation.
 
     See Also
     --------
@@ -122,29 +126,64 @@ def signatures(
 
     Examples
     --------
-    >>> import smash
     >>> from smash.factory import load_dataset
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Run the forward Model:
+    Run the forward Model
 
     >>> model.forward_run()
 
-    Compute simulated signatures:
+    Compute simulated signatures
 
     >>> sign = smash.signatures(model, domain="sim")
     >>> sign
      cont: <class 'pandas.core.frame.DataFrame'>
     event: <class 'pandas.core.frame.DataFrame'>
 
-    >>> sign.event  # simulated flood event signatures
+    Access simulated flood event signatures as a `pandas.DataFrame`
+
+    >>> sign.event
            code  season               start  ...    Erch2r  Elt        Epf
     0  V3524010  autumn 2014-11-03 03:00:00  ...  0.214772  3.0  85.736832
     1  V3515010  autumn 2014-11-03 10:00:00  ...  0.202139  0.0  17.256138
     2  V3517010  autumn 2014-11-03 08:00:00  ...  0.187440  1.0   4.770674
-
     [3 rows x 12 columns]
+
+    Access simulated continuous signatures as a `pandas.DataFrame`
+
+    >>> sign.cont
+           code       Crc     Crchf  ...     Cfp10     Cfp50      Cfp90
+    0  V3524010  0.316813  0.058713  ...  0.013092  5.895140  39.439846
+    1  V3515010  0.251831  0.048244  ...  0.001120  1.072775   9.016475
+    2  V3517010  0.251551  0.048258  ...  0.000020  0.242764   2.433439
+    [3 rows x 9 columns]
+
+    Access specific simulated continuous signature for each gauge
+
+    >>> sign.cont["Crc"]
+    0    0.516206
+    1    0.509181s
+    2    0.514302
+    Name: Crc, dtype: float64
+
+    Access all simulated continuous signatures for a single gauge
+
+    >>> sign.cont[sign.cont["code"] == "V3524010"]
+           code       Crc     Crchf  ...   Cfp10   Cfp50      Cfp90
+    0  V3524010  0.516206  0.191349  ...  1.1709  3.3225  42.631798
+    [1 rows x 9 columns]
+
+    Access specific simulated continuous signatures for a single gauge
+
+    >>> sign.cont["Crc"][sign.cont["code"] == "V3524010"]
+    0    0.516206
+    Name: Crc, dtype: float64
+
+    Use the `item <pandas.Series.item>` method to return the underlying data as a Python scalar
+
+    >>> sign.cont["Crc"][sign.cont["code"] == "V3524010"].item()
+    0.5162064433097839
     """
 
     cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)
