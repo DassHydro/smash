@@ -4,19 +4,25 @@ import yaml
 import os
 import errno
 
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from smash.util._typing import FilePath
+    from typing import Any
+
 __all__ = ["save_setup", "read_setup"]
 
 
-def save_setup(setup: dict, path: str):
+def save_setup(setup: dict[str, Any], path: FilePath):
     """
     Save the Model initialization setup dictionary to YAML.
 
     Parameters
     ----------
-    setup : dict
+    setup : `dict[str, Any]`
         The setup dictionary to be saved to `YAML <https://yaml.org/spec/1.2.2/>`__ file.
 
-    path : str
+    path : `str`
         The file path. If the path not end with ``.yaml``, the extension is automatically added to the file path.
 
     See Also
@@ -31,7 +37,7 @@ def save_setup(setup: dict, path: str):
     >>> setup
     {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup to YAML:
+    Save setup to YAML
 
     >>> save_setup(setup, "setup.yaml")
     """
@@ -43,19 +49,24 @@ def save_setup(setup: dict, path: str):
         yaml.dump(setup, f, default_flow_style=False)
 
 
-def read_setup(path: str) -> dict:
+def read_setup(path: FilePath) -> dict[str, Any]:
     """
     Read the Model initialization setup dictionary from YAML.
 
     Parameters
     ----------
-    path : str
+    path : `str`
         The file path.
 
     Returns
     -------
-    setup : dict
+    setup : dict[str, Any]
         A setup dictionary loaded from YAML.
+
+    Raises
+    ------
+    FileNotFoundError:
+        If file not found.
 
     See Also
     --------
@@ -69,11 +80,11 @@ def read_setup(path: str) -> dict:
     >>> setup
     {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
-    Save setup to YAML:
+    Save setup to YAML
 
     >>> save_setup(setup, "setup.yaml")
 
-    Read setup from YAML (the reloaded setup keys will be alphabetically sorted):
+    Read setup from YAML (the reloaded setup keys will be alphabetically sorted)
 
     >>> setup_rld = read_setup("setup.yaml")
     >>> setup_rld

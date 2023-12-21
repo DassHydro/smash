@@ -26,28 +26,28 @@ from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing import Any
+    from smash.util._typing import FilePath
     from smash.core.model.model import Model
 
 __all__ = ["save_model", "read_model"]
 
 
-def save_model(model: Model, path: str):
+def save_model(model: Model, path: FilePath):
     """
     Save Model object to HDF5.
 
     Parameters
     ----------
-    model : Model
+    model : `Model <smash.Model>`
         The Model object to be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file.
 
-    path : str
+    path : `str`
         The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
 
     See Also
     --------
     read_model: Read Model object from HDF5.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
@@ -65,7 +65,7 @@ def save_model(model: Model, path: str):
     >>> model.setup.hydrological_module, model.setup.routing_module
     ('gr4', 'lr')
 
-    Save Model to HDF5:
+    Save Model to HDF5
 
     >>> save_model(model, "model.hdf5")
     """
@@ -77,16 +77,19 @@ def save_model(model: Model, path: str):
         h5.attrs["_save_func"] = "save_model"
 
 
-def read_model(path: str) -> Model:
+def read_model(path: FilePath) -> Model:
     """
     Read Model object from HDF5.
 
-    path : str
+
+    Parameters
+    ----------
+    path : `str`
         The file path.
 
     Returns
     -------
-    model : Model
+    model : `Model <smash.Model>`
         A Model object loaded from HDF5.
 
     Raises
@@ -99,7 +102,7 @@ def read_model(path: str) -> Model:
     See Also
     --------
     save_model: Save Model object to HDF5.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
@@ -117,11 +120,11 @@ def read_model(path: str) -> Model:
     >>> model.setup.hydrological_module, model.setup.routing_module
     ('gr4', 'lr')
 
-    Save Model to HDF5:
+    Save Model to HDF5
 
     >>> save_model(model, "model.hdf5")
 
-    Read Model from HDF5:
+    Read Model from HDF5
 
     >>> model_rld = read_model("model.hdf5")
     >>> model_rld
