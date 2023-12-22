@@ -13,85 +13,83 @@ __all__ = ["load_dataset"]
 DATASET_PATH = os.path.dirname(os.path.realpath(__file__))
 
 
+# TODO: Maybe remove the dataset from the GitHub repository and fetch the data anywhere else (cloud, zenodo, etc)
+# It requires internet connexion
 def load_dataset(name: str):
     """
     Load dataset.
 
     A function allowing user to load different kinds of data or pre-filled files for a first use of the `smash` package.
 
-    .. hint::
-        See the :ref:`user_guide` cases section for more.
-
     Parameters
     ----------
-    name : str
+    name : `str`
         The dataset name. Should be one of
 
-        - 'flwdir' : The absolute path to a 1km² France flow directions in `smash` convention.
-        - 'cance' : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment at **hourly** timestep.
-        - 'lez' : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at **daily** timestep.
-        - 'france' : Setup and mesh dictionaries used to initialize the Model object on the France at **hourly** timestep.
+        - ``'flwdir'`` : The absolute path to a 1km² France flow directions in `smash` convention.
+        - ``'cance'`` : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment at ``hourly`` timestep.
+        - ``'lez'`` : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at ``daily`` timestep.
+        - ``'france'`` : Setup and mesh dictionaries used to initialize the Model object on the France at ``hourly`` timestep.
 
     Returns
     -------
-    dataset : str or tuple
+    dataset : `str` or `tuple[dict, dict]`
         Depending on the dataset choosen
 
-        - 'flwdir' : Returns a file path.
-        - 'cance' : Returns a tuple of dictionaries (setup and mesh).
-        - 'lez' : Returns a tuple of dictionaries (setup and mesh).
-        - 'france' : Returns a tuple of dictionaries (setup and mesh).
+        - ``'flwdir'`` : Returns a file path.
+        - ``'cance'`` : Returns a tuple of dictionaries (setup and mesh).
+        - ``'lez'`` : Returns a tuple of dictionaries (setup and mesh).
+        - ``'france'`` : Returns a tuple of dictionaries (setup and mesh).
 
     Examples
     --------
-
     >>> from smash.factory import load_dataset
 
-    Load ``flwdir`` dataset (the path is updated for each user):
+    Load ``'flwdir'`` dataset (the path is updated for each user):
 
     >>> flwdir = load_dataset("flwdir")
     >>> flwdir
-    '/home/fcolleoni/anaconda3/envs/smash-dev/lib/python3.8/site-packages/smash/dataset/France_flwdir.tif'
+    '/home/fcolleoni/Documents/git/smash/smash/factory/dataset/France_flwdir.tif'
 
-    Load ``cance`` dataset as a tuple of dictionaries:
+    Load ``'cance'`` dataset as a tuple of dictionaries:
 
     >>> cance = load_dataset("cance")
     >>> cance
-    ({'structure': 'gr4-lr', 'dt': 3600, ...}, {'nac': 383, 'ncol': 28, ...})
+    ({'hydrological_module': 'gr4', 'routing_module': 'lr', ...}, {'nac': 383, 'ncol': 28, ...})
 
     Or each dictionary in a different variable:
 
     >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr4-lr', 'dt': 3600, ...}
+    {'hydrological_module': 'gr4', 'routing_module': 'lr', ...}
     >>> mesh
     {'nac': 383, 'ncol': 28, ...}
 
-    Load ``lez`` dataset as a tuple of dictionaries:
+    Load ``'lez'`` dataset as a tuple of dictionaries:
 
     >>> lez = load_dataset("lez")
     >>> lez
-    ({'structure': 'gr4-lr', 'dt': 86400, ...}, {'nac': 172, 'ncol': 14, ...})
+    ({'hydrological_module': 'gr4', 'routing_module': 'lr', ...}, {'nac': 172, 'ncol': 14, ...})
 
     Or each dictionary in a different variable:
 
     >>> setup, mesh = load_dataset("lez")
     >>> setup
-    {'structure': 'gr4-lr', 'dt': 86400, ...}
+    {'hydrological_module': 'gr4', 'routing_module': 'lr', ...}
     >>> mesh
     {'nac': 172, 'ncol': 14, ...}
 
-    Load ``france`` dataset as a tuple of dictionaries:
+    Load ``'france'`` dataset as a tuple of dictionaries:
 
     >>> france = load_dataset("france")
     >>> france
-    ({'structure': 'gr4-lr', 'dt': 3600, ...}, {'nac': 906044, 'ncol': 1150, ...})
+    ({'hydrological_module': 'gr4', 'routing_module': 'lr', ...}, {'nac': 906044, 'ncol': 1150, ...})
 
     Or each dictionary in a different variable:
 
     >>> setup, mesh = load_dataset("france")
     >>> setup
-    {'structure': 'gr4-lr', 'dt': 3600, ...}
+    {'hydrological_module': 'gr4', 'routing_module': 'lr', ...}
     >>> mesh
     {'nac': 906044, 'ncol': 1150, ...}
     """

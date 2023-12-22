@@ -11,47 +11,48 @@ import os
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from smash.util._typing import FilePath
     from typing import Any
     from smash.core.model.model import Model
 
 __all__ = ["save_model_ddt", "read_model_ddt"]
 
 
-def save_model_ddt(model: Model, path: str):
+def save_model_ddt(model: Model, path: FilePath):
     """
     Save some derived data types of the Model object to HDF5.
 
-    This method is considerably lighter than `smash.save_model` method that saves the entire Model object.
+    This method is considerably lighter than `smash.io.save_model` method that saves the entire Model object.
     However, it is not capable of reconstructing the Model object from the saved data file.
 
     By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file:
 
     - ``snow_module``, ``hydrological_module``, ``routing_module``, ``serr_mu_mapping``,
-      ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from `Model.setup`
-    - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``, ``area`` from `Model.mesh`
-    - ``q`` from `Model.response_data`
-    - ``descriptor`` from `Model.physio_data`
-    - ``mean_prcp``, ``mean_pet``, ``mean_snow``, ``mean_temp`` from `Model.atmos_data` (``mean_snow`` and ``mean_temp``
+      ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from `Model.setup <smash.Model.setup>`
+    - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``, ``area`` from `Model.mesh <smash.Model.mesh>`
+    - ``q`` from `Model.response_data <smash.Model.response_data>`
+    - ``descriptor`` from `Model.physio_data <smash.Model.physio_data>`
+    - ``mean_prcp``, ``mean_pet``, ``mean_snow``, ``mean_temp`` from `Model.atmos_data <smash.Model.atmos_data>` (``mean_snow`` and ``mean_temp``
       are only stored if a snow module has been selected)
-    - ``keys``, ``values`` from `Model.rr_parameters`
-    - ``keys``, ``values`` from `Model.rr_initial_states`
-    - ``keys``, ``values`` from `Model.serr_mu_parameters`
-    - ``keys``, ``values`` from `Model.serr_sigma_parameters`
+    - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
+    - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
+    - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
+    - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
     - ``q`` from `Model.response`
-    - ``keys``, ``values`` from `Model.rr_final_states`
+    - ``keys``, ``values`` from `Model.rr_final_states <smash.Model.rr_final_states>`
 
     Parameters
     ----------
-    model : Model
+    model : `Model <smash.Model>`
         The Model object to save derived data types as a HDF5 file.
 
-    path : str
+    path : `str`
         The file path.
 
     See Also
     --------
     read_model_ddt: Read derived data types of the Model object from HDF5.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
@@ -79,43 +80,34 @@ def save_model_ddt(model: Model, path: str):
         h5.attrs["_save_func"] = "save_model_ddt"
 
 
-def read_model_ddt(path: str) -> dict[dict[str, Any]]:
+def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
     """
-    Save some derived data types of the Model object to HDF5.
+    Read some derived data types of the Model object from HDF5.
 
-    This method is considerably lighter than `smash.save_model` method that saves the entire Model object.
-    However, it is not capable of reconstructing the Model object from the saved data file.
-
-    By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file:
-
-    - ``snow_module``, ``hydrological_module``, ``routing_module``, ``serr_mu_mapping``,
-      ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from `Model.setup`
-    - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``, ``area`` from `Model.mesh`
-    - ``q`` from `Model.response_data`
-    - ``descriptor`` from `Model.physio_data`
-    - ``mean_prcp``, ``mean_pet``, ``mean_snow``, ``mean_temp`` from `Model.atmos_data` (``mean_snow`` and ``mean_temp``
-      are only stored if a snow module has been selected)
-    - ``keys``, ``values`` from `Model.rr_parameters`
-    - ``keys``, ``values`` from `Model.rr_initial_states`
-    - ``keys``, ``values`` from `Model.serr_mu_parameters`
-    - ``keys``, ``values`` from `Model.serr_sigma_parameters`
-    - ``q`` from `Model.response`
-    - ``keys``, ``values`` from `Model.rr_final_states`
+    This method does not reconstruct the Model object because certain information has not been saved from the `smash.io.save_model_ddt` method
+    in order to have light memory backup. This method returns a dictionary whose organisation is similar to the Model object.
 
     Parameters
     ----------
-    path : str
+    path : `str`
         The file path.
 
     Returns
     -------
-    model_ddt : dict
+    model_ddt : `dict[str, dict[str, Any]]`
         A dictionary with derived data types loaded from HDF5.
+
+    Raises
+    ------
+    FileNotFoundError:
+        If file not found.
+    ReadHDF5MethodError:
+        If file not created with `save_model_ddt`.
 
     See Also
     --------
     save_model_ddt: Read derived data types of the Model object from HDF5.
-    Model: Primary data structure of the hydrological model `smash`.
+    smash.Model: Primary data structure of the hydrological model `smash`.
 
     Examples
     --------
@@ -141,8 +133,9 @@ def read_model_ddt(path: str) -> dict[dict[str, Any]]:
     {'descriptor_name': array(['slope', 'dd'], dtype='<U5'), 'dt': 3600.0, 'end_time': '2014-11-14 00:00', 'hydrological_module': 'gr4',
     'routing_module': 'lr', 'serr_mu_mapping': 'Zero', 'serr_sigma_mapping': 'Linear', 'snow_module': 'zero', 'start_time': '2014-09-15 00:00'}
 
-    >>> Access to rr_parameters keys
-    model_ddt["rr_parameters"]["keys"]
+    Access to rainfall-runoff parameter keys
+
+    >>> model_ddt["rr_parameters"]["keys"]
     array(['ci', 'cp', 'ct', 'kexc', 'llr'], dtype='<U4')
     """
 

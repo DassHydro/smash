@@ -28,47 +28,46 @@ def hydrograph_segmentation(
     by: str = "obs",
 ):
     """
-    Compute segmentation information of flood events over all catchments of the Model.
+    Compute segmentation information of flood events over all catchments of Model.
 
     .. hint::
-        See the (TODO: Fill) for more.
+        See a detailed explanation on the hydrograph segmentation usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
-    model : Model
-        Model object.
+    model : `Model <smash.Model>`
+        Primary data structure of the hydrological model `smash`.
 
-    peak_quant : float, default 0.995
-        Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge timeseries.
+    peak_quant : `float`, default 0.995
+        Events will be selected if their discharge peaks exceed the **peak_quant**-quantile of the observed discharge time series.
 
-    max_duration : int or float, default 240
+    max_duration : `float`, default 240
         The expected maximum duration of an event (in hours). If multiple events are detected, their duration may exceed this value.
 
-    by : str, default 'obs'
-        Compute segmentation information based on observed (obs) or simulated (sim) discharges.
-        A simulation (forward run or optimization) is required to obtain the simulated discharge when **by** is 'sim'.
+    by : `str`, default 'obs'
+        Compute segmentation information based on observed (``'obs'``) or simulated (``'sim'``) discharges.
+        A simulation (forward run or optimization) is required to obtain the simulated discharge when **by** is ``'sim'``.
 
     Returns
     -------
-    res : pandas.DataFrame
+    segmentation : `pandas.DataFrame`
         Flood events information obtained from segmentation algorithm.
         The dataframe has 6 columns which are
 
-        - 'code' : the catchment code.
-        - 'start' : the beginning of event.
-        - 'end' : the end of event.
-        - 'maxrainfall' : the moment that the maximum precipation is observed.
-        - 'flood' : the moment that the maximum discharge is observed.
-        - 'season' : the season that event occurrs.
+        - ``'code'`` : the catchment code.
+        - ``'start'`` : the beginning of event.
+        - ``'end'`` : the end of event.
+        - ``'maxrainfall'`` : the moment that the maximum precipation is observed.
+        - ``'flood'`` : the moment that the maximum discharge is observed.
+        - ``'season'`` : the season that event occurrs.
 
     Examples
     --------
-    >>> import smash
     >>> from smash.factory import load_dataset
     >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
-    Perform segmentation algorithm and display flood events information:
+    Perform segmentation algorithm and display flood events information
 
     >>> hydro_seg = smash.hydrograph_segmentation(model)
     >>> hydro_seg
@@ -76,8 +75,35 @@ def hydrograph_segmentation(
     0  V3524010 2014-11-03 03:00:00 ... 2014-11-04 19:00:00  autumn
     1  V3515010 2014-11-03 10:00:00 ... 2014-11-04 20:00:00  autumn
     2  V3517010 2014-11-03 08:00:00 ... 2014-11-04 16:00:00  autumn
-
     [3 rows x 6 columns]
+
+    Access all flood events information for a single gauge
+
+    >>> hydro_seg[hydro_seg["code"] == "V3524010"]
+           code               start  ...               flood  season
+    0  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
+    [1 rows x 6 columns]
+
+    Lower the **peak_quant** to potentially retrieve more than one event
+
+    >>> hydro_seg = smash.hydrograph_segmentation(model, peak_quant=0.99)
+    >>> hydro_seg
+           code               start  ...               flood  season
+    0  V3524010 2014-10-10 04:00:00  ... 2014-10-13 02:00:00  autumn
+    1  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
+    2  V3515010 2014-10-10 04:00:00  ... 2014-10-13 00:00:00  autumn
+    3  V3515010 2014-11-03 10:00:00  ... 2014-11-04 20:00:00  autumn
+    4  V3517010 2014-10-09 15:00:00  ... 2014-10-10 23:00:00  autumn
+    5  V3517010 2014-11-03 08:00:00  ... 2014-11-04 16:00:00  autumn
+    [6 rows x 6 columns]
+
+    Once again, access all flood events information for a single gauge
+
+    >>> hydro_seg[hydro_seg["code"] == "V3524010"]
+           code               start  ...               flood  season
+    0  V3524010 2014-10-10 04:00:00  ... 2014-10-13 02:00:00  autumn
+    1  V3524010 2014-11-03 03:00:00  ... 2014-11-04 19:00:00  autumn
+    [2 rows x 6 columns]
     """
 
     peak_quant, max_duration, by = _standardize_hydrograph_segmentation_args(

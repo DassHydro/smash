@@ -17,6 +17,7 @@ import numpy as np
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from typing import Any
     from smash.util._typing import FilePath, ListLike, Numeric, AlphaNumeric
     from osgeo import gdal
 
@@ -25,49 +26,51 @@ __all__ = ["generate_mesh"]
 
 def generate_mesh(
     flwdir_path: FilePath,
-    bbox: ListLike | None = None,
-    x: Numeric | ListLike | None = None,
-    y: Numeric | ListLike | None = None,
-    area: Numeric | ListLike | None = None,
-    code: str | ListLike | None = None,
+    bbox: ListLike[float] | None = None,
+    x: Numeric | ListLike[float] | None = None,
+    y: Numeric | ListLike[float] | None = None,
+    area: Numeric | ListLike[float] | None = None,
+    code: str | ListLike[str] | None = None,
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
-) -> dict:
+) -> dict[str, Any]:
     """
     Automatic mesh generation.
 
     .. hint::
-        See the (TODO: Fill) for more.
+        See a detailed explanation on the generate mesh usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
-    flwdir_path : str
-        Path to the flow directions file. The file will be opened with `gdal <https://gdal.org/api/python/osgeo.gdal.html>`__.
+    flwdir_path : `str`
+        Path to the flow directions file. The flow direction convention is the following:
 
-    bbox : sequence or None, default None
-        Bounding box with the following convention:
+        .. image:: ../../../_static/flwdir_convention.png
+            :width: 100
+            :align: center
 
-        ``(xmin, xmax, ymin, ymax)``.
-        The bounding box values must respect the CRS of the flow directions file.
+    bbox : `list[float, float, float, float]` or None, default None
+        Bounding box with the following convention, ``(xmin, xmax, ymin, ymax)``.
+        The bounding box values must respect the ``CRS`` of the flow directions file.
 
         .. note::
             If not given, **x**, **y** and **area** must be filled in.
 
-    x : float, sequence or None, default None
+    x : `float`, `list[float, ...]` or None, default None
         The x-coordinate(s) of the catchment outlet(s) to mesh.
-        The **x** value(s) must respect the CRS of the flow directions file.
-        The **x** size must be equal to **y** and area.
+        The **x** value(s) must respect the ``CRS`` of the flow directions file.
+        The **x** size must be equal to **y** and **area** size.
 
-    y : float, sequence or None, default None
+    y : `float`, `list[float, ...]` or None, default None
         The y-coordinate(s) of the catchment outlet(s) to mesh.
-        The **y** value(s) must respect the CRS of the flow directions file.
-        The **y** size must be equal to **x** and **area**.
+        The **y** value(s) must respect the ``CRS`` of the flow directions file.
+        The **y** size must be equal to **x** and **area** size.
 
-    area : float, sequence or None, default None
-        The area of the catchment(s) to mesh in m².
-        The **area** size must be equal to **x** and **y**.
+    area : `float`, `list[float, ...]` or None, default None
+        The area of the catchment(s) to mesh in ``m²``.
+        The **area** size must be equal to **x** and **y** size.
 
-    code : str, sequence or None, default None
+    code : `str`, list[str, ...] or None, default None
         The code of the catchment(s) to mesh.
         The **code** size must be equal to **x**, **y** and **area**.
         In case of bouding box meshing, the **code** argument is not used.
@@ -75,13 +78,12 @@ def generate_mesh(
         .. note::
             If not given, the default code is:
 
-            ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges.
+            ``['_c0', '_c1', ..., '_cn-1']`` with :math:`n`, the number of gauges (i.e. the size of **x**)
 
-    max_depth : int, default 1
+    max_depth : `int`, default 1
         The maximum depth accepted by the algorithm to find the catchment outlet.
-        A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in:
-
-        ``(row - 1, row, row + 1, col - 1, col, col + 1)``, the coordinates that minimize the relative error between
+        A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in
+        (``row - 1``, ``row``, ``row + 1``; ``col - 1``, ``col``, ``col + 1``), the coordinates that minimize the relative error between
         the given catchment area and the modeled catchment area calculated from the flow directions file.
         This can be generalized to :math:`n`.
 
@@ -89,16 +91,103 @@ def generate_mesh(
             :align: center
             :width: 350
 
-    epsg : str, int or None, default None
-        The EPSG value of the flow directions file. By default, if the projection is well
+    epsg : `str`, `int` or None, default None
+        The ``EPSG`` value of the flow directions file. By default, if the projection is well
         defined in the flow directions file. It is not necessary to provide the value of
-        the EPSG. On the other hand, if the projection is not well defined in the flow directions file
-        (i.e. in ASCII file). The **epsg** argument must be filled in.
+        the ``EPSG``. On the other hand, if the projection is not well defined in the flow directions file
+        (i.e. in ``ASCII`` file). The **epsg** argument must be filled in.
 
     Returns
     -------
-    mesh : dict
-        A mesh dictionary that can be used to initialize the `smash.Model` object.
+    mesh : dict[str, Any]
+        Model initialization mesh dictionary. The elements are:
+
+        xres : `float`
+            X cell size. The unit depends on the projection (meter or degree)
+
+        yres : `float`
+            Y cell size. The unit depends on the projection (meter or degree)
+
+        xmin : `float`
+            X minimum value. The unit depends on the projection (meter or degree)
+
+        ymax : `float`
+            Y maximum value. The unit depends on the projection (meter or degree)
+
+        nrow : `int`
+            Number of rows
+
+        ncol : `int`
+            Number of columns
+
+        dx : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing X cell size.
+            If the projection unit is in degree, the value of ``dx`` is approximated in meter.
+
+        dy : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing Y cell size.
+            If the projection unit is in degree, the value of ``dy`` is approximated in meter.
+
+        flwdir : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing flow direction.
+
+        flwdst : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing flow distance.
+            It corresponds to the distance in meter from each cell to the most downstream gauge.
+            If there are multiple non-nested downstream gauges, the flow distance are computed for each
+            gauge.
+
+        flwacc : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing flow accumulation. The unit is the square meter.
+
+        npar : `int`
+            Number of partition. A partition delimits a set of independent cells on the drainage network. The first
+            partition represents all the most upstream cells and the last partition the gauge(s).
+            It is possible to loop in parallel over all the cells in the same partition.
+
+        ncpar : `numpy.ndarray`
+            An array of shape *(npar,)* containing the number of cells per partition.
+
+        cscpar : `numpy.ndarray`
+            An array of shape *(npar,)* containing the cumulative sum of cells per partition.
+
+        cpar_to_rowcol : `numpy.ndarray`
+            An array of shape *(nrow*ncol, 2)* containing the mapping from the sorted partition cells to row, col indices.
+
+        flwpar : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing the flow partitions. Values range from 1 to ``npar``.
+
+        nac : `int`
+            Number of active cells. A domain cell is considered active if it contributes to the discharge at the gauge
+            if gauge coordinates are entered (i.e. **x**, **y**) else the whole bouding box is considered active.
+
+        active_cell : `numpy.ndarray`
+            An array of shape *(nrow, ncol)* containing a mask of active cells.
+
+            - ``0``: Inactive cell
+            - ``1``: Active cell
+
+        ng : `int`
+            Number of gauge.
+
+        gauge_pos : `numpy.ndarray`
+            An array of shape *(ng, 2)* containing the row, col indices of each gauge.
+
+        code : `numpy.ndarray`
+            An array of shape *(ng,)* containing the code of each gauge.
+            The code is an alias enabling the user to identify the gauges in the mesh.
+
+        area : `numpy.ndarray`
+            An array of shape *(ng,)* containing the ``real`` observed draining area for each gauge.
+
+        area_dln : `numpy.ndarray`
+            An array of shape *(ng,)* containing the ``delineated`` draining area from the flow direction for each gauge.
+            It is the relative error between ``area`` and ``area_dln`` which is minimized when trying to find the gauge coordinated
+            on the flow direction file.
+
+        .. note::
+            The following variables, ``flwdst``, ``gauge_pos``, ``code``, ``area`` and ``area_dln``
+            are only returned if gauge coordinates are entered (i.e. **x**, **y**) and not just a bouding box (i.e. **bbox**).
 
     See Also
     --------
@@ -107,19 +196,46 @@ def generate_mesh(
     Examples
     --------
     >>> from smash.factory import load_dataset, generate_mesh
+
+    Retrieve a path to a flow direction file. A pre-processed file is available in the `smash` package (the path is updated for each user).
+
     >>> flwdir = load_dataset("flwdir")
+    flwdir
+
+    Generate a mesh from gauge coordinates. The following coordinates used are those of the ``Cance`` catchment
+
     >>> mesh = generate_mesh(
-    ... flwdir,
-    ... x=[840_261, 826_553, 828_269],
-    ... y=[6_457_807, 6_467_115, 6_469_198],
-    ... area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
-    ... code=["V3524010", "V3515010", "V3517010"],
-    ... )
+        flwdir_path=flwdir,
+        x=[840_261, 826_553, 828_269],
+        y=[6_457_807, 6_467_115, 6_469_198],
+        area=[381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
+        code=["V3524010", "V3515010", "V3517010"],
+    )
     >>> mesh.keys()
-    dict_keys(['xres', 'yres', 'xmin', 'ymax', 'nrow', 'ncol',
-               'dx', 'dy', 'flwdir', 'flwdst', 'flwacc', 'nac',
-               'active_cell', 'path', 'ng', 'gauge_pos', 'code',
-               'area', 'area_dln'])
+    dict_keys(['xres', 'yres', 'xmin', 'ymax', 'nrow', 'ncol', 'dx', 'dy', 'flwdir',
+    'flwdst', 'flwacc', 'npar', 'ncpar', 'cscpar', 'cpar_to_rowcol', 'flwpar', 'nac',
+    'active_cell', 'ng', 'gauge_pos', 'code', 'area', 'area_dln'])
+
+    Access a specific value in the mesh dictionary
+
+    >>> mesh["xres"], mesh["nac"], mesh["ng"]
+    (1000.0, 383, 3)
+
+    Generate a mesh from a bounding box ``(xmin, xmax, ymin, ymax)``. The following bouding box used correspond to the France boundaries
+
+    >>> mesh = generate_mesh(
+        flwdir_path=flwdir,
+        bbox=[100_000, 1_250_000, 6_050_000, 7_125_000],
+    )
+    >>> mesh.keys()
+    dict_keys(['xres', 'yres', 'xmin', 'ymax', 'nrow', 'ncol', 'dx', 'dy', 'flwdir',
+    'flwacc', 'npar', 'ncpar', 'cscpar', 'cpar_to_rowcol', 'flwpar', 'nac', 'active_cell',
+    'ng'])
+
+    Access a specific value in the mesh dictionary
+
+    >>> mesh["xres"], mesh["nac"], mesh["ng"]
+    (1000.0, 906044, 0)
     """
 
     args = _standardize_generate_mesh_args(

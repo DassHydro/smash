@@ -510,6 +510,14 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.u_descriptor[i] = np.max(
                 input_data.physio_data.descriptor[..., i]
             )
+            # % Check if descriptors are uniform
+            if (
+                input_data.physio_data.l_descriptor[i]
+                == input_data.physio_data.u_descriptor[i]
+            ):
+                raise ValueError(
+                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform optimization"
+                )
 
     if miss:
         warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}")

@@ -99,7 +99,7 @@ if TYPE_CHECKING:
 __all__ = ["Model"]
 
 
-class Model(object):
+class Model:
 
     """
     Primary data structure of the hydrological model `smash`.
@@ -291,7 +291,7 @@ class Model(object):
         Model initialization mesh dictionary.
 
         .. note::
-            The elements are described in the documentation for the function used to generate a mesh `smash.factory.generate_mesh`
+            The elements are described in the `smash.factory.generate_mesh` method.
 
     See Also
     --------
