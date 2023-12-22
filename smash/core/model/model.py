@@ -1027,7 +1027,7 @@ class Model(object):
     @property
     def nn_parameters(self):
         """
-        Get neural network parameters for the actual state-space structure of the Model.
+        Model neural network parameters.
 
         Examples
         --------
