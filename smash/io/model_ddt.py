@@ -1,12 +1,20 @@
 from __future__ import annotations
 
+from smash.fcore._mwd_nn_parameters import NN_Parameters_LayerDT
+
 from smash._constant import MODEL_DDT_IO_ATTR_KEYS
 from smash.io._error import ReadHDF5MethodError
-from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
+from smash.io.handler._hdf5_handler import (
+    _dump_dict,
+    _dump_fortran_derived_type_array,
+    _load_hdf5_to_dict,
+)
 
 import h5py
+from f90wrap.runtime import FortranDerivedTypeArray
 import errno
 import os
+from collections import defaultdict
 
 from typing import TYPE_CHECKING
 
@@ -27,7 +35,7 @@ def save_model_ddt(model: Model, path: FilePath):
 
     By default, the following data are stored into the `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file:
 
-    - ``snow_module``, ``hydrological_module``, ``routing_module``, ``serr_mu_mapping``,
+    - ``snow_module``, ``hydrological_module``, ``routing_module``, ``hidden_neuron``, ``serr_mu_mapping``,
       ``serr_sigma_mapping``, ``start_time``, ``end_time``, ``dt``, ``descriptor_name`` from `Model.setup <smash.Model.setup>`
     - ``xres``, ``yres``, ``xmin``, ``ymax``, ``dx``, ``dy``, ``active_cell``, ``gauge_pos``, ``code``, ``area`` from `Model.mesh <smash.Model.mesh>`
     - ``q`` from `Model.response_data <smash.Model.response_data>`
@@ -36,6 +44,7 @@ def save_model_ddt(model: Model, path: FilePath):
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
+    - ``layers``, ``neurons`` from `Model.nn_parameters <smash.Model.nn_parameters>` (depending on hydrological module)
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
     - ``q`` from `Model.response <smash.Model.response>`
@@ -69,13 +78,26 @@ def save_model_ddt(model: Model, path: FilePath):
     if not path.endswith(".hdf5"):
         path += ".hdf5"
 
-    model_ddt = {}
+    model_ddt = defaultdict(dict)
     with h5py.File(path, "w") as h5:
         for attr, keys in MODEL_DDT_IO_ATTR_KEYS.items():
-            try:
-                model_ddt[attr] = {k: getattr(getattr(model, attr), k) for k in keys}
-            except:
-                continue
+            for k in keys:
+                try:
+                    value = getattr(getattr(model, attr), k)
+                    if isinstance(value, FortranDerivedTypeArray):
+                        # % NN_Parameters_LayerDT case
+                        if isinstance(value[0], NN_Parameters_LayerDT):
+                            model_ddt[attr][k] = {
+                                f"{i + 1}": {
+                                    "weight": getattr(v, "weight"),
+                                    "bias": getattr(v, "bias"),
+                                }
+                                for i, v in enumerate(value.items())
+                            }
+                    else:
+                        model_ddt[attr][k] = value
+                except:
+                    continue
         _dump_dict("model_ddt", model_ddt, h5)
         h5.attrs["_save_func"] = "save_model_ddt"
 
@@ -124,17 +146,17 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
 
     >>> model_ddt = read_model_ddt("model_ddt.hdf5")
     >>> model_ddt.keys()
-    dict_keys(['mesh', 'physio_data', 'response', 'response_data', 'rr_final_states',
-    'rr_initial_states', 'rr_parameters', 'serr_mu_parameters', 'serr_sigma_parameters',
-    'setup'])
+    dict_keys(['atmos_data', 'mesh', 'nn_parameters', 'physio_data', 'response',
+    'response_data', 'rr_final_states', 'rr_initial_states', 'rr_parameters',
+    'serr_mu_parameters', 'serr_sigma_parameters', 'setup'])
 
     Access to setup variables
 
     >>> model_ddt["setup"]
-    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'), 'dt': 3600.0,
-    'end_time': '2014-11-14 00:00', 'hydrological_module': 'gr4', 'routing_module': 'lr',
-    'serr_mu_mapping': 'Zero', 'serr_sigma_mapping': 'Linear', 'snow_module': 'zero',
-    'start_time': '2014-09-15 00:00'}
+    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'),
+    'hidden_neuron': array([], dtype=int32), 'dt': 3600.0, 'end_time': '2014-11-14 00:00',
+    'hydrological_module': 'gr4', 'routing_module': 'lr', 'serr_mu_mapping': 'Zero',
+    'serr_sigma_mapping': 'Linear', 'snow_module': 'zero', 'start_time': '2014-09-15 00:00'}
 
     Access to rainfall-runoff parameter keys
 

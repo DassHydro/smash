@@ -135,14 +135,10 @@ def _dump_fortran_derived_type_array(
 
     # % NN_Parameters_LayerDT case
     elif isinstance(fdta[0], NN_Parameters_LayerDT):
-        attr_arr = {}
-
-        for i, fdt in enumerate(fdta.items()):
-            attr_arr[f"{i + 1}"] = {
-                "weight": getattr(fdt, "weight"),
-                "bias": getattr(fdt, "bias"),
-            }
-
+        attr_arr = {
+            f"{i + 1}": {"weight": getattr(fdt, "weight"), "bias": getattr(fdt, "bias")}
+            for i, fdt in enumerate(fdta.items())
+        }
         _dump_dict(name, attr_arr, h5)
 
     # % Should be unreachable

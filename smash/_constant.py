@@ -524,6 +524,7 @@ DEFAULT_MODEL_SETUP = {
     "snow_module": "zero",
     "hydrological_module": "gr4",
     "routing_module": "lr",
+    "hidden_neuron": 16,
     "serr_mu_mapping": "Zero",
     "serr_sigma_mapping": "Linear",
     "dt": 3_600,
@@ -558,7 +559,6 @@ DEFAULT_MODEL_SETUP = {
     "descriptor_format": "tif",
     "descriptor_directory": None,
     "descriptor_name": None,
-    "hidden_neuron": 16,
 }
 
 
@@ -893,13 +893,13 @@ MODEL_DDT_IO_ATTR_KEYS = {
         "snow_module",
         "hydrological_module",
         "routing_module",
+        "hidden_neuron",
         "serr_mu_mapping",
         "serr_sigma_mapping",
         "start_time",
         "end_time",
         "dt",
         "descriptor_name",
-        "hidden_neuron",
     ],
     "mesh": [
         "xres",
@@ -918,6 +918,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
     "atmos_data": ["mean_prcp", "mean_pet", "mean_snow", "mean_temp"],
     "rr_parameters": ["keys", "values"],
     "rr_initial_states": ["keys", "values"],
+    "nn_parameters": ["layers", "neurons"],
     "serr_mu_parameters": ["keys", "values"],
     "serr_sigma_parameters": ["keys", "values"],
     "response": ["q"],

@@ -12,6 +12,7 @@
 !%          ``snow_module``            Snow module
 !%          ``hydrological_module``    Hydrological module
 !%          ``routing_module``         Routing module
+!%          ``hidden_neuron``          Number of neurons in hidden layers
 !%          ``serr_mu_mapping``        Mapping for structural error model
 !%          ``serr_sigma_mapping``     Mapping for structural error model
 !%          ``dt``                     Solver time step        [s]
@@ -46,7 +47,6 @@
 !%          ``descriptor_format``      Descriptor maps format
 !%          ``descriptor_directory``   Descriptor maps directory
 !%          ``descriptor_name``        Descriptor maps names
-!%          ``hidden_neuron``          Number of neurons in hidden layers
 !%          ``structure``              Structure combaining all modules
 !%          ``snow_module_present``    Presence of snow module
 !%          ``ntime_step``             Number of time steps
@@ -79,6 +79,8 @@ module mwd_setup
         character(lchar) :: snow_module = "..." !$F90W char
         character(lchar) :: hydrological_module = "..." !$F90W char
         character(lchar) :: routing_module = "..."!$F90W char
+
+        integer, allocatable, dimension(:) :: hidden_neuron
 
         character(lchar) :: serr_mu_mapping = "..." !$F90W char
         character(lchar) :: serr_sigma_mapping = "..." !$F90W char
@@ -125,7 +127,6 @@ module mwd_setup
         character(lchar) :: descriptor_format = "..." !$F90W char
         character(lchar) :: descriptor_directory = "..." !$F90W char
         character(20), allocatable, dimension(:) :: descriptor_name !$F90W char-array
-        integer, allocatable, dimension(:) :: hidden_neuron
 
         ! Post processed variables
         character(lchar) :: structure = "..." !$F90W char
