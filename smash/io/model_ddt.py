@@ -38,7 +38,7 @@ def save_model_ddt(model: Model, path: FilePath):
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
-    - ``q`` from `Model.response`
+    - ``q`` from `Model.response <smash.Model.response>`
     - ``keys``, ``values`` from `Model.rr_final_states <smash.Model.rr_final_states>`
 
     Parameters
