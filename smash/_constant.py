@@ -667,7 +667,9 @@ PROBLEM_KEYS = ["num_vars", "names", "bounds"]
 ### SIMULATION ###
 ##################
 
-MAPPING = ["uniform", "distributed", "multi-linear", "multi-polynomial", "ann"]
+REGIONAL_MAPPING = ["multi-linear", "multi-polynomial", "ann"]
+
+MAPPING = ["uniform", "distributed"] + REGIONAL_MAPPING
 
 F90_OPTIMIZER = ["sbs", "lbfgsb"]
 

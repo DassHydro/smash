@@ -16,6 +16,7 @@ from smash._constant import (
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
     MAPPING,
+    REGIONAL_MAPPING,
     MAPPING_OPTIMIZER,
     PY_OPTIMIZER_CLASS,
     PY_OPTIMIZER,
@@ -306,18 +307,6 @@ def _standardize_simulation_optimize_options_descriptor(
 
     for prmt in desc_linked_parameters:
         descriptor.setdefault(prmt, model.setup.descriptor_name)
-
-    # % Check that descriptors are not uniform
-    for i, desc in enumerate(model.setup.descriptor_name):
-        arr = model.physio_data.descriptor[..., i]
-        if np.all(arr == arr[0, 0]):
-            prmt_err = []
-            for key, value in descriptor.items():
-                if desc in value:
-                    prmt_err.append(key)
-            raise ValueError(
-                f"Spatially uniform descriptor '{desc}' found for parameter(s) {prmt_err} in descriptor optimize_options. Must be removed to perform optimization"
-            )
 
     return descriptor
 
@@ -1190,6 +1179,12 @@ def _standardize_simulation_optimize_options_finalize(
 ) -> dict:
     optimize_options["mapping"] = mapping
     optimize_options["optimizer"] = optimizer
+
+    # % Check if decriptors are not found for regionalization mappings
+    if model.setup.nd == 0 and mapping in REGIONAL_MAPPING:
+        raise ValueError(
+            f"Physiographic descriptors are required for optimization with {mapping} mapping"
+        )
 
     descriptor_present = "descriptor" in optimize_options.keys()
 
