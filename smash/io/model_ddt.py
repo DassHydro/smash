@@ -38,7 +38,7 @@ def save_model_ddt(model: Model, path: FilePath):
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
-    - ``q`` from `Model.response`
+    - ``q`` from `Model.response <smash.Model.response>`
     - ``keys``, ``values`` from `Model.rr_final_states <smash.Model.rr_final_states>`
 
     Parameters
@@ -57,8 +57,8 @@ def save_model_ddt(model: Model, path: FilePath):
     Examples
     --------
     >>> from smash.factory import load_dataset
-    >>> from smash.io import save_model_ddt, read_model_ddt
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> from smash.io import save_model_ddt
+    >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
     Save some derived data types of the Model object to HDF5
@@ -113,7 +113,7 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
     --------
     >>> from smash.factory import load_dataset
     >>> from smash.io import save_model_ddt, read_model_ddt
-    >>> setup, mesh = smash.load_dataset("cance")
+    >>> setup, mesh = load_dataset("cance")
     >>> model = smash.Model(setup, mesh)
 
     Save some derived data types of the Model object to HDF5
@@ -124,14 +124,17 @@ def read_model_ddt(path: FilePath) -> dict[str, dict[str, Any]]:
 
     >>> model_ddt = read_model_ddt("model_ddt.hdf5")
     >>> model_ddt.keys()
-    dict_keys(['mesh', 'physio_data', 'response', 'response_data', 'rr_final_states', 'rr_initial_states',
-    'rr_parameters', 'serr_mu_parameters', 'serr_sigma_parameters', 'setup'])
+    dict_keys(['mesh', 'physio_data', 'response', 'response_data', 'rr_final_states',
+    'rr_initial_states', 'rr_parameters', 'serr_mu_parameters', 'serr_sigma_parameters',
+    'setup'])
 
     Access to setup variables
 
     >>> model_ddt["setup"]
-    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'), 'dt': 3600.0, 'end_time': '2014-11-14 00:00', 'hydrological_module': 'gr4',
-    'routing_module': 'lr', 'serr_mu_mapping': 'Zero', 'serr_sigma_mapping': 'Linear', 'snow_module': 'zero', 'start_time': '2014-09-15 00:00'}
+    {'descriptor_name': array(['slope', 'dd'], dtype='<U5'), 'dt': 3600.0,
+    'end_time': '2014-11-14 00:00', 'hydrological_module': 'gr4', 'routing_module': 'lr',
+    'serr_mu_mapping': 'Zero', 'serr_sigma_mapping': 'Linear', 'snow_module': 'zero',
+    'start_time': '2014-09-15 00:00'}
 
     Access to rainfall-runoff parameter keys
 
