@@ -119,6 +119,9 @@ class Model:
             Name of hydrological module. Should be one of:
 
             - ``'gr4'`` (TODO FC: link Math/Num)
+            - ``'gr4_mlp_alg'`` (TODO TH: link Math/Num)
+            - ``'gr4_ode'`` (TODO TH: link Math/Num)
+            - ``'gr4_mlp_ode'`` (TODO TH: link Math/Num)
             - ``'gr5'`` (TODO FC: link Math/Num)
             - ``'grd'`` (TODO FC: link Math/Num)
             - ``'loieau'`` (TODO FC: link Math/Num)
@@ -130,6 +133,9 @@ class Model:
             - ``'lag0'`` (TODO FC: link Math/Num)
             - ``'lr'`` (TODO FC: link Math/Num)
             - ``'kw'`` (TODO FC: link Math/Num)
+
+        hidden_neuron : `int` or `list[int, ...]`, default 16
+            Number of neurons in hidden layer(s) of the neural network, if used (depending on **hydrological_module**), in the forward hydrological model.
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of structural error mu mapping. Should be one of:
