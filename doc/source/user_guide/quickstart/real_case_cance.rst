@@ -53,7 +53,7 @@ A minimal ``setup`` configuration is:
 
 - ``end_time``: the end of the simulation.
 
-In this example, we give the observed discharges `qobs`, the potential evapotranspiration (PET) chronicle `pet`, and the precipitations `prcp`. For example, to take account observed discharges, the option ``read_qobs`` must be activated, and the path of the discharge data ``qobs_directory`` filled. 
+In this example, we give the observed discharges `qobs`, the potential evapotranspiration (PET) chronicle `pet`, and the precipitations `prcp`. For example, to take account observed discharges, the option ``read_qobs`` must be activated, and the path of the discharge data ``qobs_directory`` filled with the path to the data. 
 
 .. note::
     The pixel resolution of imported dataset is 1km². These imported dataset `qobs`, `pet`, `prpc` must be on the same grid of resolution.    
