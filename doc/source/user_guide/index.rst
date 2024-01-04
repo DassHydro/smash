@@ -11,6 +11,6 @@ Quickstart
 **********
 .. toctree::
     :maxdepth: 1
-
-    quickstart/practice_case
+    
     quickstart/real_case_cance
+    quickstart/real_case_france
