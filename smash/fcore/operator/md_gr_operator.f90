@@ -24,7 +24,6 @@ module md_gr_operator
 
 contains
 
-    !% TODO comment
     subroutine gr_interception(prcp, pet, ci, hi, pn, en)
 
         implicit none

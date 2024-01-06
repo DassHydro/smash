@@ -1,4 +1,3 @@
-! TODO BAYESIAN: CHECK BEN
 ! external library updated to work with Tapenade and wrapped
 
 module mwd_bayesian_tools

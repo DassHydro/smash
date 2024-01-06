@@ -29,8 +29,6 @@ module mwd_u_response_data
     type U_Response_DataDT
 
         real(sp), dimension(:, :), allocatable :: q_stdev
-        ! TODO BR
-        ! Add other uncertainty variables
 
     end type U_Response_DataDT
 

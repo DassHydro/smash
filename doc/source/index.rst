@@ -80,7 +80,7 @@ smash documentation
             :color: muted 
             :click-parent:
 
-            To the math / num documentation
+            To the math / num doc
 
 .. toctree::
    :maxdepth: 3

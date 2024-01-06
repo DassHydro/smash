@@ -1,11 +1,11 @@
-commit 9a4882f6a6f58b3f021a4c21114088c68f5850b0
-Merge: 7108962 323cf61
+commit 8abe71c58cd5bebbc1b69d8eb36226e9d249569a
+Merge: 273d82a b385dec
 Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Mon Nov 20 12:52:15 2023 +0100
+Date:   Wed Jan 3 11:27:14 2024 +0100
 
-    Merge pull request #100 from DassHydro/enc-parallel-forward-run
+    Merge pull request #120 from DassHydro/maint-update-corporate-logo-color
     
-    ENC: Add parallel forward run
+    MAINT: Update the color of the corporate logo
 
 TEST NAME                                                 |STATUS
 bbox_mesh.active_cell                                     |NON MODIFIED
@@ -121,24 +121,24 @@ forward_run.zero-loieau-lr.rr_states.ha                   |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hc                   |NON MODIFIED
 forward_run.zero-loieau-lr.rr_states.hlr                  |NON MODIFIED
 forward_run.zero-loieau-lr.sim_q                          |NON MODIFIED
-forward_run.zero-vic3l-kw.cost                            |NON MODIFIED
-forward_run.zero-vic3l-kw.jobs                            |NON MODIFIED
+forward_run.zero-vic3l-kw.cost                            |MODIFIED
+forward_run.zero-vic3l-kw.jobs                            |MODIFIED
 forward_run.zero-vic3l-kw.q_domain                        |NON MODIFIED
 forward_run.zero-vic3l-kw.rr_states.hbsl                  |NON MODIFIED
 forward_run.zero-vic3l-kw.rr_states.hcl                   |NON MODIFIED
 forward_run.zero-vic3l-kw.rr_states.hmsl                  |NON MODIFIED
 forward_run.zero-vic3l-kw.rr_states.husl                  |NON MODIFIED
-forward_run.zero-vic3l-kw.sim_q                           |NON MODIFIED
-forward_run.zero-vic3l-lag0.cost                          |NON MODIFIED
-forward_run.zero-vic3l-lag0.jobs                          |NON MODIFIED
+forward_run.zero-vic3l-kw.sim_q                           |MODIFIED
+forward_run.zero-vic3l-lag0.cost                          |MODIFIED
+forward_run.zero-vic3l-lag0.jobs                          |MODIFIED
 forward_run.zero-vic3l-lag0.q_domain                      |NON MODIFIED
 forward_run.zero-vic3l-lag0.rr_states.hbsl                |NON MODIFIED
 forward_run.zero-vic3l-lag0.rr_states.hcl                 |NON MODIFIED
 forward_run.zero-vic3l-lag0.rr_states.hmsl                |NON MODIFIED
 forward_run.zero-vic3l-lag0.rr_states.husl                |NON MODIFIED
 forward_run.zero-vic3l-lag0.sim_q                         |NON MODIFIED
-forward_run.zero-vic3l-lr.cost                            |NON MODIFIED
-forward_run.zero-vic3l-lr.jobs                            |NON MODIFIED
+forward_run.zero-vic3l-lr.cost                            |MODIFIED
+forward_run.zero-vic3l-lr.jobs                            |MODIFIED
 forward_run.zero-vic3l-lr.q_domain                        |NON MODIFIED
 forward_run.zero-vic3l-lr.rr_states.hbsl                  |NON MODIFIED
 forward_run.zero-vic3l-lr.rr_states.hcl                   |NON MODIFIED
@@ -181,38 +181,38 @@ metrics.mse                                               |NON MODIFIED
 metrics.nnse                                              |NON MODIFIED
 metrics.nse                                               |NON MODIFIED
 metrics.rmse                                              |NON MODIFIED
-model_ddt_io.mesh.active_cell                             |ADDED
-model_ddt_io.mesh.area                                    |ADDED
-model_ddt_io.mesh.code                                    |ADDED
-model_ddt_io.mesh.dx                                      |ADDED
-model_ddt_io.mesh.dy                                      |ADDED
-model_ddt_io.mesh.gauge_pos                               |ADDED
-model_ddt_io.mesh.xmin                                    |ADDED
-model_ddt_io.mesh.xres                                    |ADDED
-model_ddt_io.mesh.ymax                                    |ADDED
-model_ddt_io.mesh.yres                                    |ADDED
-model_ddt_io.physio_data.descriptor                       |ADDED
-model_ddt_io.response.q                                   |ADDED
-model_ddt_io.response_data.q                              |ADDED
-model_ddt_io.rr_final_states.keys                         |ADDED
-model_ddt_io.rr_final_states.values                       |ADDED
-model_ddt_io.rr_initial_states.keys                       |ADDED
-model_ddt_io.rr_initial_states.values                     |ADDED
-model_ddt_io.rr_parameters.keys                           |ADDED
-model_ddt_io.rr_parameters.values                         |ADDED
-model_ddt_io.serr_mu_parameters.keys                      |ADDED
-model_ddt_io.serr_mu_parameters.values                    |ADDED
-model_ddt_io.serr_sigma_parameters.keys                   |ADDED
-model_ddt_io.serr_sigma_parameters.values                 |ADDED
-model_ddt_io.setup.descriptor_name                        |ADDED
-model_ddt_io.setup.dt                                     |ADDED
-model_ddt_io.setup.end_time                               |ADDED
-model_ddt_io.setup.hydrological_module                    |ADDED
-model_ddt_io.setup.routing_module                         |ADDED
-model_ddt_io.setup.serr_mu_mapping                        |ADDED
-model_ddt_io.setup.serr_sigma_mapping                     |ADDED
-model_ddt_io.setup.snow_module                            |ADDED
-model_ddt_io.setup.start_time                             |ADDED
+model_ddt_io.mesh.active_cell                             |NON MODIFIED
+model_ddt_io.mesh.area                                    |NON MODIFIED
+model_ddt_io.mesh.code                                    |NON MODIFIED
+model_ddt_io.mesh.dx                                      |NON MODIFIED
+model_ddt_io.mesh.dy                                      |NON MODIFIED
+model_ddt_io.mesh.gauge_pos                               |NON MODIFIED
+model_ddt_io.mesh.xmin                                    |NON MODIFIED
+model_ddt_io.mesh.xres                                    |NON MODIFIED
+model_ddt_io.mesh.ymax                                    |NON MODIFIED
+model_ddt_io.mesh.yres                                    |NON MODIFIED
+model_ddt_io.physio_data.descriptor                       |NON MODIFIED
+model_ddt_io.response.q                                   |NON MODIFIED
+model_ddt_io.response_data.q                              |NON MODIFIED
+model_ddt_io.rr_final_states.keys                         |NON MODIFIED
+model_ddt_io.rr_final_states.values                       |NON MODIFIED
+model_ddt_io.rr_initial_states.keys                       |NON MODIFIED
+model_ddt_io.rr_initial_states.values                     |NON MODIFIED
+model_ddt_io.rr_parameters.keys                           |NON MODIFIED
+model_ddt_io.rr_parameters.values                         |NON MODIFIED
+model_ddt_io.serr_mu_parameters.keys                      |NON MODIFIED
+model_ddt_io.serr_mu_parameters.values                    |NON MODIFIED
+model_ddt_io.serr_sigma_parameters.keys                   |NON MODIFIED
+model_ddt_io.serr_sigma_parameters.values                 |NON MODIFIED
+model_ddt_io.setup.descriptor_name                        |NON MODIFIED
+model_ddt_io.setup.dt                                     |NON MODIFIED
+model_ddt_io.setup.end_time                               |NON MODIFIED
+model_ddt_io.setup.hydrological_module                    |NON MODIFIED
+model_ddt_io.setup.routing_module                         |NON MODIFIED
+model_ddt_io.setup.serr_mu_mapping                        |NON MODIFIED
+model_ddt_io.setup.serr_sigma_mapping                     |NON MODIFIED
+model_ddt_io.setup.snow_module                            |NON MODIFIED
+model_ddt_io.setup.start_time                             |NON MODIFIED
 model_io.atmos_data.mean_pet                              |NON MODIFIED
 model_io.atmos_data.mean_prcp                             |NON MODIFIED
 model_io.mesh.active_cell                                 |NON MODIFIED
@@ -402,45 +402,45 @@ optimize.zero-loieau-lr.multi-polynomial.sim_q            |NON MODIFIED
 optimize.zero-loieau-lr.uniform.control_vector            |NON MODIFIED
 optimize.zero-loieau-lr.uniform.iter_cost                 |NON MODIFIED
 optimize.zero-loieau-lr.uniform.sim_q                     |NON MODIFIED
-optimize.zero-vic3l-kw.ann.sim_q                          |NON MODIFIED
-optimize.zero-vic3l-kw.distributed.control_vector         |NON MODIFIED
-optimize.zero-vic3l-kw.distributed.iter_cost              |NON MODIFIED
-optimize.zero-vic3l-kw.distributed.sim_q                  |NON MODIFIED
-optimize.zero-vic3l-kw.multi-linear.control_vector        |NON MODIFIED
-optimize.zero-vic3l-kw.multi-linear.iter_cost             |NON MODIFIED
-optimize.zero-vic3l-kw.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-vic3l-kw.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-vic3l-kw.multi-polynomial.iter_cost         |NON MODIFIED
-optimize.zero-vic3l-kw.multi-polynomial.sim_q             |NON MODIFIED
-optimize.zero-vic3l-kw.uniform.control_vector             |NON MODIFIED
-optimize.zero-vic3l-kw.uniform.iter_cost                  |NON MODIFIED
-optimize.zero-vic3l-kw.uniform.sim_q                      |NON MODIFIED
-optimize.zero-vic3l-lag0.ann.sim_q                        |NON MODIFIED
-optimize.zero-vic3l-lag0.distributed.control_vector       |NON MODIFIED
-optimize.zero-vic3l-lag0.distributed.iter_cost            |NON MODIFIED
-optimize.zero-vic3l-lag0.distributed.sim_q                |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-linear.control_vector      |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-linear.iter_cost           |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-linear.sim_q               |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-polynomial.control_vector  |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-polynomial.iter_cost       |NON MODIFIED
-optimize.zero-vic3l-lag0.multi-polynomial.sim_q           |NON MODIFIED
-optimize.zero-vic3l-lag0.uniform.control_vector           |NON MODIFIED
-optimize.zero-vic3l-lag0.uniform.iter_cost                |NON MODIFIED
-optimize.zero-vic3l-lag0.uniform.sim_q                    |NON MODIFIED
-optimize.zero-vic3l-lr.ann.sim_q                          |NON MODIFIED
-optimize.zero-vic3l-lr.distributed.control_vector         |NON MODIFIED
-optimize.zero-vic3l-lr.distributed.iter_cost              |NON MODIFIED
-optimize.zero-vic3l-lr.distributed.sim_q                  |NON MODIFIED
-optimize.zero-vic3l-lr.multi-linear.control_vector        |NON MODIFIED
-optimize.zero-vic3l-lr.multi-linear.iter_cost             |NON MODIFIED
-optimize.zero-vic3l-lr.multi-linear.sim_q                 |NON MODIFIED
-optimize.zero-vic3l-lr.multi-polynomial.control_vector    |NON MODIFIED
-optimize.zero-vic3l-lr.multi-polynomial.iter_cost         |NON MODIFIED
-optimize.zero-vic3l-lr.multi-polynomial.sim_q             |NON MODIFIED
-optimize.zero-vic3l-lr.uniform.control_vector             |NON MODIFIED
-optimize.zero-vic3l-lr.uniform.iter_cost                  |NON MODIFIED
-optimize.zero-vic3l-lr.uniform.sim_q                      |NON MODIFIED
+optimize.zero-vic3l-kw.ann.sim_q                          |MODIFIED
+optimize.zero-vic3l-kw.distributed.control_vector         |MODIFIED
+optimize.zero-vic3l-kw.distributed.iter_cost              |MODIFIED
+optimize.zero-vic3l-kw.distributed.sim_q                  |MODIFIED
+optimize.zero-vic3l-kw.multi-linear.control_vector        |MODIFIED
+optimize.zero-vic3l-kw.multi-linear.iter_cost             |MODIFIED
+optimize.zero-vic3l-kw.multi-linear.sim_q                 |MODIFIED
+optimize.zero-vic3l-kw.multi-polynomial.control_vector    |MODIFIED
+optimize.zero-vic3l-kw.multi-polynomial.iter_cost         |MODIFIED
+optimize.zero-vic3l-kw.multi-polynomial.sim_q             |MODIFIED
+optimize.zero-vic3l-kw.uniform.control_vector             |MODIFIED
+optimize.zero-vic3l-kw.uniform.iter_cost                  |MODIFIED
+optimize.zero-vic3l-kw.uniform.sim_q                      |MODIFIED
+optimize.zero-vic3l-lag0.ann.sim_q                        |MODIFIED
+optimize.zero-vic3l-lag0.distributed.control_vector       |MODIFIED
+optimize.zero-vic3l-lag0.distributed.iter_cost            |MODIFIED
+optimize.zero-vic3l-lag0.distributed.sim_q                |MODIFIED
+optimize.zero-vic3l-lag0.multi-linear.control_vector      |MODIFIED
+optimize.zero-vic3l-lag0.multi-linear.iter_cost           |MODIFIED
+optimize.zero-vic3l-lag0.multi-linear.sim_q               |MODIFIED
+optimize.zero-vic3l-lag0.multi-polynomial.control_vector  |MODIFIED
+optimize.zero-vic3l-lag0.multi-polynomial.iter_cost       |MODIFIED
+optimize.zero-vic3l-lag0.multi-polynomial.sim_q           |MODIFIED
+optimize.zero-vic3l-lag0.uniform.control_vector           |MODIFIED
+optimize.zero-vic3l-lag0.uniform.iter_cost                |MODIFIED
+optimize.zero-vic3l-lag0.uniform.sim_q                    |MODIFIED
+optimize.zero-vic3l-lr.ann.sim_q                          |MODIFIED
+optimize.zero-vic3l-lr.distributed.control_vector         |MODIFIED
+optimize.zero-vic3l-lr.distributed.iter_cost              |MODIFIED
+optimize.zero-vic3l-lr.distributed.sim_q                  |MODIFIED
+optimize.zero-vic3l-lr.multi-linear.control_vector        |MODIFIED
+optimize.zero-vic3l-lr.multi-linear.iter_cost             |MODIFIED
+optimize.zero-vic3l-lr.multi-linear.sim_q                 |MODIFIED
+optimize.zero-vic3l-lr.multi-polynomial.control_vector    |MODIFIED
+optimize.zero-vic3l-lr.multi-polynomial.iter_cost         |MODIFIED
+optimize.zero-vic3l-lr.multi-polynomial.sim_q             |MODIFIED
+optimize.zero-vic3l-lr.uniform.control_vector             |MODIFIED
+optimize.zero-vic3l-lr.uniform.iter_cost                  |MODIFIED
+optimize.zero-vic3l-lr.uniform.sim_q                      |MODIFIED
 precipitation_indices.d1                                  |NON MODIFIED
 precipitation_indices.d2                                  |NON MODIFIED
 precipitation_indices.hg                                  |NON MODIFIED
