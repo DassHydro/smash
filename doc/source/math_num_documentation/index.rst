@@ -27,3 +27,4 @@ and estimation algorithms.
 
     forward_inverse_problem
     forward_structure
+    mapping

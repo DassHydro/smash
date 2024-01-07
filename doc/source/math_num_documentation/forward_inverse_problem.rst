@@ -44,11 +44,13 @@ Operators composition
 Note that the operator :math:`\mathcal{M}` can be a composite function containing, differentiable operators for vertical and lateral transfert processes within each cell :math:`x\in\Omega`, 
 and routing operator from cells to cells following a flow direction map, plus deep neural networks enabling learnable process parameterization-regionalization capabilities as described later.
 
-Special mapping
-***************
+.. _math_num_documentation.forward_inverse_problem.mapping:
+
+Mapping
+*******
 
 The spatio-temporal fields of model parameters and initial states can be constrained with spatialization rules (ex. control spatial reduction into patches), or even explained by physiographic descriptors 
-:math:`\boldsymbol{\mathcal{D}}`. This is achieved via the operator :math:`\phi: \left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}(x)\right)`
+:math:`\boldsymbol{\mathcal{D}}`. This is achieved via the operator :math:`\phi: \left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)`
 with :math:`\boldsymbol{\rho}` the control vector that can be optimized.
 
 Finally, replacing in :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>` the parameters and initial states by the :math:`\phi` operator, the differentiable forward model writes as: 
@@ -56,7 +58,7 @@ Finally, replacing in :ref:`Eq. 1 <math_num_documentation.forward_inverse_proble
 .. math::
     :name: math_num_documentation.forward_inverse_problem.forward_problem_M_2
 
-    \mathcal{M}\left(\left[\mathcal{\boldsymbol{I}},\mathcal{\boldsymbol{D}}\right](x,t);\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}(x)\right)\right)
+    \mathcal{M}\left(\left[\mathcal{\boldsymbol{I}},\mathcal{\boldsymbol{D}}\right](x,t);\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)\right)
 
 Inverse problem
 ---------------
@@ -102,7 +104,7 @@ The optimization problem minimising the misfit :math:`J` to observations writes 
 .. math::
     :name: math_num_documentation.forward_inverse_problem.inverse_problem_optimization
 
-    \boldsymbol{\hat{\rho}}(x)=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}J
+    \boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}J
 
 This problem can be tackled with optimization algorithms adapted to high dimensional problems (L-BFGS-B or Adam (TODO link to Math / Num)) that require the gradient :math:`\nabla_{\boldsymbol{\rho}}J` 
 of the cost function to the sought parameters :math:`\boldsymbol{\rho}`. The computation of the cost gradient :math:`\nabla_{\boldsymbol{\rho}}J` relies on the composed adjoint model :math:`\Lambda` 
