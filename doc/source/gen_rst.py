@@ -12,7 +12,7 @@ if __name__ == "__main__":
     if file_path.exists():
         exists_input = input("Overwrite existing file ([y]/n) ? ")
 
-        if not exists_input.lower() in ["", "y", "yes"]:
+        if exists_input.lower() not in ["", "y", "yes"]:
             exit(0)
 
     file_path.parent.mkdir(exist_ok=True)
