@@ -35,20 +35,23 @@ release = smash.__version__
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
 extensions = [
-    "sphinxcontrib.bibtex",
-    "sphinx.ext.todo",
-    "sphinx.ext.autosectionlabel",
-    "sphinx.ext.viewcode",
-    "sphinx.ext.autodoc",
-    "sphinx.ext.duration",
-    "sphinx.ext.autosummary",
-    "numpydoc",
+    'sphinx.ext.todo',
+    'sphinx.ext.autosectionlabel', 
+    'sphinx.ext.viewcode', 
+    'sphinx.ext.autodoc', 
+    'sphinx.ext.duration', 
+    'sphinx.ext.autosummary', 
+    'numpydoc', 
     "sphinx_design",
-    "IPython.sphinxext.ipython_directive",
-    "IPython.sphinxext.ipython_console_highlighting",
+    'IPython.sphinxext.ipython_directive', 
+    'IPython.sphinxext.ipython_console_highlighting', 
     "matplotlib.sphinxext.plot_directive",
-    "sphinx_autosummary_accessors",
+    'sphinx_autosummary_accessors', 
     "custom_options_directive",
+    'sphinxcontrib.bibtex', 
+    'sphinx.ext.intersphinx',
+    "sphinx.ext.napoleon",
+    'jupyter_sphinx',
 ]
 
 
@@ -69,7 +72,7 @@ templates_path = ["_templates"]
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
 # This pattern also affects html_static_path and html_extra_path.
-exclude_patterns = ["release/template-notes.rst"]
+exclude_patterns = ["release/template-notes.rst",]
 
 default_role = "autolink"
 

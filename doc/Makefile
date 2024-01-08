@@ -8,6 +8,7 @@ SPHINXBUILD   ?= sphinx-build
 SOURCEDIR     = source
 BUILDDIR      = build
 
+
 # Put it first so that "make" without argument is like "make help".
 help:
 	@$(SPHINXBUILD) -M help "$(SOURCEDIR)" "$(BUILDDIR)" $(SPHINXOPTS) $(O)
@@ -23,7 +24,9 @@ help:
     (echo "An error occurred while generating the documentation. Returning to previous version." && \
 	rm -rf $(BUILDDIR) && mv $(BUILDDIR)_tmp $(BUILDDIR) && false)
 	@rm -rf $(BUILDDIR)_tmp
-	
+	@rsync -avm --include='*.py' --include='*.ipynb' -f 'hide,! */' $(BUILDDIR)/jupyter_execute/ ../examples
+
+
 clean:
 	@rm -rf $(BUILDDIR)
 	@rm -rf $(SOURCEDIR)/savefig

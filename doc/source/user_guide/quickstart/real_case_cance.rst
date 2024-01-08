@@ -20,13 +20,20 @@ First, open a Python interface:
 Imports
 -------
 
-.. ipython:: python
+.. jupyter-execute::
     
     import smash
     from smash.io import save_setup, read_setup, save_mesh, read_mesh 
     from smash.io import save_model, read_model
     import numpy as np
     import matplotlib.pyplot as plt
+    
+In this example, the user must indicate is smash directory to access to the datasets.
+
+.. jupyter-execute::
+
+    SMASH_DIR = "/home/aelbaz/Bureau/smash/"
+
 
 .. note::
 
@@ -58,7 +65,7 @@ In this example, we give the observed discharges `qobs`, the potential evapotran
 .. note::
     The pixel resolution of imported dataset is 1km². These imported dataset `qobs`, `pet`, `prpc` must be on the same grid of resolution.    
 
-.. ipython:: python
+.. jupyter-execute::
 
     setup = {
         'hydrological_module': 'gr4', 
@@ -67,19 +74,19 @@ In this example, we give the observed discharges `qobs`, the potential evapotran
         'start_time': '2014-09-15 00:00', 
         'end_time': '2014-11-14 00:00', 
         'read_qobs': True, 
-        'qobs_directory': '../smash/factory/dataset/Cance/qobs', 
+        'qobs_directory': SMASH_DIR + 'smash/factory/dataset/Cance/qobs', 
         'read_prcp': True, 
         'prcp_format': 'tif', 
         'prcp_conversion_factor': 0.1, 
-        'prcp_directory': '../smash/factory/dataset/Cance/prcp', 
+        'prcp_directory': SMASH_DIR + 'smash/factory/dataset/Cance/prcp', 
         'read_pet': True, 
         'pet_format': 'tif', 
         'pet_conversion_factor': 1, 
         'daily_interannual_pet': True, 
-        'pet_directory': '../smash/factory/dataset/Cance/pet', 
+        'pet_directory': SMASH_DIR + 'smash/factory/dataset/Cance/pet', 
         'read_descriptor': True, 
         'descriptor_name': ['slope', 'dd'], 
-        'descriptor_directory': '../smash/factory/dataset/Cance/descriptor'
+        'descriptor_directory': SMASH_DIR + 'smash/factory/dataset/Cance/descriptor'
     }
     
     
@@ -128,10 +135,10 @@ Mesh argument creation
 
 The method :meth:`smash.factory.generate_mesh` allows from a flow directions file, the gauge coordinates and the area to generate the mesh.
     
-.. ipython:: python
+.. jupyter-execute::
     
     mesh = smash.factory.generate_mesh(
-        flwdir_path = "../smash/factory/dataset/France_flwdir.tif",
+        flwdir_path = SMASH_DIR + "smash/factory/dataset/France_flwdir.tif",
         x = [840_261, 826_553, 828_269],
         y = [6_457_807, 6_467_115, 6_469_198],
         area = [381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
@@ -153,7 +160,7 @@ The method :meth:`smash.factory.generate_mesh` allows from a flow directions fil
 Mesh composition
 ''''''''''''''''
 
-.. ipython:: python
+.. jupyter-execute::
 
     mesh.keys()
     
@@ -163,113 +170,103 @@ To get into the details:
 
 - ``yres``: the computation vertical space step in m,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["xres"], mesh["yres"]
 
 - ``xmin``: the minimum value of the domain extension in x (it depends on the flow directions projection)
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["xmin"]
 
 - ``ymax``: the maximum value of the domain extension in y (it depends on the flow directions projection)
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["ymax"]
 
 - ``nrow``: the number of rows,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["nrow"]
 
 - ``ncol``: the number of columns,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["ncol"]
 
 - ``ng``: the number of gauges,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["ng"]
     
 - ``nac``: the number of cells that contribute to any gauge discharge,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["nac"]
     
 - ``area``: the catchments area in m²,
 
-.. ipython:: python 
+.. jupyter-execute:: 
     
     mesh["area"]
     
 - ``code``: the gauges code, 
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["code"]
         
 - ``gauge_pos``: the gauges position in the grid,
 
-.. ipython:: python
+.. jupyter-execute::
     
     mesh["gauge_pos"]
     
 - ``flwdir``: the flow directions,
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.imshow(mesh["flwdir"]);
     plt.colorbar(label="Flow direction (D8)");
-    @savefig user_guide.quickstart.real_case_cance.flwdir.png
     plt.title("Real case - Cance - Flow direction");
     
 - ``flwacc``: the flow accumulation in number of cells,
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.imshow(mesh["flwacc"]);
     plt.colorbar(label="Flow accumulation (nb cells)");
-    @savefig user_guide.quickstart.real_case_cance.flwacc.png
     plt.title("Real case - Cance - Flow accumulation");
     
 - ``flwdst``: the flow distances from the main outlet in m,
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.imshow(mesh["flwdst"]);
     plt.colorbar(label="Flow distance (m)");
-    @savefig user_guide.quickstart.real_case_cance.flwdst.png
     plt.title("Real case - Cance - Flow distance");
     
 - ``active_cell``: the cells that contribute to any gauge discharge (mask),
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.imshow(mesh["active_cell"]);
     plt.colorbar(label="Logical active cell (0: False, 1: True)");
-    @savefig user_guide.quickstart.real_case_cance.active_cell.png
     plt.title("Real case - Cance - Active cell");
     
 .. note::
     
-    Each key and associated values that can be passed into the ``mesh`` dictionary are detailed in the User Guide section: :ref:`Model initialization <user_guide.others.model_initialization.mesh>`.
+    Each key and associated values can be passed into the ``mesh`` dictionary.
 
 Finally, create the :class:`.Model` object using the ``setup`` and ``mesh`` loaded.
 
-.. ipython:: python
-    :suppress:
-    
-    model = smash.Model(setup, mesh)
-
-.. ipython:: python
-    :verbatim:
+.. jupyter-execute::
     
     model = smash.Model(setup, mesh)
    
@@ -301,13 +298,12 @@ Response Data - Observed discharge
 We access to the discharge by ``q`` of :attr:`.Model.response_data`
 There are three gauges placed on the meshing. For the sake of clarity, only the most downstream gauge discharge ``V3524010`` is plotted, using ``code``.
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.plot(model.response_data.q[0,:]);
     plt.grid(alpha=.7, ls="--");
     plt.xlabel("Time step");
     plt.ylabel("Discharge ($m^3/s$)");
-    @savefig user_guide.quickstart.real_case_cance.qobs.png
     plt.title(model.mesh.code[0]);
     
 Atmospheric data
@@ -315,16 +311,15 @@ Atmospheric data
 
 Precipitation and potential evapotranspiration files were read for each time step. As uniform rainfall was imposed on the domain, we only plot the precipitation and for the sake of clarity, only one precipiation grid at time step 1200 is plotted.
 
-.. ipython:: python
+.. jupyter-execute::
 
     plt.imshow(model.atmos_data.prcp[..., 1200]);
     plt.title("Precipitation at time step 1200");
-    @savefig user_guide.quickstart.real_case_cance.prcp.png
     plt.colorbar(label="Precipitation ($mm/h$)");
     
 It is possible to mask the precipitation grid to only visualize the precipitation on active cells using numpy method ``np.where``.
 
-.. ipython:: python
+.. jupyter-execute::
 
     ma_prcp = np.where(
         model.mesh.active_cell == 0,
@@ -334,7 +329,6 @@ It is possible to mask the precipitation grid to only visualize the precipitatio
     
     plt.imshow(ma_prcp);
     plt.title("Masked precipitation at time step 1200");
-    @savefig user_guide.quickstart.real_case_cance.ma_prcp.png
     plt.colorbar(label="Precipitation ($mm/h$)");
 
        
@@ -356,7 +350,7 @@ The model GR is based on a series of consecutive reservoirs :math:`(c, h)`, with
 The initial states are the water levels of reservoirs :math:`h_i, h_p, h_t, h_{lr}`. These attributes of capacity and water level contain only numpy arrays of shape (10, 10) 
 (i.e. number of rows and columns in the grid).
 
-.. ipython:: python
+.. jupyter-execute::
     
     cp = model.get_rr_parameters("cp")
     hp = model.get_rr_initial_states("hp")
@@ -369,7 +363,7 @@ Response
 
 The last attribute, :attr:`.Model.response`, contains the simulated discharge ``q``. The attribute values are empty as long as no simulation has been run.
 
-.. ipython:: python
+.. jupyter-execute::
 
     model.response.q
 
@@ -383,13 +377,13 @@ Forward run
 
 Make a forward run using the :meth:`.Model.forward_run()` method.
 
-.. ipython:: python
+.. jupyter-execute::
 
     model.forward_run();
     
 We can visualize the simulated discharges after a forward run for the most downstream gauge.
 
-.. ipython:: python
+.. jupyter-execute::
 
     plt.plot(model.response_data.q[0,:], label="Observed discharge");
     plt.plot(model.response.q[0,:], label="Simulated discharge");
@@ -397,7 +391,6 @@ We can visualize the simulated discharges after a forward run for the most downs
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model.mesh.code[0]);
-    @savefig user_guide.quickstart.real_case_cance.qsim_forward.png
     plt.legend();
 
 .. _quickstart.cance.optimization:
@@ -428,8 +421,7 @@ We consider here for optimization (which is the default setup with ``gr4`` struc
 
 Call the :meth:`.Model.optimize` method and for the sake of computation time, set the maximum number of iterations in the ``options`` argument to 2. 
 
-.. ipython:: python
-    :suppress:
+.. jupyter-execute::
     
     res = model.optimize(
         optimize_options={"termination_crit":{"maxiter": 2}}, 
@@ -437,24 +429,8 @@ Call the :meth:`.Model.optimize` method and for the sake of computation time, se
         );
     
     model_su = model
-    
-.. ipython:: python
-    :verbatim:
-
-    res = model.optimize(
-        optimize_options={"termination_crit":{"maxiter": 2}}, 
-        return_options={"cost": True, "iter_cost": True}
-        );
 
 .. ~ While the optimization routine is in progress, some information are provided.
-
-.. code-block:: text
-
-    </> Optimize
-    At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-    STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT  
         
 .. ~ This information remainds the optimization options:
 
@@ -503,7 +479,7 @@ The last line informs about the reason why the optimization ended. Here, since w
     
 Once the optimization is complete. We can visualize the simulated discharge,
 
-.. ipython:: python
+.. jupyter-execute::
 
     plt.plot(model.response_data.q[0,:], label="Observed discharge");
     plt.plot(model.response.q[0,:], label="Simulated discharge");
@@ -511,12 +487,11 @@ Once the optimization is complete. We can visualize the simulated discharge,
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model.mesh.code[0]);
-    @savefig user_guide.quickstart.real_case_cance.qsim_su.png
     plt.legend();
 
 The cost function value :math:`J` (should be equal to the last iteration ``J``),
 
-.. ipython:: python
+.. jupyter-execute::
 
     res.cost
     res.iter_cost
@@ -524,7 +499,7 @@ The cost function value :math:`J` (should be equal to the last iteration ``J``),
     
 The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and because we performed a spatially uniform optimization, we will only display the parameter set values for one cell within the catchment active cells, which is the most downstream gauge position here),
 
-.. ipython:: python
+.. jupyter-execute::
 
     cp = model.get_rr_parameters("cp")
     ct = model.get_rr_parameters("ct")
@@ -544,7 +519,7 @@ The optimized parameters :math:`\hat{\theta}` (for the sake of clarity and becau
 
 It is possible to save any :class:`.Model` object to HDF5. Here, we will save the uniform optimized instances for a future displaying.
 
-.. ipython:: python
+.. jupyter-execute::
 
     save_model(model, "model.hdf5")
     model_su = read_model("model.hdf5")
@@ -565,49 +540,15 @@ Call the :meth:`.Model.optimize` method, fill in the arguments ``mapping`` with 
 
 As we run this optimization from the previously generated uniform parameter set, we apply the :meth:`.Model.optimize` method from the ``model`` instance which had stored the previous optimized parameters.
 
-.. ipython:: python
-    :suppress:
+.. jupyter-execute::
     
     res = model.optimize(
             mapping="distributed",
             optimize_options={"termination_crit":{"maxiter": 15}},
             return_options={"cost": True, "iter_cost": True},
         )
-    
-
-.. ipython:: python
-    :verbatim:
-    
-    res = model.optimize(
-            mapping="distributed",
-            optimize_options={"termination_crit":{"maxiter": 15}},
-            return_options={"cost": True, "iter_cost": True},
-        )
-    
 
 While the optimization routine is in progress, some information are provided.
-
-.. code-block:: text
-    
-    </> Optimize
-        At iterate      0    nfg =     1    J =      0.052158    |proj g| =      0.003706
-        At iterate      1    nfg =     3    J =      0.046520    |proj g| =      0.034254
-        At iterate      2    nfg =     4    J =      0.045327    |proj g| =      0.018078
-        At iterate      3    nfg =     6    J =      0.044052    |proj g| =      0.013705
-        At iterate      4    nfg =     7    J =      0.039764    |proj g| =      0.031789
-        At iterate      5    nfg =     8    J =      0.037352    |proj g| =      0.020424
-        At iterate      6    nfg =    10    J =      0.032467    |proj g| =      0.028793
-        At iterate      7    nfg =    11    J =      0.030155    |proj g| =      0.065370
-        At iterate      8    nfg =    12    J =      0.024909    |proj g| =      0.007977
-        At iterate      9    nfg =    13    J =      0.023737    |proj g| =      0.017989
-        At iterate     10    nfg =    14    J =      0.022914    |proj g| =      0.007681
-        At iterate     11    nfg =    15    J =      0.022013    |proj g| =      0.008621
-        At iterate     12    nfg =    17    J =      0.020395    |proj g| =      0.011236
-        At iterate     13    nfg =    18    J =      0.018925    |proj g| =      0.027226
-        At iterate     14    nfg =    19    J =      0.018672    |proj g| =      0.033382
-        At iterate     15    nfg =    20    J =      0.018326    |proj g| =      0.003987
-        STOP: TOTAL NO. OF ITERATION EXCEEDS LIMIT
-        
         
 .. ~ The information are broadly similar to the spatially uniform optimization, except for
 
@@ -629,7 +570,7 @@ The algorithm also stopped because the number of iterations was exceeded.
 
 We can once again visualize, the simulated discharges (``su``: spatially uniform, ``sd``: spatially distributed)
 
-.. ipython:: python
+.. jupyter-execute::
     
     plt.plot(model.response_data.q[0,:], label="Observed discharge");
     plt.plot(model_su.response.q[0,:], label="Simulated discharge - su");
@@ -638,7 +579,6 @@ We can once again visualize, the simulated discharges (``su``: spatially uniform
     plt.xlabel("Time step");
     plt.ylabel("Discharge $(m^3/s)$");
     plt.title(model.mesh.code[0]);
-    @savefig user_guide.quickstart.real_case_cance.qsim_sd.png
     plt.legend();
     
 .. note::
@@ -648,13 +588,13 @@ We can once again visualize, the simulated discharges (``su``: spatially uniform
     
 The cost function value :math:`J`,
 
-.. ipython:: python
+.. jupyter-execute::
 
     res.cost
     
 We can plot the optimized parameters :math:`\hat{\theta}`,
     
-.. ipython:: python
+.. jupyter-execute::
 
     ma = (model.mesh.active_cell == 0)
 
@@ -675,7 +615,6 @@ We can plot the optimized parameters :math:`\hat{\theta}`,
     f.colorbar(map_llr, ax=ax[1,0], label="llr (min)");
     
     map_kexc = ax[1,1].imshow(ma_kexc);
-    @savefig user_guide.quickstart.real_case_cance.theta.png
     f.colorbar(map_kexc, ax=ax[1,1], label="kexc (mm/h)");
 
 
@@ -692,13 +631,13 @@ Setup argument in/out
 
 The setup dictionary ``setup``, which was created in the section :ref:`user_guide.quickstart.real_case_cance.setup_argument`, can be saved in `YAML <https://yaml.org/spec/1.2.2/>`__ format via the method :meth:`smash.io.save_setup`.
 
-.. ipython:: python
+.. jupyter-execute::
 
     smash.io.save_setup(setup, "setup.yaml")
     
 A file named ``setup.yaml`` has been created in the current working directory containing the ``setup`` dictionary informations. This file can itself be opened in order to recover our initial ``setup`` dictionary via the method :meth:`smash.io.read_setup`.
 
-.. ipython:: python
+.. jupyter-execute::
 
     setup2 = smash.io.read_setup("setup.yaml")
         
@@ -707,19 +646,19 @@ Mesh argument in/out
 
 In a similar way to ``setup`` dictionary, the ``mesh`` dictionary created in the section :ref:`user_guide.quickstart.real_case_cance.mesh_argument` can be saved to file via the method :meth:`smash.io.save_mesh`. However, 3D numpy arrays cannot be saved in YAML format, so the ``mesh`` is saved in `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ format.
 
-.. ipython:: python
+.. jupyter-execute::
 
     smash.io.save_mesh(mesh, "mesh.hdf5")
     
 A file named ``mesh.hdf5`` has been created in the current working directory containing the ``mesh`` dictionary information. This file can itself be opened in order to recover our initial ``mesh`` dictionary via the method :meth:`smash.io.read_mesh`.
 
-.. ipython:: python
+.. jupyter-execute::
 
     mesh2 = smash.io.read_mesh("mesh.hdf5")
     
 A new :class:`.Model` object can be created from the read files (same as the first one).
 
-.. ipython:: python
+.. jupyter-execute::
 
     model2 = smash.Model(setup2, mesh2)
     
@@ -728,19 +667,19 @@ Model in/out
 
 The :class:`.Model` object can also be saved to file. Like the ``mesh``, it will be saved in HDF5 format using the :meth:`smash.io.save_model` method. Here, we will save the :class:`.Model` object ``model`` after optimization.
 
-.. ipython:: python
+.. jupyter-execute::
 
     smash.io.save_model(model2, "model2.hdf5")
 
 A file named ``model.hdf5`` has been created in the current working directory containing the ``model`` object information. This file can itself be opened in order to recover our initial ``model`` object via the method :meth:`smash.read_model`.
 
-.. ipython:: python
+.. jupyter-execute::
 
     model3 = smash.io.read_model("model2.hdf5")
 
 ``model3`` is directly the :class:`.Model` object itself on which the methods associated with the object are applicable.
 
-.. ipython:: python
+.. jupyter-execute::
 
     model3.forward_run();
 
@@ -748,13 +687,9 @@ A file named ``model.hdf5`` has been created in the current working directory co
 Loading data from repository
 ****************************
 
-The dataset about the Cance, the Lez and France are available in the `sma../smash/factory/dataset/` directory. For greater convenience, you can directly load the data. Run the ipython command:
+The dataset about the Cance, the Lez and France are available in the `smash/factory/dataset/` directory of the `SMASH_DIR`. For greater convenience, you can directly load the data. Run the ipython command:
 
-.. ipython:: python
+.. jupyter-execute::
 
     setup, mesh = smash.factory.load_dataset("Cance")
 
-.. ipython:: python
-    :suppress:
-
-    plt.close('all')
