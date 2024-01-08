@@ -13,7 +13,7 @@ Hydrological model
 ******************
 
 The spatially distributed hydrological model is a dynamic operator :math:`\mathcal{M}` projecting fields of atmospheric forcings :math:`\mathcal{\boldsymbol{I}}`,
-catchment physiographic descriptors :math:`\boldsymbol{\mathcal{D}}` onto surface discharge :math:`Q` and states :math:`\boldsymbol{h}` and internal fluxes :math:`\boldsymbol{q}` such that:
+catchment physiographic descriptors :math:`\boldsymbol{\mathcal{D}}` onto surface discharge :math:`Q`, model states :math:`\boldsymbol{h}`, and internal fluxes :math:`\boldsymbol{q}` such that:
 
 .. math::
     :name: math_num_documentation.forward_inverse_problem.forward_problem_M_1
@@ -49,7 +49,7 @@ and routing operator from cells to cells following a flow direction map, plus de
 Mapping
 *******
 
-The spatio-temporal fields of model parameters and initial states can be constrained with spatialization rules (ex. control spatial reduction into patches), or even explained by physiographic descriptors 
+The spatio-temporal fields of model parameters and initial states can be constrained with spatialization rules (e.g., control spatial reduction into patches), or even explained by physiographic descriptors 
 :math:`\boldsymbol{\mathcal{D}}`. This is achieved via the operator :math:`\phi: \left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)`
 with :math:`\boldsymbol{\rho}` the control vector that can be optimized.
 
@@ -99,14 +99,14 @@ The regularization term is for example a Thikhonov regularization that only invo
 Optimization
 ************
 
-The optimization problem minimising the misfit :math:`J` to observations writes as:
+The optimization problem minimizing the misfit :math:`J` to observations writes as:
 
 .. math::
     :name: math_num_documentation.forward_inverse_problem.inverse_problem_optimization
 
     \boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}J
 
-This problem can be tackled with optimization algorithms adapted to high dimensional problems (L-BFGS-B or Adam (TODO link to Math / Num)) that require the gradient :math:`\nabla_{\boldsymbol{\rho}}J` 
+This problem can be tackled with optimization algorithms adapted to high dimensional problems (L-BFGS-B or machine learning optimizers (e.g., Adam) (TODO link to Math / Num)) that require the gradient :math:`\nabla_{\boldsymbol{\rho}}J` 
 of the cost function to the sought parameters :math:`\boldsymbol{\rho}`. The computation of the cost gradient :math:`\nabla_{\boldsymbol{\rho}}J` relies on the composed adjoint model :math:`\Lambda` 
 that is derived by automatic differenciation of the forward model, using the Tapenade software :cite:p:`hascoet2013tapenade`.
 
