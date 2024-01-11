@@ -28,12 +28,7 @@ Imports
     import numpy as np
     import matplotlib.pyplot as plt
     
-In this example, the user must indicate is smash directory to access to the datasets.
-
-.. jupyter-execute::
-
-    SMASH_DIR = "/home/aelbaz/Bureau/smash/"
-
+In this example, the user must indicate is smash directory to access to the datasets in `smash/smash/factory/dataset`.
 
 .. note::
 
@@ -74,19 +69,19 @@ In this example, we give the observed discharges `qobs`, the potential evapotran
         'start_time': '2014-09-15 00:00', 
         'end_time': '2014-11-14 00:00', 
         'read_qobs': True, 
-        'qobs_directory': SMASH_DIR + 'smash/factory/dataset/Cance/qobs', 
+        'qobs_directory': '../smash/factory/dataset/Cance/qobs', 
         'read_prcp': True, 
         'prcp_format': 'tif', 
         'prcp_conversion_factor': 0.1, 
-        'prcp_directory': SMASH_DIR + 'smash/factory/dataset/Cance/prcp', 
+        'prcp_directory': '../smash/factory/dataset/Cance/prcp', 
         'read_pet': True, 
         'pet_format': 'tif', 
         'pet_conversion_factor': 1, 
         'daily_interannual_pet': True, 
-        'pet_directory': SMASH_DIR + 'smash/factory/dataset/Cance/pet', 
+        'pet_directory': '../smash/factory/dataset/Cance/pet', 
         'read_descriptor': True, 
         'descriptor_name': ['slope', 'dd'], 
-        'descriptor_directory': SMASH_DIR + 'smash/factory/dataset/Cance/descriptor'
+        'descriptor_directory': '../smash/factory/dataset/Cance/descriptor'
     }
     
     
@@ -138,7 +133,7 @@ The method :meth:`smash.factory.generate_mesh` allows from a flow directions fil
 .. jupyter-execute::
     
     mesh = smash.factory.generate_mesh(
-        flwdir_path = SMASH_DIR + "smash/factory/dataset/France_flwdir.tif",
+        flwdir_path = "../smash/factory/dataset/France_flwdir.tif",
         x = [840_261, 826_553, 828_269],
         y = [6_457_807, 6_467_115, 6_469_198],
         area = [381.7 * 1e6, 107 * 1e6, 25.3 * 1e6],
@@ -687,9 +682,14 @@ A file named ``model.hdf5`` has been created in the current working directory co
 Loading data from repository
 ****************************
 
-The dataset about the Cance, the Lez and France are available in the `smash/factory/dataset/` directory of the `SMASH_DIR`. For greater convenience, you can directly load the data. Run the ipython command:
+The dataset about the Cance, the Lez and France are available in the `smash/smash/factory/dataset/` directory. For greater convenience, you can directly load the data. Run the ipython command:
 
 .. jupyter-execute::
 
     setup, mesh = smash.factory.load_dataset("Cance")
 
+
+.. jupyter-execute::
+    :hide-code:
+    
+    plt.close('all')
