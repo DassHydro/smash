@@ -224,7 +224,17 @@ ANN
 Initialization
 **************
 
-TODO TH: Fill
+In this case, the control vector :math:`\boldsymbol{\rho}`, representing the weights and biases of the ANN, is randomly initialized using one of the following methods:
+
+- Zero initialization: :math:`\boldsymbol{\rho} = \mathbf{0}`
+- Defaut uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{1}{n_{in}}}, \sqrt{\frac{1}{n_{in}}}\right)`
+- He uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{6}{n_{in}}}, \sqrt{\frac{6}{n_{in}}}\right)`
+- Glorot uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{6}{n_{in} + n_{out}}}, \sqrt{\frac{6}{n_{in} + n_{out}}}\right)`
+- Default normal initialization: :math:`\boldsymbol{\rho} \sim \mathcal{G}(0, 0.01)`
+- He normal initialization: :math:`\boldsymbol{\rho} \sim \mathcal{G}(0, \sqrt{\frac{2}{n_{in}}})`
+- Glorot normal initialization: :math:`\boldsymbol{\rho} \sim \mathcal{G}(0, \sqrt{\frac{2}{n_{in} + n_{out}}})`
+
+with :math:`n_{in}` and :math:`n_{out}` denote the number of neurons in the input and output layers, respectively; :math:`\mathcal{U}` and :math:`\mathcal{G}` denote the uniform and Gaussian distributions, respectively.
 
 Control vector to parameters and initial states
 ***********************************************
