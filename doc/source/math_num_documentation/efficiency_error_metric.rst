@@ -52,7 +52,7 @@ with :math:`r` the Pearson correlation coefficient, :math:`\alpha` the variabili
     \end{eqnarray}
 
 with :math:`\text{cov}(Q, Q^*)` the covariance between :math:`Q` and :math:`Q^*`, :math:`\mu_{Q}` and :math:`\mu_{Q^*}` the mean of the simulated and observed discharge, respectively, and 
-:math:`\sigma_{Q}` and :math:`\sigma_{Q^*}` the standard deviation of the simulated and observed discharge respectively.
+:math:`\sigma_{Q}` and :math:`\sigma_{Q^*}` the standard deviation of the simulated and observed discharge, respectively.
 
 MAE
 ---
