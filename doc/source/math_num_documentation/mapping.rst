@@ -227,7 +227,7 @@ Initialization
 In this case, the control vector :math:`\boldsymbol{\rho}`, representing the weights and biases of the ANN, is randomly initialized using one of the following methods:
 
 - Zero initialization: :math:`\boldsymbol{\rho} = \mathbf{0}`
-- Defaut uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{1}{n_{in}}}, \sqrt{\frac{1}{n_{in}}}\right)`
+- Default uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{1}{n_{in}}}, \sqrt{\frac{1}{n_{in}}}\right)`
 - He uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{6}{n_{in}}}, \sqrt{\frac{6}{n_{in}}}\right)`
 - Glorot uniform initialization: :math:`\boldsymbol{\rho} \sim \mathcal{U}\left(-\sqrt{\frac{6}{n_{in} + n_{out}}}, \sqrt{\frac{6}{n_{in} + n_{out}}}\right)`
 - Default normal initialization: :math:`\boldsymbol{\rho} \sim \mathcal{G}(0, 0.01)`
