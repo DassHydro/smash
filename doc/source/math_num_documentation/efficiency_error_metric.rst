@@ -4,11 +4,11 @@
 Efficiency/Error Metric
 =======================
 
-The aim of this section is to present all the efficiency/error metrics that can be used as part of the observation term in the inverse problem.
+The aim of this section is to present all the efficiency/error metrics that can be used to calibrate the model and evaluate its performance in simulating discharges.
 
-Denote :math:`Q` and :math:`Q^*` the simulated and observed discharge respectively and :math:`t\in[1..T]` a time step.
+Denote :math:`Q` and :math:`Q^*` the simulated and observed discharge, respectively, with :math:`t\in[1..T]` representing a time step for each.
 
-nse
+NSE
 ---
 
 The Nash-Sutcliffe Efficiency
@@ -19,7 +19,7 @@ The Nash-Sutcliffe Efficiency
 
 with :math:`\mu_{Q^*}` the mean of the observed discharge.
 
-nnse
+NNSE
 ----
 
 The Normalized Nash-Sutcliffe Efficiency
@@ -28,7 +28,7 @@ The Normalized Nash-Sutcliffe Efficiency
 
     j_{nnse} = \frac{1}{2 - j_{nse}}
 
-kge
+KGE
 ---
 
 The Kling-Gupta Efficiency
@@ -37,7 +37,7 @@ The Kling-Gupta Efficiency
 
     j_{kge} = 1 - \sqrt{(r - 1)^2 + (\alpha - 1)^2 + (\beta - 1)^2}
 
-with :math:`r` the Pearson correlation coefficient, :math:`\alpha` the term representing the variability of prediction errors and 
+with :math:`r` the Pearson correlation coefficient, :math:`\alpha` the variability of prediction errors, and 
 :math:`\beta` the bias term. They are defined as follows:
 
 .. math::
@@ -51,10 +51,10 @@ with :math:`r` the Pearson correlation coefficient, :math:`\alpha` the term repr
 
     \end{eqnarray}
 
-with :math:`\text{cov}(Q, Q^*)` the covariance between :math:`Q` and :math:`Q^*`, :math:`\mu_{Q}` and :math:`\mu_{Q^*}` the mean of the simulated and observed discharge respectively and 
+with :math:`\text{cov}(Q, Q^*)` the covariance between :math:`Q` and :math:`Q^*`, :math:`\mu_{Q}` and :math:`\mu_{Q^*}` the mean of the simulated and observed discharge, respectively, and 
 :math:`\sigma_{Q}` and :math:`\sigma_{Q^*}` the standard deviation of the simulated and observed discharge respectively.
 
-mae
+MAE
 ---
 
 The Mean Absolute Error
@@ -63,18 +63,16 @@ The Mean Absolute Error
 
     j_{mae} = \frac{1}{T} \sum_{t=1}^T \lvert Q(t) - Q^*(t) \rvert
 
-mape
+MAPE
 ----
 
 The Mean Absolute Percentage Error
-
-.. Can't \left \lvert \right \rvert ...
 
 .. math::
 
     j_{mape} = \frac{1}{T} \sum_{t=1}^T \lvert \frac{Q(t) - Q^*(t)}{Q^*(t)} \rvert
 
-mse
+MSE
 ---
 
 The Mean Squared Error
@@ -83,7 +81,7 @@ The Mean Squared Error
 
     j_{mse} = \frac{1}{T} \sum_{t=1}^T \left(Q(t) - Q^*(t)\right)^2
 
-rmse
+RMSE
 ----
 
 The Root Mean Squared Error
@@ -92,7 +90,7 @@ The Root Mean Squared Error
 
     j_{rmse} = \sqrt{j_{mse}}
 
-lgrm
+LGRM
 ----
 
 The Logarithmic Error
