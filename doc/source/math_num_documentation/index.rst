@@ -23,8 +23,16 @@ This documentation details the mathematical basis of the forward and inverse mod
 and estimation algorithms.
 
 .. toctree::
-    :maxdepth: 1
+    :maxdepth: 2
 
     forward_inverse_problem
+
+.. toctree::
+    :maxdepth: 1
+
+    precipitation_partitioning
     forward_structure
     mapping
+    efficiency_error_metric
+    hydrograph_segmentation
+    hydrological_signatures

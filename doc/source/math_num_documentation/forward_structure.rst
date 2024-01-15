@@ -37,16 +37,16 @@ This snow module is a simple degree-day snow module. It can be expressed as foll
 
 .. math::
 
-    m_{lt}(x, t) = f\left(\left[S, T\right](x, t), k_{mlt}(x), h_s(x, t)\right)
+    m_{lt}(x, t) = f\left(\left[S, T_e\right](x, t), k_{mlt}(x), h_s(x, t)\right)
 
-with :math:`m_{lt}` the melt flux, :math:`S` the snow, :math:`T` the temperature, :math:`k_{mlt}` the melt coefficient and :math:`h_s` the state of the snow reservoir.
+with :math:`m_{lt}` the melt flux, :math:`S` the snow, :math:`T_e` the temperature, :math:`k_{mlt}` the melt coefficient and :math:`h_s` the state of the snow reservoir.
 
 .. note::
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
     - Internal fluxes, :math:`\{m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{S, T\}\subset\boldsymbol{\mathcal{I}}`
+    - Atmospheric forcings, :math:`\{S, T_e\}\subset\boldsymbol{\mathcal{I}}`
     - Parameters, :math:`\{k_{mlt}\}\subset\boldsymbol{\theta}`
     - States, :math:`\{h_s\}\subset\boldsymbol{h}`
 
@@ -69,7 +69,7 @@ The function :math:`f` is resolved numerically as follows:
         \begin{cases}
 
             0 &\text{if} \; T(x, t) \leq 0 \\
-            \min\left(h_s(x, t^*), k_{mlt}(x)\times T(x, t)\right) &\text{otherwise}
+            \min\left(h_s(x, t^*), k_{mlt}(x)\times T_e(x, t)\right) &\text{otherwise}
 
         \end{cases}
 
