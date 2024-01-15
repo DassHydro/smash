@@ -1,8 +1,8 @@
-.. _math_num_documentation.hydrological_signatures:
+.. _math_num_documentation.hydrological_signature:
 
-=======================
-Hydrological Signatures
-=======================
+======================
+Hydrological Signature
+======================
 
 Several signatures describing and quantifying properties of discharge time series are introduced 
 in view to analyze and calibrate hydrological models :cite:p:`westerberg2015uncertainty`.
@@ -12,7 +12,7 @@ flow dynamics (based for instance on base-flow separation :cite:p:`nathan1990eva
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole study period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
-These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.signal_analysis.hydrograph_segmentation>`.
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.hydrograph_segmentation>`.
 
 Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the study period. 
 Then :math:`Qb(t)` and :math:`Qq(t)` are the baseflow and quickflow computed using a classical technique for streamflow separation 
@@ -112,3 +112,22 @@ are given in the table below.
      - mm
 
 where :math:`dt` is the timestep.
+
+Now, denote :math:`S_s^*` and :math:`S_s` are observed and simulated signature type respectively. For each signature type :math:`s`,
+the corresponding signature based efficiency metric is computed depending on if the signature is:
+
+- continuous signature:
+
+.. math::
+
+    j_s = \left(\frac{S_{s}}{S_{s}^{*}}-1\right)^2
+
+- flood event signature:
+
+.. math::
+
+    j_{s} = \frac{1}{N_E}\sum_{e=1}^{N_{E}}\left(\frac{S_{s_e}}{S_{s_e}^{*}}-1\right)^2
+
+where :math:`S_{s_e},S_{s_e}^{*}` are the simulated and observed signature of event number :math:`e\in\left[1..N_{E}\right]`.
+
+

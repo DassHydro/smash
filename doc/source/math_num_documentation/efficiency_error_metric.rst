@@ -1,8 +1,8 @@
-.. _math_num_documentation.efficiency_metric:
+.. _math_num_documentation.efficiency_error_metric:
 
-=======================
-Efficiency/Error Metric
-=======================
+=========================
+Efficiency / Error Metric
+=========================
 
 The aim of this section is to present all the efficiency/error metrics that can be used to calibrate the model and evaluate its performance in simulating discharges.
 

@@ -35,4 +35,7 @@ and estimation algorithms.
     mapping
     efficiency_error_metric
     hydrograph_segmentation
-    hydrological_signatures
+    hydrological_signature
+    regularization_function
+    cost_function
+    optimization_algorithm

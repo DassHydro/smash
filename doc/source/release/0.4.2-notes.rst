@@ -76,7 +76,7 @@ The search is automatic by looking at the prefix of the Fortran files:
 Documentation
 *************
 
-Improvement of the :ref:`Regionalization operators <math_num_documentation.forward.regionalization_operators>` section in the Math/Num Documentation.
+Improvement of the Regionalization operators section in the Math/Num Documentation.
 
 Improvement of the dark theme rendering.
 

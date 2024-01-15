@@ -65,6 +65,12 @@ Inverse problem
 
 Consider the following generic cost function composed of and observation term :math:`J_{obs}` and a regularization term :math:`J_{reg}` weighted by :math:`\alpha\geq0`:
 
+
+.. _math_num_documentation.forward_inverse_problem.cost_function:
+
+Cost function
+*************
+
 .. math::
     :name: math_num_documentation.forward_inverse_problem.inverse_problem_J
 

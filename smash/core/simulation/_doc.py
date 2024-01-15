@@ -78,9 +78,6 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
             - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
             - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
             - **optimizer** = ``'ann'``; **control_tfm** = ``'keep'``
-
-        .. hint::
-            See a detailed explanation on the control vector transformation in (TODO FC: link Math/Num) section.
         """,
     ),
     "descriptor": (
@@ -190,7 +187,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+            See the :ref:`math_num_documentation.efficiency_error_metric` and :ref:`math_num_documentation.hydrological_signature` sections
         """,
     ),
     "jobs_cmpt_tfm": (
@@ -253,7 +250,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the weighting of regularization term in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.cost_function.regularization_weighting_coefficient` section
         """,
     ),
     "jreg_cmpt": (
@@ -275,7 +272,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the regularization function in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.regularization_function` section
         """,
     ),
     "wjreg_cmpt": (
@@ -383,7 +380,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See `hydrograph_segmentation <smash.hydrograph_segmentation>` for more.
+            See the `hydrograph_segmentation <smash.hydrograph_segmentation>` function and :ref:`math_num_documentation.hydrograph_segmentation` section.
 
         """,
     ),
@@ -700,7 +697,7 @@ mapping : `str`, default 'uniform'
     - ``'ann'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of 
@@ -713,14 +710,12 @@ optimizer : `str` or None, default None
     - ``'rmsprop'`` (``'ann'`` **mapping** only)
 
     .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
         - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 
@@ -925,7 +920,7 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of 
@@ -938,6 +933,9 @@ optimizer : `str` or None, default None
 
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 
@@ -1125,7 +1123,7 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of 
@@ -1140,7 +1138,7 @@ optimizer : `str` or None, default None
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 
@@ -1239,7 +1237,7 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of
@@ -1254,7 +1252,7 @@ optimizer : `str` or None, default None
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 
@@ -1402,7 +1400,7 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of
@@ -1417,7 +1415,7 @@ optimizer : `str` or None, default None
         - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
     Dictionary containing optimization options for fine-tuning the optimization process. 

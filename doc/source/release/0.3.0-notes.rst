@@ -90,7 +90,7 @@ The following signatures have been added to optimization:
 
 .. note::
     
-    More information can be find in the Math / Num Documentation section :ref:`math_num_documentation.signal_analysis.hydrological_signatures`.
+    More information can be find in the Math / Num Documentation section
 
 It can be used as follows:
 

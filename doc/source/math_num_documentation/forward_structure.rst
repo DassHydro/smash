@@ -12,6 +12,8 @@ These 3 modules are linked in the following way:
 
 In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in]0, T]`. 
 
+.. _math_num_documentation.forward_structure.snow_module:
+
 Snow module
 -----------
 
@@ -80,6 +82,8 @@ The function :math:`f` is resolved numerically as follows:
 .. math::
 
     h_s(x, t) = h_s(x, t^*) - m_{lt}(x, t)
+
+.. _math_num_documentation.forward_structure.hydrological_module:
 
 Hydrological module
 -------------------
@@ -788,6 +792,8 @@ Baseflow
 .. math::
 
     h_{bsl}(x, t) = h_{bsl}(x, t - 1) - \frac{q_b(x, t)}{c_{bsl}(x)}
+
+.. _math_num_documentation.forward_structure.routing_module:
 
 Routing module
 --------------
