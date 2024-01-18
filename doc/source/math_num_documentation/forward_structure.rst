@@ -946,11 +946,19 @@ Assuming that the momentum equation reduces to
 with :math:`S_0` the bottom slope and :math:`S_f` the friction slope - i.e. a locally uniform flow with energy grade line parallel to the channel bottom. This momentum equation can be written as :cite:p:`ChowAppliedhydrology`:
 
 .. math::
-      :name: math_num_documentation.forward_structure.forward_problem_momentum_KW_conceptual
+      :name: math_num_documentation.forward_structure.conceptual_A_of_Q
       
-      A=\alpha Q ^{\beta}
+      A=a_{kw} Q ^{b_{kw}}
 
-with :math:`\alpha` and :math:`\beta` two constants to be estimated.
+with :math:`a_{kw}` and :math:`b_{kw}` two constants to be estimated - that can also be written using Manning friction law.
+
+Injecting the momentum parameterization of :ref:`Eq. <math_num_documentation.forward_structure.conceptual_A_of_Q>` into mass equation :ref:`Eq. <math_num_documentation.forward_structure.forward_problem_momentum_KW_conceptual>` leads to the following one equation kinematic wave model :cite:p:`ChowAppliedhydrology`:
+
+.. math:: 
+      :name: math_num_documentation.forward_structure.oneEq_KW_conceptual
+
+      \partial_{x}Q+a_{kw}b_{kw} Q^{b_{kw}-1}\partial_{t}Q=q
+      
 
 
 .. hint::
@@ -959,7 +967,7 @@ with :math:`\alpha` and :math:`\beta` two constants to be estimated.
 
     - `Numerical Solution <https://wecivilengineers.files.wordpress.com/2017/10/applied-hydrology-ven-te-chow.pdf>`__ (page 294, section 9.6)
 
-It can be expressed as follows:
+The solution of this equation can written as:
 
 .. math::
 
