@@ -128,20 +128,26 @@ class Model:
             - ``'kw'`` (TODO FC: link Math/Num)
 
         serr_mu_mapping : `str`, default 'Zero'
-            Name of structural error mu mapping. Should be one of:
+            Name of the mapping used for :math:`\mu`, the mean of structural errors. Should be one of:
 
-            - ``'Zero'`` (TODO BR: link Math/Num)
-            - ``'Constant'`` (TODO BR: link Math/Num)
-            - ``'Linear'`` (TODO BR: link Math/Num)
+            - ``'Zero'`` (:math:`\mu = 0`)
+            - ``'Constant'`` (:math:`\mu = \mu_0`)
+            - ``'Linear'`` (:math:`\mu = \mu_0 + \mu_1 \\times q`)
+
+            .. hint::
+                See the :ref:`math_num_documentation.bayesian_estimation` section
 
         serr_sigma_mapping : `str`, default 'Linear'
-            Name of structural error sigma mapping. Should be one of:
+            Name of the mapping used for :math:`\sigma`, the standard deviation of structural errors. Should be one of:
 
-            - ``'Constant'`` (TODO BR: link Math/Num)
-            - ``'Linear'`` (TODO BR: link Math/Num)
-            - ``'Power'`` (TODO BR: link Math/Num)
-            - ``'Exponential'`` (TODO BR: link Math/Num)
-            - ``'Gaussian'`` (TODO BR: link Math/Num)
+            - ``'Constant'`` (:math:`\sigma=\sigma_0`)
+            - ``'Linear'`` (:math:`\sigma=\sigma_0 + \sigma_1 \\times q`)
+            - ``'Power'`` (:math:`\sigma=\sigma_0 + \sigma_1 \\times q^{\sigma_2}`)
+            - ``'Exponential'`` (:math:`\sigma=\sigma_0 + (\sigma_2-\sigma_0) \\times \left( 1-\exp (-q/\sigma_1) \\right)`)
+            - ``'Gaussian'`` (:math:`\sigma=\sigma_0 + (\sigma_2-\sigma_0) \\times \left( 1-\exp(-(q/\sigma_1)^2) \\right)`)
+
+            .. hint::
+                See the :ref:`math_num_documentation.bayesian_estimation` section
 
         dt : `float`, default 3600
             Simulation time step in seconds.
@@ -594,8 +600,6 @@ class Model:
 
         Examples
         --------
-        TODO BR: Check example
-
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
         >>> model = smash.Model(setup, mesh)
@@ -2049,7 +2053,10 @@ class Model:
 
     def get_serr_mu(self) -> NDArray[np.float32]:
         """
-        Get the structural error mu value by applying the mu mapping to mu parameters.
+        Get the structural error mu value by applying the mu mapping.
+
+        .. hint::
+            See the :ref:`math_num_documentation.bayesian_estimation` section
 
         Returns
         -------
@@ -2067,15 +2074,15 @@ class Model:
         >>> model = smash.Model(setup, mesh)
 
         The structural error mu mapping is set to ``'Linear'``.
-        Therefore, the mapping of mu parameters to mu is: :math:`\mu(g,t)=\mu_0(g)+\mu_1(g)y(g,t)` with:
+        Therefore, the mapping of mu parameters to mu is: :math:`\mu(g,t)=\mu_0(g)+\mu_1(g)q(g,t)` with:
 
         - :math:`\mu`, the mean of structural errors,
 
         - :math:`\mu_0` and :math:`\mu_1`, the structural error mu parameters with respect to ``'Linear'`` mapping,
 
-        - :math:`y`, the model response (i.e. the discharge in that case but can be any response),
+        - :math:`q`, the model response (i.e. the discharge),
 
-        - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively (TODO BR: check example and link Math/Num)
+        - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively
 
         Run the direct Model to generate discharge responses
 
@@ -2101,8 +2108,8 @@ class Model:
 
         >>> mg0 = model.get_serr_mu_parameters("mg0").reshape(-1, 1)
         >>> mg1 = model.get_serr_mu_parameters("mg1").reshape(-1, 1)
-        >>> y = model.response.q
-        >>> mu2 = mg0 + mg1 * y
+        >>> q = model.response.q
+        >>> mu2 = mg0 + mg1 * q
         >>> np.allclose(mu, mu2)
         True
         """
@@ -2115,7 +2122,10 @@ class Model:
 
     def get_serr_sigma(self) -> NDArray[np.float32]:
         """
-        Get the structural error sigma value by applying the sigma mapping to sigma parameters.
+        Get the structural error sigma value by applying the sigma mapping.
+
+        .. hint::
+            See the :ref:`math_num_documentation.bayesian_estimation` section
 
         Returns
         -------
@@ -2133,15 +2143,15 @@ class Model:
         >>> model.setup.serr_sigma_mapping
         'Linear'
 
-        Therefore, the mapping of sigma parameters to sigma is: :math:`\sigma(g,t)=\sigma_0(g)+\sigma_1(g)y(g,t)` with:
+        Therefore, the mapping of sigma parameters to sigma is: :math:`\sigma(g,t)=\sigma_0(g)+\sigma_1(g)q(g,t)` with:
 
         - :math:`\sigma`, the standard deviation of structural errors,
 
         - :math:`\sigma_0` and :math:`\sigma_1`, the structural error sigma parameters with respect to ``'Linear'`` mapping,
 
-        - :math:`y`, the model response (i.e. the discharge in that case but can be any response),
+        - :math:`q`, the model response (i.e. the discharge),
 
-        - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively (TODO BR: check example and link Math/Num)
+        - :math:`g` and :math:`t`, the index refering to the gauge and time step respectively
 
         Run the direct Model to generate discharge responses
 
@@ -2162,8 +2172,8 @@ class Model:
 
         >>> sg0 = model.get_serr_sigma_parameters("sg0").reshape(-1, 1)
         >>> sg1 = model.get_serr_sigma_parameters("sg1").reshape(-1, 1)
-        >>> y = model.response.q
-        >>> sigma2 = sg0 + sg1 * y
+        >>> q = model.response.q
+        >>> sigma2 = sg0 + sg1 * q
         >>> np.allclose(sigma, sigma2)
         True
         """
