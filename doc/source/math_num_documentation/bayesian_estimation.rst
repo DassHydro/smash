@@ -4,7 +4,7 @@
 Bayesian Estimation
 ===================
 
-The aim of this section is to present the Bayesian approach currently implemented in SMASH for parameter estimation and uncertainty quantification.
+The aim of this section is to present the Bayesian approach currently implemented in `smash` for parameter estimation and uncertainty quantification.
 
 Notation and General Setup
 --------------------------
@@ -26,7 +26,7 @@ Both structural errors :math:`\delta_{g,t}` and observation errors  :math:`\vare
 Probabilistic models
 --------------------
 
-The first step of Bayesian inference is to hypothesize a **probabilistic model** that could have generated the analyzed data - here, observed streamflows :math:`\boldsymbol{y}^{*}`. Given the formulation in :ref:`equation 1 <math_num_documentation.bayesian_estimation.errors>`, this is equivalent to proposing probabilistic models for errors :math:`\varepsilon_{g,t}` and :math:`\delta_{g,t}` -  the simulated streamflows :math:`y_{g,t}(\boldsymbol{\rho})` being computed by model :math:`\mathcal{M}` in a deterministic way. The following probabilistic modeling assumptions are made in SMASH:
+The first step of Bayesian inference is to hypothesize a **probabilistic model** that could have generated the analyzed data - here, observed streamflows :math:`\boldsymbol{y}^{*}`. Given the formulation in :ref:`equation 1 <math_num_documentation.bayesian_estimation.errors>`, this is equivalent to proposing probabilistic models for errors :math:`\varepsilon_{g,t}` and :math:`\delta_{g,t}` -  the simulated streamflows :math:`y_{g,t}(\boldsymbol{\rho})` being computed by model :math:`\mathcal{M}` in a deterministic way. The following probabilistic modeling assumptions are made in `smash`:
 
 .. math::
     :name: math_num_documentation.bayesian_estimation.error_models
@@ -41,7 +41,7 @@ The first step of Bayesian inference is to hypothesize a **probabilistic model**
 	\end{cases}
 	\end{equation}
 
-The first line declares general independence: observation and structural errors are assumed to be independent in space, in time and between the two error types. Spatial correlations, autocorrelations and cross-correlations are not supported in SMASH for the moment. Note however that these independence assumptions apply to *errors* and not to *streamflows*. In other words, the space/time dependence in observed streamflows is not ignored, but rather it is assumed to be fully explained by the space/time dependence in simulated streamflows.  
+The first line declares general independence: observation and structural errors are assumed to be independent in space, in time and between the two error types. Spatial correlations, autocorrelations and cross-correlations are not supported in `smash` for the moment. Note however that these independence assumptions apply to *errors* and not to *streamflows*. In other words, the space/time dependence in observed streamflows is not ignored, but rather it is assumed to be fully explained by the space/time dependence in simulated streamflows.  
 
 The second line stipulates that observation errors are realizations from a Gaussian distribution with mean zero and variance :math:`u_{g,t}^2` varying both in time and between gauging stations. The variances :math:`u_{g,t}^2` are assumed known, typically from a preliminary uncertainty analysis performed at each station.
 
@@ -52,8 +52,8 @@ Lastly, the third line stipulates that structural errors are realizations from a
 * Other mapping functions :math:`\phi_{\sigma}` include: 
 
 1. the power function :math:`\phi_{\sigma}=\sigma_{0,g} + \sigma_{1,g} \times y_{g,t}^{\sigma_{2,g}}` (enabling a non-linear relation with the simulated streamflow);
-2. the exponential function :math:`\phi_{\sigma}=\sigma_{0,g} + (\sigma_{2,g}-\sigma_{0,g}) \times \left( 1-exp (-y_{g,t}/\sigma_{1,g}) \right)` (which introduces an upper bound :math:`\sigma_{2,g}`);
-3. the gaussian function :math:`\phi_{\sigma}=\sigma_{0,g} + (\sigma_{2,g}-\sigma_{0,g}) \times \left( 1-exp(-(y_{g,t}/\sigma_{1,g})^2) \right)` (a variation on the exponential above); 
+2. the exponential function :math:`\phi_{\sigma}=\sigma_{0,g} + (\sigma_{2,g}-\sigma_{0,g}) \times \left( 1-\exp (-y_{g,t}/\sigma_{1,g}) \right)` (which introduces an upper bound :math:`\sigma_{2,g}`);
+3. the gaussian function :math:`\phi_{\sigma}=\sigma_{0,g} + (\sigma_{2,g}-\sigma_{0,g}) \times \left( 1-\exp(-(y_{g,t}/\sigma_{1,g})^2) \right)` (a variation on the exponential above); 
 
 * A mapping function :math:`\phi_{\mu} \neq 0` may be used to allow structural errors to have a non-zero mean. This might be useful to identify systematic biases in the simulated streamflow. Only two non-zero functions are available at the moment: constant :math:`\phi_{\mu}=\mu_{0,g}` and linear :math:`\phi_{\mu}=\mu_{0,g} + \mu_{1,g} \times y_{g,t}`. We stress that this is a highly experimental feature that has not be thoroughly evaluated yet: we therefore recommend to use it with care and, if in doubt, to stick to the zero-mean mapping :math:`\phi_{\mu}=0`.
 
@@ -90,7 +90,7 @@ Prior distributions can be specified for all inferred quantities, including the 
 	
 The following distributions are available to specifiy individual priors: `Gaussian <https://en.wikipedia.org/wiki/Normal_distribution>`_, `lognormal <https://en.wikipedia.org/wiki/Log-normal_distribution>`_, `uniform <https://en.wikipedia.org/wiki/Continuous_uniform_distribution>`_, `triangular <https://en.wikipedia.org/wiki/Triangular_distribution>`_, `exponential <https://en.wikipedia.org/wiki/Exponential_distribution>`_ and the improper `flat prior <https://en.wikipedia.org/wiki/Prior_probability#Examples>`_ distribution.
 
-The specification of priors is case-specific and depends on the target parameters, the availability of prior knowledge in the studied region or for hydrological model used within SMASH, etc. For instance, a uniform distribution can be used to specify a feasible range for some parameter; alternatively, lognormal priors are useful to specify order-of-magnitude information for strictly positive parameters; a flat prior is typically used in the absence of any specific knowldge on a parameter; etc. Let us just recall the golden rule of prior specification: the data used in the likelihood function (here, observed streamflows) should **NOT** be used to help specifying a prior distribution.
+The specification of priors is case-specific and depends on the target parameters, the availability of prior knowledge in the studied region or for hydrological model used within `smash`, etc. For instance, a uniform distribution can be used to specify a feasible range for some parameter; alternatively, lognormal priors are useful to specify order-of-magnitude information for strictly positive parameters; a flat prior is typically used in the absence of any specific knowldge on a parameter; etc. Let us just recall the golden rule of prior specification: the data used in the likelihood function (here, observed streamflows) should **NOT** be used to help specifying a prior distribution.
 
 Posterior distribution
 ----------------------
@@ -106,6 +106,6 @@ The posterior pdf of unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\m
 	p(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})
 	\end{equation}
 
-SMASH maximizes this posterior pdf with respect to the unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` to estimate them. When flat priors are used, this is equivalent to maximizing the likelihood as discussed earlier.
+`smash` maximizes this posterior pdf with respect to the unknown parameters :math:`(\boldsymbol{\rho},\boldsymbol{\mu},\boldsymbol{\sigma})` to estimate them. When flat priors are used, this is equivalent to maximizing the likelihood as discussed earlier.
 
 
