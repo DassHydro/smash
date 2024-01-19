@@ -36,3 +36,4 @@ and estimation algorithms.
     efficiency_error_metric
     hydrograph_segmentation
     hydrological_signatures
+    bayesian_estimation
