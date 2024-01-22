@@ -2,7 +2,7 @@ import os
 import argparse
 
 DATASET = ["Cance", "France", "Lez"]
-DATASET_PATH = f"{os.path.dirname(__file__)}/../smash/factory/dataset"
+DATASET_PATH = f"{os.path.dirname(os.path.realpath(__file__))}/../smash/factory/dataset"
 
 # TODO: Refactorize this when it gets more complicated. Pass to each dataset the files or directories 
 # that we want to be uploaded and used in the documentation.
