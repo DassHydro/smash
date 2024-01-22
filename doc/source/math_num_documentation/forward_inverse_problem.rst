@@ -50,7 +50,6 @@ Operators composition
 
 Note that the operator :math:`\mathcal{M}` can be a composite function containing, at least differentiable operators for vertical and lateral transfert processes within each cell :math:`x\in\Omega`, and routing operator from cells to cells following a flow direction map, plus (optionally) deep neural networks enabling learnable process parameterization and learnable conceptual parameters regionalization as described later.
 
-.. _math_num_documentation.forward_inverse_problem.mapping:
 
 Snow, Production and Routing Operators
 ======================================
@@ -65,13 +64,16 @@ The hydrological model writes
 and is composed of the snow module :math:`\mathcal{M}_{snw}` producing a melt flux :math:`m_{lt}(x,t)` inflowing the production module :math:`\mathcal{M}_{rr}` that produces elemental discharge  :math:`q_t(x,t)` inflowing a routing module :math:`\mathcal{M}_{hy}`.
 
 
+.. _math_num_documentation.forward_inverse_problem.mapping:
+
 Learnable Mapping
 =================
 
 The spatio-temporal fields of model parameters and initial states can be constrained with spatialization rules (e.g. spatial patches for control reduction), or even explained by physiographic descriptors :math:`\boldsymbol{\mathcal{D}}`. This can be achieved via an operator :math:`\phi` projecting physical descriptors :math:`\boldsymbol{\mathcal{D}}` onto model conceptual parameters such that
 
 .. math::
-
+    :name: math_num_documentation.forward_inverse_problem.mapping_general
+    
     \left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)
     
 with :math:`\boldsymbol{\rho}` the control vector that can be optimized.

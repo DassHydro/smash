@@ -986,7 +986,7 @@ flowing into cell :math:`x`. Note that :math:`\Omega_x` is a in of :math:`\Omega
     - Internal fluxes, :math:`\{q_{t}\}\in\boldsymbol{q}`
     - Parameters, :math:`\{a_{kw}, b_{kw}\}\in\boldsymbol{\theta}`
 
-For the sake of clarity, the following variables are renamed for this section:
+For the sake of clarity, the following variables are renamed for this section and the finite difference numerical scheme writting:
 
 .. list-table:: Renamed variables
     :widths: 25 25
@@ -1012,7 +1012,7 @@ Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num
 
 .. note::
 
-    :math:`q_{up}` is replaced by :math:`Q_{i-1}^{j}`
+    :math:`q_{up}` is denoted here :math:`Q_{i-1}^{j}`
 
 Surface discharge
 '''''''''''''''''
