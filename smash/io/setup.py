@@ -35,7 +35,7 @@ def save_setup(setup: dict[str, Any], path: FilePath):
     >>> from smash.io import save_setup, read_setup
     >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'hydrological_module': 'gr4', 'routing_module': 'lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup to YAML
 
@@ -78,7 +78,7 @@ def read_setup(path: FilePath) -> dict[str, Any]:
     >>> from smash.io import save_setup, read_setup
     >>> setup, mesh = load_dataset("cance")
     >>> setup
-    {'structure': 'gr4-lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
+    {'hydrological_module': 'gr4', 'routing_module': 'lr', 'dt': 3600, 'start_time': '2014-09-15 00:00', ...}
 
     Save setup to YAML
 
@@ -88,7 +88,7 @@ def read_setup(path: FilePath) -> dict[str, Any]:
 
     >>> setup_rld = read_setup("setup.yaml")
     >>> setup_rld
-    {'daily_interannual_pet': True, 'descriptor_name': ['slope', 'dd'], ...}
+    {'daily_interannual_pet': True, 'descriptor_directory': ...}
     """
 
     if os.path.isfile(path):
