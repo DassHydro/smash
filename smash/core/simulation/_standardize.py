@@ -1045,7 +1045,7 @@ def _standardize_simulation_return_options_time_step(
     if isinstance(time_step, str):
         if time_step == "all":
             time_step = pd.date_range(start=st, end=et, freq=f"{int(model.setup.dt)}s")[
-                :-1
+                1:
             ]
         else:
             try:
@@ -1082,7 +1082,7 @@ def _standardize_simulation_return_options_time_step(
 
     # % Check that all dates are inside Model start_time and end_time
     for i, date in enumerate(time_step):
-        if (date - st).total_seconds() < 0 or (et - date).total_seconds() < 0:
+        if (date - st).total_seconds() <= 0 or (et - date).total_seconds() < 0:
             raise ValueError(
                 f"date '{date}' at index {i} in time_step return_options must be between start time '{st}' and end time '{et}'"
             )
@@ -1347,7 +1347,7 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     mask_time_step = np.zeros(shape=model.setup.ntime_step, dtype=bool)
 
     for date in return_options["time_step"]:
-        ind = int((date - st).total_seconds() / model.setup.dt)
+        ind = int((date - st).total_seconds() / model.setup.dt) - 1
         mask_time_step[ind] = True
 
     # % To pass character array to Fortran.
