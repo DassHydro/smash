@@ -71,7 +71,7 @@ instead of:
 
 .. note::
     
-    More information can be find in the Math/Num documentation section: :ref:`Cost functions <math_num_documentation.signal_analysis.cost_functions>`.
+    More information can be find in the Math/Num documentation section
 
 Setting the learning rate for Net
 *********************************

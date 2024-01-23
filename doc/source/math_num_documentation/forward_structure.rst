@@ -4,16 +4,20 @@
 Forward Structure
 =================
 
-In `smash`, a forward structure is a combination of 3 modules, the ``snow`` module, the ``hydrological`` module and the ``routing`` module.
-These 3 modules are linked in the following way:
+In `smash`, a forward model structure :math:`\mathcal{M}` is a combination of 3 modules, the ``snow`` module :math:`\mathcal{M}_{snw}`, the ``hydrological`` module :math:`\mathcal{M}_{rr}` and the ``routing`` module :math:`\mathcal{M}_{hy}` 
+such that :math:`\mathcal{M}=\mathcal{M}_{hy}\circ\mathcal{M}_{rr}\circ\mathcal{M}_{snw}` 
+(:ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`).
+These 3 modules are linked in the following way, :math:`\forall x\in\Omega\;,\;\forall t \in]0 .. T]`:
 
-- The ``snow`` module generates a melt flux which is then summed to the precipitation flux in the ``hydrological`` module.
-- The ``hydrological`` module generates an elementary discharge which is then routed by the ``routing`` module to give the surface discharge.
+- The ``snow`` module :math:`\mathcal{M}_{snw}` generates a melt flux :math:`m_{lt}(x,t)` which is then summed with the precipitation flux to inflow the ``hydrological`` module :math:`\mathcal{M}_{rr}`.
+- The ``hydrological`` module :math:`\mathcal{M}_{rr}` generates an elementary discharge :math:`q_t(x,t)` which is routed by the ``routing`` module :math:`\mathcal{M}_{hy}` to simulate the surface discharge :math:`Q(x,t)`.
 
-In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in]0, T]`. 
+In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in]0 .. T]`. 
 
-Snow module
------------
+.. _math_num_documentation.forward_structure.snow_module:
+
+Snow module :math:`\mathcal{M}_{snw}`
+-------------------------------------
 
 .. image:: ../_static/snow_module.svg
     :align: center
@@ -30,8 +34,8 @@ This snow module simply means that there is no snow module.
 
 with :math:`m_{lt}` the melt flux.
 
-ssn
-***
+ssn (Simple Snow)
+*****************
 
 This snow module is a simple degree-day snow module. It can be expressed as follows:
 
@@ -45,14 +49,14 @@ with :math:`m_{lt}` the melt flux, :math:`S` the snow, :math:`T_e` the temperatu
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{S, T_e\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{k_{mlt}\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_s\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{S, T_e\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{k_{mlt}\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_s\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
-- Update the snow reservoir state :math:`h_s`
+- Update the snow reservoir state :math:`h_s` for :math:`t^* \in \left] t-1 , t\right[`
 
 .. math::
 
@@ -68,7 +72,7 @@ The function :math:`f` is resolved numerically as follows:
         m_{lt}(x, t) =
         \begin{cases}
 
-            0 &\text{if} \; T(x, t) \leq 0 \\
+            0 &\text{if} \; T_e(x, t) \leq 0 \\
             \min\left(h_s(x, t^*), k_{mlt}(x)\times T_e(x, t)\right) &\text{otherwise}
 
         \end{cases}
@@ -81,15 +85,17 @@ The function :math:`f` is resolved numerically as follows:
 
     h_s(x, t) = h_s(x, t^*) - m_{lt}(x, t)
 
-Hydrological module
--------------------
+.. _math_num_documentation.forward_structure.hydrological_module:
+
+Hydrological module :math:`\mathcal{M}_{rr}`
+--------------------------------------------
 
 .. image:: ../_static/hydrological_module.svg
     :align: center
     :width: 500
 
-gr4
-***
+gr4 (Génie Rural 4)
+*******************
 
 This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
 
@@ -117,10 +123,10 @@ and :math:`h_t` the state of the transfer reservoir.
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{P, E\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_i, h_p, h_t\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -268,8 +274,8 @@ Transfer
 
     q_t(x, t) = q_r(x, t) + q_d(x, t)
 
-gr5
-***
+gr5 (Génie Rural 5)
+*******************
 
 This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
 
@@ -297,10 +303,10 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{P, E\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}, a_{exc}\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_i, h_p, h_t\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{c_i, c_p, c_t, k_{exc}, a_{exc}\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_i, h_p, h_t\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -329,18 +335,10 @@ Transfer
 
 Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`
 
-grd
-***
+grd (Génie Rural Distribué)
+***************************
 
-This hydrological module is derived from the GR model :cite:p:`perrin2003improvement`.
-
-.. hint::
-
-    Helpful links about GR:
-
-    - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
-    - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
-    - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+This hydrological module is derived from the GR model :cite:p:`jay2019potential`.
 
 It can be expressed as follows:
 
@@ -357,10 +355,10 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{P, E\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{c_p, c_t\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_p, h_t\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{c_p, c_t\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_p, h_t\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -425,18 +423,16 @@ Transfer
 
     q_t(x, t) = q_r(x, t)
 
-loieau
-******
+loieau (LoiEau)
+***************
 
-This hydrological module is derived from the GR model :cite:p:`perrin2003improvement`.
+This hydrological module is derived from the GR model :cite:p:`Folton_2020`.
 
 .. hint::
 
-    Helpful links about GR:
+    Helpful links about LoiEau:
 
-    - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
-    - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
-    - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+    - `Database <https://loieau.recover.inrae.fr/>`__
 
 It can be expressed as follows:
 
@@ -453,10 +449,10 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{P, E\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{c_a, c_c, k_b\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_a, h_c\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{c_a, c_c, k_b\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_a, h_c\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -524,8 +520,8 @@ Transfer
 
     q_t(x, t) = k_b(x)\left(q_r(x, t) + q_d(x, t)\right)
 
-vic3l
-*****
+vic3l (Variable Infiltration Curve 3 Layers)
+********************************************
 
 This hydrological module is derived from the VIC model :cite:p:`liang1994simple`.
 
@@ -547,7 +543,7 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
 :math:`m_{lt}` the melt flux from the snow module, :math:`b` the variable infiltration curve parameter,
 :math:`c_{usl}` the maximum capacity of the upper soil layer, :math:`c_{msl}` the maximum capacity of the medium soil layer,
 :math:`c_{bsl}` the maximum capacity of the bottom soil layer, :math:`k_s` the saturated hydraulic conductivity,
-:math:`p_{bc}` the brooks and corey exponent, :math:`d_{sm}` the maximum velocity of baseflow, 
+:math:`p_{bc}` the Brooks and Corey exponent, :math:`d_{sm}` the maximum velocity of baseflow, 
 :math:`d_s` the non-linear baseflow threshold maximum velocity, :math:`w_s` the non-linear baseflow threshold soil moisture,
 :math:`h_{cl}` the state of the canopy layer, :math:`h_{usl}` the state of the upper soil layer,
 :math:`h_{msl}` the state of the medium soil layer and :math:`h_{bsl}` the state of the bottom soil layer. 
@@ -556,10 +552,10 @@ with :math:`q_{t}` the elemental discharge, :math:`P` the precipitation, :math:`
 
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
-    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\subset\boldsymbol{q}`
-    - Atmospheric forcings, :math:`\{P, E\}\subset\boldsymbol{\mathcal{I}}`
-    - Parameters, :math:`\{b, c_{usl}, c_{msl}, c_{bsl}, k_s, p_{bc}, d_{sm}, d_s, w_s\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_{cl}, h_{usl}, h_{msl}, h_{bsl}\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}, m_{lt}\}\in\boldsymbol{q}`
+    - Atmospheric forcings, :math:`\{P, E\}\in\boldsymbol{\mathcal{I}}`
+    - Parameters, :math:`\{b, c_{usl}, c_{msl}, c_{bsl}, k_s, p_{bc}, d_{sm}, d_s, w_s\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_{cl}, h_{usl}, h_{msl}, h_{bsl}\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -570,7 +566,7 @@ Canopy layer interception
 
 .. math::
 
-    e_c(x, t) = \min(E(x, t)\left(h_{cl}(x, t - 1)^{2/3}\right), P(x, t) + m_{lt}(x, t) + h_{cl}(x, t - 1))
+    e_c(x, t) = \min(E(x, t)h_{cl}(x, t - 1)^{2/3}, P(x, t) + m_{lt}(x, t) + h_{cl}(x, t - 1))
 
 - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
 
@@ -748,8 +744,7 @@ Drainage
 
 .. note::
     
-    Same for the two last layers by replacing the upper soil layer by the medium soil layer and the medium by the bottom.
-    We will skip the three first steps and only write the update of the reservoir states.
+    The same approach is performed for drainage in the medium and bottom layers. Hence the three first steps are skiped for readability and the update of the reservoir states is directly written.
 
 - Update of the reservoirs states, :math:`h_{msl}` and :math:`h_{bsl}`
 
@@ -789,24 +784,34 @@ Baseflow
 
     h_{bsl}(x, t) = h_{bsl}(x, t - 1) - \frac{q_b(x, t)}{c_{bsl}(x)}
 
-Routing module
---------------
+.. _math_num_documentation.forward_structure.routing_module:
+
+Routing module :math:`\mathcal{M}_{hy}`
+---------------------------------------
+
+The following routing operators are grid based and adapted to perform on the same grid than the snow and production modules. 
+They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing. 
+
+For all the following models, the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the 
+drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The lattest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which 
+surface discharge can inflow the current cell :math:`x` - each cell has a unique downstream cell.
+
 
 .. image:: ../_static/routing_module.svg
     :align: center
     :width: 300
 
-lag0
-****
+lag0 (Instantaneous Routing)
+****************************
 
 This routing module is a simple aggregation of upstream discharge to downstream following the drainage plan. It can be expressed as follows:
 
 .. math::
 
-    Q(x, t) = f\left(Q(x=\Omega_x, t), q_{t}(x, t)\right)
+    Q(x, t) = f\left(Q(x', t), q_{t}(x, t)\right),\;\forall x'\in \Omega_x
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
-flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\Omega`, :math:`\Omega_x\subset\Omega` and for the most upstream cells, 
+flowing into cell :math:`x`, i.e. the whole upstream catchment. Note that :math:`\Omega_x` is a subset of :math:`\Omega`, :math:`\Omega_x\subset\Omega` and for the most upstream cells, 
 :math:`\Omega_x=\emptyset`.
 
 .. note::
@@ -814,7 +819,7 @@ flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\O
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
     - Surface discharge, :math:`Q`
-    - Internal fluxes, :math:`\{q_{t}\}\subset\boldsymbol{q}`
+    - Internal fluxes, :math:`\{q_{t}\}\in\boldsymbol{q}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -851,14 +856,14 @@ Surface discharge
 
 with :math:`\alpha` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for a single cell.
 
-lr
-**
+lr (Linear Reservoir)
+*********************
 
 This routing module is using a linear reservoir to rout upstream discharge to downstream following the drainage plan. It can be expressed as follows:
 
 .. math::
 
-    Q(x, t) = f\left(Q(x=\Omega_x, t), q_{t}(x, t), l_{lr}(x), h_{lr}(x, t)\right)
+    Q(x, t) = f\left(Q(x', t), q_{t}(x, t), l_{lr}(x), h_{lr}(x, t)\right),\;\forall x'\in \Omega_x
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge, :math:`l_{lr}` the routing lag time, 
 :math:`h_{lr}` the state of the routing reservoir and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
@@ -870,9 +875,9 @@ flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\O
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
     - Surface discharge, :math:`Q`
-    - Internal fluxes, :math:`\{q_{t}\}\subset\boldsymbol{q}`
-    - Parameters, :math:`\{l_{lr}\}\subset\boldsymbol{\theta}`
-    - States, :math:`\{h_{lr}\}\subset\boldsymbol{h}`
+    - Internal fluxes, :math:`\{q_{t}\}\in\boldsymbol{q}`
+    - Parameters, :math:`\{l_{lr}\}\in\boldsymbol{\theta}`
+    - States, :math:`\{h_{lr}\}\in\boldsymbol{h}`
 
 The function :math:`f` is resolved numerically as follows:
 
@@ -912,10 +917,45 @@ with :math:`\beta` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m
 
 with :math:`\alpha` a conversion factor from from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for a single cell.
 
-kw
-**
+kw (Kinematic Wave) 
+*******************
 
-This routing module is derived from the kinematic wave linear scheme in :cite:p:`ChowAppliedhydrology`
+This routing module is based on a conceptual 1D kinematic wave model that is numerically solved with a linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
+
+The kinematic wave model is a simplification of 1D Saint-Venant hydraulic model. First the mass equation writes:
+
+.. math:: 
+      :name: math_num_documentation.forward_structure.forward_problem_mass_KW
+
+      \partial_{t}A+\partial_{x}Q =q
+      
+with :math:`\partial_{\square}` denoting the partial derivation either in time or space, :math:`A` the cross sectional flow area, :math:`Q` the flow discharge and :math:`q` the lateral inflows. 
+
+Assuming that the momentum equation reduces to
+
+.. math:: 
+      :name: math_num_documentation.forward_structure.forward_problem_momentum_KW
+      
+      S_0=S_f
+    
+with :math:`S_0` the bottom slope and :math:`S_f` the friction slope - i.e. a locally uniform flow with energy grade line parallel to the channel bottom. This momentum equation can be written as :cite:p:`ChowAppliedhydrology`:
+
+.. math::
+      :name: math_num_documentation.forward_structure.conceptual_A_of_Q
+      
+      A=a_{kw} Q ^{b_{kw}}
+
+with :math:`a_{kw}` and :math:`b_{kw}` two constants to be estimated - that can also be written using Manning friction law.
+
+Injecting the momentum parameterization of :ref:`Eq. 3 <math_num_documentation.forward_structure.conceptual_A_of_Q>` into mass equation :ref:`Eq. 1 <math_num_documentation.forward_structure.forward_problem_mass_KW>` 
+leads to the following one equation kinematic wave model :cite:p:`ChowAppliedhydrology`:
+
+.. math:: 
+      :name: math_num_documentation.forward_structure.oneEq_KW_conceptual
+
+      \partial_{x}Q+a_{kw}b_{kw} Q^{b_{kw}-1}\partial_{t}Q=q
+      
+
 
 .. hint::
 
@@ -923,11 +963,11 @@ This routing module is derived from the kinematic wave linear scheme in :cite:p:
 
     - `Numerical Solution <https://wecivilengineers.files.wordpress.com/2017/10/applied-hydrology-ven-te-chow.pdf>`__ (page 294, section 9.6)
 
-It can be expressed as follows:
+The solution of this equation can written as:
 
 .. math::
 
-    Q(x, t) = f\left(Q(x=\Omega_x, t=\{t - 1, t\}), q_{t}(x, t=\{t - 1, t\}), \left[a_{kw}, b_{kw}\right](x)\right)
+    Q(x, t) = f\left(Q(x', t'), q_{t}(x, t'), \left[a_{kw}, b_{kw}\right](x)\right),\;\forall (x', t') \in \Omega_x\times[t-1, t]
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge, :math:`a_{kw}` the alpha kinematic wave parameter, 
 :math:`b_{kw}` the beta kinematic wave parameter and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
@@ -939,10 +979,10 @@ flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\O
     Linking with the forward problem equation :ref:`Eq. 1 <math_num_documentation.forward_inverse_problem.forward_problem_M_1>`
     
     - Surface discharge, :math:`Q`
-    - Internal fluxes, :math:`\{q_{t}\}\subset\boldsymbol{q}`
-    - Parameters, :math:`\{a_{kw}, b_{kw}\}\subset\boldsymbol{\theta}`
+    - Internal fluxes, :math:`\{q_{t}\}\in\boldsymbol{q}`
+    - Parameters, :math:`\{a_{kw}, b_{kw}\}\in\boldsymbol{\theta}`
 
-For the sake of clarity, the following variables are renamed for this section:
+For the sake of clarity, the following variables are renamed for this section and the finite difference numerical scheme writting:
 
 .. list-table:: Renamed variables
     :widths: 25 25
@@ -968,7 +1008,7 @@ Same as ``lag0`` upstream discharge, see :ref:`LAG0 Upstream Discharge <math_num
 
 .. note::
 
-    :math:`q_{up}` is replaced by :math:`Q_{i-1}^{j}`
+    :math:`q_{up}` is denoted here :math:`Q_{i-1}^{j}`
 
 Surface discharge
 '''''''''''''''''

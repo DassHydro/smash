@@ -108,24 +108,33 @@ class Model:
         snow_module : `str`, default 'zero'
             Name of snow module. Should be one of:
 
-            - ``'zero'`` (TODO FC: link Math/Num)
-            - ``'ssn'`` (TODO FC: link Math/Num)
+            - ``'zero'``
+            - ``'ssn'``
+
+            .. hint::
+                See the :ref:`math_num_documentation.forward_structure.snow_module` section
 
         hydrological_module : `str`, default 'gr4'
             Name of hydrological module. Should be one of:
 
-            - ``'gr4'`` (TODO FC: link Math/Num)
-            - ``'gr5'`` (TODO FC: link Math/Num)
-            - ``'grd'`` (TODO FC: link Math/Num)
-            - ``'loieau'`` (TODO FC: link Math/Num)
-            - ``'vic3l'`` (TODO FC: link Math/Num)
+            - ``'gr4'``
+            - ``'gr5'``
+            - ``'grd'``
+            - ``'loieau'``
+            - ``'vic3l'``
+
+            .. hint::
+                See the :ref:`math_num_documentation.forward_structure.hydrological_module` section
 
         routing_module : `str`, default 'lr'
             Name of routing module. Should be one of:
 
-            - ``'lag0'`` (TODO FC: link Math/Num)
-            - ``'lr'`` (TODO FC: link Math/Num)
-            - ``'kw'`` (TODO FC: link Math/Num)
+            - ``'lag0'``
+            - ``'lr'``
+            - ``'kw'``
+
+            .. hint::
+                See the :ref:`math_num_documentation.forward_structure.routing_module` section
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\mu`, the mean of structural errors. Should be one of:
@@ -187,11 +196,11 @@ class Model:
             Path to the root directory of the precipitation file(s).
             This option is ``mandatory`` if **read_prcp** is set to True.
 
-        prcp_access : `str`, default '' (TODO FC: link to user guide example)
+        prcp_access : `str`, default ''
             Precipitation directory structure access.
             By default, files are read using a recursive search from the root directory **prcp_directory**.
             This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
-            This option is only applicable if **read_prcp** is set to True.
+            This option is only applicable if **read_prcp** is set to True. (TODO FC: link to user guide example)
 
         read_pet : `bool`, default False
             Whether or not to read potential evapotranspiration file(s). (TODO FC: link to input_data convention)
@@ -264,13 +273,16 @@ class Model:
             This option is only applicable if **read_temp** is set to True and if **snow_module** is set to ``ssn``.
 
         prcp_partitioning : `bool`, default False
-            Whether or not to partition precipitation into liquid (precipitation) and solid (snow) parts. (TODO FC: link to Math/Num)
-            if precipitation and snow are read, the precipitation and snow will be summed before partitioning.
+            Whether or not to partition precipitation into liquid (precipitation) and solid (snow) parts.
+            If precipitation and snow are read, the precipitation and snow will be summed before partitioning.
             This option is only applicable if **snow_module** is set to ``ssn``.
 
+            .. hint::
+                See the :ref:`math_num_documentation.precipitation_partitioning` section
+
         sparse_storage : `bool`, default False
-            Whether or not to store atmospheric data (i.e. precipitation, potential evapotranspiration, snow and temperature) sparsely. (TODO FC: link to Math/Num)
-            This option reduces the amount of memory taken up by atmospheric data.It is particularly useful when working large dataset.
+            Whether or not to store atmospheric data (i.e. precipitation, potential evapotranspiration, snow and temperature) sparsely.
+            This option reduces the amount of memory taken up by atmospheric data. It is particularly useful when working large dataset.
 
         read_descriptor : `bool`, default False
             Whether or not to read descriptor file(s). (TODO FC: link to input_data convention)

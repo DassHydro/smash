@@ -38,7 +38,7 @@ def default_optimize_options(
         - ``'ann'``
 
         .. hint::
-            See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.mapping` section
 
     optimizer : `str` or None, default None
         Name of optimizer. Should be one of
@@ -58,7 +58,7 @@ def default_optimize_options(
             - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
         .. hint::
-            See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.optimization_algorithm` section
 
     Returns
     -------
@@ -247,7 +247,7 @@ def default_bayesian_optimize_options(
         - ``'multi-polynomial'``
 
         .. hint::
-            See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.mapping` section
 
     optimizer : `str` or None, default None
         Name of optimizer. Should be one of
@@ -262,7 +262,7 @@ def default_bayesian_optimize_options(
             - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
 
         .. hint::
-            See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.optimization_algorithm` section
 
     Returns
     -------
