@@ -4,13 +4,15 @@
 Forward Structure
 =================
 
-In `smash`, a forward model structure :math:`\mathcal{M}` is a combination of 3 modules, the ``snow`` module :math:`\mathcal{M}_{snw}`, the ``hydrological`` module :math:`\mathcal{M}_{rr}` and the ``routing`` module :math:`\mathcal{M}_{hy}` such that :math:`\mathcal{M}=\mathcal{M}_{hy}\circ\mathcal{M}_{rr}\circ\mathcal{M}_{snw}` (cf. :ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`).
-These 3 modules are linked in the following way, :math:`\forall x\in\Omega\;,\;\forall t \in [0,T]`:
+In `smash`, a forward model structure :math:`\mathcal{M}` is a combination of 3 modules, the ``snow`` module :math:`\mathcal{M}_{snw}`, the ``hydrological`` module :math:`\mathcal{M}_{rr}` and the ``routing`` module :math:`\mathcal{M}_{hy}` 
+such that :math:`\mathcal{M}=\mathcal{M}_{hy}\circ\mathcal{M}_{rr}\circ\mathcal{M}_{snw}` 
+(:ref:`Eq. 2 <math_num_documentation.forward_inverse_problem.forward_problem_Mhy_circ_Mrr>`).
+These 3 modules are linked in the following way, :math:`\forall x\in\Omega\;,\;\forall t \in]0 .. T]`:
 
 - The ``snow`` module :math:`\mathcal{M}_{snw}` generates a melt flux :math:`m_{lt}(x,t)` which is then summed with the precipitation flux to inflow the ``hydrological`` module :math:`\mathcal{M}_{rr}`.
 - The ``hydrological`` module :math:`\mathcal{M}_{rr}` generates an elementary discharge :math:`q_t(x,t)` which is routed by the ``routing`` module :math:`\mathcal{M}_{hy}` to simulate the surface discharge :math:`Q(x,t)`.
 
-In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in[0, T]`. 
+In this section, we will detail all the operators in each module for a given cell :math:`x\in\Omega` and a time step :math:`t\in]0 .. T]`. 
 
 .. _math_num_documentation.forward_structure.snow_module:
 
@@ -32,8 +34,8 @@ This snow module simply means that there is no snow module.
 
 with :math:`m_{lt}` the melt flux.
 
-ssn
-***
+ssn (Simple Snow)
+*****************
 
 This snow module is a simple degree-day snow module. It can be expressed as follows:
 
@@ -92,8 +94,8 @@ Hydrological module :math:`\mathcal{M}_{rr}`
     :align: center
     :width: 500
 
-gr4
-***
+gr4 (Génie Rural 4)
+*******************
 
 This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
 
@@ -272,8 +274,8 @@ Transfer
 
     q_t(x, t) = q_r(x, t) + q_d(x, t)
 
-gr5
-***
+gr5 (Génie Rural 5)
+*******************
 
 This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
 
@@ -333,18 +335,10 @@ Transfer
 
 Same as ``gr4`` transfer, see :ref:`GR4 Transfer <math_num_documentation.forward_structure.hydrological_module.gr4.transfer>`
 
-grd
-***
+grd (Génie Rural Distribué)
+***************************
 
-This hydrological module is derived from the GR model :cite:p:`perrin2003improvement`.
-
-.. hint::
-
-    Helpful links about GR:
-
-    - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
-    - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
-    - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+This hydrological module is derived from the GR model :cite:p:`jay2019potential`.
 
 It can be expressed as follows:
 
@@ -429,18 +423,16 @@ Transfer
 
     q_t(x, t) = q_r(x, t)
 
-loieau
-******
+loieau (LoiEau)
+***************
 
-This hydrological module is derived from the GR model :cite:p:`perrin2003improvement`.
+This hydrological module is derived from the GR model :cite:p:`Folton_2020`.
 
 .. hint::
 
-    Helpful links about GR:
+    Helpful links about LoiEau:
 
-    - `Brief history of GR models <https://webgr.inrae.fr/models/a-brief-history/>`__
-    - `Scientific papers <https://webgr.inrae.fr/publications/articles/>`__
-    - `GR models in a R package <https://hydrogr.github.io/airGR/>`__
+    - `Database <https://loieau.recover.inrae.fr/>`__
 
 It can be expressed as follows:
 
@@ -528,8 +520,8 @@ Transfer
 
     q_t(x, t) = k_b(x)\left(q_r(x, t) + q_d(x, t)\right)
 
-vic3l
-*****
+vic3l (Variable Infiltration Curve 3 Layers)
+********************************************
 
 This hydrological module is derived from the VIC model :cite:p:`liang1994simple`.
 
@@ -574,7 +566,7 @@ Canopy layer interception
 
 .. math::
 
-    e_c(x, t) = \min(E(x, t)\left(h_{cl}(x, t - 1)^{2/3}\right), P(x, t) + m_{lt}(x, t) + h_{cl}(x, t - 1))
+    e_c(x, t) = \min(E(x, t)h_{cl}(x, t - 1)^{2/3}, P(x, t) + m_{lt}(x, t) + h_{cl}(x, t - 1))
 
 - Compute the neutralized precipitation :math:`p_n` and evaporation :math:`e_n`
 
@@ -797,16 +789,19 @@ Baseflow
 Routing module :math:`\mathcal{M}_{hy}`
 ---------------------------------------
 
-The following routing operators are grid based and adapted to perform on the same grid than the snow and production modules. They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing (e.g. refs **TODO** RichDEM Barnes/Pyflwdir Heilander). 
+The following routing operators are grid based and adapted to perform on the same grid than the snow and production modules. 
+They take as input a 8 direction (D8) drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` obtained by terrain elevation processing. 
 
-For all the following models (except the lag0 one), the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The lattest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which surface discharge can inflow the current cell :math:`x` - each cell has a unique downstream cell.
+For all the following models, the 2D flow routing problem over the spatial domain :math:`\Omega` reduces to a 1D problem by using the 
+drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)`. The lattest, for a given cell :math:`x\in\Omega` defines 1 to 7 upstream cells which 
+surface discharge can inflow the current cell :math:`x` - each cell has a unique downstream cell.
 
 
 .. image:: ../_static/routing_module.svg
     :align: center
     :width: 300
 
-lag0 (instantaneous routing)
+lag0 (Instantaneous Routing)
 ****************************
 
 This routing module is a simple aggregation of upstream discharge to downstream following the drainage plan. It can be expressed as follows:
@@ -816,7 +811,7 @@ This routing module is a simple aggregation of upstream discharge to downstream 
     Q(x, t) = f\left(Q(x', t), q_{t}(x, t)\right),\;\forall x'\in \Omega_x
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
-flowing into cell :math:`x`, i.e. the whole upstream catchment. Note that :math:`\Omega_x` is a in of :math:`\Omega`, :math:`\Omega_x\in\Omega` and for the most upstream cells, 
+flowing into cell :math:`x`, i.e. the whole upstream catchment. Note that :math:`\Omega_x` is a subset of :math:`\Omega`, :math:`\Omega_x\subset\Omega` and for the most upstream cells, 
 :math:`\Omega_x=\emptyset`.
 
 .. note::
@@ -861,18 +856,18 @@ Surface discharge
 
 with :math:`\alpha` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for a single cell.
 
-lr (linear reservoir)
+lr (Linear Reservoir)
 *********************
 
 This routing module is using a linear reservoir to rout upstream discharge to downstream following the drainage plan. It can be expressed as follows:
 
 .. math::
 
-    Q(x, t) = f\left(Q(x=\Omega_x, t), q_{t}(x, t), l_{lr}(x), h_{lr}(x, t)\right)
+    Q(x, t) = f\left(Q(x', t), q_{t}(x, t), l_{lr}(x), h_{lr}(x, t)\right),\;\forall x'\in \Omega_x
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge, :math:`l_{lr}` the routing lag time, 
 :math:`h_{lr}` the state of the routing reservoir and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
-flowing into cell :math:`x`. Note that :math:`\Omega_x` is a in of :math:`\Omega`, :math:`\Omega_x\in\Omega` and for the most upstream cells, 
+flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\Omega`, :math:`\Omega_x\subset\Omega` and for the most upstream cells, 
 :math:`\Omega_x=\emptyset`.
 
 .. note::
@@ -922,7 +917,7 @@ with :math:`\beta` a conversion factor from :math:`mm.\Delta t^{-1}` to :math:`m
 
 with :math:`\alpha` a conversion factor from from :math:`mm.\Delta t^{-1}` to :math:`m^3.s^{-1}` for a single cell.
 
-kw (kinematic wave) 
+kw (Kinematic Wave) 
 *******************
 
 This routing module is based on a conceptual 1D kinematic wave model that is numerically solved with a linearized implicit numerical scheme :cite:p:`ChowAppliedhydrology`. This is applicable given the drainage plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
@@ -952,7 +947,8 @@ with :math:`S_0` the bottom slope and :math:`S_f` the friction slope - i.e. a lo
 
 with :math:`a_{kw}` and :math:`b_{kw}` two constants to be estimated - that can also be written using Manning friction law.
 
-Injecting the momentum parameterization of :ref:`Eq. <math_num_documentation.forward_structure.conceptual_A_of_Q>` into mass equation :ref:`Eq. <math_num_documentation.forward_structure.forward_problem_momentum_KW_conceptual>` leads to the following one equation kinematic wave model :cite:p:`ChowAppliedhydrology`:
+Injecting the momentum parameterization of :ref:`Eq. 3 <math_num_documentation.forward_structure.conceptual_A_of_Q>` into mass equation :ref:`Eq. 1 <math_num_documentation.forward_structure.forward_problem_mass_KW>` 
+leads to the following one equation kinematic wave model :cite:p:`ChowAppliedhydrology`:
 
 .. math:: 
       :name: math_num_documentation.forward_structure.oneEq_KW_conceptual
@@ -971,11 +967,11 @@ The solution of this equation can written as:
 
 .. math::
 
-    Q(x, t) = f\left(Q(x=\Omega_x, t=\{t - 1, t\}), q_{t}(x, t=\{t - 1, t\}), \left[a_{kw}, b_{kw}\right](x)\right)
+    Q(x, t) = f\left(Q(x', t'), q_{t}(x, t'), \left[a_{kw}, b_{kw}\right](x)\right),\;\forall (x', t') \in \Omega_x\times[t-1, t]
 
 with :math:`Q` the surface discharge, :math:`q_t` the elemental discharge, :math:`a_{kw}` the alpha kinematic wave parameter, 
 :math:`b_{kw}` the beta kinematic wave parameter and :math:`\Omega_x` a 2D spatial domain that corresponds to all upstream cells
-flowing into cell :math:`x`. Note that :math:`\Omega_x` is a in of :math:`\Omega`, :math:`\Omega_x\in\Omega` and for the most upstream cells, 
+flowing into cell :math:`x`. Note that :math:`\Omega_x` is a subset of :math:`\Omega`, :math:`\Omega_x\subset\Omega` and for the most upstream cells, 
 :math:`\Omega_x=\emptyset`.
 
 .. note::

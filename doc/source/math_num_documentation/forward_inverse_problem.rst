@@ -6,9 +6,9 @@ Forward & Inverse Problems
 
 This section explains :
  
- - The **forward hydrologic problem statement**, consisting in modeling the spatio-temporal evolution of water states-fluxes within a basin given atmospheric forcings and basin physical descriptors. 
+- The **forward hydrologic problem statement**, consisting in modeling the spatio-temporal evolution of water states-fluxes within a basin given atmospheric forcings and basin physical descriptors. 
  
- - The **inverse problem statement**, aiming to use spatio-temporal observations of hydrological state-fluxes to estimate uncertain or unknows model parameters.
+- The **inverse problem statement**, aiming to use spatio-temporal observations of hydrological state-fluxes to estimate uncertain or unknows model parameters.
  
 
 Forward problem
@@ -37,9 +37,9 @@ with :math:`\boldsymbol{U}(x,t)` the modeled state-flux variables, :math:`\bolds
 
     - Internal fluxes :math:`\boldsymbol{q}=\left(q_{1}(x,t),...,q_{N_{q}}(x,t)\right)\in\mathbb{R}^{N \times N_{q}}` with :math:`N_q` the number of distinct internal fluxes
 
-    - Atmospheric forcings :math:`\mathcal{\boldsymbol{I}}=\left(\mathcal{I}_{1}(x,t),...,\mathcal{I}_{N_{\mathcal{I}}}(x,t)\right)\in\mathbb{R}^{N \times N_{I}}` with :math:`N_I` the number of atmospheric forcings types
+    - Atmospheric forcings :math:`\mathcal{\boldsymbol{I}}=\left(\mathcal{I}_{1}(x,t),...,\mathcal{I}_{N_{\mathcal{I}}}(x,t)\right)\in\mathbb{R}^{N \times N_{\mathcal{I}}}` with :math:`N_\mathcal{I}` the number of atmospheric forcings types
 
-    - Physiographic descriptors :math:`\mathcal{\boldsymbol{D}}=\left(\mathcal{D}_{1}(x,t),...,\mathcal{D}_{N_{\mathcal{D}}}(x,t)\right)\in\mathbb{R}^{N \times N_{D}}` with :math:`N_D` the number of physical descriptors
+    - Physiographic descriptors :math:`\mathcal{\boldsymbol{D}}=\left(\mathcal{D}_{1}(x,t),...,\mathcal{D}_{N_{\mathcal{D}}}(x,t)\right)\in\mathbb{R}^{N \times N_{\mathcal{D}}}` with :math:`N_{\mathcal{D}}` the number of physical descriptors
 
     - Parameters :math:`\boldsymbol{\theta}=\left(\theta_{1}(x),...,\theta_{N_{\theta}}(x)\right)\in\mathbb{R}^{N \times N_{\theta}}` with :math:`N_{\theta}` the number of distinct parameters
 
@@ -109,7 +109,7 @@ The modeled states variables :math:`\boldsymbol{U}(x,t)=(Q,\boldsymbol{h},\bolds
 :math:`\boldsymbol{Y}=H\left[\mathcal{M}(\boldsymbol{\rho})\right]\in\mathcal{Y}` with :math:`H:\mathcal{X}\mapsto\mathcal{Y}` 
 the observation operator from state space :math:`\mathcal{X}` to observation space :math:`\mathcal{Y}`.
 
-Given observations :math:`\boldsymbol{Y}^{*}(x^{*},t^{*})\in\mathcal{Y}` of hydrological responses over the domain :math:`\Omega\times]0,T]`, 
+Given observations :math:`\boldsymbol{Y}^{*}(x^{*},t^{*})\in\mathcal{Y}` of hydrological responses over the domain :math:`\Omega\times]0 .. T]`, 
 the model misfit to observations is measured through the observation cost function:
 
 .. math::
@@ -138,7 +138,7 @@ The optimization problem minimizing the misfit :math:`J` to observations writes 
 
     \boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}J
 
-This problem can be tackled with optimization algorithms adapted to high dimensional problems (L-BFGS-B or machine learning optimizers (e.g., Adam) (TODO link to Math / Num)) that require the gradient :math:`\nabla_{\boldsymbol{\rho}}J` 
+This problem can be tackled with optimization algorithms adapted to high dimensional problems (L-BFGS-B :cite:p:`zhu1994bfgs` or machine learning optimizers (e.g., Adam :cite:p:`kingma2014adam`)) that require the gradient :math:`\nabla_{\boldsymbol{\rho}}J` 
 of the cost function to the sought parameters :math:`\boldsymbol{\rho}`. The computation of the cost gradient :math:`\nabla_{\boldsymbol{\rho}}J` relies on the composed adjoint model :math:`\Lambda` 
 that is derived by automatic differenciation of the forward model, using the Tapenade software :cite:p:`hascoet2013tapenade`.
 
