@@ -362,7 +362,7 @@ COST_OPTIONS_BASE_DOC = {
             If not given, ``'FlatPrior'`` is applied to each control vector parameter (i.e. equivalent to no prior).
 
         .. hint::
-            See a detailed explanation on the distribution in (TODO BR: add link Math/Num) section.
+            See a more detailed explanation on the available distributions in :ref:`math_num_documentation.bayesian_estimation` section.
         """,
     ),
     "event_seg": (

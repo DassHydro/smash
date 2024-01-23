@@ -39,7 +39,7 @@ def save_mesh(mesh: dict[str, Any], path: FilePath):
     >>> from smash.io import save_mesh, read_mesh
     >>> setup, mesh = load_dataset("cance")
     >>> mesh
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh to HDF5
 
@@ -85,7 +85,7 @@ def read_mesh(path: FilePath) -> dict[str, Any]:
     >>> from smash.io import save_mesh, read_mesh
     >>> setup, mesh = load_dataset("cance")
     >>> mesh
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh to HDF5
 
@@ -95,7 +95,7 @@ def read_mesh(path: FilePath) -> dict[str, Any]:
 
     >>> mesh_rld = read_mesh("mesh.hdf5")
     >>> mesh_rld
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
     """
 
     if not os.path.isfile(path):

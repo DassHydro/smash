@@ -37,3 +37,4 @@ and estimation algorithms.
     regularization_function
     cost_function
     optimization_algorithm
+    bayesian_estimation
