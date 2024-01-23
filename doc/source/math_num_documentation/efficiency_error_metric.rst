@@ -1,12 +1,12 @@
-.. _math_num_documentation.efficiency_metric:
+.. _math_num_documentation.efficiency_error_metric:
 
-=======================
-Efficiency/Error Metric
-=======================
+=========================
+Efficiency & Error Metric
+=========================
 
-The aim of this section is to present all the efficiency/error metrics that can be used to calibrate the model and evaluate its performance in simulating discharges.
+The aim of this section is to present all the efficiency & error metrics that can be used to calibrate the model and evaluate its performance in simulating discharges.
 
-Denote :math:`Q` and :math:`Q^*` the simulated and observed discharge, respectively, with :math:`t\in[1..T]` representing a time step for each.
+Denote :math:`Q` and :math:`Q^*` the simulated and observed discharge, respectively, with :math:`t\in]0 .. T]` representing a time step for each.
 
 NSE
 ---
