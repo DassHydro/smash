@@ -3,6 +3,11 @@
 Regionalization
 ***************
 
+The parameters :math:`\boldsymbol{\theta}` and initial states :math:`\boldsymbol{h_0}` can be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}` (slope, drainage density, soil water storage...) and :math:`\boldsymbol{\rho}` a control vector: :math:`\left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)`.
+
+First, a shape is assumed for the mapping (here polynomial or neural network).
+Then we search to optimize the control vector of the mapping: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}J`, with :math:`J` the cost function. See the section :ref:`Mapping Math / Num Documentation <math_num_documentation.mapping>` for more details.
+
 ==================
 Polynomial mapping
 ==================
@@ -50,9 +55,7 @@ Load the ``setup`` and ``mesh`` dictionaries using the :meth:`smash.load_dataset
 ----------------------------
 Visualization of descriptors
 ----------------------------
-
-Here, we aim to employ some physiographic descriptors to find the pre-regionalization mapping using polynomial functions. 
-Six descriptors are considered in this example, which are:
+We can plot the descriptors, as the beginning :
 
 .. code-block:: none
 
@@ -202,6 +205,7 @@ And finally, the spatially distributed model parameters constrained by physiogra
 ======================
 Neural network mapping
 ======================
+We can also find the pre-regionalization mapping using an artificial neural network. 
 
 Let's reinitialize the model:
 
@@ -210,8 +214,6 @@ Let's reinitialize the model:
     model = smash.Model(setup, mesh)
     desc_name = model.setup.descriptor_name
     n_desc = model.setup.nd
-
-
 
 
 To define a custom neural network, you may need to have information about the physiographic descriptors and hydrological parameters. 
