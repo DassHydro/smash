@@ -128,7 +128,7 @@ Documentation
 
 Add the user guide for advanced optimization techniques.
 
-Add :ref:`developers guide <developers_guide>`, :ref:`list of contributors <contributors>` and :ref:`license <license>` to the documentation.
+Add developers guide, list of contributors and license to the documentation.
 
 ------------
 New Features

@@ -59,7 +59,7 @@ of each command, please look directly at the makefile.
 
 - ``doc``
     Generate the documentation. This command acts as an intermediary with a second makefile (in the ``doc`` directory) specific to the generation of
-    the documenation by `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
+    the documentation by `Sphinx <https://www.sphinx-doc.org/en/master/>`__.
 
 - ``doc-clean``
     Clean the documentation workspace (i.e. deletes everything that was generated to produce the smash documentation).
@@ -71,7 +71,7 @@ of each command, please look directly at the makefile.
     Run unit tests with coverage. It will display coverage result in the terminal and generate a html file.
 
     .. note::
-        The html file can be viewed with yout browser
+        The html file can be viewed with your browser
 
         .. code-block:: none
 
@@ -198,7 +198,7 @@ associated with this derived type.
 Create new wrapped files
 """"""""""""""""""""""""
 
-As explained in the :ref:`contributor_guide.development_process_details.fortran_guideline.global_convention.file_name_convention` section a 
+As explained in the :ref:`contributor_guide.development_process_details.fortran_guideline.global_convention.file_name_convention` section, a 
 Fortran file will be automatically wrapped if it name contains the prefix ``mw`` or ``mwd``. We will consider the following 
 Fortran files: ``mw_vector2.f90`` and ``mw_vector2_manipulation.f90``. The first file will contain the implementation of the derived type 
 ``Vector2DT`` and the second will contain all the subroutines/functions that manipulate the derived type. It might well have been possible to 
@@ -1062,11 +1062,343 @@ Let's do the same thing with the new directive.
     >>> array_index_at_ind(ai)
     9.0
 
+Automatic differentiation
+*************************
+
+The Fortran code is automatically differentiated using the `Tapenade <https://team.inria.fr/ecuador/en/tapenade/>`__ engine. The use
+of Tapenade can quickly become complex and a reason to give up in the development of `smash`. The aim of this section is to explore the subtleties
+of this not-so-automatic differentiation.
+
+Differentiated files
+''''''''''''''''''''
+
+Similar to wrapped files, and as explained in the :ref:`contributor_guide.development_process_details.fortran_guideline.global_convention.file_name_convention` section,
+a Fortran file will be automatically differentiated if it name contains the prefix ``md`` or ``mwd``. There is just one exception with the file
+``fcore/forward/forward.f90`` which is not a module and contains the **top differentiation routine** ``base_foward_run``. This file is not a module
+because Tapenade is complaining about. If an operator needs to be added to the direct model, it is necessary to implement it in a pre-existing file
+containing ``md`` or ``mwd`` or to insert it in a new file containing these same prefixes. The result of the differentiation 
+(i.e. the adjoint and tangent linear model) is writted in the ``fcore/forward/forward_db.f90`` file. 
+
+.. note::
+
+    There is no need to modify the file ``forward_db.f90``, apart from for debugging purposes, as this file is constantly updated with
+    the sources as soon as the ``make tap`` command is called.
+
+Tapenade usage
+''''''''''''''
+
+The call to Tapenade to generate the ``forward_db.f90`` file is made with the ``make tap`` command. This command calls another makefile
+located here, ``tapenade/makefile``. The generation of the ``forward_db.f90`` file takes place in 3 stages:
+
+- ``pre-sed``
+    Before calling the Tapenade executable, this step allows you to make changes to the files to be differentiated. The only modification
+    currently available is the ability to delete sections of code via a pair of directives. For example, in the file
+    ``fcore/forward/md_simulation.f90`` file, you can see how this pair of directives is used.
+
+    .. code-block:: fortran
+
+        subroutine store_timestep(mesh, output, returns, t, iret, q)
+
+            implicit none
+
+            type(MeshDT), intent(in) :: mesh
+            type(OutputDT), intent(inout) :: output
+            type(ReturnsDT), intent(inout) :: returns
+            integer, intent(in) :: t
+            integer, intent(inout) :: iret
+            real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: q
+
+            integer :: i
+
+            do i = 1, mesh%ng
+
+                output%response%q(i, t) = q(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
+
+            end do
+
+            !$AD start-exclude
+            if (allocated(returns%mask_time_step)) then
+                if (returns%mask_time_step(t)) then
+                    iret = iret + 1
+                    if (returns%rr_states_flag) returns%rr_states(iret) = output%rr_final_states
+                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                end if
+            end if
+            !$AD end-exclude
+
+        end subroutine store_timestep
+
+    Why has this section of code been removed from the differentiation? Firstly, Tapenade was returning a warning 
+    (for some reason) and secondly, quite simply, this section allows you to store intermediate results which 
+    can be useful when doing a forward run, but do not influence the calculation of gradients in the adjoint model.
+
+- ``bd``
+    This step calls the Tapenade executable (supplied with the code sources) and generates the ``forward_db.f90`` file from the
+    source files.
+
+    .. code-block:: shell
+
+        $(TAPENADE)/bin/tapenade \
+        -b \
+        -d \
+        -fixinterface \
+        -noisize \
+        -openmp \
+        -context \
+        -msglevel 100 \
+        -adjvarname %_b \
+        -tgtvarname %_d \
+        -o forward \
+        -head "base_forward_run(parameters.control.x)\(output.cost)" \
+        -O $(PWD) $(FILES)
+
+    It is possible to find in the Tapenade online documentation 
+    `here <https://tapenade.gitlabpages.inria.fr/userdoc/build/html/tapenade/tutorial.html>`__ or by running the executable with the ``-h`` option,
+    information to understand what is done through the various options.
+
+    .. code-block:: shell
+
+        ./smash/tapenade/tapenade_3.16/bin/tapenade -h
+        Tapenade 3.16 (master) -  9 Oct 2020 17:47 - Java 11.0.21 Linux
+        @@ TAPENADE_HOME=/home/fcolleoni/Documents/git/smash-repo/smash/tapenade/tapenade_3.16/bin/..
+        Builds a differentiated program.
+        Usage: tapenade [options]* filenames
+        options:
+        -head, -root <proc>     set the differentiation root procedure(s)
+                                See FAQ for refined invocation syntax, e.g.
+                                independent and dependent arguments, multiple heads...
+        -tangent, -d            differentiate in forward/tangent mode (default)
+        -reverse, -b            differentiate in reverse/adjoint mode
+        ...
+        -version                display Tapenade version information
+        Report bugs to <tapenade@lists-sop.inria.fr>.
+
+    There are still a few mysteries and sometimes it's necessary to check into the code examples, available on Tapenade's GitLab
+    `here <https://gitlab.inria.fr/tapenade/tapenade>`__.
+    
+    In order to simplify this process, all the options are briefly detailed below.
+
+    - ``-b``
+        To differentiate in the reverse mode (adjoint model)
+
+    - ``-d``
+        To differentiate in the tangent mode (linear tangent model)
+
+    - ``-fixinterface``
+        To disable the use of activity to filter user-given (in)dependent vars
+
+    - ``-noisize``
+        To allow the use of dynamic calls to Fortran SIZE primitive whenever Tapenade needs the size of a variable
+
+    - ``-openmp``
+        To use the OpenMp directives to generate a parallel adjoint model
+    
+    - ``-context``
+        To generate a complete differentiated code with its main procedure. This option is mandatory when the ``-openmp`` option is used
+    
+    - ``-msglevel 100``
+        To set the level of detail of error messages (``100`` is the max)
+
+    - ``-adjvarname %_b``
+        To set the extension for adjoint variables
+    
+    - ``-tgtvarname %_d``
+        To set the extension for linear tangent variables
+
+    - ``-o forward``
+        To set the name of the generated file. The suffix ``_db.f90`` will be added
+    
+    - ``-head "base_forward_run(parameters.control.x)\(output.cost)"``
+        To set the differentiation root procedure. ``base_forward_run`` is the **top differentiation routine** to differentiate,
+        ``output.cost`` the **dependent output** variable whose derivate is required and
+        ``parameters.control.x`` the **independent input** variable with respect to which differentiation must be made
+
+    - ``-O $(PWD) $(FILES)``
+        To set the list of files used to generate the ``forward_db.f90`` file (i.e. all the files with ``mwd`` and ``md`` prefixes and 
+        ``forward.f90``)
+
+- ``post-sed``
+    After calling the Tapenade executable, this step allows you to make changes to the files to be differentiated. The only modification
+    currently available is the ability to change the derived type used. By default, Tapenade generates a new version of an existing derived type
+    by adding the suffix ``_DIFF`` and by removing all the variables that do not interact in differentiation. 
+    This may be useful to avoid storing variables unnecessarily, but it implies the use of specific derived types, which can only be used 
+    by the routines in ``forward_db.f90`` and which make the code more complicated to use for very little. Most of the variables that take up 
+    memory are used in the differentiation scheme.
+
+Tapenade tips
+'''''''''''''
+
+Here's a list of some useful tips when using Tapenade:
+
+- Use simple Fortran 90 functionalities. Don't get lost in trying to make the code more complex in order to modularise it or remove duplicated code,
+  this generally leads to the use of functionality that is not taken into account in Tapenade.
+
+- At each generation of the adjoint model, a file containing potential error messages is available, ``tapenade/forward_db.msg``. 
+  As soon as an error occurs, consult the dedicated section in the Tapenade documentation,
+  `here <https://tapenade.gitlabpages.inria.fr/userdoc/build/html/tapenade/faq.html#allMsgs>`__
+
+- If it is necessary to enter into the routines of the adjoint model to debug, remove the ``-openmp`` option to disable parallel computation,
+  compile in debug mode, ``make dbg`` and use a debugger  (`The GNU Project Debugger <https://www.sourceware.org/gdb>`__) otherwise you will 
+  spend more time compiling the ``forward_db.f90`` file at each update of ``WRITE(*,*)`` and 
+  ``READ(*,*)`` calls than actually debugging.
+
 Python guideline
 ----------------
+
+.. warning::
+    
+    Section in development
 
 Test
 ----
 
+Tests are run with the ``make test`` or ``make test-coverage`` command using the `pytest <https://docs.pytest.org/en/7.4.x/>`__ library.
+There are two types of test available in `smash`:
+
+- ``standard test``
+    Test which do not require comparison with a file of expected values
+
+- ``baseline test``
+    Test that require a comparison with a file of expected values (e.g. ``smash/tests/baseline.hdf5``, 
+    ``smash/tests/simulated_discharge.hdf5``)
+
+Standard test
+*************
+
+To set up a standard test, all you need to do is add a function whose name starts with ``test_``, either from a pre-existing file or 
+from a new file whose name must also start with ``test_``. Then all you have to do is write the desired tests and check the result with the 
+``assert`` command
+
+.. code-block:: python
+
+    def test_add_two():
+        x = 2
+        y = -2
+
+        assert add_two(x) == 4, "add_two.x"
+        assert add_two(y) == 0, "add_two.y"
+
+
+Baseline test
+*************
+
+Setting up a test with a comparison with an expected value is a little more complex than a standard test. It breaks down into
+into two functions:
+
+- ``generic function``
+    This function is not a test function in itself, it simply runs the calculations and stores the variables to be checked.
+    This function can take any kind of arguments as input but must returns a dictionary.
+
+- ``test function``
+    This function is the test function, which uses the ``generic function`` to generate the values to be compared and then compares them
+    with a file in which the expected values have been stored.
+
+.. code-block:: python
+
+    def generic_add_sth_complex(**kwargs):
+
+        x = 3
+        y = [-2, 2]
+
+        res = {
+            "add_sth_complex.x": add_sth_complex(x),
+            "add_sth_complex.y": add_sth_complex(y),
+        }
+        return res
+
+    def test_add_sth_complex():
+
+        res = generic_add_sth_complex()
+
+        for key, value in res.items():
+            assert value, pytest.baseline[key], key
+
+In this example, we can't simply write what the result of ``add_sth_complex`` (because it's something complex). So we store the output value(s) of
+this function in a file ``baseline.hdf5`` and then compare this value(s) by rerunning the test with the same function.
+
+As you can see, we compare the values with values stored in ``pytest.baseline``. It is possible with pytest to store 
+global variables at test runtime. This is done in the ``test_define_global_vars.py`` file and ``pytest.baseline`` is therefore the global variable
+which stores data from the ``baseline.hdf5`` file and which can be called in any function.
+
+Now comes the time when changes have been made to the code and the ``add_sth_complex`` function has been modified and still returns something 
+complex but different. If we run the tests again, they will fail because the expected value is not up to date. It is therefore necessary to 
+regenerate the expected values file (``baseline.hdf5``). To do this, you need to run the ``make test-baseline`` command, which will run the
+``smash/tests/gen_baseline.py`` file, updating the ``baseline.hdf5`` file (by calling all the functions starting with ``generic_``), writes a
+``diff_baseline.csv`` file which logs the differences between the old and new baselines and generates a new baseline file ``new_baseline.hdf5``.
+If the logs in the ``diff_baseline.csv`` file seem consistent with your modifications (i.e. that tests that shouldn't be modified aren't modified
+and conversely that tests that should be modified are modified), all you have to do is simply delete the ``baseline.hdf5`` file and rename
+``new_baseline.hdf5`` to ``baseline.hdf5``.
+
 Documentation
 -------------
+
+The `smash` documentation is generated with the ``make doc`` command using `Sphinx <https://www.sphinx-doc.org/en/master/>`__. 
+This command will generate a ``build/html`` folder in which it is possible to display the documentation on your browser.
+
+.. code-block:: shell
+
+    firefox ./doc/build/html/index.html
+
+.. note::
+
+    If you encounter any issues when compiling the documentation, try cleaning the ``doc`` directory and then recompiling the documentation.
+    This can help eliminate any potential conflicts and bugs that may be causing the issue.
+
+    .. code-block:: shell
+
+        (smash-dev) make doc-clean
+        (smash-dev) make doc
+
+Generate a new ReStructuredText file
+************************************
+
+The documentation is written using files in `ReStructuredText <https://www.sphinx-doc.org/en/master/usage/restructuredtext/>`__ (``rst``) format. 
+It is possible to generate a new file by hand without too much difficulty, but the ``doc/source/gen_rst.py`` file makes it easier to create a new 
+one depending on where it is placed in the documentation architecture.
+
+.. code-block:: shell
+
+    python3 gen_rst.py user_guide/quickstart/foo.rst
+
+This will create the ``foo.rst`` file in the desired location with the following header:
+
+.. code-block:: rst
+
+    .. _user_guide.quickstart.foo:
+
+    ===
+    Foo
+    ===
+
+Then, you need to call up this file in the desired toctree, for example in the file ``doc/source/user_guide/index.rst``.
+
+.. code-block:: rst
+
+    .. _user_guide:
+
+    ==========
+    User Guide
+    ==========
+
+    Quickstart
+    ----------
+    .. toctree::
+        :maxdepth: 1
+
+        quickstart/cance_first_simulation
+
+        quickstart/foo
+
+User guide
+**********
+
+The user guide contains all the `smash` tutorials. These tutorials are not hardcoded, the python commands written in the
+``.. ipython:: python`` directives are executed and automatically generate the tutorial output. This is quite handy, as it means you don't have to 
+update the documentation each time the source is modified, and adds an extra layer of testing since the documentation will not compile if 
+there is an error in executing a python command but which, on the other hand, requires a certain amount of computing time.
+
+API reference
+*************
+
+Only the architecture of this section is defined in the ``rst`` files. The content is automatically generated from the docstrings of each
+`smash` function. The style guide used for the docstrings is that of  `numpydoc <https://numpydoc.readthedocs.io/en/latest/format.html>`__.
