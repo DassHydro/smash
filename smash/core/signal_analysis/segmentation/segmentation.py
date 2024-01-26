@@ -27,11 +27,9 @@ def hydrograph_segmentation(
     max_duration: Numeric = MAX_DURATION,
     by: str = "obs",
 ):
+    # % TODO FC: Add advanced user guide
     """
     Compute segmentation information of flood events over all catchments of Model.
-
-    .. hint::
-        See a detailed explanation on the hydrograph segmentation usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------

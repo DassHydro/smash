@@ -85,5 +85,4 @@ l-curve
 This method consists of a series of 6 optimisation iterations to determine the coefficient :math:`\alpha` based on L-Curve:
 
 .. warning::
-    Section in development (TODO MJA)
-
+    Section in development
