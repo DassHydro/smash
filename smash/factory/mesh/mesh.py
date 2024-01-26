@@ -34,11 +34,9 @@ def generate_mesh(
     max_depth: Numeric = 1,
     epsg: AlphaNumeric | None = None,
 ) -> dict[str, Any]:
+    # % TODO FC: Add advanced user guide
     """
     Automatic mesh generation.
-
-    .. hint::
-        See a detailed explanation on the generate mesh usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
