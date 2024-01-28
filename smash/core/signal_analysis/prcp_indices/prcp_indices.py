@@ -123,6 +123,7 @@ class PrecipitationIndices:
 def precipitation_indices(
     model: Model,
 ) -> PrecipitationIndices:
+    # % TODO FC: Add advanced user guide
     """
     Compute precipitation indices of Model.
 
@@ -133,9 +134,6 @@ def precipitation_indices(
     - ``'d2'`` : the second scaled moment, :cite:p:`zocatelli_2011`
     - ``'vg'`` : the vertical gap :cite:p:`emmanuel_2015`
     - ``'hg'`` : the horizontal gap :cite:p:`emmanuel_2015`
-
-    .. hint::
-        See a detailed explanation on the precipitation indices usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------

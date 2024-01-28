@@ -606,11 +606,9 @@ def _gen_docstring_from_base_doc(
 
 
 _forward_run_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Run the forward Model.
-
-.. hint::
-    See a detailed explanation on the forward run usage in the (TODO FC: link user guide) section.
 
 Parameters
 ----------
@@ -678,11 +676,9 @@ array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
 )
 
 _optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model assimilation using numerical optimization algorithms.
-
-.. hint::
-    See a detailed explanation on the optimize usage in (TODO FC: link user guide) section. 
 
 Parameters
 ----------
@@ -807,11 +803,9 @@ array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
 )
 
 _multiset_estimate_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model assimilation using Bayesian-like estimation on multiple sets of solutions.
-
-.. hint::
-    See a detailed explanation on the multiset estimate usage in (TODO FC: link user guide) section.
 
 Parameters
 ----------
@@ -902,11 +896,9 @@ array([[9.4456947e-05, 9.3808041e-05, 9.3033530e-05, ..., 1.7851851e+01,
 )
 
 _bayesian_optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model bayesian assimilation using numerical optimization algorithms.
-
-.. hint::
-    See a detailed explanation on the bayesian optimize usage in (TODO FC: link user guide) section. 
 
 Parameters
 ----------
@@ -1027,11 +1019,9 @@ array([[2.8263923e-04, 2.6972688e-04, 2.5154054e-04, ..., 2.2405909e+01,
 )
 
 _multiple_forward_run_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Run the forward Model with multiple sets of parameters.
-
-.. hint::
-    See a detailed explanation on the multiple forward run usage in (TODO FC: link user guide) section.
 
 Parameters
 ----------
@@ -1100,11 +1090,9 @@ array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
 )
 
 _multiple_optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple solutions.
-
-.. hint::
-    See a detailed explanation on the multiple optimize usage in (TODO FC: link user guide) section.
 
 Parameters
 ----------

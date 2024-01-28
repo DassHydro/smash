@@ -83,11 +83,9 @@ def signatures(
     event_seg: dict[str, Any] | None = None,
     domain: str = "obs",
 ):
+    # % TODO FC: Add advanced user guide
     """
     Compute simulated or observed hydrological signatures of Model.
-
-    .. hint::
-        See a detailed explanation on the signatures usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------

@@ -168,19 +168,25 @@ class Model:
             End time date. **end_time** must be later than **start_time**
 
         adjust_interception : `bool`, default True
-            Whether or not to adjust the maximum capacity of the interception reservoir (TODO FC: link Math/Num).
+            Whether or not to adjust the maximum capacity of the interception reservoir.
             This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and
             for a sub-daily simulation time step **dt**.
 
         read_qobs : `bool`, default False
-            Whether or not to read observed discharge file(s). (TODO FC: link to input_data convention)
+            Whether or not to read observed discharge file(s).
+
+            .. hint::
+                See the :ref:`user_guide.others.input_data_convention` section
 
         qobs_directory : `str`
             Path to the root directory of the observed discharge file(s).
             This option is ``mandatory`` if **read_qobs** is set to True.
 
         read_prcp : `bool`, default False
-            Whether or not to read precipitation file(s). (TODO FC: link to input_data convention)
+            Whether or not to read precipitation file(s).
+
+            .. hint::
+                See the :ref:`user_guide.others.input_data_convention` section
 
         prcp_format : `str`, default 'tif'
             Precipitation file format. This option is only applicable if **read_prcp** is set to True.
@@ -200,10 +206,13 @@ class Model:
             Precipitation directory structure access.
             By default, files are read using a recursive search from the root directory **prcp_directory**.
             This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
-            This option is only applicable if **read_prcp** is set to True. (TODO FC: link to user guide example)
+            This option is only applicable if **read_prcp** is set to True.
 
         read_pet : `bool`, default False
-            Whether or not to read potential evapotranspiration file(s). (TODO FC: link to input_data convention)
+            Whether or not to read potential evapotranspiration file(s).
+
+            .. hint::
+                See the :ref:`user_guide.others.input_data_convention` section
 
         pet_format : `str`, default 'tif'
             Potential evapotranspiration file format. This option is only applicable if **read_pet** is set to True.
@@ -227,11 +236,14 @@ class Model:
 
         daily_interannual_pet : `bool`, default False
             Whether or not to read daily interannual potential evapotranspiration.
-            This replaces the conventional way of reading a file in time steps. (TODO FC: link to input_data convention)
+            This replaces the conventional way of reading a file in time steps.
 
         read_snow : `bool`, default False
-            Whether or not to read snow file(s). (TODO FC: link to input_data convention)
+            Whether or not to read snow file(s).
             This option is only applicable if **snow_module** is set to ``ssn``.
+
+            .. hint::
+                See the :ref:`user_guide.others.input_data_convention` section
 
         snow_format : `str`, default 'tif'
             Snow file format. This option is only applicable if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
@@ -254,7 +266,10 @@ class Model:
             This option is only applicable if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
 
         read_temp : `bool`, default False
-            Whether or not to read temperature file(s). (TODO FC: link to input_data convention)
+            Whether or not to read temperature file(s).
+
+            .. hint::
+                See the :ref:`user_guide.others.input_data_convention` section
 
         temp_format : `str`, default 'tif'
             Temperature file format. This option is only applicable if **read_temp** is set to True and if **snow_module** is set to ``ssn``.
@@ -285,7 +300,7 @@ class Model:
             This option reduces the amount of memory taken up by atmospheric data. It is particularly useful when working large dataset.
 
         read_descriptor : `bool`, default False
-            Whether or not to read descriptor file(s). (TODO FC: link to input_data convention)
+            Whether or not to read descriptor file(s).
 
         descriptor_format : `str`, default 'tif'
             Descriptor file format. This option is only applicable if **read_descriptor** is set to True.
@@ -751,7 +766,7 @@ class Model:
             If the Model object has been initialised with the ``sparse_storage`` option in setup (see `smash.Model`),
             the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are unavailable and replaced by
             ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``, optionally) and vice versa
-            if the sparse_storage option has not been chosen. (TODO FC: link to user guide to handle sparse data)
+            if the sparse_storage option has not been chosen.
 
         Access to a specific gauge mean precipitation time serie
 
