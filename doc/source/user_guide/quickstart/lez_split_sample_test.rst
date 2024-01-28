@@ -11,6 +11,9 @@ set up a split sample test :cite:p:`klemevs1986operational` over two distinct pe
     :width: 400
     :align: center
 
+Required data
+-------------
+
 You need first to download all the required data.
 
 .. button-link:: https://smash.recover.inrae.fr/dataset/Lez-dataset.tar
@@ -346,3 +349,8 @@ calibration performances and the other for the validation performances.
     perf_cal # Calibration performances
 
     perf_val # Validation performances
+
+.. ipython:: python
+    :suppress:
+
+    plt.close('all')

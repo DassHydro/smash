@@ -92,7 +92,7 @@ The catchment descriptors files must be stored in ``tif`` format. For each descr
 An example of file name in tif format for the slope descriptor: ``slope.tif``. The spatial resolution and the projection 
 between the decriptor files and the flow direction file must be **identical**.
 
-.. warning::
+.. note::
     
     ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
 
