@@ -5,7 +5,7 @@ Lez - Split Sample Test
 =======================
 
 This third and last quickstart tutorial on `smash` will be carried out on another French catchment, **the Lez at Lattes**. The objective is to 
-set up a split sample test :cite:p:`klemevs1986operational` over two distinct periods ``p1`` and ``p2``.
+set up an optimization with split sample test :cite:p:`klemevs1986operational`, i.e. cross-calibration and temporal validation over two distinct periods ``p1`` and ``p2``.
 
 .. image:: ../../_static/lez.png
     :width: 400
@@ -114,7 +114,7 @@ will be in the simulation period arguments ``start_time`` and ``end_time``. The 
 Model mesh creation
 *******************
 
-For the ``mesh``, there is no need to generate two different ``meshes`` dictionaries, the same one can be used for both periods. Similar to the 
+For the ``mesh``, there is no need to generate two different ``meshes`` dictionaries, the same one can be used for both time periods. Similar to the 
 **Cance** tutorial, we are going to create a ``mesh`` from the attributes of the catchment gauges.
 
 .. ipython:: python
@@ -171,12 +171,12 @@ Optimization
 First, we will optimize both models for each period to generate two sets of optimized rainfall-runoff parameters.
 So far, to optimize, we have called the method associated with the `smash.Model` object `Model.optimize <smash.Model.optimize>`. This method
 will modify the associated object in place (i.e. the values of the rainfall-runoff parameters after calling this function are modified). Here, we
-want to optimize the model but still keep this model to run the validation afterwards. To do this, instead of calling the method
+want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the method
 `Model.optimize <smash.Model.optimize>` method, we can call the `smash.optimize` function, which is identical but takes a
 `smash.Model` object as input and returns a copy of it. This method allows you to optimize a `smash.Model` object and store the results in 
 another object without modifying the initial one.
 
-Similar to the **Cance** tutorial, we will perform a simple spatially uniform optimization of the rainfall-runoff parameters by minimizing the
+Similar to the **Cance** tutorial, we will perform a simple spatially uniform optimization (``SBS`` global :ref:`optimization algorithm <math_num_documentation.optimization_algorithm>`) of the rainfall-runoff parameters by minimizing the
 Nash-Sutcliffe efficiency on the most downstream gauge.
 
 .. To speed up documentation generation
@@ -246,7 +246,7 @@ Temporal validation
 Rainfall-runoff parameters transfer
 '''''''''''''''''''''''''''''''''''
 
-We can now transfer the optimized rainfall-runoff parameters from each period to their respective validation period. 
+We can now transfer the optimized rainfall-runoff parameters for each calibration period to the respective validation period. 
 We will transfer the rainfall-runoff parameters from ``model_p1_opt`` to ``model_p2`` and from ``model_p2_opt`` to ``model_p1``. 
 There are several ways to do this:
 

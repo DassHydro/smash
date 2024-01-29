@@ -4,8 +4,7 @@
 France - Large Domain Simulation
 ================================
 
-This second tutorial on `smash` will cover the whole of mainland France. The objective, compare to the first tutorial, is to create a mesh over a 
-domain, perform a forward run and visualize the simulated discharge over the entire domain.
+This second tutorial on `smash` aims to perform a simulation over the whole of metropolitan France with a simple model structure. The objective, compared to the first tutorial, is to create a mesh over a large spatial domain, to perform a forward run and to visualize the simulated discharge over the entire domain.
 
 .. image:: ../../_static/france.png
     :width: 350
@@ -147,8 +146,8 @@ Forward run
 ***********
 
 We can now call the `Model.forward_run <smash.Model.forward_run>` method, but by default and for memory reasons, the simulated discharge on the 
-entire domain is not saved. This means storing an `numpy.ndarray` of shape *(nrow, ncol, ntime_step)*, which may be quite large depending on the 
-simulation period and the domain. To activate this option, the ``return_options`` argument must be filled in, specifying that you want to retrieve 
+entire spatio-temporal domain is not saved. This means storing an `numpy.ndarray` of shape *(nrow, ncol, ntime_step)*, which may be quite large depending on the 
+simulation period and the spatial domain. To activate this option, the ``return_options`` argument must be filled in, specifying that you want to retrieve 
 the simulated discharge on the whole domain. Whenever the ``return_options`` is filled in, the `Model.forward_run <smash.Model.forward_run>` method
 returns a `smash.ForwardRun` object storing these variables.
 
@@ -186,7 +185,7 @@ We can view the simulated discharge for one time step, for example the last one.
 .. note::
 
     Given that we performed a forward run on only 32 time steps with default rainfall-runoff parameters and initial states, the simulated 
-    discharge is not consistent with reality.
+    discharge is not realistic.
 
 By default, if the returned time steps are not defined, all the time steps are returned. It is possible to return only certain time steps by
 specifying them in the ``return_options`` argument, for example only the two last ones.

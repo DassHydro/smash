@@ -4,8 +4,8 @@
 Lez - Regionalization
 =====================
 
-This guide on `smash` will be carried out on the French catchment, **the Lez at Lattes**. The parameters :math:`\boldsymbol{\theta}` and initial states :math:`\boldsymbol{h_0}` can
-be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}` (slope, drainage density, soil water storage...) 
+This guide on `smash` will be carried out on the French catchment, **the Lez at Lattes** and aims to perform an optimization of the hydrological model considering regional mapping of physical descriptors onto model conceptual parameters. The parameters :math:`\boldsymbol{\theta}` and initial states :math:`\boldsymbol{h_0}` can
+be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}` (slope, drainage density, soil water storage, etc) 
 and :math:`\boldsymbol{\rho}` a control vector: :math:`\left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)`.
 See the :ref:`math_num_documentation.mapping` section for more details.
 
@@ -52,7 +52,7 @@ Now a folder called ``Lez-dataset`` should be accessible and contain the followi
 - ``descriptor``
     A directory containing physiographic descriptors in GeoTiff format.
 
-Six descriptors are considered in this example, which are:
+Six physical descriptors are considered in this example, which are:
 
 .. image:: ../../_static/physio_descriptors.png
     :align: center
@@ -141,7 +141,7 @@ Model simulation
 Multiple polynomial
 *******************
 
-To optimize the rainfall-runoff parameters via a multiple polynomial mapping, it is simply necessary to pass to the ``mapping`` argument,
+To optimize the rainfall-runoff model using a multiple polynomial mapping of descriptors to conceptual model parameters, it is simply necessary to pass to the ``mapping`` argument,
 the value, ``multi-polynomial``. We add another option to limit the number of iterations by stopping the optimizer after ``50`` iterations.
 
 .. To speed up documentation generation
@@ -206,13 +206,11 @@ As well as performances at upstream gauges
 Artificial neural network
 *************************
 
-We can do the same thing, but this time by optimizing the rainfall-runoff parameters using a neural network. It is possible to
-to define your own network to implement this optimization, but here we willl use the default neural network. Similar to
-multiple polynomial mapping, all you have to do is pass the value, ``ann`` to the ``mapping`` argument. We also pass other options:
+We can optimize the rainfall-runoff model using a neural network (NN) based mapping of descriptors to conceptual model parameters. It is possible to to define your own network to implement this optimization, but here we willl use the default neural network. Similar to multiple polynomial mapping, all you have to do is to pass the value, ``ann`` to the ``mapping`` argument. We also pass other options specific to NN use:
 
 - ``optimize_options``
     - ``random_state``: a random seed used to initialize neural network weights.
-    - ``learning_rate``: the learning rate used for weight updates during training.
+    - ``learning_rate``: the learning rate used for weights updates during training.
     - ``termination_crit``: the number of training ``epochs`` for the neural network and a positive number to stop training when the loss function does not decrease below the current optimal value for  ``early_stopping`` consecutive ``epochs``
 
 - ``return_options``
@@ -249,7 +247,7 @@ multiple polynomial mapping, all you have to do is pass the value, ``ann`` to th
         return_options={"net": True},
     )
 .. note::
-    As we used the `smash.optimize` method and asked for optional return values, this function will return two values, the optimized model
+    As we used the `smash.optimize` method (here an :ref:`ADAM algorithm <math_num_documentation.optimization_algorithm>` by default when choosing a NN based mapping) and asked for optional return values, this function will return two values, the optimized model
     ``model_ann`` and the optional returns ``opt_ann``.
 
 Since we have returned the optimized neural network, we can visualize what it contains
