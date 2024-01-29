@@ -10,7 +10,7 @@ spatial scale of 1km², and because it is well modeled with a low complexity app
 
 - provide an overview of the input data required for modelling with `smash`, 
 
--  explain how to perform in Python a simulation and a simple model optimization from discharge data at a given gauging station. 
+- explain how to perform in Python a simulation and a simple model optimization from discharge data at a given gauging station. 
 
 .. image:: ../../_static/cance.png
     :width: 600
@@ -107,17 +107,17 @@ the data is the observed discharge in **cubic meter per second** and any negativ
 
 .. note::
 
-    It is not necessary to provide an exact observed discharge series for each simulation time step. It is possible to provide a chronicle on a larger time window over  which `smash` will only read the lines corresponding to dates after the starting date provided in the header.
+    It is not necessary to provide an exact observed discharge series for each simulation time step. It is possible to provide a chronicle on a larger time window over which `smash` will only read the lines corresponding to dates after the starting date provided in the header.
 
 Now that a brief tour of the necessary data has been done, we can open a Python interface in the **conda environment**. The current working directory 
 will be assumed to be the directory where the ``Cance-dataset`` is located.
 
 Activate the environment:
 
-.. code-block:: none
-     
-     conda activate smash
-     
+.. code-block:: shell
+
+    conda activate smash
+
 Open a Python interface:
 
 .. code-block:: shell
@@ -461,14 +461,14 @@ Or masked on the active cells of the catchment
 
 .. ipython:: python
 
-    my_prcp = np.where(
+    ma_prcp = np.where(
         model.mesh.active_cell == 0,
         np.nan,
         model.atmos_data.prcp[..., 1200]
     )
-    plt.imshow(my_prcp);
+    plt.imshow(ma_prcp);
     plt.colorbar(label="Precipitation ($mm/h$)");
-    @savefig user_guide.quickstart.cance_first_simulation.my_prcp.png
+    @savefig user_guide.quickstart.cance_first_simulation.ma_prcp.png
     plt.title("Masked precipitation");
 
 The spatial average of precipitation (``mean_prcp``) and potential evapotranspiration (``mean_pet``) over each gauge are also computed
