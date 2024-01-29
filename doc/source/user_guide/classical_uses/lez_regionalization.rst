@@ -60,6 +60,14 @@ Six physical descriptors are considered in this example, which are:
 We can open a Python interface in the **conda environment**. The current working directory will be assumed to be the directory where 
 the ``Lez-dataset`` is located.
 
+Activate the environment:
+
+.. code-block:: shell
+
+    conda activate smash
+
+Open a Python interface:
+
 .. code-block:: shell
 
     (smash) python3
