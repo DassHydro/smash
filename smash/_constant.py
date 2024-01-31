@@ -154,6 +154,7 @@ RR_PARAMETERS = [
     "ci",  # % (gr4, gr5, gr6)
     "cp",  # % (gr4, gr5, gr6, grd)
     "ct",  # % (gr4, gr5, gr6, grd)
+    "ce",  # % (gr6)
     "kexc",  # % (gr4, gr5, gr6)
     "aexc",  # % (gr5, gr6)
     "ca",  # % loieau
@@ -178,6 +179,7 @@ RR_STATES = [
     "hi",  # % (gr4, gr5, gr6)
     "hp",  # % (gr4, gr5, gr6, grd)
     "ht",  # % (gr4, gr5, gr6, grd)
+    "he",  # % (gr6)
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
