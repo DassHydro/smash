@@ -146,9 +146,9 @@ contains
         real(sp), dimension(:, :, :), allocatable :: q, qt
         real(sp), dimension(:, :), allocatable :: mlt
         real(sp), dimension(:, :), allocatable :: snow, temp
-        real(sp), dimension(:, :), allocatable :: kmlt, ci, cp, ct, kexc, aexc, ca, cc, kb, &
+        real(sp), dimension(:, :), allocatable :: kmlt, ci, cp, ct, ce, kexc, aexc, ca, cc, kb, &
         & b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, akw, bkw
-        real(sp), dimension(:, :), allocatable :: hs, hi, hp, ht, ha, hc, hcl, husl, hmsl, hbsl, hlr
+        real(sp), dimension(:, :), allocatable :: hs, hi, hp, ht, he, ha, hc, hcl, husl, hmsl, hbsl, hlr
 
         ! Snow module initialisation
         select case (setup%snow_module)
@@ -212,6 +212,28 @@ contains
             call get_rr_states(parameters%rr_initial_states, "hi", hi)
             call get_rr_states(parameters%rr_initial_states, "hp", hp)
             call get_rr_states(parameters%rr_initial_states, "ht", ht)
+            
+            ! 'gr6' module
+        case ("gr6")
+
+            ! Hydrological module rr parameters
+            allocate (ci(mesh%nrow, mesh%ncol), cp(mesh%nrow, mesh%ncol), &
+                      ct(mesh%nrow, mesh%ncol), ce(mesh%nrow, mesh%ncol), &
+                      kexc(mesh%nrow, mesh%ncol), aexc(mesh%nrow, mesh%ncol))
+            call get_rr_parameters(parameters%rr_parameters, "ci", ci)
+            call get_rr_parameters(parameters%rr_parameters, "cp", cp)
+            call get_rr_parameters(parameters%rr_parameters, "ct", ct)
+            call get_rr_parameters(parameters%rr_parameters, "ce", ce)
+            call get_rr_parameters(parameters%rr_parameters, "kexc", kexc)
+            call get_rr_parameters(parameters%rr_parameters, "aexc", aexc)
+            
+            ! Hydrological module rr states
+            allocate (hi(mesh%nrow, mesh%ncol), hp(mesh%nrow, mesh%ncol), &
+                      ht(mesh%nrow, mesh%ncol), he(mesh%nrow, mesh%ncol)) 
+            call get_rr_states(parameters%rr_initial_states, "hi", hi)
+            call get_rr_states(parameters%rr_initial_states, "hp", hp)
+            call get_rr_states(parameters%rr_initial_states, "ht", ht)
+            call get_rr_states(parameters%rr_initial_states, "he", he)
 
             ! 'grd' module
         case ("grd")

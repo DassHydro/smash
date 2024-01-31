@@ -36,7 +36,7 @@ def get_rr_states_from_structure(structure: str) -> list[str]:
 
 SNOW_MODULE = ["zero", "ssn"]
 
-HYDROLOGICAL_MODULE = ["gr4", "gr5", "grd", "loieau", "vic3l"]
+HYDROLOGICAL_MODULE = ["gr4", "gr5", "gr6", "grd", "loieau", "vic3l"]
 
 ROUTING_MODULE = ["lag0", "lr", "kw"]
 
@@ -60,6 +60,7 @@ HYDROLOGICAL_MODULE_RR_PARAMETERS = dict(
         [
             ["ci", "cp", "ct", "kexc"],  # % gr4
             ["ci", "cp", "ct", "kexc", "aexc"],  # % gr5
+            ["ci", "cp", "ct", "ce", "kexc", "aexc"],  # % gr6
             ["cp", "ct"],  # % grd
             ["ca", "cc", "kb"],  # % loieau
             ["b", "cusl", "cmsl", "cbsl", "ks", "pbc", "ds", "dsm", "ws"],  # % vic3l
@@ -97,6 +98,7 @@ HYDROLOGICAL_MODULE_RR_STATES = dict(
         [
             ["hi", "hp", "ht"],  # % gr4
             ["hi", "hp", "ht"],  # % gr5
+            ["hi", "hp", "ht", "he"],  # % gr6
             ["hp", "ht"],  # % grd
             ["ha", "hc"],  # % loieau
             ["hcl", "husl", "hmsl", "hbsl"],  # % vic3l
@@ -149,11 +151,11 @@ STRUCTURE_ADJUST_CI = dict(
 
 RR_PARAMETERS = [
     "kmlt",  # % ssn
-    "ci",  # % (gr4, gr5)
-    "cp",  # % (gr4, gr5, grd)
-    "ct",  # % (gr4, gr5, grd)
-    "kexc",  # % (gr4, gr5)
-    "aexc",  # % gr5
+    "ci",  # % (gr4, gr5, gr6)
+    "cp",  # % (gr4, gr5, gr6, grd)
+    "ct",  # % (gr4, gr5, gr6, grd)
+    "kexc",  # % (gr4, gr5, gr6)
+    "aexc",  # % (gr5, gr6)
     "ca",  # % loieau
     "cc",  # % loieau
     "kb",  # % loieau
@@ -173,9 +175,9 @@ RR_PARAMETERS = [
 
 RR_STATES = [
     "hs",  # % ssn
-    "hi",  # % (gr4, gr5)
-    "hp",  # % (gr4, gr5, grd)
-    "ht",  # % (gr4, gr5, grd)
+    "hi",  # % (gr4, gr5, gr6)
+    "hp",  # % (gr4, gr5, gr6, grd)
+    "ht",  # % (gr4, gr5, gr6, grd)
     "ha",  # % loieau
     "hc",  # % loieau
     "hcl",  # % vic3l
@@ -197,6 +199,7 @@ FEASIBLE_RR_PARAMETERS = dict(
             (0, np.inf),  # % ci
             (0, np.inf),  # % cp
             (0, np.inf),  # % ct
+            (0, np.inf),  # % ce
             (-np.inf, np.inf),  # % kexc
             (0, 1),  # % aexc
             (0, np.inf),  # % ca
@@ -227,6 +230,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % hi
             (0, 1),  # % hp
             (0, 1),  # % ht
+            (0, 1),  # % he
             (0, 1),  # % ha
             (0, 1),  # % hc
             (0, 1),  # % hcl
@@ -252,6 +256,7 @@ DEFAULT_RR_PARAMETERS = dict(
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
+            30,  # % ce
             0,  # % kexc
             0.1,  # % aexc
             200,  # % ca
@@ -282,6 +287,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % hi
             1e-2,  # % hp
             1e-2,  # % ht
+            1e-2,  # % he
             1e-2,  # % ha
             1e-2,  # % hc
             1e-2,  # % hcl
@@ -305,6 +311,7 @@ DEFAULT_BOUNDS_RR_PARAMETERS = dict(
             (1e-6, 1e2),  # % ci
             (1e-6, 1e3),  # % cp
             (1e-6, 1e3),  # % ct
+            (1e-6, 1e3),  # % ce
             (-50, 50),  # % kexc
             (1e-6, 0.999999),  # % aexc
             (1e-6, 1e3),  # % ca
@@ -335,6 +342,7 @@ DEFAULT_BOUNDS_RR_INITIAL_STATES = dict(
             (1e-6, 0.999999),  # % hi
             (1e-6, 0.999999),  # % hp
             (1e-6, 0.999999),  # % ht
+            (1e-6, 0.999999),  # % he
             (1e-6, 0.999999),  # % ha
             (1e-6, 0.999999),  # % hc
             (1e-6, 0.999999),  # % hcl

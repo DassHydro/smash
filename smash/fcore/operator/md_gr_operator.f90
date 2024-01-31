@@ -10,6 +10,7 @@
 !%      - gr_transfer
 !%      - gr4_timestep
 !%      - gr5_timestep
+!%      - gr6_timestep
 !%      - grd_timestep
 !%      - loieau_timestep
 
@@ -245,6 +246,70 @@ contains
         !$OMP end parallel do
 
     end subroutine gr5_timestep
+
+    subroutine gr6_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, ce, kexc, aexc, hi, hp, ht, he, qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(OptionsDT), intent(in) :: options
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, ce, kexc, aexc
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hi, hp, ht, he
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+
+        integer :: row, col
+        real(sp) :: pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre
+
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt) &
+        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+
+                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+
+                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+
+                    call gr_threshold_exchange(kexc(row, col), aexc(row, col), ht(row, col), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+                                
+                prr = 0.6_sp * 0.9_sp * (pr + perc) + l
+                pre = 0.4_sp * 0.9_sp * (pr + perc) + l
+                prd = 0.1_sp * (pr + perc) 
+                
+                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                
+!~                 A encap ap verif voir avec PAG les borne du code michel
+                he(row, col) = he(row, col) + pre
+                qre = max(0._sp, ce(row, col) * log(1 + exp(he(row, col) / ce(row, col))))
+                he(row, col) = he(row, col) - qre
+                
+                qd = max(0._sp, prd + l)
+                
+                
+                qt(row, col) = qr + qd + qre
+
+                ! Transform from mm/dt to m3/s
+                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+            end do
+        end do
+        !$OMP end parallel do
+
+    end subroutine gr6_timestep
 
     subroutine grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt)
 
