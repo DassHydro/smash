@@ -86,7 +86,7 @@ contains
         row = row + 1
         col = col + 1
 
-        min_tol = 1._4
+        min_tol = huge(0._4)
 
         do i = -max_depth, max_depth
 

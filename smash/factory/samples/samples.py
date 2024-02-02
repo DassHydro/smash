@@ -18,7 +18,6 @@ __all__ = ["Samples", "generate_samples"]
 
 
 class Samples:
-
     """
     Represents the generated samples result.
 

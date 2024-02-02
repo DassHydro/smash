@@ -27,9 +27,30 @@ def _rowcol_to_xy(
     return x, y
 
 
-def _trim_zeros_2d(array: np.ndarray, shift_value: bool = False) -> np.ndarray:
+def _get_catchment_slice_window(
+    nrow: int,
+    ncol: int,
+    row: int,
+    col: int,
+    area: float,
+    dx: float,
+    dy: float,
+    max_depth: int,
+) -> tuple[slice, slice]:
+    n = np.ceil(area / (dx * dy)).astype(np.int32)
+    srow = np.maximum(0, row - max_depth - n)
+    erow = np.minimum(nrow - 1, row + max_depth + n)
+    scol = np.maximum(0, col - max_depth - n)
+    ecol = np.minimum(ncol - 1, col + max_depth + n)
+
+    return (slice(srow, erow), slice(scol, ecol))
+
+
+def _trim_mask_2d(
+    array: np.ndarray, slice_win: bool = False
+) -> (np.ndarray | np.ndarray, tuple[slice, slice]):
     for ax in [0, 1]:
-        mask = ~(array == 0).all(axis=ax)
+        mask = ~(array.mask).all(axis=ax)
 
         inv_mask = mask[::-1]
 
@@ -38,15 +59,15 @@ def _trim_zeros_2d(array: np.ndarray, shift_value: bool = False) -> np.ndarray:
         end_ind = len(inv_mask) - np.argmax(inv_mask)
 
         if ax == 0:
-            scol, ecol = start_ind, end_ind
-            array = array[:, start_ind:end_ind]
+            slice_col = slice(start_ind, end_ind)
+            array = array[:, slice_col]
 
         else:
-            srow, erow = start_ind, end_ind
-            array = array[start_ind:end_ind, :]
+            slice_row = slice(start_ind, end_ind)
+            array = array[slice_row, :]
 
-    if shift_value:
-        return array, srow, erow, scol, ecol
+    if slice_win:
+        return array, (slice_row, slice_col)
 
     else:
         return array
@@ -56,7 +77,7 @@ def _get_array(
     flwdir_dataset: gdal.Dataset, bbox: np.ndarray | None = None
 ) -> np.ndarray:
     if bbox is not None:
-        xmin, xmax, xres, ymin, ymax, yres = _get_transform(flwdir_dataset)
+        xmin, _, xres, _, ymax, yres = _get_transform(flwdir_dataset)
 
         col_off = int((bbox[0] - xmin) / xres)
         row_off = int((ymax - bbox[3]) / yres)

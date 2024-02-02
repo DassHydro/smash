@@ -17,7 +17,6 @@ __all__ = ["PrecipitationIndices", "precipitation_indices"]
 
 
 class PrecipitationIndices:
-
     """
     Represents precipitation indices computation result.
 

@@ -8,7 +8,8 @@ from smash.factory.mesh._tools import (
     _get_srs,
     _get_array,
     _xy_to_rowcol,
-    _trim_zeros_2d,
+    _trim_mask_2d,
+    _get_catchment_slice_window,
 )
 from smash.factory.mesh._libmesh import mw_mesh
 
@@ -252,7 +253,7 @@ def _generate_mesh_from_xy(
     max_depth: int,
     epsg: int,
 ) -> dict:
-    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(flwdir_dataset)
+    (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
     srs = _get_srs(flwdir_dataset, epsg)
 
@@ -274,24 +275,42 @@ def _generate_mesh_from_xy(
     for ind in range(x.size):
         row, col = _xy_to_rowcol(x[ind], y[ind], xmin, ymax, xres, yres)
 
-        mask_dln_imd, row_dln[ind], col_dln[ind] = mw_mesh.catchment_dln(
-            flwdir, dx, dy, row, col, area[ind], max_depth
+        # % Take a window of flow directions. It avoids to fill and clean too large
+        # % matrices. The boundaries of the window are obtained by assuming the
+        # % worst spatial pattern of draining area (i.e. a rectangular catchment
+        # % in x or y direction of 1 cell width).
+        slice_win = _get_catchment_slice_window(
+            *flwdir.shape, row, col, area[ind], dx[row, col], dy[row, col], max_depth
         )
 
-        area_dln[ind] = np.sum(mask_dln_imd * dx * dy)
+        row_win = row - slice_win[0].start  # % srow
+        col_win = col - slice_win[1].start  # % scol
 
-        mask_dln = np.where(mask_dln_imd == 1, 1, mask_dln)
+        dx_win = dx[slice_win]
+        dy_win = dy[slice_win]
+        flwdir_win = flwdir[slice_win]
+
+        mask_dln_win, row_dln_win, col_dln_win = mw_mesh.catchment_dln(
+            flwdir_win, dx_win, dy_win, row_win, col_win, area[ind], max_depth
+        )
+
+        row_dln[ind] = row_dln_win + slice_win[0].start  # % srow
+        col_dln[ind] = col_dln_win + slice_win[1].start  # % scol
+
+        area_dln[ind] = np.sum(mask_dln_win * dx_win * dy_win)
+
+        mask_dln[slice_win] = np.where(mask_dln_win == 1, 1, mask_dln[slice_win])
 
     flwdir = np.ma.masked_array(flwdir, mask=(1 - mask_dln))
-    flwdir, srow, erow, scol, ecol = _trim_zeros_2d(flwdir, shift_value=True)
-    dx = dx[srow:erow, scol:ecol]
-    dy = dy[srow:erow, scol:ecol]
+    flwdir, slice_win = _trim_mask_2d(flwdir, slice_win=True)
+    dx = dx[slice_win]
+    dy = dy[slice_win]
 
-    xmin_shifted = xmin + scol * xres
-    ymax_shifted = ymax - srow * yres
+    ymax_shifted = ymax - slice_win[0].start * yres  # % srow
+    xmin_shifted = xmin + slice_win[1].start * xres  # % scol
 
-    row_dln = row_dln - srow
-    col_dln = col_dln - scol
+    row_dln = row_dln - slice_win[0].start  # % srow
+    col_dln = col_dln - slice_win[1].start  # % scol
 
     flwacc, flwpar = mw_mesh.flow_accumulation_partition(flwdir, dx, dy)
 
@@ -343,14 +362,11 @@ def _generate_mesh_from_xy(
 def _generate_mesh_from_bbox(
     flwdir_dataset: gdal.Dataset, bbox: np.ndarray, epsg: int
 ) -> dict:
-    (xmin, xmax, xres, ymin, ymax, yres) = _get_transform(flwdir_dataset)
+    (_, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
     srs = _get_srs(flwdir_dataset, epsg)
 
     flwdir = _get_array(flwdir_dataset, bbox)
-
-    if np.any(~np.isin(flwdir, D8_VALUE), where=(flwdir > 0)):
-        raise ValueError(f"Flow direction data is invalid. Value must be in {D8_VALUE}")
 
     flwdir = np.ma.masked_array(flwdir, mask=(flwdir < 1))
 
