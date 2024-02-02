@@ -27,7 +27,6 @@ class Layer(object):
 
 
 class Activation(Layer):
-
     """
     Activation layer that applies a specified activation function to the input.
 
@@ -69,7 +68,6 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-
     """
     Scale layer that applies the min-max scaling function to the outputs.
 
@@ -146,7 +144,6 @@ def _wb_initialization(layer: Layer, attr: str):
 
 
 class Dense(Layer):
-
     """
     Fully-connected (dense) layer.
 
@@ -241,7 +238,6 @@ class Dense(Layer):
 
 
 class Dropout(Layer):
-
     """
     Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
 

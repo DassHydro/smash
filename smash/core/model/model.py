@@ -96,7 +96,6 @@ __all__ = ["Model"]
 
 
 class Model:
-
     """
     Primary data structure of the hydrological model `smash`.
 

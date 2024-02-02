@@ -57,9 +57,9 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 )
 
                 res[f"optimize.{model.setup.structure}.{mp}.iter_cost"] = ret.iter_cost
-                res[
-                    f"optimize.{model.setup.structure}.{mp}.control_vector"
-                ] = ret.control_vector
+                res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = (
+                    ret.control_vector
+                )
 
             qsim = instance.response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
