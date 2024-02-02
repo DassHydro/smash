@@ -199,7 +199,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hlr
         real(sp), dimension(mesh%nrow, mesh%ncol, zq), intent(inout) :: q
 
-        integer :: i, j, row, col, ncpu
+        integer :: i, j, row, col
         real(sp) :: qup
 
         q(:, :, zq) = qt(:, :, zq)

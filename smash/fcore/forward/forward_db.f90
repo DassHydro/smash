@@ -77,6 +77,7 @@ CONTAINS
     INTRINSIC LOG
     REAL(mrk) :: temp
 ! Initialize
+    loglkh = 0._mrk
     feas = .true.
     isnull = .false.
 ! Compute
@@ -111,6 +112,7 @@ CONTAINS
           temp = (obs(t, s)-sim(t, s)-mu)*(obs(t, s)-sim(t, s)-mu)/v
           loglkh_d = loglkh_d - 0.5_mrk*(v_d/v+(2*(obs(t, s)-sim(t, s)-&
 &           mu)*(-sim_d(t, s)-mu_d)-temp*v_d)/v)
+          loglkh = loglkh - 0.5_mrk*(LOG(pi*2._mrk)+LOG(v)+temp)
         END IF
       END DO
     END DO
@@ -285,7 +287,6 @@ CONTAINS
     REAL(mrk), INTENT(OUT) :: logprior_d
     LOGICAL, INTENT(OUT) :: feas, isnull
 ! locals
-    INTEGER(mik) :: i
     REAL(mrk) :: pdf
     REAL(mrk) :: pdf_d
     REAL(mrk) :: dummytheta(SIZE(theta), 1)
@@ -293,6 +294,7 @@ CONTAINS
     TYPE(PRIORTYPE) :: dummytheta_prior(SIZE(theta_prior), 1)
     INTRINSIC SIZE
 ! Initialize
+    logprior = 0.0_mrk
 ! theta
     dummytheta_d = 0.0_8
     dummytheta_d(:, 1) = theta_d
@@ -304,17 +306,21 @@ CONTAINS
       logprior_d = 0.0_8
     ELSE
       logprior_d = pdf_d
+      logprior = logprior + pdf
 ! mu hyperparameters
       CALL COMPUTE_LOGPRIOR_ENGINE_D(mu_gamma, mu_gamma_d, &
 &                              mu_gamma_prior, pdf, pdf_d, feas, isnull)
       IF (.NOT.((.NOT.feas) .OR. isnull)) THEN
         logprior_d = logprior_d + pdf_d
+        logprior = logprior + pdf
 ! sigma hyperparameters
         CALL COMPUTE_LOGPRIOR_ENGINE_D(sigma_gamma, sigma_gamma_d, &
 &                                sigma_gamma_prior, pdf, pdf_d, feas, &
 &                                isnull)
-        IF (.NOT.((.NOT.feas) .OR. isnull)) logprior_d = logprior_d + &
-&           pdf_d
+        IF (.NOT.((.NOT.feas) .OR. isnull)) THEN
+          logprior_d = logprior_d + pdf_d
+          logprior = logprior + pdf
+        END IF
       END IF
     END IF
   END SUBROUTINE COMPUTE_LOGPRIOR_D
@@ -334,7 +340,6 @@ CONTAINS
     REAL(mrk) :: logprior_b
     LOGICAL, INTENT(OUT) :: feas, isnull
 ! locals
-    INTEGER(mik) :: i
     REAL(mrk) :: pdf
     REAL(mrk) :: pdf_b
     REAL(mrk) :: dummytheta(SIZE(theta), 1)
@@ -390,7 +395,6 @@ CONTAINS
     REAL(mrk), INTENT(OUT) :: logprior
     LOGICAL, INTENT(OUT) :: feas, isnull
 ! locals
-    INTEGER(mik) :: i
     REAL(mrk) :: pdf
     REAL(mrk) :: dummytheta(SIZE(theta), 1)
     TYPE(PRIORTYPE) :: dummytheta_prior(SIZE(theta_prior), 1)
@@ -460,6 +464,7 @@ CONTAINS
     REAL(mrk) :: loglkh_d
     REAL(mrk) :: logprior_d
 ! Initialize
+    logpost = undefrn
 ! Prior
     CALL COMPUTE_LOGPRIOR_D(theta, theta_d, theta_prior, mu_gamma, &
 &                     mu_gamma_d, mu_gamma_prior, sigma_gamma, &
@@ -482,6 +487,7 @@ CONTAINS
         ELSE
 ! Posterior
           logpost_d = loglkh_d + logprior_d
+          logpost = loglkh + logprior + logh
         END IF
       END IF
     END IF
@@ -605,6 +611,7 @@ CONTAINS
     CHARACTER(len=250) :: mess
     INTRINSIC SIZE
 ! Initialize
+    logprior = 0.0_mrk
     feas = .true.
     isnull = .false.
 ! No prior <=> flat prior
@@ -621,6 +628,7 @@ CONTAINS
           IF (err .GT. 0) feas = .false.
 ! return removed for Tapenade
           logprior_d = logprior_d + pdf_d
+          logprior = logprior + pdf
         END DO
       END DO
     END IF
@@ -1030,6 +1038,7 @@ CONTAINS
 ! Exponentiate if loga=.false.
       IF (.NOT.loga) THEN
         IF (isnull) THEN
+          pdf = 0.0_mrk
           pdf_d = 0.0_8
         ELSE
           pdf_d = EXP(pdf)*pdf_d
@@ -1829,7 +1838,6 @@ CONTAINS
 ! locals
     INTEGER(mik) :: i, j, err
     CHARACTER(len=250) :: mess
-    CHARACTER(len=250), PARAMETER :: procname='SigmaFunk_vect'
     INTRINSIC SIZE
     res = undefrn
     DO j=1,SIZE(y, 2)
@@ -1870,7 +1878,6 @@ CONTAINS
 ! locals
     INTEGER(mik) :: i, j, err
     CHARACTER(len=250) :: mess
-    CHARACTER(len=250), PARAMETER :: procname='MuFunk_vect'
     INTRINSIC SIZE
     res = undefrn
     DO j=1,SIZE(y, 2)
@@ -6469,7 +6476,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j
+    INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
     INTRINSIC TRIM
@@ -6497,7 +6504,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j
+    INTEGER :: i, j
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
     INTRINSIC TRIM
@@ -6528,7 +6535,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     CHARACTER(len=lchar) :: name
-    INTEGER :: n, i, j, row, col
+    INTEGER :: i, j, row, col
     INTRINSIC TRIM
 ! RR parameters is first control kind
     j = 0
@@ -6563,7 +6570,7 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
     CHARACTER(len=lchar) :: name
-    INTEGER :: n, i, j, row, col
+    INTEGER :: i, j, row, col
     INTRINSIC TRIM
 ! RR initial states is second control kind
     j = parameters%control%nbk(1)
@@ -6597,7 +6604,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
+    INTEGER :: i, j, k
     REAL(sp) :: y, l, u
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
@@ -6637,7 +6644,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
+    INTEGER :: i, j, k
     REAL(sp) :: y, l, u
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
@@ -6678,7 +6685,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
+    INTEGER :: i, j, k
     REAL(sp) :: y, l, u
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
@@ -6724,7 +6731,7 @@ CONTAINS
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(PARAMETERSDT), INTENT(INOUT) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    INTEGER :: n, i, j, k
+    INTEGER :: i, j, k
     REAL(sp) :: y, l, u
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: ac_mask
     INTRINSIC SUM
@@ -9249,7 +9256,6 @@ CONTAINS
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_d
-    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9290,7 +9296,6 @@ CONTAINS
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qs_b
-    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9319,7 +9324,6 @@ CONTAINS
     IMPLICIT NONE
     CHARACTER(len=lchar), INTENT(IN) :: tfm
     REAL(sp), DIMENSION(:), INTENT(INOUT) :: qo, qs
-    INTEGER :: i
     REAL(sp) :: mean_qo, e
     INTRINSIC SIZE
     LOGICAL, DIMENSION(SIZE(qo)) :: mask
@@ -9437,7 +9441,7 @@ CONTAINS
 &                   )
 ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
     temp = SIZE(obs)
-    output_d%cost = -(log_post_d/temp)
+    output_d%cost = -(REAL(log_post_d, sp)/temp)
   END SUBROUTINE BAYESIAN_COMPUTE_COST_D
 
 !  Differentiation of bayesian_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
@@ -9629,7 +9633,7 @@ CONTAINS
 &                  sigma_gamma_prior, log_post, log_prior, log_lkh, &
 &                  log_h, feas, isnull)
 ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
-    output%cost = -(1._sp*log_post/SIZE(obs))
+    output%cost = -(1._sp*REAL(log_post, sp)/SIZE(obs))
   END SUBROUTINE BAYESIAN_COMPUTE_COST
 
 !  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -9637,7 +9641,7 @@ CONTAINS
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
-&   output_d, options, returns, jobs, jobs_d)
+&   output_d, options, jobs, jobs_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -9645,7 +9649,6 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OUTPUTDT), INTENT(IN) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     REAL(sp), INTENT(INOUT) :: jobs_d
     INTEGER :: i, j, k, n_computed_event
@@ -10011,7 +10014,7 @@ CONTAINS
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
-&   output_b, options, returns, jobs, jobs_b)
+&   output_b, options, jobs, jobs_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -10019,7 +10022,6 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OUTPUTDT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     REAL(sp), INTENT(INOUT) :: jobs_b
     INTEGER :: i, j, k, n_computed_event
@@ -10823,14 +10825,13 @@ CONTAINS
   END SUBROUTINE CLASSICAL_COMPUTE_JOBS_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, &
-&   options, returns, jobs)
+&   options, jobs)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OUTPUTDT), INTENT(IN) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), INTENT(INOUT) :: jobs
     INTEGER :: i, j, k, n_computed_event
     REAL(sp), DIMENSION(setup%ntime_step-options%cost%end_warmup+1) :: &
@@ -11119,7 +11120,7 @@ CONTAINS
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, &
-&   parameters, parameters_d, options, options_d, returns, jreg, jreg_d)
+&   parameters, parameters_d, options, options_d, jreg, jreg_d)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -11128,7 +11129,6 @@ CONTAINS
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF), INTENT(IN) :: options_d
-    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_d
     INTEGER :: i
@@ -11175,7 +11175,7 @@ CONTAINS
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in options.cost.wjreg_cmpt:in
   SUBROUTINE CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, &
-&   parameters, parameters_b, options, options_b, returns, jreg, jreg_b)
+&   parameters, parameters_b, options, options_b, jreg, jreg_b)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -11184,7 +11184,6 @@ CONTAINS
     TYPE(PARAMETERSDT) :: parameters_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(OPTIONSDT_DIFF) :: options_b
-    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     REAL(sp), INTENT(INOUT) :: jreg_b
     INTEGER :: i
@@ -11289,14 +11288,13 @@ CONTAINS
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_B
 
   SUBROUTINE CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters&
-&   , options, returns, jreg)
+&   , options, jreg)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(PARAMETERSDT), INTENT(IN) :: parameters
     TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(IN) :: returns
     REAL(sp), INTENT(INOUT) :: jreg
     INTEGER :: i
     REAL(sp), DIMENSION(options%cost%njrc) :: jreg_cmpt_values
@@ -11353,10 +11351,10 @@ CONTAINS
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_d, jreg_d
     CALL CLASSICAL_COMPUTE_JOBS_D(setup, mesh, input_data, output, &
-&                           output_d, options, returns, jobs, jobs_d)
+&                           output_d, options, jobs, jobs_d)
     CALL CLASSICAL_COMPUTE_JREG_D(setup, mesh, input_data, parameters, &
-&                           parameters_d, options, options_d, returns, &
-&                           jreg, jreg_d)
+&                           parameters_d, options, options_d, jreg, &
+&                           jreg_d)
     output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
@@ -11387,7 +11385,7 @@ CONTAINS
     REAL(sp) :: jobs, jreg
     REAL(sp) :: jobs_b, jreg_b
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
-&                         , returns, jobs)
+&                         , jobs)
     CALL PUSHREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x&
 &                 , 1))
     CALL PUSHREAL4ARRAY(parameters%rr_parameters%values, SIZE(parameters&
@@ -11399,7 +11397,7 @@ CONTAINS
 &                 parameters%rr_initial_states%values, 2)*SIZE(&
 &                 parameters%rr_initial_states%values, 3))
     CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, returns, jreg)
+&                         options, jreg)
     jobs_b = output_b%cost
     jreg_b = options%cost%wjreg*output_b%cost
     CALL POPREAL4ARRAY(parameters%rr_initial_states%values, SIZE(&
@@ -11412,10 +11410,10 @@ CONTAINS
     CALL POPREAL4ARRAY(parameters%control%x, SIZE(parameters%control%x, &
 &                1))
     CALL CLASSICAL_COMPUTE_JREG_B(setup, mesh, input_data, parameters, &
-&                           parameters_b, options, options_b, returns, &
-&                           jreg, jreg_b)
+&                           parameters_b, options, options_b, jreg, &
+&                           jreg_b)
     CALL CLASSICAL_COMPUTE_JOBS_B(setup, mesh, input_data, output, &
-&                           output_b, options, returns, jobs, jobs_b)
+&                           output_b, options, jobs, jobs_b)
   END SUBROUTINE CLASSICAL_COMPUTE_COST_B
 
   SUBROUTINE CLASSICAL_COMPUTE_COST(setup, mesh, input_data, parameters&
@@ -11432,9 +11430,9 @@ CONTAINS
     jobs = 0._sp
     jreg = 0._sp
     CALL CLASSICAL_COMPUTE_JOBS(setup, mesh, input_data, output, options&
-&                         , returns, jobs)
+&                         , jobs)
     CALL CLASSICAL_COMPUTE_JREG(setup, mesh, input_data, parameters, &
-&                         options, returns, jreg)
+&                         options, jreg)
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
@@ -14146,7 +14144,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_d
-    INTEGER :: i, j, row, col, ncpu
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     REAL(sp) :: qup_d
     q_d(:, :, zq) = qt_d(:, :, zq)
@@ -14210,7 +14208,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q_b
-    INTEGER :: i, j, row, col, ncpu
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     REAL(sp) :: qup_b
     INTEGER :: ad_to
@@ -14335,7 +14333,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: llr
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hlr
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol, zq), INTENT(INOUT) :: q
-    INTEGER :: i, j, row, col, ncpu
+    INTEGER :: i, j, row, col
     REAL(sp) :: qup
     q(:, :, zq) = qt(:, :, zq)
 ! Skip the first partition because boundary cells are not routed

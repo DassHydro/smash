@@ -785,7 +785,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j
+        integer :: i, j
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
@@ -818,7 +818,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j
+        integer :: i, j
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
         ac_mask = (mesh%active_cell(:, :) .eq. 1)
@@ -852,7 +852,7 @@ contains
         type(OptionsDT), intent(in) :: options
 
         character(lchar) :: name
-        integer :: n, i, j, row, col
+        integer :: i, j, row, col
 
         ! RR parameters is first control kind
         j = 0
@@ -894,7 +894,7 @@ contains
         type(OptionsDT), intent(in) :: options
 
         character(lchar) :: name
-        integer :: n, i, j, row, col
+        integer :: i, j, row, col
 
         ! RR initial states is second control kind
         j = parameters%control%nbk(1)
@@ -935,7 +935,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j, k
+        integer :: i, j, k
         real(sp) :: y, l, u
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
@@ -984,7 +984,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j, k
+        integer :: i, j, k
         real(sp) :: y, l, u
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
@@ -1033,7 +1033,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j, k
+        integer :: i, j, k
         real(sp) :: y, l, u
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 
@@ -1089,7 +1089,7 @@ contains
         type(ParametersDT), intent(inout) :: parameters
         type(OptionsDT), intent(in) :: options
 
-        integer :: n, i, j, k
+        integer :: i, j, k
         real(sp) :: y, l, u
         logical, dimension(mesh%nrow, mesh%ncol) :: ac_mask
 

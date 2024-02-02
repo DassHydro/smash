@@ -102,7 +102,6 @@ contains
         real(mrk),intent(out)::logPrior
         logical,intent(out)::feas,isnull
         ! locals
-        integer(mik)::i
         real(mrk)::pdf
         real(mrk)::dummyTheta(size(theta),1)
         type(PriorType)::dummyTheta_prior(size(theta_prior),1)
@@ -631,7 +630,6 @@ contains
     ! locals
     integer(mik)::i,j,err
     character(250)::mess
-    character(250),parameter::procname='SigmaFunk_vect'
 
     res=undefRN
 
@@ -672,7 +670,6 @@ contains
     ! locals
     integer(mik)::i,j,err
     character(250)::mess
-    character(250),parameter::procname='MuFunk_vect'
 
     res=undefRN
 

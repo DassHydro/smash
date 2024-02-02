@@ -74,7 +74,6 @@ contains
         character(lchar), intent(in) :: tfm
         real(sp), dimension(:), intent(inout) :: qo, qs
 
-        integer :: i
         real(sp) :: mean_qo, e
         logical, dimension(size(qo)) :: mask
 
@@ -164,18 +163,18 @@ contains
         & sigma_funk, sigma_gamma, sigma_gamma_prior, log_post, log_prior, log_lkh, log_h, feas, isnull)
 
         ! TODO: Should be count(obs .ge. 0._sp .and. uobs .ge. 0._sp)
-        output%cost = -1._sp*log_post/size(obs)
+        output%cost = -1._sp*real(log_post, sp)/size(obs)
 
         !$AD start-exclude
         if (returns%cost_flag) returns%cost = output%cost
-        if (returns%log_lkh_flag) returns%log_lkh = log_lkh
-        if (returns%log_prior_flag) returns%log_prior = log_prior
-        if (returns%log_h_flag) returns%log_h = log_h
+        if (returns%log_lkh_flag) returns%log_lkh = real(log_lkh, sp)
+        if (returns%log_prior_flag) returns%log_prior = real(log_prior, sp)
+        if (returns%log_h_flag) returns%log_h = real(log_h, sp)
         !$AD end-exclude
 
     end subroutine bayesian_compute_cost
 
-    subroutine classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
+    subroutine classical_compute_jobs(setup, mesh, input_data, output, options, jobs)
 
         implicit none
 
@@ -184,7 +183,6 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(OutputDT), intent(in) :: output
         type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
         real(sp), intent(inout) :: jobs
 
         integer :: i, j, k, n_computed_event
@@ -428,7 +426,7 @@ contains
 
     end subroutine classical_compute_jobs
 
-    subroutine classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
+    subroutine classical_compute_jreg(setup, mesh, input_data, parameters, options, jreg)
 
         implicit none
 
@@ -437,7 +435,6 @@ contains
         type(Input_DataDT), intent(in) :: input_data
         type(ParametersDT), intent(in) :: parameters
         type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(in) :: returns
         real(sp), intent(inout) :: jreg
 
         integer :: i
@@ -492,9 +489,9 @@ contains
         jobs = 0._sp
         jreg = 0._sp
 
-        call classical_compute_jobs(setup, mesh, input_data, output, options, returns, jobs)
+        call classical_compute_jobs(setup, mesh, input_data, output, options, jobs)
 
-        call classical_compute_jreg(setup, mesh, input_data, parameters, options, returns, jreg)
+        call classical_compute_jreg(setup, mesh, input_data, parameters, options, jreg)
 
         output%cost = jobs + options%cost%wjreg*jreg
 
