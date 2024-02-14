@@ -147,7 +147,7 @@ contains
 
         integer :: row, col
         real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
-
+        
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
         !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
@@ -260,11 +260,12 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
 
         integer :: row, col
-        real(sp) :: pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre
-
+        real(sp) :: pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre, AR, he_star
+        
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, ce, kexc, aexc, hi, hp, ht, he, qt) &
+        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre)
+        
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -285,21 +286,41 @@ contains
                     l = 0._sp
 
                 end if
-                                
+                
+                
                 prr = 0.6_sp * 0.9_sp * (pr + perc) + l
                 pre = 0.4_sp * 0.9_sp * (pr + perc) + l
                 prd = 0.1_sp * (pr + perc) 
                 
                 call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
                 
-!~                 A encap ap verif voir avec PAG les borne du code michel
-                he(row, col) = he(row, col) + pre
-                qre = max(0._sp, ce(row, col) * log(1 + exp(he(row, col) / ce(row, col))))
-                he(row, col) = he(row, col) - qre
+                he_star = max(1.e-6_sp, he(row, col) + pre / ce(row, col))
+                AR = he_star / ce(row, col)
+                qre = he(row, col) * ce(row, col) - log(1. + exp(AR)) * ce(row, col)
+                
+                
+                qre = max(0._sp, qre)
+                he(row, col) = he_star - qre / ce(row, col)
+            
+                            
+!~             ! Update of exponential store
+!~                   St(3)=St(3)+C*StUH1(1)+EXCH
+!~                   AR=St(3)/Param(6)
+!~                   IF(AR.GT.33.)  AR=33.
+!~                   IF(AR.LT.-33.) AR=-33.
+
+!~                   IF(AR.GT.7.) THEN
+!~                     QRExp=St(3)+Param(6)/EXP(AR)
+!~                   ELSEIF(AR.LT.-7.) THEN
+!~                     QRExp=Param(6)*EXP(AR)
+!~                   ELSE
+!~                     QRExp=Param(6)*LOG(EXP(AR)+1.)
+!~                   ENDIF
+
+!~                   St(3)=St(3)-QRExp
                 
                 qd = max(0._sp, prd + l)
-                
-                
+                                
                 qt(row, col) = qr + qd + qre
 
                 ! Transform from mm/dt to m3/s
@@ -308,7 +329,7 @@ contains
             end do
         end do
         !$OMP end parallel do
-
+       
     end subroutine gr6_timestep
 
     subroutine grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt)

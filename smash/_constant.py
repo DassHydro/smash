@@ -232,7 +232,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
             (0, 1),  # % hi
             (0, 1),  # % hp
             (0, 1),  # % ht
-            (0, 1),  # % he
+            (-np.inf, 0),  # % he
             (0, 1),  # % ha
             (0, 1),  # % hc
             (0, 1),  # % hcl
@@ -258,7 +258,7 @@ DEFAULT_RR_PARAMETERS = dict(
             1e-6,  # % ci
             200,  # % cp
             500,  # % ct
-            30,  # % ce
+            10,  # % ce
             0,  # % kexc
             0.1,  # % aexc
             200,  # % ca
@@ -289,7 +289,7 @@ DEFAULT_RR_INITIAL_STATES = dict(
             1e-2,  # % hi
             1e-2,  # % hp
             1e-2,  # % ht
-            1e-2,  # % he
+            -0.5,  # % he
             1e-2,  # % ha
             1e-2,  # % hc
             1e-2,  # % hcl
