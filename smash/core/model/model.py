@@ -112,7 +112,7 @@ class Model:
             - ``'ssn'``
 
             .. hint::
-                See the :ref:`math_num_documentation.forward_structure.snow_module` section
+                See the :ref:`Snow Module <math_num_documentation.forward_structure.snow_module>` section
 
         hydrological_module : `str`, default 'gr4'
             Name of hydrological module. Should be one of:
@@ -124,7 +124,8 @@ class Model:
             - ``'vic3l'``
 
             .. hint::
-                See the :ref:`math_num_documentation.forward_structure.hydrological_module` section
+                See the :ref:`Hydrological Module
+                <math_num_documentation.forward_structure.hydrological_module>` section
 
         routing_module : `str`, default 'lr'
             Name of routing module. Should be one of:
@@ -134,7 +135,8 @@ class Model:
             - ``'kw'``
 
             .. hint::
-                See the :ref:`math_num_documentation.forward_structure.routing_module` section
+                See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>`
+                section
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:

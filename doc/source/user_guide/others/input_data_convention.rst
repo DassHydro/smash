@@ -4,7 +4,7 @@
 Input Data Convention
 =====================
 
-Cette section a pour objectif de présenter les coventions utilisées pour tous les types de données d'entrée utilisés dans `smash` 
+The aim of this section is to describe the conventions that apply to all input data used in `smash`
 (i.e. precipitation, observed discharge, descriptor, etc)
 
 Precipitation
@@ -99,12 +99,12 @@ between the decriptor files and the flow direction file must be **identical**.
 Directory structure
 -------------------
 
-The aim of this section is to present the Directory structure for input data and how this translates into ``setup``.
+The aim of this section is to present the directory structure for input data and how this translates into ``setup``.
 
 Quick structure
 ***************
 
-Below is the most basic Directory structure you can have with a Directory, with all the files at the root, for each type of input data.
+Below is the most basic directory structure you can have, with one subdirectory per type of input data, and all files at the root of each subdirectory.
 
 .. code-block:: text
 

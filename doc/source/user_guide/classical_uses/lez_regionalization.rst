@@ -4,13 +4,15 @@
 Lez - Regionalization
 =====================
 
-This guide on `smash` will be carried out on the French catchment, **the Lez at Lattes** and aims to perform an optimization of the hydrological model considering regional mapping of physical descriptors onto model conceptual parameters. The parameters :math:`\boldsymbol{\theta}` and initial states :math:`\boldsymbol{h_0}` can
-be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}` (slope, drainage density, soil water storage, etc) 
-and :math:`\boldsymbol{\rho}` a control vector: :math:`\left(\boldsymbol{\theta}(x),\boldsymbol{h}_{0}(x)\right)=\phi\left(\boldsymbol{\mathcal{D}}(x,t),\boldsymbol{\rho}\right)`.
+This guide on `smash` will be carried out on the French catchment, **the Lez at Lattes** and aims to perform an optimization of the
+hydrological model considering regional mapping of physical descriptors onto model conceptual parameters.
+The parameters :math:`\boldsymbol{\theta}` can be written as a mapping :math:`\phi` of descriptors :math:`\boldsymbol{\mathcal{D}}`
+(slope, drainage density, soil water storage, etc) and :math:`\boldsymbol{\rho}` a control vector:
+:math:`\boldsymbol{\theta}(x)=\phi\left(\boldsymbol{\mathcal{D}}(x),\boldsymbol{\rho}\right)`.
 See the :ref:`math_num_documentation.mapping` section for more details.
 
 First, a shape is assumed for the mapping (here **multi-polynomial** or **neural network**).
-Then we search to optimize the control vector of the mapping: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}\;J`,
+Then the control vector of the mapping needs to be optimized: :math:`\boldsymbol{\hat{\rho}}=\underset{\mathrm{\boldsymbol{\rho}}}{\text{argmin}}\;J`,
 with :math:`J` the cost function.
 
 .. image:: ../../_static/lez.png
@@ -19,6 +21,10 @@ with :math:`J` the cost function.
 
 Required data
 -------------
+
+.. hint::
+
+    It is the same dataset as the :ref:`user_guide.quickstart.lez_split_sample_test` study, so possibly no need to re-download it.
 
 You need first to download all the required data.
 
@@ -56,6 +62,8 @@ Six physical descriptors are considered in this example, which are:
 
 .. image:: ../../_static/physio_descriptors.png
     :align: center
+
+.. TODO: Add descriptor explanation
 
 We can open a Python interface in the **conda environment**. The current working directory will be assumed to be the directory where 
 the ``Lez-dataset`` is located.
@@ -149,8 +157,9 @@ Model simulation
 Multiple polynomial
 *******************
 
-To optimize the rainfall-runoff model using a multiple polynomial mapping of descriptors to conceptual model parameters, it is simply necessary to pass to the ``mapping`` argument,
-the value, ``multi-polynomial``. We add another option to limit the number of iterations by stopping the optimizer after ``50`` iterations.
+To optimize the rainfall-runoff model using a multiple polynomial mapping of descriptors to conceptual model parameters,
+the value ``multi-polynomial`` simply needs to be passed to the mapping argument. We add another option to limit the number of iterations
+by stopping the optimizer after ``50`` iterations.
 
 .. To speed up documentation generation
 .. ipython:: python
@@ -178,8 +187,8 @@ the value, ``multi-polynomial``. We add another option to limit the number of it
     )
 
 We have therefore optimized the set of rainfall-runoff parameters using a multiple polynomial regression constrained by
-physiographic descriptors. Here, most of the options used are the default ones, i.e. a minization of the Nash-Sutcliffe efficiency on the most 
-downstream gauge of the domain. The resulting rainfall-runoff parameter maps can be viewed.
+physiographic descriptors. Here, most of the options used are the default ones, i.e. a minimization of one minus the Nash-Sutcliffe
+efficiency on the most downstream gauge of the domain. The resulting rainfall-runoff parameter maps can be viewed.
 
 .. ipython:: python
 
@@ -214,7 +223,10 @@ As well as performances at upstream gauges
 Artificial neural network
 *************************
 
-We can optimize the rainfall-runoff model using a neural network (NN) based mapping of descriptors to conceptual model parameters. It is possible to to define your own network to implement this optimization, but here we willl use the default neural network. Similar to multiple polynomial mapping, all you have to do is to pass the value, ``ann`` to the ``mapping`` argument. We also pass other options specific to NN use:
+We can optimize the rainfall-runoff model using a neural network (NN) based mapping of descriptors to conceptual model parameters.
+It is possible to define your own network to implement this optimization, but here we willl use the default neural network.
+Similar to multiple polynomial mapping, all you have to do is to pass the value, ``ann`` to the ``mapping`` argument.
+We also pass other options specific to the use of a NN:
 
 - ``optimize_options``
     - ``random_state``: a random seed used to initialize neural network weights.
