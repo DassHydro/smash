@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-import smash
-from smash._constant import STRUCTURE
-
 import argparse
 import glob
 import importlib
-import re
-import os
-import sys
 import inspect
+import os
+import re
+import sys
+
 import h5py
-import pandas as pd
 import numpy as np
+import pandas as pd
+
+import smash
+from smash._constant import STRUCTURE
 
 
 def parser():
@@ -51,14 +52,11 @@ def parser():
 def adjust_module_names(module_names: list[str]) -> list[str]:
     rep = {"/": ".", ".py": ""}
 
-    rep = dict((re.escape(k), v) for k, v in rep.items())
+    rep = {re.escape(k): v for k, v in rep.items()}
 
     pattern = re.compile("|".join(rep.keys()))
 
-    ret = [
-        "smash.tests." + pattern.sub(lambda m: rep[re.escape(m.group(0))], name)
-        for name in module_names
-    ]
+    ret = ["smash.tests." + pattern.sub(lambda m: rep[re.escape(m.group(0))], name) for name in module_names]
 
     ret.remove("smash.tests.test_define_global_vars")
 
@@ -87,10 +85,10 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 
     all_keys = sorted(set(new_f_keys + f_keys))
 
-    test_name = list()
-    status = list()
+    test_name = []
+    status = []
 
-    for i, key in enumerate(all_keys):
+    for key in all_keys:
         if len(key) > max_len_name:
             max_len_name = len(key)
 
@@ -102,16 +100,14 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
                 if f[key][:].dtype == "object" or f[key][:].dtype.char == "S":
                     is_equal = np.array_equal(f[key][:], new_f[key][:])
                 else:
-                    is_equal = np.allclose(
-                        f[key][:], new_f[key][:], equal_nan=True, atol=1e-3
-                    )
+                    is_equal = np.allclose(f[key][:], new_f[key][:], equal_nan=True, atol=1e-3)
 
                 if is_equal:
                     status.append("NON MODIFIED")
 
                 else:
                     status.append("MODIFIED")
-            except:
+            except Exception:
                 status.append("MODIFIED")
 
             new_f_keys.remove(key)
@@ -134,9 +130,7 @@ def compare_baseline(f: h5py.File, new_f: h5py.File):
 
     df.to_csv("diff_baseline.csv", sep="|", index=False)
 
-    os.system(
-        f'echo "$(git show --no-patch)\n\n$(cat diff_baseline.csv)" > diff_baseline.csv'
-    )
+    os.system('echo "$(git show --no-patch)\n\n$(cat diff_baseline.csv)" > diff_baseline.csv')
 
 
 if __name__ == "__main__":
@@ -150,9 +144,7 @@ if __name__ == "__main__":
 
     print("collecting ...")
 
-    qs = h5py.File(
-        os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r"
-    )["sim_q"][:]
+    qs = h5py.File(os.path.join(os.path.dirname(__file__), "simulated_discharges.hdf5"), "r")["sim_q"][:]
 
     # % Disable stdout
     # % TODO: replace this by adding a verbose argument at Model initialisation
@@ -192,20 +184,14 @@ if __name__ == "__main__":
             ]
 
             if args.only:
-                generic_functions = [
-                    (name, func)
-                    for (name, func) in generic_functions
-                    if name in args.only
-                ]
+                generic_functions = [(name, func) for (name, func) in generic_functions if name in args.only]
 
             elif args.skip:
                 generic_functions = [
-                    (name, func)
-                    for (name, func) in generic_functions
-                    if name not in args.skip
+                    (name, func) for (name, func) in generic_functions if name not in args.skip
                 ]
 
-            for name, func in generic_functions:
+            for _, func in generic_functions:
                 for key, value in func(
                     model=model,
                     model_structure=model_structure,

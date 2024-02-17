@@ -1,33 +1,22 @@
 from __future__ import annotations
 
-from smash.core.signal_analysis.metrics._standardize import _standardize_metrics_args
-
-from smash.fcore._mwd_metrics import (
-    nse as wrap_nse,
-    nnse as wrap_nnse,
-    kge as wrap_kge,
-    mae as wrap_mae,
-    mape as wrap_mape,
-    mse as wrap_mse,
-    rmse as wrap_rmse,
-    lgrm as wrap_lgrm,
-)
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from typing import TYPE_CHECKING
+import smash.fcore._mwd_metrics as wrap_module_metrics
+from smash.core.signal_analysis.metrics._standardize import _standardize_metrics_args
 
 if TYPE_CHECKING:
-    from smash.core.model.model import Model
     from pandas import Timestamp
+
+    from smash.core.model.model import Model
 
 
 __all__ = ["metrics"]
 
 
-def metrics(
-    model: Model, metric: str = "nse", end_warmup: str | Timestamp | None = None
-):
+def metrics(model: Model, metric: str = "nse", end_warmup: str | Timestamp | None = None):
     """
     Compute the efficiency/error metrics of Model based on observed and simulated discharges
     for each gauge in a multi-catchment hydrological model evaluation.
@@ -50,9 +39,10 @@ def metrics(
         - '``lgrm'``: Logarithmic
 
     end_warmup : `str`, `pandas.Timestamp` or None, default None
-        The end of the warm-up period. Evaluation metrics will only be calculated between the end of the warm-up period
-        and the end time. The value can be a string that can be interpreted as `pandas.Timestamp`.
-        The **end_warmup** date value must be between the start time and the end time defined in `Model.setup`.
+        The end of the warm-up period. Evaluation metrics will only be calculated between the end of the
+        warm-up period and the end time. The value can be a string that can be interpreted as
+        `pandas.Timestamp`. The **end_warmup** date value must be between the start time and the end time
+        defined in `Model.setup`.
 
         .. note::
             If not given, the metrics will be computed for the entire period.
@@ -113,7 +103,9 @@ def metrics(
 
     evaluation_metric = np.zeros(ng)
 
+    evaluation_metric_func = getattr(wrap_module_metrics, metric)
+
     for i in range(ng):
-        evaluation_metric[i] = eval("wrap_" + metric)(obs[i], sim[i])
+        evaluation_metric[i] = evaluation_metric_func(obs[i], sim[i])
 
     return evaluation_metric

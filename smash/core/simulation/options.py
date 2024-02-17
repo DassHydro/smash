@@ -1,15 +1,16 @@
 from __future__ import annotations
 
-from smash.core.simulation._standardize import (
-    _standardize_simulation_optimize_options,
-    _standardize_default_optimize_options_args,
-    _standardize_default_bayesian_optimize_options_args,
-)
-
 from typing import TYPE_CHECKING
+
+from smash.core.simulation._standardize import (
+    _standardize_default_bayesian_optimize_options_args,
+    _standardize_default_optimize_options_args,
+    _standardize_simulation_optimize_options,
+)
 
 if TYPE_CHECKING:
     from typing import Any
+
     from smash.core.model.model import Model
 
 __all__ = ["default_optimize_options", "default_bayesian_optimize_options"]
@@ -44,7 +45,8 @@ def default_optimize_options(
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (``'uniform'`` **mapping** only)
-        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+          **mapping** only)
         - ``'sgd'`` (``'ann'`` **mapping** only)
         - ``'adam'`` (``'ann'`` **mapping** only)
         - ``'adagrad'`` (``'ann'`` **mapping** only)
@@ -54,7 +56,8 @@ def default_optimize_options(
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+              ``'lbfgsb'``
             - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
         .. hint::
@@ -63,8 +66,9 @@ def default_optimize_options(
     Returns
     -------
     optimize_options : `dict[str, Any]`
-        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
-        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+        returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
+        the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
 
     See Also
     --------
@@ -92,7 +96,8 @@ def default_optimize_options(
         'termination_crit': {'maxiter': 50},
     }
 
-    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.optimize` (or `Model.optimize`).
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method
+    `smash.optimize` (or `Model.optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
@@ -124,15 +129,18 @@ def default_optimize_options(
     Run the optimize method
 
     >>> model_u = smash.optimize(model, mapping="uniform", optimize_options=opt_u)
-    ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options. Choices: ['cp', 'ct', 'llr']
+    ValueError: Unknown or non optimized parameter 'kexc' in bounds optimize_options.
+    Choices: ['cp', 'ct', 'llr']
 
-    An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also ``kexc`` from bounds
+    An error is raised because we define ``bounds`` to a non optimized parameter ``kexc``. Remove also
+    ``kexc`` from bounds
 
     >>> opt_u["bounds"].pop("kexc")
     (-50, 50)
 
     .. note::
-        The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__ returns the value associated to the removed key
+        The built-in dictionary method `pop <https://docs.python.org/3/library/stdtypes.html#dict.pop>`__
+        returns the value associated to the removed key
 
     >>> opt_u
     {
@@ -215,14 +223,12 @@ def default_optimize_options(
         At epoch     37    J =  0.179911    |proj g| =  0.011819
         Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
 
-    The training process was terminated after 37 epochs, where the loss did not decrease below the minimal value at epoch 27 for 10 consecutive epochs.
-    The optimal parameters are thus recorded at epoch 27
+    The training process was terminated after 37 epochs, where the loss did not decrease below the minimal
+    value at epoch 27 for 10 consecutive epochs. The optimal parameters are thus recorded at epoch 27
     """
     mapping, optimizer = _standardize_default_optimize_options_args(mapping, optimizer)
 
-    return _standardize_simulation_optimize_options(
-        model, "optimize", mapping, optimizer, None
-    )
+    return _standardize_simulation_optimize_options(model, "optimize", mapping, optimizer, None)
 
 
 def default_bayesian_optimize_options(
@@ -253,13 +259,15 @@ def default_bayesian_optimize_options(
         Name of optimizer. Should be one of
 
         - ``'sbs'`` (``'uniform'`` **mapping** only)
-        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+        - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+          **mapping** only)
 
         .. note::
             If not given, a default optimizer will be set depending on the optimization mapping:
 
             - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+            - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+              ``'lbfgsb'``
 
         .. hint::
             See the :ref:`math_num_documentation.optimization_algorithm` section
@@ -267,8 +275,10 @@ def default_bayesian_optimize_options(
     Returns
     -------
     optimize_options : `dict[str, Any]`
-        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys returned depend on the chosen **mapping** and **optimizer**.
-        This dictionary can be directly pass to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+        Dictionary containing optimization options for fine-tuning the optimization process. The specific keys
+        returned depend on the chosen **mapping** and **optimizer**. This dictionary can be directly pass to
+        the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or
+        `Model.bayesian_optimize`).
 
     Examples
     --------
@@ -294,7 +304,8 @@ def default_bayesian_optimize_options(
         'termination_crit': {'maxiter': 50},
     }
 
-    Directly pass this dictionary to the **optimize_options** argument of the optimize method `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
+    Directly pass this dictionary to the **optimize_options** argument of the optimize method
+    `smash.bayesian_optimize` (or `Model.bayesian_optimize`).
     It's equivalent to set **optimize_options** to None (which is the default value)
 
     >>> model_u = smash.bayesian_optimize(model, mapping="uniform", optimize_options=opt_u)
@@ -358,10 +369,6 @@ def default_bayesian_optimize_options(
     The optimization process was terminated after 10 iterations, the maximal value we defined.
     """
 
-    mapping, optimizer = _standardize_default_bayesian_optimize_options_args(
-        mapping, optimizer
-    )
+    mapping, optimizer = _standardize_default_bayesian_optimize_options_args(mapping, optimizer)
 
-    return _standardize_simulation_optimize_options(
-        model, "bayesian_optimize", mapping, optimizer, None
-    )
+    return _standardize_simulation_optimize_options(model, "bayesian_optimize", mapping, optimizer, None)

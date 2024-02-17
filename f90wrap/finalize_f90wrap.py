@@ -1,7 +1,7 @@
 from __future__ import annotations
 
-import pathlib
 import os
+import pathlib
 import re
 
 REPR_METHOD = """
@@ -12,7 +12,7 @@ def __repr__(self):
             continue
         try:
             value = getattr(self, attr)
-        except:
+        except Exception:
             continue
         if callable(value):
             continue
@@ -55,8 +55,8 @@ def get_pyf90_couple_files(py_mod_names: dict[str, str]) -> list[tuple[str, str]
     res = []
 
     for f90_name, py_name in py_mod_names.items():
-        f90_file = list(fcore_path.glob(f"*/{f90_name}.f90"))[0]
-        py_file = list(fcore_path.glob(f"{py_name}.py"))[0]
+        f90_file = next(iter(fcore_path.glob(f"*/{f90_name}.f90")))
+        py_file = next(iter(fcore_path.glob(f"{py_name}.py")))
 
         res.append((py_file, f90_file))
 
@@ -75,9 +75,7 @@ def sed_internal_import(pyf: pathlib.PosixPath):
         The Python file to sed
     """
 
-    os.system(
-        f'sed -i "0,/import _libfcore/s//from smash.fcore import _libfcore/" {pyf}'
-    )
+    os.system(f'sed -i "0,/import _libfcore/s//from smash.fcore import _libfcore/" {pyf}')
     os.system(f'sed -i "s/from libfcore/from smash.fcore/g" {pyf}')
 
 
@@ -113,8 +111,9 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
     decorator on getter to decode them and retrived a str
 
     - char-array: Allow to manage Fortran character array.
-    Fortran derived type character array wrapped with f90wrap are retrived as array of ASCII character. It adds
-    one decorator on getter to decode ASCII character to str and one decorator on setter to pass numpy character array of list of str
+    Fortran derived type character array wrapped with f90wrap are retrived as array of ASCII character. It
+    adds one decorator on getter to decode ASCII character to str and one decorator on setter to pass numpy
+    character array of list of str
     instead of array of ASCII character
 
     - private: Allow to make Fortran attribute pseudo-private in Python.
@@ -128,26 +127,26 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
     private = []
 
     with open(f90f) as f:
-        for l in f:
-            if "!$F90W" in l:
-                ind_double_2dots = l.find("::") + 2
+        for line in f:
+            if "!$F90W" in line:
+                ind_double_2dots = line.find("::") + 2
 
-                subl = l[ind_double_2dots:].strip().lower()
+                subline = line[ind_double_2dots:].strip().lower()
 
-                if "index-array" in subl:
-                    index_array.append(subl.split(" ")[0])
+                if "index-array" in subline:
+                    index_array.append(subline.split(" ")[0])
 
-                elif "index" in subl:
-                    index.append(subl.split(" ")[0])
+                elif "index" in subline:
+                    index.append(subline.split(" ")[0])
 
-                if "char-array" in subl:
-                    char_array.append(subl.split(" ")[0])
+                if "char-array" in subline:
+                    char_array.append(subline.split(" ")[0])
 
-                elif "char" in subl:
-                    char.append(subl.split(" ")[0])
+                elif "char" in subline:
+                    char.append(subline.split(" ")[0])
 
-                if "private" in subl:
-                    private.append(subl.split(" ")[0])
+                if "private" in subline:
+                    private.append(subline.split(" ")[0])
 
     res = {
         "index": index,
@@ -179,12 +178,13 @@ def sed_index_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_index, f90wrap_setter_index" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_index, '
+        f'f90wrap_setter_index" {pyf}'
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index" {pyf}')
-        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\\@f90wrap_getter_index" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_index" {pyf}')
 
 
 def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
@@ -206,16 +206,13 @@ def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_index_array, f90wrap_setter_index_array" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import '
+        f'f90wrap_getter_index_array, f90wrap_setter_index_array" {pyf}'
     )
 
     for attr in attribute:
-        os.system(
-            f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_index_array" {pyf}'
-        )
-        os.system(
-            f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_index_array" {pyf}'
-        )
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\\@f90wrap_getter_index_array" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_index_array" {pyf}')
 
 
 def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
@@ -241,7 +238,7 @@ def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_char" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\\@f90wrap_getter_char" {pyf}')
 
 
 def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
@@ -263,12 +260,13 @@ def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
     decorator on top of the getter and setter for each attribute flagged
     """
     os.system(
-        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import f90wrap_getter_char_array, f90wrap_setter_char_array" {pyf}'
+        f'sed -i "/from __future__/a \\from smash.fcore._f90wrap_decorator import '
+        f'f90wrap_getter_char_array, f90wrap_setter_char_array" {pyf}'
     )
 
     for attr in attribute:
-        os.system(f'sed -i "/def {attr}(self)/i \\\t\@f90wrap_getter_char_array" {pyf}')
-        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\@f90wrap_setter_char_array" {pyf}')
+        os.system(f'sed -i "/def {attr}(self)/i \\\t\\@f90wrap_getter_char_array" {pyf}')
+        os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_char_array" {pyf}')
 
 
 def sed_private_property(pyf: pathlib.PosixPath, attribute: list[str]):
@@ -303,9 +301,7 @@ def sed_derived_type_procedure(pyf: pathlib.PosixPath):
 
     content = open(pyf, "r").read()
     procedure = {}
-    class_matches = re.findall(
-        '@f90wrap.runtime.register_class\("libfcore.(\w+)', content
-    )
+    class_matches = re.findall('@f90wrap.runtime.register_class\\("libfcore.(\\w+)', content)
 
     for cm in class_matches:
         pattern = r"def ({0}_\w+\([\w\s,]*\)):".format(cm.lower())
@@ -316,9 +312,7 @@ def sed_derived_type_procedure(pyf: pathlib.PosixPath):
             pattern = f"class {key}(f90wrap.runtime.FortranDerivedType)"
             for vle in value:
                 nvle = re.search(r"{0}_(.*)".format(key.lower()), vle).group(1)
-                os.system(
-                    f'sed -i "/{pattern}/a \\\tdef {nvle}:\\n\\t\\treturn {vle}" {pyf}'
-                )
+                os.system(f'sed -i "/{pattern}/a \\\tdef {nvle}:\\n\\t\\treturn {vle}" {pyf}')
 
 
 def sed_finalise_method(pyf: pathlib.PosixPath):

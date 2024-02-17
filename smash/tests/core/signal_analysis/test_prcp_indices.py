@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-import smash
-from smash._constant import PRECIPITATION_INDICES
-
 import numpy as np
 import pytest
+
+import smash
+from smash._constant import PRECIPITATION_INDICES
 
 
 def generic_precipitation_indices(model: smash.Model, **kwargs) -> dict:
     prcp_ind = smash.precipitation_indices(model)
 
-    res = {
-        "precipitation_indices." + k: getattr(prcp_ind, k)
-        for k in PRECIPITATION_INDICES
-    }
+    res = {"precipitation_indices." + k: getattr(prcp_ind, k) for k in PRECIPITATION_INDICES}
 
     return res
 
@@ -41,6 +38,4 @@ def test_sparse_precipitation_indices():
             pytest.baseline[key][:],
             equal_nan=True,
             atol=1e-04,
-        ), (
-            "sparse." + key
-        )
+        ), "sparse." + key

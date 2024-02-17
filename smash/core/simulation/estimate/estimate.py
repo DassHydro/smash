@@ -1,27 +1,26 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import numpy as np
+
 from smash.core.simulation._doc import (
     _multiset_estimate_doc_appender,
     _smash_multiset_estimate_doc_substitution,
 )
-
 from smash.core.simulation.estimate._tools import (
     _compute_density,
     _forward_run_with_estimated_parameters,
     _lcurve_forward_run_with_estimated_parameters,
 )
-
 from smash.core.simulation.optimize.optimize import MultipleOptimize
 from smash.core.simulation.run.run import MultipleForwardRun
 
-import numpy as np
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from typing import Any
-    from smash.util._typing import Numeric, ListLike
+
     from smash.core.model.model import Model
+    from smash.util._typing import ListLike, Numeric
 
 __all__ = ["MultisetEstimate", "multiset_estimate"]
 
@@ -39,7 +38,8 @@ class MultisetEstimate:
         A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
-        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
+        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
+        **time_step**.
 
     cost : `float`
         Cost value.
@@ -64,7 +64,8 @@ class MultisetEstimate:
 
     Notes
     -----
-    The object's available attributes depend on what is requested by the user during a call to `smash.multiset_estimate`.
+    The object's available attributes depend on what is requested by the user during a call to
+    `smash.multiset_estimate`.
 
     See Also
     --------
@@ -83,11 +84,7 @@ class MultisetEstimate:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -101,12 +98,10 @@ def multiset_estimate(
     alpha: Numeric | ListLike | None = None,
     common_options: dict[str, Any] | None = None,
     return_options: dict[str, Any] | None = None,
-) -> Model | (Model, MultisetEstimate):
+) -> Model | tuple[Model, MultisetEstimate]:
     wmodel = model.copy()
 
-    ret_multiset_estimate = wmodel.multiset_estimate(
-        multiset, alpha, common_options, return_options
-    )
+    ret_multiset_estimate = wmodel.multiset_estimate(multiset, alpha, common_options, return_options)
 
     if ret_multiset_estimate is None:
         return wmodel
@@ -133,9 +128,7 @@ def _multiset_estimate(
             zip(
                 optimized_parameters.keys(),
                 [
-                    np.tile(
-                        getattr(multiset._samples, p), (*model.mesh.flwdir.shape, 1)
-                    )
+                    np.tile(getattr(multiset._samples, p), (*model.mesh.flwdir.shape, 1))
                     for p in optimized_parameters.keys()
                 ],
             )
@@ -150,9 +143,7 @@ def _multiset_estimate(
         pass
 
     # % Compute density
-    density = _compute_density(
-        multiset._samples, optimized_parameters, model.mesh.active_cell
-    )
+    density = _compute_density(multiset._samples, optimized_parameters, model.mesh.active_cell)
 
     # % Multiple set estimate
     if isinstance(alpha, float):
@@ -176,11 +167,7 @@ def _multiset_estimate(
     )
 
     fret = {} if ret_forward_run is None else ret_forward_run.__dict__
-    pyret = (
-        {"lcurve_multiset": lcurve_multiset}
-        if "lcurve_multiset" in return_options["keys"]
-        else {}
-    )
+    pyret = {"lcurve_multiset": lcurve_multiset} if "lcurve_multiset" in return_options["keys"] else {}
 
     ret = {**fret, **pyret}
 

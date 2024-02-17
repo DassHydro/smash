@@ -1,22 +1,23 @@
 from __future__ import annotations
 
-from smash.util._typing import Numeric
+from typing import TYPE_CHECKING
 
 from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 
-from smash.factory.net._standardize import _standardize_add_args
+# Used inside eval statement
+from smash.factory.net._layers import Activation, Dense, Dropout, Scale  # noqa: F401
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
-from smash.factory.net._layers import Dense, Activation, Scale, Dropout
-from smash.factory.net._optimizers import SGD, Adam, Adagrad, RMSprop
-
-from typing import TYPE_CHECKING
+from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
+from smash.factory.net._standardize import _standardize_add_args
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
     from smash.fcore._mwd_options import OptionsDT
     from smash.fcore._mwd_returns import ReturnsDT
+    from smash.util._typing import Numeric
 
 import copy
+
 import numpy as np
 from terminaltables import AsciiTable
 from tqdm import tqdm
@@ -93,9 +94,10 @@ class Net(object):
         >>> net = Net()
         >>> net.add(layer="dense", options={"input_shape": (6,), "neurons": 32})
         >>> net.add(layer="activation", options={"name": "sigmoid"})
-        >>> net.add(layer="dropout", options={"drop_rate": .2})
+        >>> net.add(layer="dropout", options={"drop_rate": 0.2})
 
-        If you are using IPython, tab completion allows you to visualize all the attributes and methods of each Layer object:
+        If you are using IPython, tab completion allows you to visualize all the attributes and methods of
+        each Layer object:
 
         >>> layer_1 = net.layers[0]
         >>> layer_1.<TAB>
@@ -211,11 +213,10 @@ class Net(object):
                     )
 
             else:
-                raise TypeError(
-                    f"First layer missing required option argument: 'input_shape'"
-                )
+                raise TypeError("First layer missing required option argument: 'input_shape'")
 
-        else:  # If be not the first layer then set the input shape to the output shape of the next added layer
+        else:
+            # If be not the first layer then set the input shape to the output shape of the next added layer
             lay._set_input_shape(shape=self.layers[-1].output_shape())
 
         # Add layer to the network
@@ -288,7 +289,8 @@ class Net(object):
 
         else:
             raise ValueError(
-                f"Inconsistent size between trainable ({len(trainable)}) and the number of layers ({len(self.layers)})"
+                f"Inconsistent size between trainable ({len(trainable)}) and the number of layers "
+                f"({len(self.layers)})"
             )
 
     def _compile(
@@ -347,9 +349,7 @@ class Net(object):
             y_pred = self._forward_pass(x_train)
 
             # calculate the gradient of the loss function wrt y_pred
-            init_loss_grad = _hcost_prime(
-                y_pred, parameters, mask, instance, wrap_options, wrap_returns
-            )
+            init_loss_grad = _hcost_prime(y_pred, parameters, mask, instance, wrap_options, wrap_returns)
 
             # compute loss
             loss = _hcost(instance)
@@ -372,7 +372,8 @@ class Net(object):
                 else:
                     if (
                         epo - loss_opt["epo"] > early_stopping
-                    ):  # stop training if the loss values do not decrease through early_stopping consecutive epochs
+                    ):  # stop training if the loss values do not decrease through early_stopping consecutive
+                        # epochs
                         break
 
             # backpropagation and calculate infinity norm of the projected gradient
@@ -387,9 +388,7 @@ class Net(object):
                 ret.append(f"{' ' * 4}At epoch")
                 ret.append("{:3}".format(epo + 1))
                 ret.append("J =" + "{:10.6f}".format(loss))
-                ret.append(
-                    "|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1])
-                )
+                ret.append("|proj g| =" + "{:10.6f}".format(self.history["proj_grad"][-1]))
 
                 tqdm.write((" " * 4).join(ret))
 

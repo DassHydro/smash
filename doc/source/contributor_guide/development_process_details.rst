@@ -84,6 +84,16 @@ of each command, please look directly at the makefile.
     and an hdf5 file storing the new baseline (``new_baseline.hdf5``). Once you have ensured that all tests are successfully passed,
     rename the ``new_baseline.hdf5`` file to ``baseline.hdf5`` and remove the previous version.
 
+- ``format``
+    Format Python and Fortran files. Python files are formatted with `Ruff <https://docs.astral.sh/ruff/formatter/>`__
+    and Fortran files are formatted with `Fprettify <https://github.com/pseewald/fprettify/>`__.
+    Ruff formatter and fprettify options can be found, respectively, in the ``pyproject.toml`` file and ``makefile``
+
+- ``check``
+    Check Python files. Pythons files are checked with `Ruff <https://docs.astral.sh/ruff/linter/>`__.
+    Ruff linters rules can be found in the ``pyproject.toml`` file. This checks are also run in the continuous
+    integration service (``CI``).
+
 Fortran guideline
 -----------------
 

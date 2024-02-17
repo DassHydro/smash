@@ -1,5 +1,5 @@
-import os
 import argparse
+import os
 
 DATASET = ["Cance", "France", "Lez"]
 DATASET_PATH = f"{os.path.dirname(os.path.realpath(__file__))}/../smash/factory/dataset"
@@ -7,7 +7,6 @@ DATASET_PATH = f"{os.path.dirname(os.path.realpath(__file__))}/../smash/factory/
 # TODO: Refactorize this when it gets more complicated. Pass to each dataset the files or directories
 # that we want to be uploaded and used in the documentation.
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser()
 
     parser.add_argument(
@@ -40,13 +39,12 @@ if __name__ == "__main__":
         os.system(f"cp -r {DATASET_PATH}/{ds}/pet {DATASET_PATH}/{ds}/prcp {ds_dir}/.")
 
         if ds == "Cance":
-            os.system(
-                f"cp -r {DATASET_PATH}/{ds}/qobs {DATASET_PATH}/{ds}/gauge_attributes.csv {ds_dir}/."
-            )
+            os.system(f"cp -r {DATASET_PATH}/{ds}/qobs {DATASET_PATH}/{ds}/gauge_attributes.csv {ds_dir}/.")
 
         elif ds == "Lez":
             os.system(
-                f"cp -r {DATASET_PATH}/{ds}/qobs {DATASET_PATH}/{ds}/gauge_attributes.csv {DATASET_PATH}/{ds}/descriptor {ds_dir}/."
+                f"cp -r {DATASET_PATH}/{ds}/qobs {DATASET_PATH}/{ds}/gauge_attributes.csv "
+                f"{DATASET_PATH}/{ds}/descriptor {ds_dir}/."
             )
 
         if args.tar:

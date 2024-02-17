@@ -1,11 +1,10 @@
 from __future__ import annotations
 
-import smash
-
-from smash._constant import METRICS
-
 import numpy as np
 import pytest
+
+import smash
+from smash._constant import METRICS
 
 
 def generic_metrics(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:

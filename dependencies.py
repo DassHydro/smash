@@ -65,13 +65,15 @@ def find_use_statement(f: pathlib.PosixPath) -> set[str]:
 
     Notes
     -----
-    An explanation of the pattern: r"^(?!\s*[!]).*?use\s+(\w+)"
+    An explanation of the pattern: r"^(?!\\s*[!]).*?use\\s+(\\w+)"
 
     - ^ : Matches the start of a line
-    - (?!\s*[!]) : Negative lookahead that excludes matches with ! after zero or more whitespace characters (\s)
-    - .*? : Lazy match of any character (.) zero or more times (*) until it encounters the next part of the pattern
-    - use\s+ : Matches the string "use" followed by one or more whitespace characters (\s)
-    - (\w+) : Captures one or more word characters (\w+) after "use" as a group
+    - (?!\\s*[!]) : Negative lookahead that excludes matches with ! after zero or more whitespace characters
+      (\\s)
+    - .*? : Lazy match of any character (.) zero or more times (*) until it encounters the next part of the
+      pattern
+    - use\\s+ : Matches the string "use" followed by one or more whitespace characters (\\s)
+    - (\\w+) : Captures one or more word characters (\\w+) after "use" as a group
 
     So this regex pattern looks for lines that start with "use" followed by one or more whitespace characters,
     but excludes lines that have a comment symbol (!) before the "use".
@@ -109,7 +111,7 @@ def get_dependencies(files: list[pathlib.PosixPath]) -> dict[list]:
     """
     ret = {}
 
-    for i, f in enumerate(files):
+    for f in files:
         deps = find_use_statement(f)
 
         ret.update({f.stem: deps})
@@ -131,7 +133,8 @@ def sort_by_dependencies(files: list[pathlib.PosixPath]):
     -----
     The sorting algorithm is applied sequentially for each module and there is the explanation for one:
     - We look first for it's dependencies and we move the module behind each dependency (Forward loop)
-    - We look for dependencies for the current module in other module and we move the current module above each dependency (Backward loop)
+    - We look for dependencies for the current module in other module and we move the current module above
+      each dependency (Backward loop)
     """
 
     # % Get dependencies dictionary
@@ -178,14 +181,13 @@ def sort_by_dependencies(files: list[pathlib.PosixPath]):
 if __name__ == "__main__":
     fcore_path = pathlib.Path("smash/fcore/")
 
-    # % The files are presorted to avoid the randomness that makes the order of dependencies change even if there are no new files.
+    # % The files are presorted to avoid the randomness that makes the order of dependencies change even if
+    # % there are no new files.
     # % There can be several ways to sort files by dependencies
-    c_files = sorted(list(fcore_path.glob("*/*.c")))
-    f77_files = sorted(list(fcore_path.glob("*/*.f")))
+    c_files = sorted(fcore_path.glob("*/*.c"))
+    f77_files = sorted(fcore_path.glob("*/*.f"))
     # % In case we have generated f90wrap files we must remove them
-    f90_files = sorted(
-        list(set(fcore_path.glob("*/*.f90")) - set(fcore_path.glob("f90wrap/*.f90")))
-    )
+    f90_files = sorted(set(fcore_path.glob("*/*.f90")) - set(fcore_path.glob("f90wrap/*.f90")))
 
     sort_by_dependencies(f90_files)
 

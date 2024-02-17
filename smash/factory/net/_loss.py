@@ -1,15 +1,16 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 
+from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
 from smash.fcore._mwd_parameters_manipulation import (
-    parameters_to_control as wrap_parameters_to_control,
     control_to_parameters as wrap_control_to_parameters,
 )
-
-from smash.fcore._mw_forward import forward_run_b as wrap_forward_run_b
-
-from typing import TYPE_CHECKING
+from smash.fcore._mwd_parameters_manipulation import (
+    parameters_to_control as wrap_parameters_to_control,
+)
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model

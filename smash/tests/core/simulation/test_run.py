@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import smash
+import os
 
 import numpy as np
 import pytest
-import os
+
+import smash
 
 
 def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
@@ -35,12 +36,8 @@ def generic_forward_run(model_structure: list[smash.Model], **kwargs) -> dict:
         qsim = qsim[::10]  # extract values at every 10th position
 
         res[f"forward_run.{instance.setup.structure}.sim_q"] = qsim
-        res[f"forward_run.{instance.setup.structure}.cost"] = np.array(
-            ret.cost, ndmin=1
-        )
-        res[f"forward_run.{instance.setup.structure}.jobs"] = np.array(
-            ret.jobs, ndmin=1
-        )
+        res[f"forward_run.{instance.setup.structure}.cost"] = np.array(ret.cost, ndmin=1)
+        res[f"forward_run.{instance.setup.structure}.jobs"] = np.array(ret.jobs, ndmin=1)
         res[f"forward_run.{instance.setup.structure}.q_domain"] = np.where(
             mask, np.nan, ret.q_domain[..., -1]
         )
@@ -57,9 +54,7 @@ def test_forward_run():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(
-            value, pytest.baseline[key][:], atol=1e-06, equal_nan=True
-        ), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), key
 
 
 def test_sparse_forward_run():
@@ -67,9 +62,7 @@ def test_sparse_forward_run():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(
-            value, pytest.baseline[key][:], atol=1e-06, equal_nan=True
-        ), ("sparse." + key)
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-06, equal_nan=True), "sparse." + key
 
 
 def test_multiple_forward_run():
@@ -95,9 +88,7 @@ def test_multiple_forward_run():
         instance.forward_run(common_options={"ncpu": ncpu})
         frq[..., i] = instance.response.q.copy()
 
-    mfr = smash.multiple_forward_run(
-        instance, samples, common_options={"verbose": False, "ncpu": ncpu}
-    )
+    mfr = smash.multiple_forward_run(instance, samples, common_options={"verbose": False, "ncpu": ncpu})
 
     # % Check that forward run discharge is equivalent to multiple forward run discharge
     assert np.allclose(frq, mfr.q, atol=1e-06, equal_nan=True), "multiple_forward_run.q"

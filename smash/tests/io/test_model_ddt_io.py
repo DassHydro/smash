@@ -1,10 +1,11 @@
 from __future__ import annotations
 
-import smash
+import sys
 
 import numpy as np
 import pytest
-import sys
+
+import smash
 
 
 def generic_model_ddt_io(**kwargs) -> dict:

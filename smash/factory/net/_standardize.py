@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash._constant import LAYER_NAME, ACTIVATION_FUNCTION
-
 from typing import TYPE_CHECKING
+
+from smash._constant import ACTIVATION_FUNCTION, LAYER_NAME
 
 if TYPE_CHECKING:
     from smash.util._typing import AnyTuple
@@ -19,7 +19,7 @@ def _standardize_add_layer(layer: str) -> str:
             raise ValueError(f"Unknown layer type '{layer}'. Choices: {LAYER_NAME}")
 
     else:
-        raise TypeError(f"layer argument must be str")
+        raise TypeError("layer argument must be str")
 
     return layer
 
@@ -32,8 +32,8 @@ def _standardize_add_options(layer: str, options: dict) -> dict:
 
             except KeyError:
                 raise ValueError(
-                    f"Key 'name' in options argument must be specified for the activation function"
-                )
+                    "Key 'name' in options argument must be specified for the activation function"
+                ) from None
 
             if isinstance(option_name, str):
                 activation_function = [name.lower() for name in ACTIVATION_FUNCTION]
@@ -44,18 +44,18 @@ def _standardize_add_options(layer: str, options: dict) -> dict:
                 except ValueError:
                     raise ValueError(
                         f"Unknown activation function '{option_name}'. Choices: {ACTIVATION_FUNCTION}"
-                    )
+                    ) from None
 
                 options["name"] = ACTIVATION_FUNCTION[ind]
 
             else:
-                raise TypeError(f"Key 'name' in options argument must be a str")
+                raise TypeError("Key 'name' in options argument must be a str")
 
         else:
             pass
 
     else:
-        raise TypeError(f"options argument must be a dictionary")
+        raise TypeError("options argument must be a dictionary")
 
     return options
 

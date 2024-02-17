@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import smash
-
 import numpy as np
 import pytest
+
+import smash
 
 
 def generic_mesh_io(**kwargs) -> dict:

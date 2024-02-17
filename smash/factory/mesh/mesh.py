@@ -1,26 +1,26 @@
 from __future__ import annotations
 
-from smash._constant import D8_VALUE
-
-from smash.factory.mesh._standardize import _standardize_generate_mesh_args
-from smash.factory.mesh._tools import (
-    _get_transform,
-    _get_srs,
-    _get_array,
-    _xy_to_rowcol,
-    _trim_mask_2d,
-    _get_catchment_slice_window,
-)
-from smash.factory.mesh._libmesh import mw_mesh
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from typing import TYPE_CHECKING
+from smash.factory.mesh._libmesh import mw_mesh
+from smash.factory.mesh._standardize import _standardize_generate_mesh_args
+from smash.factory.mesh._tools import (
+    _get_array,
+    _get_catchment_slice_window,
+    _get_srs,
+    _get_transform,
+    _trim_mask_2d,
+    _xy_to_rowcol,
+)
 
 if TYPE_CHECKING:
     from typing import Any
-    from smash.util._typing import FilePath, ListLike, Numeric, AlphaNumeric
+
     from osgeo import gdal
+
+    from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
 __all__ = ["generate_mesh"]
 
@@ -82,9 +82,9 @@ def generate_mesh(
     max_depth : `int`, default 1
         The maximum depth accepted by the algorithm to find the catchment outlet.
         A **max_depth** of 1 means that the algorithm will search among the 2-length combinations in
-        (``row - 1``, ``row``, ``row + 1``; ``col - 1``, ``col``, ``col + 1``), the coordinates that minimize the relative error between
-        the given catchment area and the modeled catchment area calculated from the flow directions file.
-        This can be generalized to :math:`n`.
+        (``row - 1``, ``row``, ``row + 1``; ``col - 1``, ``col``, ``col + 1``), the coordinates that minimize
+        the relative error between the given catchment area and the modeled catchment area calculated from the
+        flow directions file. This can be generalized to :math:`n`.
 
         .. image:: ../../../_static/max_depth.png
             :align: center
@@ -140,8 +140,8 @@ def generate_mesh(
             An array of shape *(nrow, ncol)* containing flow accumulation. The unit is the square meter.
 
         npar : `int`
-            Number of partition. A partition delimits a set of independent cells on the drainage network. The first
-            partition represents all the most upstream cells and the last partition the gauge(s).
+            Number of partition. A partition delimits a set of independent cells on the drainage network. The
+            first partition represents all the most upstream cells and the last partition the gauge(s).
             It is possible to loop in parallel over all the cells in the same partition.
 
         ncpar : `numpy.ndarray`
@@ -151,14 +151,16 @@ def generate_mesh(
             An array of shape *(npar,)* containing the cumulative sum of cells per partition.
 
         cpar_to_rowcol : `numpy.ndarray`
-            An array of shape *(nrow*ncol, 2)* containing the mapping from the sorted partition cells to row, col indices.
+            An array of shape *(nrow*ncol, 2)* containing the mapping from the sorted partition cells to row,
+            col indices.
 
         flwpar : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing the flow partitions. Values range from 1 to ``npar``.
 
         nac : `int`
-            Number of active cells. A domain cell is considered active if it contributes to the discharge at the gauge
-            if gauge coordinates are entered (i.e. **x**, **y**) else the whole bouding box is considered active.
+            Number of active cells. A domain cell is considered active if it contributes to the discharge at
+            the gauge if gauge coordinates are entered (i.e. **x**, **y**) else the whole bouding box is
+            considered active.
 
         active_cell : `numpy.ndarray`
             An array of shape *(nrow, ncol)* containing a mask of active cells.
@@ -180,13 +182,14 @@ def generate_mesh(
             An array of shape *(ng,)* containing the ``real`` observed draining area for each gauge.
 
         area_dln : `numpy.ndarray`
-            An array of shape *(ng,)* containing the ``delineated`` draining area from the flow direction for each gauge.
-            It is the relative error between ``area`` and ``area_dln`` which is minimized when trying to find the gauge coordinated
-            on the flow direction file.
+            An array of shape *(ng,)* containing the ``delineated`` draining area from the flow direction for
+            each gauge. It is the relative error between ``area`` and ``area_dln`` which is minimized when
+            trying to find the gauge coordinated on the flow direction file.
 
         .. note::
             The following variables, ``flwdst``, ``gauge_pos``, ``code``, ``area`` and ``area_dln``
-            are only returned if gauge coordinates are entered (i.e. **x**, **y**) and not just a bouding box (i.e. **bbox**).
+            are only returned if gauge coordinates are entered (i.e. **x**, **y**) and not just a bouding box
+            (i.e. **bbox**).
 
     See Also
     --------
@@ -196,12 +199,14 @@ def generate_mesh(
     --------
     >>> from smash.factory import load_dataset, generate_mesh
 
-    Retrieve a path to a flow direction file. A pre-processed file is available in the `smash` package (the path is updated for each user).
+    Retrieve a path to a flow direction file. A pre-processed file is available in the `smash` package (the
+    path is updated for each user).
 
     >>> flwdir = load_dataset("flwdir")
     flwdir
 
-    Generate a mesh from gauge coordinates. The following coordinates used are those of the ``Cance`` catchment
+    Generate a mesh from gauge coordinates. The following coordinates used are those of the ``Cance``
+    catchment
 
     >>> mesh = generate_mesh(
         flwdir_path=flwdir,
@@ -220,7 +225,8 @@ def generate_mesh(
     >>> mesh["xres"], mesh["nac"], mesh["ng"]
     (1000.0, 383, 3)
 
-    Generate a mesh from a bounding box ``(xmin, xmax, ymin, ymax)``. The following bouding box used correspond to the France boundaries
+    Generate a mesh from a bounding box ``(xmin, xmax, ymin, ymax)``. The following bouding box used
+    correspond to the France boundaries
 
     >>> mesh = generate_mesh(
         flwdir_path=flwdir,
@@ -237,9 +243,7 @@ def generate_mesh(
     (1000.0, 906044, 0)
     """
 
-    args = _standardize_generate_mesh_args(
-        flwdir_path, bbox, x, y, area, code, max_depth, epsg
-    )
+    args = _standardize_generate_mesh_args(flwdir_path, bbox, x, y, area, code, max_depth, epsg)
 
     return _generate_mesh(*args)
 
@@ -359,9 +363,7 @@ def _generate_mesh_from_xy(
     return mesh
 
 
-def _generate_mesh_from_bbox(
-    flwdir_dataset: gdal.Dataset, bbox: np.ndarray, epsg: int
-) -> dict:
+def _generate_mesh_from_bbox(flwdir_dataset: gdal.Dataset, bbox: np.ndarray, epsg: int) -> dict:
     (_, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
     srs = _get_srs(flwdir_dataset, epsg)
