@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import smash
+import sys
 
 import numpy as np
-from f90wrap.runtime import FortranDerivedTypeArray
 import pytest
-import sys
+
+import smash
+from f90wrap.runtime import FortranDerivedTypeArray
 
 
 def generic_model_io(**kwargs) -> dict:
@@ -101,9 +102,7 @@ def test_sparse_model_io_cmp():
             value_rld = getattr(getattr(model_rld, attr), sub_attr)
 
             if isinstance(value, np.ndarray):
-                assert np.allclose(
-                    value, value_rld, atol=1e-6
-                ), f"sparse_model_io_cmp.{sub_attr}"
+                assert np.allclose(value, value_rld, atol=1e-6), f"sparse_model_io_cmp.{sub_attr}"
 
             elif isinstance(value, FortranDerivedTypeArray):
                 for i in range(len(value)):
@@ -114,7 +113,7 @@ def test_sparse_model_io_cmp():
                             fdt_value = getattr(value[i], fdt_attr)
                             fdt_value_rld = getattr(value_rld[i], fdt_attr)
                             compare = True
-                        except:
+                        except Exception:
                             compare = False
 
                         if callable(fdt_value):

@@ -1,25 +1,24 @@
 from __future__ import annotations
 
-from smash.factory.mesh._tools import _get_transform
-
-import numpy as np
-import warnings
 import errno
 import os
+import warnings
+from typing import TYPE_CHECKING
+
+import numpy as np
 from osgeo import gdal
 
-from typing import TYPE_CHECKING
+from smash.factory.mesh._tools import _get_transform
 
 if TYPE_CHECKING:
     from typing import Tuple
-    from smash.util._typing import AnyTuple, FilePath, ListLike, Numeric, AlphaNumeric
+
+    from smash.util._typing import AlphaNumeric, AnyTuple, FilePath, ListLike, Numeric
 
 
 def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
     if not isinstance(flwdir_path, (str, os.PathLike)):
-        raise TypeError(
-            f"flwdir_path argument must be of FilePath type (str, PathLike[str])"
-        )
+        raise TypeError("flwdir_path argument must be of FilePath type (str, PathLike[str])")
 
     flwdir_path = str(flwdir_path)
 
@@ -29,15 +28,11 @@ def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
     return flwdir_path
 
 
-def _standardize_generate_mesh_bbox(
-    flwdir_dataset: gdal.Dataset, bbox: ListLike
-) -> np.ndarray:
+def _standardize_generate_mesh_bbox(flwdir_dataset: gdal.Dataset, bbox: ListLike) -> np.ndarray:
     # % Bounding Box (xmin, xmax, ymin, ymax)
 
     if not isinstance(bbox, (list, tuple, np.ndarray)):
-        raise TypeError(
-            "bbox argument must be of ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("bbox argument must be of ListLike type (List, Tuple, np.ndarray)")
 
     bbox = np.array(bbox)
 
@@ -54,28 +49,36 @@ def _standardize_generate_mesh_bbox(
 
     if bbox[0] < xmin:
         warnings.warn(
-            f"bbox xmin ({bbox[0]}) is out of flow directions bound ({xmin}). bbox is update according to flow directions bound"
+            f"bbox xmin ({bbox[0]}) is out of flow directions bound ({xmin}). bbox is update according to "
+            f"flow directions bound",
+            stacklevel=2,
         )
 
         bbox[0] = xmin
 
     if bbox[1] > xmax:
         warnings.warn(
-            f"bbox xmax ({bbox[1]}) is out of flow directions bound ({xmax}). bbox is update according to flow directions bound"
+            f"bbox xmax ({bbox[1]}) is out of flow directions bound ({xmax}). bbox is update according to "
+            f"flow directions bound",
+            stacklevel=2,
         )
 
         bbox[1] = xmax
 
     if bbox[2] < ymin:
         warnings.warn(
-            f"bbox ymin ({bbox[2]}) is out of flow directions bound ({ymin}). bbox is update according to flow directions bound"
+            f"bbox ymin ({bbox[2]}) is out of flow directions bound ({ymin}). bbox is update according to "
+            f"flow directions bound",
+            stacklevel=2,
         )
 
         bbox[2] = ymin
 
     if bbox[3] > ymax:
         warnings.warn(
-            f"bbox ymax ({bbox[3]}) is out of flow directions bound ({ymax}). bbox is update according to flow directions bound"
+            f"bbox ymax ({bbox[3]}) is out of flow directions bound ({ymax}). bbox is update according to "
+            f"flow directions bound",
+            stacklevel=2,
         )
 
         bbox[3] = ymax
@@ -109,9 +112,7 @@ def _standardize_generate_mesh_x_y_area(
     area = np.array(area, dtype=np.float32, ndmin=1)
 
     if (x.size != y.size) or (y.size != area.size):
-        raise ValueError(
-            f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})"
-        )
+        raise ValueError(f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})")
 
     xmin, xmax, xres, ymin, ymax, yres = _get_transform(flwdir_dataset)
 
@@ -127,25 +128,19 @@ def _standardize_generate_mesh_x_y_area(
     return x, y, area
 
 
-def _standardize_generate_mesh_code(
-    x: np.ndarray, code: str | ListLike | None
-) -> np.ndarray:
+def _standardize_generate_mesh_code(x: np.ndarray, code: str | ListLike | None) -> np.ndarray:
     if code is None:
         code = np.array([f"_c{i}" for i in range(x.size)])
 
     else:
         if not isinstance(code, (str, list, tuple, np.ndarray)):
-            raise TypeError(
-                "code argument must be a str or ListLike type (List, Tuple, np.ndarray)"
-            )
+            raise TypeError("code argument must be a str or ListLike type (List, Tuple, np.ndarray)")
 
         code = np.array(code, ndmin=1)
 
         # % Only check x (y and area already check)
         if code.size != x.size:
-            raise ValueError(
-                f"Inconsistent size between code ({code.size}) and x ({x.size})"
-            )
+            raise ValueError(f"Inconsistent size between code ({code.size}) and x ({x.size})")
     return code
 
 
@@ -167,9 +162,7 @@ def _standardize_generate_mesh_epsg(epsg: AlphaNumeric | None) -> int:
 
     else:
         if not isinstance(epsg, (str, int, float)):
-            raise TypeError(
-                "epsg argument must be of AlphaNumeric type (str, int, float)"
-            )
+            raise TypeError("epsg argument must be of AlphaNumeric type (str, int, float)")
 
         epsg = int(epsg)
 

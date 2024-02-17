@@ -1,14 +1,12 @@
 from __future__ import annotations
 
-import smash
-
 import numpy as np
 import pytest
 
+import smash
 
-def generic_hydrograph_segmentation(
-    model: smash.Model, qs: np.ndarray, **kwargs
-) -> dict:
+
+def generic_hydrograph_segmentation(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
     instance = model.copy()
 
     instance.response.q = qs
@@ -25,9 +23,7 @@ def generic_hydrograph_segmentation(
 
 
 def test_hydrograph_segmentation():
-    res = generic_hydrograph_segmentation(
-        pytest.model, pytest.simulated_discharges["sim_q"][:]
-    )
+    res = generic_hydrograph_segmentation(pytest.model, pytest.simulated_discharges["sim_q"][:])
 
     for key, value in res.items():
         # % Check hydrograph segmentation res

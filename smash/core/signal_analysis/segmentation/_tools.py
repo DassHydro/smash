@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from smash._constant import PEAK_QUANT, MAX_DURATION
-
-from smash.fcore._mwd_signatures import baseflow_separation as wrap_baseflow_separation
+import warnings
+from datetime import date, datetime
+from typing import TYPE_CHECKING
 
 import numpy as np
-from datetime import date, datetime
-import warnings
 
-from typing import TYPE_CHECKING
+from smash._constant import MAX_DURATION, PEAK_QUANT
+from smash.fcore._mwd_signatures import baseflow_separation as wrap_baseflow_separation
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
@@ -60,11 +59,7 @@ def _detect_peaks(
     # % handle NaN's
     if ind.size and indnan.size:
         # NaN's and values close to NaN's cannot be peaks
-        ind = ind[
-            np.in1d(
-                ind, np.unique(np.hstack((indnan, indnan - 1, indnan + 1))), invert=True
-            )
-        ]
+        ind = ind[np.in1d(ind, np.unique(np.hstack((indnan, indnan - 1, indnan + 1))), invert=True)]
 
     # % first and last values of x cannot be peaks
     if ind.size and ind[0] == 0:
@@ -130,9 +125,7 @@ def _events_grad(
         p_search = p[range(max(i_peak - start_seg, 0), i_peak)]
         p_search_grad = np.gradient(p_search)
 
-        ind_start = _detect_peaks(
-            p_search_grad, mph=np.nanquantile(p_search_grad, rg_quant)
-        )
+        ind_start = _detect_peaks(p_search_grad, mph=np.nanquantile(p_search_grad, rg_quant))
 
         if ind_start.size > 1:
             power = np.array(
@@ -208,9 +201,7 @@ def _events_grad(
 
                 continue
 
-        list_events.append(
-            {"start": start, "end": end, "peakP": peakp, "peakQ": i_peak}
-        )
+        list_events.append({"start": start, "end": end, "peakP": peakp, "peakQ": i_peak})
 
     return list_events
 
@@ -229,13 +220,11 @@ def _mask_event(
 
         if (prcp < 0).all() or (qobs < 0).all():
             warnings.warn(
-                f"Catchment {catchment} has no observed precipitation or/and discharge data"
+                f"Catchment {catchment} has no observed precipitation or/and discharge data", stacklevel=2
             )
 
         else:
-            list_events = _events_grad(
-                prcp, qobs, peak_quant, max_duration, model.setup.dt
-            )
+            list_events = _events_grad(prcp, qobs, peak_quant, max_duration, model.setup.dt)
 
             n_event[i] = len(list_events)
 

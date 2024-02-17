@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 import itertools
+
+import numpy as np
 
 ### FUNCTIONS TO GENERATE CONSTANTS ###
 #######################################
@@ -16,10 +17,7 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    [
-        rr_parameters.extend(MODULE_RR_PARAMETERS[module])
-        for module in structure.split("-")
-    ]
+    [rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")]
 
     return rr_parameters
 
@@ -110,9 +108,7 @@ ROUTING_MODULE_RR_STATES = dict(
 )
 
 # % Following MODULE order
-MODULE_RR_STATES = dict(
-    **SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES
-)
+MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 ### STRUCTURE ###
 #################
@@ -719,9 +715,7 @@ DEFAULT_TERMINATION_CRIT = dict(
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(
-        zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])
-    ),
+    **dict(zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [

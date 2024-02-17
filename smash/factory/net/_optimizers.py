@@ -16,9 +16,7 @@ class SGD:
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(
-        self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
-    ):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options):
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -147,5 +145,6 @@ class RMSprop:
 
         self.Eg = self.rho * self.Eg + (1 - self.rho) * np.power(grad_wrt_w, 2)
 
-        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for that weight
+        # Divide the learning rate for a weight by a running average of the magnitudes of recent gradients for
+        # that weight
         return w - self.learning_rate * grad_wrt_w / np.sqrt(self.Eg + self.eps)

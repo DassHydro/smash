@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import smash
-
 import numpy as np
 import pytest
+
+import smash
 
 
 def generic_xy_mesh(**kwargs) -> dict:
@@ -19,11 +19,7 @@ def generic_xy_mesh(**kwargs) -> dict:
     )
     # % Remove 'path' check because of updated numpy argsort method
     skip_keys = ["path"]
-    res = {
-        "xy_mesh." + k: np.array(v, ndmin=1)
-        for (k, v) in mesh.items()
-        if k not in skip_keys
-    }
+    res = {"xy_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items() if k not in skip_keys}
 
     return res
 
@@ -51,11 +47,7 @@ def generic_bbox_mesh(**kwargs) -> dict:
     )
     # % Remove 'path' check because of updated numpy argsort method
     skip_keys = ["path"]
-    res = {
-        "bbox_mesh." + k: np.array(v, ndmin=1)
-        for (k, v) in mesh.items()
-        if k not in skip_keys
-    }
+    res = {"bbox_mesh." + k: np.array(v, ndmin=1) for (k, v) in mesh.items() if k not in skip_keys}
 
     return res
 

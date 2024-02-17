@@ -5,5 +5,3 @@ class ReadHDF5MethodError(OSError):
     """
     Raise error when using wrong read method for hdf5 files.
     """
-
-    pass

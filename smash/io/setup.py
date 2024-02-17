@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-import yaml
-import os
 import errno
-
+import os
 from typing import TYPE_CHECKING
 
+import yaml
+
 if TYPE_CHECKING:
-    from smash.util._typing import FilePath
     from typing import Any
+
+    from smash.util._typing import FilePath
 
 __all__ = ["save_setup", "read_setup"]
 
@@ -23,7 +24,8 @@ def save_setup(setup: dict[str, Any], path: FilePath):
         The setup dictionary to be saved to `YAML <https://yaml.org/spec/1.2.2/>`__ file.
 
     path : `str`
-        The file path. If the path not end with ``.yaml``, the extension is automatically added to the file path.
+        The file path. If the path not end with ``.yaml``, the extension is automatically added to the file
+        path.
 
     See Also
     --------

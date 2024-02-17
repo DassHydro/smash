@@ -1,45 +1,45 @@
 from __future__ import annotations
 
+from copy import deepcopy
+from typing import TYPE_CHECKING
+
+import numpy as np
+
 from smash._constant import (
-    SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
     CONTROL_PRIOR_DISTRIBUTION,
     CONTROL_PRIOR_DISTRIBUTION_PARAMETERS,
+    SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
 )
-
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
-
 from smash.core.simulation._doc import (
-    _optimize_doc_appender,
-    _smash_optimize_doc_substitution,
     _bayesian_optimize_doc_appender,
-    _smash_bayesian_optimize_doc_substitution,
     _multiple_optimize_doc_appender,
+    _optimize_doc_appender,
+    _smash_bayesian_optimize_doc_substitution,
     _smash_multiple_optimize_doc_substitution,
+    _smash_optimize_doc_substitution,
 )
-
 from smash.core.simulation.optimize._standardize import (
     _standardize_multiple_optimize_args,
 )
-
 from smash.fcore._mw_forward import forward_run as wrap_forward_run
 from smash.fcore._mw_optimize import (
-    optimize as wrap_optimize,
     multiple_optimize as wrap_multiple_optimize,
 )
+from smash.fcore._mw_optimize import (
+    optimize as wrap_optimize,
+)
 from smash.fcore._mwd_options import OptionsDT
-from smash.fcore._mwd_returns import ReturnsDT
 from smash.fcore._mwd_parameters_manipulation import (
     parameters_to_control as wrap_parameters_to_control,
 )
-
-import numpy as np
-from copy import deepcopy
-
-from typing import TYPE_CHECKING
+from smash.fcore._mwd_returns import ReturnsDT
 
 if TYPE_CHECKING:
     from typing import Any
+
     from numpy.typing import NDArray
+
     from smash.core.model.model import Model
     from smash.factory.net.net import Net
     from smash.factory.samples.samples import Samples
@@ -69,11 +69,13 @@ class MultipleOptimize:
 
     parameters : `dict[str, np.ndarray]`
         A dictionary containing optimized rainfall-runoff parameters and/or initial states.
-        Each key represents an array of shape *(nrow, ncol, n)* corresponding to a specific rainfall-runoff parameter or initial state.
+        Each key represents an array of shape *(nrow, ncol, n)* corresponding to a specific rainfall-runoff
+        parameter or initial state.
 
     See Also
     --------
-    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple solutions.
+    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e.
+    starting points), yielding multiple solutions.
     """
 
     def __init__(self, data: dict[str, NDArray[np.float32]] | None = None):
@@ -88,11 +90,7 @@ class MultipleOptimize:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -111,13 +109,15 @@ class Optimize:
         A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
-        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
+        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
+        **time_step**.
 
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
     iter_projg : `numpy.ndarray`
-        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
+        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from
+        *m* iterations.
 
     control_vector : `numpy.ndarray`
         An array of shape *(k,)* representing the control vector at end of optimization.
@@ -158,7 +158,8 @@ class Optimize:
 
     Notes
     -----
-    The object's available attributes depend on what is requested by the user during a call to `smash.optimize` in **return_options**.
+    The object's available attributes depend on what is requested by the user during a call to
+    `smash.optimize` in **return_options**.
 
     See Also
     --------
@@ -177,11 +178,7 @@ class Optimize:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -200,13 +197,15 @@ class BayesianOptimize:
         A list of length *n* of `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>` for each **time_step**.
 
     q_domain : `numpy.ndarray`
-        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each **time_step**.
+        An array of shape *(nrow, ncol, n)* representing simulated discharges on the domain for each
+        **time_step**.
 
     iter_cost : `numpy.ndarray`
         An array of shape *(m,)* representing cost iteration values from *m* iterations.
 
     iter_projg : `numpy.ndarray`
-        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from *m* iterations.
+        An array of shape *(m,)* representing infinity norm of the projected gardient iteration values from
+        *m* iterations.
 
     control_vector : `numpy.ndarray`
         An array of shape *(k,)* representing the control vector at end of optimization.
@@ -224,14 +223,17 @@ class BayesianOptimize:
         Log h component value.
 
     serr_mu : `numpy.ndarray`
-        An array of shape *(ng, ntime_step)* representing the mean of structural errors for each gauge and each **time_step**.
+        An array of shape *(ng, ntime_step)* representing the mean of structural errors for each gauge and
+        each **time_step**.
 
     serr_sigma : `numpy.ndarray`
-        An array of shape *(ng, ntime_step)* representing the standard deviation of structural errors for each gauge and each **time_step**.
+        An array of shape *(ng, ntime_step)* representing the standard deviation of structural errors for
+        each gauge and each **time_step**.
 
     Notes
     -----
-    The object's available attributes depend on what is requested by the user during a call to `smash.bayesian_optimize` in **return_options**.
+    The object's available attributes depend on what is requested by the user during a call to
+    `smash.bayesian_optimize` in **return_options**.
 
     See Also
     --------
@@ -250,11 +252,7 @@ class BayesianOptimize:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -280,9 +278,7 @@ def _get_control_info(
     # % Map cost_options dict to derived type
     _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 
-    wrap_parameters_to_control(
-        model.setup, model.mesh, model._input_data, model._parameters, wrap_options
-    )
+    wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, wrap_options)
 
     ret = {}
     for attr in dir(model._parameters.control):
@@ -376,9 +372,7 @@ def _get_lcurve_wjreg_best(
     return distance, wjreg
 
 
-def _get_lcurve_wjreg(
-    model: Model, options: OptionsDT, returns: ReturnsDT
-) -> (float, dict):
+def _get_lcurve_wjreg(model: Model, options: OptionsDT, returns: ReturnsDT) -> (float, dict):
     if options.comm.verbose:
         print(f"{' '*4}LCURVE WJREG CYCLE 1")
 
@@ -416,9 +410,7 @@ def _get_lcurve_wjreg(
     if (jobs_min / jobs_max) < 0.95 and (jreg_max - jreg_min) > 0.0:
         wjreg_fast = (jobs_max - jobs_min) / jreg_max
         log10_wjreg_fast = np.log10(wjreg_fast)
-        wjreg_range = np.array(
-            10 ** np.arange(log10_wjreg_fast - 0.66, log10_wjreg_fast + 0.67, 0.33)
-        )
+        wjreg_range = np.array(10 ** np.arange(log10_wjreg_fast - 0.66, log10_wjreg_fast + 0.67, 0.33))
     else:
         wjreg_range = np.empty(shape=0)
 
@@ -548,17 +540,11 @@ def _optimize(
         if auto_wjreg == "fast":
             wrap_options.cost.wjreg = _get_fast_wjreg(model, wrap_options, wrap_returns)
             if wrap_options.comm.verbose:
-                print(
-                    f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
-                )
+                print(f"{' '*4}FAST WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
         elif auto_wjreg == "lcurve":
-            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(
-                model, wrap_options, wrap_returns
-            )
+            wrap_options.cost.wjreg, lcurve_wjreg = _get_lcurve_wjreg(model, wrap_options, wrap_returns)
             if wrap_options.comm.verbose:
-                print(
-                    f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}"
-                )
+                print(f"{' '*4}LCURVE WJREG LAST CYCLE. wjreg: {'{:.6f}'.format(wrap_options.cost.wjreg)}")
         else:
             pass
 
@@ -579,7 +565,7 @@ def _optimize(
     for key in return_options["keys"]:
         try:
             value = getattr(wrap_returns, key)
-        except:
+        except Exception:
             continue
         if hasattr(value, "copy"):
             value = value.copy()
@@ -601,7 +587,7 @@ def _optimize(
     ret = {**fret, **pyret}
     if ret:
         # % Add time_step to the object
-        if any([k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()]):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
         return Optimize(ret)
 
@@ -694,9 +680,7 @@ def multiple_optimize(
     cost_options: dict[str, Any] | None = None,
     common_options: dict[str, Any] | None = None,
 ) -> MultipleOptimize:
-    args_options = [
-        deepcopy(arg) for arg in [optimize_options, cost_options, common_options]
-    ]
+    args_options = [deepcopy(arg) for arg in [optimize_options, cost_options, common_options]]
 
     args = _standardize_multiple_optimize_args(
         model,
@@ -748,15 +732,11 @@ def _multiple_optimize(
         if name in model._parameters.rr_parameters.keys:
             samples_kind[i] = 0
             # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = (
-                np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
-            )
+            samples_ind[i] = np.argwhere(model._parameters.rr_parameters.keys == name).item() + 1
         elif name in model._parameters.rr_initial_states.keys:
             samples_kind[i] = 1
             # % Adding 1 because Fortran uses one based indexing
-            samples_ind[i] = (
-                np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
-            )
+            samples_ind[i] = np.argwhere(model._parameters.rr_initial_states.keys == name).item() + 1
         # % Should be unreachable
         else:
             pass
@@ -802,23 +782,17 @@ def _multiple_optimize(
         )
     )
 
-    for sp in samples._problem[
-        "names"
-    ]:  # add uncalibrated parameters from samples to parameters
-        if not sp in optimize_options["parameters"]:
+    for sp in samples._problem["names"]:  # add uncalibrated parameters from samples to parameters
+        if sp not in optimize_options["parameters"]:
             value = getattr(samples, sp)
             value = np.tile(value, (*model.mesh.flwdir.shape, 1))
 
             parameters.update({sp: value})
 
-    samples_fnl = deepcopy(
-        samples
-    )  # make a deepcopy of samples (will be modified by setattr)
+    samples_fnl = deepcopy(samples)  # make a deepcopy of samples (will be modified by setattr)
 
-    for op in optimize_options[
-        "parameters"
-    ]:  # add calibrated paramters from parameters to samples
-        if not op in samples._problem["names"]:
+    for op in optimize_options["parameters"]:  # add calibrated paramters from parameters to samples
+        if op not in samples._problem["names"]:
             if op in model.rr_parameters.keys:
                 value = model.get_rr_parameters(op)[0, 0]
 
@@ -841,12 +815,8 @@ def _multiple_optimize(
     }
 
 
-def _handle_bayesian_optimize_control_prior(
-    model: Model, control_prior: dict, options: OptionsDT
-):
-    wrap_parameters_to_control(
-        model.setup, model.mesh, model._input_data, model._parameters, options
-    )
+def _handle_bayesian_optimize_control_prior(model: Model, control_prior: dict, options: OptionsDT):
+    wrap_parameters_to_control(model.setup, model.mesh, model._input_data, model._parameters, options)
 
     if control_prior is None:
         control_prior = {}
@@ -855,26 +825,31 @@ def _handle_bayesian_optimize_control_prior(
         for key, value in control_prior.items():
             if key not in model._parameters.control.name:
                 raise ValueError(
-                    f"Unknown control name '{key}' in control_prior cost_options. Choices: {list(model._parameters.control.name)}"
+                    f"Unknown control name '{key}' in control_prior cost_options. "
+                    f"Choices: {list(model._parameters.control.name)}"
                 )
             else:
                 if isinstance(value, (list, tuple, np.ndarray)):
                     if value[0] not in CONTROL_PRIOR_DISTRIBUTION:
                         raise ValueError(
-                            f"Unknown distribution '{value[0]}' for key '{key}' in control_prior cost_options. Choices: {CONTROL_PRIOR_DISTRIBUTION}"
+                            f"Unknown distribution '{value[0]}' for key '{key}' in control_prior "
+                            f"cost_options. Choices: {CONTROL_PRIOR_DISTRIBUTION}"
                         )
                     value[1] = np.array(value[1], dtype=np.float32)
                     if value[1].size != CONTROL_PRIOR_DISTRIBUTION_PARAMETERS[value[0]]:
                         raise ValueError(
-                            f"Invalid number of parameter(s) ({value[1].size}) for distribution '{value[0]}' for key '{key}' in control_prior cost_options. Expected: ({CONTROL_PRIOR_DISTRIBUTION_PARAMETERS[value[0]]})"
+                            f"Invalid number of parameter(s) ({value[1].size}) for distribution '{value[0]}' "
+                            f"for key '{key}' in control_prior cost_options. "
+                            f"Expected: ({CONTROL_PRIOR_DISTRIBUTION_PARAMETERS[value[0]]})"
                         )
                 else:
                     raise ValueError(
-                        f"control_prior cost_options value for key '{key}' must be of ListLike (List, Tuple, np.ndarray)"
+                        f"control_prior cost_options value for key '{key}' must be of ListLike (List, "
+                        f"Tuple, np.ndarray)"
                     )
             control_prior[key] = {"dist": value[0], "par": value[1]}
     else:
-        raise TypeError(f"control_prior cost_options must be a dictionary")
+        raise TypeError("control_prior cost_options must be a dictionary")
 
     for key in model._parameters.control.name:
         control_prior.setdefault(key, {"dist": "FlatPrior", "par": np.empty(shape=0)})
@@ -947,9 +922,7 @@ def _bayesian_optimize(
 
     # % Map cost_options dict to derived type
     # % Control prior handled after
-    _map_dict_to_fortran_derived_type(
-        cost_options, wrap_options.cost, skip=["control_prior"]
-    )
+    _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost, skip=["control_prior"])
 
     # % Map common_options dict to derived type
     _map_dict_to_fortran_derived_type(common_options, wrap_options.comm)
@@ -958,9 +931,7 @@ def _bayesian_optimize(
     _map_dict_to_fortran_derived_type(return_options, wrap_returns)
 
     # % Control prior check
-    _handle_bayesian_optimize_control_prior(
-        model, cost_options["control_prior"], wrap_options
-    )
+    _handle_bayesian_optimize_control_prior(model, cost_options["control_prior"], wrap_options)
 
     wrap_optimize(
         model.setup,
@@ -979,7 +950,7 @@ def _bayesian_optimize(
     for key in return_options["keys"]:
         try:
             value = getattr(wrap_returns, key)
-        except:
+        except Exception:
             continue
         if hasattr(value, "copy"):
             value = value.copy()
@@ -988,6 +959,6 @@ def _bayesian_optimize(
     ret = {**fret, **pyret}
     if ret:
         # % Add time_step to the object
-        if any([k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()]):
+        if any(k in SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS for k in ret.keys()):
             ret["time_step"] = return_options["time_step"].copy()
         return BayesianOptimize(ret)

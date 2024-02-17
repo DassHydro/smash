@@ -1,35 +1,34 @@
 from __future__ import annotations
 
-from smash._constant import (
-    SNOW_MODULE,
-    HYDROLOGICAL_MODULE,
-    ROUTING_MODULE,
-    DEFAULT_MODEL_SETUP,
-    STRUCTURE,
-    SERR_MU_MAPPING,
-    SERR_SIGMA_MAPPING,
-    INPUT_DATA_FORMAT,
-    STRUCTURE_RR_PARAMETERS,
-    STRUCTURE_RR_STATES,
-    SERR_MU_MAPPING_PARAMETERS,
-    SERR_SIGMA_MAPPING_PARAMETERS,
-    FEASIBLE_RR_PARAMETERS,
-    FEASIBLE_RR_INITIAL_STATES,
-    FEASIBLE_SERR_MU_PARAMETERS,
-    FEASIBLE_SERR_SIGMA_PARAMETERS,
-)
-
-import pandas as pd
-import numpy as np
+import datetime
 import os
 import warnings
-import datetime
-
 from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+
+from smash._constant import (
+    DEFAULT_MODEL_SETUP,
+    FEASIBLE_RR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_SERR_MU_PARAMETERS,
+    FEASIBLE_SERR_SIGMA_PARAMETERS,
+    HYDROLOGICAL_MODULE,
+    INPUT_DATA_FORMAT,
+    ROUTING_MODULE,
+    SERR_MU_MAPPING,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING,
+    SERR_SIGMA_MAPPING_PARAMETERS,
+    SNOW_MODULE,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
+)
+
 if TYPE_CHECKING:
-    from smash.util._typing import AnyTuple, Numeric, ListLike
     from smash.core.model.model import Model
+    from smash.util._typing import AnyTuple, ListLike, Numeric
 
 
 def _standardize_model_setup_bool(key: str, value: bool) -> bool:
@@ -44,14 +43,10 @@ def _standardize_model_setup_directory(read: bool, key: str, value: str | None) 
 
     if read:
         if value is None:
-            raise ValueError(
-                f"{key} model setup must be defined if read_{directory_kind} is set to True"
-            )
+            raise ValueError(f"{key} model setup must be defined if read_{directory_kind} is set to True")
         elif isinstance(value, str):
             if not os.path.exists(value):
-                raise FileNotFoundError(
-                    f"No such file or directory '{value}' for {key} model setup"
-                )
+                raise FileNotFoundError(f"No such file or directory '{value}' for {key} model setup")
         else:
             raise TypeError(f"{key} model setup must be a str")
     else:
@@ -110,15 +105,14 @@ def _standardize_model_setup_snow_module(snow_module: str, **kwargs) -> str:
     return snow_module
 
 
-def _standardize_model_setup_hydrological_module(
-    hydrological_module: str, **kwargs
-) -> str:
+def _standardize_model_setup_hydrological_module(hydrological_module: str, **kwargs) -> str:
     if isinstance(hydrological_module, str):
         if hydrological_module.lower() in HYDROLOGICAL_MODULE:
             hydrological_module = hydrological_module.lower()
         else:
             raise ValueError(
-                f"Unknown hydrological module '{hydrological_module}' for hydrological_module in model setup. Choices: {HYDROLOGICAL_MODULE}"
+                f"Unknown hydrological module '{hydrological_module}' for hydrological_module in model "
+                f"setup. Choices: {HYDROLOGICAL_MODULE}"
             )
     else:
         raise TypeError("hydrological_module model setup must be a str")
@@ -132,7 +126,8 @@ def _standardize_model_setup_routing_module(routing_module: str, **kwargs) -> st
             routing_module = routing_module.lower()
         else:
             raise ValueError(
-                f"Unknown routing module '{routing_module}' for routing_module in model setup. Choices: {ROUTING_MODULE}"
+                f"Unknown routing module '{routing_module}' for routing_module in model setup. "
+                f"Choices: {ROUTING_MODULE}"
             )
     else:
         raise TypeError("routing_module model setup must be a str")
@@ -146,7 +141,8 @@ def _standardize_model_setup_serr_mu_mapping(serr_mu_mapping: str, **kwargs) -> 
             serr_mu_mapping = serr_mu_mapping.capitalize()
         else:
             raise ValueError(
-                f"Unknown structural error mu mapping '{serr_mu_mapping}' for serr_mu_mapping in model setup. Choices: {SERR_MU_MAPPING}"
+                f"Unknown structural error mu mapping '{serr_mu_mapping}' for serr_mu_mapping in model "
+                f"setup. Choices: {SERR_MU_MAPPING}"
             )
     else:
         raise TypeError("serr_mu_mapping model setup must be a str")
@@ -154,15 +150,14 @@ def _standardize_model_setup_serr_mu_mapping(serr_mu_mapping: str, **kwargs) -> 
     return serr_mu_mapping
 
 
-def _standardize_model_setup_serr_sigma_mapping(
-    serr_sigma_mapping: str, **kwargs
-) -> str:
+def _standardize_model_setup_serr_sigma_mapping(serr_sigma_mapping: str, **kwargs) -> str:
     if isinstance(serr_sigma_mapping, str):
         if serr_sigma_mapping.capitalize() in SERR_SIGMA_MAPPING:
             serr_sigma_mapping = serr_sigma_mapping.capitalize()
         else:
             raise ValueError(
-                f"Unknown structural error sigma mapping '{serr_sigma_mapping}' for serr_sigma_mapping in model setup. Choices: {SERR_SIGMA_MAPPING}"
+                f"Unknown structural error sigma mapping '{serr_sigma_mapping}' for serr_sigma_mapping in "
+                f"model setup. Choices: {SERR_SIGMA_MAPPING}"
             )
     else:
         raise TypeError("serr_sigma_mapping model setup must be a str")
@@ -189,10 +184,8 @@ def _standardize_model_setup_start_time(
     elif isinstance(start_time, str):
         try:
             start_time = pd.Timestamp(start_time)
-        except:
-            raise ValueError(
-                f"start_time '{start_time}' model setup is an invalid date"
-            )
+        except Exception:
+            raise ValueError(f"start_time '{start_time}' model setup is an invalid date") from None
     elif isinstance(start_time, datetime.date):
         start_time = pd.Timestamp(start_time)
 
@@ -201,7 +194,7 @@ def _standardize_model_setup_start_time(
 
     else:
         raise TypeError(
-            f"start_time model setup must be a str, datetime.date object or pandas.Timestamp object"
+            "start_time model setup must be a str, datetime.date object or pandas.Timestamp object"
         )
 
     return start_time
@@ -217,8 +210,8 @@ def _standardize_model_setup_end_time(
     elif isinstance(end_time, str):
         try:
             end_time = pd.Timestamp(end_time)
-        except:
-            raise ValueError(f"end_time '{end_time}' model setup is an invalid date")
+        except Exception:
+            raise ValueError(f"end_time '{end_time}' model setup is an invalid date") from None
     elif isinstance(end_time, datetime.date):
         end_time = pd.Timestamp(end_time)
 
@@ -226,22 +219,19 @@ def _standardize_model_setup_end_time(
         pass
 
     else:
-        raise TypeError(
-            f"end_time model setup must be a str, datetime.date object or pandas.Timestamp object"
-        )
+        raise TypeError("end_time model setup must be a str, datetime.date object or pandas.Timestamp object")
 
     # Check that end_time is after start_time
     if (end_time - start_time).total_seconds() <= 0:
         raise ValueError(
-            f"end_time model setup '{end_time}' corresponds to a date earlier or equal to start_time model setup '{start_time}'"
+            f"end_time model setup '{end_time}' corresponds to a date earlier or equal to start_time model "
+            f"setup '{start_time}'"
         )
 
     return end_time
 
 
-def _standardize_model_setup_adjust_interception(
-    adjust_interception: bool, **kwrags
-) -> bool:
+def _standardize_model_setup_adjust_interception(adjust_interception: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("adjust_interception", adjust_interception)
 
 
@@ -249,12 +239,8 @@ def _standardize_model_setup_read_qobs(read_qobs: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_qobs", read_qobs)
 
 
-def _standardize_model_setup_qobs_directory(
-    read_qobs: bool, qobs_directory: str | None, **kwargs
-) -> str:
-    return _standardize_model_setup_directory(
-        read_qobs, "qobs_directory", qobs_directory
-    )
+def _standardize_model_setup_qobs_directory(read_qobs: bool, qobs_directory: str | None, **kwargs) -> str:
+    return _standardize_model_setup_directory(read_qobs, "qobs_directory", qobs_directory)
 
 
 def _standardize_model_setup_read_prcp(read_prcp: bool, **kwrags) -> bool:
@@ -265,20 +251,12 @@ def _standardize_model_setup_prcp_format(prcp_format: str, **kwargs) -> str:
     return _standardize_model_setup_format("prcp_format", prcp_format)
 
 
-def _standardize_model_setup_prcp_conversion_factor(
-    prcp_conversion_factor: str, **kwargs
-) -> str:
-    return _standardize_model_setup_conversion_factor(
-        "prcp_conversion_factor", prcp_conversion_factor
-    )
+def _standardize_model_setup_prcp_conversion_factor(prcp_conversion_factor: str, **kwargs) -> str:
+    return _standardize_model_setup_conversion_factor("prcp_conversion_factor", prcp_conversion_factor)
 
 
-def _standardize_model_setup_prcp_directory(
-    read_prcp: bool, prcp_directory: str | None, **kwargs
-) -> str:
-    return _standardize_model_setup_directory(
-        read_prcp, "prcp_directory", prcp_directory
-    )
+def _standardize_model_setup_prcp_directory(read_prcp: bool, prcp_directory: str | None, **kwargs) -> str:
+    return _standardize_model_setup_directory(read_prcp, "prcp_directory", prcp_directory)
 
 
 def _standardize_model_setup_prcp_access(prcp_access: str, **kwargs) -> str:
@@ -293,17 +271,11 @@ def _standardize_model_setup_pet_format(pet_format: str, **kwargs) -> str:
     return _standardize_model_setup_format("pet_format", pet_format)
 
 
-def _standardize_model_setup_pet_conversion_factor(
-    pet_conversion_factor: str, **kwargs
-) -> str:
-    return _standardize_model_setup_conversion_factor(
-        "pet_conversion_factor", pet_conversion_factor
-    )
+def _standardize_model_setup_pet_conversion_factor(pet_conversion_factor: str, **kwargs) -> str:
+    return _standardize_model_setup_conversion_factor("pet_conversion_factor", pet_conversion_factor)
 
 
-def _standardize_model_setup_pet_directory(
-    read_pet: bool, pet_directory: str | None, **kwargs
-) -> str:
+def _standardize_model_setup_pet_directory(read_pet: bool, pet_directory: str | None, **kwargs) -> str:
     return _standardize_model_setup_directory(read_pet, "pet_directory", pet_directory)
 
 
@@ -311,21 +283,15 @@ def _standardize_model_setup_pet_access(pet_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("pet_access", pet_access)
 
 
-def _standardize_model_setup_daily_interannual_pet(
-    daily_interannual_pet: bool, **kwargs
-) -> bool:
+def _standardize_model_setup_daily_interannual_pet(daily_interannual_pet: bool, **kwargs) -> bool:
     return _standardize_model_setup_bool("daily_interannual_pet", daily_interannual_pet)
 
 
-def _standardize_model_setup_read_snow(
-    snow_module: str, read_snow: bool, **kwrags
-) -> bool:
+def _standardize_model_setup_read_snow(snow_module: str, read_snow: bool, **kwrags) -> bool:
     read_snow = _standardize_model_setup_bool("read_snow", read_snow)
 
     if read_snow and snow_module == "zero":
-        raise ValueError(
-            f"read_snow model setup can not be set to True if no snow module has been selected"
-        )
+        raise ValueError("read_snow model setup can not be set to True if no snow module has been selected")
 
     return read_snow
 
@@ -334,35 +300,23 @@ def _standardize_model_setup_snow_format(snow_format: str, **kwargs) -> str:
     return _standardize_model_setup_format("snow_format", snow_format)
 
 
-def _standardize_model_setup_snow_conversion_factor(
-    snow_conversion_factor: str, **kwargs
-) -> str:
-    return _standardize_model_setup_conversion_factor(
-        "snow_conversion_factor", snow_conversion_factor
-    )
+def _standardize_model_setup_snow_conversion_factor(snow_conversion_factor: str, **kwargs) -> str:
+    return _standardize_model_setup_conversion_factor("snow_conversion_factor", snow_conversion_factor)
 
 
-def _standardize_model_setup_snow_directory(
-    read_snow: bool, snow_directory: str | None, **kwargs
-) -> str:
-    return _standardize_model_setup_directory(
-        read_snow, "snow_directory", snow_directory
-    )
+def _standardize_model_setup_snow_directory(read_snow: bool, snow_directory: str | None, **kwargs) -> str:
+    return _standardize_model_setup_directory(read_snow, "snow_directory", snow_directory)
 
 
 def _standardize_model_setup_snow_access(snow_access: str, **kwargs) -> str:
     return _standardize_model_setup_access("snow_access", snow_access)
 
 
-def _standardize_model_setup_read_temp(
-    snow_module: str, read_temp: bool, **kwrags
-) -> bool:
+def _standardize_model_setup_read_temp(snow_module: str, read_temp: bool, **kwrags) -> bool:
     read_temp = _standardize_model_setup_bool("read_temp", read_temp)
 
     if read_temp and snow_module == "zero":
-        raise ValueError(
-            f"read_temp model setup can not be set to True if no snow module has been selected"
-        )
+        raise ValueError("read_temp model setup can not be set to True if no snow module has been selected")
 
     return read_temp
 
@@ -371,12 +325,8 @@ def _standardize_model_setup_temp_format(temp_format: str, **kwargs) -> str:
     return _standardize_model_setup_format("temp_format", temp_format)
 
 
-def _standardize_model_setup_temp_directory(
-    read_temp: bool, temp_directory: str | None, **kwargs
-) -> str:
-    return _standardize_model_setup_directory(
-        read_temp, "temp_directory", temp_directory
-    )
+def _standardize_model_setup_temp_directory(read_temp: bool, temp_directory: str | None, **kwargs) -> str:
+    return _standardize_model_setup_directory(read_temp, "temp_directory", temp_directory)
 
 
 def _standardize_model_setup_temp_access(temp_access: str, **kwargs) -> str:
@@ -390,23 +340,25 @@ def _standardize_model_setup_prcp_partitioning(
     prcp_partitioning: bool,
     **kwargs,
 ) -> bool:
-    prcp_partitioning = _standardize_model_setup_bool(
-        "prcp_partitioning", prcp_partitioning
-    )
+    prcp_partitioning = _standardize_model_setup_bool("prcp_partitioning", prcp_partitioning)
 
     if prcp_partitioning and snow_module == "zero":
         raise ValueError(
-            f"prcp_partitioning model setup can not be set to True if no snow module has been selected (snow_module is set to 'zero')"
+            "prcp_partitioning model setup can not be set to True if no snow module has been selected "
+            "(snow_module is set to 'zero')"
         )
 
     if prcp_partitioning and not read_temp:
         raise ValueError(
-            f"prcp_partitioning model setup can not be set to True if no temperature data is read (read_temp is set to False)"
+            "prcp_partitioning model setup can not be set to True if no temperature data is read "
+            "(read_temp is set to False)"
         )
 
     if prcp_partitioning and read_snow:
         warnings.warn(
-            f"prcp_partitioning and read_snow model setup are set to True. The snow data read will be summed with the precipitation and re-partitioned"
+            "prcp_partitioning and read_snow model setup are set to True. The snow data read will be summed "
+            "with the precipitation and re-partitioned",
+            stacklevel=2,
         )
 
     return prcp_partitioning
@@ -427,22 +379,16 @@ def _standardize_model_setup_descriptor_format(descriptor_format: str, **kwargs)
 def _standardize_model_setup_descriptor_directory(
     read_descriptor: bool, descriptor_directory: str | None, **kwargs
 ) -> str:
-    return _standardize_model_setup_directory(
-        read_descriptor, "descriptor_directory", descriptor_directory
-    )
+    return _standardize_model_setup_directory(read_descriptor, "descriptor_directory", descriptor_directory)
 
 
-def _standardize_model_setup_descriptor_name(
-    descriptor_name: ListLike | None, **kwargs
-) -> np.ndarray:
+def _standardize_model_setup_descriptor_name(descriptor_name: ListLike | None, **kwargs) -> np.ndarray:
     if descriptor_name is None:
         descriptor_name = np.empty(shape=0)
     elif isinstance(descriptor_name, (list, tuple, np.ndarray)):
         descriptor_name = np.array(descriptor_name, ndmin=1)
     else:
-        raise TypeError(
-            "descriptor_name model setup must be of ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("descriptor_name model setup must be of ListLike type (List, Tuple, np.ndarray)")
 
     return descriptor_name
 
@@ -454,7 +400,8 @@ def _standardize_model_setup(setup: dict) -> dict:
             if key not in DEFAULT_MODEL_SETUP.keys():
                 pop_keys.append(key)
                 warnings.warn(
-                    f"Unknown model setup key '{key}'. Choices: {list(DEFAULT_MODEL_SETUP.keys())}"
+                    f"Unknown model setup key '{key}'. Choices: {list(DEFAULT_MODEL_SETUP.keys())}",
+                    stacklevel=2,
                 )
 
         for key in pop_keys:
@@ -482,15 +429,11 @@ def _standardize_model_setup_finalize(setup: dict):
 
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
-    setup["ntime_step"] = int(
-        (setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"]
-    )
+    setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
     setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
-    setup["nsep_sigma"] = len(
-        SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]]
-    )
+    setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nd"] = setup["descriptor_name"].size
 
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
@@ -517,7 +460,7 @@ def _standardize_model_args(setup: dict, mesh: dict) -> AnyTuple:
 
 def _standardize_rr_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
-        raise TypeError(f"key argument must be a str")
+        raise TypeError("key argument must be a str")
 
     if key.lower() not in STRUCTURE_RR_PARAMETERS[model.setup.structure]:
         raise ValueError(
@@ -529,7 +472,7 @@ def _standardize_rr_parameters_key(model: Model, key: str) -> str:
 
 def _standardize_rr_states_key(model: Model, state_kind: str, key: str) -> str:
     if not isinstance(key, str):
-        raise TypeError(f"key argument must be a str")
+        raise TypeError("key argument must be a str")
 
     if key.lower() not in STRUCTURE_RR_STATES[model.setup.structure]:
         raise ValueError(
@@ -541,11 +484,12 @@ def _standardize_rr_states_key(model: Model, state_kind: str, key: str) -> str:
 
 def _standardize_serr_mu_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
-        raise TypeError(f"key argument must be a str")
+        raise TypeError("key argument must be a str")
 
     if key.lower() not in SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]:
         raise ValueError(
-            f"Unknown model serr_mu_parameters '{key}'. Choices: {SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]}"
+            f"Unknown model serr_mu_parameters '{key}'. Choices: "
+            f"{SERR_MU_MAPPING_PARAMETERS[model.setup.serr_mu_mapping]}"
         )
 
     return key.lower()
@@ -553,11 +497,12 @@ def _standardize_serr_mu_parameters_key(model: Model, key: str) -> str:
 
 def _standardize_serr_sigma_parameters_key(model: Model, key: str) -> str:
     if not isinstance(key, str):
-        raise TypeError(f"key argument must be a str")
+        raise TypeError("key argument must be a str")
 
     if key.lower() not in SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]:
         raise ValueError(
-            f"Unknown model serr_sigma_parameters '{key}'. Choices: {SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]}"
+            f"Unknown model serr_sigma_parameters '{key}'. Choices: "
+            f"{SERR_SIGMA_MAPPING_PARAMETERS[model.setup.serr_sigma_mapping]}"
         )
 
     return key.lower()
@@ -567,27 +512,23 @@ def _standardize_rr_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
-        raise TypeError(
-            f"value argument must be of Numeric type (int, float) or np.ndarray"
-        )
+        raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_RR_PARAMETERS[key]
-    l_arr = np.min(arr)
-    u_arr = np.max(arr)
+    low, upp = FEASIBLE_RR_PARAMETERS[key]
+    low_arr = np.min(arr)
+    upp_arr = np.max(arr)
 
-    if (
-        isinstance(value, np.ndarray)
-        and value.shape != model.mesh.flwdir.shape
-        and value.size != 1
-    ):
+    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
         raise ValueError(
-            f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+            f"Invalid shape for model rr_parameter '{key}'. Could not broadcast input array from shape "
+            f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if l_arr <= l or u_arr >= u:
+    if low_arr <= low or upp_arr >= upp:
         raise ValueError(
-            f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{low_arr}, {upp_arr}] is "
+            f"not included in the feasible domain ]{low}, {upp}["
         )
 
     return value
@@ -597,27 +538,23 @@ def _standardize_rr_states_value(
     model: Model, state_kind: str, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
-        raise TypeError(
-            f"value argument must be of Numeric type (int, float) or np.ndarray"
-        )
+        raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_RR_INITIAL_STATES[key]
-    l_arr = np.min(arr)
-    u_arr = np.max(arr)
+    low, upp = FEASIBLE_RR_INITIAL_STATES[key]
+    low_arr = np.min(arr)
+    upp_arr = np.max(arr)
 
-    if (
-        isinstance(value, np.ndarray)
-        and value.shape != model.mesh.flwdir.shape
-        and value.size != 1
-    ):
+    if isinstance(value, np.ndarray) and value.shape != model.mesh.flwdir.shape and value.size != 1:
         raise ValueError(
-            f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape {value.shape} into shape {model.mesh.flwdir.shape}"
+            f"Invalid shape for model {state_kind} '{key}'. Could not broadcast input array from shape "
+            f"{value.shape} into shape {model.mesh.flwdir.shape}"
         )
 
-    if l_arr <= l or u_arr >= u:
+    if low_arr <= low or upp_arr >= upp:
         raise ValueError(
-            f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model {state_kind} '{key}'. {state_kind} domain [{low_arr}, {upp_arr}] is "
+            f"not included in the feasible domain ]{low}, {upp}["
         )
 
     return value
@@ -627,27 +564,23 @@ def _standardize_serr_mu_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
-        raise TypeError(
-            f"value argument must be of Numeric type (int, float) or np.ndarray"
-        )
+        raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
-    l_arr = np.min(arr)
-    u_arr = np.max(arr)
+    low, upp = FEASIBLE_SERR_MU_PARAMETERS[key]
+    low_arr = np.min(arr)
+    upp_arr = np.max(arr)
 
-    if (
-        isinstance(value, np.ndarray)
-        and value.shape != (model.mesh.ng,)
-        and value.size != 1
-    ):
+    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
         raise ValueError(
-            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+            f"Invalid shape for model serr_mu_parameter '{key}'. Could not broadcast input array from shape "
+            f"{value.shape} into shape {(model.mesh.ng,)}"
         )
 
-    if l_arr <= l or u_arr >= u:
+    if low_arr <= low or upp_arr >= upp:
         raise ValueError(
-            f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain "
+            f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
         )
 
     return value
@@ -657,27 +590,23 @@ def _standardize_serr_sigma_parameters_value(
     model: Model, key: str, value: Numeric | np.ndarray
 ) -> Numeric | np.ndarray:
     if not isinstance(value, (int, float, np.ndarray)):
-        raise TypeError(
-            f"value argument must be of Numeric type (int, float) or np.ndarray"
-        )
+        raise TypeError("value argument must be of Numeric type (int, float) or np.ndarray")
 
     arr = np.array(value, ndmin=1)
-    l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
-    l_arr = np.min(arr)
-    u_arr = np.max(arr)
+    low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+    low_arr = np.min(arr)
+    upp_arr = np.max(arr)
 
-    if (
-        isinstance(value, np.ndarray)
-        and value.shape != (model.mesh.ng,)
-        and value.size != 1
-    ):
+    if isinstance(value, np.ndarray) and value.shape != (model.mesh.ng,) and value.size != 1:
         raise ValueError(
-            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from shape {value.shape} into shape {(model.mesh.ng,)}"
+            f"Invalid shape for model serr_sigma_parameter '{key}'. Could not broadcast input array from "
+            f"shape {value.shape} into shape {(model.mesh.ng,)}"
         )
 
-    if l_arr <= l or u_arr >= u:
+    if low_arr <= low or upp_arr >= upp:
         raise ValueError(
-            f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+            f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain "
+            f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
         )
 
     return value
@@ -713,9 +642,7 @@ def _standardize_get_rr_final_states_args(model: Model, key: str) -> str:
     return key
 
 
-def _standardize_set_rr_parameters_args(
-    model: Model, key: str, value: Numeric | np.ndarray
-) -> AnyTuple:
+def _standardize_set_rr_parameters_args(model: Model, key: str, value: Numeric | np.ndarray) -> AnyTuple:
     key = _standardize_rr_parameters_key(model, key)
 
     value = _standardize_rr_parameters_value(model, key, value)
@@ -723,9 +650,7 @@ def _standardize_set_rr_parameters_args(
     return (key, value)
 
 
-def _standardize_set_rr_initial_states_args(
-    model: Model, key: str, value: Numeric | np.ndarray
-) -> AnyTuple:
+def _standardize_set_rr_initial_states_args(model: Model, key: str, value: Numeric | np.ndarray) -> AnyTuple:
     state_kind = "rr_initial_state"
     key = _standardize_rr_states_key(model, state_kind, key)
 
@@ -734,9 +659,7 @@ def _standardize_set_rr_initial_states_args(
     return (key, value)
 
 
-def _standardize_set_serr_mu_parameters_args(
-    model: Model, key: str, value: Numeric | np.ndarray
-) -> AnyTuple:
+def _standardize_set_serr_mu_parameters_args(model: Model, key: str, value: Numeric | np.ndarray) -> AnyTuple:
     key = _standardize_serr_mu_parameters_key(model, key)
 
     value = _standardize_serr_mu_parameters_value(model, key, value)

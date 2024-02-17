@@ -1,96 +1,97 @@
 from __future__ import annotations
 
-from smash._constant import (
-    STRUCTURE_RR_PARAMETERS,
-    STRUCTURE_RR_STATES,
-    SERR_MU_MAPPING_PARAMETERS,
-    SERR_SIGMA_MAPPING_PARAMETERS,
-    DEFAULT_BOUNDS_RR_PARAMETERS,
-    DEFAULT_BOUNDS_RR_INITIAL_STATES,
-    DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
-    DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
-)
-
-from smash.core.model._build_model import (
-    _map_dict_to_fortran_derived_type,
-    _build_mesh,
-    _build_input_data,
-    _build_parameters,
-    _build_output,
-)
-from smash.core.model._standardize import (
-    _standardize_model_args,
-    _standardize_get_rr_parameters_args,
-    _standardize_get_rr_initial_states_args,
-    _standardize_get_serr_mu_parameters_args,
-    _standardize_get_serr_sigma_parameters_args,
-    _standardize_get_rr_final_states_args,
-    _standardize_set_rr_parameters_args,
-    _standardize_set_rr_initial_states_args,
-    _standardize_set_serr_mu_parameters_args,
-    _standardize_set_serr_sigma_parameters_args,
-)
-from smash.core.simulation.run.run import _forward_run
-from smash.core.simulation.run._standardize import _standardize_forward_run_args
-from smash.core.simulation._doc import (
-    _forward_run_doc_appender,
-    _model_forward_run_doc_substitution,
-    _optimize_doc_appender,
-    _model_optimize_doc_substitution,
-    _multiset_estimate_doc_appender,
-    _model_multiset_estimate_doc_substitution,
-    _bayesian_optimize_doc_appender,
-    _model_bayesian_optimize_doc_substitution,
-)
-from smash.core.simulation.optimize.optimize import (
-    _optimize,
-    _bayesian_optimize,
-)
-from smash.core.simulation.optimize._standardize import (
-    _standardize_optimize_args,
-    _standardize_bayesian_optimize_args,
-)
-from smash.core.simulation.estimate.estimate import _multiset_estimate
-from smash.core.simulation.estimate._standardize import (
-    _standardize_multiset_estimate_args,
-)
-
-from smash.fcore._mwd_setup import SetupDT
-from smash.fcore._mwd_mesh import MeshDT
-from smash.fcore._mwd_input_data import Input_DataDT
-from smash.fcore._mwd_parameters import ParametersDT
-from smash.fcore._mwd_output import OutputDT
-from smash.fcore._mwd_parameters_manipulation import (
-    get_serr_mu as wrap_get_serr_mu,
-    get_serr_sigma as wrap_get_serr_sigma,
-)
+from copy import deepcopy
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from copy import deepcopy
-
-from typing import TYPE_CHECKING
+from smash._constant import (
+    DEFAULT_BOUNDS_RR_INITIAL_STATES,
+    DEFAULT_BOUNDS_RR_PARAMETERS,
+    DEFAULT_BOUNDS_SERR_MU_PARAMETERS,
+    DEFAULT_BOUNDS_SERR_SIGMA_PARAMETERS,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
+)
+from smash.core.model._build_model import (
+    _build_input_data,
+    _build_mesh,
+    _build_output,
+    _build_parameters,
+    _map_dict_to_fortran_derived_type,
+)
+from smash.core.model._standardize import (
+    _standardize_get_rr_final_states_args,
+    _standardize_get_rr_initial_states_args,
+    _standardize_get_rr_parameters_args,
+    _standardize_get_serr_mu_parameters_args,
+    _standardize_get_serr_sigma_parameters_args,
+    _standardize_model_args,
+    _standardize_set_rr_initial_states_args,
+    _standardize_set_rr_parameters_args,
+    _standardize_set_serr_mu_parameters_args,
+    _standardize_set_serr_sigma_parameters_args,
+)
+from smash.core.simulation._doc import (
+    _bayesian_optimize_doc_appender,
+    _forward_run_doc_appender,
+    _model_bayesian_optimize_doc_substitution,
+    _model_forward_run_doc_substitution,
+    _model_multiset_estimate_doc_substitution,
+    _model_optimize_doc_substitution,
+    _multiset_estimate_doc_appender,
+    _optimize_doc_appender,
+)
+from smash.core.simulation.estimate._standardize import (
+    _standardize_multiset_estimate_args,
+)
+from smash.core.simulation.estimate.estimate import _multiset_estimate
+from smash.core.simulation.optimize._standardize import (
+    _standardize_bayesian_optimize_args,
+    _standardize_optimize_args,
+)
+from smash.core.simulation.optimize.optimize import (
+    _bayesian_optimize,
+    _optimize,
+)
+from smash.core.simulation.run._standardize import _standardize_forward_run_args
+from smash.core.simulation.run.run import _forward_run
+from smash.fcore._mwd_input_data import Input_DataDT
+from smash.fcore._mwd_mesh import MeshDT
+from smash.fcore._mwd_output import OutputDT
+from smash.fcore._mwd_parameters import ParametersDT
+from smash.fcore._mwd_parameters_manipulation import (
+    get_serr_mu as wrap_get_serr_mu,
+)
+from smash.fcore._mwd_parameters_manipulation import (
+    get_serr_sigma as wrap_get_serr_sigma,
+)
+from smash.fcore._mwd_setup import SetupDT
 
 if TYPE_CHECKING:
     from typing import Any
+
     from numpy.typing import NDArray
-    from smash.util._typing import Numeric, ListLike
+
+    from smash.core.simulation.estimate.estimate import MultisetEstimate
     from smash.core.simulation.optimize.optimize import (
-        Optimize,
-        MultipleOptimize,
         BayesianOptimize,
+        MultipleOptimize,
+        Optimize,
     )
     from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun
-    from smash.core.simulation.estimate.estimate import MultisetEstimate
-    from smash.fcore._mwd_response_data import Response_DataDT
-    from smash.fcore._mwd_u_response_data import U_Response_DataDT
-    from smash.fcore._mwd_physio_data import Physio_DataDT
     from smash.fcore._mwd_atmos_data import Atmos_DataDT
+    from smash.fcore._mwd_physio_data import Physio_DataDT
+    from smash.fcore._mwd_response import ResponseDT
+    from smash.fcore._mwd_response_data import Response_DataDT
     from smash.fcore._mwd_rr_parameters import RR_ParametersDT
     from smash.fcore._mwd_rr_states import RR_StatesDT
     from smash.fcore._mwd_serr_mu_parameters import SErr_Mu_ParametersDT
     from smash.fcore._mwd_serr_sigma_parameters import SErr_Sigma_ParametersDT
-    from smash.fcore._mwd_response import ResponseDT
+    from smash.fcore._mwd_u_response_data import U_Response_DataDT
+    from smash.util._typing import ListLike, Numeric
 
 __all__ = ["Model"]
 
@@ -136,23 +137,26 @@ class Model:
                 See the :ref:`math_num_documentation.forward_structure.routing_module` section
 
         serr_mu_mapping : `str`, default 'Zero'
-            Name of the mapping used for :math:`\mu`, the mean of structural errors. Should be one of:
+            Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
 
-            - ``'Zero'`` (:math:`\mu = 0`)
-            - ``'Constant'`` (:math:`\mu = \mu_0`)
-            - ``'Linear'`` (:math:`\mu = \mu_0 + \mu_1 \\times q`)
+            - ``'Zero'`` (:math:`\\mu = 0`)
+            - ``'Constant'`` (:math:`\\mu = \\mu_0`)
+            - ``'Linear'`` (:math:`\\mu = \\mu_0 + \\mu_1 \\times q`)
 
             .. hint::
                 See the :ref:`math_num_documentation.bayesian_estimation` section
 
         serr_sigma_mapping : `str`, default 'Linear'
-            Name of the mapping used for :math:`\sigma`, the standard deviation of structural errors. Should be one of:
+            Name of the mapping used for :math:`\\sigma`, the standard deviation of structural errors.
+            Should be one of:
 
-            - ``'Constant'`` (:math:`\sigma=\sigma_0`)
-            - ``'Linear'`` (:math:`\sigma=\sigma_0 + \sigma_1 \\times q`)
-            - ``'Power'`` (:math:`\sigma=\sigma_0 + \sigma_1 \\times q^{\sigma_2}`)
-            - ``'Exponential'`` (:math:`\sigma=\sigma_0 + (\sigma_2-\sigma_0) \\times \left( 1-\exp (-q/\sigma_1) \\right)`)
-            - ``'Gaussian'`` (:math:`\sigma=\sigma_0 + (\sigma_2-\sigma_0) \\times \left( 1-\exp(-(q/\sigma_1)^2) \\right)`)
+            - ``'Constant'`` (:math:`\\sigma=\\sigma_0`)
+            - ``'Linear'`` (:math:`\\sigma=\\sigma_0 + \\sigma_1 \\times q`)
+            - ``'Power'`` (:math:`\\sigma=\\sigma_0 + \\sigma_1 \\times q^{\\sigma_2}`)
+            - ``'Exponential'`` (:math:`\\sigma=\\sigma_0 + (\\sigma_2-\\sigma_0) \\times \\left( 1-\\exp
+              (-q/\\sigma_1) \\right)`)
+            - ``'Gaussian'`` (:math:`\\sigma=\\sigma_0 + (\\sigma_2-\\sigma_0) \\times \\left( 1-\\exp(
+              -(q/\\sigma_1)^2) \\right)`)
 
             .. hint::
                 See the :ref:`math_num_documentation.bayesian_estimation` section
@@ -191,7 +195,8 @@ class Model:
             Precipitation file format. This option is only applicable if **read_prcp** is set to True.
 
             .. note::
-                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf`` format in future version.
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
 
         prcp_conversion_factor : `float`, default 1
             Preciptation conversion factor. The precipitation will be ``multiplied`` by the conversion factor.
@@ -204,7 +209,8 @@ class Model:
         prcp_access : `str`, default ''
             Precipitation directory structure access.
             By default, files are read using a recursive search from the root directory **prcp_directory**.
-            This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
+            This option makes it possible to specify the directory structure and allow faster access according
+            to **start_time** and **end_time** dates.
             This option is only applicable if **read_prcp** is set to True.
 
         read_pet : `bool`, default False
@@ -214,13 +220,16 @@ class Model:
                 See the :ref:`user_guide.others.input_data_convention` section
 
         pet_format : `str`, default 'tif'
-            Potential evapotranspiration file format. This option is only applicable if **read_pet** is set to True.
+            Potential evapotranspiration file format. This option is only applicable if **read_pet** is set
+            to True.
 
             .. note::
-                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf`` format in future version.
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
 
         pet_conversion_factor : `float`, default 1
-            Potential evapotranspiration conversion factor. The potential evapotranspiration will be ``multiplied`` by the conversion factor.
+            Potential evapotranspiration conversion factor. The potential evapotranspiration will be
+            ``multiplied`` by the conversion factor.
             This option is only applicable if **read_pet** is set to True.
 
         pet_directory : `str`
@@ -230,7 +239,8 @@ class Model:
         pet_access : `str`, default ''
             Potential evapotranspiration directory structure access.
             By default, files are read using a recursive search from the root directory **pet_directory**.
-            This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
+            This option makes it possible to specify the directory structure and allow faster access according
+            to **start_time** and **end_time** dates.
             This option is only applicable if **read_pet** is set to True.
 
         daily_interannual_pet : `bool`, default False
@@ -245,24 +255,30 @@ class Model:
                 See the :ref:`user_guide.others.input_data_convention` section
 
         snow_format : `str`, default 'tif'
-            Snow file format. This option is only applicable if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
+            Snow file format. This option is only applicable if **read_snow** is set to True and if
+            **snow_module** is set to ``ssn``.
 
             .. note::
-                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf`` format in future version.
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
 
         snow_conversion_factor : `float`, default 1
             Snow conversion factor. The snow will be ``multiplied`` by the conversion factor.
-            This option is only applicable if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
+            This option is only applicable if **read_snow** is set to True and if **snow_module** is set to
+            ``ssn``.
 
         snow_directory : `str`
             Path to the root directory of the snow file(s).
-            This option is ``mandatory`` if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
+            This option is ``mandatory`` if **read_snow** is set to True and if **snow_module** is set to
+            ``ssn``.
 
         snow_access : `str`, default ''
             Snow directory structure access.
             By default, files are read using a recursive search from the root directory **snow_directory**.
-            This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
-            This option is only applicable if **read_snow** is set to True and if **snow_module** is set to ``ssn``.
+            This option makes it possible to specify the directory structure and allow faster access according
+            to **start_time** and **end_time** dates.
+            This option is only applicable if **read_snow** is set to True and if **snow_module** is set to
+            ``ssn``.
 
         read_temp : `bool`, default False
             Whether or not to read temperature file(s).
@@ -271,20 +287,25 @@ class Model:
                 See the :ref:`user_guide.others.input_data_convention` section
 
         temp_format : `str`, default 'tif'
-            Temperature file format. This option is only applicable if **read_temp** is set to True and if **snow_module** is set to ``ssn``.
+            Temperature file format. This option is only applicable if **read_temp** is set to True and if
+            **snow_module** is set to ``ssn``.
 
             .. note::
-                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf`` format in future version.
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
 
         temp_directory : `str`
             Path to the root directory of the temperature file(s).
-            This option is ``mandatory`` if **read_temp** is set to True and if **snow_module** is set to ``ssn``.
+            This option is ``mandatory`` if **read_temp** is set to True and if **snow_module** is set to
+            ``ssn``.
 
         temp_access : `str`, default ''
             Temperature directory structure access.
             By default, files are read using a recursive search from the root directory **temp_directory**.
-            This option makes it possible to specify the directory structure and allow faster access according to **start_time** and **end_time** dates.
-            This option is only applicable if **read_temp** is set to True and if **snow_module** is set to ``ssn``.
+            This option makes it possible to specify the directory structure and allow faster access according
+            to **start_time** and **end_time** dates.
+            This option is only applicable if **read_temp** is set to True and if **snow_module** is set to
+            ``ssn``.
 
         prcp_partitioning : `bool`, default False
             Whether or not to partition precipitation into liquid (precipitation) and solid (snow) parts.
@@ -295,8 +316,10 @@ class Model:
                 See the :ref:`math_num_documentation.precipitation_partitioning` section
 
         sparse_storage : `bool`, default False
-            Whether or not to store atmospheric data (i.e. precipitation, potential evapotranspiration, snow and temperature) sparsely.
-            This option reduces the amount of memory taken up by atmospheric data. It is particularly useful when working large dataset.
+            Whether or not to store atmospheric data (i.e. precipitation, potential evapotranspiration, snow
+            and temperature) sparsely.
+            This option reduces the amount of memory taken up by atmospheric data. It is particularly useful
+            when working large dataset.
 
         read_descriptor : `bool`, default False
             Whether or not to read descriptor file(s).
@@ -305,7 +328,8 @@ class Model:
             Descriptor file format. This option is only applicable if **read_descriptor** is set to True.
 
             .. note::
-                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf`` format in future version.
+                Only the ``tif`` format is currently supported. We would like to extend this to ``netcdf``
+                format in future version.
 
         descriptor_directory : `str`
             Path to the root directory of the descriptor file(s).
@@ -339,7 +363,13 @@ class Model:
     Setup and mesh dictionaries loaded from ``Cance`` dataset
 
     >>> setup
-    {'hydrological_module': 'gr4', 'routing_module': 'lr', 'dt': 3600, ..., 'descriptor_name': ['slope', 'dd']}
+    {
+        'hydrological_module': 'gr4',
+        'routing_module': 'lr',
+        'dt': 3600,
+        ...
+        'descriptor_name': ['slope', 'dd']
+    }
     >>> mesh.keys()
     dict_keys(['active_cell', 'area', 'area_dln', ..., 'yres'])
 
@@ -376,9 +406,7 @@ class Model:
 
             _map_dict_to_fortran_derived_type(setup, self.setup)
 
-            self.mesh = MeshDT(
-                self.setup, mesh["nrow"], mesh["ncol"], mesh["npar"], mesh["ng"]
-            )
+            self.mesh = MeshDT(self.setup, mesh["nrow"], mesh["ncol"], mesh["npar"], mesh["ng"])
 
             _map_dict_to_fortran_derived_type(mesh, self.mesh)
 
@@ -413,7 +441,7 @@ class Model:
                 return False
             try:
                 value = getattr(obj, attr)
-            except:
+            except Exception:
                 return False
             if callable(value):
                 return False
@@ -426,9 +454,7 @@ class Model:
                 continue
             value = getattr(self, attr)
 
-            sub_attr_list = [
-                sub_attr for sub_attr in dir(value) if _valid_attr(value, sub_attr)
-            ]
+            sub_attr_list = [sub_attr for sub_attr in dir(value) if _valid_attr(value, sub_attr)]
 
             # % Do not print too much attributes
             if len(sub_attr_list) > 4:
@@ -622,7 +648,8 @@ class Model:
         Returns
         -------
         u_response_data : `U_Response_DataDT <smash.fcore._mwd_u_response_data.U_Response_DataDT>`
-            It returns a Fortran derived type containing the variables relating to the response data uncertainties.
+            It returns a Fortran derived type containing the variables relating to the response data
+            uncertainties.
 
         Examples
         --------
@@ -638,7 +665,8 @@ class Model:
                [0., 0., 0., ..., 0., 0., 0.],
                [0., 0., 0., ..., 0., 0., 0.]], dtype=float32)
 
-        Access to a specific gauge discharge uncertainties (standard deviation of independent error) time serie
+        Access to a specific gauge discharge uncertainties (standard deviation of independent error) time
+        serie
 
         >>> model.mesh.code
         array(['V3524010', 'V3515010', 'V3517010'], dtype='<U8')
@@ -762,10 +790,10 @@ class Model:
                 [0., 0., 0., ..., 0., 0., 0.]]], dtype=float32)
 
         .. warning::
-            If the Model object has been initialised with the ``sparse_storage`` option in setup (see `smash.Model`),
-            the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are unavailable and replaced by
-            ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``, optionally) and vice versa
-            if the sparse_storage option has not been chosen.
+            If the Model object has been initialised with the ``sparse_storage`` option in setup
+            (see `smash.Model`), the variables ``prcp``, ``pet`` (``snow`` and ``temp``, optionally) are
+            unavailable and replaced by ``sparse_prcp``, ``sparse_pet`` (``sparse_snow`` and ``sparse_temp``,
+            optionally) and vice versa if the sparse_storage option has not been chosen.
 
         Access to a specific gauge mean precipitation time serie
 
@@ -815,7 +843,8 @@ class Model:
         Returns
         -------
         rr_parameters : `RR_ParametersDT <smash.fcore._mwd_rr_parameters.RR_ParametersDT>`
-            It returns a Fortran derived type containing the variables relating to the rainfall-runoff parameters.
+            It returns a Fortran derived type containing the variables relating to the rainfall-runoff
+            parameters.
 
         See Also
         --------
@@ -839,7 +868,8 @@ class Model:
                 ...
                 [1.0e-06, 2.0e+02, 5.0e+02, 0.0e+00, 5.0e+00]]], dtype=float32)
 
-        Access to a specific rainfall-runoff parameter grid with the getter method `get_rr_parameters <Model.get_rr_parameters>`
+        Access to a specific rainfall-runoff parameter grid with the getter method
+        `get_rr_parameters <Model.get_rr_parameters>`
 
         >>> model.get_rr_parameters("cp")
         array([[200., 200., 200., 200., 200., 200., 200., 200., 200., 200., 200.,
@@ -847,7 +877,8 @@ class Model:
                 ...
                 200., 200., 200., 200., 200., 200.]], dtype=float32)
 
-        Set a value to a specific rainfall-runoff parameter grid with the setter method `set_rr_parameters <Model.set_rr_parameters>`
+        Set a value to a specific rainfall-runoff parameter grid with the setter method
+        `set_rr_parameters <Model.set_rr_parameters>`
 
         >>> model.set_rr_parameters("cp", 273)
         >>> model.get_rr_parameters("cp")
@@ -877,7 +908,8 @@ class Model:
         Returns
         -------
         rr_initial_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
-            It returns a Fortran derived type containing the variables relating to the rainfall-runoff initial states.
+            It returns a Fortran derived type containing the variables relating to the rainfall-runoff
+            initial states.
 
         See Also
         --------
@@ -901,7 +933,8 @@ class Model:
                 ...
                 [1.e-02, 1.e-02, 1.e-02, 1.e-06]]], dtype=float32)
 
-        Access to a specific rainfall-runoff initial state grid with the getter method `get_rr_initial_states <Model.get_rr_initial_states>`
+        Access to a specific rainfall-runoff initial state grid with the getter method
+        `get_rr_initial_states <Model.get_rr_initial_states>`
 
         >>> model.get_rr_initial_states("hp")
         array([[0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01, 0.01,
@@ -909,7 +942,8 @@ class Model:
                 ...
                 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]], dtype=float32)
 
-        Set a value to a specific rainfall-runoff initial state grid with the setter method `set_rr_initial_states <Model.set_rr_initial_states>`
+        Set a value to a specific rainfall-runoff initial state grid with the setter method
+        `set_rr_initial_states <Model.set_rr_initial_states>`
 
         >>> model.set_rr_initial_states("hp", 0.29)
         >>> model.get_rr_initial_states("hp")
@@ -939,7 +973,8 @@ class Model:
         Returns
         -------
         serr_mu_parameters : `SErr_Mu_ParametersDT <smash.fcore._mwd_serr_mu_parameters.SErr_Mu_ParametersDT>`
-            It returns a Fortran derived type containing the variables relating to the structural error mu parameters.
+            It returns a Fortran derived type containing the variables relating to the structural error mu
+            parameters.
 
         See Also
         --------
@@ -951,7 +986,8 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
@@ -966,19 +1002,22 @@ class Model:
                [0., 0.]], dtype=float32)
 
         .. note::
-            If we had left the default structural error mu mapping to ``'Zero'`` this is the output we would have obtained
+            If we had left the default structural error mu mapping to ``'Zero'`` this is the output we
+            would have obtained
 
             >>> model.serr_mu_parameters
             SErr_Mu_ParametersDT
                 keys: array([], dtype=float64)
                 values: array([], shape=(3, 0), dtype=float32)
 
-        Access to a specific structural error mu parameter vector with the getter method `get_serr_mu_parameters <Model.get_serr_mu_parameters>`
+        Access to a specific structural error mu parameter vector with the getter method
+        `get_serr_mu_parameters <Model.get_serr_mu_parameters>`
 
         >>> model.get_serr_mu_parameters("mg0")
         array([0., 0., 0.], dtype=float32)
 
-        Set a value to a specific structural error mu parameter vector with the setter method `set_serr_mu_parameters <Model.set_serr_mu_parameters>`
+        Set a value to a specific structural error mu parameter vector with the setter method
+        `set_serr_mu_parameters <Model.set_serr_mu_parameters>`
 
         >>> model.set_serr_mu_parameters("mg0", 11)
         >>> model.get_serr_mu_parameters("mg0")
@@ -1005,7 +1044,8 @@ class Model:
         Returns
         -------
         serr_sigma_parameters : `SErr_Sigma_ParametersDT <smash.fcore._mwd_serr_sigma_parameters.SErr_Sigma_ParametersDT>`
-            It returns a Fortran derived type containing the variables relating to the structural error sigma parameters.
+            It returns a Fortran derived type containing the variables relating to the structural error sigma
+            parameters.
 
         See Also
         --------
@@ -1026,12 +1066,14 @@ class Model:
                [1. , 0.2],
                [1. , 0.2]], dtype=float32)
 
-        Access to a specific structural error sigma parameter vector with the getter method `get_serr_sigma_parameters <Model.get_serr_sigma_parameters>`
+        Access to a specific structural error sigma parameter vector with the getter method
+        `get_serr_sigma_parameters <Model.get_serr_sigma_parameters>`
 
         >>> model.get_serr_sigma_parameters("sg0")
         array([1., 1., 1.], dtype=float32)
 
-        Set a value to a specific structural error sigma parameter vector with the setter method `set_serr_sigma_parameters <Model.set_serr_sigma_parameters>`
+        Set a value to a specific structural error sigma parameter vector with the setter method
+        `set_serr_sigma_parameters <Model.set_serr_sigma_parameters>`
 
         >>> model.set_serr_sigma_parameters("sg0", 5.4)
         >>> model.get_serr_sigma_parameters("sg0")
@@ -1042,7 +1084,7 @@ class Model:
         >>> model.serr_sigma_parameters.<TAB>
         model.serr_sigma_parameters.copy()        model.serr_sigma_parameters.keys
         model.serr_sigma_parameters.from_handle(  model.serr_sigma_parameters.values
-        """
+        """  # noqa: E501
 
         return self._parameters.serr_sigma_parameters
 
@@ -1111,7 +1153,8 @@ class Model:
         Returns
         -------
         rr_final_states : `RR_StatesDT <smash.fcore._mwd_rr_states.RR_StatesDT>`
-            It returns a Fortran derived type containing the variables relating to the rainfall-runoff final states.
+            It returns a Fortran derived type containing the variables relating to the rainfall-runoff final
+            states.
 
         See Also
         --------
@@ -1138,7 +1181,8 @@ class Model:
         >>> model.forward_run()
         </> Forward Run
 
-        Access to a specific rainfall-runoff final state grid with the getter method `get_rr_final_states <Model.get_rr_final_states>`
+        Access to a specific rainfall-runoff final state grid with the getter method
+        `get_rr_final_states <Model.get_rr_final_states>`
 
         >>> model.get_rr_final_states("hp")
         array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
@@ -1148,7 +1192,8 @@ class Model:
                 0.01      , 0.01      , 0.01      ]], dtype=float32)
 
         .. note::
-            Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states. They are generated after any kind of simulation (i.e. forward_run, optimize, ...)
+            Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states.
+            They are generated after any kind of simulation (i.e. forward_run, optimize, ...)
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
@@ -1262,7 +1307,8 @@ class Model:
                 200., 200., 200., 200., 200., 200.]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below) but is simpler to use
+            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below)
+            but is simpler to use
 
         Access the rainfall-runoff parameter keys
 
@@ -1302,7 +1348,8 @@ class Model:
 
         value : `float` or `numpy.ndarray`
             The value(s) to set to the rainfall-runoff parameter.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the rainfall-runoff parameter shape.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the rainfall-runoff
+            parameter shape.
 
         See Also
         --------
@@ -1327,7 +1374,8 @@ class Model:
                 ...
                 150, 150, 150, 150, 150, 150]], dtype=float32)
 
-        Set a grid with a shape equivalent to the rainfall-runoff parameter filled with random values between ``10`` and ``500``
+        Set a grid with a shape equivalent to the rainfall-runoff parameter filled with random values between
+        ``10`` and ``500``
 
         Get the rainfall-runoff parameter shape
 
@@ -1355,7 +1403,8 @@ class Model:
                 243., 424., 301., 413., 107., 386.]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
+            This method is equivalent to directly slicing the ``rr_parameters.values`` array (as shown below)
+            and change the values but is simpler and ``safer`` to use.
 
         Access the rainfall-runoff parameter keys
 
@@ -1378,9 +1427,10 @@ class Model:
                 56., 56.]], dtype=float32)
 
         .. warning::
-            In that case, there's no problem to set the value ``56`` to the rainfall-runoff parameter ``'cp'``,
-            but each rainfall-runoff parameter has a feasibility domain, and that outside this domain, the model cannot run.
-            For example, the feasibility domain of ``'cp'`` is :math:`]0, +\inf[`.
+            In that case, there's no problem to set the value ``56`` to the rainfall-runoff parameter
+            ``'cp'``, but each rainfall-runoff parameter has a feasibility domain, and that outside this
+            domain, the model cannot run. For example, the feasibility domain of ``'cp'`` is
+            :math:`]0, +\\inf[`.
 
         Trying to set a negative value to the rainfall-runoff parameter ``'cp'`` without the setter
 
@@ -1394,12 +1444,15 @@ class Model:
         No particular problem doing this but trying with the setter
 
         >>> model.set_rr_parameters("cp", -47)
-        ValueError: Invalid value for model rr_parameter 'cp'. rr_parameter domain [-47, -47] is not included in the feasible domain ]0, inf[
+        ValueError: Invalid value for model rr_parameter 'cp'. rr_parameter domain [-47, -47] is not included
+        in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the rainfall-runoff parameter ``'cp'`` leads to the same error.
+        Finally, trying to run the Model with a negative value set to the rainfall-runoff parameter ``'cp'``
+        leads to the same error.
 
         >>> model.forward_run()
-        ValueError: Invalid value for model rr_parameter 'cp'. rr_parameter domain [-47, -47] is not included in the feasible domain ]0, inf[
+        ValueError: Invalid value for model rr_parameter 'cp'. rr_parameter domain [-47, -47] is not included
+        in the feasible domain ]0, inf[
         """
 
         key, value = _standardize_set_rr_parameters_args(self, key, value)
@@ -1440,7 +1493,8 @@ class Model:
                 0.01, 0.01, 0.01, 0.01, 0.01, 0.01]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown below) but is simpler to use
+            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown
+            below) but is simpler to use
 
         Access the rainfall-runoff state keys
 
@@ -1480,7 +1534,8 @@ class Model:
 
         value : `float` or `numpy.ndarray`
             The value(s) to set to the rainfall-runoff initial state.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the rainfall-runoff initial state shape.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the rainfall-runoff
+            initial state shape.
 
         See Also
         --------
@@ -1505,7 +1560,8 @@ class Model:
                 ...
                 0.22, 0.22, 0.22, 0.22, 0.22, 0.22]], dtype=float32)
 
-        Set a grid with a shape equivalent to the rainfall-runoff initial state filled with random values between ``0`` and ``1``
+        Set a grid with a shape equivalent to the rainfall-runoff initial state filled with random values
+        between ``0`` and ``1``
 
         Get the rainfall-runoff initial state shape
 
@@ -1534,7 +1590,8 @@ class Model:
               dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown below) and change the values but is simpler and ``safer`` to use
+            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown
+            below) and change the values but is simpler and ``safer`` to use
 
         Access the rainfall-runoff initial state keys
 
@@ -1557,9 +1614,9 @@ class Model:
                 0.56, 0.56, 0.56, 0.56, 0.56, 0.56]], dtype=float32)
 
         .. warning::
-            In that case, there's no problem to set the value ``0.56`` to the rainfall-runoff initial state ``'hp'``,
-            but each rainfall-runoff initial state has a feasibility domain, and that outside this domain, the model cannot run.
-            For example, the feasibility domain of ``'hp'`` is :math:`]0, 1[`.
+            In that case, there's no problem to set the value ``0.56`` to the rainfall-runoff initial state
+            ``'hp'``, but each rainfall-runoff initial state has a feasibility domain, and that outside this
+            domain, the model cannot run. For example, the feasibility domain of ``'hp'`` is :math:`]0, 1[`.
 
         Trying to set a value greater than 1 to the rainfall-runoff initial state ``'hp'`` without the setter
 
@@ -1573,12 +1630,15 @@ class Model:
         No particular problem doing this but trying with the setter
 
         >>> model.set_rr_initial_states("hp", 21)
-        ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not included in the feasible domain ]0, 1[
+        ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not
+        included in the feasible domain ]0, 1[
 
-        Finally, trying to run the Model with a value greater than 1 set to the rainfall-runoff initial state ``'hp'`` leads to the same error
+        Finally, trying to run the Model with a value greater than 1 set to the rainfall-runoff initial
+        state ``'hp'`` leads to the same error
 
         >>> model.forward_run()
-        ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not included in the feasible domain ]0, 1[
+        ValueError: Invalid value for model rr_initial_state 'hp'. rr_initial_state domain [21, 21] is not
+        included in the feasible domain ]0, 1[
         """
 
         key, value = _standardize_set_rr_initial_states_args(self, key, value)
@@ -1609,7 +1669,8 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
@@ -1620,7 +1681,8 @@ class Model:
         array([0., 0., 0.], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown below) but is simpler to use.
+            This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown
+            below) but is simpler to use.
 
         Access the structural error mu parameter keys
 
@@ -1657,7 +1719,8 @@ class Model:
 
         value : `float` or `numpy.ndarray`
             The value(s) to set to the structural error mu parameter.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the structural error mu parameter shape.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the structural error mu
+            parameter shape.
 
         See Also
         --------
@@ -1669,7 +1732,8 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
@@ -1704,7 +1768,8 @@ class Model:
         array([1., 2., 3.], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
+            This method is equivalent to directly slicing the ``serr_mu_parameters.values`` array (as shown
+            below) and change the values but is simpler and ``safer`` to use.
 
         Access the structual error mu parameter keys
 
@@ -1724,9 +1789,10 @@ class Model:
         array([[24., 24., 24.]], dtype=float32)
 
         .. warning::
-            In that case, there's no problem to set the value ``24`` to the structural error mu parameter ``'mg0'``,
-            but each structural error mu parameter has a feasibility domain, and that outside this domain, the model cannot run.
-            For example, the feasibility domain of ``'mg0'`` is :math:`]-\inf, +\inf[` so in this case, you should not have any problems.
+            In that case, there's no problem to set the value ``24`` to the structural error mu parameter
+            ``'mg0'``, but each structural error mu parameter has a feasibility domain, and that outside this
+            domain, the model cannot run. For example, the feasibility domain of ``'mg0'`` is
+            :math:`]-\\inf, +\\inf[` so in this case, you should not have any problems.
         """
 
         key, value = _standardize_set_serr_mu_parameters_args(self, key, value)
@@ -1764,7 +1830,8 @@ class Model:
         array([1., 1., 1.], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown below) but is simpler to use.
+            This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown
+            below) but is simpler to use.
 
         Access the structural error sigma parameter keys
 
@@ -1801,7 +1868,8 @@ class Model:
 
         value : `float` or `numpy.ndarray`
             The value(s) to set to the structural error sigma parameter.
-            If the value is a `numpy.ndarray`, its shape must be broadcastable into the structural error sigma parameter shape.
+            If the value is a `numpy.ndarray`, its shape must be broadcastable into the structural error sigma
+            parameter shape.
 
         See Also
         --------
@@ -1843,7 +1911,8 @@ class Model:
         array([1., 2., 3.], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown below) and change the values but is simpler and ``safer`` to use.
+            This method is equivalent to directly slicing the ``serr_sigma_parameters.values`` array (as shown
+            below) and change the values but is simpler and ``safer`` to use.
 
         Access the structual error sigma parameter keys
 
@@ -1863,9 +1932,10 @@ class Model:
         array([[0.5, 0.5, 0.5]], dtype=float32)
 
         .. warning::
-            In that case, there's no problem to set the value ``0.5`` to the structural error sigma parameter ``'sg0'``,
-            but each structural error sigma parameter has a feasibility domain, and that outside this domain, the model cannot run.
-            For example, the feasibility domain of ``'sg0'`` is :math:`]0, +\inf[`.
+            In that case, there's no problem to set the value ``0.5`` to the structural error sigma parameter
+            ``'sg0'``,
+            but each structural error sigma parameter has a feasibility domain, and that outside this domain,
+            the model cannot run. For example, the feasibility domain of ``'sg0'`` is :math:`]0, +\\inf[`.
 
         Trying to set a negative value to the strutural error sigma parameter ``'sg0'`` without the setter
 
@@ -1876,12 +1946,15 @@ class Model:
         No particular problem doing this but trying with the setter
 
         >>> model.set_serr_sigma_parameters("sg0", -1)
-        ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1] is not included in the feasible domain ]0, inf[
+        ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1]
+        is not included in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the structural error mu parameter ``'sg0'`` leads to the same error
+        Finally, trying to run the Model with a negative value set to the structural error mu parameter
+        ``'sg0'`` leads to the same error
 
         >>> model.forward_run()
-        ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1] is not included in the feasible domain ]0, inf[
+        ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1]
+        is not included in the feasible domain ]0, inf[
         """
 
         key, value = _standardize_set_serr_sigma_parameters_args(self, key, value)
@@ -1927,7 +2000,8 @@ class Model:
                 0.01      , 0.01      , 0.01      ]], dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_final_states.values`` array (as shown below) but is simpler to use.
+            This method is equivalent to directly slicing the ``rr_final_states.values`` array (as shown
+            below) but is simpler to use.
 
         Access the rainfall-runoff state keys
 
@@ -1976,7 +2050,8 @@ class Model:
 
         .. note::
             This method allows you to find out the default bounds for the rainfall-runoff parameters.
-            These bounds are used during optimization if they are not modified in the optimization method argument.
+            These bounds are used during optimization if they are not modified in the optimization method
+            argument.
         """
 
         return {
@@ -2006,7 +2081,8 @@ class Model:
 
         .. note::
             This method allows you to find out the default bounds for the rainfall-runoff inital states.
-            These bounds are used during optimization if they are not modified in the optimization method argument.
+            These bounds are used during optimization if they are not modified in the optimization method
+            argument.
         """
 
         return {
@@ -2029,7 +2105,8 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping).
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
@@ -2039,7 +2116,8 @@ class Model:
 
         .. note::
             This method allows you to find out the default bounds for the structural error mu parameters.
-            These bounds are used during optimization if they are not modified in the optimization method argument.
+            These bounds are used during optimization if they are not modified in the optimization method
+            argument.
         """
 
         return {
@@ -2068,7 +2146,8 @@ class Model:
 
         .. note::
             This method allows you to find out the default bounds for the structural error sigma parameters.
-            These bounds are used during optimization if they are not modified in the optimization method argument.
+            These bounds are used during optimization if they are not modified in the optimization method
+            argument.
         """
 
         return {
@@ -2087,24 +2166,27 @@ class Model:
         Returns
         -------
         value : `numpy.ndarray`
-            An array of shape *(ng, ntime_step)* representing the values of the structural error mu for each gauge and each timestep.
+            An array of shape *(ng, ntime_step)* representing the values of the structural error mu for each
+            gauge and each timestep.
 
         Examples
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
 
         >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
 
         The structural error mu mapping is set to ``'Linear'``.
-        Therefore, the mapping of mu parameters to mu is: :math:`\mu(g,t)=\mu_0(g)+\mu_1(g)q(g,t)` with:
+        Therefore, the mapping of mu parameters to mu is: :math:`\\mu(g,t)=\\mu_0(g)+\\mu_1(g)q(g,t)` with:
 
-        - :math:`\mu`, the mean of structural errors,
+        - :math:`\\mu`, the mean of structural errors,
 
-        - :math:`\mu_0` and :math:`\mu_1`, the structural error mu parameters with respect to ``'Linear'`` mapping,
+        - :math:`\\mu_0` and :math:`\\mu_1`, the structural error mu parameters with respect to
+          ``'Linear'`` mapping,
 
         - :math:`q`, the model response (i.e. the discharge),
 
@@ -2140,9 +2222,7 @@ class Model:
         True
         """
 
-        serr_mu = np.zeros(
-            shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
-        )
+        serr_mu = np.zeros(shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32)
         wrap_get_serr_mu(self.setup, self.mesh, self._parameters, self._output, serr_mu)
         return serr_mu
 
@@ -2156,7 +2236,8 @@ class Model:
         Returns
         -------
         value : `numpy.ndarray`
-            An array of shape *(ng, ntime_step)* representing the values of the structural error sigma for each gauge and each timestep.
+            An array of shape *(ng, ntime_step)* representing the values of the structural error sigma for
+            each gauge and each timestep.
 
         Examples
         --------
@@ -2169,11 +2250,13 @@ class Model:
         >>> model.setup.serr_sigma_mapping
         'Linear'
 
-        Therefore, the mapping of sigma parameters to sigma is: :math:`\sigma(g,t)=\sigma_0(g)+\sigma_1(g)q(g,t)` with:
+        Therefore, the mapping of sigma parameters to sigma is:
+        :math:`\\sigma(g,t)=\\sigma_0(g)+\\sigma_1(g)q(g,t)` with:
 
-        - :math:`\sigma`, the standard deviation of structural errors,
+        - :math:`\\sigma`, the standard deviation of structural errors,
 
-        - :math:`\sigma_0` and :math:`\sigma_1`, the structural error sigma parameters with respect to ``'Linear'`` mapping,
+        - :math:`\\sigma_0` and :math:`\\sigma_1`, the structural error sigma parameters with respect to
+          ``'Linear'`` mapping,
 
         - :math:`q`, the model response (i.e. the discharge),
 
@@ -2203,12 +2286,8 @@ class Model:
         >>> np.allclose(sigma, sigma2)
         True
         """
-        serr_sigma = np.zeros(
-            shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32
-        )
-        wrap_get_serr_sigma(
-            self.setup, self.mesh, self._parameters, self._output, serr_sigma
-        )
+        serr_sigma = np.zeros(shape=(self.mesh.ng, self.setup.ntime_step), order="F", dtype=np.float32)
+        wrap_get_serr_sigma(self.setup, self.mesh, self._parameters, self._output, serr_sigma)
         return serr_sigma
 
     @_model_forward_run_doc_substitution
@@ -2219,9 +2298,7 @@ class Model:
         common_options: dict[str, Any] | None = None,
         return_options: dict[str, Any] | None = None,
     ) -> ForwardRun | None:
-        args_options = [
-            deepcopy(arg) for arg in [cost_options, common_options, return_options]
-        ]
+        args_options = [deepcopy(arg) for arg in [cost_options, common_options, return_options]]
 
         args = _standardize_forward_run_args(self, *args_options)
 
@@ -2239,8 +2316,7 @@ class Model:
         return_options: dict[str, Any] | None = None,
     ) -> Optimize | None:
         args_options = [
-            deepcopy(arg)
-            for arg in [optimize_options, cost_options, common_options, return_options]
+            deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
         ]
 
         args = _standardize_optimize_args(
@@ -2279,8 +2355,7 @@ class Model:
         return_options: dict[str, Any] | None = None,
     ) -> BayesianOptimize | None:
         args_options = [
-            deepcopy(arg)
-            for arg in [optimize_options, cost_options, common_options, return_options]
+            deepcopy(arg) for arg in [optimize_options, cost_options, common_options, return_options]
         ]
 
         args = _standardize_bayesian_optimize_args(

@@ -1,26 +1,22 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
 import numpy as np
 from osgeo import osr
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from osgeo import gdal
 
 
-def _xy_to_rowcol(
-    x: float, y: float, xmin: float, ymax: float, xres: float, yres: float
-) -> tuple:
+def _xy_to_rowcol(x: float, y: float, xmin: float, ymax: float, xres: float, yres: float) -> tuple:
     row = int((ymax - y) / yres)
     col = int((x - xmin) / xres)
 
     return row, col
 
 
-def _rowcol_to_xy(
-    row: int, col: int, xmin: float, ymax: float, xres: float, yres: float
-) -> tuple:
+def _rowcol_to_xy(row: int, col: int, xmin: float, ymax: float, xres: float, yres: float) -> tuple:
     x = int(col * xres + xmin)
     y = int(ymax - row * yres)
 
@@ -48,7 +44,7 @@ def _get_catchment_slice_window(
 
 def _trim_mask_2d(
     array: np.ndarray, slice_win: bool = False
-) -> (np.ndarray | np.ndarray, tuple[slice, slice]):
+) -> np.ndarray | tuple[np.ndarray, tuple[slice, slice]]:
     for ax in [0, 1]:
         mask = ~(array.mask).all(axis=ax)
 
@@ -73,9 +69,7 @@ def _trim_mask_2d(
         return array
 
 
-def _get_array(
-    flwdir_dataset: gdal.Dataset, bbox: np.ndarray | None = None
-) -> np.ndarray:
+def _get_array(flwdir_dataset: gdal.Dataset, bbox: np.ndarray | None = None) -> np.ndarray:
     if bbox is not None:
         xmin, _, xres, _, ymax, yres = _get_transform(flwdir_dataset)
 
@@ -84,9 +78,7 @@ def _get_array(
         ncol = int((bbox[1] - bbox[0]) / xres)
         nrow = int((bbox[3] - bbox[2]) / yres)
 
-        flwdir = flwdir_dataset.GetRasterBand(1).ReadAsArray(
-            col_off, row_off, ncol, nrow
-        )
+        flwdir = flwdir_dataset.GetRasterBand(1).ReadAsArray(col_off, row_off, ncol, nrow)
 
     else:
         flwdir = flwdir_dataset.GetRasterBand(1).ReadAsArray()
@@ -124,7 +116,8 @@ def _get_srs(flwdir_dataset: gdal.Dataset, epsg: int) -> osr.SpatialReference:
 
         else:
             raise ValueError(
-                "Flow direction file does not contain spatial reference information. Can be specified with the 'epsg' argument"
+                "Flow direction file does not contain spatial reference information. Can be specified with "
+                "the 'epsg' argument"
             )
 
     return srs

@@ -1,11 +1,9 @@
 from __future__ import annotations
 
-import smash
-
-from smash._constant import PROBLEM_KEYS
-
 import numpy as np
 import pytest
+
+import smash
 
 
 def generic_generate_samples(model: smash.Model, **kwargs) -> dict:
@@ -15,9 +13,7 @@ def generic_generate_samples(model: smash.Model, **kwargs) -> dict:
     bounds = [(0, 77), (-940, 832), (23, 543), (-4, 681)]
     problem = {"num_vars": num_vars, "names": names, "bounds": bounds}
 
-    sample = smash.factory.generate_samples(
-        problem, generator="uniform", n=20, random_state=11
-    )
+    sample = smash.factory.generate_samples(problem, generator="uniform", n=20, random_state=11)
     uni = sample.to_numpy(axis=-1)
 
     sample = smash.factory.generate_samples(
