@@ -70,8 +70,8 @@ smash documentation
         Math / Num Documentation
         ^^^^^^^^^^^^^^^^^^^^^^^^
 
-        The mathematical and numerical documentation contains a detailed description of
-        the *smash* model operators.
+        This documentation contains a detailed description of the *smash* model operators and associated
+        mathematical and numerical tools.
 
         +++
 

@@ -178,7 +178,7 @@ returns a `smash.ForwardRun` object storing these variables.
     fwd_run.q_domain.shape
 
 The returned object `smash.ForwardRun` contains two variables ``q_domain`` and ``time_step``. With ``q_domain`` a `numpy.ndarray` of shape 
-*(nrow, ncol, ntime_step)* storting the simulated discharge and ``time_step`` a `pandas.DatetimeIndex` storing the saved time steps.
+*(nrow, ncol, ntime_step)* storing the simulated discharge and ``time_step`` a `pandas.DatetimeIndex` storing the saved time steps.
 We can view the simulated discharge for one time step, for example the last one.
 
 .. ipython:: python
