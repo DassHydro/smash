@@ -74,8 +74,8 @@ class MultipleOptimize:
 
     See Also
     --------
-    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e.
-    starting points), yielding multiple solutions.
+    multiple_optimize : Run multiple optimization processes with multiple sets of parameters (i.e. starting
+        points), yielding multiple solutions.
     """
 
     def __init__(self, data: dict[str, NDArray[np.float32]] | None = None):
