@@ -381,7 +381,6 @@ contains
             case ("gr6")
 
                 call gr6_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, ce, kexc, aexc, hi, hp, ht, he, qt(:, :, zq))
-!~                 print *, max(qt(:, :, zq))
                 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)

@@ -287,7 +287,6 @@ contains
 
                 end if
                 
-                
                 prr = 0.6_sp * 0.9_sp * (pr + perc) + l
                 pre = 0.4_sp * 0.9_sp * (pr + perc) + l
                 prd = 0.1_sp * (pr + perc) 
@@ -297,32 +296,13 @@ contains
                 he_star = max(1.e-6_sp, he(row, col) + pre / ce(row, col))
                 AR = he_star / ce(row, col)
                 qre = he(row, col) * ce(row, col) - log(1. + exp(AR)) * ce(row, col)
-                
-                
                 qre = max(0._sp, qre)
                 he(row, col) = he_star - qre / ce(row, col)
-            
-                            
-!~             ! Update of exponential store
-!~                   St(3)=St(3)+C*StUH1(1)+EXCH
-!~                   AR=St(3)/Param(6)
-!~                   IF(AR.GT.33.)  AR=33.
-!~                   IF(AR.LT.-33.) AR=-33.
-
-!~                   IF(AR.GT.7.) THEN
-!~                     QRExp=St(3)+Param(6)/EXP(AR)
-!~                   ELSEIF(AR.LT.-7.) THEN
-!~                     QRExp=Param(6)*EXP(AR)
-!~                   ELSE
-!~                     QRExp=Param(6)*LOG(EXP(AR)+1.)
-!~                   ENDIF
-
-!~                   St(3)=St(3)-QRExp
                 
                 qd = max(0._sp, prd + l)
-                                
+                
                 qt(row, col) = qr + qd + qre
-
+    
                 ! Transform from mm/dt to m3/s
                 qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 

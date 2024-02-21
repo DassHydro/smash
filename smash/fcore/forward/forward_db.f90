@@ -17294,7 +17294,6 @@ CONTAINS
 &                     , ci_d, cp, cp_d, ct, ct_d, ce, ce_d, kexc, kexc_d&
 &                     , aexc, aexc_d, hi, hi_d, hp, hp_d, ht, ht_d, he, &
 &                     he_d, qt(:, :, zq), qt_d(:, :, zq))
-!~                 print *, max(qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
@@ -17828,7 +17827,6 @@ CONTAINS
         END IF
         CALL GR6_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   ce, kexc, aexc, hi, hp, ht, he, qt(:, :, zq))
-!~                 print *, max(qt(:, :, zq))
         CALL PUSHCONTROL3B(3)
       CASE ('grd') 
 ! 'grd' module
@@ -18651,7 +18649,6 @@ CONTAINS
 ! 'gr6' module
         CALL GR6_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   ce, kexc, aexc, hi, hp, ht, he, qt(:, :, zq))
-!~                 print *, max(qt(:, :, zq))
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)

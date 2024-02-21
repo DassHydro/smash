@@ -26,3 +26,4 @@ Others
     :maxdepth: 1
 
     others/input_data_convention.rst
+    others/gr6.rst
