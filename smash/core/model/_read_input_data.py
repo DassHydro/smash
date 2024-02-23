@@ -143,18 +143,21 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
             # % Check if observed discharge file contains data for corresponding simulation period
             if start_time > file_end_time or end_time < file_start_time:
-                raise ValueError(
+                warnings.warn(
                     f"The provided observed discharge file for catchment '{c}' does not contain data for the "
                     f"selected simulation period ['{start_time}', '{end_time}']. The file covers the period "
-                    f"['{file_start_time}', '{file_end_time}']"
+                    f"['{file_start_time}', '{file_end_time}']",
+                    stacklevel=2,
                 )
+            else:
+                ind_start_dat = max(0, start_diff)
+                ind_end_dat = min(dat.index.max(), end_diff)
+                ind_start_arr = max(0, -start_diff)
+                ind_end_arr = ind_start_arr + ind_end_dat - ind_start_dat
 
-            ind_start_dat = max(0, start_diff)
-            ind_end_dat = min(dat.index.max(), end_diff)
-            ind_start_arr = max(0, -start_diff)
-            ind_end_arr = ind_start_arr + ind_end_dat - ind_start_dat
-
-            input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[ind_start_dat:ind_end_dat, 0]
+                input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
+                    ind_start_dat:ind_end_dat, 0
+                ]
         else:
             miss.append(c)
 
