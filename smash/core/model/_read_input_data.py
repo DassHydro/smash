@@ -61,6 +61,8 @@ def _find_index_files_containing_date(
     return ind
 
 
+# FIXME UnboundLocalError: cannot access local variable 'ind' where it is not associated with a value. It
+# happens when there is no files associated to the date range is access method is defined.
 def _get_atmos_files(
     dir: str,
     fmt: str,

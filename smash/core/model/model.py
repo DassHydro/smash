@@ -177,6 +177,9 @@ class Model:
             This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and
             for a sub-daily simulation time step **dt**.
 
+        compute_mean_atmos : `bool`, default True
+            Whether or not to compute mean atmospheric data for each gauge.
+
         read_qobs : `bool`, default False
             Whether or not to read observed discharge file(s).
 
@@ -395,7 +398,7 @@ class Model:
         rr_parameters: ['keys', 'values']
         serr_mu_parameters: ['keys', 'values']
         serr_sigma_parameters: ['keys', 'values']
-        setup: ['adjust_interception', 'daily_interannual_pet', '...', 'temp_access', 'temp_directory']
+        setup: ['adjust_interception', 'compute_mean_atmos', '...', 'temp_access', 'temp_directory']
         u_response_data: ['q_stdev']
     """
 
@@ -487,7 +490,7 @@ class Model:
         >>> model.setup
         SetupDT
             adjust_interception: 1
-            daily_interannual_pet: 1
+            compute_mean_atmos: 1
             ...
             temp_directory: '...'
             temp_format: 'tif'
@@ -500,7 +503,8 @@ class Model:
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
         >>> model.setup.<TAB>
-        model.setup.adjust_interception     model.setup.prcp_partitioning
+        model.setup.adjust_interception     model.setup.prcp_format
+        model.setup.compute_mean_atmos      model.setup.prcp_partitioning
         model.setup.copy()                  model.setup.qobs_directory
         model.setup.daily_interannual_pet   model.setup.read_descriptor
         model.setup.descriptor_directory    model.setup.read_pet
@@ -523,7 +527,6 @@ class Model:
         model.setup.prcp_access             model.setup.temp_access
         model.setup.prcp_conversion_factor  model.setup.temp_directory
         model.setup.prcp_directory          model.setup.temp_format
-        model.setup.prcp_format
         """
 
         return self._setup
@@ -580,7 +583,7 @@ class Model:
         model.mesh.cpar_to_rowcol        model.mesh.ng
         model.mesh.cscpar                model.mesh.npar
         model.mesh.dx                    model.mesh.nrow
-        model.mesh.dy                    model.mesh.rowcol_to_ind_sparse
+        model.mesh.dy                    model.mesh.rowcol_to_ind_ac
         model.mesh.flwacc                model.mesh.xmin
         model.mesh.flwdir                model.mesh.xres
         model.mesh.flwdst                model.mesh.ymax
