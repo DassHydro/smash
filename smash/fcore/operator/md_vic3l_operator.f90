@@ -103,7 +103,7 @@ contains
         husl = husl + ifl_usl/cusl
         hmsl = hmsl + ifl_msl/cmsl
 
-        qr = pn - (ifl_usl - ifl_msl)
+        qr = pn - (ifl_usl + ifl_msl)
 
     end subroutine vic3l_infiltration
 

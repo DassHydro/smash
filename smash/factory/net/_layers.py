@@ -1,9 +1,10 @@
 from __future__ import annotations
 
-from smash._constant import WB_INITIALIZER
+import copy
 
 import numpy as np
-import copy
+
+from smash._constant import WB_INITIALIZER
 
 
 class Layer(object):
@@ -27,7 +28,6 @@ class Layer(object):
 
 
 class Activation(Layer):
-
     """
     Activation layer that applies a specified activation function to the input.
 
@@ -69,7 +69,6 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-
     """
     Scale layer that applies the min-max scaling function to the outputs.
 
@@ -148,7 +147,6 @@ def _set_initialized_wb_to_layer(layer: Layer, kind: str):
 
 
 class Dense(Layer):
-
     """
     Fully-connected (dense) layer.
 
@@ -162,10 +160,12 @@ class Dense(Layer):
         It must be specified if this is the first layer in the network.
 
     kernel_initializer : str, default 'glorot_uniform'
-        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal', 'glorot_normal', 'he_normal', 'zeros'.
+        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
+        'glorot_normal', 'he_normal', 'zeros'.
 
     bias_initializer : str, default 'zeros'
-        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal', 'glorot_normal', 'he_normal', 'zeros'.
+        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
+        'glorot_normal', 'he_normal', 'zeros'.
     """
 
     # TODO: Add function check_unknown_options
@@ -199,11 +199,10 @@ class Dense(Layer):
         self.bias_initializer = bias_initializer.lower()
 
         if self.bias_initializer not in WB_INITIALIZER:
-            raise ValueError(
-                f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}"
-            )
+            raise ValueError(f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}")
 
-    def _initialize(self, optimizer: function):
+    # TODO TYPE HINT: replace function by Callable
+    def _initialize(self, optimizer: function):  # noqa: F821
         # Initialize weights and biases
         _set_initialized_wb_to_layer(self, "weight")
         _set_initialized_wb_to_layer(self, "bias")
@@ -243,7 +242,6 @@ class Dense(Layer):
 
 
 class Dropout(Layer):
-
     """
     Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
 

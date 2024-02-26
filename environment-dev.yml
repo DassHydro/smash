@@ -37,5 +37,5 @@ dependencies:
     - pytest-cov
 
     # format
-    - black
+    - ruff
     - fprettify

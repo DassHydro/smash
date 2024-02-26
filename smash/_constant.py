@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import numpy as np
 import itertools
+
+import numpy as np
 
 ### FUNCTIONS TO GENERATE CONSTANTS ###
 #######################################
@@ -16,10 +17,7 @@ def get_structure() -> list[str]:
 
 def get_rr_parameters_from_structure(structure: str) -> list[str]:
     rr_parameters = []
-    [
-        rr_parameters.extend(MODULE_RR_PARAMETERS[module])
-        for module in structure.split("-")
-    ]
+    [rr_parameters.extend(MODULE_RR_PARAMETERS[module]) for module in structure.split("-")]
 
     return rr_parameters
 
@@ -125,9 +123,7 @@ ROUTING_MODULE_RR_STATES = dict(
 )
 
 # % Following MODULE order
-MODULE_RR_STATES = dict(
-    **SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES
-)
+MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
 ### STRUCTURE ###
 #################
@@ -735,9 +731,7 @@ DEFAULT_TERMINATION_CRIT = dict(
             [{"maxiter": 50}, {"maxiter": 100, "factr": 1e6, "pgtol": 1e-12}],
         )
     ),
-    **dict(
-        zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])
-    ),
+    **dict(zip(PY_OPTIMIZER, len(PY_OPTIMIZER) * [{"epochs": 200, "early_stopping": 0}])),
 )
 
 CONTROL_PRIOR_DISTRIBUTION = [
@@ -812,10 +806,10 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "jobs_cmpt": "nse",
         "wjobs_cmpt": "mean",
         "jobs_cmpt_tfm": "keep",
+        "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
-        "end_warmup": None,
     },
     "optimize": {
         "jobs_cmpt": "nse",
@@ -824,15 +818,15 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "wjreg": 0,
         "jreg_cmpt": "prior",
         "wjreg_cmpt": "mean",
+        "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
-        "end_warmup": None,
     },
     "bayesian_optimize": {
+        "end_warmup": None,
         "gauge": "dws",
         "control_prior": None,
-        "end_warmup": None,
     },
 }
 

@@ -1,17 +1,18 @@
 from __future__ import annotations
 
-from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
-from smash.io._error import ReadHDF5MethodError
-
-import os
 import errno
-import h5py
-
+import os
 from typing import TYPE_CHECKING
 
+import h5py
+
+from smash.io._error import ReadHDF5MethodError
+from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
+
 if TYPE_CHECKING:
-    from smash.util._typing import FilePath
     from typing import Any
+
+    from smash.util._typing import FilePath
 
 
 __all__ = ["save_mesh", "read_mesh"]
@@ -27,7 +28,8 @@ def save_mesh(mesh: dict[str, Any], path: FilePath):
         The mesh dictionary to be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file.
 
     path : `str`
-        The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
+        The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file
+        path.
 
     See Also
     --------
@@ -39,7 +41,7 @@ def save_mesh(mesh: dict[str, Any], path: FilePath):
     >>> from smash.io import save_mesh, read_mesh
     >>> setup, mesh = load_dataset("cance")
     >>> mesh
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh to HDF5
 
@@ -85,7 +87,7 @@ def read_mesh(path: FilePath) -> dict[str, Any]:
     >>> from smash.io import save_mesh, read_mesh
     >>> setup, mesh = load_dataset("cance")
     >>> mesh
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
 
     Save mesh to HDF5
 
@@ -95,7 +97,7 @@ def read_mesh(path: FilePath) -> dict[str, Any]:
 
     >>> mesh_rld = read_mesh("mesh.hdf5")
     >>> mesh_rld
-    {'dx': 1000.0, 'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28, ...}
+    {'nac': 383, 'ncol': 28, 'ng': 3, 'nrow': 28 ...}
     """
 
     if not os.path.isfile(path):
@@ -107,7 +109,8 @@ def read_mesh(path: FilePath) -> dict[str, Any]:
 
         else:
             raise ReadHDF5MethodError(
-                f"Unable to read '{path}' with 'read_mesh' method. The file may not have been created with 'save_mesh' method."
+                f"Unable to read '{path}' with 'read_mesh' method. The file may not have been created with "
+                f"'save_mesh' method."
             )
 
     return mesh

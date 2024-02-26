@@ -1,24 +1,23 @@
 from __future__ import annotations
 
-from smash.core.simulation._doc import (
-    _optimize_control_info_doc_appender,
-    _smash_optimize_control_info_doc_substitution,
-    _bayesian_optimize_control_info_doc_appender,
-    _smash_bayesian_optimize_control_info_doc_substitution,
-)
+from copy import deepcopy
+from typing import TYPE_CHECKING
 
+from smash.core.simulation._doc import (
+    _bayesian_optimize_control_info_doc_appender,
+    _optimize_control_info_doc_appender,
+    _smash_bayesian_optimize_control_info_doc_substitution,
+    _smash_optimize_control_info_doc_substitution,
+)
 from smash.core.simulation.optimize._standardize import (
-    _standardize_optimize_args,
     _standardize_bayesian_optimize_args,
+    _standardize_optimize_args,
 )
 from smash.core.simulation.optimize.optimize import _get_control_info
 
-from copy import deepcopy
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from typing import Any
+
     from smash.core.model.model import Model
 
 __all__ = ["optimize_control_info", "bayesian_optimize_control_info"]

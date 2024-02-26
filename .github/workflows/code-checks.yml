@@ -1,5 +1,5 @@
-# This workflow will compare tapenade file.
-name: Tapenade Comparison
+# This workflow will check code (tapenade compare and ruff check)
+name: Code Checks
 
 on:
 
@@ -25,11 +25,26 @@ jobs:
 
         steps:
         - uses: actions/checkout@v3
+
+        - name: Set up Python
+          uses: actions/setup-python@v4
+          with:
+            python-version: "3.11"
+
         - name: Install dependencies
           run: |
             sudo apt-get update -y
             sudo apt-get install build-essential make openjdk-11-jre-headless
+            python -m venv test
+            . test/bin/activate
+            python -m pip install --upgrade pip
+            pip install ruff
 
-        - name: Compare
+        - name: Tapenade Compare
           run: |
             make tap-cmp
+
+        - name: Ruff Check
+          run: |
+            . test/bin/activate
+            make check

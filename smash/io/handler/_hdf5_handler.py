@@ -1,18 +1,19 @@
 from __future__ import annotations
 
-from smash.fcore._mwd_sparse_matrix import Sparse_MatrixDT
+from typing import TYPE_CHECKING
 from smash.fcore._mwd_nn_parameters import NN_Parameters_LayerDT
 
-import numpy as np
 import h5py
-from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
+import numpy as np
 
-from typing import TYPE_CHECKING
+from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
+from smash.fcore._mwd_sparse_matrix import Sparse_MatrixDT
 
 if TYPE_CHECKING:
     from typing import Any
-    from smash.util._typing import AlphaNumeric
+
     from smash.core.model.model import Model
+    from smash.util._typing import AlphaNumeric
 
 
 def _dump_alphanumeric(name: str, value: AlphaNumeric, h5: h5py.File | h5py.Group):
@@ -62,7 +63,7 @@ def _dump_object(name: str, obj: object, h5: h5py.File | h5py.Group):
             continue
         try:
             value = getattr(obj, attr)
-        except:
+        except Exception:
             continue
 
         if callable(value):
@@ -95,22 +96,18 @@ def _dump_model(name: str, model: Model, h5: h5py.File | h5py.Group):
 
 
 # % Same as object atm
-def _dump_fortran_derived_type(
-    name: str, fdt: FortranDerivedType, h5: h5py.File | h5py.Group
-):
+def _dump_fortran_derived_type(name: str, fdt: FortranDerivedType, h5: h5py.File | h5py.Group):
     _dump_object(name, fdt, h5)
 
 
 # % Handle by hand each derived type array (maybe there is a way to be generic ...)
-def _dump_fortran_derived_type_array(
-    name: str, fdta: FortranDerivedTypeArray, h5: h5py.File | h5py.Group
-):
+def _dump_fortran_derived_type_array(name: str, fdta: FortranDerivedTypeArray, h5: h5py.File | h5py.Group):
     if len(fdta) == 0:
         return
 
     # % Sparse_MatrixDT case
     if isinstance(fdta[0], Sparse_MatrixDT):
-        nc = np.amax([getattr(fdt, "values").shape for fdt in fdta.items()])
+        nc = np.amax([fdt.values.shape for fdt in fdta.items()])
         ntime_step = len(fdta)
         attr_arr = {
             "n": np.zeros(shape=ntime_step, dtype=np.int32),
@@ -128,7 +125,7 @@ def _dump_fortran_derived_type_array(
                 try:
                     n = attr_arr["n"][i]
                     attr_arr[attr][0:n, i] = getattr(fdt, attr)
-                except:
+                except Exception:
                     pass
 
         _dump_dict(name, attr_arr, h5)
@@ -170,9 +167,7 @@ def _load_hdf5_to_dict(h5: h5py.File | h5py.Group) -> dict[str, Any]:
     return dct
 
 
-def _map_hdf5_to_fortran_derived_type(
-    h5: h5py.File | h5py.Group, fdt: FortranDerivedType
-):
+def _map_hdf5_to_fortran_derived_type(h5: h5py.File | h5py.Group, fdt: FortranDerivedType):
     for key, value in h5.items():
         if isinstance(value, h5py.Group):
             sub_fdt = getattr(fdt, key)
@@ -193,9 +188,7 @@ def _map_hdf5_to_fortran_derived_type(
 
 
 # % Must handle each case of derived type array by hand
-def _map_hdf5_to_fortran_derived_type_array(
-    h5: h5py.File | h5py.Group, fdta: FortranDerivedTypeArray
-):
+def _map_hdf5_to_fortran_derived_type_array(h5: h5py.File | h5py.Group, fdta: FortranDerivedTypeArray):
     if len(fdta) == 0:
         return
 
@@ -209,9 +202,9 @@ def _map_hdf5_to_fortran_derived_type_array(
             )
             for attr in ["indices", "values"]:
                 try:
-                    n = getattr(fdt, "n")
+                    n = fdt.n
                     setattr(fdt, attr, h5[attr][0:n, i])
-                except:
+                except Exception:
                     pass
 
     # % NN_Parameters_LayerDT case

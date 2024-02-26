@@ -1,14 +1,13 @@
 from __future__ import annotations
 
-from smash._constant import PRECIPITATION_INDICES
-
-from smash.fcore._mw_prcp_indices import (
-    precipitation_indices_computation as wrap_precipitation_indices_computation,
-)
+from typing import TYPE_CHECKING
 
 import numpy as np
 
-from typing import TYPE_CHECKING
+from smash._constant import PRECIPITATION_INDICES
+from smash.fcore._mw_prcp_indices import (
+    precipitation_indices_computation as wrap_precipitation_indices_computation,
+)
 
 if TYPE_CHECKING:
     from smash.core.model.model import Model
@@ -17,7 +16,6 @@ __all__ = ["PrecipitationIndices", "precipitation_indices"]
 
 
 class PrecipitationIndices:
-
     """
     Represents precipitation indices computation result.
 
@@ -51,11 +49,7 @@ class PrecipitationIndices:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -64,8 +58,9 @@ class PrecipitationIndices:
         """
         Convert the `PrecipitationIndices` object to a `numpy.ndarray`.
 
-        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical order
-        based on the names of the precipitation indices (``'d1'``, ``'d2'``, ``'hg'``, ``'std'``, ``'vg'``).
+        The attribute arrays are stacked along a user-specified axis of the resulting array in alphabetical
+        order based on the names of the precipitation indices (``'d1'``, ``'d2'``, ``'hg'``, ``'std'``,
+        ``'vg'``).
 
         Parameters
         ----------
@@ -123,6 +118,7 @@ class PrecipitationIndices:
 def precipitation_indices(
     model: Model,
 ) -> PrecipitationIndices:
+    # % TODO FC: Add advanced user guide
     """
     Compute precipitation indices of Model.
 
@@ -133,9 +129,6 @@ def precipitation_indices(
     - ``'d2'`` : the second scaled moment, :cite:p:`zocatelli_2011`
     - ``'vg'`` : the vertical gap :cite:p:`emmanuel_2015`
     - ``'hg'`` : the horizontal gap :cite:p:`emmanuel_2015`
-
-    .. hint::
-        See a detailed explanation on the precipitation indices usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
@@ -167,7 +160,8 @@ def precipitation_indices(
     std: <class 'numpy.ndarray'>
     vg: <class 'numpy.ndarray'>
 
-    Each attribute is a `numpy.ndarray` of shape *(ng, ntime_step)* (i.e. number of gauges, number of time steps)
+    Each attribute is a `numpy.ndarray` of shape *(ng, ntime_step)* (i.e. number of gauges, number of
+    time steps)
 
     Access a specific precipitation indice
 
@@ -218,9 +212,7 @@ def precipitation_indices(
     )
 
     # % Call Fortran wrapped subroutine
-    wrap_precipitation_indices_computation(
-        model.setup, model.mesh, model._input_data, prcp_indices
-    )
+    wrap_precipitation_indices_computation(model.setup, model.mesh, model._input_data, prcp_indices)
 
     # % Process results by converting negative values to NaN
     prcp_indices = np.where(prcp_indices < 0, np.nan, prcp_indices)

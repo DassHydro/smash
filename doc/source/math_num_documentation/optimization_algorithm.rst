@@ -1,12 +1,8 @@
-.. _math_num_documentation.inverse.algorithms:
+.. _math_num_documentation.optimization_algorithm:
 
-=======================
-Optimization algorithms
-=======================
-
-.. warning::
-
-    Section in development
+======================
+Optimization Algorithm
+======================
 
 Here's a list of the optimization algorithms used in `smash`:
 

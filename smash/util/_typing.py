@@ -1,11 +1,14 @@
 from __future__ import annotations
 
-import numpy as np
-from os import PathLike
+from typing import TYPE_CHECKING, Any, Tuple, Union
 
-from typing import Union, Tuple, Any
+import numpy as np
 from numpy.typing import NDArray
 
+if TYPE_CHECKING:
+    from os import PathLike
+
+# TODO TYPE HINT: ENH smash typing
 
 Numeric = Union[float, int, np.number]
 

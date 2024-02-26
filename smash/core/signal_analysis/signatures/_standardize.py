@@ -1,14 +1,15 @@
 from __future__ import annotations
 
-from smash._constant import SIGNS, CSIGN, ESIGN, DOMAIN, EVENT_SEG_KEYS
-
-from smash.core.signal_analysis.segmentation._standardize import (
-    _standardize_hydrograph_segmentation_peak_quant,
-    _standardize_hydrograph_segmentation_max_duration,
-    _standardize_hydrograph_segmentation_by,
-)
-
 from typing import TYPE_CHECKING
+
+from smash._constant import CSIGN, DOMAIN, ESIGN, EVENT_SEG_KEYS, SIGNS
+
+# Used inside eval statement
+from smash.core.signal_analysis.segmentation._standardize import (  # noqa: F401
+    _standardize_hydrograph_segmentation_by,
+    _standardize_hydrograph_segmentation_max_duration,
+    _standardize_hydrograph_segmentation_peak_quant,
+)
 
 if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, ListLike
@@ -38,7 +39,7 @@ def _standardize_signatures_sign(
             s_standardized = s.lower().capitalize()
 
             if s_standardized not in SIGNS:
-                warnings.warn(f"Unknown signature {s}. Choices: {SIGNS}")
+                warnings.warn(f"Unknown signature {s}. Choices: {SIGNS}", stacklevel=2)
 
             else:
                 sign_standardized.append(s_standardized)
@@ -46,7 +47,7 @@ def _standardize_signatures_sign(
         sign = sign_standardized
 
     else:
-        raise TypeError(f"sign argument must be a str, a list of str or None")
+        raise TypeError("sign argument must be a str, a list of str or None")
 
     cs = [s for s in sign if s in CSIGN]
 
@@ -65,7 +66,7 @@ def _standardize_signatures_domain(domain: str) -> str:
         else:
             raise ValueError(f"Unknown domain argument {domain}. Choices: {DOMAIN}")
     else:
-        raise TypeError(f"domain argument must be str")
+        raise TypeError("domain argument must be str")
 
     return domain_standardized
 
@@ -81,12 +82,10 @@ def _standardize_signatures_event_seg(event_seg: dict | None) -> dict:
                     func = eval(f"_standardize_hydrograph_segmentation_{key}")
                     event_seg[key] = func(value)
                 else:
-                    raise ValueError(
-                        f"Unknown key '{key}' in event_seg. Choices: {EVENT_SEG_KEYS}"
-                    )
+                    raise ValueError(f"Unknown key '{key}' in event_seg. Choices: {EVENT_SEG_KEYS}")
 
         else:
-            raise TypeError(f"event_seg argument must be a dictionary")
+            raise TypeError("event_seg argument must be a dictionary")
 
     return event_seg
 

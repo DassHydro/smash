@@ -1,11 +1,12 @@
 from __future__ import annotations
 
-import smash
-from smash._constant import MAPPING
+import os
 
 import numpy as np
 import pytest
-import os
+
+import smash
+from smash._constant import MAPPING
 
 
 def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
@@ -22,9 +23,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
         # % With VIC, remove ["cusl", "cbsl", "ks", "ds", "dsm"]
         if model.setup.hydrological_module == "vic3l":
             parameters = [
-                key
-                for key in model.rr_parameters.keys
-                if key not in ["cusl", "cbsl", "ks", "ds", "dsm"]
+                key for key in model.rr_parameters.keys if key not in ["cusl", "cbsl", "ks", "ds", "dsm"]
             ]
         # % Else default parameters
         else:
@@ -61,9 +60,7 @@ def generic_optimize(model_structure: list[smash.Model], **kwargs) -> dict:
                 )
 
                 res[f"optimize.{model.setup.structure}.{mp}.iter_cost"] = ret.iter_cost
-                res[
-                    f"optimize.{model.setup.structure}.{mp}.control_vector"
-                ] = ret.control_vector
+                res[f"optimize.{model.setup.structure}.{mp}.control_vector"] = ret.control_vector
 
             qsim = instance.response.q[:].flatten()
             qsim = qsim[::10]  # extract values at every 10th position
@@ -78,9 +75,7 @@ def test_optimize():
 
     for key, value in res.items():
         # % Check qsim in run
-        assert np.allclose(
-            value, pytest.baseline[key][:], atol=1e-03, equal_nan=True
-        ), key
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), key
 
 
 def test_sparse_optimize():
@@ -88,9 +83,7 @@ def test_sparse_optimize():
 
     for key, value in res.items():
         # % Check qsim in sparse storage run
-        assert np.allclose(
-            value, pytest.baseline[key][:], atol=1e-03, equal_nan=True
-        ), ("sparse." + key)
+        assert np.allclose(value, pytest.baseline[key][:], atol=1e-03, equal_nan=True), "sparse." + key
 
 
 def generic_custom_optimize(model: smash.Model, **kwargs) -> dict:

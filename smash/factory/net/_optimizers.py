@@ -17,9 +17,7 @@ class SGD:
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(
-        self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options
-    ):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options):
         self.learning_rate = learning_rate
 
         self.momentum = momentum

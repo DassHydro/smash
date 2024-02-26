@@ -1,65 +1,64 @@
 from __future__ import annotations
 
+import os
+import warnings
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
 from smash._constant import (
-    STRUCTURE_RR_PARAMETERS,
-    STRUCTURE_RR_STATES,
+    DEFAULT_SIMULATION_COMMON_OPTIONS,
+    DEFAULT_SIMULATION_COST_OPTIONS,
+    DEFAULT_SIMULATION_RETURN_OPTIONS,
+    DEFAULT_TERMINATION_CRIT,
+    EVENT_SEG_KEYS,
+    F90_OPTIMIZER_CONTROL_TFM,
+    FEASIBLE_RR_INITIAL_STATES,
+    FEASIBLE_RR_PARAMETERS,
+    FEASIBLE_SERR_MU_PARAMETERS,
+    FEASIBLE_SERR_SIGMA_PARAMETERS,
+    GAUGE_ALIAS,
+    JOBS_CMPT,
+    JOBS_CMPT_TFM,
+    JREG_CMPT,
+    MAPPING,
+    MAPPING_OPTIMIZER,
+    METRICS,
+    OPTIMIZABLE_RR_INITIAL_STATES,
+    OPTIMIZABLE_RR_PARAMETERS,
+    OPTIMIZABLE_SERR_MU_PARAMETERS,
+    OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
+    PY_OPTIMIZER,
+    PY_OPTIMIZER_CLASS,
+    REGIONAL_MAPPING,
     RR_PARAMETERS,
     RR_STATES,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING_PARAMETERS,
-    OPTIMIZABLE_RR_PARAMETERS,
-    OPTIMIZABLE_RR_INITIAL_STATES,
-    OPTIMIZABLE_SERR_MU_PARAMETERS,
-    OPTIMIZABLE_SERR_SIGMA_PARAMETERS,
-    FEASIBLE_RR_PARAMETERS,
-    FEASIBLE_RR_INITIAL_STATES,
-    FEASIBLE_SERR_MU_PARAMETERS,
-    FEASIBLE_SERR_SIGMA_PARAMETERS,
-    MAPPING,
-    REGIONAL_MAPPING,
-    MAPPING_OPTIMIZER,
-    PY_OPTIMIZER_CLASS,
-    PY_OPTIMIZER,
-    F90_OPTIMIZER_CONTROL_TFM,
-    SIMULATION_OPTIMIZE_OPTIONS_KEYS,
-    DEFAULT_TERMINATION_CRIT,
-    DEFAULT_SIMULATION_COMMON_OPTIONS,
-    DEFAULT_SIMULATION_COST_OPTIONS,
-    DEFAULT_SIMULATION_RETURN_OPTIONS,
-    METRICS,
     SIGNS,
-    JOBS_CMPT,
-    JOBS_CMPT_TFM,
-    WJREG_ALIAS,
-    JREG_CMPT,
+    SIMULATION_OPTIMIZE_OPTIONS_KEYS,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
     WEIGHT_ALIAS,
-    GAUGE_ALIAS,
-    EVENT_SEG_KEYS,
+    WJREG_ALIAS,
 )
 
-from smash.core.signal_analysis.segmentation._standardize import (
-    _standardize_hydrograph_segmentation_peak_quant,
+# Used inside eval statement
+from smash.core.signal_analysis.segmentation._standardize import (  # noqa: F401
     _standardize_hydrograph_segmentation_max_duration,
+    _standardize_hydrograph_segmentation_peak_quant,
 )
-
 from smash.core.signal_analysis.segmentation._tools import _mask_event
 
+# Used inside eval statement
+from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
 from smash.factory.net.net import Net
-
-from smash.factory.net._optimizers import Adam, Adagrad, SGD, RMSprop
-
 from smash.factory.samples.samples import Samples
 
-import numpy as np
-import pandas as pd
-import warnings
-import os
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from smash.util._typing import Numeric, AlphaNumeric, ListLike, AnyTuple
     from smash.core.model.model import Model
+    from smash.util._typing import AlphaNumeric, AnyTuple, ListLike, Numeric
 
 
 def _standardize_simulation_mapping(mapping: str) -> str:
@@ -80,7 +79,8 @@ def _standardize_simulation_optimizer(mapping: str, optimizer: str | None) -> st
         if isinstance(optimizer, str):
             if optimizer.lower() not in MAPPING_OPTIMIZER[mapping]:
                 raise ValueError(
-                    f"Unknown optimizer '{optimizer}' for mapping '{mapping}'. Choices: {MAPPING_OPTIMIZER[mapping]}"
+                    f"Unknown optimizer '{optimizer}' for mapping '{mapping}'. Choices: "
+                    f"{MAPPING_OPTIMIZER[mapping]}"
                 )
 
         else:
@@ -93,27 +93,26 @@ def _standardize_simulation_samples(model: Model, samples: Samples) -> Samples:
     if isinstance(samples, Samples):
         for key in samples._problem["names"]:
             if key in model.rr_parameters.keys:
-                l, u = FEASIBLE_RR_PARAMETERS[key]
+                low, upp = FEASIBLE_RR_PARAMETERS[key]
             elif key in model.rr_initial_states.keys:
-                l, u = FEASIBLE_RR_INITIAL_STATES[key]
+                low, upp = FEASIBLE_RR_INITIAL_STATES[key]
             else:
-                available_parameters = list(model.rr_parameters.keys) + list(
-                    model.rr_initial_states.keys
-                )
+                available_parameters = list(model.rr_parameters.keys) + list(model.rr_initial_states.keys)
                 raise ValueError(
                     f"Unknown parameter '{key}' in samples attributes. Choices: {available_parameters}"
                 )
 
             # % Check that sample is inside feasible domain
             arr = getattr(samples, key)
-            l_arr = np.min(arr)
-            u_arr = np.max(arr)
-            if l_arr <= l or u_arr >= u:
+            low_arr = np.min(arr)
+            upp_arr = np.max(arr)
+            if low_arr <= low or upp_arr >= upp:
                 raise ValueError(
-                    f"Invalid sample values for parameter '{key}'. Sample domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                    f"Invalid sample values for parameter '{key}'. Sample domain [{low_arr}, {upp_arr}] is "
+                    f"not included in the feasible domain ]{low}, {upp}["
                 )
     else:
-        raise TypeError(f"samples arguments must be a smash.Samples object")
+        raise TypeError("samples arguments must be a smash.Samples object")
 
     return samples
 
@@ -124,14 +123,10 @@ def _standardize_simulation_optimize_options_parameters(
     is_bayesian = "bayesian" in func_name
 
     available_rr_parameters = [
-        key
-        for key in STRUCTURE_RR_PARAMETERS[model.setup.structure]
-        if OPTIMIZABLE_RR_PARAMETERS[key]
+        key for key in STRUCTURE_RR_PARAMETERS[model.setup.structure] if OPTIMIZABLE_RR_PARAMETERS[key]
     ]
     available_rr_initial_states = [
-        key
-        for key in STRUCTURE_RR_STATES[model.setup.structure]
-        if OPTIMIZABLE_RR_INITIAL_STATES[key]
+        key for key in STRUCTURE_RR_STATES[model.setup.structure] if OPTIMIZABLE_RR_INITIAL_STATES[key]
     ]
     available_serr_mu_parameters = [
         key
@@ -146,16 +141,12 @@ def _standardize_simulation_optimize_options_parameters(
     available_parameters = available_rr_parameters + available_rr_initial_states
 
     if is_bayesian:
-        available_parameters.extend(
-            available_serr_mu_parameters + available_serr_sigma_parameters
-        )
+        available_parameters.extend(available_serr_mu_parameters + available_serr_sigma_parameters)
 
     if parameters is None:
         if is_bayesian:
             parameters = np.array(
-                available_rr_parameters
-                + available_serr_mu_parameters
-                + available_serr_sigma_parameters,
+                available_rr_parameters + available_serr_mu_parameters + available_serr_sigma_parameters,
                 ndmin=1,
             )
         else:
@@ -171,7 +162,8 @@ def _standardize_simulation_optimize_options_parameters(
 
                 else:
                     raise ValueError(
-                        f"Unknown or non optimizable parameter '{prmt}' at index {i} in parameters optimize_options. Choices: {available_parameters}"
+                        f"Unknown or non optimizable parameter '{prmt}' at index {i} in parameters "
+                        f"optimize_options. Choices: {available_parameters}"
                     )
         else:
             raise TypeError(
@@ -197,17 +189,20 @@ def _standardize_simulation_optimize_options_bounds(
                     if isinstance(value, (list, tuple, np.ndarray)) and len(value) == 2:
                         if value[0] >= value[1]:
                             raise ValueError(
-                                f"Lower bound value {value[0]} is greater than or equal to upper bound {value[1]} for parameter '{key}' in bounds optimize_options"
+                                f"Lower bound value {value[0]} is greater than or equal to upper bound "
+                                f"{value[1]} for parameter '{key}' in bounds optimize_options"
                             )
                         else:
                             bounds[key] = tuple(value)
                     else:
                         raise TypeError(
-                            f"Bounds values for parameter '{key}' must be of ListLike type (List, Tuple, np.ndarray) of size 2 in bounds optimize_options"
+                            f"Bounds values for parameter '{key}' must be of ListLike type (List, Tuple, "
+                            f"np.ndarray) of size 2 in bounds optimize_options"
                         )
                 else:
                     raise ValueError(
-                        f"Unknown or non optimized parameter '{key}' in bounds optimize_options. Choices: {parameters}"
+                        f"Unknown or non optimized parameter '{key}' in bounds optimize_options. "
+                        f"Choices: {parameters}"
                     )
         else:
             TypeError("bounds optimize_options must be a dictionary")
@@ -227,30 +222,32 @@ def _standardize_simulation_optimize_options_bounds(
     for key, value in bounds.items():
         if key in model.rr_parameters.keys:
             arr = model.get_rr_parameters(key)
-            l, u = FEASIBLE_RR_PARAMETERS[key]
+            low, upp = FEASIBLE_RR_PARAMETERS[key]
         elif key in model.rr_initial_states.keys:
             arr = model.get_rr_initial_states(key)
-            l, u = FEASIBLE_RR_INITIAL_STATES[key]
+            low, upp = FEASIBLE_RR_INITIAL_STATES[key]
         elif key in model.serr_sigma_parameters.keys:
             arr = model.get_serr_sigma_parameters(key)
-            l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+            low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
         elif key in model.serr_mu_parameters.keys:
             arr = model.get_serr_mu_parameters(key)
-            l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
+            low, upp = FEASIBLE_SERR_MU_PARAMETERS[key]
         # % In case we have other kind of parameters. Should be unreachable.
         else:
             pass
 
-        l_arr = np.min(arr)
-        u_arr = np.max(arr)
-        if (l_arr + 1e-3) < value[0] or (u_arr - 1e-3) > value[1]:
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
+        if (low_arr + 1e-3) < value[0] or (upp_arr - 1e-3) > value[1]:
             raise ValueError(
-                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] does not include parameter domain [{l_arr}, {u_arr}] in bounds optimize_options"
+                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] does "
+                f"not include parameter domain [{low_arr}, {upp_arr}] in bounds optimize_options"
             )
 
-        if value[0] <= l or value[1] >= u:
+        if value[0] <= low or value[1] >= upp:
             raise ValueError(
-                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] is not included in the feasible domain ]{l}, {u}[ in bounds optimize_options"
+                f"Invalid bounds values for parameter '{key}'. Bounds domain [{value[0]}, {value[1]}] is not "
+                f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
             )
 
     return bounds
@@ -258,14 +255,15 @@ def _standardize_simulation_optimize_options_bounds(
 
 def _standardize_simulation_optimize_options_control_tfm(
     optimizer: str, control_tfm: str | None, **kwargs
-) -> (str, None):
+) -> str | None:
     if control_tfm is None:
         control_tfm = F90_OPTIMIZER_CONTROL_TFM[optimizer][0]
     else:
         if isinstance(control_tfm, str):
             if control_tfm.lower() not in F90_OPTIMIZER_CONTROL_TFM[optimizer]:
                 raise ValueError(
-                    f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. Choices: {F90_OPTIMIZER_CONTROL_TFM[optimizer]}"
+                    f"Unknown transformation '{control_tfm}' in control_tfm optimize_options. "
+                    f"Choices: {F90_OPTIMIZER_CONTROL_TFM[optimizer]}"
                 )
         else:
             TypeError("control_tfm optimize_options must be a str")
@@ -276,9 +274,7 @@ def _standardize_simulation_optimize_options_control_tfm(
 def _standardize_simulation_optimize_options_descriptor(
     model: Model, parameters: np.ndarray, descriptor: dict | None, **kwargs
 ) -> dict:
-    desc_linked_parameters = [
-        key for key in parameters if key in RR_PARAMETERS + RR_STATES
-    ]
+    desc_linked_parameters = [key for key in parameters if key in RR_PARAMETERS + RR_STATES]
     if descriptor is None:
         descriptor = {}
 
@@ -291,16 +287,19 @@ def _standardize_simulation_optimize_options_descriptor(
                         for vle in value:
                             if vle not in model.setup.descriptor_name:
                                 raise ValueError(
-                                    f"Unknown descriptor '{vle}' for parameter '{key}' in descriptor optimize_options. Choices: {list(model.setup.descriptor_name)}"
+                                    f"Unknown descriptor '{vle}' for parameter '{key}' in descriptor "
+                                    f"optimize_options. Choices: {list(model.setup.descriptor_name)}"
                                 )
                         descriptor[key] = value
                     else:
                         raise TypeError(
-                            f"Descriptor values for parameter '{key}' must be a str or ListLike type (List, Tuple, np.ndarray) in descriptor optimize_options"
+                            f"Descriptor values for parameter '{key}' must be a str or ListLike type (List, "
+                            f"Tuple, np.ndarray) in descriptor optimize_options"
                         )
                 else:
                     raise ValueError(
-                        f"Unknown or non optimized or non descriptor linked parameter '{key}' in descriptor optimize_options. Choices: {desc_linked_parameters}"
+                        f"Unknown or non optimized or non descriptor linked parameter '{key}' in descriptor "
+                        f"optimize_options. Choices: {desc_linked_parameters}"
                     )
         else:
             raise TypeError("descriptor optimize_options must be a dictionary")
@@ -361,7 +360,7 @@ def _standardize_simulation_optimize_options_net(
         raise TypeError(f"net optimize_options: Unknown network {net}")
 
     elif not net.layers:
-        raise ValueError(f"net optimize_options: The graph has not been set yet")
+        raise ValueError("net optimize_options: The graph has not been set yet")
 
     else:
         # % check input shape
@@ -369,7 +368,8 @@ def _standardize_simulation_optimize_options_net(
 
         if ips[0] != nd:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of input layer ({ips[0]}) and the number of descriptors ({nd}): {ips[0]} != {nd}"
+                f"net optimize_options: Inconsistent value between the number of input layer ({ips[0]}) and "
+                f"the number of descriptors ({nd}): {ips[0]} != {nd}"
             )
 
         # % check output shape
@@ -377,7 +377,8 @@ def _standardize_simulation_optimize_options_net(
 
         if ios[0] != ncv:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of output layer ({ios[0]}) and the number of parameters ({ncv}): {ios[0]} != {ncv}"
+                f"net optimize_options: Inconsistent value between the number of output layer ({ios[0]}) and "
+                f"the number of parameters ({ncv}): {ios[0]} != {ncv}"
             )
 
         # % check bounds constraints
@@ -389,7 +390,10 @@ def _standardize_simulation_optimize_options_net(
             for i, name in enumerate(bounds.keys()):
                 if diff[i].any():
                     warnings.warn(
-                        f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}. Ignoring default bounds for scaling layer."
+                        f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and "
+                        f"the parameter bound for {name}: {net_bounds[i]} != {bound_values[i]}. Ignoring "
+                        f"default bounds for scaling layer.",
+                        stacklevel=2,
                     )
 
     return net
@@ -408,31 +412,23 @@ def _standardize_simulation_optimize_options_learning_rate(
             learning_rate = opt_class().learning_rate
 
         else:
-            raise TypeError(
-                "learning_rate optimize_options must be of Numeric type (int, float) or None"
-            )
+            raise TypeError("learning_rate optimize_options must be of Numeric type (int, float) or None")
 
     return learning_rate
 
 
-def _standardize_simulation_optimize_options_random_state(
-    random_state: Numeric | None, **kwargs
-) -> int:
+def _standardize_simulation_optimize_options_random_state(random_state: Numeric | None, **kwargs) -> int:
     if random_state is None:
         pass
 
     else:
         if not isinstance(random_state, (int, float)):
-            raise TypeError(
-                "random_state optimize_options must be of Numeric type (int, float)"
-            )
+            raise TypeError("random_state optimize_options must be of Numeric type (int, float)")
 
         random_state = int(random_state)
 
         if random_state < 0 or random_state > 4_294_967_295:
-            raise ValueError(
-                "random_state optimize_options must be between 0 and 2**32 - 1"
-            )
+            raise ValueError("random_state optimize_options must be between 0 and 2**32 - 1")
 
     return random_state
 
@@ -446,11 +442,13 @@ def _standardize_simulation_optimize_options_termination_crit(
     else:
         if isinstance(termination_crit, dict):
             pop_keys = []
-            for key, value in termination_crit.items():
+            for key in termination_crit.keys():
                 if key not in DEFAULT_TERMINATION_CRIT[optimizer].keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown termination_crit key '{key}' for optimizer '{optimizer}'. Choices: {list(DEFAULT_TERMINATION_CRIT[optimizer].keys())}"
+                        f"Unknown termination_crit key '{key}' for optimizer '{optimizer}'. "
+                        f"Choices: {list(DEFAULT_TERMINATION_CRIT[optimizer].keys())}",
+                        stacklevel=2,
                     )
 
             for key in pop_keys:
@@ -467,24 +465,18 @@ def _standardize_simulation_optimize_options_termination_crit(
     return termination_crit
 
 
-def _standardize_simulation_optimize_options_termination_crit_maxiter(
-    maxiter: Numeric, **kwargs
-) -> int:
+def _standardize_simulation_optimize_options_termination_crit_maxiter(maxiter: Numeric, **kwargs) -> int:
     if isinstance(maxiter, (int, float)):
         maxiter = int(maxiter)
         if maxiter < 0:
-            raise ValueError(
-                "maxiter termination_crit must be greater than or equal to 0"
-            )
+            raise ValueError("maxiter termination_crit must be greater than or equal to 0")
     else:
         raise TypeError("maxiter termination_crit must be of Numeric type (int, float)")
 
     return maxiter
 
 
-def _standardize_simulation_optimize_options_termination_crit_factr(
-    factr: Numeric, **kwargs
-) -> float:
+def _standardize_simulation_optimize_options_termination_crit_factr(factr: Numeric, **kwargs) -> float:
     if isinstance(factr, (int, float)):
         factr = float(factr)
         if factr <= 0:
@@ -495,9 +487,7 @@ def _standardize_simulation_optimize_options_termination_crit_factr(
     return factr
 
 
-def _standardize_simulation_optimize_options_termination_crit_pgtol(
-    pgtol: Numeric, **kwargs
-) -> float:
+def _standardize_simulation_optimize_options_termination_crit_pgtol(pgtol: Numeric, **kwargs) -> float:
     if isinstance(pgtol, (int, float)):
         pgtol = float(pgtol)
         if pgtol <= 0:
@@ -508,15 +498,11 @@ def _standardize_simulation_optimize_options_termination_crit_pgtol(
     return pgtol
 
 
-def _standardize_simulation_optimize_options_termination_crit_epochs(
-    epochs: Numeric, **kwargs
-) -> float:
+def _standardize_simulation_optimize_options_termination_crit_epochs(epochs: Numeric, **kwargs) -> float:
     if isinstance(epochs, (int, float)):
         epochs = int(epochs)
         if epochs < 0:
-            raise ValueError(
-                "epochs termination_crit must be greater than or equal to 0"
-            )
+            raise ValueError("epochs termination_crit must be greater than or equal to 0")
     else:
         raise TypeError("epochs termination_crit must be of Numeric type (int, float)")
 
@@ -532,9 +518,7 @@ def _standardize_simulation_optimize_options_termination_crit_early_stopping(
         if early_stopping < 0:
             raise ValueError("early_stopping termination_crit must be non-negative")
     else:
-        raise TypeError(
-            "early_stopping termination_crit must be of Numeric type (int, float)"
-        )
+        raise TypeError("early_stopping termination_crit must be of Numeric type (int, float)")
 
     return early_stopping
 
@@ -547,18 +531,18 @@ def _standardize_simulation_optimize_options(
     optimize_options: dict | None,
 ) -> dict:
     if optimize_options is None:
-        optimize_options = dict.fromkeys(
-            SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)], None
-        )
+        optimize_options = dict.fromkeys(SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)], None)
 
     else:
         if isinstance(optimize_options, dict):
             pop_keys = []
-            for key, value in optimize_options.items():
+            for key in optimize_options.keys():
                 if key not in SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]:
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown optimize_options key '{key}' for mapping '{mapping}' and optimizer '{optimizer}'. Choices: {SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]}"
+                        f"Unknown optimize_options key '{key}' for mapping '{mapping}' and optimizer "
+                        f"'{optimizer}'. Choices: {SIMULATION_OPTIMIZE_OPTIONS_KEYS[(mapping, optimizer)]}",
+                        stacklevel=2,
                     )
 
             for key in pop_keys:
@@ -581,9 +565,7 @@ def _standardize_simulation_optimize_options(
     return optimize_options
 
 
-def _standardize_simulation_cost_options_jobs_cmpt(
-    jobs_cmpt: str | ListLike, **kwargs
-) -> np.ndarray:
+def _standardize_simulation_cost_options_jobs_cmpt(jobs_cmpt: str | ListLike, **kwargs) -> np.ndarray:
     if isinstance(jobs_cmpt, (str, list, tuple, np.ndarray)):
         jobs_cmpt = np.array(jobs_cmpt, ndmin=1)
 
@@ -598,36 +580,26 @@ def _standardize_simulation_cost_options_jobs_cmpt(
                 )
 
     else:
-        raise TypeError(
-            "jobs_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("jobs_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)")
 
     return jobs_cmpt
 
 
 def _standardize_simulation_cost_options_wjobs_cmpt(
     jobs_cmpt: np.ndarray, wjobs_cmpt: AlphaNumeric | ListLike, **kwargs
-) -> (np.ndarray, str):
+) -> np.ndarray | str:
     if isinstance(wjobs_cmpt, str):
         if wjobs_cmpt == "mean":
-            wjobs_cmpt = (
-                np.ones(shape=jobs_cmpt.size, dtype=np.float32) / jobs_cmpt.size
-            )
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) / jobs_cmpt.size
 
         elif wjobs_cmpt == "lquartile":
-            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
-                -0.25
-            )
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(-0.25)
 
         elif wjobs_cmpt == "median":
-            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
-                -0.5
-            )
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(-0.5)
 
         elif wjobs_cmpt == "uquartile":
-            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(
-                -0.75
-            )
+            wjobs_cmpt = np.ones(shape=jobs_cmpt.size, dtype=np.float32) * np.float32(-0.75)
 
         else:
             raise ValueError(
@@ -639,18 +611,18 @@ def _standardize_simulation_cost_options_wjobs_cmpt(
 
         if wjobs_cmpt.size != jobs_cmpt.size:
             raise ValueError(
-                f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and wjobs_cmpt ({wjobs_cmpt.size}) cost_options"
+                f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and wjobs_cmpt ({wjobs_cmpt.size}) "
+                f"cost_options"
             )
 
         for i, wjoc in enumerate(wjobs_cmpt):
             if wjoc < 0:
-                raise ValueError(
-                    f"Negative component {wjoc:f} at index {i} in wjobs_cmpt cost_options"
-                )
+                raise ValueError(f"Negative component {wjoc:f} at index {i} in wjobs_cmpt cost_options")
 
     else:
         raise TypeError(
-            "wjobs_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjobs_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type "
+            "(List, Tuple, np.ndarray)"
         )
 
     return wjobs_cmpt
@@ -665,14 +637,16 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
             jobs_cmpt_tfm = np.array([jobs_cmpt_tfm.lower()] * jobs_cmpt.size, ndmin=1)
         else:
             raise ValueError(
-                f"Unknown discharge transformation '{jobs_cmpt_tfm}' in job_cmpt_tfm cost_options. Choices {JOBS_CMPT_TFM}"
+                f"Unknown discharge transformation '{jobs_cmpt_tfm}' in job_cmpt_tfm cost_options. "
+                f"Choices {JOBS_CMPT_TFM}"
             )
     elif isinstance(jobs_cmpt_tfm, (list, tuple, np.ndarray)):
         jobs_cmpt_tfm = np.array(jobs_cmpt_tfm, ndmin=1)
 
         if jobs_cmpt.size != jobs_cmpt_tfm.size:
             raise ValueError(
-                f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and jobs_cmpt_tfm ({jobs_cmpt_tfm.size}) cost_options"
+                f"Inconsistent sizes between jobs_cmpt ({jobs_cmpt.size}) and jobs_cmpt_tfm "
+                f"({jobs_cmpt_tfm.size}) cost_options"
             )
 
         for i, joct in enumerate(jobs_cmpt_tfm):
@@ -680,12 +654,11 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
                 jobs_cmpt_tfm[i] = joct.lower()
             else:
                 raise ValueError(
-                    f"Unknown discharge transformation '{jobs_cmpt_tfm}' at index {i} in job_cmpt_tfm cost_options. Choices: {JOBS_CMPT_TFM}"
+                    f"Unknown discharge transformation '{jobs_cmpt_tfm}' at index {i} in job_cmpt_tfm "
+                    f"cost_options. Choices: {JOBS_CMPT_TFM}"
                 )
     else:
-        raise TypeError(
-            "jobs_cmpt_tfm cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("jobs_cmpt_tfm cost_options must be a str or ListLike type (List, Tuple, np.ndarray)")
 
     # % No transformation applied to signatures
     avail_tfm_signs = ["keep"]
@@ -695,38 +668,31 @@ def _standardize_simulation_cost_options_jobs_cmpt_tfm(
         joct = jobs_cmpt_tfm[i]
         if joc in SIGNS and joct not in avail_tfm_signs:
             raise ValueError(
-                f"Discharge transformation '{joct}' is not available for component '{joc}' at index {i} in jobs_cmpt_tfm cost_options. Choices: {avail_tfm_signs}"
+                f"Discharge transformation '{joct}' is not available for component '{joc}' at index {i} in "
+                f"jobs_cmpt_tfm cost_options. Choices: {avail_tfm_signs}"
             )
 
     return jobs_cmpt_tfm
 
 
-def _standardize_simulation_cost_options_wjreg(
-    wjreg: AlphaNumeric, **kwargs
-) -> str | float:
+def _standardize_simulation_cost_options_wjreg(wjreg: AlphaNumeric, **kwargs) -> str | float:
     if isinstance(wjreg, str):
         if wjreg.lower() in WJREG_ALIAS:
             wjreg = wjreg.lower()
         else:
-            raise ValueError(
-                f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}"
-            )
+            raise ValueError(f"Unknown alias '{wjreg}' for wjreg in cost_options. Choices: {WJREG_ALIAS}")
 
     elif isinstance(wjreg, (int, float)):
         wjreg = float(wjreg)
         if wjreg < 0:
             raise ValueError("wjreg cost_options must be greater than or equal to 0")
     else:
-        raise TypeError(
-            "wjreg cost_options must be of AlphaNumeric type (str, int, float)"
-        )
+        raise TypeError("wjreg cost_options must be of AlphaNumeric type (str, int, float)")
 
     return wjreg
 
 
-def _standardize_simulation_cost_options_jreg_cmpt(
-    jreg_cmpt: str | ListLike, **kwargs
-) -> np.ndarray:
+def _standardize_simulation_cost_options_jreg_cmpt(jreg_cmpt: str | ListLike, **kwargs) -> np.ndarray:
     if isinstance(jreg_cmpt, (str, list, tuple, np.ndarray)):
         jreg_cmpt = np.array(jreg_cmpt, ndmin=1)
 
@@ -738,36 +704,26 @@ def _standardize_simulation_cost_options_jreg_cmpt(
                     f"Unknown component '{jrc}' at index {i} in jreg_cmpt cost_options. Choices: {JREG_CMPT}"
                 )
     else:
-        raise TypeError(
-            "jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("jreg_cmpt cost_options must be a str or ListLike type (List, Tuple, np.ndarray)")
 
     return jreg_cmpt
 
 
 def _standardize_simulation_cost_options_wjreg_cmpt(
     jreg_cmpt: np.ndarray, wjreg_cmpt: AlphaNumeric | ListLike, **kwargs
-) -> (np.ndarray, str):
+) -> np.ndarray | str:
     if isinstance(wjreg_cmpt, str):
         if wjreg_cmpt == "mean":
-            wjreg_cmpt = (
-                np.ones(shape=jreg_cmpt.size, dtype=np.float32) / jreg_cmpt.size
-            )
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) / jreg_cmpt.size
 
         elif wjreg_cmpt == "lquartile":
-            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
-                -0.25
-            )
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(-0.25)
 
         elif wjreg_cmpt == "median":
-            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
-                -0.5
-            )
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(-0.5)
 
         elif wjreg_cmpt == "uquartile":
-            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(
-                -0.75
-            )
+            wjreg_cmpt = np.ones(shape=jreg_cmpt.size, dtype=np.float32) * np.float32(-0.75)
 
         else:
             raise ValueError(
@@ -779,25 +735,61 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
 
         if wjreg_cmpt.size != jreg_cmpt.size:
             raise ValueError(
-                f"Inconsistent sizes between jreg_cmpt ({jreg_cmpt.size}) and wjreg_cmpt ({wjreg_cmpt.size}) cost_options"
+                f"Inconsistent sizes between jreg_cmpt ({jreg_cmpt.size}) and wjreg_cmpt ({wjreg_cmpt.size}) "
+                f"cost_options"
             )
 
         for i, wjrc in enumerate(wjreg_cmpt):
             if wjrc < 0:
-                raise ValueError(
-                    f"Negative component {wjrc:f} at index {i} in wjreg_cmpt cost_options"
-                )
+                raise ValueError(f"Negative component {wjrc:f} at index {i} in wjreg_cmpt cost_options")
 
     else:
         raise TypeError(
-            "wjreg_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wjreg_cmpt cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, "
+            "Tuple, np.ndarray)"
         )
 
     return wjreg_cmpt
 
 
+def _standardize_simulation_cost_options_end_warmup(
+    model: Model, end_warmup: str | pd.Timestamp | None, **kwargs
+) -> pd.Timestamp:
+    st = pd.Timestamp(model.setup.start_time)
+    et = pd.Timestamp(model.setup.end_time)
+
+    if end_warmup is None:
+        end_warmup = pd.Timestamp(st)
+
+    else:
+        if isinstance(end_warmup, str):
+            try:
+                end_warmup = pd.Timestamp(end_warmup)
+
+            except Exception:
+                raise ValueError(f"end_warmup '{end_warmup}' cost_options is an invalid date") from None
+
+        elif isinstance(end_warmup, pd.Timestamp):
+            pass
+
+        else:
+            raise TypeError("end_warmup cost_options must be str or pandas.Timestamp object")
+
+        if (end_warmup - st).total_seconds() < 0 or (et - end_warmup).total_seconds() < 0:
+            raise ValueError(
+                f"end_warmup '{end_warmup}' cost_options must be between start time '{st}' and end time "
+                f"'{et}'"
+            )
+
+    return end_warmup
+
+
 def _standardize_simulation_cost_options_gauge(
-    model: Model, gauge: str | ListLike, **kwargs
+    model: Model,
+    func_name: str,
+    gauge: str | ListLike,
+    end_warmup: pd.Timestamp,
+    **kwargs,
 ) -> np.ndarray:
     if isinstance(gauge, str):
         if gauge == "dws":
@@ -815,7 +807,8 @@ def _standardize_simulation_cost_options_gauge(
 
         else:
             raise ValueError(
-                f"Unknown alias or gauge code '{gauge}' for gauge cost_options. Choices: {GAUGE_ALIAS + list(model.mesh.code)}"
+                f"Unknown alias or gauge code '{gauge}' for gauge cost_options. "
+                f"Choices: {GAUGE_ALIAS + list(model.mesh.code)}"
             )
 
     elif isinstance(gauge, (list, tuple, np.ndarray)):
@@ -831,16 +824,30 @@ def _standardize_simulation_cost_options_gauge(
                 )
 
     else:
-        raise TypeError(
-            "gauge cost_options must be a str or ListLike type (List, Tuple, np.ndarray)"
-        )
+        raise TypeError("gauge cost_options must be a str or ListLike type (List, Tuple, np.ndarray)")
+
+    # % Check that there is observed discharge available when optimizing. No particular issue with a
+    # % forward run
+    if "optimize" in func_name:
+        st = pd.Timestamp(model.setup.start_time)
+        et = pd.Timestamp(model.setup.end_time)
+        start_slice = int((end_warmup - st).total_seconds() / model.setup.dt)
+        end_slice = model.setup.ntime_step - 1
+        time_slice = slice(start_slice, end_slice)
+        for i, ggc in enumerate(model.mesh.code):
+            if ggc in gauge:
+                if np.all(model.response_data.q[i, time_slice] < 0):
+                    raise ValueError(
+                        f"No observed discharge available at gauge '{ggc}' for the selected "
+                        f"optimization period ['{end_warmup}', '{et}']"
+                    )
 
     return gauge
 
 
 def _standardize_simulation_cost_options_wgauge(
     gauge: np.ndarray, wgauge: AlphaNumeric | ListLike, **kwargs
-) -> (np.ndarray, str):
+) -> np.ndarray | str:
     if isinstance(wgauge, str):
         if wgauge == "mean":
             wgauge = np.ones(shape=gauge.size, dtype=np.float32)
@@ -857,9 +864,7 @@ def _standardize_simulation_cost_options_wgauge(
             wgauge = np.ones(shape=gauge.size, dtype=np.float32) * np.float32(-0.75)
 
         else:
-            raise ValueError(
-                f"Unknown alias '{wgauge}' for wgauge cost_options. Choices: {WEIGHT_ALIAS}"
-            )
+            raise ValueError(f"Unknown alias '{wgauge}' for wgauge cost_options. Choices: {WEIGHT_ALIAS}")
 
     elif isinstance(wgauge, (int, float, list, tuple, np.ndarray)):
         wgauge = np.array(wgauge, ndmin=1)
@@ -875,7 +880,8 @@ def _standardize_simulation_cost_options_wgauge(
 
     else:
         raise TypeError(
-            "wgauge cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, Tuple, np.ndarray)"
+            "wgauge cost_options must be of AlphaNumeric type (str, int, float) or ListLike type (List, "
+            "Tuple, np.ndarray)"
         )
 
     return wgauge
@@ -902,65 +908,26 @@ def _standardize_simulation_cost_options_event_seg(event_seg: dict, **kwargs) ->
     return event_seg
 
 
-def _standardize_simulation_cost_options_end_warmup(
-    model: Model, end_warmup: str | pd.Timestamp | None, **kwargs
-) -> pd.Timestamp:
-    st = pd.Timestamp(model.setup.start_time)
-    et = pd.Timestamp(model.setup.end_time)
-
-    if end_warmup is None:
-        end_warmup = pd.Timestamp(st)
-
-    else:
-        if isinstance(end_warmup, str):
-            try:
-                end_warmup = pd.Timestamp(end_warmup)
-
-            except:
-                raise ValueError(
-                    f"end_warmup '{end_warmup}' cost_options is an invalid date"
-                )
-
-        elif isinstance(end_warmup, pd.Timestamp):
-            pass
-
-        else:
-            raise TypeError(
-                f"end_warmup cost_options must be str or pandas.Timestamp object"
-            )
-
-        if (end_warmup - st).total_seconds() < 0 or (
-            et - end_warmup
-        ).total_seconds() < 0:
-            raise ValueError(
-                f"end_warmup '{end_warmup}' cost_options must be between start time '{st}' and end time '{et}'"
-            )
-
-    return end_warmup
-
-
 # % Some standardization of control_prior must be done with Fortran calls
 # % Otherwise we have to compute control size in Python ...
-def _standardize_simulation_cost_options_control_prior(
-    control_prior: dict | None, **kwargs
-) -> dict | None:
+def _standardize_simulation_cost_options_control_prior(control_prior: dict | None, **kwargs) -> dict | None:
     return control_prior
 
 
-def _standardize_simulation_cost_options(
-    model: Model, func_name: str, cost_options: dict | None
-) -> dict:
+def _standardize_simulation_cost_options(model: Model, func_name: str, cost_options: dict | None) -> dict:
     if cost_options is None:
         cost_options = DEFAULT_SIMULATION_COST_OPTIONS[func_name].copy()
 
     else:
         if isinstance(cost_options, dict):
             pop_keys = []
-            for key, value in cost_options.items():
+            for key, _ in cost_options.items():
                 if key not in DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown cost_options key '{key}'. Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys())}"
+                        f"Unknown cost_options key '{key}'. "
+                        f"Choices: {list(DEFAULT_SIMULATION_COST_OPTIONS[func_name].keys())}",
+                        stacklevel=2,
                     )
 
             for key in pop_keys:
@@ -972,7 +939,7 @@ def _standardize_simulation_cost_options(
     for key, value in DEFAULT_SIMULATION_COST_OPTIONS[func_name].items():
         cost_options.setdefault(key, value)
         func = eval(f"_standardize_simulation_cost_options_{key}")
-        cost_options[key] = func(model=model, **cost_options)
+        cost_options[key] = func(model=model, func_name=func_name, **cost_options)
 
     return cost_options
 
@@ -985,7 +952,9 @@ def _standardize_simulation_common_options_ncpu(ncpu: Numeric) -> int:
         elif ncpu > os.cpu_count():
             ncpu = os.cpu_count()
             warnings.warn(
-                f"ncpu common_options cannot be greater than the number of CPU(s) on the machine. ncpu is set to {os.cpu_count()}"
+                f"ncpu common_options cannot be greater than the number of CPU(s) on the machine. ncpu is "
+                f"set to {os.cpu_count()}",
+                stacklevel=2,
             )
     else:
         raise TypeError("ncpu common_options must be of Numeric type (int, float)")
@@ -1008,11 +977,13 @@ def _standardize_simulation_common_options(common_options: dict | None) -> dict:
     else:
         if isinstance(common_options, dict):
             pop_keys = []
-            for key, value in common_options.items():
+            for key in common_options.keys():
                 if key not in DEFAULT_SIMULATION_COMMON_OPTIONS.keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown common_options key '{key}': Choices: {list(DEFAULT_SIMULATION_COMMON_OPTIONS.keys())}"
+                        f"Unknown common_options key '{key}': "
+                        f"Choices: {list(DEFAULT_SIMULATION_COMMON_OPTIONS.keys())}",
+                        stacklevel=2,
                     )
 
             for key in pop_keys:
@@ -1044,18 +1015,14 @@ def _standardize_simulation_return_options_time_step(
 
     if isinstance(time_step, str):
         if time_step == "all":
-            time_step = pd.date_range(start=st, end=et, freq=f"{int(model.setup.dt)}s")[
-                :-1
-            ]
+            time_step = pd.date_range(start=st, end=et, freq=f"{int(model.setup.dt)}s")[1:]
         else:
             try:
                 # % Pass to list to convert to pd.DatetimeIndex
                 time_step = [pd.Timestamp(time_step)]
 
-            except:
-                raise ValueError(
-                    f"time_step '{time_step}' return_options is an invalid date"
-                )
+            except Exception:
+                raise ValueError(f"time_step '{time_step}' return_options is an invalid date") from None
 
     elif isinstance(time_step, pd.Timestamp):
         # % Pass to list to convert to pd.DatetimeIndex
@@ -1066,43 +1033,43 @@ def _standardize_simulation_return_options_time_step(
         for i, date in enumerate(time_step):
             try:
                 time_step[i] = pd.Timestamp(str(date))
-            except:
-                raise ValueError(
-                    f"Invalid date '{date}' at index {i} in time_step return_options"
-                )
+            except Exception:
+                raise ValueError(f"Invalid date '{date}' at index {i} in time_step return_options") from None
     elif isinstance(time_step, pd.DatetimeIndex):
         pass
 
     else:
         raise TypeError(
-            "time_step return_options must be a str, pd.Timestamp, pd.DatetimeIndex or ListLike type (List, Tuple, np.ndarray)"
+            "time_step return_options must be a str, pd.Timestamp, pd.DatetimeIndex or ListLike type (List, "
+            "Tuple, np.ndarray)"
         )
 
     time_step = pd.DatetimeIndex(time_step)
 
     # % Check that all dates are inside Model start_time and end_time
     for i, date in enumerate(time_step):
-        if (date - st).total_seconds() < 0 or (et - date).total_seconds() < 0:
+        if (date - st).total_seconds() <= 0 or (et - date).total_seconds() < 0:
             raise ValueError(
-                f"date '{date}' at index {i} in time_step return_options must be between start time '{st}' and end time '{et}'"
+                f"date '{date}' at index {i} in time_step return_options must be between start time '{st}' "
+                f"and end time '{et}'"
             )
 
     return time_step
 
 
-def _standardize_simulation_return_options(
-    model: Model, func_name: str, return_options: dict | None
-) -> dict:
+def _standardize_simulation_return_options(model: Model, func_name: str, return_options: dict | None) -> dict:
     if return_options is None:
         return_options = DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].copy()
     else:
         if isinstance(return_options, dict):
             pop_keys = []
-            for key, value in return_options.items():
+            for key in return_options.keys():
                 if key not in DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].keys():
                     pop_keys.append(key)
                     warnings.warn(
-                        f"Unknown return_options key '{key}': Choices: {list(DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].keys())}"
+                        f"Unknown return_options key '{key}': "
+                        f"Choices: {list(DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].keys())}",
+                        stacklevel=2,
                     )
 
             for key in pop_keys:
@@ -1114,9 +1081,7 @@ def _standardize_simulation_return_options(
     for key, value in DEFAULT_SIMULATION_RETURN_OPTIONS[func_name].items():
         return_options.setdefault(key, value)
         if key == "time_step":
-            return_options[key] = _standardize_simulation_return_options_time_step(
-                model, return_options[key]
-            )
+            return_options[key] = _standardize_simulation_return_options_time_step(model, return_options[key])
         else:
             _standardize_simulation_return_options_bool(key, return_options[key])
 
@@ -1126,24 +1091,26 @@ def _standardize_simulation_return_options(
 def _standardize_simulation_parameters_feasibility(model: Model):
     for key in model.rr_parameters.keys:
         arr = model.get_rr_parameters(key)
-        l, u = FEASIBLE_RR_PARAMETERS[key]
-        l_arr = np.min(arr)
-        u_arr = np.max(arr)
+        low, upp = FEASIBLE_RR_PARAMETERS[key]
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
 
-        if l_arr <= l or u_arr >= u:
+        if low_arr <= low or upp_arr >= upp:
             raise ValueError(
-                f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_parameter '{key}'. rr_parameter domain [{low_arr}, {upp_arr}] "
+                f"is not included in the feasible domain ]{low}, {upp}["
             )
 
     for key in model.rr_initial_states.keys:
         arr = model.get_rr_initial_states(key)
-        l, u = FEASIBLE_RR_INITIAL_STATES[key]
-        l_arr = np.min(arr)
-        u_arr = np.max(arr)
+        low, upp = FEASIBLE_RR_INITIAL_STATES[key]
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
 
-        if l_arr <= l or u_arr >= u:
+        if low_arr <= low or upp_arr >= upp:
             raise ValueError(
-                f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model rr_initial_state '{key}'. rr_initial_state domain "
+                f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
             )
 
     for key in model.serr_mu_parameters.keys:
@@ -1151,26 +1118,28 @@ def _standardize_simulation_parameters_feasibility(model: Model):
         # % Skip if size == 0, i.e. no gauge
         if arr.size == 0:
             continue
-        l, u = FEASIBLE_SERR_MU_PARAMETERS[key]
-        l_arr = np.min(arr)
-        u_arr = np.max(arr)
+        low, upp = FEASIBLE_SERR_MU_PARAMETERS[key]
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
 
-        if l_arr <= l or u_arr >= u:
+        if low_arr <= low or upp_arr >= upp:
             raise ValueError(
-                f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_mu_parameter '{key}'. serr_mu_parameter domain "
+                f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
             )
     for key in model.serr_sigma_parameters.keys:
         arr = model.get_serr_sigma_parameters(key)
         # % Skip if size == 0, i.e. no gauge
         if arr.size == 0:
             continue
-        l, u = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
-        l_arr = np.min(arr)
-        u_arr = np.max(arr)
+        low, upp = FEASIBLE_SERR_SIGMA_PARAMETERS[key]
+        low_arr = np.min(arr)
+        upp_arr = np.max(arr)
 
-        if l_arr <= l or u_arr >= u:
+        if low_arr <= low or upp_arr >= upp:
             raise ValueError(
-                f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain [{l_arr}, {u_arr}] is not included in the feasible domain ]{l}, {u}["
+                f"Invalid value for model serr_sigma_parameter '{key}'. serr_sigma_parameter domain "
+                f"[{low_arr}, {upp_arr}] is not included in the feasible domain ]{low}, {upp}["
             )
 
 
@@ -1182,21 +1151,15 @@ def _standardize_simulation_optimize_options_finalize(
 
     # % Check if decriptors are not found for regionalization mappings
     if model.setup.nd == 0 and mapping in REGIONAL_MAPPING:
-        raise ValueError(
-            f"Physiographic descriptors are required for optimization with {mapping} mapping"
-        )
+        raise ValueError(f"Physiographic descriptors are required for optimization with {mapping} mapping")
 
     descriptor_present = "descriptor" in optimize_options.keys()
 
     # % Handle parameters
     # % rr parameters
     optimize_options["rr_parameters"] = np.zeros(shape=model.setup.nrrp, dtype=np.int32)
-    optimize_options["l_rr_parameters"] = np.zeros(
-        shape=model.setup.nrrp, dtype=np.float32
-    )
-    optimize_options["u_rr_parameters"] = np.zeros(
-        shape=model.setup.nrrp, dtype=np.float32
-    )
+    optimize_options["l_rr_parameters"] = np.zeros(shape=model.setup.nrrp, dtype=np.float32)
+    optimize_options["u_rr_parameters"] = np.zeros(shape=model.setup.nrrp, dtype=np.float32)
 
     if descriptor_present:
         optimize_options["rr_parameters_descriptor"] = np.zeros(
@@ -1215,15 +1178,9 @@ def _standardize_simulation_optimize_options_finalize(
                         optimize_options["rr_parameters_descriptor"][j, i] = 1
 
     # % rr initial states
-    optimize_options["rr_initial_states"] = np.zeros(
-        shape=model.setup.nrrs, dtype=np.int32
-    )
-    optimize_options["l_rr_initial_states"] = np.zeros(
-        shape=model.setup.nrrs, dtype=np.float32
-    )
-    optimize_options["u_rr_initial_states"] = np.zeros(
-        shape=model.setup.nrrs, dtype=np.float32
-    )
+    optimize_options["rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.int32)
+    optimize_options["l_rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.float32)
+    optimize_options["u_rr_initial_states"] = np.zeros(shape=model.setup.nrrs, dtype=np.float32)
     if descriptor_present:
         optimize_options["rr_initial_states_descriptor"] = np.zeros(
             shape=(model.setup.nd, model.setup.nrrs), dtype=np.int32
@@ -1232,12 +1189,8 @@ def _standardize_simulation_optimize_options_finalize(
     for i, key in enumerate(model.rr_initial_states.keys):
         if key in optimize_options["parameters"]:
             optimize_options["rr_initial_states"][i] = 1
-            optimize_options["l_rr_initial_states"][i] = optimize_options["bounds"][
-                key
-            ][0]
-            optimize_options["u_rr_initial_states"][i] = optimize_options["bounds"][
-                key
-            ][1]
+            optimize_options["l_rr_initial_states"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_rr_initial_states"][i] = optimize_options["bounds"][key][1]
 
             if descriptor_present:
                 for j, desc in enumerate(model.setup.descriptor_name):
@@ -1245,64 +1198,38 @@ def _standardize_simulation_optimize_options_finalize(
                         optimize_options["rr_initial_states_descriptor"][j, i] = 1
 
     # % serr mu parameters
-    optimize_options["serr_mu_parameters"] = np.zeros(
-        shape=model.setup.nsep_mu, dtype=np.int32
-    )
-    optimize_options["l_serr_mu_parameters"] = np.zeros(
-        shape=model.setup.nsep_mu, dtype=np.float32
-    )
-    optimize_options["u_serr_mu_parameters"] = np.zeros(
-        shape=model.setup.nsep_mu, dtype=np.float32
-    )
+    optimize_options["serr_mu_parameters"] = np.zeros(shape=model.setup.nsep_mu, dtype=np.int32)
+    optimize_options["l_serr_mu_parameters"] = np.zeros(shape=model.setup.nsep_mu, dtype=np.float32)
+    optimize_options["u_serr_mu_parameters"] = np.zeros(shape=model.setup.nsep_mu, dtype=np.float32)
 
     for i, key in enumerate(model.serr_mu_parameters.keys):
         if key in optimize_options["parameters"]:
             optimize_options["serr_mu_parameters"][i] = 1
-            optimize_options["l_serr_mu_parameters"][i] = optimize_options["bounds"][
-                key
-            ][0]
-            optimize_options["u_serr_mu_parameters"][i] = optimize_options["bounds"][
-                key
-            ][1]
+            optimize_options["l_serr_mu_parameters"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_serr_mu_parameters"][i] = optimize_options["bounds"][key][1]
 
     # % serr sigma parameters
-    optimize_options["serr_sigma_parameters"] = np.zeros(
-        shape=model.setup.nsep_sigma, dtype=np.int32
-    )
-    optimize_options["l_serr_sigma_parameters"] = np.zeros(
-        shape=model.setup.nsep_sigma, dtype=np.float32
-    )
-    optimize_options["u_serr_sigma_parameters"] = np.zeros(
-        shape=model.setup.nsep_sigma, dtype=np.float32
-    )
+    optimize_options["serr_sigma_parameters"] = np.zeros(shape=model.setup.nsep_sigma, dtype=np.int32)
+    optimize_options["l_serr_sigma_parameters"] = np.zeros(shape=model.setup.nsep_sigma, dtype=np.float32)
+    optimize_options["u_serr_sigma_parameters"] = np.zeros(shape=model.setup.nsep_sigma, dtype=np.float32)
 
     for i, key in enumerate(model.serr_sigma_parameters.keys):
         if key in optimize_options["parameters"]:
             optimize_options["serr_sigma_parameters"][i] = 1
-            optimize_options["l_serr_sigma_parameters"][i] = optimize_options["bounds"][
-                key
-            ][0]
-            optimize_options["u_serr_sigma_parameters"][i] = optimize_options["bounds"][
-                key
-            ][1]
+            optimize_options["l_serr_sigma_parameters"][i] = optimize_options["bounds"][key][0]
+            optimize_options["u_serr_sigma_parameters"][i] = optimize_options["bounds"][key][1]
 
     return optimize_options
 
 
-def _standardize_simulation_cost_options_finalize(
-    model: Model, func_name: str, cost_options: dict
-) -> dict:
+def _standardize_simulation_cost_options_finalize(model: Model, func_name: str, cost_options: dict) -> dict:
     is_bayesian = "bayesian" in func_name
 
     if is_bayesian:
         cost_options["bayesian"] = True
 
-    cost_options["njoc"] = (
-        cost_options["jobs_cmpt"].size if "jobs_cmpt" in cost_options.keys() else 0
-    )
-    cost_options["njrc"] = (
-        cost_options["jreg_cmpt"].size if "jreg_cmpt" in cost_options.keys() else 0
-    )
+    cost_options["njoc"] = cost_options["jobs_cmpt"].size if "jobs_cmpt" in cost_options.keys() else 0
+    cost_options["njrc"] = cost_options["jreg_cmpt"].size if "jreg_cmpt" in cost_options.keys() else 0
 
     if any(f.startswith("E") for f in cost_options.get("jobs_cmpt", [])):
         info_event = _mask_event(model=model, **cost_options["event_seg"])
@@ -1334,9 +1261,7 @@ def _standardize_simulation_cost_options_finalize(
 
     # % end_warmup
     st = pd.Timestamp(model.setup.start_time)
-    cost_options["end_warmup"] = int(
-        (cost_options["end_warmup"] - st).total_seconds() / model.setup.dt
-    )
+    cost_options["end_warmup"] = int((cost_options["end_warmup"] - st).total_seconds() / model.setup.dt)
 
     return cost_options
 
@@ -1347,7 +1272,7 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     mask_time_step = np.zeros(shape=model.setup.ntime_step, dtype=bool)
 
     for date in return_options["time_step"]:
-        ind = int((date - st).total_seconds() / model.setup.dt)
+        ind = int((date - st).total_seconds() / model.setup.dt) - 1
         mask_time_step[ind] = True
 
     # % To pass character array to Fortran.
@@ -1371,17 +1296,13 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     )
 
     pop_keys = [
-        k
-        for k in return_options.keys()
-        if k not in ["nmts", "mask_time_step", "time_step", "fkeys", "keys"]
+        k for k in return_options.keys() if k not in ["nmts", "mask_time_step", "time_step", "fkeys", "keys"]
     ]
     for key in pop_keys:
         return_options.pop(key)
 
 
-def _standardize_default_optimize_options_args(
-    mapping: str, optimizer: str | None
-) -> AnyTuple:
+def _standardize_default_optimize_options_args(mapping: str, optimizer: str | None) -> AnyTuple:
     mapping = _standardize_simulation_mapping(mapping)
 
     optimizer = _standardize_simulation_optimizer(mapping, optimizer)
@@ -1389,7 +1310,5 @@ def _standardize_default_optimize_options_args(
     return (mapping, optimizer)
 
 
-def _standardize_default_bayesian_optimize_options_args(
-    mapping: str, optimizer: str | None
-) -> AnyTuple:
+def _standardize_default_bayesian_optimize_options_args(mapping: str, optimizer: str | None) -> AnyTuple:
     return _standardize_default_optimize_options_args(mapping, optimizer)

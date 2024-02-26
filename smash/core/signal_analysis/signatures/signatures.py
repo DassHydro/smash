@@ -1,35 +1,49 @@
 from __future__ import annotations
 
-from smash._constant import PEAK_QUANT, MAX_DURATION
-
-from smash.fcore._mwd_signatures import (
-    rc as wrap_rc,
-    rchf as wrap_rchf,
-    rclf as wrap_rclf,
-    rch2r as wrap_rch2r,
-    cfp as wrap_cfp,
-    eff as wrap_eff,
-    ebf as wrap_ebf,
-    epf as wrap_epf,
-    elt as wrap_elt,
-)
-
-from smash.core.signal_analysis.signatures._standardize import (
-    _standardize_signatures_args,
-)
-
-from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
+import warnings
+from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-import warnings
 
-from typing import TYPE_CHECKING
+from smash._constant import MAX_DURATION, PEAK_QUANT
+from smash.core.signal_analysis.segmentation._tools import _events_grad, _get_season
+from smash.core.signal_analysis.signatures._standardize import (
+    _standardize_signatures_args,
+)
+from smash.fcore._mwd_signatures import (
+    cfp as wrap_cfp,
+)
+from smash.fcore._mwd_signatures import (
+    ebf as wrap_ebf,
+)
+from smash.fcore._mwd_signatures import (
+    eff as wrap_eff,
+)
+from smash.fcore._mwd_signatures import (
+    elt as wrap_elt,
+)
+from smash.fcore._mwd_signatures import (
+    epf as wrap_epf,
+)
+from smash.fcore._mwd_signatures import (
+    rc as wrap_rc,
+)
+from smash.fcore._mwd_signatures import (
+    rch2r as wrap_rch2r,
+)
+from smash.fcore._mwd_signatures import (
+    rchf as wrap_rchf,
+)
+from smash.fcore._mwd_signatures import (
+    rclf as wrap_rclf,
+)
 
 if TYPE_CHECKING:
+    from typing import Any
+
     from smash.core.model.model import Model
     from smash.util._typing import ListLike
-    from typing import Any
 
 
 __all__ = ["Signatures", "signatures"]
@@ -67,11 +81,7 @@ class Signatures:
         if dct.keys():
             m = max(map(len, list(dct.keys()))) + 1
             return "\n".join(
-                [
-                    k.rjust(m) + ": " + repr(type(v))
-                    for k, v in sorted(dct.items())
-                    if not k.startswith("_")
-                ]
+                [k.rjust(m) + ": " + repr(type(v)) for k, v in sorted(dct.items()) if not k.startswith("_")]
             )
         else:
             return self.__class__.__name__ + "()"
@@ -83,11 +93,9 @@ def signatures(
     event_seg: dict[str, Any] | None = None,
     domain: str = "obs",
 ):
+    # % TODO FC: Add advanced user guide
     """
     Compute simulated or observed hydrological signatures of Model.
-
-    .. hint::
-        See a detailed explanation on the signatures usage in the (TODO FC: link user guide) section.
 
     Parameters
     ----------
@@ -97,8 +105,10 @@ def signatures(
     sign : `str`, `list[str, ...]` or None, default None
         Define signature(s) to compute. Should be one of
 
-        - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'`` (continuous signatures-based error metrics)
-        - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'`` (flood event signatures-based error metrics)
+        - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'``
+          (continuous signatures-based error metrics)
+        - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'``
+          (flood event signatures-based error metrics)
 
         .. note::
             If not given, all of continuous and flood event signatures will be computed.
@@ -109,8 +119,8 @@ def signatures(
 
         .. note::
             If not given, default values will be set for all elements.
-            If a specific element is not given in the dictionary, a default value will be set for that element.
-            See `smash.hydrograph_segmentation` for more.
+            If a specific element is not given in the dictionary, a default value will be set for that
+            element. See `smash.hydrograph_segmentation` for more.
 
     domain : `str`, default 'obs'
         Compute observed (``'obs'``) or simulated (``'sim'``) signatures.
@@ -205,10 +215,7 @@ def _signatures(
     **unknown_options,
 ):
     prcp_cvt = (
-        instance.atmos_data.mean_prcp
-        * 0.001
-        * instance.mesh.area_dln[..., np.newaxis]
-        / instance.setup.dt
+        instance.atmos_data.mean_prcp * 0.001 * instance.mesh.area_dln[..., np.newaxis] / instance.setup.dt
     )  # convert precip from mm to m3/s
 
     date_range = pd.date_range(
@@ -225,57 +232,36 @@ def _signatures(
 
     if len(cs) + len(es) > 0:
         for i, catchment in enumerate(instance.mesh.code):
-            prcp = prcp_cvt[
-                i, :
-            ]  # already conversion of instance.atmos_data.mean_prcp[i, :]
+            prcp = prcp_cvt[i, :]  # already conversion of instance.atmos_data.mean_prcp[i, :]
 
             suffix = "_data" if domain == "obs" else ""
             q = getattr(instance, f"response{suffix}").q[i, :].copy()
 
             if (prcp < 0).all() or (q < 0).all():
                 warnings.warn(
-                    f"Catchment {catchment} has no precipitation or/and discharge data"
+                    f"Catchment {catchment} has no precipitation or/and discharge data",
+                    stacklevel=2,
                 )
 
-                row_cs = pd.DataFrame(
-                    [[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs
-                )
-                row_es = pd.DataFrame(
-                    [[catchment] + [np.nan] * (len(col_es) - 1)], columns=col_es
-                )
+                row_cs = pd.DataFrame([[catchment] + [np.nan] * (len(col_cs) - 1)], columns=col_cs)
+                row_es = pd.DataFrame([[catchment] + [np.nan] * (len(col_es) - 1)], columns=col_es)
 
-                df_cs = (
-                    row_cs.copy()
-                    if df_cs.empty
-                    else pd.concat([df_cs, row_cs], ignore_index=True)
-                )
-                df_es = (
-                    row_es.copy()
-                    if df_es.empty
-                    else pd.concat([df_es, row_es], ignore_index=True)
-                )
+                df_cs = row_cs.copy() if df_cs.empty else pd.concat([df_cs, row_cs], ignore_index=True)
+                df_es = row_es.copy() if df_es.empty else pd.concat([df_es, row_es], ignore_index=True)
 
             else:
                 if len(cs) > 0:
-                    csignatures = [
-                        _signature_computation(prcp, q, signature) for signature in cs
-                    ]
+                    csignatures = [_signature_computation(prcp, q, signature) for signature in cs]
 
                     row_cs = pd.DataFrame([[catchment] + csignatures], columns=col_cs)
 
-                    df_cs = (
-                        row_cs.copy()
-                        if df_cs.empty
-                        else pd.concat([df_cs, row_cs], ignore_index=True)
-                    )
+                    df_cs = row_cs.copy() if df_cs.empty else pd.concat([df_cs, row_cs], ignore_index=True)
 
                 if len(es) > 0:
                     suffix = "_data" if by == "obs" else ""
                     q_seg = getattr(instance, f"response{suffix}").q[i, :].copy()
 
-                    list_events = _events_grad(
-                        prcp, q_seg, peak_quant, max_duration, instance.setup.dt
-                    )
+                    list_events = _events_grad(prcp, q_seg, peak_quant, max_duration, instance.setup.dt)
 
                     if len(list_events) == 0:
                         row_es = pd.DataFrame(
@@ -284,9 +270,7 @@ def _signatures(
                         )
 
                         df_es = (
-                            row_es.copy()
-                            if df_es.empty
-                            else pd.concat([df_es, row_es], ignore_index=True)
+                            row_es.copy() if df_es.empty else pd.concat([df_es, row_es], ignore_index=True)
                         )
 
                     else:
@@ -300,8 +284,7 @@ def _signatures(
                             season = _get_season(date_range[ts].date())
 
                             esignatures = [
-                                _signature_computation(event_prcp, event_q, signature)
-                                for signature in es
+                                _signature_computation(event_prcp, event_q, signature) for signature in es
                             ]
 
                             row_es = pd.DataFrame(

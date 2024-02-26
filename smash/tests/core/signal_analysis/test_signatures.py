@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import smash
-from smash._constant import CSIGN, ESIGN
-
 import numpy as np
 import pytest
+
+import smash
+from smash._constant import CSIGN, ESIGN
 
 
 def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
@@ -16,23 +16,13 @@ def generic_signatures(model: smash.Model, qs: np.ndarray, **kwargs) -> dict:
 
     signresult = {}
 
-    signresult["obs_by_obs"] = smash.signatures(
-        instance, domain="obs", event_seg={"by": "obs"}
-    )
-    signresult["sim_by_obs"] = smash.signatures(
-        instance, domain="sim", event_seg={"by": "obs"}
-    )
-    signresult["sim_by_sim"] = smash.signatures(
-        instance, domain="sim", event_seg={"by": "sim"}
-    )
+    signresult["obs_by_obs"] = smash.signatures(instance, domain="obs", event_seg={"by": "obs"})
+    signresult["sim_by_obs"] = smash.signatures(instance, domain="sim", event_seg={"by": "obs"})
+    signresult["sim_by_sim"] = smash.signatures(instance, domain="sim", event_seg={"by": "sim"})
 
-    for typ, sign in zip(
-        ["cont", "event"], [CSIGN, ESIGN]
-    ):  # % remove percentile signatures calculation
+    for typ, sign in zip(["cont", "event"], [CSIGN, ESIGN]):  # % remove percentile signatures calculation
         for dom in signresult.keys():
-            res[f"signatures.{typ}_{dom}"] = getattr(signresult[dom], typ)[
-                sign
-            ].to_numpy(dtype=np.float32)
+            res[f"signatures.{typ}_{dom}"] = getattr(signresult[dom], typ)[sign].to_numpy(dtype=np.float32)
 
     return res
 

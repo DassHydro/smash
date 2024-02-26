@@ -1,54 +1,56 @@
 from __future__ import annotations
 
+from typing import TYPE_CHECKING
+
+import numpy as np
+import pandas as pd
+
+from f90wrap.runtime import FortranDerivedType
 from smash._constant import (
-    STRUCTURE_RR_PARAMETERS,
-    STRUCTURE_RR_STATES,
-    STRUCTURE_ADJUST_CI,
-    DEFAULT_RR_PARAMETERS,
     DEFAULT_RR_INITIAL_STATES,
-    SERR_MU_MAPPING_PARAMETERS,
-    SERR_SIGMA_MAPPING_PARAMETERS,
+    DEFAULT_RR_PARAMETERS,
     DEFAULT_SERR_MU_PARAMETERS,
     DEFAULT_SERR_SIGMA_PARAMETERS,
+    SERR_MU_MAPPING_PARAMETERS,
+    SERR_SIGMA_MAPPING_PARAMETERS,
+    STRUCTURE_ADJUST_CI,
+    STRUCTURE_RR_PARAMETERS,
+    STRUCTURE_RR_STATES,
 )
-
 from smash.core.model._read_input_data import (
-    _read_qobs,
-    _read_prcp,
+    _read_descriptor,
     _read_pet,
+    _read_prcp,
+    _read_qobs,
     _read_snow,
     _read_temp,
-    _read_descriptor,
-)
-from smash.fcore._mwd_sparse_matrix_manipulation import (
-    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
 )
 from smash.fcore._mw_atmos_statistic import (
     compute_mean_atmos as wrap_compute_mean_atmos,
+)
+from smash.fcore._mw_atmos_statistic import (
     compute_prcp_partitioning as wrap_compute_prcp_partitioning,
 )
 from smash.fcore._mw_interception_capacity import (
     adjust_interception_capacity as wrap_adjust_interception_capacity,
 )
-
-import pandas as pd
-import numpy as np
-from f90wrap.runtime import FortranDerivedType
-
-from typing import TYPE_CHECKING
+from smash.fcore._mwd_sparse_matrix_manipulation import (
+    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
+)
 
 if TYPE_CHECKING:
-    from smash.fcore._mwd_setup import SetupDT
-    from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_input_data import Input_DataDT
-    from smash.fcore._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_output import OutputDT
+    from smash.fcore._mwd_parameters import ParametersDT
+    from smash.fcore._mwd_setup import SetupDT
+    from smash.util._typing import ListLike
 
 
 # % TODO: Move this function to a generic common function file
-def _map_dict_to_fortran_derived_type(
-    dct: dict, fdt: FortranDerivedType, skip: list = []
-):
+def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: ListLike | None = None):
+    if skip is None:
+        skip = []
     for key, value in dct.items():
         if key in skip:
             continue
@@ -120,7 +122,8 @@ def _build_parameters(
     # % "llr": lambda x, dt, dx: x * dt / 3_600
     # % ...
     # % ]
-    # % parameters.rr_parameters.values = SCALE_RR_PARAMETRS[key](DEFAULT_RR_PARAMETERS[key], setup.dt, mesh.dx)
+    # % parameters.rr_parameters.values = SCALE_RR_PARAMETRS[key](DEFAULT_RR_PARAMETERS[key], setup.dt,
+    # % mesh.dx)
     for i, key in enumerate(parameters.rr_parameters.keys):
         value = DEFAULT_RR_PARAMETERS[key]
         if key == "llr":
@@ -135,16 +138,12 @@ def _build_parameters(
         parameters.rr_initial_states.values[..., i] = value
 
     # % If structure contains ci and is at sub daily time step and if user wants the capacity to be adjusted
-    if (
-        STRUCTURE_ADJUST_CI[setup.structure]
-        and setup.dt < 86_400
-        and setup.adjust_interception
-    ):
+    if STRUCTURE_ADJUST_CI[setup.structure] and setup.dt < 86_400 and setup.adjust_interception:
         print("</> Adjusting GR interception capacity")
         # % Date
-        day_index = pd.date_range(
-            start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s"
-        )[1:].to_series()
+        day_index = pd.date_range(start=setup.start_time, end=setup.end_time, freq=f"{int(setup.dt)}s")[
+            1:
+        ].to_series()
 
         # % Date to proleptic Gregorian ordinal
         day_index = day_index.apply(lambda x: x.toordinal()).to_numpy()
@@ -164,18 +163,14 @@ def _build_parameters(
         )  # % Fortran subroutine
 
     # % Build structural error mu parameters
-    parameters.serr_mu_parameters.keys = SERR_MU_MAPPING_PARAMETERS[
-        setup.serr_mu_mapping
-    ]
+    parameters.serr_mu_parameters.keys = SERR_MU_MAPPING_PARAMETERS[setup.serr_mu_mapping]
 
     for i, key in enumerate(parameters.serr_mu_parameters.keys):
         value = DEFAULT_SERR_MU_PARAMETERS[key]
         parameters.serr_mu_parameters.values[..., i] = value
 
     # % Build structural error sigma parameters
-    parameters.serr_sigma_parameters.keys = SERR_SIGMA_MAPPING_PARAMETERS[
-        setup.serr_sigma_mapping
-    ]
+    parameters.serr_sigma_parameters.keys = SERR_SIGMA_MAPPING_PARAMETERS[setup.serr_sigma_mapping]
 
     for i, key in enumerate(parameters.serr_sigma_parameters.keys):
         value = DEFAULT_SERR_SIGMA_PARAMETERS[key]

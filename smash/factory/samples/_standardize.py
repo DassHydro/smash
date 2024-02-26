@@ -1,11 +1,11 @@
 from __future__ import annotations
 
-from smash._constant import SAMPLES_GENERATORS, PROBLEM_KEYS
-
 import warnings
+from typing import TYPE_CHECKING
+
 import numpy as np
 
-from typing import TYPE_CHECKING
+from smash._constant import PROBLEM_KEYS, SAMPLES_GENERATORS
 
 if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, Numeric
@@ -17,15 +17,14 @@ def _standardize_generate_samples_problem(problem: dict) -> dict:
         raise TypeError("problem argument must be a dictionary")
 
     if not all(k in problem.keys() for k in PROBLEM_KEYS):
-        raise KeyError(
-            f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}"
-        )
+        raise KeyError(f"Problem dictionary should be defined with required keys {PROBLEM_KEYS}")
 
     unk_keys = [k for k in problem.keys() if k not in PROBLEM_KEYS]
 
     if unk_keys:
         warnings.warn(
-            f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}"
+            f"Unknown key(s) found in the problem definition {unk_keys}. Choices: {PROBLEM_KEYS}",
+            stacklevel=2,
         )
 
     return problem
@@ -37,9 +36,7 @@ def _standardize_generate_samples_generator(problem: dict, generator: str) -> st
     generator = generator.lower()
 
     if generator not in SAMPLES_GENERATORS:
-        raise ValueError(
-            f"Unknown generator '{generator}': Choices: {SAMPLES_GENERATORS}"
-        )
+        raise ValueError(f"Unknown generator '{generator}': Choices: {SAMPLES_GENERATORS}")
 
     return generator
 
@@ -64,9 +61,7 @@ def _standardize_generate_samples_random_state(
 
     else:
         if not isinstance(random_state, (int, float)):
-            raise TypeError(
-                "random_state argument must be of Numeric type (int, float)"
-            )
+            raise TypeError("random_state argument must be of Numeric type (int, float)")
 
         random_state = int(random_state)
 
@@ -87,9 +82,11 @@ def _standardize_generate_samples_mean(problem: dict, mean: dict | None) -> dict
             raise TypeError("mean argument must be a dictionary")
 
         for name, um in mean.items():
-            if not name in problem["names"]:
+            if name not in problem["names"]:
                 warnings.warn(
-                    f"Key '{name}' does not match any existing names in the problem definition {problem['names']}"
+                    f"Key '{name}' does not match any existing names in the problem definition "
+                    f"{problem['names']}",
+                    stacklevel=2,
                 )
 
             if isinstance(um, (int, float)):
@@ -111,7 +108,7 @@ def _standardize_generate_samples_coef_std(coef_std: Numeric | None) -> float:
         if not isinstance(coef_std, (int, float)):
             raise TypeError("coef_std argument must be of Numeric type (int, float)")
 
-        coef_stf = float(coef_std)
+        coef_std = float(coef_std)
 
     return coef_std
 

@@ -1,9 +1,9 @@
 from __future__ import annotations
 
-import smash
-
 import numpy as np
 import pytest
+
+import smash
 
 
 def generic_net_init(**kwargs):
@@ -51,7 +51,7 @@ def generic_net_init(**kwargs):
         random_state=11,
     )  # % TODO: change this when net.fit_xx available
 
-    graph = np.array([l.layer_name() for l in net.layers]).astype("S")
+    graph = np.array([layer.layer_name() for layer in net.layers]).astype("S")
 
     res["net_init.graph"] = graph
 

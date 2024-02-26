@@ -1,18 +1,18 @@
 from __future__ import annotations
 
-from smash.core.simulation.run.run import _forward_run
-
-from tqdm import tqdm
-import numpy as np
-from scipy.stats import gaussian_kde
-
 from typing import TYPE_CHECKING
 
+import numpy as np
+from scipy.stats import gaussian_kde
+from tqdm import tqdm
+
+from smash.core.simulation.run.run import _forward_run
+
 if TYPE_CHECKING:
-    from smash.util._typing import AnyTuple
     from smash.core.model.model import Model
-    from smash.factory.samples.samples import Samples
     from smash.core.simulation.run.run import ForwardRun
+    from smash.factory.samples.samples import Samples
+    from smash.util._typing import AnyTuple
 
 
 def _compute_density(
@@ -48,9 +48,7 @@ def _compute_density(
                     if np.allclose(unf_optim_param, unf_optim_param[0]):
                         estimted_density = np.ones(unf_optim_param.shape)
                     else:
-                        estimted_density = gaussian_kde(unf_optim_param)(
-                            unf_optim_param
-                        )
+                        estimted_density = gaussian_kde(unf_optim_param)(unf_optim_param)
 
                     density[p][mask] *= estimted_density  # compute joint-probability
 
@@ -63,9 +61,7 @@ def _compute_density(
                     if np.allclose(unf_optim_param_ij, unf_optim_param_ij[0]):
                         estimted_density = np.ones(unf_optim_param_ij.shape)
                     else:
-                        estimted_density = gaussian_kde(unf_optim_param_ij)(
-                            unf_optim_param_ij
-                        )
+                        estimted_density = gaussian_kde(unf_optim_param_ij)(unf_optim_param_ij)
 
                     density[p][i, j] *= estimted_density  # compute joint-probability
 
@@ -91,9 +87,7 @@ def _estimate_parameter(
     estim_param = 1 / sum_weighting * np.sum(prior_data * weighting, axis=2)  # 2D-array
 
     var_param = (
-        1
-        / sum_weighting
-        * np.sum((prior_data - estim_param[..., np.newaxis]) ** 2 * weighting, axis=2)
+        1 / sum_weighting * np.sum((prior_data - estim_param[..., np.newaxis]) ** 2 * weighting, axis=2)
     )  # 2D-array
     var_param = np.mean(var_param)
 
@@ -117,9 +111,7 @@ def _forward_run_with_estimated_parameters(
     mahal_distance = 0
 
     for p in prior_data.keys():
-        param_p, distance_p = _estimate_parameter(
-            prior_data[p], cost, density[p], alpha
-        )
+        param_p, distance_p = _estimate_parameter(prior_data[p], cost, density[p], alpha)
 
         if p in model.rr_parameters.keys:
             model.set_rr_parameters(p, param_p)

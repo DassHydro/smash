@@ -66,6 +66,8 @@ tapenade/*~
 
 # Temporary files
 tmp*
+*.kate-swp
 
 # Documentation files
 doc/source/api_reference/**/smash
+doc/*-dataset

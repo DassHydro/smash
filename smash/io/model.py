@@ -1,13 +1,20 @@
 from __future__ import annotations
 
+import errno
+import os
+from typing import TYPE_CHECKING
+
+import h5py
+import numpy as np
+
 import smash
-
-from smash.fcore._mwd_setup import SetupDT
-from smash.fcore._mwd_mesh import MeshDT
+from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
 from smash.fcore._mwd_input_data import Input_DataDT
-from smash.fcore._mwd_parameters import ParametersDT
+from smash.fcore._mwd_mesh import MeshDT
 from smash.fcore._mwd_output import OutputDT
-
+from smash.fcore._mwd_parameters import ParametersDT
+from smash.fcore._mwd_setup import SetupDT
+from smash.io._error import ReadHDF5MethodError
 from smash.io.handler._hdf5_handler import (
     _dump_model,
     _load_hdf5_dataset_to_npndarray,
@@ -15,19 +22,10 @@ from smash.io.handler._hdf5_handler import (
     _map_hdf5_to_fortran_derived_type,
     _map_hdf5_to_fortran_derived_type_array,
 )
-from smash.io._error import ReadHDF5MethodError
-
-import numpy as np
-import os
-import errno
-import h5py
-from f90wrap.runtime import FortranDerivedType, FortranDerivedTypeArray
-
-from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from smash.util._typing import FilePath
     from smash.core.model.model import Model
+    from smash.util._typing import FilePath
 
 __all__ = ["save_model", "read_model"]
 
@@ -42,7 +40,8 @@ def save_model(model: Model, path: FilePath):
         The Model object to be saved to `HDF5 <https://www.hdfgroup.org/solutions/hdf5/>`__ file.
 
     path : `str`
-        The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file path.
+        The file path. If the path not end with ``.hdf5``, the extension is automatically added to the file
+        path.
 
     See Also
     --------
@@ -170,7 +169,7 @@ def read_model(path: FilePath) -> Model:
                     continue
                 try:
                     value = getattr(model, attr)
-                except:
+                except Exception:
                     pass
 
                 if isinstance(value, FortranDerivedType):
@@ -198,7 +197,8 @@ def read_model(path: FilePath) -> Model:
 
         else:
             raise ReadHDF5MethodError(
-                f"Unable to read '{path}' with 'read_model' method. The file may not have been created with 'save_model' method."
+                f"Unable to read '{path}' with 'read_model' method. The file may not have been created with "
+                f"'save_model' method."
             )
 
     return model

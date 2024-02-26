@@ -130,6 +130,15 @@ test-coverage:
 test-baseline:
 	cd $(TESTS_DIR) ; python3 gen_baseline.py $(args)
 
+#% Format Python files with ruff and Fortran files with fprettify
+format:
+	ruff format
+	fprettify -e forward_db.f90 -e f90wrap -f .f90 --indent 4 -r smash
+
+#% Check Python files with ruff linters
+check:
+	ruff check --fix --exit-non-zero-on-fix
+
 #% Clean
 clean:
 	@rm -rf $(EXT_DIR)
@@ -142,7 +151,8 @@ clean:
 	@rm -rf $(MESH_DIR)/_$(MESH_SHARED_LIB)*.so
 	@rm -rf build
 
-.PHONY: all dbg directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-mesh library library-edit finalize tap tap-cmp doc doc-clean test test-baseline clean
+.PHONY: all dbg directories dependencies c f77 f90 f90wrap f2py-f90wrap f2py-mesh library library-edit finalize
+.PHONY: tap tap-cmp doc doc-clean test test-baseline format check clean
 
 #% Include 'c' 'f77' and 'f90' targets
 include makefile.dep

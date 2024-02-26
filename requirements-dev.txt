@@ -14,5 +14,5 @@ pytest
 pytest-cov
 
 # format
-black
+ruff
 fprettify

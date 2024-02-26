@@ -1,8 +1,8 @@
 from __future__ import annotations
 
-from smash._constant import DOMAIN
-
 from typing import TYPE_CHECKING
+
+from smash._constant import DOMAIN
 
 if TYPE_CHECKING:
     from smash.util._typing import AnyTuple, Numeric
@@ -42,14 +42,12 @@ def _standardize_hydrograph_segmentation_by(by: str) -> str:
         else:
             raise ValueError(f"Unknown by argument {by}. Choices: {DOMAIN}")
     else:
-        raise TypeError(f"by argument must be str")
+        raise TypeError("by argument must be str")
 
     return by_standardized
 
 
-def _standardize_hydrograph_segmentation_args(
-    peak_quant: float, max_duration: Numeric, by: str
-) -> AnyTuple:
+def _standardize_hydrograph_segmentation_args(peak_quant: float, max_duration: Numeric, by: str) -> AnyTuple:
     peak_quant = _standardize_hydrograph_segmentation_peak_quant(peak_quant)
 
     max_duration = _standardize_hydrograph_segmentation_max_duration(max_duration)

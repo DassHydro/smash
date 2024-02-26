@@ -120,4 +120,6 @@ For a brief user guide to get started with `smash`, you can refer to the ``Quick
 
 For detailed descriptions of the `smash` API, you can visit the :ref:`API Reference <api_reference>` section.
 
-Additionally, if you're interested in the mathematical and numerical documentation of the hydrological model operators and the optimization problems, you can refer to the :ref:`Math/Num Documentation <math_num_documentation>` section.
+Additionally, if you're interested in the mathematical and numerical documentation of the hydrological model
+operators and the tools for its calibration, including optimization tools, you can refer to the
+:ref:`Math/Num Documentation <math_num_documentation>` section.

@@ -1,10 +1,9 @@
 from __future__ import annotations
 
-import smash
-
-from smash._constant import DATASET_NAME
-
 import pytest
+
+import smash
+from smash._constant import DATASET_NAME
 
 
 def test_load_dataset(**kwargs):
@@ -12,5 +11,5 @@ def test_load_dataset(**kwargs):
     for name in DATASET_NAME:
         try:
             smash.factory.load_dataset(name)
-        except:
+        except Exception:
             pytest.fail(f"load_dataset.{name}")

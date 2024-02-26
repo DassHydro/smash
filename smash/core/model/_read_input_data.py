@@ -1,26 +1,25 @@
 from __future__ import annotations
 
-from smash._constant import RATIO_PET_HOURLY
+import glob
+import re
+import warnings
+from typing import TYPE_CHECKING
 
+import numpy as np
+import pandas as pd
+from osgeo import gdal
+from tqdm import tqdm
+
+from smash._constant import RATIO_PET_HOURLY
 from smash.fcore._mwd_sparse_matrix_manipulation import (
     matrix_to_sparse_matrix as wrap_matrix_to_sparse_matrix,
 )
 
-import warnings
-import glob
-from tqdm import tqdm
-import pandas as pd
-import numpy as np
-from osgeo import gdal
-import re
-
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
-    from smash.util._typing import ListLike, FilePath
-    from smash.fcore._mwd_setup import SetupDT
-    from smash.fcore._mwd_mesh import MeshDT
     from smash.fcore._mwd_input_data import Input_DataDT
+    from smash.fcore._mwd_mesh import MeshDT
+    from smash.fcore._mwd_setup import SetupDT
+    from smash.util._typing import FilePath, ListLike
 
 
 def _get_date_regex_pattern(dt: float, daily_interannual: bool) -> str:
@@ -74,9 +73,7 @@ def _get_atmos_files(
 
     files = []
     for date_strftime_access in date_range_strftime_access:
-        files.extend(
-            glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True)
-        )
+        files.extend(glob.glob(f"{dir}/{date_strftime_access}/**/*{fmt}", recursive=True))
 
     files = sorted(files)
 
@@ -134,36 +131,38 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             dat = pd.read_csv(f[0])
             try:
                 file_start_time = pd.Timestamp(dat.columns[0])
-            except:
+            except Exception:
                 raise ValueError(
-                    f"Column header '{dat.columns[0]}' in the observed discharge file for catchment '{c}' is not a valid date"
-                )
+                    f"Column header '{dat.columns[0]}' in the observed discharge file for catchment '{c}' "
+                    f"is not a valid date"
+                ) from None
 
             file_end_time = file_start_time + pd.Timedelta(seconds=setup.dt * len(dat))
-            start_diff = (
-                int((start_time - file_start_time).total_seconds() / setup.dt) + 1
-            )
+            start_diff = int((start_time - file_start_time).total_seconds() / setup.dt) + 1
             end_diff = int((end_time - file_start_time).total_seconds() / setup.dt) + 1
 
             # % Check if observed discharge file contains data for corresponding simulation period
             if start_time > file_end_time or end_time < file_start_time:
-                raise ValueError(
-                    f"The provided observed discharge file for catchment '{c}' does not contain data for the selected simulation period ['{start_time}', '{end_time}']. The file covers the period ['{file_start_time}', '{file_end_time}']"
+                warnings.warn(
+                    f"The provided observed discharge file for catchment '{c}' does not contain data for the "
+                    f"selected simulation period ['{start_time}', '{end_time}']. The file covers the period "
+                    f"['{file_start_time}', '{file_end_time}']",
+                    stacklevel=2,
                 )
+            else:
+                ind_start_dat = max(0, start_diff)
+                ind_end_dat = min(dat.index.max(), end_diff)
+                ind_start_arr = max(0, -start_diff)
+                ind_end_arr = ind_start_arr + ind_end_dat - ind_start_dat
 
-            ind_start_dat = max(0, start_diff)
-            ind_end_dat = min(dat.index.max(), end_diff)
-            ind_start_arr = max(0, -start_diff)
-            ind_end_arr = ind_start_arr + ind_end_dat - ind_start_dat
-
-            input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
-                ind_start_dat:ind_end_dat, 0
-            ]
+                input_data.response_data.q[i, ind_start_arr:ind_end_arr] = dat.iloc[
+                    ind_start_dat:ind_end_dat, 0
+                ]
         else:
             miss.append(c)
 
     if miss:
-        warnings.warn(f"Missing {len(miss)} observed discharge file(s): {miss}")
+        warnings.warn(f"Missing {len(miss)} observed discharge file(s): {miss}", stacklevel=2)
 
 
 # TODO: Refactorize each read atmos
@@ -176,9 +175,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     miss = []
 
     if setup.prcp_format == "tif":
-        files = _get_atmos_files(
-            setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range
-        )
+        files = _get_atmos_files(setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading precipitation")):
             ind = _find_index_files_containing_date(files, date, setup.dt)
@@ -186,9 +183,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             if ind == -1:
                 miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
-                    matrix = np.zeros(
-                        shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
-                    )
+                    matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     matrix.fill(np.float32(-99))
                     wrap_matrix_to_sparse_matrix(
                         mesh,
@@ -201,10 +196,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     input_data.atmos_data.prcp[..., i] = np.float32(-99)
 
             else:
-                matrix = (
-                    _read_windowed_raster(files[ind], mesh)
-                    * setup.prcp_conversion_factor
-                )
+                matrix = _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
 
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
@@ -224,7 +216,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         raise NotImplementedError("NetCDF format not implemented yet")
 
     if miss:
-        warnings.warn(f"Missing {len(miss)} precipitation file(s) for date(s): {miss}")
+        warnings.warn(
+            f"Missing {len(miss)} precipitation file(s) for date(s): {miss}",
+            stacklevel=2,
+        )
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -245,12 +240,8 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         )
 
         if setup.daily_interannual_pet:
-            leap_year_days = pd.date_range(
-                start="202001010000", end="202012310000", freq="1D"
-            )
-            step_offset = int(
-                (date_range[0] - date_range[0].floor("D")).total_seconds() / setup.dt
-            )
+            leap_year_days = pd.date_range(start="202001010000", end="202012310000", freq="1D")
+            step_offset = int((date_range[0] - date_range[0].floor("D")).total_seconds() / setup.dt)
             nstep_per_day = int(86_400 / setup.dt)
             hourly_ratio = 3_600 / setup.dt
 
@@ -258,22 +249,14 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 ratio = np.repeat(RATIO_PET_HOURLY, hourly_ratio) / hourly_ratio
 
             else:
-                ratio = np.sum(
-                    RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1
-                )
+                ratio = np.sum(RATIO_PET_HOURLY.reshape(-1, int(1 / hourly_ratio)), axis=1)
 
-            matrix_dip = np.zeros(
-                shape=(mesh.nrow, mesh.ncol, len(leap_year_days)), dtype=np.float32
-            )
+            matrix_dip = np.zeros(shape=(mesh.nrow, mesh.ncol, len(leap_year_days)), dtype=np.float32)
             missing_day = np.empty(shape=0, dtype=np.int32)
 
-            for i, day in enumerate(
-                tqdm(leap_year_days, desc="</> Reading daily interannual pet")
-            ):
+            for i, day in enumerate(tqdm(leap_year_days, desc="</> Reading daily interannual pet")):
                 if day.day_of_year in date_range.day_of_year:
-                    ind = _find_index_files_containing_date(
-                        files, day, setup.dt, setup.daily_interannual_pet
-                    )
+                    ind = _find_index_files_containing_date(files, day, setup.dt, setup.daily_interannual_pet)
 
                     if ind == -1:
                         miss.append(day.strftime("%m-%d"))
@@ -281,23 +264,18 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
                     else:
                         matrix_dip[..., i] = (
-                            _read_windowed_raster(files[ind], mesh)
-                            * setup.pet_conversion_factor
+                            _read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
                         )
 
                         files = files[ind + 1 :]
 
-            for i, date in enumerate(
-                tqdm(date_range, desc="</> Disaggregating daily interannual pet")
-            ):
+            for i, date in enumerate(tqdm(date_range, desc="</> Disaggregating daily interannual pet")):
                 day = date.day_of_year
                 ratio_ind = (i + step_offset) % nstep_per_day
 
                 if day in missing_day:
                     if setup.sparse_storage:
-                        matrix = np.zeros(
-                            shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
-                        )
+                        matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                         matrix.fill(np.float32(-99))
                         wrap_matrix_to_sparse_matrix(
                             mesh,
@@ -322,16 +300,12 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
         else:
             for i, date in enumerate(tqdm(date_range, desc="</> Reading pet")):
-                ind = _find_index_files_containing_date(
-                    files, date, setup.dt, setup.daily_interannual_pet
-                )
+                ind = _find_index_files_containing_date(files, date, setup.dt, setup.daily_interannual_pet)
 
                 if ind == -1:
                     miss.append(date.strftime("%Y-%m-%d %H:%M"))
                     if setup.sparse_storage:
-                        matrix = np.zeros(
-                            shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
-                        )
+                        matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                         matrix.fill(np.float32(-99))
                         wrap_matrix_to_sparse_matrix(
                             mesh,
@@ -344,10 +318,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         input_data.atmos_data.pet[..., i] = np.float32(-99)
 
                 else:
-                    matrix = (
-                        _read_windowed_raster(files[ind], mesh)
-                        * setup.pet_conversion_factor
-                    )
+                    matrix = _read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
 
                     if setup.sparse_storage:
                         wrap_matrix_to_sparse_matrix(
@@ -368,7 +339,10 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
 
     if miss:
         pet_kind = "daily interannual" if setup.daily_interannual_pet else ""
-        warnings.warn(f"Missing {len(miss)} {pet_kind} pet file(s) for date(s): {miss}")
+        warnings.warn(
+            f"Missing {len(miss)} {pet_kind} pet file(s) for date(s): {miss}",
+            stacklevel=2,
+        )
 
 
 def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -380,9 +354,7 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     miss = []
 
     if setup.snow_format == "tif":
-        files = _get_atmos_files(
-            setup.snow_directory, setup.snow_format, setup.snow_access, date_range
-        )
+        files = _get_atmos_files(setup.snow_directory, setup.snow_format, setup.snow_access, date_range)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading snow")):
             ind = _find_index_files_containing_date(files, date, setup.dt)
@@ -390,9 +362,7 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             if ind == -1:
                 miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
-                    matrix = np.zeros(
-                        shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
-                    )
+                    matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     matrix.fill(np.float32(-99))
                     wrap_matrix_to_sparse_matrix(
                         mesh,
@@ -405,10 +375,7 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     input_data.atmos_data.snow[..., i] = np.float32(-99)
 
             else:
-                matrix = (
-                    _read_windowed_raster(files[ind], mesh)
-                    * setup.snow_conversion_factor
-                )
+                matrix = _read_windowed_raster(files[ind], mesh) * setup.snow_conversion_factor
 
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
@@ -428,7 +395,7 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         raise NotImplementedError("NetCDF format not implemented yet")
 
     if miss:
-        warnings.warn(f"Missing {len(miss)} snow file(s) for date(s): {miss}")
+        warnings.warn(f"Missing {len(miss)} snow file(s) for date(s): {miss}", stacklevel=2)
 
 
 def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -440,9 +407,7 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     miss = []
 
     if setup.temp_format == "tif":
-        files = _get_atmos_files(
-            setup.temp_directory, setup.temp_format, setup.temp_access, date_range
-        )
+        files = _get_atmos_files(setup.temp_directory, setup.temp_format, setup.temp_access, date_range)
 
         for i, date in enumerate(tqdm(date_range, desc="</> Reading temperature")):
             ind = _find_index_files_containing_date(files, date, setup.dt)
@@ -450,9 +415,7 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             if ind == -1:
                 miss.append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
-                    matrix = np.zeros(
-                        shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F"
-                    )
+                    matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     # We can assume that -99 is too cold
                     matrix.fill(np.float32(-99))
                     wrap_matrix_to_sparse_matrix(
@@ -486,7 +449,7 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         raise NotImplementedError("NetCDF format not implemented yet")
 
     if miss:
-        warnings.warn(f"Missing {len(miss)} temperature file(s) for date(s): {miss}")
+        warnings.warn(f"Missing {len(miss)} temperature file(s) for date(s): {miss}", stacklevel=2)
 
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -501,23 +464,15 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             miss.append(name)
 
         else:
-            input_data.physio_data.descriptor[..., i] = _read_windowed_raster(
-                path[0], mesh
-            )
-            input_data.physio_data.l_descriptor[i] = np.min(
-                input_data.physio_data.descriptor[..., i]
-            )
-            input_data.physio_data.u_descriptor[i] = np.max(
-                input_data.physio_data.descriptor[..., i]
-            )
+            input_data.physio_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
+            input_data.physio_data.l_descriptor[i] = np.min(input_data.physio_data.descriptor[..., i])
+            input_data.physio_data.u_descriptor[i] = np.max(input_data.physio_data.descriptor[..., i])
             # % Check if descriptors are uniform
-            if (
-                input_data.physio_data.l_descriptor[i]
-                == input_data.physio_data.u_descriptor[i]
-            ):
+            if input_data.physio_data.l_descriptor[i] == input_data.physio_data.u_descriptor[i]:
                 raise ValueError(
-                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform optimization"
+                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform "
+                    f"optimization"
                 )
 
     if miss:
-        warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}")
+        warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}", stacklevel=2)

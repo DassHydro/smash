@@ -1,8 +1,8 @@
-.. _math_num_documentation.signal_analysis.hydrological_signatures:
+.. _math_num_documentation.hydrological_signature:
 
-=======================
-Hydrological signatures
-=======================
+======================
+Hydrological Signature
+======================
 
 Several signatures describing and quantifying properties of discharge time series are introduced 
 in view to analyze and calibrate hydrological models :cite:p:`westerberg2015uncertainty`.
@@ -12,7 +12,7 @@ flow dynamics (based for instance on base-flow separation :cite:p:`nathan1990eva
 flow timing, etc.. A so-called continuous signature is a signature that can be computed on the whole study period.
 Flood event signatures on the other hand focus on the behavior of the high flows 
 that are observed in the flood events. 
-These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.signal_analysis.hydrograph_segmentation>`.
+These flood event signatures are calculated via a proposed segmentation algorithm as depicted in :ref:`Hydrograph segmentation <math_num_documentation.hydrograph_segmentation>`.
 
 Denote :math:`P(t)` and :math:`Q(t)` are the rainfall and runoff at time :math:`t\in\mathbf{U}`, where :math:`\mathbf{U}` is the study period. 
 Then :math:`Qb(t)` and :math:`Qq(t)` are the baseflow and quickflow computed using a classical technique for streamflow separation 
@@ -113,26 +113,21 @@ are given in the table below.
 
 where :math:`dt` is the timestep.
 
-Next we are interested in investigating the simulation uncertainty, in term
-of signatures, depending on the input parameters of the model. Let us consider
-the :math:`m`-parameters set of the model :math:`\theta=(x_{1},...,x_{m})`. 
-Then a signature type :math:`i` is represented as :math:`S_{i}=f_i(\theta)`. We are interested at
-several variance-based sensitivity indices (Sobol indices), called first-order and total-order indices.
-The first- (depending on :math:`x_{j}`), and the total-order (depending on :math:`x_{\sim j}`, 
-i.e. all parameters except :math:`x_{j}`) Sobol indices of the simulated signature :math:`S_{i}` are 
-respectively defined as follows:
+Now, denote :math:`S_s^*` and :math:`S_s` are observed and simulated signature type respectively. For each signature type :math:`s`,
+the corresponding signature based efficiency metric is computed depending on if the signature is:
 
-.. math ::
+- continuous signature:
 
-    s_{i}^{1j}=\frac{\mathbb{\mathbb{V}}[\mathbb{E}[S_{i}|x_{j}]]}{\mathbb{\mathbb{V}}[S_{i}]}
+.. math::
 
-and:
+    j_s = \left(\frac{S_{s}}{S_{s}^{*}}-1\right)^2
 
-.. math ::
+- flood event signature:
 
-    s_{i}^{1 \sim j}=\frac{\mathbb{\mathbb{E}}[\mathbb{V}[S_{i}|x_{\sim j}]]}{\mathbb{\mathbb{V}}[S_{i}]}=1-\frac{\mathbb{\mathbb{V}}[\mathbb{E}[S_{i}|x_{\sim j}]]}{\mathbb{\mathbb{V}}[S_{i}]}.
+.. math::
 
-In such a way, :cite:`azzini2021comparison` proposed a method to estimate
-these indices on parameter sets of Monte-Carlo simulations
-via Saltelli generator :cite:p:`saltelli2002making`, which is implemented in the `SALib <https://salib.readthedocs.io>`__ Python library 
-:cite:p:`Iwanaga2022, Herman2017`.
+    j_{s} = \frac{1}{N_E}\sum_{e=1}^{N_{E}}\left(\frac{S_{s_e}}{S_{s_e}^{*}}-1\right)^2
+
+where :math:`S_{s_e},S_{s_e}^{*}` are the simulated and observed signature of event number :math:`e\in\left[1..N_{E}\right]`.
+
+

@@ -1,7 +1,6 @@
-from smash.factory.mesh.mesh import generate_mesh
-from smash.io.mesh.mesh import save_mesh
-
 from smash.factory.dataset.dataset import load_dataset
+from smash.factory.mesh.mesh import generate_mesh
+from smash.io.mesh import save_mesh
 
 flwdir = load_dataset("flwdir")
 

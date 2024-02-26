@@ -3,8 +3,8 @@ from __future__ import annotations
 from textwrap import dedent
 
 from smash._constant import (
-    DEFAULT_SIMULATION_COST_OPTIONS,
     DEFAULT_SIMULATION_COMMON_OPTIONS,
+    DEFAULT_SIMULATION_COST_OPTIONS,
     DEFAULT_SIMULATION_RETURN_OPTIONS,
 )
 from smash.util._doctools import DocAppender, DocSubstitution
@@ -36,7 +36,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, all parameters in `Model.rr_parameters`%(parameters_note_serr_parameters)s will be optimized.
+            If not given, all parameters in `Model.rr_parameters`%(parameters_note_serr_parameters)s will be
+            optimized.
         """,
     ),
     "bounds": (
@@ -44,21 +45,23 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `dict[str, tuple[float, float]]` or None, default None
         """,
         """
-        Bounds on optimized parameters. A dictionary where the keys represent parameter names, and the values are pairs of ``(min, max)`` 
-        values (i.e., a list or tuple) with ``min`` lower than ``max``. The keys must be included in **parameters**.
+        Bounds on optimized parameters. A dictionary where the keys represent parameter names, and the values
+        are pairs of ``(min, max)`` values (i.e., a list or tuple) with ``min`` lower than ``max``. The keys
+        must be included in **parameters**.
 
         >>> optimize_options = {
             "bounds": {
                 "cp": (1, 2000),
                 "ct": (1, 1000),
-                "kexc": (-10, 5), 
+                "kexc": (-10, 5)
                 "llr": (1, 1000)
             },
         }
 
         .. note::
-            If not given, default bounds will be applied to each parameter. 
-            See `Model.get_rr_parameters_bounds`, `Model.get_rr_initial_states_bounds`%(bounds_get_serr_parameters_bounds)s
+            If not given, default bounds will be applied to each parameter.
+            See `Model.get_rr_parameters_bounds`,
+            `Model.get_rr_initial_states_bounds`%(bounds_get_serr_parameters_bounds)s
         """,
     ),
     "control_tfm": (
@@ -67,7 +70,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         """,
         """
         Transformation method applied to the control vector. Should be one of:
-        
+
         - ``'keep'`` (all **optimizer**)
         - ``'normalize'`` (``'sbs'`` or ``'lbfgsb'`` **optimizer** only)
         - ``'sbs'`` (``'sbs'`` **optimizer** only)
@@ -78,9 +81,6 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
             - **optimizer** = ``'sbs'``; **control_tfm** = ``'sbs'``
             - **optimizer** = ``'lbfgsb'``; **control_tfm** = ``'normalize'``
             - **optimizer** = ``'ann'``; **control_tfm** = ``'keep'``
-
-        .. hint::
-            See a detailed explanation on the control vector transformation in (TODO FC: link Math/Num) section.
         """,
     ),
     "descriptor": (
@@ -88,8 +88,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `dict[str, list[str, ...]]` or None, default None
         """,
         """
-        Descriptors linked to optimized parameters. A dictionary where the keys represent parameter names, and the values are list of descriptor names.
-        The keys must be included in **parameters**.
+        Descriptors linked to optimized parameters. A dictionary where the keys represent parameter names, and
+        the values are list of descriptor names. The keys must be included in **parameters**.
 
         >>> optimize_options = {
             "descriptor": {
@@ -102,7 +102,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
 
         .. note::
             If not given, all descriptors will be used for each parameter.
-            This option is only be used when **mapping** is ``'multi-linear'`` or ``'multi-polynomial'``. In case of ``'ann'``, all descriptors will be used.
+            This option is only be used when **mapping** is ``'multi-linear'`` or ``'multi-polynomial'``.
+            In case of ``'ann'``, all descriptors will be used.
         """,
     ),
     "net": (
@@ -111,10 +112,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         """,
         """
         The neural network used to learn the descriptors-to-parameters mapping.
-        
+
         .. note::
-            If not given, a default neural network will be used. This option is only used when **mapping** is ``'ann'``.
-            See `Net <smash.factory.Net>` to learn how to create a customized neural network for training.
+            If not given, a default neural network will be used. This option is only used when **mapping** is
+            ``'ann'``. See `Net <smash.factory.Net>` to learn how to create a customized neural network for
+            training.
         """,
     ),
     "learning_rate": (
@@ -125,7 +127,8 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         The learning rate used for weight updates during training.
 
         .. note::
-            If not given, a default learning rate will be used. This option is only used when **mapping** is ``'ann'``.
+            If not given, a default learning rate will be used. This option is only used when **mapping** is
+            ``'ann'``.
         """,
     ),
     "random_state": (
@@ -133,10 +136,11 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `int` or None, default None
         """,
         """
-        A random seed used to initialize neural network weights. 
-        
+        A random seed used to initialize neural network weights.
+
         .. note::
-            If not given, the weights will be initialized with a random seed. This options is only used when **mapping** is ``'ann'``.
+            If not given, the weights will be initialized with a random seed. This options is only used when
+            **mapping** is ``'ann'``.
         """,
     ),
     "termination_crit": (
@@ -146,12 +150,19 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         """
         Termination criteria. The elements are:
 
-        - ``'maxiter'``: The maximum number of iterations. Only used when **optimizer** is ``'sbs'`` or ``'lbfgsb'``.
-        - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer** is ``'lbfgsb'``.
-        - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost function. Only used when **optimizer** is ``'lbfgsb'``.
-        - ``'epochs'``: The number of training epochs for the neural network. Only used when **mapping** is ``'ann'``.
-        - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early stopping is disabled, and the training continues for the full number of epochs. Only used when **mapping** is ``'ann'``.
-        
+        - ``'maxiter'``: The maximum number of iterations. Only used when **optimizer** is ``'sbs'`` or
+          ``'lbfgsb'``.
+        - ``'factr'``: An additional termination criterion based on cost values. Only used when **optimizer**
+          is ``'lbfgsb'``.
+        - ``'pgtol'``: An additional termination criterion based on the projected gradient of the cost
+          function. Only used when **optimizer** is ``'lbfgsb'``.
+        - ``'epochs'``: The number of training epochs for the neural network. Only used when **mapping** is
+          ``'ann'``.
+        - ``'early_stopping'``: A positive number to stop training when the loss function does not decrease
+          below the current optimal value for **early_stopping** consecutive epochs. When set to zero, early
+          stopping is disabled, and the training continues for the full number of epochs. Only used when
+          **mapping** is ``'ann'``.
+
         >>> optimize_options = {
             "termination_crit": {
                 "maxiter": 10,
@@ -178,9 +189,12 @@ COST_OPTIONS_BASE_DOC = {
         """
         Type of observation objective function(s) to be computed. Should be one or a sequence of any of
 
-        - ``'nse'``, ``'nnse'``, ``'kge'``, ``'mae'``, ``'mape'``, ``'mse'``, ``'rmse'``, ``'lgrm'`` (classical evaluation metrics)
-        - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'`` (continuous signatures-based error metrics)
-        - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'`` (flood event signatures-based error metrics)
+        - ``'nse'``, ``'nnse'``, ``'kge'``, ``'mae'``, ``'mape'``, ``'mse'``, ``'rmse'``, ``'lgrm'``
+          (classical evaluation metrics)
+        - ``'Crc'``, ``'Crchf'``, ``'Crclf'``, ``'Crch2r'``, ``'Cfp2'``, ``'Cfp10'``, ``'Cfp50'``, ``'Cfp90'``
+          (continuous signatures-based error metrics)
+        - ``'Eff'``, ``'Ebf'``, ``'Erc'``, ``'Erchf'``, ``'Erclf'``, ``'Erch2r'``, ``'Elt'``, ``'Epf'``
+          (flood event signatures-based error metrics)
 
         >>> cost_options = {
             "jobs_cmpt": "nse",
@@ -190,7 +204,8 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the objective function in :ref:`Math / Num Documentation <math_num_documentation.signal_analysis.cost_functions>` section.
+            See the :ref:`math_num_documentation.efficiency_error_metric` and
+            :ref:`math_num_documentation.hydrological_signature` sections
         """,
     ),
     "jobs_cmpt_tfm": (
@@ -198,10 +213,11 @@ COST_OPTIONS_BASE_DOC = {
         `str` or `list[str, ...]`, default 'keep'
         """,
         """
-        Type of transformation applied to discharge in observation objective function(s). Should be one or a sequence of any of
+        Type of transformation applied to discharge in observation objective function(s). Should be one or a
+        sequence of any of
 
         - ``'keep'`` : No transformation :math:`f:x \\rightarrow x`
-        - ``'sqrt'`` : Square root transformation :math:`f:x \\rightarrow \sqrt{x}`
+        - ``'sqrt'`` : Square root transformation :math:`f:x \\rightarrow \\sqrt{x}`
         - ``'inv'`` : Multiplicative inverse transformation :math:`f:x \\rightarrow \\frac{1}{x}`
 
         >>> cost_options = {
@@ -212,8 +228,8 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If **jobs_cmpt** is a multi-criteria and only one transformation is choosen in **jobs_cmpt_tfm**. The transformation will be applied to each 
-            observation objective function.
+            If **jobs_cmpt** is a multi-criteria and only one transformation is choosen in **jobs_cmpt_tfm**.
+            The transformation will be applied to each observation objective function.
         """,
     ),
     "wjobs_cmpt": (
@@ -221,11 +237,12 @@ COST_OPTIONS_BASE_DOC = {
         `str` or `list[float, ...]`, default 'mean'
         """,
         """
-        The corresponding weighting of observation objective functions in case of multi-criteria 
+        The corresponding weighting of observation objective functions in case of multi-criteria
         (i.e., a sequence of objective functions to compute). There are two ways to specify it:
 
         - An alias among ``'mean'``
-        - A sequence of value whose size must be equal to the number of observation objective function(s) in **jobs_cmpt**
+        - A sequence of value whose size must be equal to the number of observation objective function(s) in
+          **jobs_cmpt**
 
         >>> cost_options = {
             "wjobs_cmpt": "mean",
@@ -253,7 +270,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the weighting of regularization term in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.cost_function.regularization_weighting_coefficient` section
         """,
     ),
     "jreg_cmpt": (
@@ -261,7 +278,8 @@ COST_OPTIONS_BASE_DOC = {
         `str` or `list[str, ...]`, default 'prior'
         """,
         """
-        Type(s) of regularization function(s) to be minimized when regularization term is set (i.e., **wjreg** > 0). Should be one or a sequence of any of
+        Type(s) of regularization function(s) to be minimized when regularization term is set (i.e.,**wjreg**
+        > 0). Should be one or a sequence of any of
 
         - ``'prior'``
         - ``'smoothing'``
@@ -275,7 +293,7 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See a detailed explanation on the regularization function in (TODO FC: link Math/Num) section.
+            See the :ref:`math_num_documentation.regularization_function` section
         """,
     ),
     "wjreg_cmpt": (
@@ -287,7 +305,8 @@ COST_OPTIONS_BASE_DOC = {
         (i.e., a sequence of regularization functions to compute). There are two ways to specify it:
 
         - An alias among ``'mean'``
-        - A sequence of value whose size must be equal to the number of regularization function(s) in **jreg_cmpt**
+        - A sequence of value whose size must be equal to the number of regularization function(s) in
+          **jreg_cmpt**
 
         >>> cost_options = {
             "wjreg_cmpt": "mean",
@@ -295,6 +314,25 @@ COST_OPTIONS_BASE_DOC = {
         >>> cost_options = {
             "wjreg_cmpt": [1., 2.],
         }
+        """,
+    ),
+    "end_warmup": (
+        """
+        `str`, `pandas.Timestamp` or None, default None
+        """,
+        """
+        The end of the warm-up period, which must be between the start time and the end time defined in
+        `Model.setup`.
+
+        >>> cost_options = {
+            "end_warmup": "1997-12-21",
+        }
+        >>> cost_options = {
+            "end_warmup": pd.Timestamp("19971221"),
+        }
+
+        .. note::
+            If not given, it is set to be equal to the `Model.setup` start time.
         """,
     ),
     "gauge": (
@@ -305,7 +343,8 @@ COST_OPTIONS_BASE_DOC = {
         Type of gauge to be computed. There are two ways to specify it:
 
         - An alias among ``'all'`` (all gauge codes) or ``'dws'`` (most downstream gauge code(s))
-        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes defined in the `Model.mesh`
+        - A gauge code or any sequence of gauge codes. The gauge code(s) given must belong to the gauge codes
+          defined in the `Model.mesh`
 
         >>> cost_options = {
             "gauge": "dws",
@@ -320,12 +359,13 @@ COST_OPTIONS_BASE_DOC = {
     ),
     "wgauge": (
         """
-        `str` or `list[float, ...]` default 'mean'        
+        `str` or `list[float, ...]` default 'mean'
         """,
         """
         Type of gauge weights. There are two ways to specify it:
 
-        - An alias among ``'mean'``, ``'lquartile'`` (1st quantile or lower quantile), ``'median'``, or ``'uquartile'`` (3rd quantile or upper quantile)
+        - An alias among ``'mean'``, ``'lquartile'`` (1st quantile or lower quantile), ``'median'``, or
+          ``'uquartile'`` (3rd quantile or upper quantile)
         - A sequence of value whose size must be equal to the number of gauges optimized in **gauge**
 
         >>> cost_options = {
@@ -342,10 +382,11 @@ COST_OPTIONS_BASE_DOC = {
         """,
         """
         Prior applied to the control vector.
-        A dictionary containing the type of prior to link to control vector. The keys are any control parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), 
-        see `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` to retrieve control parameters names.
-        The values are list of length 2 containing distribution information (i.e. distribution name and parameters). 
-        Below, the set of available distributions and the associated number of parameters:
+        A dictionary containing the type of prior to link to control vector. The keys are any control
+        parameter name (i.e. ``'cp0'``, ``'cp1-1'``, ``'cp-slope-a'``, etc.), see
+        `bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` to retrieve control parameters
+        names. The values are list of length 2 containing distribution information (i.e. distribution name and
+        parameters). Below, the set of available distributions and the associated number of parameters:
 
         - ``'FlatPrior'``,   []                                 (0)
         - ``'Uniform'``,     [lower_bound, higher_bound]        (2)
@@ -362,10 +403,12 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. note::
-            If not given, ``'FlatPrior'`` is applied to each control vector parameter (i.e. equivalent to no prior).
+            If not given, ``'FlatPrior'`` is applied to each control vector parameter (i.e. equivalent to no
+            prior).
 
         .. hint::
-            See a detailed explanation on the distribution in (TODO BR: add link Math/Num) section.
+            See a more detailed explanation on the available distributions in
+            :ref:`math_num_documentation.bayesian_estimation` section.
         """,
     ),
     "event_seg": (
@@ -373,7 +416,8 @@ COST_OPTIONS_BASE_DOC = {
         `dict[str, float]`, default {'peak_quant': 0.995, 'max_duration': 240}
         """,
         """
-        A dictionary of event segmentation options when calculating flood event signatures for cost computation (i.e., **jobs_cmpt** includes flood events signatures).
+        A dictionary of event segmentation options when calculating flood event signatures for cost
+        computation (i.e., **jobs_cmpt** includes flood events signatures).
 
         >>> cost_options = {
             event_seg = {
@@ -383,26 +427,9 @@ COST_OPTIONS_BASE_DOC = {
         }
 
         .. hint::
-            See `hydrograph_segmentation <smash.hydrograph_segmentation>` for more.
+            See the `hydrograph_segmentation <smash.hydrograph_segmentation>` function and
+            :ref:`math_num_documentation.hydrograph_segmentation` section.
 
-        """,
-    ),
-    "end_warmup": (
-        """
-        `str`, `pandas.Timestamp` or None, default None
-        """,
-        """
-        The end of the warm-up period, which must be between the start time and the end time defined in `Model.setup`.
-
-        >>> cost_options = {
-            "end_warmup": "1997-12-21",
-        }
-        >>> cost_options = {
-            "end_warmup": pd.Timestamp("19971221"),
-        }
-        
-        .. note::
-            If not given, it is set to be equal to the `Model.setup` start time.
         """,
     ),
 }
@@ -501,7 +528,8 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return control vector at end of optimization. In case of optimization with ``'ann'`` **mapping**, the control vector is represented in `Net.layers <smash.factory.Net.layers>` instead.
+        Whether to return control vector at end of optimization. In case of optimization with ``'ann'``
+        **mapping**, the control vector is represented in `Net.layers <smash.factory.Net.layers>` instead.
         """,
     ),
     "net": (
@@ -509,7 +537,8 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return the trained neural network `Net <smash.factory.Net>`. Only used with ``'ann'`` **mapping**.
+        Whether to return the trained neural network `Net <smash.factory.Net>`. Only used with ``'ann'``
+        **mapping**.
         """,
     ),
     "cost": (
@@ -581,7 +610,8 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return mu, the mean of structural errors. It can also be returned directly from the Model object using the `Model.get_serr_mu` method.
+        Whether to return mu, the mean of structural errors. It can also be returned directly from the Model
+        object using the `Model.get_serr_mu` method.
         """,
     ),
     "serr_sigma": (
@@ -589,14 +619,15 @@ RETURN_OPTIONS_BASE_DOC = {
         `bool`, default False
         """,
         """
-        Whether to return sigma, the standard deviation of structural errors. It can also be returned directly from the Model object using the `Model.get_serr_sigma` method.
+        Whether to return sigma, the standard deviation of structural errors. It can also be returned directly
+        from the Model object using the `Model.get_serr_sigma` method.
         """,
     ),
 }
 
 
 def _gen_docstring_from_base_doc(
-    base_doc: dict[str, tuple(str, str)], keys: list[str], nindent: int = 0
+    base_doc: dict[str, tuple[str, str]], keys: list[str], nindent: int = 0
 ) -> str:
     ret = []
     for key in keys:
@@ -609,11 +640,9 @@ def _gen_docstring_from_base_doc(
 
 
 _forward_run_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Run the forward Model.
-
-.. hint::
-    See a detailed explanation on the forward run usage in the (TODO FC: link user guide) section.
 
 Parameters
 ----------
@@ -681,50 +710,49 @@ array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
 )
 
 _optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model assimilation using numerical optimization algorithms.
-
-.. hint::
-    See a detailed explanation on the optimize usage in (TODO FC: link user guide) section. 
 
 Parameters
 ----------
 %(model_parameter)s
 mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of 
-    
-    - ``'uniform'`` 
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
     - ``'distributed'``
     - ``'multi-linear'``
     - ``'multi-polynomial'``
     - ``'ann'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
-    Name of optimizer. Should be one of 
-    
+    Name of optimizer. Should be one of
+
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+      **mapping** only)
     - ``'sgd'`` (``'ann'`` **mapping** only)
     - ``'adam'`` (``'ann'`` **mapping** only)
     - ``'adagrad'`` (``'ann'`` **mapping** only)
     - ``'rmsprop'`` (``'ann'`` **mapping** only)
 
     .. note::
-        If not given, a default optimizer will be set depending on the optimization mapping:
-
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+          ``'lbfgsb'``
         - **mapping** = ``'ann'``; **optimizer** = ``'adam'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process. 
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
 
 """
     + _gen_docstring_from_base_doc(
@@ -741,7 +769,7 @@ optimize_options : `dict[str, Any]` or None, default None
         ],
         nindent=1,
     )
-    + """ 
+    + """
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -812,23 +840,23 @@ array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
 )
 
 _multiset_estimate_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model assimilation using Bayesian-like estimation on multiple sets of solutions.
-
-.. hint::
-    See a detailed explanation on the multiset estimate usage in (TODO FC: link user guide) section.
 
 Parameters
 ----------
 %(model_parameter)s
 
 multiset : `MultipleForwardRun <smash.MultipleForwardRun>` or `MultipleOptimize <smash.MultipleOptimize>`
-    The returned object created by `multiple_forward_run <smash.multiple_forward_run>` or `multiple_optimize <smash.multiple_optimize>` 
-    method containing information about multiple sets of rainfall-runoff parameters or initial states.
+    The returned object created by `multiple_forward_run <smash.multiple_forward_run>` or
+    `multiple_optimize <smash.multiple_optimize>` method containing information about multiple sets of
+    rainfall-runoff parameters or initial states.
 
 alpha : `float`, `list[float, ...]`, or None, default None
     A regularization parameter that controls the decay rate of the likelihood function.
-    If **alpha** is a list, the L-curve approach will be used to find an optimal value for the regularization parameter.
+    If **alpha** is a list, the L-curve approach will be used to find an optimal value for the regularization
+    parameter.
 
     .. note::
         If not given, a default numeric range will be set for optimization through the L-curve process.
@@ -858,7 +886,8 @@ Returns
 %(model_return)s
 
 multiset_estimate : `MultisetEstimate <smash.MultisetEstimate>` or None, default None
-    It returns an object containing the intermediate variables defined in **return_options**. If no intermediate variables are defined, it returns None.
+    It returns an object containing the intermediate variables defined in **return_options**. If no
+    intermediate variables are defined, it returns None.
 
 See Also
 --------
@@ -907,41 +936,45 @@ array([[9.4456947e-05, 9.3808041e-05, 9.3033530e-05, ..., 1.7851851e+01,
 )
 
 _bayesian_optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Model bayesian assimilation using numerical optimization algorithms.
-
-.. hint::
-    See a detailed explanation on the bayesian optimize usage in (TODO FC: link user guide) section. 
 
 Parameters
 ----------
 %(model_parameter)s
 mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of 
-    
-    - ``'uniform'`` 
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
     - ``'distributed'``
     - ``'multi-linear'``
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
-    Name of optimizer. Should be one of 
-    
+    Name of optimizer. Should be one of
+
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+      **mapping** only)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
 
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+          ``'lbfgsb'``
+
+    .. hint::
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process. 
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
 
 """
     + _gen_docstring_from_base_doc(
@@ -955,7 +988,7 @@ optimize_options : `dict[str, Any]` or None, default None
         ],
         nindent=1,
     )
-    + """ 
+    + """
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -1029,11 +1062,9 @@ array([[2.8263923e-04, 2.6972688e-04, 2.5154054e-04, ..., 2.2405909e+01,
 )
 
 _multiple_forward_run_doc = (
+    # % TODO FC: Add advanced user guide
     """
 Run the forward Model with multiple sets of parameters.
-
-.. hint::
-    See a detailed explanation on the multiple forward run usage in (TODO FC: link user guide) section.
 
 Parameters
 ----------
@@ -1102,11 +1133,10 @@ array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
 )
 
 _multiple_optimize_doc = (
+    # % TODO FC: Add advanced user guide
     """
-Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple solutions.
-
-.. hint::
-    See a detailed explanation on the multiple optimize usage in (TODO FC: link user guide) section.
+Run multiple optimization processes with multiple sets of parameters (i.e. starting points), yielding multiple
+solutions.
 
 Parameters
 ----------
@@ -1117,34 +1147,37 @@ samples : `Samples <smash.Samples>`
     Represents the generated samples result.
 
 mapping : `str`, default 'uniform'
-    Type of mapping. Should be one of 
-    
-    - ``'uniform'`` 
+    Type of mapping. Should be one of
+
+    - ``'uniform'``
     - ``'distributed'``
     - ``'multi-linear'``
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
-    Name of optimizer. Should be one of 
-    
+    Name of optimizer. Should be one of
+
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+      **mapping** only)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
 
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+          ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process. 
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
 
 """
     + _gen_docstring_from_base_doc(
@@ -1158,7 +1191,7 @@ optimize_options : `dict[str, Any]` or None, default None
         ],
         nindent=1,
     )
-    + """ 
+    + """
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -1239,26 +1272,29 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of
 
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+      **mapping** only)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
 
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+          ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process. 
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
 
 """
     + _gen_docstring_from_base_doc(
@@ -1272,7 +1308,7 @@ optimize_options : `dict[str, Any]` or None, default None
         ],
         nindent=1,
     )
-    + """ 
+    + """
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -1292,7 +1328,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`, `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control vector (``sum(nbk) = n``).
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
+        vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1314,9 +1352,15 @@ control_info : `dict[str, Any]`
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
-        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
-        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``, ``'llr-slope-b'``, ``'ht-dd-a'``).
+        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
+        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
+          rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
+          the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
+          and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
+          ``'llr-slope-b'``, ``'ht-dd-a'``).
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
@@ -1344,17 +1388,19 @@ Default optimize control vector information
     'name': array(['cp0', 'ct0', 'kexc0', 'llr0'], dtype='<U5'),
     'nbd': array([2, 2, 2, 2], dtype=int32),
     'nbk': array([4, 0, 0, 0], dtype=int32),
-    'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32), 
-    'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32), 
-    'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32), 
+    'u': array([6.9077554, 6.9077554, 4.6052704, 6.9077554], dtype=float32),
+    'u_bkg': array([1000., 1000.,   50., 1000.], dtype=float32),
+    'x': array([5.2983174, 6.214608 , 0.       , 1.609438 ], dtype=float32),
     'x_bkg': array([200., 500.,   0.,   5.], dtype=float32),
 }
 
-This gives a direct indication of what the optimizer takes as input, depending on the optimization configuration set up.
-4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``).
-Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
+This gives a direct indication of what the optimizer takes as input, depending on the optimization
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
+and ``'llr0'``). Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
+applied to the control (``x`` relative to ``x_bkg``)
 
-With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp`` and ``kexc`` with different descriptors
+With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and optimizing only ``cp``
+and ``kexc`` with different descriptors
 
 >>> control_info = smash.optimize_control_info(
         model,
@@ -1378,8 +1424,8 @@ With a customize optimize configuration. Here, choosing a ``multi-linear`` mappi
     'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       ], dtype=float32),
 }
 
-5 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) 
-and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors 
+5 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) and the coefficients
+(``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors
 (``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``)
 """
 )
@@ -1402,26 +1448,29 @@ mapping : `str`, default 'uniform'
     - ``'multi-polynomial'``
 
     .. hint::
-        See a detailed explanation on the mapping in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.mapping` section
 
 optimizer : `str` or None, default None
     Name of optimizer. Should be one of
 
     - ``'sbs'`` (``'uniform'`` **mapping** only)
-    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'`` **mapping** only)
+    - ``'lbfgsb'`` (``'uniform'``, ``'distributed'``, ``'multi-linear'`` or ``'multi-polynomial'``
+      **mapping** only)
 
     .. note::
         If not given, a default optimizer will be set depending on the optimization mapping:
 
         - **mapping** = ``'uniform'``; **optimizer** = ``'sbs'``
-        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** = ``'lbfgsb'``
+        - **mapping** = ``'distributed'``, ``'multi-linear'``, or ``'multi-polynomial'``; **optimizer** =
+          ``'lbfgsb'``
 
     .. hint::
-        See a detailed explanation on the optimizer in (TODO FC: link Math/Num) section.
+        See the :ref:`math_num_documentation.optimization_algorithm` section
 
 optimize_options : `dict[str, Any]` or None, default None
-    Dictionary containing optimization options for fine-tuning the optimization process. 
-    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping** and **optimizer**.
+    Dictionary containing optimization options for fine-tuning the optimization process.
+    See `%(default_optimize_options_func)s` to retrieve the default optimize options based on the **mapping**
+    and **optimizer**.
 
 """
     + _gen_docstring_from_base_doc(
@@ -1435,7 +1484,7 @@ optimize_options : `dict[str, Any]` or None, default None
         ],
         nindent=1,
     )
-    + """ 
+    + """
 cost_options : `dict[str, Any]` or None, default None
     Dictionary containing computation cost options for simulated and observed responses. The elements are:
 
@@ -1455,7 +1504,9 @@ control_info : `dict[str, Any]`
         The size of the control vector.
 
     - nbk : `numpy.ndarray`
-        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`, `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control vector (``sum(nbk) = n``).
+        An array of shape *(4,)* containing the number of elements by kind (`Model.rr_parameters`,
+        `Model.rr_initial_states`, `Model.serr_mu_parameters`, `Model.serr_sigma_parameters`) of the control
+        vector (``sum(nbk) = n``).
 
     - x : `numpy.ndarray`
         An array of shape *(n,)* containing the initial values of the control vector (it can be transformed).
@@ -1477,10 +1528,18 @@ control_info : `dict[str, Any]`
     - name : `numpy.ndarray`
         An array of shape *(n,)* containing the names of the control vector. The naming convention is:
 
-        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
-        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
-        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``, ``'llr-slope-b'``, ``'ht-dd-a'``).
-        - ``<key>-<code>``: Structural error parameter where ``<key>`` is the name of any structural error mu or sigma parameters and ``<code>``, the corresponding gauge (``'sg0-V3524010'``, ``'sg1-V3524010'``, etc)
+        - ``<key>0``: Spatially uniform parameter or multi-linear/polynomial intercept where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states (``'cp0'``, ``'llr0'``, ``'ht0'``, etc).
+        - ``<key><row>-<col>``: Spatially distributed parameter where ``<key>`` is the name of any
+          rainfall-runoff parameters or initial_states and ``<row>``, ``<col>``, the corresponding position in
+          the spatial domain (``'cp1-1'``, ``'llr20-2'``, ``'ht3-12'``, etc). It's one based indexing.
+        - ``<key>-<desc>-<kind>``: Multi-linear/polynomial descriptor linked parameter where ``<key>`` is the
+          name of any rainfall-runoff parameters or initial_states, ``<desc>`` the corresponding descriptor
+          and ``<kind>``, the kind of parameter (coefficient or exposant) (``'cp-slope-a'``,
+          ``'llr-slope-b'``, ``'ht-dd-a'``).
+        - ``<key>-<code>``: Structural error parameter where ``<key>`` is the name of any structural error mu
+          or sigma parameters and ``<code>``, the corresponding gauge (``'sg0-V3524010'``, ``'sg1-V3524010'``,
+          etc)
 
     - x_bkg : `numpy.ndarray`
         An array of shape *(n,)* containing the background values of the control vector.
@@ -1502,24 +1561,29 @@ Default optimize control vector information
 >>> control_info = smash.bayesian_optimize_control_info(model)
 >>> control_info
 {
-    'l': array([-1.3815511e+01, -1.3815511e+01, -4.6052704e+00, -1.3815511e+01, 1.0000000e-06, 1.0000000e-06], dtype=float32),
+    'l': array([-1.3815511e+01, -1.3815511e+01, -4.6052704e+00, -1.3815511e+01, 1.0000000e-06, 1.0000000e-06],
+         dtype=float32),
     'l_bkg': array([ 1.e-06,  1.e-06, -5.e+01,  1.e-06,  1.e-06,  1.e-06], dtype=float32),
     'n': 6,
     'name': array(['cp0', 'ct0', 'kexc0', 'llr0', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
     'nbd': array([2, 2, 2, 2, 2, 2], dtype=int32),
     'nbk': array([4, 0, 0, 2], dtype=int32),
-    'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ], dtype=float32),
+    'u': array([   6.9077554,    6.9077554,    4.6052704,    6.9077554, 1000.       ,   10.       ],
+         dtype=float32),
     'u_bkg': array([1000., 1000.,   50., 1000., 1000.,   10.], dtype=float32),
     'x': array([5.2983174, 6.214608 , 0.       , 1.609438 , 1.       , 0.2      ], dtype=float32),
     'x_bkg': array([2.e+02, 5.e+02, 0.e+00, 5.e+00, 1.e+00, 2.e-01], dtype=float32),
 }
 
-This gives a direct indication of what the optimizer takes as input, depending on the optimization configuration set up.
-4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'`` and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``, ``'sg1-V3524010'``)
-Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was applied to the control (``x`` relative to ``x_bkg``)
+This gives a direct indication of what the optimizer takes as input, depending on the optimization
+configuration set up. 4 rainfall-runoff parameters are uniformly optimized (``'cp0'``, ``'ct0'``, ``'kexc0'``
+and ``'llr0'``) and 2 structural error sigma parameters at gauge ``'V3524010'`` (``'sg0-V3524010'``,
+``'sg1-V3524010'``) Each parameter has a lower and upper bound (``2`` in ``nbd``) and a transformation was
+applied to the control (``x`` relative to ``x_bkg``)
 
 With a customize optimize configuration. Here, choosing a ``multi-linear`` mapping and
-optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural error sigma parameters ``sg0`` and ``sg1``.
+optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different descriptors and 2 structural
+error sigma parameters ``sg0`` and ``sg1``.
 
 >>> control_info = smash.bayesian_optimize_control_info(
         model,
@@ -1534,28 +1598,33 @@ optimizing only 2 rainfall-runoff parameters ``cp``, ``kexc`` with different des
     'l': array([-99., -99., -99., -99., -99.,   0.,   0.], dtype=float32),
     'l_bkg': array([-9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01, -9.9e+01,  1.0e-06, 1.0e-06], dtype=float32),
     'n': 7,
-    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'], dtype='<U12'),
+    'name': array(['cp0', 'cp-slope-a', 'cp-dd-a', 'kexc0', 'kexc-dd-a', 'sg0-V3524010', 'sg1-V3524010'],
+            dtype='<U12'),
     'nbd': array([0, 0, 0, 0, 0, 2, 2], dtype=int32),
     'nbk': array([5, 0, 0, 2], dtype=int32),
     'u': array([-99., -99., -99., -99., -99.,   1.,   1.], dtype=float32),
     'u_bkg': array([ -99.,  -99.,  -99.,  -99.,  -99., 1000.,   10.], dtype=float32),
-    'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,  1.9999903e-02], dtype=float32),
-    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ], dtype=float32),
+    'x': array([-1.3862944e+00,  0.0000000e+00,  0.0000000e+00,  0.0000000e+00, 0.0000000e+00,  9.9999900e-04,
+         1.9999903e-02], dtype=float32),
+    'x_bkg': array([-1.3862944,  0.       ,  0.       ,  0.       ,  0.       , 1.       ,  0.2      ],
+             dtype=float32),
 }
 
-7 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``) 
-and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the descriptors 
-(``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``) and the 2 structural error sigma parameters
-(``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
+7 parameters are optimized which are the intercepts (``'cp0'`` and  ``'kexc0'``)
+and the coefficients (``'cp-slope-a'``, ``'cp-dd-a'`` and ``'kexc-dd-a'``) of the regression between the
+descriptors  (``slope`` and ``dd``) and the rainfall-runoff parameters (``cp`` and ``kexc``) and the 2
+structural error sigma parameters (``'sg0'`` and ``'sg1'``) associated to the gauge ``'V3524010'``.
 
 Retrieving information from the control vector is particularly useful for defining priors on the parameters.
 During a bayesian optimization, it is possible to define these priors in the **cost_options** argument within
-the ``'control_prior'`` key. The problem is that we don't know the control vector in advance until we've filled in all
-the optimization options. This is why we can define all the optimization options in the 
-`bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` method, retrieve the names of the parameters 
-that make up the control vector and then call the optimization function, assigning the priors we want to.
+the ``'control_prior'`` key. The problem is that we don't know the control vector in advance until we've
+filled in all the optimization options. This is why we can define all the optimization options in the
+`bayesian_optimize_control_info <smash.bayesian_optimize_control_info>` method, retrieve the names of the
+parameters that make up the control vector and then call the optimization function, assigning the priors we
+want to.
 
-Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially uniform optimization
+Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'kexc0'`` and perform a spatially
+uniform optimization
 
 >>> model.bayesian_optimize(
         cost_options={
@@ -1576,7 +1645,8 @@ Assign Gaussian priors to the two rainfall-runoff parameters ``'cp0'`` and ``'ke
 
 _forward_run_doc_appender = DocAppender(_forward_run_doc, indents=0)
 _smash_forward_run_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
+    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
+    "`smash`.",
     model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_fwd = smash.forward_run()",
     model_example_response="model_fwd",
@@ -1592,7 +1662,8 @@ _model_forward_run_doc_substitution = DocSubstitution(
 
 _optimize_doc_appender = DocAppender(_optimize_doc, indents=0)
 _smash_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
+    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
+    "`smash`.",
     default_optimize_options_func="default_optimize_options <smash.default_optimize_options>",
     parameters_serr_mu_parameters="",
     parameters_serr_sigma_parameters="",
@@ -1618,7 +1689,8 @@ _model_optimize_doc_substitution = DocSubstitution(
 
 _multiset_estimate_doc_appender = DocAppender(_multiset_estimate_doc, indents=0)
 _smash_multiset_estimate_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
+    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
+    "`smash`.",
     model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_estim = smash.multiset_estimate(model, multiset=mfr)",
     model_example_response="model_estim",
@@ -1634,12 +1706,15 @@ _model_multiset_estimate_doc_substitution = DocSubstitution(
 
 _bayesian_optimize_doc_appender = DocAppender(_bayesian_optimize_doc, indents=0)
 _smash_bayesian_optimize_doc_substitution = DocSubstitution(
-    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model `smash`.",
-    default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
+    model_parameter="model : `Model <smash.Model>`\n\tPrimary data structure of the hydrological model "
+    "`smash`.",
+    default_optimize_options_func="default_bayesian_optimize_options "
+    "<smash.default_bayesian_optimize_options>",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
-    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
+    "`Model.get_serr_sigma_parameters_bounds`",
     model_return="model : `Model <smash.Model>`\n\t It returns an updated copy of the initial Model object.",
     model_example_func="model_bayes_opt = smash.bayesian_optimize()",
     model_example_response="model_bayes_opt",
@@ -1647,11 +1722,13 @@ _smash_bayesian_optimize_doc_substitution = DocSubstitution(
 )
 _model_bayesian_optimize_doc_substitution = DocSubstitution(
     model_parameter="",
-    default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
+    default_optimize_options_func="default_bayesian_optimize_options "
+    "<smash.default_bayesian_optimize_options>",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
-    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
+    "`Model.get_serr_sigma_parameters_bounds`",
     model_return="",
     model_example_func="model.bayesian_optimize()",
     model_example_response="model",
@@ -1679,13 +1756,13 @@ _smash_optimize_control_info_doc_substitution = DocSubstitution(
     bounds_get_serr_parameters_bounds="",
 )
 
-_bayesian_optimize_control_info_doc_appender = DocAppender(
-    _bayesian_optimize_control_info_doc, indents=0
-)
+_bayesian_optimize_control_info_doc_appender = DocAppender(_bayesian_optimize_control_info_doc, indents=0)
 _smash_bayesian_optimize_control_info_doc_substitution = DocSubstitution(
-    default_optimize_options_func="default_bayesian_optimize_options <smash.default_bayesian_optimize_options>",
+    default_optimize_options_func="default_bayesian_optimize_options "
+    "<smash.default_bayesian_optimize_options>",
     parameters_serr_mu_parameters="- `Model.serr_mu_parameters`",
     parameters_serr_sigma_parameters="- `Model.serr_sigma_parameters`",
     parameters_note_serr_parameters=", `Model.serr_mu_parameters` and `Model.serr_sigma_parameters`",
-    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and `Model.get_serr_sigma_parameters_bounds`",
+    bounds_get_serr_parameters_bounds=", `Model.get_serr_mu_parameters_bounds` and "
+    "`Model.get_serr_sigma_parameters_bounds`",
 )

@@ -41,7 +41,7 @@ contains
 
     subroutine dot_product_2d_1d(a, x, b)
         !% Multiply 2D matrix (m, n) with 1D vector (n,) producing a 1D vector of (m,)
-        !% This routine accepts all arguments x and b with size(x)>=n and size(b)>=m 
+        !% This routine accepts all arguments x and b with size(x)>=n and size(b)>=m
 
         implicit none
 

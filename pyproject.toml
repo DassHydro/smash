@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "smash"
 dynamic = ["version", "dependencies"]
-description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology."
+description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology platform."
 readme = "README.md"
 authors = [
     {name = "INRAE RECOVER RHAX Team", email = "pierre.javelle@inrae.fr"},
@@ -48,3 +48,140 @@ versionfile_source = "smash/_version.py"
 versionfile_build = "smash/_version.py"
 tag_prefix = "v"
 parentdir_prefix = "smash-"
+
+[tool.ruff]
+line-length = 110
+target-version = "py38"
+
+# ruff lint rules retrieved from pandas
+[tool.ruff.lint]
+select = [
+  # pyflakes
+  "F",
+  # pycodestyle
+  "E", "W",
+  # isort
+  "I",
+  # flake8-2020
+  "YTT",
+  # flake8-bugbear
+  "B",
+  # flake8-quotes
+  "Q",
+  # flake8-debugger
+  "T10",
+  # flake8-gettext
+  "INT",
+  # pylint
+  "PL",
+  # flake8-pytest-style
+  "PT",
+  # misc lints
+  "PIE",
+  # flake8-pyi
+  "PYI",
+  # tidy imports
+  "TID",
+  # implicit string concatenation
+  "ISC",
+  # type-checking imports
+  "TCH",
+  # comprehensions
+  "C4",
+  # pygrep-hooks
+  "PGH",
+  # Ruff-specific rules
+  "RUF",
+  # flake8-bandit: exec-builtin
+  "S102",
+  # Perflint
+  "PERF",
+  # flynt
+  "FLY",
+  # flake8-logging-format
+  "G",
+  # flake8-future-annotations
+  "FA",
+]
+
+ignore = [
+  ### Intentionally disabled
+  # module level import not at top of file
+  "E402",
+  # do not assign a lambda expression, use a def
+  "E731",
+  # controversial
+  "B007",
+  # controversial
+  "B008",
+  # setattr is used to side-step mypy
+  "B009",
+  # getattr is used to side-step mypy
+  "B010",
+  # tests use comparisons but not their returned value
+  "B015",
+  # Function definition does not bind loop variable
+  "B023",
+  # Only works with python >=3.10
+  "B905",
+  # Too many arguments to function call
+  "PLR0913",
+  # Too many returns
+  "PLR0911",
+  # Too many branches
+  "PLR0912",
+  # Too many statements
+  "PLR0915",
+  # Redefined loop name
+  "PLW2901",
+  # Checks for else blocks that consist of a single if statement
+  "PLR5501",
+  # Global statements are discouraged
+  "PLW0603",
+  # Use `typing.NamedTuple` instead of `collections.namedtuple`
+  "PYI024",
+  # No builtin `eval()` allowed
+  "S307",
+  # while int | float can be shortened to float, the former is more explicit
+  "PYI041",
+  # incorrect-dict-iterator, flags valid Series.items usage
+  "PERF102",
+  # try-except-in-loop, becomes useless in Python 3.11
+  "PERF203",
+  # pytest-missing-fixture-name-underscore
+  "PT004",
+  # pytest-incorrect-fixture-name-underscore
+  "PT005",
+  # pytest-parametrize-names-wrong-type
+  "PT006",
+  # pytest-parametrize-values-wrong-type
+  "PT007",
+  # pytest-patch-with-lambda
+  "PT008",
+  # pytest-raises-with-multiple-statements
+  "PT012",
+  # pytest-assert-in-except
+  "PT017",
+  # pytest-composite-assertion
+  "PT018",
+  # pytest-fixture-param-without-value
+  "PT019",
+  # The following rules may cause conflicts when used with the formatter:
+  "ISC001",
+
+  ### TODO: Enable gradually
+  # Useless statement
+  "B018",
+  # Magic number
+  "PLR2004",
+  # comparison-with-itself
+  "PLR0124",
+  # collection-literal-concatenation
+  "RUF005",
+  # pairwise-over-zipped (>=PY310 only)
+  "RUF007",
+  # mutable-class-default
+  "RUF012",
+  # numpy-legacy-random
+  "NPY002",
+]

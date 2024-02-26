@@ -70,8 +70,8 @@ smash documentation
         Math / Num Documentation
         ^^^^^^^^^^^^^^^^^^^^^^^^
 
-        The mathematical and numerical documentation contains a detailed description of
-        the *smash* model operators.
+        This documentation contains a detailed description of the *smash* model operators and associated
+        mathematical and numerical tools.
 
         +++
 
@@ -80,7 +80,7 @@ smash documentation
             :color: muted 
             :click-parent:
 
-            To the math / num documentation
+            To the math / num doc
 
 .. toctree::
    :maxdepth: 3
@@ -92,7 +92,6 @@ smash documentation
    api_reference/index
    math_num_documentation/index
    release/index
-   contributors/index
-   developers_guide/index
+   contributor_guide/index
    license/index
    bibliography/index
