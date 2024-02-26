@@ -316,6 +316,25 @@ COST_OPTIONS_BASE_DOC = {
         }
         """,
     ),
+    "end_warmup": (
+        """
+        `str`, `pandas.Timestamp` or None, default None
+        """,
+        """
+        The end of the warm-up period, which must be between the start time and the end time defined in
+        `Model.setup`.
+
+        >>> cost_options = {
+            "end_warmup": "1997-12-21",
+        }
+        >>> cost_options = {
+            "end_warmup": pd.Timestamp("19971221"),
+        }
+
+        .. note::
+            If not given, it is set to be equal to the `Model.setup` start time.
+        """,
+    ),
     "gauge": (
         """
         `str` or `list[str, ...]`, default 'dws'
@@ -411,25 +430,6 @@ COST_OPTIONS_BASE_DOC = {
             See the `hydrograph_segmentation <smash.hydrograph_segmentation>` function and
             :ref:`math_num_documentation.hydrograph_segmentation` section.
 
-        """,
-    ),
-    "end_warmup": (
-        """
-        `str`, `pandas.Timestamp` or None, default None
-        """,
-        """
-        The end of the warm-up period, which must be between the start time and the end time defined in
-        `Model.setup`.
-
-        >>> cost_options = {
-            "end_warmup": "1997-12-21",
-        }
-        >>> cost_options = {
-            "end_warmup": pd.Timestamp("19971221"),
-        }
-
-        .. note::
-            If not given, it is set to be equal to the `Model.setup` start time.
         """,
     ),
 }

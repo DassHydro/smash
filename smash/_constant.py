@@ -790,10 +790,10 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "jobs_cmpt": "nse",
         "wjobs_cmpt": "mean",
         "jobs_cmpt_tfm": "keep",
+        "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
-        "end_warmup": None,
     },
     "optimize": {
         "jobs_cmpt": "nse",
@@ -802,15 +802,15 @@ DEFAULT_SIMULATION_COST_OPTIONS = {
         "wjreg": 0,
         "jreg_cmpt": "prior",
         "wjreg_cmpt": "mean",
+        "end_warmup": None,
         "gauge": "dws",
         "wgauge": "mean",
         "event_seg": dict(zip(EVENT_SEG_KEYS[:2], [PEAK_QUANT, MAX_DURATION])),
-        "end_warmup": None,
     },
     "bayesian_optimize": {
+        "end_warmup": None,
         "gauge": "dws",
         "control_prior": None,
-        "end_warmup": None,
     },
 }
 

@@ -752,7 +752,41 @@ def _standardize_simulation_cost_options_wjreg_cmpt(
     return wjreg_cmpt
 
 
-def _standardize_simulation_cost_options_gauge(model: Model, gauge: str | ListLike, **kwargs) -> np.ndarray:
+def _standardize_simulation_cost_options_end_warmup(
+    model: Model, end_warmup: str | pd.Timestamp | None, **kwargs
+) -> pd.Timestamp:
+    st = pd.Timestamp(model.setup.start_time)
+    et = pd.Timestamp(model.setup.end_time)
+
+    if end_warmup is None:
+        end_warmup = pd.Timestamp(st)
+
+    else:
+        if isinstance(end_warmup, str):
+            try:
+                end_warmup = pd.Timestamp(end_warmup)
+
+            except Exception:
+                raise ValueError(f"end_warmup '{end_warmup}' cost_options is an invalid date") from None
+
+        elif isinstance(end_warmup, pd.Timestamp):
+            pass
+
+        else:
+            raise TypeError("end_warmup cost_options must be str or pandas.Timestamp object")
+
+        if (end_warmup - st).total_seconds() < 0 or (et - end_warmup).total_seconds() < 0:
+            raise ValueError(
+                f"end_warmup '{end_warmup}' cost_options must be between start time '{st}' and end time "
+                f"'{et}'"
+            )
+
+    return end_warmup
+
+
+def _standardize_simulation_cost_options_gauge(
+    model: Model, func_name: str, gauge: str | ListLike, end_warmup: pd.Timestamp, **kwargs
+) -> np.ndarray:
     if isinstance(gauge, str):
         if gauge == "dws":
             gauge = np.empty(shape=0)
@@ -787,6 +821,22 @@ def _standardize_simulation_cost_options_gauge(model: Model, gauge: str | ListLi
 
     else:
         raise TypeError("gauge cost_options must be a str or ListLike type (List, Tuple, np.ndarray)")
+
+    # % Check that there is observed discharge available when optimizing. No particular issue with a
+    # % forward run
+    if "optimize" in func_name:
+        st = pd.Timestamp(model.setup.start_time)
+        et = pd.Timestamp(model.setup.end_time)
+        start_slice = int((end_warmup - st).total_seconds() / model.setup.dt)
+        end_slice = model.setup.ntime_step - 1
+        time_slice = slice(start_slice, end_slice)
+        for i, ggc in enumerate(model.mesh.code):
+            if ggc in gauge:
+                if np.all(model.response_data.q[i, time_slice] < 0):
+                    raise ValueError(
+                        f"No observed discharge available at gauge '{ggc}' for the selected "
+                        f"optimization period ['{end_warmup}', '{et}']"
+                    )
 
     return gauge
 
@@ -854,38 +904,6 @@ def _standardize_simulation_cost_options_event_seg(event_seg: dict, **kwargs) ->
     return event_seg
 
 
-def _standardize_simulation_cost_options_end_warmup(
-    model: Model, end_warmup: str | pd.Timestamp | None, **kwargs
-) -> pd.Timestamp:
-    st = pd.Timestamp(model.setup.start_time)
-    et = pd.Timestamp(model.setup.end_time)
-
-    if end_warmup is None:
-        end_warmup = pd.Timestamp(st)
-
-    else:
-        if isinstance(end_warmup, str):
-            try:
-                end_warmup = pd.Timestamp(end_warmup)
-
-            except Exception:
-                raise ValueError(f"end_warmup '{end_warmup}' cost_options is an invalid date") from None
-
-        elif isinstance(end_warmup, pd.Timestamp):
-            pass
-
-        else:
-            raise TypeError("end_warmup cost_options must be str or pandas.Timestamp object")
-
-        if (end_warmup - st).total_seconds() < 0 or (et - end_warmup).total_seconds() < 0:
-            raise ValueError(
-                f"end_warmup '{end_warmup}' cost_options must be between start time '{st}' and end time "
-                f"'{et}'"
-            )
-
-    return end_warmup
-
-
 # % Some standardization of control_prior must be done with Fortran calls
 # % Otherwise we have to compute control size in Python ...
 def _standardize_simulation_cost_options_control_prior(control_prior: dict | None, **kwargs) -> dict | None:
@@ -917,7 +935,7 @@ def _standardize_simulation_cost_options(model: Model, func_name: str, cost_opti
     for key, value in DEFAULT_SIMULATION_COST_OPTIONS[func_name].items():
         cost_options.setdefault(key, value)
         func = eval(f"_standardize_simulation_cost_options_{key}")
-        cost_options[key] = func(model=model, **cost_options)
+        cost_options[key] = func(model=model, func_name=func_name, **cost_options)
 
     return cost_options
 
