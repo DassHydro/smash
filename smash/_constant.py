@@ -511,6 +511,7 @@ DEFAULT_MODEL_SETUP = {
     "start_time": None,
     "end_time": None,
     "adjust_interception": True,
+    "compute_mean_atmos": True,
     "read_qobs": False,
     "qobs_directory": None,
     "read_prcp": False,

@@ -235,6 +235,10 @@ def _standardize_model_setup_adjust_interception(adjust_interception: bool, **kw
     return _standardize_model_setup_bool("adjust_interception", adjust_interception)
 
 
+def _standardize_model_setup_compute_mean_atmos(compute_mean_atmos: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("compute_mean_atmos", compute_mean_atmos)
+
+
 def _standardize_model_setup_read_qobs(read_qobs: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_qobs", read_qobs)
 

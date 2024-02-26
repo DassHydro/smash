@@ -18,6 +18,7 @@
 !%          ``start_time``             Simulation start time   [%Y%m%d%H%M]
 !%          ``end_time``               Simulation end time     [%Y%m%d%H%M]
 !%          ``adjust_interception``    Adjust interception reservoir capacity
+!%          ``compute_mean_atmos``     Compute mean atmospheric data for each gauge
 !%          ``read_qobs``              Read observed discharge
 !%          ``qobs_directory``         Observed discharge directory path
 !%          ``read_prcp``              Read precipitation
@@ -87,6 +88,7 @@ module mwd_setup
         character(lchar) :: end_time = "..." !$F90W char
 
         logical :: adjust_interception = .true.
+        logical :: compute_mean_atmos = .true.
 
         logical :: read_qobs = .false.
         character(lchar) :: qobs_directory = "..." !$F90W char
