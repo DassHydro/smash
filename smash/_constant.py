@@ -824,6 +824,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "q_domain": False,
         "cost": False,
         "jobs": False,
+        "qt": False,
     },
     "optimize": {
         "time_step": "all",

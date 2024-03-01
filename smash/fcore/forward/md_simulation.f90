@@ -98,7 +98,7 @@ contains
 
     end subroutine get_extended_atmos_data_timestep
 
-    subroutine store_timestep(mesh, output, returns, t, iret, q)
+    subroutine store_timestep(mesh, output, returns, t, iret, qt, q)
 
         implicit none
 
@@ -107,6 +107,7 @@ contains
         type(ReturnsDT), intent(inout) :: returns
         integer, intent(in) :: t
         integer, intent(inout) :: iret
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: qt
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: q
 
         integer :: i
@@ -114,7 +115,7 @@ contains
         do i = 1, mesh%ng
 
             output%response%q(i, t) = q(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
-
+            
         end do
 
         !$AD start-exclude
@@ -123,6 +124,7 @@ contains
                 iret = iret + 1
                 if (returns%rr_states_flag) returns%rr_states(iret) = output%rr_final_states
                 if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                if (returns%qt_flag) returns%qt(:, :, iret) = qt
             end if
         end if
         !$AD end-exclude
@@ -407,7 +409,7 @@ contains
             end select
 
             ! Store variables
-            call store_timestep(mesh, output, returns, t, iret, q(:, :, zq))
+            call store_timestep(mesh, output, returns, t, iret, qt(:, :, zq), q(:, :, zq))
 
         end do
 

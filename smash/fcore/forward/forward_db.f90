@@ -3601,6 +3601,8 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_mu_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: serr_sigma
       LOGICAL :: serr_sigma_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
+      LOGICAL :: qt_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3657,6 +3659,9 @@ CONTAINS
       CASE ('serr_sigma') 
         this%serr_sigma_flag = .true.
         ALLOCATE(this%serr_sigma(mesh%ng, setup%ntime_step))
+      CASE ('qt') 
+        this%qt_flag = .true.
+        ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
       END SELECT
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
@@ -16441,7 +16446,7 @@ CONTAINS
 !   with respect to varying inputs: q *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, &
-&   q, q_d)
+&   qt, q, q_d)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
@@ -16449,6 +16454,7 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: t
     INTEGER, INTENT(INOUT) :: iret
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q_d
     INTEGER :: i
@@ -16465,7 +16471,7 @@ CONTAINS
 !   with respect to varying inputs: q *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
   SUBROUTINE STORE_TIMESTEP_B(mesh, output, output_b, returns, t, iret, &
-&   q, q_b)
+&   qt, q, q_b)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
@@ -16473,6 +16479,7 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: t
     INTEGER, INTENT(INOUT) :: iret
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
     INTEGER :: i
@@ -16484,13 +16491,14 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIMESTEP_B
 
-  SUBROUTINE STORE_TIMESTEP(mesh, output, returns, t, iret, q)
+  SUBROUTINE STORE_TIMESTEP(mesh, output, returns, t, iret, qt, q)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: t
     INTEGER, INTENT(INOUT) :: iret
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
     INTEGER :: i
     DO i=1,mesh%ng
@@ -16861,8 +16869,8 @@ CONTAINS
 &                    bkw, bkw_d, q, q_d)
       END SELECT
 ! Store variables
-      CALL STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, q(&
-&                     :, :, zq), q_d(:, :, zq))
+      CALL STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, qt&
+&                     (:, :, zq), q(:, :, zq), q_d(:, :, zq))
     END DO
   END SUBROUTINE SIMULATION_D
 
@@ -17396,11 +17404,12 @@ CONTAINS
         CALL PUSHCONTROL2B(0)
       END SELECT
 ! Store variables
-      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, q(:, :, zq))
+      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
+&                   q(:, :, zq))
     END DO
     DO t=setup%ntime_step,1,-1
-      CALL STORE_TIMESTEP_B(mesh, output, output_b, returns, t, iret, q(&
-&                     :, :, zq), q_b(:, :, zq))
+      CALL STORE_TIMESTEP_B(mesh, output, output_b, returns, t, iret, qt&
+&                     (:, :, zq), q(:, :, zq), q_b(:, :, zq))
       CALL POPCONTROL2B(branch)
       IF (branch .LT. 2) THEN
         IF (branch .NE. 0) THEN
@@ -18023,7 +18032,8 @@ CONTAINS
         CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
       END SELECT
 ! Store variables
-      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, q(:, :, zq))
+      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
+&                   q(:, :, zq))
     END DO
   END SUBROUTINE SIMULATION
 

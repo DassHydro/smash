@@ -507,6 +507,14 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return simulated discharge on the whole domain for specific time steps.
         """,
     ),
+    "qt": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return lateral discharge on the whole domain for specific time steps.
+        """,
+    ),
     "iter_cost": (
         """
         `bool`, default False

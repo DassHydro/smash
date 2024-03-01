@@ -99,6 +99,9 @@ module mwd_returns
         real(sp), dimension(:, :), allocatable :: serr_sigma
         logical :: serr_sigma_flag = .false.
 
+        real(sp), dimension(:, :, :), allocatable :: qt
+        logical :: qt_flag = .false.
+
     end type ReturnsDT
 
 contains
@@ -176,6 +179,10 @@ contains
             case ("serr_sigma")
                 this%serr_sigma_flag = .true.
                 allocate (this%serr_sigma(mesh%ng, setup%ntime_step))
+
+            case ("qt")
+                this%qt_flag = .true.
+                allocate (this%qt(mesh%nrow, mesh%ncol, this%nmts))
 
             end select
 
