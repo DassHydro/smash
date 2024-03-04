@@ -825,6 +825,15 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "cost": False,
         "jobs": False,
         "qt": False,
+        "pn": False,
+        "en": False,
+        "pr": False,
+        "perc": False,
+        "lexc": False,
+        "prr": False,
+        "prd": False,
+        "qr": False,
+        "qd": False,
     },
     "optimize": {
         "time_step": "all",
@@ -862,6 +871,8 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "lcurve_multiset": False,
     },
 }
+
+print(DEFAULT_SIMULATION_RETURN_OPTIONS)
 
 SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS = ["rr_states", "q_domain"]
 

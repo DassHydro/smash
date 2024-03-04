@@ -3572,6 +3572,7 @@ MODULE MWD_RETURNS_DIFF
 !%only: Rr_StatesDT
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
+! internal fluxes
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
@@ -3603,6 +3604,24 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_sigma_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
       LOGICAL :: qt_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pn
+      LOGICAL :: pn_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: en
+      LOGICAL :: en_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pr
+      LOGICAL :: pr_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: perc
+      LOGICAL :: perc_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: lexc
+      LOGICAL :: lexc_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: prr
+      LOGICAL :: prr_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: prd
+      LOGICAL :: prd_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qr
+      LOGICAL :: qr_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qd
+      LOGICAL :: qd_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3662,6 +3681,34 @@ CONTAINS
       CASE ('qt') 
         this%qt_flag = .true.
         ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
+      CASE ('pn') 
+! internal fluxes
+        this%pn_flag = .true.
+        ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
+      CASE ('en') 
+        this%en_flag = .true.
+        ALLOCATE(this%en(mesh%nrow, mesh%ncol))
+      CASE ('pr') 
+        this%pr_flag = .true.
+        ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
+      CASE ('perc') 
+        this%perc_flag = .true.
+        ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
+      CASE ('lexc') 
+        this%lexc_flag = .true.
+        ALLOCATE(this%lexc(mesh%nrow, mesh%ncol))
+      CASE ('prr') 
+        this%prr_flag = .true.
+        ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
+      CASE ('prd') 
+        this%prd_flag = .true.
+        ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
+      CASE ('qr') 
+        this%qr_flag = .true.
+        ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
+      CASE ('qd') 
+        this%qd_flag = .true.
+        ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
       END SELECT
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
@@ -11583,6 +11630,8 @@ MODULE MD_GR_OPERATOR_DIFF
   USE MWD_MESH
 !% only: OptionsDT
   USE MWD_OPTIONS_DIFF
+!% only: ReturnDT
+  USE MWD_RETURNS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -12289,11 +12338,12 @@ CONTAINS
 !                ct
   SUBROUTINE GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht, &
-&   ht_d, qt, qt_d)
+&   ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12371,11 +12421,12 @@ CONTAINS
 !                ct
   SUBROUTINE GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
 &   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht, &
-&   ht_b, qt, qt_b)
+&   ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12510,11 +12561,12 @@ CONTAINS
   END SUBROUTINE GR4_TIMESTEP_B
 
   SUBROUTINE GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&   kexc, hi, hp, ht, qt)
+&   kexc, hi, hp, ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
 &   , kexc
@@ -16814,7 +16866,7 @@ CONTAINS
         CALL GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d&
 &                     , hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :, zq)&
-&                    )
+&                     , returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
@@ -17246,7 +17298,7 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
         CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, hi, hp, ht, qt(:, :, zq))
+&                   kexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(1)
       CASE ('gr5') 
 ! 'gr5' module
@@ -17454,7 +17506,7 @@ CONTAINS
           CALL GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
 &                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, &
 &                       hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:, &
-&                       :, zq))
+&                       :, zq), returns)
         ELSE
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi&
@@ -17985,7 +18037,7 @@ CONTAINS
       CASE ('gr4') 
 ! 'gr4' module
         CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, hi, hp, ht, qt(:, :, zq))
+&                   kexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)

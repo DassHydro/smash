@@ -101,6 +101,37 @@ module mwd_returns
 
         real(sp), dimension(:, :, :), allocatable :: qt
         logical :: qt_flag = .false.
+        
+        ! internal fluxes
+!~         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
+!~         logical :: internal_fluxes_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: pn
+        logical :: pn_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: en
+        logical :: en_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: pr
+        logical :: pr_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: perc
+        logical :: perc_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: lexc
+        logical :: lexc_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: prr
+        logical :: prr_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: prd
+        logical :: prd_flag = .false.
+
+        real(sp), dimension(:, :), allocatable :: qr
+        logical :: qr_flag = .false.
+        
+        real(sp), dimension(:, :), allocatable :: qd
+        logical :: qd_flag = .false.
 
     end type ReturnsDT
 
@@ -183,9 +214,54 @@ contains
             case ("qt")
                 this%qt_flag = .true.
                 allocate (this%qt(mesh%nrow, mesh%ncol, this%nmts))
-
+            
+            ! internal fluxes
+!~             case ("internal_fluxes")
+!~                 this%internal_fluxes_flag = .true.
+!~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
             end select
+            
+            if (setup%hydrological_module == "gr4") then
+                ! GR4
+                select case (wkeys(i))
+                case ("pn")
+                    this%pn_flag = .true.
+                    allocate (this%pn(mesh%nrow, mesh%ncol))
+                    
+                case ("en")
+                    this%en_flag = .true.
+                    allocate (this%en(mesh%nrow, mesh%ncol))
+                    
+                case ("pr")
+                    this%pr_flag = .true.
+                    allocate (this%pr(mesh%nrow, mesh%ncol))
 
+                case ("perc")
+                    this%perc_flag = .true.
+                    allocate (this%perc(mesh%nrow, mesh%ncol))
+                    
+                case ("lexc")
+                    this%lexc_flag = .true.
+                    allocate (this%lexc(mesh%nrow, mesh%ncol))
+                    
+                case ("prr")
+                    this%prr_flag = .true.
+                    allocate (this%prr(mesh%nrow, mesh%ncol))
+                    
+                case ("prd")
+                    this%prd_flag = .true.
+                    allocate (this%prd(mesh%nrow, mesh%ncol))
+                
+                case ("qr")
+                    this%qr_flag = .true.
+                    allocate (this%qr(mesh%nrow, mesh%ncol))
+                    
+                case ("qd")
+                    this%qd_flag = .true.
+                    allocate (this%qd(mesh%nrow, mesh%ncol))
+                
+                end select
+            end if    
         end do
 
     end subroutine ReturnsDT_initialise

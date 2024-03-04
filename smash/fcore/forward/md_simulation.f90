@@ -342,7 +342,7 @@ contains
                 ! 'gr4' module
             case ("gr4")
 
-                call gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt(:, :, zq))
+                call gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)

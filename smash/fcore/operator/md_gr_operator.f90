@@ -19,7 +19,8 @@ module md_gr_operator
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_options !% only: OptionsDT
-
+    use mwd_returns !% only: ReturnDT
+    
     implicit none
 
 contains
@@ -132,13 +133,14 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
@@ -182,7 +184,19 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-
+                
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%pn_flag) returns%pn(row, col) = pn
+                if (returns%en_flag) returns%en(row, col) = en
+                if (returns%pr_flag) returns%pr(row, col) = pr
+                if (returns%perc_flag) returns%perc(row, col) = perc
+                if (returns%lexc_flag) returns%lexc(row, col) = l
+                if (returns%prr_flag) returns%prr(row, col) = prr
+                if (returns%prd_flag) returns%prd(row, col) = prd
+                if (returns%qr_flag) returns%qr(row, col) = qr
+                if (returns%qd_flag) returns%qd(row, col) = qd
+                !$AD end-exclude
             end do
         end do
         !$OMP end parallel do
