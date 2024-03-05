@@ -2172,7 +2172,7 @@ class Model:
         -------
         value : `numpy.ndarray`
             An array of shape *(ng, ntime_step)* representing the values of the structural error mu for each
-            gauge and each timestep.
+            gauge and each time step.
 
         Examples
         --------
@@ -2242,7 +2242,7 @@ class Model:
         -------
         value : `numpy.ndarray`
             An array of shape *(ng, ntime_step)* representing the values of the structural error sigma for
-            each gauge and each timestep.
+            each gauge and each time step.
 
         Examples
         --------

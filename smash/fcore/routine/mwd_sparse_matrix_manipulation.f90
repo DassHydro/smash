@@ -5,6 +5,8 @@
 !%
 !%      - binary_search
 !%      - compute_rowcol_to_ind_ac
+!%      - matrix_to_ac_vector
+!%      - ac_vector_to_matrix
 !%      - get_matrix_nnz
 !%      - coo_fill_sparse_matrix
 !%      - ac_fill_sparse_matrix
@@ -94,6 +96,50 @@ contains
 
     end subroutine compute_rowcol_to_ind_ac
 
+    subroutine matrix_to_ac_vector(mesh, matrix, ac_vector)
+
+        implicit none
+
+        type(MeshDT), intent(in) :: mesh
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: matrix
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_vector
+
+        integer :: row, col, k
+
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+                if (k .eq. -99) cycle
+                ac_vector(k) = matrix(row, col)
+
+            end do
+        end do
+
+    end subroutine matrix_to_ac_vector
+
+    subroutine ac_vector_to_matrix(mesh, ac_vector, matrix)
+
+        implicit none
+
+        type(MeshDT), intent(in) :: mesh
+        real(sp), dimension(mesh%nac), intent(in) :: ac_vector
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: matrix
+
+        integer :: row, col, k
+
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+                if (k .eq. -99) cycle
+                matrix(row, col) = ac_vector(k)
+
+            end do
+        end do
+
+    end subroutine ac_vector_to_matrix
+
     subroutine get_matrix_nnz(mesh, matrix, zvalue, nnz)
 
         implicit none
@@ -155,22 +201,7 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: matrix
         type(Sparse_MatrixDT), intent(inout) :: sparse_matrix
 
-        integer :: row, col, i
-
-        i = 0
-
-        do col = 1, mesh%ncol
-
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0) cycle
-
-                i = i + 1
-                sparse_matrix%values(i) = matrix(row, col)
-
-            end do
-
-        end do
+        call matrix_to_ac_vector(mesh, matrix, sparse_matrix%values)
 
     end subroutine ac_fill_sparse_matrix
 
@@ -267,22 +298,7 @@ contains
         type(Sparse_MatrixDT), intent(in) :: sparse_matrix
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: matrix
 
-        integer :: row, col, i
-
-        i = 0
-
-        do col = 1, mesh%ncol
-
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0) cycle
-
-                i = i + 1
-                matrix(row, col) = sparse_matrix%values(i)
-
-            end do
-
-        end do
+        call ac_vector_to_matrix(mesh, sparse_matrix%values, matrix)
 
     end subroutine ac_sparse_matrix_to_matrix
 

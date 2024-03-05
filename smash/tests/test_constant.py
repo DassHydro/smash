@@ -24,6 +24,7 @@ from smash._constant import (
     PEAK_QUANT,
     RATIO_PET_HOURLY,
     ROUTING_MODULE,
+    ROUTING_MODULE_NQZ,
     ROUTING_MODULE_RR_PARAMETERS,
     ROUTING_MODULE_RR_STATES,
     RR_PARAMETERS,
@@ -87,6 +88,8 @@ def test_module_parameters():
 
     # % Check routing module rr states
     assert list(ROUTING_MODULE_RR_STATES.values()) == [[], ["hlr"], []]
+
+    assert list(ROUTING_MODULE_NQZ.values()) == [1, 1, 2]
 
 
 def test_parameters():

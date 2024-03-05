@@ -111,7 +111,7 @@ are given in the table below.
      - :math:`\max_{t\in\mathbf{E}} Q(t)`
      - mm
 
-where :math:`dt` is the timestep.
+where :math:`dt` is the time step.
 
 Now, denote :math:`S_s^*` and :math:`S_s` are observed and simulated signature type respectively. For each signature type :math:`s`,
 the corresponding signature based efficiency metric is computed depending on if the signature is:
