@@ -1107,36 +1107,52 @@ located here, ``tapenade/makefile``. The generation of the ``forward_db.f90`` fi
 
     .. code-block:: fortran
 
-        subroutine store_timestep(mesh, output, returns, t, iret, q)
+        subroutine store_time_step(setup, mesh, output, returns, checkpoint_variable, time_step)
 
             implicit none
 
+            type(SetupDT), intent(in) :: setup
             type(MeshDT), intent(in) :: mesh
             type(OutputDT), intent(inout) :: output
             type(ReturnsDT), intent(inout) :: returns
-            integer, intent(in) :: t
-            integer, intent(inout) :: iret
-            real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: q
+            type(Checkpoint_VariableDT), intent(in) :: checkpoint_variable
+            integer, intent(in) :: time_step
 
-            integer :: i
+            integer :: i, k, time_step_returns
 
             do i = 1, mesh%ng
-
-                output%response%q(i, t) = q(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
+                k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2))
+                output%response%q(i, time_step) = checkpoint_variable%ac_qz(k, setup%nqz)
 
             end do
 
             !$AD start-exclude
             if (allocated(returns%mask_time_step)) then
-                if (returns%mask_time_step(t)) then
-                    iret = iret + 1
-                    if (returns%rr_states_flag) returns%rr_states(iret) = output%rr_final_states
-                    if (returns%q_domain_flag) returns%q_domain(:, :, iret) = q
+                if (returns%mask_time_step(time_step)) then
+                    time_step_returns = returns%time_step_to_returns_time_step(time_step)
+
+                    !% Return states
+                    if (returns%rr_states_flag) then
+                        do i = 1, setup%nrrs
+
+                            call ac_vector_to_matrix(mesh, checkpoint_variable%ac_rr_states(:, i), &
+                            & returns%rr_states(time_step_returns)%values(:, :, i))
+
+                        end do
+
+                    end if
+
+                    !% Return discharge grid
+                    if (returns%q_domain_flag) then
+                        call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qz(:, setup%nqz), &
+                        & returns%q_domain(:, :, time_step_returns))
+                    end if
+
                 end if
             end if
             !$AD end-exclude
 
-        end subroutine store_timestep
+        end subroutine store_time_step
 
     Why has this section of code been removed from the differentiation? Firstly, Tapenade was returning a warning 
     (for some reason) and secondly, quite simply, this section allows you to store intermediate results which 
