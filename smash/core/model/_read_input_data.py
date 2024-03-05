@@ -139,12 +139,12 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     f"is not a valid date"
                 ) from None
 
-            file_end_time = file_start_time + pd.Timedelta(seconds=setup.dt * len(dat))
+            file_end_time = file_start_time + pd.Timedelta(seconds=setup.dt * (len(dat) - 1))
             start_diff = int((start_time - file_start_time).total_seconds() / setup.dt) + 1
             end_diff = int((end_time - file_start_time).total_seconds() / setup.dt) + 1
 
             # % Check if observed discharge file contains data for corresponding simulation period
-            if start_time > file_end_time or end_time < file_start_time:
+            if start_diff > dat.index.max() or end_diff < 0:
                 warnings.warn(
                     f"The provided observed discharge file for catchment '{c}' does not contain data for the "
                     f"selected simulation period ['{start_time}', '{end_time}']. The file covers the period "
@@ -152,6 +152,7 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     stacklevel=2,
                 )
             else:
+
                 ind_start_dat = max(0, start_diff)
                 ind_end_dat = min(dat.index.max(), end_diff)
                 ind_start_arr = max(0, -start_diff)
