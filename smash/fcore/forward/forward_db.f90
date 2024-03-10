@@ -13349,8 +13349,8 @@ CONTAINS
             en_d = -ei_d
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          ), 1000._sp, ac_hp(k), ac_hp_d(k), pr, pr_d, &
+&                          perc, perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -13441,8 +13441,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
+&                        , perc)
             CALL PUSHCONTROL1B(0)
           ELSE
             CALL PUSHCONTROL1B(1)
@@ -13500,8 +13500,8 @@ CONTAINS
           IF (branch .EQ. 0) THEN
             CALL POPREAL4(ac_hp(k))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          ), 1000._sp, ac_hp(k), ac_hp_b(k), pr, pr_b, &
+&                          perc, perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -13568,8 +13568,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr&
+&                        , perc)
           ELSE
             pr = 0._sp
             perc = 0._sp

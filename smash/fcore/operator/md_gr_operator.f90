@@ -316,7 +316,7 @@ contains
 
                     en = ac_pet(k) - ei
 
-                    call gr_production(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), pr, perc)
+                    call gr_production(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
 
                 else
 
