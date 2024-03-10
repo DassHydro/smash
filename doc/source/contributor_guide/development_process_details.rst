@@ -121,6 +121,12 @@ Here are the conventions that have been applied on the content of a Fortran file
         fprettify --indent 4 mwd_parameters.f90
         fprettify --indent 4 *.f90
 
+    or using the make ``format`` command
+
+    .. code-block:: none
+
+        make format
+
 .. _contributor_guide.development_process_details.fortran_guideline.global_convention.file_name_convention:
 
 File name convention
