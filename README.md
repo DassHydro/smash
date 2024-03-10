@@ -11,8 +11,7 @@
 
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro/smash
-- **Contributors and contact:** https://smash.recover.inrae.fr/contributors/index.html
-- **Contributing:** https://smash.recover.inrae.fr/developers_guide/index.html
+- **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
 - **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
