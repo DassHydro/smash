@@ -1,9 +1,23 @@
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - vic3l_canopy_interception
+!%      - vic3l_upper_soil_layer_evaporation
+!%      - vic3l_infiltration
+!%      - vic3l_drainage_2l
+!%      - vic3l_drainage
+!%      - vic3l_baseflow
+!%      - vic3l_timestep
+
 module md_vic3l_operator
 
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
     use mwd_options !% only: OptionsDT
+    use mwd_returns !% only: ReturnDT
 
     implicit none
 
@@ -164,13 +178,15 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
+    subroutine vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, & 
+    & cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
         type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hcl, husl, hmsl, hbsl
@@ -212,7 +228,14 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-
+                
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%pn_flag) returns%pn(row, col) = pn
+                if (returns%en_flag) returns%en(row, col) = en
+                if (returns%qr_flag) returns%qr(row, col) = qr
+                if (returns%qb_flag) returns%qb(row, col) = qb
+                !$AD end-exclude
             end do
         end do
         !$OMP end parallel do

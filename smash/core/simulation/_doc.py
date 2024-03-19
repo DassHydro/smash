@@ -523,6 +523,14 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return internal flux pn.
         """,
     ),
+    "ei": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux ei.
+        """,
+    ),
     "en": (
         """
         `bool`, default False
@@ -585,6 +593,14 @@ RETURN_OPTIONS_BASE_DOC = {
         """,
         """
         Whether to return internal flux qd.
+        """,
+    ),
+    "qb": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux qb.
         """,
     ),
     "iter_cost": (

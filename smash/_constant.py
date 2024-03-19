@@ -825,6 +825,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "cost": False,
         "jobs": False,
         "qt": False,
+        "ei": False,
         "pn": False,
         "en": False,
         "pr": False,
@@ -834,6 +835,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "prd": False,
         "qr": False,
         "qd": False,
+        "qb": False,
     },
     "optimize": {
         "time_step": "all",

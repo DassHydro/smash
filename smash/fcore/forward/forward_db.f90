@@ -3573,6 +3573,8 @@ MODULE MWD_RETURNS_DIFF
   USE MWD_RR_STATES_DIFF
   IMPLICIT NONE
 ! internal fluxes
+!~         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
+!~         logical :: internal_fluxes_flag = .false.
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
@@ -3604,6 +3606,8 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_sigma_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
       LOGICAL :: qt_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ei
+      LOGICAL :: ei_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pn
       LOGICAL :: pn_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: en
@@ -3622,6 +3626,8 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: qr_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qd
       LOGICAL :: qd_flag=.false.
+      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qb
+      LOGICAL :: qb_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3647,6 +3653,10 @@ CONTAINS
 ! Variable inside forward run are pre allocated
 ! Variable inside optimize will be allocated on the fly
     DO i=1,SIZE(wkeys)
+! internal fluxes
+!~             case ("internal_fluxes")
+!~                 this%internal_fluxes_flag = .true.
+!~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
       SELECT CASE  (wkeys(i)) 
       CASE ('rr_states') 
         this%rr_states_flag = .true.
@@ -3681,35 +3691,112 @@ CONTAINS
       CASE ('qt') 
         this%qt_flag = .true.
         ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
-      CASE ('pn') 
-! internal fluxes
-        this%pn_flag = .true.
-        ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
-      CASE ('en') 
-        this%en_flag = .true.
-        ALLOCATE(this%en(mesh%nrow, mesh%ncol))
-      CASE ('pr') 
-        this%pr_flag = .true.
-        ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
-      CASE ('perc') 
-        this%perc_flag = .true.
-        ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
-      CASE ('lexc') 
-        this%lexc_flag = .true.
-        ALLOCATE(this%lexc(mesh%nrow, mesh%ncol))
-      CASE ('prr') 
-        this%prr_flag = .true.
-        ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
-      CASE ('prd') 
-        this%prd_flag = .true.
-        ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
-      CASE ('qr') 
-        this%qr_flag = .true.
-        ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
-      CASE ('qd') 
-        this%qd_flag = .true.
-        ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
       END SELECT
+      IF (setup%hydrological_module .EQ. 'gr4' .OR. setup%&
+&         hydrological_module .EQ. 'gr5') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
+        CASE ('lexc') 
+          this%lexc_flag = .true.
+          ALLOCATE(this%lexc(mesh%nrow, mesh%ncol))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
+        CASE ('prd') 
+          this%prd_flag = .true.
+          ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
+        CASE ('qd') 
+          this%qd_flag = .true.
+          ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'grd') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('ei') 
+          this%ei_flag = .true.
+          ALLOCATE(this%ei(mesh%nrow, mesh%ncol))
+          WRITE(*, *) this%ei_flag
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'loieau') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('ei') 
+          this%ei_flag = .true.
+          ALLOCATE(this%ei(mesh%nrow, mesh%ncol))
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
+        CASE ('prd') 
+          this%prd_flag = .true.
+          ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
+        CASE ('qd') 
+          this%qd_flag = .true.
+          ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'vic3l') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
+        CASE ('qb') 
+          this%qb_flag = .true.
+          ALLOCATE(this%qb(mesh%nrow, mesh%ncol))
+        END SELECT
+      END IF
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
 
@@ -12619,11 +12706,12 @@ CONTAINS
 !                ci cp ct
   SUBROUTINE GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, hi_d, hp&
-&   , hp_d, ht, ht_d, qt, qt_d)
+&   , hp_d, ht, ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12703,11 +12791,12 @@ CONTAINS
 !                ci cp ct
   SUBROUTINE GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
 &   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, hi, hi_b, hp&
-&   , hp_b, ht, ht_b, qt, qt_b)
+&   , hp_b, ht, ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
@@ -12845,11 +12934,12 @@ CONTAINS
   END SUBROUTINE GR5_TIMESTEP_B
 
   SUBROUTINE GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&   kexc, aexc, hi, hp, ht, qt)
+&   kexc, aexc, hi, hp, ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
 &   , kexc, aexc
@@ -12901,11 +12991,12 @@ CONTAINS
 !   variations   of useful results: qt hp ht
 !   with respect to varying inputs: qt prcp hp ht cp ct
   SUBROUTINE GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
-&   , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt, qt_d)
+&   , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
@@ -12977,11 +13068,12 @@ CONTAINS
 !   gradient     of useful results: qt hp ht cp ct
 !   with respect to varying inputs: qt prcp hp ht cp ct
   SUBROUTINE GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
-&   , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b)
+&   , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
@@ -13114,11 +13206,12 @@ CONTAINS
   END SUBROUTINE GRD_TIMESTEP_B
 
   SUBROUTINE GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&   ht, qt)
+&   ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hp, ht
@@ -13169,11 +13262,12 @@ CONTAINS
 !   variations   of useful results: qt ha hc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
   SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
-&   ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d)
+&   ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
@@ -13256,11 +13350,12 @@ CONTAINS
 !   gradient     of useful results: kb qt ha hc ca cc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
   SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
-&   ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b)
+&   ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
@@ -13424,11 +13519,12 @@ CONTAINS
   END SUBROUTINE LOIEAU_TIMESTEP_B
 
   SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&   , ha, hc, qt)
+&   , ha, hc, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha, hc
@@ -14968,6 +15064,18 @@ CONTAINS
 
 END MODULE MD_SNOW_OPERATOR_DIFF
 
+!%      (MD) Module Differentiated.
+!%
+!%      Subroutine
+!%      ----------
+!%
+!%      - vic3l_canopy_interception
+!%      - vic3l_upper_soil_layer_evaporation
+!%      - vic3l_infiltration
+!%      - vic3l_drainage_2l
+!%      - vic3l_drainage
+!%      - vic3l_baseflow
+!%      - vic3l_timestep
 MODULE MD_VIC3L_OPERATOR_DIFF
 !% only: sp
   USE MD_CONSTANT
@@ -14977,6 +15085,8 @@ MODULE MD_VIC3L_OPERATOR_DIFF
   USE MWD_MESH
 !% only: OptionsDT
   USE MWD_OPTIONS_DIFF
+!% only: ReturnDT
+  USE MWD_RETURNS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -16082,11 +16192,12 @@ CONTAINS
   SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
 &   , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, &
 &   pbc_d, dsm, dsm_d, ds, ds_d, ws, ws_d, hcl, hcl_d, husl, husl_d, &
-&   hmsl, hmsl_d, hbsl, hbsl_d, qt, qt_d)
+&   hmsl, hmsl_d, hbsl, hbsl_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
@@ -16164,11 +16275,12 @@ CONTAINS
   SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, b&
 &   , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, &
 &   pbc_b, dsm, dsm_b, ds, ds_b, ws, ws_b, hcl, hcl_b, husl, husl_b, &
-&   hmsl, hmsl_b, hbsl, hbsl_b, qt, qt_b)
+&   hmsl, hmsl_b, hbsl, hbsl_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
@@ -16304,11 +16416,13 @@ CONTAINS
   END SUBROUTINE VIC3L_TIMESTEP_B
 
   SUBROUTINE VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
-&   cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt)
+&   cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, returns&
+& )
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
 &   cmsl, cbsl, ks, pbc, ds, dsm, ws
@@ -16875,7 +16989,7 @@ CONTAINS
         CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
 &                     aexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
-&                     , qt_d(:, :, zq))
+&                     , qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
@@ -16883,14 +16997,14 @@ CONTAINS
 ! 'grd' module
         CALL GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
 &                     , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
-&                     , qt_d(:, :, zq))
+&                     , qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
 &                        ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, &
-&                        hc_d, qt(:, :, zq), qt_d(:, :, zq))
+&                        hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
@@ -16899,7 +17013,8 @@ CONTAINS
 &                       , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d&
 &                       , ks, ks_d, pbc, pbc_d, ds, ds_d, dsm, dsm_d, ws&
 &                       , ws_d, hcl, hcl_d, husl, husl_d, hmsl, hmsl_d, &
-&                       hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :, zq))
+&                       hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :, zq), &
+&                       returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
@@ -17327,7 +17442,7 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, aexc, hi, hp, ht, qt(:, :, zq))
+&                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(2)
       CASE ('grd') 
 ! 'grd' module
@@ -17350,7 +17465,7 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
         CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&                   ht, qt(:, :, zq))
+&                   ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(3)
       CASE ('loieau') 
 ! 'loieau' module
@@ -17373,7 +17488,7 @@ CONTAINS
           CALL PUSHCONTROL1B(0)
         END IF
         CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&                      , ha, hc, qt(:, :, zq))
+&                      , ha, hc, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(4)
       CASE ('vic3l') 
 ! 'vic3l' module
@@ -17409,7 +17524,7 @@ CONTAINS
         END IF
         CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
 &                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
-&                     , hbsl, qt(:, :, zq))
+&                     , hbsl, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(5)
       CASE DEFAULT
         CALL PUSHCONTROL3B(0)
@@ -17523,7 +17638,7 @@ CONTAINS
           CALL GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
 &                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc&
 &                       , aexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt(:, :&
-&                       , zq), qt_b(:, :, zq))
+&                       , zq), qt_b(:, :, zq), returns)
         END IF
       ELSE IF (branch .EQ. 3) THEN
         CALL POPCONTROL1B(branch)
@@ -17537,7 +17652,7 @@ CONTAINS
 &                                       SIZE(qt, 2))
         CALL GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
 &                     , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt(:, :, zq)&
-&                     , qt_b(:, :, zq))
+&                     , qt_b(:, :, zq), returns)
       ELSE IF (branch .EQ. 4) THEN
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(ha, SIZE(ha, 1)*SIZE(ha, 2&
@@ -17550,7 +17665,7 @@ CONTAINS
 &                                       SIZE(qt, 2))
         CALL LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
 &                        ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, &
-&                        hc_b, qt(:, :, zq), qt_b(:, :, zq))
+&                        hc_b, qt(:, :, zq), qt_b(:, :, zq), returns)
       ELSE
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(hcl, SIZE(hcl, 1)*SIZE(hcl&
@@ -17571,7 +17686,8 @@ CONTAINS
 &                       , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b&
 &                       , ks, ks_b, pbc, pbc_b, ds, ds_b, dsm, dsm_b, ws&
 &                       , ws_b, hcl, hcl_b, husl, husl_b, hmsl, hmsl_b, &
-&                       hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :, zq))
+&                       hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :, zq), &
+&                       returns)
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
@@ -18044,27 +18160,27 @@ CONTAINS
       CASE ('gr5') 
 ! 'gr5' module
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, aexc, hi, hp, ht, qt(:, :, zq))
+&                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('grd') 
 ! 'grd' module
         CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&                   ht, qt(:, :, zq))
+&                   ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&                      , ha, hc, qt(:, :, zq))
+&                      , ha, hc, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
 ! 'vic3l' module
         CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
 &                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
-&                     , hbsl, qt(:, :, zq))
+&                     , hbsl, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)

@@ -351,7 +351,7 @@ contains
                 ! 'gr5' module
             case ("gr5")
 
-                call gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt(:, :, zq))
+                call gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
@@ -360,7 +360,7 @@ contains
                 ! 'grd' module
             case ("grd")
 
-                call grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt(:, :, zq))
+                call grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
@@ -368,7 +368,7 @@ contains
                 ! 'loieau' module
             case ("loieau")
 
-                call loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt(:, :, zq))
+                call loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "ha", ha)
                 call set_rr_states(output%rr_final_states, "hc", hc)
@@ -377,7 +377,7 @@ contains
             case ("vic3l")
 
                 call vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, &
-                & hcl, husl, hmsl, hbsl, qt(:, :, zq))
+                & hcl, husl, hmsl, hbsl, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "hcl", hcl)
                 call set_rr_states(output%rr_final_states, "husl", husl)
