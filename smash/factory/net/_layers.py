@@ -203,7 +203,6 @@ class Dense(Layer):
 
     # TODO TYPE HINT: replace function by Callable
     def _initialize(self, optimizer: function):  # noqa: F821
-        # Initialize weights and biases
         _set_initialized_wb_to_layer(self, "weight")
         _set_initialized_wb_to_layer(self, "bias")
 
@@ -220,22 +219,16 @@ class Dense(Layer):
         return x.dot(self.weight) + self.bias
 
     def _backward_pass(self, accum_grad: np.ndarray):
-        # Save weights used during forwards pass
         weight = self.weight
 
         if self.trainable:
-            # Calculate gradient w.r.t layer weights
-            grad_w = self.layer_input.T.dot(accum_grad)
-            grad_w0 = np.sum(accum_grad, axis=0, keepdims=True)
+            grad_weight = self.layer_input.T.dot(accum_grad)
+            grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
 
-        # Update the layer weights
-        self.weight = self._weight_opt.update(self.weight, grad_w)
-        self.bias = self._bias_opt.update(self.bias, grad_w0)
+            self.weight = self._weight_opt.update(self.weight, grad_weight)
+            self.bias = self._bias_opt.update(self.bias, grad_bias)
 
-        # Return accumulated gradient for next layer
-        # Calculated based on the weights used during the forward pass
-        accum_grad = accum_grad.dot(weight.T)
-        return accum_grad
+        return accum_grad.dot(weight.T)
 
     def output_shape(self):
         return (self.neurons,)
