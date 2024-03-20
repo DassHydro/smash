@@ -17,7 +17,7 @@ class Layer(object):
     def n_params(self):
         return 0
 
-    def _forward_pass(self, x: np.ndarray, training: bool):
+    def _forward_pass(self, x: np.ndarray):
         raise NotImplementedError()
 
     def _backward_pass(self, accum_grad: np.ndarray):
@@ -57,7 +57,7 @@ class Activation(Layer):
     def layer_name(self):
         return f"Activation ({self.activation_name})"
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
+    def _forward_pass(self, x: np.ndarray):
         self.layer_input = x
         return self._activation_func(x)
 
@@ -91,7 +91,7 @@ class Scale(Layer):
     def layer_name(self):
         return f"Scale ({self.scale_name})"
 
-    def _forward_pass(self, x, training=True):
+    def _forward_pass(self, x):
         self.layer_input = x
         return self._scale_func(x)
 
@@ -211,11 +211,10 @@ class Dense(Layer):
         self._bias_opt = copy.copy(optimizer)
 
     def n_params(self):
-        return self.input_shape[0] * self.neurons + self.neurons
+        return np.prod(self.weight.shape) + np.prod(self.bias.shape)
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
-        if training:
-            self.layer_input = x
+    def _forward_pass(self, x: np.ndarray):
+        self.layer_input = x
         return x.dot(self.weight) + self.bias
 
     def _backward_pass(self, accum_grad: np.ndarray):
@@ -254,12 +253,11 @@ class Dropout(Layer):
 
         self.trainable = True
 
-    def _forward_pass(self, x: np.ndarray, training: bool = True):
+    def _forward_pass(self, x: np.ndarray):
         c = 1 - self.drop_rate
 
-        if training:
-            self._mask = np.random.uniform(size=x.shape) > self.drop_rate
-            c = self._mask
+        self._mask = np.random.uniform(size=x.shape) > self.drop_rate
+        c = self._mask
 
         return x * c
 

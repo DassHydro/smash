@@ -422,11 +422,11 @@ class Net(object):
                     layer.weight = np.copy(layer._weight)
                     layer.bias = np.copy(layer._bias)
 
-    def _forward_pass(self, x_train: np.ndarray, training: bool = True):
+    def _forward_pass(self, x_train: np.ndarray):
         layer_output = x_train
 
         for layer in self.layers:
-            layer_output = layer._forward_pass(layer_output, training)
+            layer_output = layer._forward_pass(layer_output)
 
         return layer_output
 
@@ -442,6 +442,6 @@ class Net(object):
         return loss_grad
 
     def _predict(self, x_train: np.ndarray):
-        preds = self._forward_pass(x_train, training=False)
+        preds = self._forward_pass(x_train)
 
         return preds
