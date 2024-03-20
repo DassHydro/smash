@@ -405,7 +405,10 @@ contains
 
         ac_prcp = ac_prcp + ac_mlt
 
-        !% TODO: Fix bugs with OMP and TAPENADE here
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
+        !$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -434,7 +437,7 @@ contains
 
             end do
         end do
-!~        !$OMP end parallel do
+        !$OMP end parallel do
 
     end subroutine gr4_mlp_alg_time_step
 
@@ -462,7 +465,10 @@ contains
 
         ac_prcp = ac_prcp + ac_mlt
 
-        !% TODO: Fix bugs with OMP and TAPENADE here
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
+        !$OMP& ac_qt) &
+        !$OMP& private(row, col, k, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -490,7 +496,7 @@ contains
 
             end do
         end do
-!~        !$OMP end parallel do
+        !$OMP end parallel do
 
     end subroutine gr4_ode_time_step
 
@@ -520,7 +526,10 @@ contains
 
         ac_prcp = ac_prcp + ac_mlt
 
-        !% TODO: Fix bugs with OMP and TAPENADE here
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
+        !$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -548,7 +557,7 @@ contains
 
             end do
         end do
-!~        !$OMP end parallel do
+        !$OMP end parallel do
 
     end subroutine gr4_mlp_ode_time_step
 

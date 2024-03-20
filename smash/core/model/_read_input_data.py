@@ -152,7 +152,6 @@ def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     stacklevel=2,
                 )
             else:
-
                 ind_start_dat = max(0, start_diff)
                 ind_end_dat = min(dat.index.max(), end_diff)
                 ind_start_arr = max(0, -start_diff)
