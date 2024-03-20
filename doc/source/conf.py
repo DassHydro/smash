@@ -25,7 +25,7 @@ sys.path.insert(0, os.path.abspath("./_ext"))
 # -- Project information -----------------------------------------------------
 
 project = "smash"
-copyright = "2022-2023, INRAE"
+copyright = "2022-2024, INRAE"
 author = "INRAE"
 
 # The full version, including alpha/beta/rc tags

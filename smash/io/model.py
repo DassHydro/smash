@@ -59,7 +59,7 @@ def save_model(model: Model, path: FilePath):
         atmos_data: ['mean_pet', 'mean_prcp', '...', 'sparse_prcp', 'sparse_snow']
         mesh: ['active_cell', 'area', '...', 'xres', 'ymax']
         ...
-        setup: ['adjust_interception', 'daily_interannual_pet', '...', 'structure', 'temp_directory']
+        setup: ['adjust_interception', 'compute_mean_atmos', '...', 'structure', 'temp_directory']
         u_response_data: ['q_stdev']
     >>> model.setup.hydrological_module, model.setup.routing_module
     ('gr4', 'lr')
@@ -114,7 +114,7 @@ def read_model(path: FilePath) -> Model:
         atmos_data: ['mean_pet', 'mean_prcp', '...', 'sparse_prcp', 'sparse_snow']
         mesh: ['active_cell', 'area', '...', 'xres', 'ymax']
         ...
-        setup: ['adjust_interception', 'daily_interannual_pet', '...', 'structure', 'temp_directory']
+        setup: ['adjust_interception', 'compute_mean_atmos', '...', 'structure', 'temp_directory']
         u_response_data: ['q_stdev']
     >>> model.setup.hydrological_module, model.setup.routing_module
     ('gr4', 'lr')
@@ -131,7 +131,7 @@ def read_model(path: FilePath) -> Model:
         atmos_data: ['mean_pet', 'mean_prcp', '...', 'sparse_prcp', 'sparse_snow']
         mesh: ['active_cell', 'area', '...', 'xres', 'ymax']
         ...
-        setup: ['adjust_interception', 'daily_interannual_pet', '...', 'structure', 'temp_directory']
+        setup: ['adjust_interception', 'compute_mean_atmos', '...', 'structure', 'temp_directory']
         u_response_data: ['q_stdev']
     >>> model.setup.hydrological_module, model.setup.routing_module
     ('gr4', 'lr')

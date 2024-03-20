@@ -30,6 +30,7 @@
 	"mw_atmos_statistic": "_mw_atmos_statistic",
 	"mw_interception_capacity": "_mw_interception_capacity",
 	"mw_mask": "_mw_mask",
+	"mwd_atmos_manipulation": "_mwd_atmos_manipulation",
 	"mwd_parameters_manipulation": "_mwd_parameters_manipulation",
 	"mwd_sparse_matrix_manipulation": "_mwd_sparse_matrix_manipulation",
 	"mw_prcp_indices": "_mw_prcp_indices",

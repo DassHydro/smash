@@ -1270,10 +1270,17 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     st = pd.Timestamp(model.setup.start_time)
 
     mask_time_step = np.zeros(shape=model.setup.ntime_step, dtype=bool)
+    time_step_to_returns_time_step = np.zeros(shape=model.setup.ntime_step, dtype=np.int32) - np.int32(99)
 
     for date in return_options["time_step"]:
         ind = int((date - st).total_seconds() / model.setup.dt) - 1
         mask_time_step[ind] = True
+
+    ind = 0
+    for i in range(model.setup.ntime_step):
+        if mask_time_step[i]:
+            time_step_to_returns_time_step[i] = ind
+            ind += 1
 
     # % To pass character array to Fortran.
     keys = [k for k, v in return_options.items() if k != "time_step" and v]
@@ -1290,13 +1297,16 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
         {
             "nmts": np.count_nonzero(mask_time_step),
             "mask_time_step": mask_time_step,
+            "time_step_to_returns_time_step": time_step_to_returns_time_step,
             "fkeys": fkeys,
             "keys": keys,
         }
     )
 
     pop_keys = [
-        k for k in return_options.keys() if k not in ["nmts", "mask_time_step", "time_step", "fkeys", "keys"]
+        k
+        for k in return_options.keys()
+        if k not in ["nmts", "mask_time_step", "time_step_to_returns_time_step", "time_step", "fkeys", "keys"]
     ]
     for key in pop_keys:
         return_options.pop(key)

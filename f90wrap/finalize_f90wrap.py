@@ -79,7 +79,7 @@ def sed_internal_import(pyf: pathlib.PosixPath):
     os.system(f'sed -i "s/from libfcore/from smash.fcore/g" {pyf}')
 
 
-def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
+def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, set[str]]:
     """
     Get the flagged derived type attributes in Fortran
 
@@ -120,33 +120,37 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
     It adds one "_" at the beginning of each pseudo-private attribute
     """
 
-    index = []
-    index_array = []
-    char = []
-    char_array = []
-    private = []
+    index = set()
+    index_array = set()
+    char = set()
+    char_array = set()
+    private = set()
 
     with open(f90f) as f:
         for line in f:
+            # pass commented line
+            if line.strip().startswith("!"):
+                continue
+
             if "!$F90W" in line:
                 ind_double_2dots = line.find("::") + 2
 
                 subline = line[ind_double_2dots:].strip().lower()
 
                 if "index-array" in subline:
-                    index_array.append(subline.split(" ")[0])
+                    index_array.add(subline.split(" ")[0])
 
                 elif "index" in subline:
-                    index.append(subline.split(" ")[0])
+                    index.add(subline.split(" ")[0])
 
                 if "char-array" in subline:
-                    char_array.append(subline.split(" ")[0])
+                    char_array.add(subline.split(" ")[0])
 
                 elif "char" in subline:
-                    char.append(subline.split(" ")[0])
+                    char.add(subline.split(" ")[0])
 
                 if "private" in subline:
-                    private.append(subline.split(" ")[0])
+                    private.add(subline.split(" ")[0])
 
     res = {
         "index": index,
@@ -159,7 +163,7 @@ def get_flagged_attr(f90f: pathlib.PosixPath) -> dict[str, list[str]]:
     return res
 
 
-def sed_index_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_index_decorator(pyf: pathlib.PosixPath, attribute: set[str]):
     """
     Modify Python script to handle index decorator for specific attributes.
     Done by using the unix command sed in place
@@ -187,7 +191,7 @@ def sed_index_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_index" {pyf}')
 
 
-def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: set[str]):
     """
     Modify Python script to handle index array decorator for specific attributes.
     Done by using the unix command sed in place
@@ -215,7 +219,7 @@ def sed_index_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_index_array" {pyf}')
 
 
-def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_char_decorator(pyf: pathlib.PosixPath, attribute: set[str]):
     """
     Modify Python script to handle character decorator for specific attributes.
     Done by using the unix command sed in place
@@ -241,7 +245,7 @@ def sed_char_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/def {attr}(self)/i \\\t\\@f90wrap_getter_char" {pyf}')
 
 
-def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: set[str]):
     """
     Modify Python script to handle character array decorator for specific attributes.
     Done by using the unix command sed in place
@@ -269,7 +273,7 @@ def sed_char_array_decorator(pyf: pathlib.PosixPath, attribute: list[str]):
         os.system(f'sed -i "/\\b{attr}.setter/a \\\t\\@f90wrap_setter_char_array" {pyf}')
 
 
-def sed_private_property(pyf: pathlib.PosixPath, attribute: list[str]):
+def sed_private_property(pyf: pathlib.PosixPath, attribute: set[str]):
     """
     Modify Python script make pseudo-private property for specific attributes.
     Done by using the unix command sed in place

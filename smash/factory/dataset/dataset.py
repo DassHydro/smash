@@ -28,11 +28,11 @@ def load_dataset(name: str):
 
         - ``'flwdir'`` : The absolute path to a 1km² France flow directions in `smash` convention.
         - ``'cance'`` : Setup and mesh dictionaries used to initialize the Model object on the Cance catchment
-          at ``hourly`` timestep.
+          at ``hourly`` time step.
         - ``'lez'`` : Setup and mesh dictionaries used to initialize the Model object on the Lez catchment at
-          ``daily`` timestep.
+          ``daily`` time step.
         - ``'france'`` : Setup and mesh dictionaries used to initialize the Model object on the France at
-          ``hourly`` timestep.
+          ``hourly`` time step.
 
     Returns
     -------

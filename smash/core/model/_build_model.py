@@ -35,7 +35,7 @@ from smash.fcore._mw_interception_capacity import (
     adjust_interception_capacity as wrap_adjust_interception_capacity,
 )
 from smash.fcore._mwd_sparse_matrix_manipulation import (
-    compute_rowcol_to_ind_sparse as wrap_compute_rowcol_to_ind_sparse,
+    compute_rowcol_to_ind_ac as wrap_compute_rowcol_to_ind_ac,
 )
 
 if TYPE_CHECKING:
@@ -76,8 +76,7 @@ def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: 
 
 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
-    if setup.sparse_storage:
-        wrap_compute_rowcol_to_ind_sparse(mesh)  # % Fortran subroutine
+    wrap_compute_rowcol_to_ind_ac(mesh)  # % Fortran subroutine
     mesh.local_active_cell = mesh.active_cell.copy()
 
 
@@ -103,8 +102,9 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_descriptor:
         _read_descriptor(setup, mesh, input_data)
 
-    print("</> Computing mean atmospheric data")
-    wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
+    if setup.compute_mean_atmos:
+        print("</> Computing mean atmospheric data")
+        wrap_compute_mean_atmos(setup, mesh, input_data)  # % Fortran subroutine
 
 
 def _build_parameters(

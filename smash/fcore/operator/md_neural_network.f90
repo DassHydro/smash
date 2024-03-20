@@ -3,7 +3,7 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - feedforward_mlp
+!%      - forward_mlp
 
 module md_neural_network
 
@@ -15,7 +15,7 @@ module md_neural_network
 
 contains
 
-    subroutine feedforward_mlp(layers, neurons, input_layer, output_layer)
+    subroutine forward_mlp(layers, neurons, input_layer, output_layer)
         !% The forward pass of the multilayer perceptron used in hydrological model structure
 
         implicit none
@@ -57,6 +57,6 @@ contains
             output_layer(i) = f_out(i)
         end do
 
-    end subroutine feedforward_mlp
+    end subroutine forward_mlp
 
 end module md_neural_network

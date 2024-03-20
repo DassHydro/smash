@@ -50,7 +50,7 @@ module mwd_returns
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
-    use mwd_rr_states !%only: Rr_StatesDT
+    use mwd_rr_states !%only: RR_StatesDT, RR_StatesDT_initialise
 
     implicit none
 
@@ -59,6 +59,7 @@ module mwd_returns
         integer :: nmts
 
         logical, dimension(:), allocatable :: mask_time_step
+        integer, dimension(:), allocatable :: time_step_to_returns_time_step !$F90W index-array
 
         type(Rr_StatesDT), dimension(:), allocatable :: rr_states
         logical :: rr_states_flag = .false.
@@ -128,6 +129,9 @@ contains
         allocate (this%mask_time_step(setup%ntime_step))
         this%mask_time_step = .false.
 
+        allocate (this%time_step_to_returns_time_step(setup%ntime_step))
+        this%time_step_to_returns_time_step = -99
+
         ! Variable inside forward run are pre allocated
         ! Variable inside optimize will be allocated on the fly
         do i = 1, size(wkeys)
@@ -137,10 +141,14 @@ contains
             case ("rr_states")
                 this%rr_states_flag = .true.
                 allocate (this%rr_states(this%nmts))
+                do j = 1, this%nmts
+                    call RR_StatesDT_initialise(this%rr_states(j), setup, mesh)
+                end do
 
             case ("q_domain")
                 this%q_domain_flag = .true.
                 allocate (this%q_domain(mesh%nrow, mesh%ncol, this%nmts))
+                this%q_domain = -99._sp
 
             case ("iter_cost")
                 this%iter_cost_flag = .true.

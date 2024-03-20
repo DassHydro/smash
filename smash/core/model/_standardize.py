@@ -17,6 +17,7 @@ from smash._constant import (
     HYDROLOGICAL_MODULE,
     INPUT_DATA_FORMAT,
     ROUTING_MODULE,
+    ROUTING_MODULE_NQZ,
     SERR_MU_MAPPING,
     SERR_MU_MAPPING_PARAMETERS,
     SERR_SIGMA_MAPPING,
@@ -258,6 +259,10 @@ def _standardize_model_setup_adjust_interception(adjust_interception: bool, **kw
     return _standardize_model_setup_bool("adjust_interception", adjust_interception)
 
 
+def _standardize_model_setup_compute_mean_atmos(compute_mean_atmos: bool, **kwrags) -> bool:
+    return _standardize_model_setup_bool("compute_mean_atmos", compute_mean_atmos)
+
+
 def _standardize_model_setup_read_qobs(read_qobs: bool, **kwrags) -> bool:
     return _standardize_model_setup_bool("read_qobs", read_qobs)
 
@@ -466,11 +471,12 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["snow_module_present"] = setup["snow_module"] != "zero"
 
     setup["ntime_step"] = int((setup["end_time"] - setup["start_time"]).total_seconds() / setup["dt"])
+    setup["nd"] = setup["descriptor_name"].size
     setup["nrrp"] = len(STRUCTURE_RR_PARAMETERS[setup["structure"]])
     setup["nrrs"] = len(STRUCTURE_RR_STATES[setup["structure"]])
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
-    setup["nd"] = setup["descriptor_name"].size
+    setup["nqz"] = ROUTING_MODULE_NQZ[setup["routing_module"]]
 
     setup["nhl"] = setup["hidden_neuron"].size if "mlp" in setup["hydrological_module"] else -1
 

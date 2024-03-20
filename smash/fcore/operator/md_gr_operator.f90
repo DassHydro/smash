@@ -11,23 +11,25 @@
 !%      - gr_production_transfer_mlp_alg
 !%      - gr_production_transfer_ode
 !%      - gr_production_transfer_mlp_ode
-!%      - gr4_timestep
-!%      - gr4_mlp_alg_timestep
-!%      - gr4_ode_timestep
-!%      - gr4_mlp_ode_timestep
-!%      - gr5_timestep
-!%      - grd_timestep
-!%      - loieau_timestep
+!%      - gr4_time_step
+!%      - gr4_mlp_alg_time_step
+!%      - gr4_ode_time_step
+!%      - gr4_mlp_ode_time_step
+!%      - gr5_time_step
+!%      - grd_time_step
+!%      - loieau_time_step
 
 module md_gr_operator
 
     use md_constant !% only : sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+    use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
     use mwd_nn_parameters !% only: NN_Parameters_LayerDT
     use md_algebra !% only: solve_linear_system_2vars
-    use md_neural_network !% only: feedforward_mlp
+    use md_neural_network !% only: forward_mlp
 
     implicit none
 
@@ -141,7 +143,7 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr_production_transfer_mlp_alg(layers, neurons, pn, en, cp, beta, ct, kexc, n, prcp, hp, ht, qti)
+    subroutine gr_production_transfer_mlp_alg(layers, neurons, pn, en, cp, beta, ct, kexc, n, prcp, hp, ht, q)
         !% Integrate MLP in stepwise aprroximation method
 
         implicit none
@@ -149,7 +151,7 @@ contains
         type(NN_Parameters_LayerDT), dimension(:), intent(inout) :: layers
         integer, dimension(:), intent(in) :: neurons
         real(sp), intent(in) :: pn, en, cp, beta, ct, kexc, n, prcp
-        real(sp), intent(inout) :: hp, ht, qti
+        real(sp), intent(inout) :: hp, ht, q
 
         real(sp), dimension(4) :: input_layer  ! fixed NN input size
         real(sp), dimension(5) :: output_layer  ! fixed NN output size
@@ -160,7 +162,7 @@ contains
         input_layer(3) = pn
         input_layer(4) = en
 
-        call feedforward_mlp(layers, neurons, input_layer, output_layer)
+        call forward_mlp(layers, neurons, input_layer, output_layer)
 
         pr = 0._sp
 
@@ -200,17 +202,17 @@ contains
 
         qd = 0.1_sp*(output_layer(3)*pr + output_layer(4)*perc) + output_layer(5)*kexc*(ht**3.5_sp)
 
-        qti = (ht_imd - ht)*ct + max(0._sp, qd)
+        q = (ht_imd - ht)*ct + max(0._sp, qd)
 
     end subroutine gr_production_transfer_mlp_alg
 
-    subroutine gr_production_transfer_ode(pn, en, cp, ct, kexc, hp, ht, qti)
+    subroutine gr_production_transfer_ode(pn, en, cp, ct, kexc, hp, ht, q)
         !% Solve state-space ODE system with implicit Euler
 
         implicit none
 
         real(sp), intent(in) :: pn, en, cp, ct, kexc
-        real(sp), intent(inout) :: hp, ht, qti
+        real(sp), intent(inout) :: hp, ht, q
 
         real(sp), dimension(2, 2) :: jacob
         real(sp), dimension(2) :: dh, delta_h
@@ -259,11 +261,11 @@ contains
 
         end do
 
-        qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
+        q = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
 
     end subroutine gr_production_transfer_ode
 
-    subroutine gr_production_transfer_mlp_ode(layers, neurons, pn, en, cp, ct, kexc, hp, ht, qti)
+    subroutine gr_production_transfer_mlp_ode(layers, neurons, pn, en, cp, ct, kexc, hp, ht, q)
         !% Solve state-space ODE system with explicit Euler and MLP
 
         implicit none
@@ -271,7 +273,7 @@ contains
         type(NN_Parameters_LayerDT), dimension(:), intent(inout) :: layers
         integer, dimension(:), intent(in) :: neurons
         real(sp), intent(in) :: pn, en, cp, ct, kexc
-        real(sp), intent(inout) :: hp, ht, qti
+        real(sp), intent(inout) :: hp, ht, q
 
         real(sp), dimension(4) :: input_layer  ! fixed NN input size
         real(sp), dimension(5) :: output_layer  ! fixed NN output size
@@ -284,7 +286,7 @@ contains
         input_layer(3) = pn
         input_layer(4) = en
 
-        call feedforward_mlp(layers, neurons, input_layer, output_layer)
+        call forward_mlp(layers, neurons, input_layer, output_layer)
 
         dt = 1._sp/real(n_subtimesteps, sp)
 
@@ -303,40 +305,53 @@ contains
 
         end do
 
-        qti = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
+        q = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
 
     end subroutine gr_production_transfer_mlp_ode
 
-    subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
+        !$OMP& ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
-                    call gr_exchange(kexc(row, col), ht(row, col), l)
+                    call gr_production(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), pr, perc)
+
+                    call gr_exchange(ac_kexc(k), ac_ht(k), l)
 
                 else
 
@@ -349,50 +364,59 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)
 
-                qt(row, col) = qr + qd
+                ac_qt(k) = qr + qd
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
         !$OMP end parallel do
 
-    end subroutine gr4_timestep
+    end subroutine gr4_time_step
 
-    subroutine gr4_mlp_alg_timestep(setup, mesh, options, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_mlp_alg_time_step(setup, mesh, input_data, options, time_step, layers, neurons, &
+    & ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        integer, intent(in) :: time_step
         type(NN_Parameters_LayerDT), dimension(:), intent(inout) :: layers
         integer, dimension(:), intent(in) :: neurons
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !% TODO: Fix bugs with OMP and TAPENADE here
-!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
                 else
 
@@ -402,45 +426,54 @@ contains
                 end if
 
                 call gr_production_transfer_mlp_alg(layers, neurons, pn, en, &
-                & cp(row, col), 9._sp/4._sp, ct(row, col), kexc(row, col), 5._sp, &
-                & prcp(row, col), hp(row, col), ht(row, col), qt(row, col))
+                & ac_cp(k), 9._sp/4._sp, ac_ct(k), ac_kexc(k), 5._sp, &
+                & ac_prcp(k), ac_hp(k), ac_ht(k), ac_qt(k))
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
 !~        !$OMP end parallel do
 
-    end subroutine gr4_mlp_alg_timestep
+    end subroutine gr4_mlp_alg_time_step
 
-    subroutine gr4_ode_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_ode_time_step(setup, mesh, input_data, options, time_step, &
+    & ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !% TODO: Fix bugs with OMP and TAPENADE here
-!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!~        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
                 else
 
@@ -449,47 +482,56 @@ contains
 
                 end if
 
-                call gr_production_transfer_ode(pn, en, cp(row, col), ct(row, col), &
-                & kexc(row, col), hp(row, col), ht(row, col), qt(row, col))
+                call gr_production_transfer_ode(pn, en, ac_cp(k), ac_ct(k), &
+                & ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k))
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
 !~        !$OMP end parallel do
 
-    end subroutine gr4_ode_timestep
+    end subroutine gr4_ode_time_step
 
-    subroutine gr4_mlp_ode_timestep(setup, mesh, options, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
+    subroutine gr4_mlp_ode_time_step(setup, mesh, input_data, options, time_step, layers, neurons, &
+    & ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
+        integer, intent(in) :: time_step
         type(NN_Parameters_LayerDT), dimension(:), intent(inout) :: layers
         integer, dimension(:), intent(in) :: neurons
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !% TODO: Fix bugs with OMP and TAPENADE here
-!~        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!~        !$OMP& shared(setup, mesh, layers, neurons, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-!~        !$OMP& private(row, col, pn, en)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
                 else
 
@@ -498,48 +540,61 @@ contains
 
                 end if
 
-                call gr_production_transfer_mlp_ode(layers, neurons, pn, en, cp(row, col), &
-                & ct(row, col), kexc(row, col), hp(row, col), ht(row, col), qt(row, col))
+                call gr_production_transfer_mlp_ode(layers, neurons, pn, en, ac_cp(k), &
+                & ac_ct(k), ac_kexc(k), ac_hp(k), ac_ht(k), ac_qt(k))
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
 !~        !$OMP end parallel do
 
-    end subroutine gr4_mlp_ode_timestep
+    end subroutine gr4_mlp_ode_time_step
 
-    subroutine gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt)
+    subroutine gr5_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc, aexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, &
+        !$OMP& ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
-                    call gr_threshold_exchange(kexc(row, col), aexc(row, col), ht(row, col), l)
+                    call gr_production(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), pr, perc)
+
+                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
 
                 else
 
@@ -552,53 +607,64 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)
 
-                qt(row, col) = qr + qd
+                ac_qt(k) = qr + qd
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
         !$OMP end parallel do
 
-    end subroutine gr5_timestep
+    end subroutine gr5_time_step
 
-    subroutine grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt)
+    subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
+    & ac_ht, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: cp, ct
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_cp, ac_ct
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: ei, pn, en, pr, perc, prr, qr
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, cp, ct, hp, ht, qt) &
-        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, qr)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, qr)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    ei = min(pet(row, col), prcp(row, col))
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    pn = max(0._sp, prcp(row, col) - ei)
+                    ei = min(ac_pet(k), ac_prcp(k))
 
-                    en = pet(row, col) - ei
+                    pn = max(0._sp, ac_prcp(k) - ei)
 
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+                    en = ac_pet(k) - ei
+
+                    call gr_production(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
 
                 else
 
@@ -609,51 +675,62 @@ contains
 
                 prr = pr + perc
 
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
-                qt(row, col) = qr
+                ac_qt(k) = qr
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
         !$OMP end parallel do
 
-    end subroutine grd_timestep
+    end subroutine grd_time_step
 
-    subroutine loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt)
+    subroutine loieau_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ca, ac_cc, ac_kb, &
+    & ac_ha, ac_hc, ac_qt)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: ca, cc, kb
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: ha, hc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in):: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in):: ac_ca, ac_cc, ac_kb
+        real(sp), dimension(mesh%nac), intent(inout):: ac_ha, ac_hc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ca, cc, kb, ha, hc, qt) &
-        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt) &
+        !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd)
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    ei = min(pet(row, col), prcp(row, col))
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    pn = max(0._sp, prcp(row, col) - ei)
+                    ei = min(ac_pet(k), ac_prcp(k))
 
-                    en = pet(row, col) - ei
+                    pn = max(0._sp, ac_prcp(k) - ei)
 
-                    call gr_production(pn, en, ca(row, col), 9._sp/4._sp, ha(row, col), pr, perc)
+                    en = ac_pet(k) - ei
+
+                    call gr_production(pn, en, ac_ca(k), 9._sp/4._sp, ac_ha(k), pr, perc)
 
                 else
 
@@ -665,19 +742,19 @@ contains
                 prr = 0.9_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(4._sp, prcp(row, col), prr, cc(row, col), hc(row, col), qr)
+                call gr_transfer(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), qr)
 
                 qd = max(0._sp, prd)
 
-                qt(row, col) = kb(row, col)*(qr + qd)
+                ac_qt(k) = ac_kb(k)*(qr + qd)
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
 
             end do
         end do
         !$OMP end parallel do
 
-    end subroutine loieau_timestep
+    end subroutine loieau_time_step
 
 end module md_gr_operator
