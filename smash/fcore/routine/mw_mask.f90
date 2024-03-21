@@ -40,4 +40,25 @@ contains
 
     end subroutine mask_upstream_cells
 
+
+    
+    subroutine compute_mask_gauge(mesh)
+
+        implicit none
+
+        type(MeshDT), intent(inout) :: mesh
+
+        integer :: i, t
+
+        mesh%mask_gauge = .false.
+
+        do i = 1, mesh%ng
+
+            call mask_upstream_cells(mesh, mesh%gauge_pos(i, 1), &
+            & mesh%gauge_pos(i, 2), mesh%mask_gauge(:, :, i))
+
+        end do
+        
+    end subroutine compute_mask_gauge
+    
 end module mw_mask

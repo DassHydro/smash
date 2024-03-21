@@ -904,6 +904,7 @@ MODEL_DDT_IO_ATTR_KEYS = {
         "gauge_pos",
         "code",
         "area",
+        "mask_gauge",
     ],
     "response_data": ["q"],
     "physio_data": ["descriptor"],
