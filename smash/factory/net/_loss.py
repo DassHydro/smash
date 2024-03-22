@@ -26,22 +26,27 @@ def _hcost(instance: Model) -> float:
 def _hcost_prime(
     y: np.ndarray,
     parameters: np.ndarray,
-    mask: np.ndarray,
     instance: Model,
     wrap_options: OptionsDT,
     wrap_returns: ReturnsDT,
 ) -> AnyTuple:
+    if y.ndim < 3:
+        y = y.reshape(instance.mesh.flwdir.shape + (-1,))
+        return_3d_grad = False
+    else:
+        return_3d_grad = True
+
     # % Set parameters or states
     for i, name in enumerate(parameters):
         if name in instance.rr_parameters.keys:
             ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            instance.rr_parameters.values[..., ind][mask] = y[:, i]
+            instance.rr_parameters.values[..., ind] = y[..., i]
 
         else:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            instance.rr_inital_states.values[..., ind][mask] = y[:, i]
+            instance.rr_inital_states.values[..., ind] = y[..., i]
 
     # % Run adjoint model
     wrap_parameters_to_control(
@@ -78,14 +83,17 @@ def _hcost_prime(
         if name in instance.rr_parameters.keys:
             ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            grad.append(parameters_b.rr_parameters.values[..., ind][mask])
+            grad.append(parameters_b.rr_parameters.values[..., ind])
 
         else:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            grad.append(parameters_b.rr_initial_states.values[..., ind][mask])
+            grad.append(parameters_b.rr_initial_states.values[..., ind])
 
-    grad = np.transpose(grad)
+    if return_3d_grad:
+        grad = np.transpose(grad, (1, 2, 0))
+    else:
+        grad = np.reshape(grad, (len(grad), -1)).T
 
     # % Get the gradient of NN in the forward hydrological model if used
     grad_h = [

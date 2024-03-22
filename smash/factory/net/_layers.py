@@ -102,12 +102,12 @@ class Scale(Layer):
         return self.input_shape
 
 
-def _initialize_nn_parameter(n_in: int, n_neuron: int, initializer: str) -> np.ndarray:
+def _initialize_nn_parameter(n_in: int, n_out: int, initializer: str) -> np.ndarray:
     split_inizer = initializer.split("_")
 
     if split_inizer[-1] == "uniform":
         if split_inizer[0] == "glorot":
-            limit = np.sqrt(6 / (n_in + n_neuron))
+            limit = np.sqrt(6 / (n_in + n_out))
 
         elif split_inizer[0] == "he":
             limit = np.sqrt(6 / n_in)
@@ -115,11 +115,11 @@ def _initialize_nn_parameter(n_in: int, n_neuron: int, initializer: str) -> np.n
         else:
             limit = 1 / np.sqrt(n_in)
 
-        value = np.random.uniform(-limit, limit, (n_in, n_neuron))
+        value = np.random.uniform(-limit, limit, (n_out, n_in))
 
     elif split_inizer[-1] == "normal":
         if split_inizer[0] == "glorot":
-            std = np.sqrt(2 / (n_in + n_neuron))
+            std = np.sqrt(2 / (n_in + n_out))
 
         elif split_inizer[0] == "he":
             std = np.sqrt(2 / n_in)
@@ -127,21 +127,39 @@ def _initialize_nn_parameter(n_in: int, n_neuron: int, initializer: str) -> np.n
         else:
             std = 0.01
 
-        value = np.random.normal(0, std, (n_in, n_neuron))
+        value = np.random.normal(0, std, (n_out, n_in))
 
     else:
-        value = np.zeros((n_in, n_neuron))
+        value = np.zeros((n_out, n_in))
 
     return value
 
 
 def _set_initialized_wb_to_layer(layer: Layer, kind: str):
-    n_in = 1 if kind == "bias" else layer.input_shape[0]
-    n_neuron = layer.neurons
+    if layer.layer_name() == "Dense":
+        n_in = layer.input_shape[-1]
+        n_out = layer.neurons
 
-    initializer = layer.bias_initializer if kind == "bias" else layer.kernel_initializer
+    elif layer.layer_name() == "Conv2d":
+        n_in = layer.input_shape[-1] * np.prod(layer.filter_shape)
+        n_out = layer.filters
+        # The real shape of W in this case is (filters, depth, height, width),
+        # which is simplified as (filters, depth*height*width)
 
-    value = _initialize_nn_parameter(n_in, n_neuron, initializer)
+    else:  # Should be unreachable
+        pass
+
+    if kind == "bias":
+        initializer = layer.bias_initializer
+        value = _initialize_nn_parameter(1, n_out, initializer)
+        value = value.T
+
+    elif kind == "weight":
+        initializer = layer.kernel_initializer
+        value = _initialize_nn_parameter(n_in, n_out, initializer)
+
+    else:  # Should be unreachable
+        pass
 
     setattr(layer, kind, value)
 
@@ -211,26 +229,144 @@ class Dense(Layer):
         self._bias_opt = copy.copy(optimizer)
 
     def n_params(self):
-        return np.prod(self.weight.shape) + np.prod(self.bias.shape)
+        return self.neurons * (self.input_shape[-1] + 1)
 
     def _forward_pass(self, x: np.ndarray):
         self.layer_input = x
-        return x.dot(self.weight) + self.bias
+        return x.dot(self.weight.T) + self.bias
 
     def _backward_pass(self, accum_grad: np.ndarray):
         weight = self.weight
 
         if self.trainable:
-            grad_weight = self.layer_input.T.dot(accum_grad)
+            # Compute gradients w.r.t. weights and biases
+            grad_weight = accum_grad.T.dot(self.layer_input)
             grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
 
+            # Update weights and biases
             self.weight = self._weight_opt.update(self.weight, grad_weight)
             self.bias = self._bias_opt.update(self.bias, grad_bias)
 
-        return accum_grad.dot(weight.T)
+        # Gradient propogated back to previous layer
+        return accum_grad.dot(weight)
 
     def output_shape(self):
         return (self.neurons,)
+
+
+class Conv2d(Layer):
+    """A 2D Convolution Layer. Same padding, stride=1
+
+    Parameters:
+    -----------
+    filters: int
+        The number of filters that will convolve over the input matrix.
+    filter_shape: tuple
+        A tuple (filter_height, filter_width).
+    input_shape: tuple
+        The shape of the expected input of the layer. (height, width, depth)
+        Only needs to be specified for first layer in the network.
+    """
+
+    def __init__(
+        self,
+        filters: int,
+        filter_shape: tuple,
+        input_shape: tuple | None = None,
+        kernel_initializer: str = "glorot_uniform",
+        bias_initializer: str = "zeros",
+        **unknown_options,
+    ):
+        self.layer_input = None
+
+        self.filters = filters
+        self.filter_shape = filter_shape
+
+        self.input_shape = input_shape
+
+        self.trainable = True
+
+        self.weight = None
+
+        self.bias = None
+
+        self.kernel_initializer = kernel_initializer.lower()
+
+        if self.kernel_initializer not in WB_INITIALIZER:
+            raise ValueError(
+                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {WB_INITIALIZER}"
+            )
+
+        self.bias_initializer = bias_initializer.lower()
+
+        if self.bias_initializer not in WB_INITIALIZER:
+            raise ValueError(f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}")
+
+    def _initialize(self, optimizer):
+        _set_initialized_wb_to_layer(self, "weight")
+        _set_initialized_wb_to_layer(self, "bias")
+
+        # Set optimizer
+        self._weight_opt = copy.copy(optimizer)
+        self._bias_opt = copy.copy(optimizer)
+
+    def n_params(self):
+        return self.filters * (self.input_shape[-1] * np.prod(self.filter_shape) + 1)
+
+    def _forward_pass(self, x: np.ndarray):
+        self.layer_input = x
+
+        self.x_col = _im2col(x, self.filter_shape)
+
+        res = self.x_col.dot(self.weight.T) + self.bias
+
+        return res.reshape(self.output_shape())
+
+    def _backward_pass(self, accum_grad):
+        weight = self.weight
+
+        # Reshape accum_grad into column shape
+        accum_grad = accum_grad.reshape(-1, self.filters)
+
+        if self.trainable:
+            # Compute gradients w.r.t. weights and biases
+            grad_weight = accum_grad.T.dot(self.x_col)
+            grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
+
+            # Update weights and biases
+            self.weight = self._weight_opt.update(self.weight, grad_weight)
+            self.bias = self._bias_opt.update(self.bias, grad_bias)
+
+        # Gradient propogated back to previous layer
+        accum_grad = accum_grad.dot(weight)
+        accum_grad = _col2im(accum_grad, self.input_shape, self.filter_shape)
+
+        return accum_grad
+
+    def output_shape(self):
+        height, width, _ = self.input_shape
+
+        return height, width, self.filters
+
+
+class Flatten(Layer):
+    """Turns a multidimensional matrix into two-dimensional"""
+
+    def __init__(self, input_shape=None):
+        self.prev_shape = None
+        self.trainable = True
+        self.input_shape = input_shape
+
+    def _forward_pass(self, x):
+        self.prev_shape = x.shape
+
+        return x.reshape((-1, x.shape[-1]))
+
+    def _backward_pass(self, accum_grad):
+        return accum_grad.reshape(self.prev_shape)
+
+    def output_shape(self):
+        return (self.input_shape[0] * self.input_shape[1], self.input_shape[2])
 
 
 class Dropout(Layer):
@@ -362,3 +498,66 @@ class MinMaxScale:
 
     def gradient(self, x: np.ndarray):
         return self.upper - self.lower
+
+
+### UTILS ###
+
+
+def _im2col(im: np.ndarray, filter_shape: tuple) -> np.ndarray:
+    pad_h, pad_w = _same_padding(filter_shape)
+
+    im_padded = np.pad(im, (pad_h, pad_w, (0, 0)), mode="constant")
+
+    i, j, k = _get_imcol_indices(im.shape, filter_shape, (pad_h, pad_w))
+
+    return np.transpose(im_padded[i, j, k])
+
+
+def _col2im(col: np.ndarray, im_shape: tuple, filter_shape: tuple) -> np.ndarray:
+    height, width, depth = im_shape
+
+    pad_h, pad_w = _same_padding(filter_shape)
+
+    im_padded = np.zeros((height + np.sum(pad_h), width + np.sum(pad_w), depth))
+
+    i, j, k = _get_imcol_indices(im_shape, filter_shape, (pad_h, pad_w))
+
+    np.add.at(im_padded, (i, j, k), col.T)
+
+    # Remove padding
+    return im_padded[pad_h[0] : -pad_h[1], pad_w[0] : -pad_w[1]]
+
+
+def _get_imcol_indices(im_shape: tuple, filter_shape: tuple, padding: tuple) -> tuple:
+    height, width, depth = im_shape
+    filter_height, filter_width = filter_shape
+
+    pad_h, pad_w = padding
+
+    height_out = height + np.sum(pad_h) - filter_height + 1
+    width_out = width + np.sum(pad_w) - filter_width + 1
+
+    i0 = np.repeat(np.arange(filter_height), filter_width)
+    i0 = np.tile(i0, depth)
+    i1 = np.repeat(np.arange(height_out), width_out)
+
+    j0 = np.tile(np.arange(filter_width), filter_height * depth)
+    j1 = np.tile(np.arange(width_out), height_out)
+
+    i = i0.reshape(-1, 1) + i1.reshape(1, -1)
+    j = j0.reshape(-1, 1) + j1.reshape(1, -1)
+
+    k = np.repeat(np.arange(depth), filter_height * filter_width).reshape(-1, 1)
+
+    return (i, j, k)
+
+
+def _same_padding(filter_shape: tuple) -> tuple:
+    # Compute 'same' padding where the output size is the same as input size
+
+    pad_h1 = int((filter_shape[0] - 1) // 2)
+    pad_h2 = filter_shape[0] - 1 - pad_h1
+    pad_w1 = int((filter_shape[1] - 1) // 2)
+    pad_w2 = filter_shape[1] - 1 - pad_w1
+
+    return (pad_h1, pad_h2), (pad_w1, pad_w2)

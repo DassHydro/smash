@@ -366,19 +366,19 @@ def _standardize_simulation_optimize_options_net(
         # % check input shape
         ips = net.layers[0].input_shape
 
-        if ips[0] != nd:
+        if ips[-1] != nd:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of input layer ({ips[0]}) and "
-                f"the number of descriptors ({nd}): {ips[0]} != {nd}"
+                f"net optimize_options: Inconsistent value between the number of input layer ({ips[-1]}) and "
+                f"the number of descriptors ({nd}): {ips[-1]} != {nd}"
             )
 
         # % check output shape
         ios = net.layers[-1].output_shape()
 
-        if ios[0] != ncv:
+        if ios[-1] != ncv:
             raise ValueError(
-                f"net optimize_options: Inconsistent value between the number of output layer ({ios[0]}) and "
-                f"the number of parameters ({ncv}): {ios[0]} != {ncv}"
+                f"net optimize_options: Inconsistent value between the number of output layer ({ios[-1]}) and "
+                f"the number of parameters ({ncv}): {ios[-1]} != {ncv}"
             )
 
         # % check bounds constraints

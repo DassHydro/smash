@@ -647,7 +647,7 @@ WB_INITIALIZER = [
     "zeros",
 ]
 
-LAYER_NAME = ["Dense", "Activation", "Scale", "Dropout"]
+LAYER_NAME = ["Dense", "Conv2d", "Activation", "Scale", "Flatten", "Dropout"]
 
 PY_OPTIMIZER_CLASS = ["Adam", "SGD", "Adagrad", "RMSprop"]
 

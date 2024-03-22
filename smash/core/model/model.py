@@ -2322,7 +2322,7 @@ class Model:
 
     def get_nn_parameters_weight(self) -> list[NDArray[np.float32]]:
         """
-        TODO TH: Fill (transposed weight)
+        TODO TH: Fill
         """
 
         return [layer.weight for layer in self._parameters.nn_parameters.layers]
@@ -2336,7 +2336,7 @@ class Model:
 
     def set_nn_parameters_weight(self, initializer: str = "glorot_uniform", random_state: int | None = None):
         """
-        TODO TH: Fill (transposed weight)
+        TODO TH: Fill
         """
 
         initializer, random_state = _standardize_set_nn_parameters_weight_args(initializer, random_state)
@@ -2346,55 +2346,7 @@ class Model:
 
         for layer in self._parameters.nn_parameters.layers:
             (n_neuron, n_in) = layer.weight.shape
-            value = _initialize_nn_parameter(n_in, n_neuron, initializer)
-
-            layer.weight = np.transpose(value)
-
-    def set_nn_parameters_bias(self, initializer: str = "zeros", random_state: int | None = None):
-        """
-        TODO TH: Fill
-        """
-
-        initializer, random_state = _standardize_set_nn_parameters_bias_args(initializer, random_state)
-
-        if (random_state is not None) and (initializer != "zeros"):
-            np.random.seed(random_state)
-
-        for layer in self._parameters.nn_parameters.layers:
-            n_neuron = layer.bias.shape[0]
-            value = _initialize_nn_parameter(1, n_neuron, initializer)
-
-            layer.bias = value.flatten()
-
-    def get_nn_parameters_weight(self) -> list[NDArray[np.float32]]:
-        """
-        TODO TH: Fill (transposed weight)
-        """
-
-        return [layer.weight for layer in self._parameters.nn_parameters.layers]
-
-    def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
-        """
-        TODO TH: Fill
-        """
-
-        return [layer.bias for layer in self._parameters.nn_parameters.layers]
-
-    def set_nn_parameters_weight(self, initializer: str = "glorot_uniform", random_state: int | None = None):
-        """
-        TODO TH: Fill (transposed weight)
-        """
-
-        initializer, random_state = _standardize_set_nn_parameters_weight_args(initializer, random_state)
-
-        if (random_state is not None) and (initializer != "zeros"):
-            np.random.seed(random_state)
-
-        for layer in self._parameters.nn_parameters.layers:
-            (n_neuron, n_in) = layer.weight.shape
-            value = _initialize_nn_parameter(n_in, n_neuron, initializer)
-
-            layer.weight = np.transpose(value)
+            layer.weight = _initialize_nn_parameter(n_in, n_neuron, initializer)
 
     def set_nn_parameters_bias(self, initializer: str = "zeros", random_state: int | None = None):
         """

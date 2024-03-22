@@ -5,7 +5,7 @@ from typing import TYPE_CHECKING
 from smash._constant import PY_OPTIMIZER, PY_OPTIMIZER_CLASS
 
 # Used inside eval statement
-from smash.factory.net._layers import Activation, Dense, Dropout, Scale  # noqa: F401
+from smash.factory.net._layers import Activation, Dense, Conv2d, Dropout, Flatten, Scale  # noqa: F401
 from smash.factory.net._loss import _hcost, _hcost_prime, _inf_norm
 from smash.factory.net._optimizers import SGD, Adagrad, Adam, RMSprop  # noqa: F401
 from smash.factory.net._standardize import _standardize_add_args
@@ -321,7 +321,6 @@ class Net(object):
     def _fit_d2p(
         self,
         x_train: np.ndarray,
-        mask: np.ndarray,
         instance: Model,
         wrap_options: OptionsDT,
         wrap_returns: ReturnsDT,
@@ -358,7 +357,7 @@ class Net(object):
             # calculate the gradient of the loss function wrt y_pred
             # and get the gradient of NN in the forward hydrological model
             init_loss_grad, nn_parameters_b = _hcost_prime(
-                y_pred, parameters, mask, instance, wrap_options, wrap_returns
+                y_pred, parameters, instance, wrap_options, wrap_returns
             )
 
             # compute loss
@@ -440,8 +439,3 @@ class Net(object):
             loss_grad = layer._backward_pass(loss_grad)
 
         return loss_grad
-
-    def _predict(self, x_train: np.ndarray):
-        preds = self._forward_pass(x_train)
-
-        return preds
