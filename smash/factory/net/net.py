@@ -346,7 +346,7 @@ class Net(object):
         ind = PY_OPTIMIZER.index(optimizer.lower())
         func = eval(PY_OPTIMIZER_CLASS[ind])
 
-        opt_weight = [func(**{"learning_rate": learning_rate}) for i in range(instance.setup.nhl + 1)]
+        opt_weight = [func(**{"learning_rate": learning_rate}) for _ in range(instance.setup.nhl + 1)]
         opt_bias = copy.deepcopy(opt_weight)
 
         # % Train model
@@ -404,6 +404,7 @@ class Net(object):
 
             # calculate projected gradient for regionalization NN
             self.history["proj_grad"].append(_inf_norm(loss_grad))
+            # TODO: review this for computing proj_g in case of double NN
 
             if verbose:
                 ret = []

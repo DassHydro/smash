@@ -41,7 +41,7 @@ class Activation(Layer):
         - 'selu' : Scaled Exponential Linear Unit
         - 'elu' : Exponential Linear Unit
         - 'softmax' : Softmax
-        - 'leaky_relu' : Leaky Rectified Linear Unit
+        - 'leakyrelu' : Leaky Rectified Linear Unit
         - 'tanh' : Hyperbolic Tangent
         - 'softplus' : Softplus
     """
@@ -441,7 +441,7 @@ class ReLU:
         return np.where(x >= 0, 1, 0)
 
 
-class PReLU:
+class LeakyReLU:
     def __init__(self, alpha=0.01):
         self.alpha = alpha
 
