@@ -148,7 +148,7 @@ class Net(object):
         Parameters
         ----------
         layer : str
-            Layer name. Should be one of 'dense', 'activation', 'scale', 'dropout'.
+            Layer name. Should be one of 'dense', 'conv2d', 'activation', 'scale', 'flatten', 'dropout'.
 
         options : dict
             A dictionary to configure layers added to the network.
@@ -157,8 +157,10 @@ class Net(object):
                 See options for each layer type:
 
                 - 'dense' :ref:`(see here) <api_reference.sub-packages.net.add_dense>`
+                - 'conv2d' :ref:`(see here) <api_reference.sub-packages.net.add_conv2d>`
                 - 'activation' :ref:`(see here) <api_reference.sub-packages.net.add_activation>`
                 - 'scale' :ref:`(see here) <api_reference.sub-packages.net.add_scale>`
+                - 'flatten' :ref:`(see here) <api_reference.sub-packages.net.add_flatten>`
                 - 'dropout' :ref:`(see here) <api_reference.sub-packages.net.add_dropout>`
 
         Examples
@@ -244,7 +246,7 @@ class Net(object):
             List of booleans with a length of the total number of the network's layers.
 
             .. note::
-                Dropout, activation, and scaling functions are non-parametric layers,
+                Flatten, Dropout, Activation, and Scaling functions are non-parametric layers,
                 meaning they do not have any learnable weights or biases.
                 Therefore, it is not necessary to set these layers as trainable
                 since they do not involve any weight updates during training.

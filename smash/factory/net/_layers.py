@@ -251,21 +251,32 @@ class Dense(Layer):
         return accum_grad.dot(weight)
 
     def output_shape(self):
-        return (self.neurons,)
+        return self.input_shape[:-1] + (self.neurons,)
 
 
 class Conv2d(Layer):
-    """A 2D Convolution Layer. Same padding, stride=1
+    """
+    2D convolutional layer with same padding and a stride of one.
 
-    Parameters:
-    -----------
-    filters: int
-        The number of filters that will convolve over the input matrix.
-    filter_shape: tuple
-        A tuple (filter_height, filter_width).
-    input_shape: tuple
-        The shape of the expected input of the layer. (height, width, depth)
-        Only needs to be specified for first layer in the network.
+    Options
+    -------
+    filters : int
+        The number of filters in the convolutional layer.
+
+    filter_shape : tuple
+        The size of the convolutional window.
+
+    input_shape : tuple or None, default None
+        The expected input shape of the convolutional layer.
+        It must be specified if this is the first layer in the network.
+
+    kernel_initializer : str, default 'glorot_uniform'
+        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
+        'glorot_normal', 'he_normal', 'zeros'.
+
+    bias_initializer : str, default 'zeros'
+        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
+        'glorot_normal', 'he_normal', 'zeros'.
     """
 
     def __init__(
@@ -350,7 +361,9 @@ class Conv2d(Layer):
 
 
 class Flatten(Layer):
-    """Turns a multidimensional matrix into two-dimensional"""
+    """
+    Flatten layer to reshape the input from 2D layer into 1D layer.
+    """
 
     def __init__(self, input_shape=None):
         self.prev_shape = None

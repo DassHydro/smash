@@ -36,8 +36,10 @@ Neural Network Configuration
       smash/smash.factory.Net.layers
       smash/smash.factory.Net.history
       net/add_dense
+      net/add_conv2d
       net/add_activation
       net/add_scale
+      net/add_flatten
       net/add_dropout
 
 Sample Generation
