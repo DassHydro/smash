@@ -3606,6 +3606,8 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_sigma_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
       LOGICAL :: qt_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: stats
+      LOGICAL :: stats_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ei
       LOGICAL :: ei_flag=.false.
       REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pn
@@ -3653,10 +3655,6 @@ CONTAINS
 ! Variable inside forward run are pre allocated
 ! Variable inside optimize will be allocated on the fly
     DO i=1,SIZE(wkeys)
-! internal fluxes
-!~             case ("internal_fluxes")
-!~                 this%internal_fluxes_flag = .true.
-!~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
       SELECT CASE  (wkeys(i)) 
       CASE ('rr_states') 
         this%rr_states_flag = .true.
@@ -3691,6 +3689,14 @@ CONTAINS
       CASE ('qt') 
         this%qt_flag = .true.
         ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
+      CASE ('stats') 
+! internal fluxes
+!~             case ("internal_fluxes")
+!~                 this%internal_fluxes_flag = .true.
+!~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
+! mean, var, min, max, med
+        this%stats_flag = .true.
+        ALLOCATE(this%stats(mesh%ng, setup%ntime_step, 5))
       END SELECT
       IF (setup%hydrological_module .EQ. 'gr4' .OR. setup%&
 &         hydrological_module .EQ. 'gr5') THEN
@@ -16683,6 +16689,12 @@ CONTAINS
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
+!~         do j = 1, mesh%ng
+!~             write (*,*) mean(j, :)
+!~             write (*,*) ""
+!~         end do    
+!write (*,*) minimum
+!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -16692,7 +16704,8 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq
+    INTEGER :: t, iret, zq, j, npos_val
+    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_d
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -16710,6 +16723,9 @@ CONTAINS
 &   hcl, husl, hmsl, hbsl, hlr
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs_d, hi_d, hp_d, ht_d, &
 &   ha_d, hc_d, hcl_d, husl_d, hmsl_d, hbsl_d, hlr_d
+    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
+&   , maximum, med
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
     CASE ('zero') 
@@ -17052,6 +17068,12 @@ CONTAINS
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
+!~         do j = 1, mesh%ng
+!~             write (*,*) mean(j, :)
+!~             write (*,*) ""
+!~         end do    
+!write (*,*) minimum
+!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -17061,7 +17083,8 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq
+    INTEGER :: t, iret, zq, j, npos_val
+    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -17079,6 +17102,9 @@ CONTAINS
 &   hcl, husl, hmsl, hbsl, hlr
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs_b, hi_b, hp_b, ht_b, &
 &   ha_b, hc_b, hcl_b, husl_b, hmsl_b, hbsl_b, hlr_b
+    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
+&   , maximum, med
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
     INTEGER :: branch
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
@@ -17962,6 +17988,12 @@ CONTAINS
   SUBROUTINE SIMULATION(setup, mesh, input_data, parameters, output, &
 &   options, returns)
     IMPLICIT NONE
+!~         do j = 1, mesh%ng
+!~             write (*,*) mean(j, :)
+!~             write (*,*) ""
+!~         end do    
+!write (*,*) minimum
+!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -17969,7 +18001,8 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq
+    INTEGER :: t, iret, zq, j, npos_val
+    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
@@ -17979,6 +18012,9 @@ CONTAINS
 &   akw, bkw
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs, hi, hp, ht, ha, hc, &
 &   hcl, husl, hmsl, hbsl, hlr
+    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
+&   , maximum, med
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
     CASE ('zero') 

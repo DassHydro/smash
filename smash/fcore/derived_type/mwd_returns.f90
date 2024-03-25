@@ -105,7 +105,10 @@ module mwd_returns
         ! internal fluxes
 !~         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
 !~         logical :: internal_fluxes_flag = .false.
-
+        
+        real(sp), dimension(:, :, :), allocatable :: stats
+        logical :: stats_flag = .false.
+                
         real(sp), dimension(:, :), allocatable :: ei
         logical :: ei_flag = .false.
 
@@ -225,6 +228,11 @@ contains
 !~             case ("internal_fluxes")
 !~                 this%internal_fluxes_flag = .true.
 !~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
+            
+            case("stats") ! mean, var, min, max, med
+                this%stats_flag = .true.
+                allocate (this%stats(mesh%ng, setup%ntime_step, 5))
+                
             end select
             
             if ((setup%hydrological_module == "gr4") .or. (setup%hydrological_module == "gr5")) then

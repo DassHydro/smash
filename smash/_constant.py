@@ -825,6 +825,7 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "cost": False,
         "jobs": False,
         "qt": False,
+        "stats": False,
         "ei": False,
         "pn": False,
         "en": False,

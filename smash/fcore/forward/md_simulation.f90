@@ -142,8 +142,9 @@ contains
         type(OutputDT), intent(inout) :: output
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-
-        integer :: t, iret, zq
+        
+        integer :: t, iret, zq, j, npos_val
+        real(sp) :: m
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet
         real(sp), dimension(:, :, :), allocatable :: q, qt
         real(sp), dimension(:, :), allocatable :: mlt
@@ -151,6 +152,8 @@ contains
         real(sp), dimension(:, :), allocatable :: kmlt, ci, cp, ct, kexc, aexc, ca, cc, kb, &
         & b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, akw, bkw
         real(sp), dimension(:, :), allocatable :: hs, hi, hp, ht, ha, hc, hcl, husl, hmsl, hbsl, hlr
+        real(sp), dimension(mesh%ng, setup%ntime_step) :: mean, var, minimum, maximum, med
+        logical, dimension(mesh%nrow, mesh%ncol) :: mask
 
         ! Snow module initialisation
         select case (setup%snow_module)
@@ -310,6 +313,7 @@ contains
         iret = 0
         qt = 0._sp
         q = 0._sp
+ 
         ! Start time loop
         do t = 1, setup%ntime_step
 
@@ -341,13 +345,34 @@ contains
 
                 ! 'gr4' module
             case ("gr4")
-
                 call gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt(:, :, zq), returns)
 
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
+                !$AD start-exclude
+                do j = 1, mesh%ng
+                    mask = (returns%pn .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
+                    npos_val = count(mask) 
+                    m = sum(returns%pn, mask = mask) / npos_val 
+                    mean(j, t) = m
+                    var(j, t) = sum((returns%pn - m) * (returns%pn - m), mask = mask) / npos_val 
+                    minimum(j, t) = minval(returns%pn, mask = mask)
+                    maximum(j, t) = maxval(returns%pn, mask = mask)
+!~                     write(*,*) "Niglo"
+!~                     write(*,*) j, t, returns%pn, maximum(j, t)
+!~                     write(*,*) "Niglo"
 
+!~                     if (mod(npos_val, 2) .eq. 0) med(j, t) =   
+                end do
+                if (returns%stats_flag) then
+                    returns%stats(:, :, 1) = mean
+                    returns%stats(:, :, 2) = var
+                    returns%stats(:, :, 3) = minimum
+                    returns%stats(:, :, 4) = maximum
+!~                     returns%stats(:, :, 5) = med
+                end if
+                !$AD end-exclude
                 ! 'gr5' module
             case ("gr5")
 
@@ -412,6 +437,12 @@ contains
             call store_timestep(mesh, output, returns, t, iret, qt(:, :, zq), q(:, :, zq))
 
         end do
+!~         do j = 1, mesh%ng
+!~             write (*,*) mean(j, :)
+!~             write (*,*) ""
+!~         end do    
+        !write (*,*) minimum
+        !write (*,*) maximum
 
     end subroutine simulation
 

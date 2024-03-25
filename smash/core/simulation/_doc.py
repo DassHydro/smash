@@ -515,6 +515,14 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return lateral discharge on the whole domain for specific time steps.
         """,
     ),
+    "stats": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return stats : mean, var, min, max, med on internal fluxes.
+        """,
+    ),
     "pn": (
         """
         `bool`, default False
