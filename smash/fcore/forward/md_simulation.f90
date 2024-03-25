@@ -3,7 +3,7 @@
 !%      Subroutine
 !%      ----------
 !%
-!%      - roll_checkpoint_discharge
+!%      - roll_discharge
 !%      - store_time_step
 !%      - simulation_checkpoint
 !%      - simulation
@@ -83,6 +83,7 @@ contains
 
                         call ac_vector_to_matrix(mesh, checkpoint_variable%ac_rr_states(:, i), &
                         & returns%rr_states(time_step_returns)%values(:, :, i))
+                        returns%rr_states(time_step_returns)%keys = output%rr_final_states%keys
 
                     end do
 
