@@ -16912,7 +16912,7 @@ END MODULE MD_VIC3L_OPERATOR_DIFF
 !%      Subroutine
 !%      ----------
 !%
-!%      - roll_checkpoint_discharge
+!%      - roll_discharge
 !%      - store_time_step
 !%      - simulation_checkpoint
 !%      - simulation
