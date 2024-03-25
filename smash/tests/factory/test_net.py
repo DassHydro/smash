@@ -16,40 +16,21 @@ def generic_net_init(**kwargs):
 
     for i in range(n_hidden_layers):
         if i == 0:
-            net.add(
-                layer="dense",
-                options={
-                    "input_shape": (6,),
-                    "neurons": n_neurons,
-                    "kernel_initializer": "he_uniform",
-                },
-            )
+            net.add_dense(n_neurons, input_shape=6, kernel_initializer="he_uniform")
 
         else:
             n_neurons_i = round(n_neurons * (n_hidden_layers - i) / n_hidden_layers)
 
-            net.add(
-                layer="dense",
-                options={
-                    "neurons": n_neurons_i,
-                    "kernel_initializer": "he_uniform",
-                },
-            )
+            net.add_dense(n_neurons_i, kernel_initializer="he_uniform", activation="relu")
+            net.add_dropout(0.1)
 
-        net.add(layer="activation", options={"name": "relu"})
-        net.add(layer="dropout", options={"drop_rate": 0.1})
-
-    net.add(
-        layer="dense",
-        options={"neurons": 2, "kernel_initializer": "glorot_uniform"},
-    )
-    net.add(layer="activation", options={"name": "sigmoid"})
+    net.add_dense(2, kernel_initializer="glorot_uniform", activation="sigmoid")
 
     net._compile(
         optimizer="adam",
-        learning_param={"learning_rate": 0.002, "b1": 0.8, "b2": 0.99},
+        learning_param={"learning_rate": 0.002},
         random_state=11,
-    )  # % TODO: change this when net.fit_xx available
+    )
 
     graph = np.array([layer.layer_name() for layer in net.layers]).astype("S")
 

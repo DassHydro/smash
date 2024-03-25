@@ -4,8 +4,6 @@ import copy
 
 import numpy as np
 
-from smash._constant import WB_INITIALIZER
-
 
 class Layer(object):
     def _set_input_shape(self, shape: tuple):
@@ -28,31 +26,12 @@ class Layer(object):
 
 
 class Activation(Layer):
-    """
-    Activation layer that applies a specified activation function to the input.
-
-    Options
-    -------
-    name : str
-        The name of the activation function that will be used. Should be one of
-
-        - 'relu' : Rectified Linear Unit
-        - 'sigmoid' : Sigmoid
-        - 'selu' : Scaled Exponential Linear Unit
-        - 'elu' : Exponential Linear Unit
-        - 'softmax' : Softmax
-        - 'leakyrelu' : Leaky Rectified Linear Unit
-        - 'tanh' : Hyperbolic Tangent
-        - 'softplus' : Softplus
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, name: str, **unknown_options):
+    def __init__(self, name: str):
         self.input_shape = None
 
         self._activation_func = eval(name)()
         self.activation_name = self._activation_func.__class__.__name__
-        self.trainable = True
+        self.trainable = False
 
     def layer_name(self):
         return f"Activation ({self.activation_name})"
@@ -69,24 +48,14 @@ class Activation(Layer):
 
 
 class Scale(Layer):
-    """
-    Scale layer that applies the min-max scaling function to the outputs.
-
-    Options
-    -------
-    bounds : ListLike
-        A sequence of ``(min, max)`` values that the outputs will be scaled to.
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, bounds: list | tuple | np.ndarray, **unknown_options):
+    def __init__(self, bounds: np.ndarray):
         self.input_shape = None
 
-        self._scale_func = MinMaxScale(np.array(bounds))
+        self._scale_func = MinMaxScale(bounds)
 
         self.scale_name = self._scale_func.__class__.__name__
 
-        self.trainable = True
+        self.trainable = False
 
     def layer_name(self):
         return f"Scale ({self.scale_name})"
@@ -140,7 +109,7 @@ def _set_initialized_wb_to_layer(layer: Layer, kind: str):
         n_in = layer.input_shape[-1]
         n_out = layer.neurons
 
-    elif layer.layer_name() == "Conv2d":
+    elif layer.layer_name() == "Conv2D":
         n_in = layer.input_shape[-1] * np.prod(layer.filter_shape)
         n_out = layer.filters
         # The real shape of W in this case is (filters, depth, height, width),
@@ -165,35 +134,12 @@ def _set_initialized_wb_to_layer(layer: Layer, kind: str):
 
 
 class Dense(Layer):
-    """
-    Fully-connected (dense) layer.
-
-    Options
-    -------
-    neurons : int
-        The number of neurons in the layer.
-
-    input_shape : tuple or None, default None
-        The expected input shape of the dense layer.
-        It must be specified if this is the first layer in the network.
-
-    kernel_initializer : str, default 'glorot_uniform'
-        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-
-    bias_initializer : str, default 'zeros'
-        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-    """
-
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         neurons: int,
-        input_shape: tuple | None = None,
-        kernel_initializer: str = "glorot_uniform",
-        bias_initializer: str = "zeros",
-        **unknown_options,
+        input_shape: tuple,
+        kernel_initializer: str,
+        bias_initializer: str,
     ):
         self.layer_input = None
 
@@ -207,17 +153,8 @@ class Dense(Layer):
 
         self.bias = None
 
-        self.kernel_initializer = kernel_initializer.lower()
-
-        if self.kernel_initializer not in WB_INITIALIZER:
-            raise ValueError(
-                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {WB_INITIALIZER}"
-            )
-
-        self.bias_initializer = bias_initializer.lower()
-
-        if self.bias_initializer not in WB_INITIALIZER:
-            raise ValueError(f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}")
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
 
     # TODO TYPE HINT: replace function by Callable
     def _initialize(self, optimizer: function):  # noqa: F821
@@ -254,39 +191,14 @@ class Dense(Layer):
         return self.input_shape[:-1] + (self.neurons,)
 
 
-class Conv2d(Layer):
-    """
-    2D convolutional layer with same padding and a stride of one.
-
-    Options
-    -------
-    filters : int
-        The number of filters in the convolutional layer.
-
-    filter_shape : tuple
-        The size of the convolutional window.
-
-    input_shape : tuple or None, default None
-        The expected input shape of the convolutional layer.
-        It must be specified if this is the first layer in the network.
-
-    kernel_initializer : str, default 'glorot_uniform'
-        Weight initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-
-    bias_initializer : str, default 'zeros'
-        Bias initialization method. Should be one of 'uniform', 'glorot_uniform', 'he_uniform', 'normal',
-        'glorot_normal', 'he_normal', 'zeros'.
-    """
-
+class Conv2D(Layer):
     def __init__(
         self,
         filters: int,
         filter_shape: tuple,
-        input_shape: tuple | None = None,
-        kernel_initializer: str = "glorot_uniform",
-        bias_initializer: str = "zeros",
-        **unknown_options,
+        input_shape: tuple,
+        kernel_initializer: str,
+        bias_initializer: str,
     ):
         self.layer_input = None
 
@@ -301,17 +213,8 @@ class Conv2d(Layer):
 
         self.bias = None
 
-        self.kernel_initializer = kernel_initializer.lower()
-
-        if self.kernel_initializer not in WB_INITIALIZER:
-            raise ValueError(
-                f"Unknown kernel initializer: {self.kernel_initializer}. Choices {WB_INITIALIZER}"
-            )
-
-        self.bias_initializer = bias_initializer.lower()
-
-        if self.bias_initializer not in WB_INITIALIZER:
-            raise ValueError(f"Unknown bias initializer: {self.bias_initializer}. Choices {WB_INITIALIZER}")
+        self.kernel_initializer = kernel_initializer
+        self.bias_initializer = bias_initializer
 
     def _initialize(self, optimizer):
         _set_initialized_wb_to_layer(self, "weight")
@@ -361,46 +264,34 @@ class Conv2d(Layer):
 
 
 class Flatten(Layer):
-    """
-    Flatten layer to reshape the input from 2D layer into 1D layer.
-    """
+    def __init__(self):
+        self._prev_shape = None
 
-    def __init__(self, input_shape=None):
-        self.prev_shape = None
-        self.trainable = True
-        self.input_shape = input_shape
+        self.input_shape = None
+
+        self.trainable = False
 
     def _forward_pass(self, x):
-        self.prev_shape = x.shape
+        self._prev_shape = x.shape
 
         return x.reshape((-1, x.shape[-1]))
 
     def _backward_pass(self, accum_grad):
-        return accum_grad.reshape(self.prev_shape)
+        return accum_grad.reshape(self._prev_shape)
 
     def output_shape(self):
         return (self.input_shape[0] * self.input_shape[1], self.input_shape[2])
 
 
 class Dropout(Layer):
-    """
-    Dropout layer that randomly sets the output of the previous layer to zero with a specified probability.
-
-    Options
-    -------
-    drop_rate : float
-        The probability of setting a given output value to zero.
-    """
-
-    # TODO: Add function check_unknown_options
-    def __init__(self, drop_rate: float, **unknown_options):
+    def __init__(self, drop_rate: float):
         self.drop_rate = drop_rate
 
         self._mask = None
 
         self.input_shape = None
 
-        self.trainable = True
+        self.trainable = False
 
     def _forward_pass(self, x: np.ndarray):
         c = 1 - self.drop_rate
@@ -501,10 +392,8 @@ class SoftPlus:
 
 class MinMaxScale:
     def __init__(self, bounds: np.ndarray):
-        self._bounds = bounds
-
-        self.lower = np.array([b[0] for b in bounds])
-        self.upper = np.array([b[1] for b in bounds])
+        self.lower = bounds[:, 0]
+        self.upper = bounds[:, 1]
 
     def __call__(self, x: np.ndarray):
         return self.lower + x * (self.upper - self.lower)

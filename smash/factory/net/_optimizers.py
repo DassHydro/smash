@@ -17,7 +17,7 @@ class SGD:
         The momentum used to smooth the gradient updates.
     """
 
-    def __init__(self, learning_rate: float = 0.01, momentum: float = 0, **unknown_options):
+    def __init__(self, learning_rate: float = 0.01, momentum: float = 0):
         self.learning_rate = learning_rate
 
         self.momentum = momentum
@@ -49,14 +49,12 @@ class Adam:
         Exponential decay rate for the second moment estimate.
     """
 
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         learning_rate: float = 0.001,
         b1: float = 0.9,
         b2: float = 0.999,
         eps=1e-8,
-        **unknown_options,
     ):
         self.learning_rate = learning_rate
 
@@ -96,8 +94,7 @@ class Adagrad:
 
     """
 
-    # TODO: Add function check_unknown_options
-    def __init__(self, learning_rate: float = 0.01, eps=1e-8, **unknown_options):
+    def __init__(self, learning_rate: float = 0.01, eps=1e-8):
         self.learning_rate = learning_rate
 
         self.g = None  # Sum of squares of the gradients
@@ -130,13 +127,11 @@ class RMSprop:
         The decay rate for the running average of the squared gradients.
     """
 
-    # TODO: Add function check_unknown_options
     def __init__(
         self,
         learning_rate: float = 0.001,
         rho: float = 0.9,
         eps=1e-8,
-        **unknown_options,
     ):
         self.learning_rate = learning_rate
 
