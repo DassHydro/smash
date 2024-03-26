@@ -111,7 +111,7 @@ OPTIMIZE_OPTIONS_BASE_DOC = {
         `Net <smash.factory.Net>` or None, default None
         """,
         """
-        The neural network used to learn the descriptors-to-parameters mapping.
+        The regionalization neural network used to learn the descriptors-to-parameters mapping.
 
         .. note::
             If not given, a default neural network will be used. This option is only used when **mapping** is

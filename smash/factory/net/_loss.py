@@ -77,32 +77,38 @@ def _hcost_prime(
         instance.setup, instance.mesh, instance._input_data, parameters_b, wrap_options
     )
 
-    # % Get the gradient of NN for regionalization
-    grad = []
+    # % Get the gradient of regionalization NN
+    grad_reg = []
     for name in parameters:
         if name in instance.rr_parameters.keys:
             ind = np.argwhere(instance.rr_parameters.keys == name).item()
 
-            grad.append(parameters_b.rr_parameters.values[..., ind])
+            grad_reg.append(parameters_b.rr_parameters.values[..., ind])
 
         else:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            grad.append(parameters_b.rr_initial_states.values[..., ind])
+            grad_reg.append(parameters_b.rr_initial_states.values[..., ind])
 
     if return_3d_grad:
-        grad = np.transpose(grad, (1, 2, 0))
+        grad_reg = np.transpose(grad_reg, (1, 2, 0))
     else:
-        grad = np.reshape(grad, (len(grad), -1)).T
+        grad_reg = np.reshape(grad_reg, (len(grad_reg), -1)).T
 
-    # % Get the gradient of NN in the forward hydrological model if used
-    grad_h = [
-        {"weight": layer.weight.copy(), "bias": layer.bias.copy()}
-        for layer in parameters_b.nn_parameters.layers
-    ]
+    # % Get the gradient of parameterization NN if used
+    grad_par_weight = [layer.weight.copy() for layer in parameters_b.nn_parameters.layers]
+    grad_par_bias = [layer.bias.copy() for layer in parameters_b.nn_parameters.layers]
 
-    return grad, grad_h
+    return grad_reg, (grad_par_weight, grad_par_bias)
 
 
-def _inf_norm(grad: np.ndarray) -> float:
-    return np.amax(np.abs(grad))
+def _inf_norm(grad: np.ndarray | list | tuple) -> float:
+    if isinstance(grad, (list, tuple)):
+        if grad:  # If not an empty list
+            return max(_inf_norm(g) for g in grad)
+
+        else:
+            return 0
+
+    else:
+        return np.amax(np.abs(grad))

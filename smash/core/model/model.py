@@ -93,6 +93,7 @@ if TYPE_CHECKING:
     from smash.fcore._mwd_rr_states import RR_StatesDT
     from smash.fcore._mwd_serr_mu_parameters import SErr_Mu_ParametersDT
     from smash.fcore._mwd_serr_sigma_parameters import SErr_Sigma_ParametersDT
+    from smash.fcore._mwd_nn_parameters import NN_ParametersDT
     from smash.fcore._mwd_u_response_data import U_Response_DataDT
     from smash.util._typing import ListLike, Numeric
 
@@ -121,9 +122,9 @@ class Model:
             Name of hydrological module. Should be one of:
 
             - ``'gr4'``
-            - ``'gr4_mlp_alg'`` (TODO TH: link Math/Num)
-            - ``'gr4_ode'`` (TODO TH: link Math/Num)
-            - ``'gr4_mlp_ode'`` (TODO TH: link Math/Num)
+            - ``'gr4_mlp_alg'``
+            - ``'gr4_ode'``
+            - ``'gr4_mlp_ode'``
             - ``'gr5'``
             - ``'grd'``
             - ``'loieau'``
@@ -145,7 +146,7 @@ class Model:
                 section
 
         hidden_neuron : `int` or `list[int, ...]`, default 16
-            Number of neurons in hidden layer(s) of the neural network, if used (depending on **hydrological_module**), in the forward hydrological model.
+            Number of neurons in hidden layer(s) of the parameterization neural network used to correct internal fluxes, if used (depending on **hydrological_module**).
 
         serr_mu_mapping : `str`, default 'Zero'
             Name of the mapping used for :math:`\\mu`, the mean of structural errors. Should be one of:
@@ -1107,9 +1108,16 @@ class Model:
         self._parameters.serr_sigma_parameters = value
 
     @property
-    def nn_parameters(self):
+    def nn_parameters(self) -> NN_ParametersDT:
         """
-        Model neural network parameters.
+        The weight and bias of the parameterization neural network used to correct internal fluxes.
+
+        See Also
+        --------
+        Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
+        Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
+        Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
+        Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
 
         Examples
         --------
@@ -1119,7 +1127,7 @@ class Model:
         return self._parameters.nn_parameters
 
     @nn_parameters.setter
-    def nn_parameters(self, value):
+    def nn_parameters(self, value: NN_ParametersDT):
         self._parameters.nn_parameters = value
 
     @property
@@ -2322,14 +2330,34 @@ class Model:
 
     def get_nn_parameters_weight(self) -> list[NDArray[np.float32]]:
         """
+        Get the weight of the parameterization neural network.
+
         TODO TH: Fill
+
+        Returns
+        -------
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.set_nn_parameters_weight : Set the values of the weight in the parameterization neural network.
         """
 
         return [layer.weight for layer in self._parameters.nn_parameters.layers]
 
     def get_nn_parameters_bias(self) -> list[NDArray[np.float32]]:
         """
+        Get the bias of the parameterization neural network.
+
         TODO TH: Fill
+
+        Returns
+        -------
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.set_nn_parameters_bias : Set the values of the bias in the parameterization neural network.
         """
 
         return [layer.bias for layer in self._parameters.nn_parameters.layers]
@@ -2341,7 +2369,17 @@ class Model:
         random_state: int | None = None,
     ):
         """
+        Set the values of the weight in the parameterization neural network.
+
         TODO TH: Fill
+
+        Parameters
+        ----------
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.get_nn_parameters_weight : Get the weight of the parameterization neural network.
         """
 
         value, initializer, random_state = _standardize_set_nn_parameters_weight_args(
@@ -2365,7 +2403,17 @@ class Model:
         random_state: int | None = None,
     ):
         """
+        Set the values of the bias in the parameterization neural network.
+
         TODO TH: Fill
+
+        Parameters
+        ----------
+
+        See Also
+        --------
+        Model.nn_parameters : The weight and bias of the parameterization neural network used to correct internal fluxes.
+        Model.get_nn_parameters_bias : Get the bias of the parameterization neural network.
         """
 
         value, initializer, random_state = _standardize_set_nn_parameters_bias_args(

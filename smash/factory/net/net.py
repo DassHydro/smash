@@ -514,7 +514,7 @@ class Net(object):
             random_state=random_state,
         )
 
-        # % Initialize optimizer for NN in the forward hydrological model if used
+        # % Initialize optimizer for the parameterization NN if used
         ind = PY_OPTIMIZER.index(optimizer.lower())
         func = eval(PY_OPTIMIZER_CLASS[ind])
 
@@ -526,8 +526,8 @@ class Net(object):
             # forward propogation
             y_pred = self._forward_pass(x_train)
 
-            # calculate the gradient of the loss function wrt y_pred
-            # and get the gradient of NN in the forward hydrological model
+            # calculate the gradient of the loss function wrt y_pred of the regionalization NN
+            # and get the gradient of the parameterization NN if used
             init_loss_grad, nn_parameters_b = _hcost_prime(
                 y_pred, parameters, instance, wrap_options, wrap_returns
             )
@@ -559,24 +559,21 @@ class Net(object):
 
             # backpropagation and weights update
             if epo < epochs - 1:
-                # update weights of NN in the forward model
+                # update weights of the parameterization NN
                 for i in range(instance.setup.nhl + 1):
                     instance.nn_parameters.layers[i].weight = opt_weight[i].update(
-                        instance.nn_parameters.layers[i].weight,
-                        nn_parameters_b[i]["weight"],
+                        instance.nn_parameters.layers[i].weight, nn_parameters_b[0][i]
                     )
                     instance.nn_parameters.layers[i].bias = opt_bias[i].update(
-                        instance.nn_parameters.layers[i].bias,
-                        nn_parameters_b[i]["bias"],
+                        instance.nn_parameters.layers[i].bias, nn_parameters_b[1][i]
                     )
-                # backpropagation and update weights regionalization NN
+                # backpropagation and update weights of the regionalization NN
                 loss_grad = self._backward_pass(init_loss_grad, inplace=True)
             else:  # do not update weights at the last epoch
                 loss_grad = self._backward_pass(init_loss_grad, inplace=False)
 
-            # calculate projected gradient for regionalization NN
-            self.history["proj_grad"].append(_inf_norm(loss_grad))
-            # TODO: review this for computing proj_g in case of double NN
+            # calculate projected gradient for the LPR operator
+            self.history["proj_grad"].append(_inf_norm([loss_grad, nn_parameters_b]))
 
             if verbose:
                 ret = []
