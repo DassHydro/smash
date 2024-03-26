@@ -2348,7 +2348,7 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is not None):
+        if (random_state is not None) and (initializer != "zeros") and (value is None):
             np.random.seed(random_state)
 
         for i, layer in enumerate(self._parameters.nn_parameters.layers):
@@ -2372,7 +2372,7 @@ class Model:
             self, value, initializer, random_state
         )
 
-        if (random_state is not None) and (initializer != "zeros") and (value is not None):
+        if (random_state is not None) and (initializer != "zeros") and (value is None):
             np.random.seed(random_state)
 
         for i, layer in enumerate(self._parameters.nn_parameters.layers):
