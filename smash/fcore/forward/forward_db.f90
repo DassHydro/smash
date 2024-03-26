@@ -16679,6 +16679,19 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIMESTEP
 
+  SUBROUTINE COMPUTE_STATS(mesh, returns, ntime_step, t, fx)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: ntime_step
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: fx
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), DIMENSION(mesh%ng, ntime_step) :: mean, var, minimum, &
+&   maximum
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
+    INTEGER :: j, t, npos_val
+    REAL(sp) :: m
+  END SUBROUTINE COMPUTE_STATS
+
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
@@ -16705,7 +16718,6 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER :: t, iret, zq, j, npos_val
-    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_d
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -16725,7 +16737,6 @@ CONTAINS
 &   ha_d, hc_d, hcl_d, husl_d, hmsl_d, hbsl_d, hlr_d
     REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
 &   , maximum, med
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
     CASE ('zero') 
@@ -17000,6 +17011,8 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    pn)
       CASE ('gr5') 
 ! 'gr5' module
         CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
@@ -17084,7 +17097,6 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER :: t, iret, zq, j, npos_val
-    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -17104,7 +17116,6 @@ CONTAINS
 &   ha_b, hc_b, hcl_b, husl_b, hmsl_b, hbsl_b, hlr_b
     REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
 &   , maximum, med
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
     INTEGER :: branch
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
@@ -18002,7 +18013,6 @@ CONTAINS
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER :: t, iret, zq, j, npos_val
-    REAL(sp) :: m
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
@@ -18014,7 +18024,6 @@ CONTAINS
 &   hcl, husl, hmsl, hbsl, hlr
     REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
 &   , maximum, med
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
 ! Snow module initialisation
     SELECT CASE  (setup%snow_module) 
     CASE ('zero') 
@@ -18193,6 +18202,8 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    pn)
       CASE ('gr5') 
 ! 'gr5' module
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &

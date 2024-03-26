@@ -25,7 +25,6 @@ module md_simulation
     use md_vic3l_operator !% only: vic3l_timestep
     use md_routing_operator !% only: lag0_timestep, lr_timestep, kw_timestep
     use mwd_parameters_manipulation !% only: get_rr_parameters, get_rr_states, set_rr_states
-
     implicit none
 
 contains
@@ -130,7 +129,41 @@ contains
         !$AD end-exclude
 
     end subroutine store_timestep
+    
+    subroutine compute_stats(mesh, returns, ntime_step, t, fx)
+        implicit none
 
+        type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: ntime_step
+        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: fx
+        type(ReturnsDT), intent(inout) :: returns
+        real(sp), dimension(mesh%ng, ntime_step) :: mean, var, minimum, maximum
+        logical, dimension(mesh%nrow, mesh%ncol) :: mask
+        integer :: j, t, npos_val
+        real(sp) :: m
+        
+        !$AD start-exclude
+        do j = 1, mesh%ng
+            mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
+            npos_val = count(mask) 
+            m = sum(fx, mask = mask) / npos_val 
+            mean(j, t) = m
+            var(j, t) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
+            minimum(j, t) = minval(fx, mask = mask)
+            maximum(j, t) = maxval(fx, mask = mask)
+    !~                         if (mod(npos_val, 2) .eq. 0) med(j, t) =   
+        end do
+        if (returns%stats_flag) then
+            returns%stats(:, :, 1) = mean
+            returns%stats(:, :, 2) = var
+            returns%stats(:, :, 3) = minimum
+            returns%stats(:, :, 4) = maximum
+    !~                      returns%stats(:, :, 5) = med
+        end if
+        !$AD end-exclude
+    end subroutine
+    
+    
     subroutine simulation(setup, mesh, input_data, parameters, output, options, returns)
 
         implicit none
@@ -144,7 +177,6 @@ contains
         type(ReturnsDT), intent(inout) :: returns
         
         integer :: t, iret, zq, j, npos_val
-        real(sp) :: m
         real(sp), dimension(mesh%nrow, mesh%ncol) :: prcp, pet
         real(sp), dimension(:, :, :), allocatable :: q, qt
         real(sp), dimension(:, :), allocatable :: mlt
@@ -153,7 +185,6 @@ contains
         & b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, akw, bkw
         real(sp), dimension(:, :), allocatable :: hs, hi, hp, ht, ha, hc, hcl, husl, hmsl, hbsl, hlr
         real(sp), dimension(mesh%ng, setup%ntime_step) :: mean, var, minimum, maximum, med
-        logical, dimension(mesh%nrow, mesh%ncol) :: mask
 
         ! Snow module initialisation
         select case (setup%snow_module)
@@ -350,29 +381,9 @@ contains
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
-                !$AD start-exclude
-                do j = 1, mesh%ng
-                    mask = (returns%pn .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
-                    npos_val = count(mask) 
-                    m = sum(returns%pn, mask = mask) / npos_val 
-                    mean(j, t) = m
-                    var(j, t) = sum((returns%pn - m) * (returns%pn - m), mask = mask) / npos_val 
-                    minimum(j, t) = minval(returns%pn, mask = mask)
-                    maximum(j, t) = maxval(returns%pn, mask = mask)
-!~                     write(*,*) "Niglo"
-!~                     write(*,*) j, t, returns%pn, maximum(j, t)
-!~                     write(*,*) "Niglo"
 
-!~                     if (mod(npos_val, 2) .eq. 0) med(j, t) =   
-                end do
-                if (returns%stats_flag) then
-                    returns%stats(:, :, 1) = mean
-                    returns%stats(:, :, 2) = var
-                    returns%stats(:, :, 3) = minimum
-                    returns%stats(:, :, 4) = maximum
-!~                     returns%stats(:, :, 5) = med
-                end if
-                !$AD end-exclude
+                call compute_stats(mesh, returns, setup%ntime_step, t, returns%pn)
+                
                 ! 'gr5' module
             case ("gr5")
 
