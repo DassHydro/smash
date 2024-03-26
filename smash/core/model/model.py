@@ -1886,6 +1886,12 @@ class Model:
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
 
+        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
+        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
+
+        >>> setup["serr_mu_mapping"] = "Linear"
+        >>> model = smash.Model(setup, mesh)
+
         Set a specific value to a structural error sigma parameter vector
 
         >>> model.set_serr_sigma_parameters("sg0", 2)
