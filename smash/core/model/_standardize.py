@@ -31,7 +31,6 @@ from smash._constant import (
     FEASIBLE_RR_INITIAL_STATES,
     FEASIBLE_SERR_MU_PARAMETERS,
     FEASIBLE_SERR_SIGMA_PARAMETERS,
-    WB_INITIALIZER,
 )
 
 import pandas as pd
@@ -43,8 +42,9 @@ import datetime
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
+    from numpy.typing import NDArray
     from smash.core.model.model import Model
-    from smash.util._typing import AnyTuple, ListLike, Numeric
+    from smash.util._typing import AnyTuple, ListLike, Numeric, Any
 
 from smash.factory.samples._standardize import (
     _standardize_generate_samples_random_state,
@@ -53,6 +53,8 @@ from smash.factory.samples._standardize import (
 from smash.factory.samples._standardize import (
     _standardize_generate_samples_random_state,
 )
+
+from smash.factory.net._standardize import _standardize_initializer
 
 
 def _standardize_model_setup_bool(key: str, value: bool) -> bool:
@@ -721,14 +723,72 @@ def _standardize_set_serr_sigma_parameters_args(
     return (key, value)
 
 
-def _standardize_set_nn_parameters_initializer(initializer: str) -> str:
-    if isinstance(initializer, str):
-        if initializer not in WB_INITIALIZER:
-            raise ValueError(f"Unknown initializer: {initializer}. Choices {WB_INITIALIZER}")
-    else:
-        raise TypeError("initializer argument must be a str")
+def _standardize_set_nn_parameters_weight_value(
+    model: Model, value: list[Any] | None
+) -> list[NDArray[np.float32]]:
+    if value is None:
+        pass
 
-    return initializer.lower()
+    elif isinstance(value, list):
+        layers = model._parameters.nn_parameters.layers
+
+        if len(value) != len(layers):
+            raise ValueError(
+                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(layers)}"
+            )
+
+        else:
+            for i, arr in enumerate(value):
+                if isinstance(arr, (int, float)):
+                    value[i] = arr * np.ones(layers[i].weight.shape)
+                elif isinstance(arr, np.ndarray):
+                    if arr.shape != layers[i].weight.shape:
+                        raise ValueError(
+                            f"Inconsistent size between the expected weight to set to the current one: {arr.shape} != {layers[i].weight.shape}"
+                        )
+                else:
+                    raise TypeError("Each element of value argument must be a Numpy array")
+
+    else:
+        raise TypeError("value argument must be a list of a same size with layers")
+
+    return value
+
+
+def _standardize_set_nn_parameters_bias_value(
+    model: Model, value: list[Any] | None
+) -> list[NDArray[np.float32]]:
+    if value is None:
+        pass
+
+    elif isinstance(value, list):
+        layers = model._parameters.nn_parameters.layers
+
+        if len(value) != len(layers):
+            raise ValueError(
+                f"Inconsistent size between value argument and the layers of the network: {len(value)} != {len(layers)}"
+            )
+
+        else:
+            for i, arr in enumerate(value):
+                if isinstance(arr, (int, float)):
+                    value[i] = arr * np.ones(layers[i].bias.shape)
+                elif isinstance(arr, np.ndarray):
+                    if arr.shape != layers[i].bias.shape:
+                        raise ValueError(
+                            f"Inconsistent size between the expected bias to set to the current one: {arr.shape} != {layers[i].bias.shape}"
+                        )
+                else:
+                    raise TypeError("Each element of value argument must be a Numpy array")
+
+    else:
+        raise TypeError("value argument must be a list of a same size with layers")
+
+    return value
+
+
+def _standardize_set_nn_parameters_initializer(initializer: str) -> str:
+    return _standardize_initializer(initializer)
 
 
 def _standardize_set_nn_parameters_random_state(
@@ -737,12 +797,21 @@ def _standardize_set_nn_parameters_random_state(
     return _standardize_generate_samples_random_state(random_state)
 
 
-def _standardize_set_nn_parameters_weight_args(initializer: str, random_state: Numeric | None) -> AnyTuple:
+def _standardize_set_nn_parameters_weight_args(
+    model: Model, value: list[Any] | None, initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    value = _standardize_set_nn_parameters_weight_value(model, value)
     initializer = _standardize_set_nn_parameters_initializer(initializer)
     random_state = _standardize_set_nn_parameters_random_state(random_state)
 
-    return (initializer, random_state)
+    return (value, initializer, random_state)
 
 
-def _standardize_set_nn_parameters_bias_args(initializer: str, random_state: Numeric | None) -> AnyTuple:
-    return _standardize_set_nn_parameters_weight_args(initializer, random_state)
+def _standardize_set_nn_parameters_bias_args(
+    model: Model, value: list[Any] | None, initializer: str, random_state: Numeric | None
+) -> AnyTuple:
+    value = _standardize_set_nn_parameters_bias_value(model, value)
+    initializer = _standardize_set_nn_parameters_initializer(initializer)
+    random_state = _standardize_set_nn_parameters_random_state(random_state)
+
+    return (value, initializer, random_state)

@@ -2334,35 +2334,53 @@ class Model:
 
         return [layer.bias for layer in self._parameters.nn_parameters.layers]
 
-    def set_nn_parameters_weight(self, initializer: str = "glorot_uniform", random_state: int | None = None):
+    def set_nn_parameters_weight(
+        self,
+        value: list[NDArray[Any]] | None = None,
+        initializer: str = "glorot_uniform",
+        random_state: int | None = None,
+    ):
         """
         TODO TH: Fill
         """
 
-        initializer, random_state = _standardize_set_nn_parameters_weight_args(initializer, random_state)
+        value, initializer, random_state = _standardize_set_nn_parameters_weight_args(
+            self, value, initializer, random_state
+        )
 
-        if (random_state is not None) and (initializer != "zeros"):
+        if (random_state is not None) and (initializer != "zeros") and (value is not None):
             np.random.seed(random_state)
 
-        for layer in self._parameters.nn_parameters.layers:
-            (n_neuron, n_in) = layer.weight.shape
-            layer.weight = _initialize_nn_parameter(n_in, n_neuron, initializer)
+        for i, layer in enumerate(self._parameters.nn_parameters.layers):
+            if value is None:
+                (n_neuron, n_in) = layer.weight.shape
+                layer.weight = _initialize_nn_parameter(n_in, n_neuron, initializer)
+            else:
+                layer.weight = value[i]
 
-    def set_nn_parameters_bias(self, initializer: str = "zeros", random_state: int | None = None):
+    def set_nn_parameters_bias(
+        self,
+        value: list[NDArray[Any]] | None = None,
+        initializer: str = "zeros",
+        random_state: int | None = None,
+    ):
         """
         TODO TH: Fill
         """
 
-        initializer, random_state = _standardize_set_nn_parameters_bias_args(initializer, random_state)
+        value, initializer, random_state = _standardize_set_nn_parameters_bias_args(
+            self, value, initializer, random_state
+        )
 
-        if (random_state is not None) and (initializer != "zeros"):
+        if (random_state is not None) and (initializer != "zeros") and (value is not None):
             np.random.seed(random_state)
 
-        for layer in self._parameters.nn_parameters.layers:
-            n_neuron = layer.bias.shape[0]
-            value = _initialize_nn_parameter(1, n_neuron, initializer)
-
-            layer.bias = value.flatten()
+        for i, layer in enumerate(self._parameters.nn_parameters.layers):
+            if value is None:
+                n_neuron = layer.bias.shape[0]
+                layer.bias = _initialize_nn_parameter(1, n_neuron, initializer).flatten()
+            else:
+                layer.bias = value[i]
 
     @_model_forward_run_doc_substitution
     @_forward_run_doc_appender

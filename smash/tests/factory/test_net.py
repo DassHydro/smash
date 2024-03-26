@@ -12,19 +12,27 @@ def generic_net_init(**kwargs):
     net = smash.factory.Net()
 
     n_hidden_layers = 4
-    n_neurons = 16
+    n_filters = 16
 
     for i in range(n_hidden_layers):
         if i == 0:
-            net.add_dense(n_neurons, input_shape=6, kernel_initializer="he_uniform")
+            net.add_conv2d(
+                n_filters,
+                filter_shape=(3, 4),
+                input_shape=(12, 15, 2),
+                kernel_initializer="he_normal",
+                activation="leakyrelu",
+            )
+            net.add_flatten()
 
         else:
-            n_neurons_i = round(n_neurons * (n_hidden_layers - i) / n_hidden_layers)
+            n_neurons_i = round(n_filters * (n_hidden_layers - i) / n_hidden_layers)
 
             net.add_dense(n_neurons_i, kernel_initializer="he_uniform", activation="relu")
             net.add_dropout(0.1)
 
-    net.add_dense(2, kernel_initializer="glorot_uniform", activation="sigmoid")
+    net.add_dense(2, kernel_initializer="glorot_normal", activation="sigmoid")
+    net.add_scale([(1.5, 3), (2, 5.5)])
 
     net._compile(
         optimizer="adam",

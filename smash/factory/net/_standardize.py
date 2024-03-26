@@ -22,8 +22,8 @@ def _standardize_add_dense_args(
     neurons = _standardize_integer("neurons", neurons)
     input_shape = _standardize_add_dense_input_shape(net, input_shape)
     activation = _standardize_activation(activation)
-    kernel_initializer = _standardize_initializer("kernel", kernel_initializer)
-    bias_initializer = _standardize_initializer("bias", bias_initializer)
+    kernel_initializer = _standardize_initializer(kernel_initializer)
+    bias_initializer = _standardize_initializer(bias_initializer)
 
     return neurons, input_shape, activation, kernel_initializer, bias_initializer
 
@@ -41,8 +41,8 @@ def _standardize_add_conv2d_args(
     filter_shape = _standardize_add_conv2d_filter_shape(filter_shape)
     input_shape = _standardize_add_conv2d_input_shape(net, input_shape)
     activation = _standardize_activation(activation)
-    kernel_initializer = _standardize_initializer("kernel", kernel_initializer)
-    bias_initializer = _standardize_initializer("bias", bias_initializer)
+    kernel_initializer = _standardize_initializer(kernel_initializer)
+    bias_initializer = _standardize_initializer(bias_initializer)
 
     return filters, filter_shape, input_shape, activation, kernel_initializer, bias_initializer
 
@@ -168,32 +168,27 @@ def _standardize_activation(activation: str | None) -> str | None:
         pass
 
     elif isinstance(activation, str):
-        activation_standardized = activation.lower()
-
-        if activation_standardized in ACTIVATION_FUNCTION:
-            ind = ACTIVATION_FUNCTION.index(activation_standardized)
-            activation_standardized = ACTIVATION_FUNCTION_CLASS[ind]
+        if activation.lower() in ACTIVATION_FUNCTION:
+            ind = ACTIVATION_FUNCTION.index(activation.lower())
+            activation = ACTIVATION_FUNCTION_CLASS[ind]
 
         else:
             raise ValueError(f"Unknown activation function {activation}. Choices: {ACTIVATION_FUNCTION}")
 
-        return activation_standardized
-
     else:
         raise TypeError("activation must be a str")
 
+    return activation
 
-def _standardize_initializer(name: str, value: str) -> str:
-    if isinstance(value, str):
-        value_standardized = value.lower()
 
-        if not value_standardized in WB_INITIALIZER:
-            raise ValueError(f"Unknown {name}_initializer '{value}'. Choices: {WB_INITIALIZER}")
-
+def _standardize_initializer(initializer: str) -> str:
+    if isinstance(initializer, str):
+        if initializer.lower() not in WB_INITIALIZER:
+            raise ValueError(f"Unknown initializer: {initializer}. Choices {WB_INITIALIZER}")
     else:
-        raise TypeError(f"{name}_initializer must be a str")
+        raise TypeError("Initializer method must be a str")
 
-    return value_standardized
+    return initializer.lower()
 
 
 def _standardize_integer(name: str, value: Numeric) -> int:
