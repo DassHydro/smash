@@ -653,7 +653,7 @@ def _ann_optimize(
         else:
             ind = np.argwhere(model.rr_initial_states.keys == name).item()
 
-            model.rr_inital_states.values[..., ind] = y_reshape
+            model.rr_initial_states.values[..., ind] = y_reshape
 
     # % Forward run for updating final states
     wrap_forward_run(
