@@ -90,14 +90,6 @@ One of the optimizers available for spatially uniform parameter optimization was
 optimizer. Seeing no particular advantage in using this optimizer rather than the ``step-by-step`` optimizer,
 it was decided to withdraw it.
 
-Aggregation and disaggregation of precipitation
-***********************************************
-
-It is no longer possible to read atmospheric data whose resolution is different from the resolution of the
-``mesh``. Aggregating or disaggregating data when reading it is only of interest if the desired simulation is
-run once. As soon as the simulation has to be repeated, it is more interesting to aggregate or disaggregate
-the data beforehand by storing it on disk in order to avoid multiplying unnecessary calculations. 
-
 kge2 efficiency metric
 **********************
 
