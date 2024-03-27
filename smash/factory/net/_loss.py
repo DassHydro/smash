@@ -46,7 +46,7 @@ def _hcost_prime(
         else:
             ind = np.argwhere(instance.rr_initial_states.keys == name).item()
 
-            instance.rr_inital_states.values[..., ind] = y[..., i]
+            instance.rr_initial_states.values[..., ind] = y[..., i]
 
     # % Run adjoint model
     wrap_parameters_to_control(
