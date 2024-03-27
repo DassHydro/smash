@@ -1595,7 +1595,7 @@ class Model:
               dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown
+            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown
             below) and change the values but is simpler and ``safer`` to use
 
         Access the rainfall-runoff initial state keys
@@ -1885,6 +1885,7 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
 
         Set a specific value to a structural error sigma parameter vector
 
@@ -1954,7 +1955,7 @@ class Model:
         ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1]
         is not included in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the structural error mu parameter
+        Finally, trying to run the Model with a negative value set to the structural error sigma parameter
         ``'sg0'`` leads to the same error
 
         >>> model.forward_run()
@@ -2085,7 +2086,7 @@ class Model:
          'ht': (1e-06, 0.999999), 'hlr': (1e-06, 1000.0)}
 
         .. note::
-            This method allows you to find out the default bounds for the rainfall-runoff inital states.
+            This method allows you to find out the default bounds for the rainfall-runoff initial states.
             These bounds are used during optimization if they are not modified in the optimization method
             argument.
         """

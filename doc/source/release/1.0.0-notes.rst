@@ -69,7 +69,7 @@ Compatibilities
   dependencies and replaced by the `ruff <https://docs.astral.sh/ruff/>`__ package. 
 
 - The `SALib <https://salib.readthedocs.io/en/latest/>`__ package has been removed from the list of
-  dependencies. The sensitivity analysis can still be performed but external to `smash`
+  dependencies. The sensitivity analysis can still be performed but external to `smash`.
 
 ------------
 Deprecations
@@ -89,14 +89,6 @@ Nelder-Mead optimizer
 One of the optimizers available for spatially uniform parameter optimization was the ``Nelder-Mead``
 optimizer. Seeing no particular advantage in using this optimizer rather than the ``step-by-step`` optimizer,
 it was decided to withdraw it.
-
-Aggregation and disaggregation of precipitation
-***********************************************
-
-It is no longer possible to read atmospheric data whose resolution is different from the resolution of the
-``mesh``. Aggregating or disaggregating data when reading it is only of interest if the desired simulation is
-run once. As soon as the simulation has to be repeated, it is more interesting to aggregate or disaggregate
-the data beforehand by storing it on disk in order to avoid multiplying unnecessary calculations. 
 
 kge2 efficiency metric
 **********************
@@ -179,11 +171,12 @@ optimizing with signatures. Therefore, we added a new option in the setup, ``com
 default is set to True, but can be set to False to disable the computation of the spatial averages of
 atmospheric data.
 
-Hydrograph segmentation
-***********************
+Hydrograph segmentation and signatures-based optimization
+*********************************************************
 
-The baseflow algorithm used in the hydrograph segmentation algorithm has been rewritten in Fortran to improve
-the efficiency of signature calculation, especially for signature-based optimization.
+The baseflow separation method used in the hydrograph segmentation algorithm has been rewritten in Fortran 
+to improve the efficiency of signature calculation, especially for signature-based optimization. 
+The multi-criteria optimization method is now applicable for all studied event-based signatures.
 
 Model attributes
 ****************
@@ -272,7 +265,7 @@ It is now possible to run parallel simulations within a single Model object. Thi
 the `OpenMP <https://www.openmp.org/>`__ library, whose most of the directives are handled by Tapenade to
 generate a parallel adjoint code. To activate this option, simply pass a number of CPUs greater than 1 to the
 ``common_options`` argument of the various simulation methods (``forward_run``, ``optimize``, 
-``bayesian_optimize`` etc).
+``bayesian_optimize``, etc.).
 
 .. code-block:: python
 
@@ -289,19 +282,19 @@ direction whose unit is the degree, so that atmospheric data can be read on the 
 Bayesian estimation
 *******************
 
-A bayesian estimation module has been added to perform parameter estimation and uncertainty quantification
+A bayesian estimation module has been added to perform parameter estimation and uncertainty quantification.
 
 .. hint::
     See the :ref:`math_num_documentation.bayesian_estimation` section and `smash.Model.bayesian_optimize`
     API reference.
 
-A bayesian estimation can be invoked as follows:
+This bayesian estimation method can be invoked as follows:
 
 .. code-block:: python
 
     >>> model.bayesian_optimize()
 
-Strutural error mu and sigma can be accessed as follows once a bayesian estimation has been performed:
+Strutural error mu and sigma can be accessed as follows once the bayesian estimation has been performed:
 
 .. code-block:: python
 
@@ -317,9 +310,9 @@ A new snow module has been introduced:
     This snow module is a simple degree-day snow module.
 
 .. hint::
-    See the :ref:`Snow Module <math_num_documentation.forward_structure.snow_module>` section
+    See the :ref:`Snow Module <math_num_documentation.forward_structure.snow_module>` section.
 
-These snow module can be selected using the ``snow_module`` setup option.
+This snow module can be selected using the ``snow_module`` setup option:
 
 .. code-block:: yaml
 
@@ -332,7 +325,7 @@ Since a snow module has been introduced, a partitioning of the total precipitati
 precipitation has been implemented. The partitioning method is derived from a classical parametric S-shaped
 curve :cite:p:`garavaglia2017impact`.
 
-The precipitation partitioning can be selected using the ``prcp_partitioning`` setup option.
+The precipitation partitioning can be selected using the ``prcp_partitioning`` setup option:
 
 .. code-block:: yaml
 
@@ -353,7 +346,7 @@ New hydrological modules
     This hydrological module is derived from the VIC model :cite:p:`liang1994simple`.
 
 .. hint::
-    See the :ref:`Hydrological Module <math_num_documentation.forward_structure.hydrological_module>` section
+    See the :ref:`Hydrological Module <math_num_documentation.forward_structure.hydrological_module>` section.
 
 These hydrological modules can be selected using the ``hydrological_module`` setup option.
 
@@ -378,7 +371,7 @@ New routing modules
     plan :math:`\mathcal{D}_{\Omega}\left(x\right)` that enables reducing the routing problem to 1D. 
 
 .. hint::
-    See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>` section
+    See the :ref:`Routing Module <math_num_documentation.forward_structure.routing_module>` section.
 
 These routing modules can be selected using the ``routing_module`` setup option.
 
@@ -405,7 +398,7 @@ New efficiency metrics
     The Mean Squared Error
 
 .. hint::
-        See the :ref:`math_num_documentation.efficiency_error_metric` section
+        See the :ref:`math_num_documentation.efficiency_error_metric` section.
 
 These efficiency metrics can be selected using the ``cost_options`` argument in a simulation method.
 
@@ -423,8 +416,8 @@ or in the `smash.metrics` method
 Efficiency metric discharge transformation
 ******************************************
 
-It is now possible to apply transformations to the discharge to calculate the efficiency metrics. 2 
-transformations are available:
+It is now possible to apply transformations to the discharge to calculate the efficiency metrics. 
+Two transformations are available:
 
 - ``sqrt``
     Square root transformation
@@ -436,7 +429,8 @@ This can be used as follows:
 
 .. code-block:: python
 
-    >>> model.optimize(cost_options={"jobs_cmpt": ["kge", "kge"], "jobs_cmpt_tfm": ["keep", "inv"]})
+    >>> model.optimize(cost_options={"jobs_cmpt": ["kge", "kge"], 
+    ...                              "jobs_cmpt_tfm": ["keep", "inv"]})
 
 Return optional variables
 *************************
@@ -476,7 +470,8 @@ Two variables can be returned at certain time steps only, ``q_domain`` and ``rr_
     >>> len(ret.rr_states)
     1440
 
-    >>> ret = model.optimize(return_options={"q_domain": True, "rr_states": True, "time_step": model.setup.end_time})
+    >>> ret = model.optimize(return_options={"q_domain": True, "rr_states": True, 
+    ...                                      "time_step": model.setup.end_time})
     >>> ret.q_domain.shape  # shape (nrow, ncol, ntime_step)
     (28, 28, 1)
     >>> len(ret.rr_states)
@@ -491,7 +486,32 @@ optimized parameters. It can be specified as follows:
 
 .. code-block:: python
 
-    >>> model.optimize("multi-linear", optimize_options={"descriptor": dict(cp=["slope", "dd"], ct=["slope"], kexc=["slope", "dd"], llr=["dd"])})
+    >>> model.optimize("multi-linear", 
+    ...                optimize_options={"descriptor": dict(cp=["slope", "dd"], ct=["slope"], 
+    ...                                                     kexc=["slope", "dd"], llr=["dd"])})
+
+New early stopping feature for ANN-based regionalization
+********************************************************
+
+A new feature for ANN-based regionalization method to stop training when the loss function does not decrease 
+below the current optimal value for ``early_stopping`` consecutive epochs. It can be used as follows:
+
+.. code-block:: python
+
+    >>> model.optimize(mapping="ann", 
+    ...                optimize_options={"termination_crit": dict(early_stopping=10)})
+    </> Optimize
+        At epoch      1    J =  1.150821    |proj g| =  0.002341
+        At epoch      2    J =  1.142061    |proj g| =  0.002610
+        ...
+        At epoch     26    J =  0.103324    |proj g| =  0.005455
+        At epoch     27    J =  0.089769    |proj g| =  0.016618
+        At epoch     28    J =  0.104150    |proj g| =  0.019718
+        ...
+        At epoch     36    J =  0.185123    |proj g| =  0.011936
+        At epoch     37    J =  0.179911    |proj g| =  0.011819
+        Training:  92%|██████████████████████████▊  | 37/40 [00:30<00:02,  1.23it/s]
+
 
 New multiple optimize method
 ****************************
@@ -575,7 +595,7 @@ New optimize control information method
 New methods, `smash.optimize_control_info` and `smash.bayesian_optimize_control_info` have been added to
 retrieve control vector information from a certain ``mapping``, ``optimizer``, ``optimize_options`` and
 ``cost_options``. These methods will return a dictionary containing control vector information such as,
-initial value, name of each element, bounds, kind of bounds etc. These methods can be used to check that the
+initial value, name of each element, bounds, kind of bounds, etc.. These methods can be used to check that the
 control vector created for a given optimization configuration is correct. In addition, in the case of
 bayesian estimation, the names of each element in the control vector can be retrieved in this way in order to
 impose prior distribution on the control vector.
@@ -601,9 +621,9 @@ New package architecture
 ************************
 
 Two sub-modules have been created ``io`` and ``factory``. The ``io`` sub-module contains all the In/Out
-methods (i.e. `smash.io.read_setup`, `smash.io.save_model`, etc). The ``factory`` sub-module contains all
-the methods that are used to work around the `smash.Model` object but not dependent on it (i.e.
-`smash.factory.load_dataset`, `smash.factory.generate_mesh`, etc)
+methods (i.e., `smash.io.read_setup`, `smash.io.save_model`, etc.). The ``factory`` sub-module contains all
+the methods that are used to work around the `smash.Model` object but not dependent on it (i.e.,
+`smash.factory.load_dataset`, `smash.factory.generate_mesh`, etc.).
 
 New precipitation indice
 ************************
@@ -617,10 +637,10 @@ New options have been added to the setup:
 
 - ``prcp_access``, ``pet_access``, ``snow_access`` and ``temp_access``
     This options (one per atmospheric data type) can be used to specify how are stored the atmospheric
-    data files (i.e. the directories architecture).
+    data files (i.e., the directories architecture).
 
     .. hint::
-        See the :ref:`user_guide.others.input_data_convention` convention
+        See the :ref:`user_guide.others.input_data_convention` convention.
 
     It can be specified as follows:
 
@@ -660,7 +680,7 @@ No observed discharge available between end_warmup and end_time
 ***************************************************************
 
 Solves a problem when the user chooses to optimize the model by taking stations where no observed discharge
-data is available over the calibration period between ``end_warmup`` and ``end_time``
+data is available over the calibration period between ``end_warmup`` and ``end_time``.
 
 Error message when no input files were found
 ********************************************
@@ -683,5 +703,5 @@ The `smash.Model` object was not correctly saved and therefore read when it was 
 Error in projected gradient value with ANN mapping
 **************************************************
 
-There was an error in the values of the projected gradient when using ANN mapping. The ith iteration was
-printing the projected gradient of the i - 1 th iteration.
+There was an error in the values of the projected gradient when using ANN mapping. The current iteration was
+printing the projected gradient of the next iteration.
