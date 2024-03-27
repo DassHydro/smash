@@ -1885,11 +1885,6 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
-
-        Set the structural error mu mapping to ``'Linear'`` (see `smash.Model`). Default value in the
-        ``Cance`` dataset is ``'Zero'`` (equivalent to no mu mapping)
-
-        >>> setup["serr_mu_mapping"] = "Linear"
         >>> model = smash.Model(setup, mesh)
 
         Set a specific value to a structural error sigma parameter vector
@@ -1960,7 +1955,7 @@ class Model:
         ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1]
         is not included in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the structural error mu parameter
+        Finally, trying to run the Model with a negative value set to the structural error sigma parameter
         ``'sg0'`` leads to the same error
 
         >>> model.forward_run()
