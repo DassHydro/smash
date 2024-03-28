@@ -705,3 +705,9 @@ Error in projected gradient value with ANN mapping
 
 There was an error in the values of the projected gradient when using ANN mapping. The current iteration was
 printing the projected gradient of the next iteration.
+
+Error when computing min and max of physiograhic descriptor
+***********************************************************
+
+There was an error when computing the min and max of a physiograhic descriptor if there is no data (i.e., 
+sea in the domain). No data from tif file are converted to -99 which leads to a wrong minimal value.
