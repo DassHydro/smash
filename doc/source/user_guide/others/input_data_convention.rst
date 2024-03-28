@@ -130,7 +130,7 @@ Below is the most basic directory structure you can have, with one subdirectory 
     │   ├── V3504010.csv
     │   └── ...
     └── descriptor
-        ├── slope.ti
+        ├── slope.tif
         └── dd.tif
 
 This results in the following ``setup``:

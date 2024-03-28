@@ -16,7 +16,7 @@ def generic_multiset_estimate(model: smash.Model, **kwargs) -> dict:
     problem = {
         "num_vars": 3,
         "names": ["cp", "kexc", "hp"],
-        "bounds": [(1, 500), (-50, 50), (0, 1)],
+        "bounds": [(2, 1000), (-20, 5), (0, 1)],
     }
 
     sample = smash.factory.generate_samples(problem, n=20, random_state=11)
