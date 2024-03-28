@@ -1,11 +1,19 @@
-commit e9aaa187dd75a4e5e9ebd2c1074c38051cad3218
-Merge: 18c911e 14128e9
-Author: Francois Colleoni <110899888+inoelloc@users.noreply.github.com>
-Date:   Thu Mar 28 11:12:41 2024 +0100
+commit 89a4cb60d324b9023202c641f4453e636bc27eb2
+Author: Francois Colleoni <francois.colleoni@inrae.fr>
+Date:   Thu Mar 28 14:34:51 2024 +0100
 
-    Merge pull request #156 from DassHydro/fix-min-max-descriptor-with-no-data
+    FIX: Beta parameter in GR percolation
     
-    FIX: Min Max computation for physiographic descriptor
+    - The beta parameters in GR production in time step dependent. Currently, beta
+    was assigned to the daily time step value (i.e., 9/4)
+    This commit adds a beta parameter which is time step dependent. The hydrological
+    module concerned by this modification are ``gr4``, ``gr5`` and ``loieau``
+    
+    - This modifications impacted the test. A new baseline has been generated.
+    The setup of the tests on mutliset estimate has been changed to overcome
+    warning when dividing by zero.
+    
+    - The docstring has been updated
 
 TEST NAME                                                 |STATUS
 bbox_mesh.active_cell                                     |NON MODIFIED
