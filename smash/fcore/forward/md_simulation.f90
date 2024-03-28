@@ -136,13 +136,12 @@ contains
         type(MeshDT), intent(in) :: mesh
         integer, intent(in) :: t, fx_pos
         real(sp), dimension(mesh%nrow, mesh%ncol) :: fx
-!~         character(*), intent(in) :: fx_name
         type(ReturnsDT), intent(inout) :: returns
         logical, dimension(mesh%nrow, mesh%ncol) :: mask
         integer :: i, j, npos_val
         real(sp) :: m
 
-        fx = returns%internal_fluxes(:, :, fx_pos)
+        fx = returns%stats%internal_fluxes(:, :, fx_pos)
         !$AD start-exclude
         do j = 1, mesh%ng
             mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))

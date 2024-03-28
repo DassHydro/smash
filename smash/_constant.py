@@ -826,7 +826,6 @@ DEFAULT_SIMULATION_RETURN_OPTIONS = {
         "jobs": False,
         "qt": False,
         "stats": False,
-        "internal_fluxes": False,
     },
     "optimize": {
         "time_step": "all",

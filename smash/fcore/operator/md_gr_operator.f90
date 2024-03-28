@@ -187,16 +187,16 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%internal_fluxes_flag) then
-                    returns%internal_fluxes(row, col, 1) = pn
-                    returns%internal_fluxes(row, col, 2) = en
-                    returns%internal_fluxes(row, col, 3) = pr
-                    returns%internal_fluxes(row, col, 4) = perc
-                    returns%internal_fluxes(row, col, 5) = l
-                    returns%internal_fluxes(row, col, 6) = prr
-                    returns%internal_fluxes(row, col, 7) = prd
-                    returns%internal_fluxes(row, col, 8) = qr
-                    returns%internal_fluxes(row, col, 9) = qd
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = pr
+                    returns%stats%internal_fluxes(row, col, 4) = perc
+                    returns%stats%internal_fluxes(row, col, 5) = l
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
                 !$AD end-exclude
             end do
@@ -259,16 +259,16 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%internal_fluxes_flag) then
-                    returns%internal_fluxes(row, col, 1) = pn
-                    returns%internal_fluxes(row, col, 2) = en
-                    returns%internal_fluxes(row, col, 3) = pr
-                    returns%internal_fluxes(row, col, 4) = perc
-                    returns%internal_fluxes(row, col, 5) = l
-                    returns%internal_fluxes(row, col, 6) = prr
-                    returns%internal_fluxes(row, col, 7) = prd
-                    returns%internal_fluxes(row, col, 8) = qr
-                    returns%internal_fluxes(row, col, 9) = qd
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = pr
+                    returns%stats%internal_fluxes(row, col, 4) = perc
+                    returns%stats%internal_fluxes(row, col, 5) = l
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
                 !$AD end-exclude
             end do
@@ -329,14 +329,14 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%internal_fluxes_flag) then
-                    returns%internal_fluxes(row, col, 1) = ei
-                    returns%internal_fluxes(row, col, 2) = pn
-                    returns%internal_fluxes(row, col, 3) = en
-                    returns%internal_fluxes(row, col, 4) = pr
-                    returns%internal_fluxes(row, col, 5) = perc
-                    returns%internal_fluxes(row, col, 6) = prr
-                    returns%internal_fluxes(row, col, 7) = qr
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = ei
+                    returns%stats%internal_fluxes(row, col, 2) = pn
+                    returns%stats%internal_fluxes(row, col, 3) = en
+                    returns%stats%internal_fluxes(row, col, 4) = pr
+                    returns%stats%internal_fluxes(row, col, 5) = perc
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = qr
                 end if
                 !$AD end-exclude
             end do
@@ -400,16 +400,16 @@ contains
             
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%internal_fluxes_flag) then
-                    returns%internal_fluxes(row, col, 1) = ei
-                    returns%internal_fluxes(row, col, 2) = pn
-                    returns%internal_fluxes(row, col, 3) = en
-                    returns%internal_fluxes(row, col, 4) = pr
-                    returns%internal_fluxes(row, col, 5) = perc
-                    returns%internal_fluxes(row, col, 6) = prr
-                    returns%internal_fluxes(row, col, 7) = prd
-                    returns%internal_fluxes(row, col, 8) = qr
-                    returns%internal_fluxes(row, col, 9) = qd
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = ei
+                    returns%stats%internal_fluxes(row, col, 2) = pn
+                    returns%stats%internal_fluxes(row, col, 3) = en
+                    returns%stats%internal_fluxes(row, col, 4) = pr
+                    returns%stats%internal_fluxes(row, col, 5) = perc
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
                 !$AD end-exclude
             

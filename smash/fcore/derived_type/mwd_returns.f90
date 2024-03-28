@@ -106,9 +106,6 @@ module mwd_returns
         ! internal fluxes
         type (StatsDT) :: stats
         logical :: stats_flag = .false.
-                
-        real(sp), dimension(:, :, :), allocatable :: internal_fluxes
-        logical :: internal_fluxes_flag = .false.
 
     end type ReturnsDT
 
@@ -197,10 +194,6 @@ contains
                 this%stats_flag = .true.
                 call StatsDT_initialise(this%stats, setup, mesh)
             
-            case("internal_fluxes")
-                this%internal_fluxes_flag = .true.
-                allocate(this%internal_fluxes(mesh%nrow, mesh%ncol, setup%nfx))
-                
             end select
         end do
 

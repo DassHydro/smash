@@ -231,11 +231,11 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%internal_fluxes_flag) then 
-                    returns%internal_fluxes(row, col, 1) = pn
-                    returns%internal_fluxes(row, col, 2) = en
-                    returns%internal_fluxes(row, col, 3) = qr
-                    returns%internal_fluxes(row, col, 4) = qb
+                if (returns%stats_flag) then 
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = qr
+                    returns%stats%internal_fluxes(row, col, 4) = qb
                 end if 
                 !$AD end-exclude
             end do

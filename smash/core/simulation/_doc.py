@@ -523,14 +523,6 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return stats : mean, var, min, max, med on internal fluxes.
         """,
     ),
-    "internal_fluxes": (
-        """
-        `bool`, default False
-        """,
-        """
-        Whether to return internal fluxes (depends on the structure model).
-        """,
-    ),
     "iter_cost": (
         """
         `bool`, default False
