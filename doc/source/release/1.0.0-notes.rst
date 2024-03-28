@@ -700,11 +700,23 @@ Model object save and read method with sparse storage
 The `smash.Model` object was not correctly saved and therefore read when it was constructed with the
 ``sparse_storage`` option. ``FortranDerivedTypeArray`` were not currently handled.
 
-Error in projected gradient value with ANN mapping
-**************************************************
+Error in projected gradient computation with ANN mapping
+********************************************************
 
-There was an error in the values of the projected gradient when using ANN mapping. The current iteration was
-printing the projected gradient of the next iteration.
+There was an error in the computation of the projected gradient when using ANN mapping. The returned projected 
+gradients were computed only based on :math:`\nabla_\boldsymbol{\rho} \boldsymbol{\theta}`, while the correct term is 
+:math:`\nabla_\boldsymbol{\rho} J = \nabla_\boldsymbol{\theta} J . \nabla_\boldsymbol{\rho} \boldsymbol{\theta}`.
+
+Optimization of initial states with ANN mapping
+***********************************************
+
+There was a typing error leading to a bug when optimizing the initial states using ANN mapping.
+
+Final states not computed when using ANN mapping
+************************************************
+
+The final states were not computed when using ANN mapping for optimization. 
+This issue has been fixed by adding a forward run when the optimization process with ANN has been finished.
 
 Error when computing min and max of physiograhic descriptor
 ***********************************************************
