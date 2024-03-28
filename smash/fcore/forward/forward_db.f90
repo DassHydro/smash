@@ -3571,10 +3571,10 @@ MODULE MWD_RETURNS_DIFF
   USE MWD_MESH
 !%only: Rr_StatesDT
   USE MWD_RR_STATES_DIFF
+!%only: StatsDT
+  USE MWD_STATS
   IMPLICIT NONE
 ! internal fluxes
-!~         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
-!~         logical :: internal_fluxes_flag = .false.
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
@@ -3606,30 +3606,10 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: serr_sigma_flag=.false.
       REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qt
       LOGICAL :: qt_flag=.false.
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: stats
+      TYPE(STATSDT) :: stats
       LOGICAL :: stats_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: ei
-      LOGICAL :: ei_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pn
-      LOGICAL :: pn_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: en
-      LOGICAL :: en_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: pr
-      LOGICAL :: pr_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: perc
-      LOGICAL :: perc_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: lexc
-      LOGICAL :: lexc_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: prr
-      LOGICAL :: prr_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: prd
-      LOGICAL :: prd_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qr
-      LOGICAL :: qr_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qd
-      LOGICAL :: qd_flag=.false.
-      REAL(sp), DIMENSION(:, :), ALLOCATABLE :: qb
-      LOGICAL :: qb_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: internal_fluxes
+      LOGICAL :: internal_fluxes_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3690,119 +3670,14 @@ CONTAINS
         this%qt_flag = .true.
         ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
       CASE ('stats') 
-! internal fluxes
-!~             case ("internal_fluxes")
-!~                 this%internal_fluxes_flag = .true.
-!~                 this%internal_fluxes%pn(mesh%nrow, mesh%ncol)
+! internal fluxes      
 ! mean, var, min, max, med
         this%stats_flag = .true.
-        ALLOCATE(this%stats(mesh%ng, setup%ntime_step, 5))
+        CALL STATSDT_INITIALISE(this%stats, setup, mesh)
+      CASE ('internal_fluxes') 
+        this%internal_fluxes_flag = .true.
+        ALLOCATE(this%internal_fluxes(mesh%nrow, mesh%ncol, setup%nfx))
       END SELECT
-      IF (setup%hydrological_module .EQ. 'gr4' .OR. setup%&
-&         hydrological_module .EQ. 'gr5') THEN
-        SELECT CASE  (wkeys(i)) 
-        CASE ('pn') 
-          this%pn_flag = .true.
-          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
-        CASE ('en') 
-          this%en_flag = .true.
-          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
-        CASE ('pr') 
-          this%pr_flag = .true.
-          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
-        CASE ('perc') 
-          this%perc_flag = .true.
-          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
-        CASE ('lexc') 
-          this%lexc_flag = .true.
-          ALLOCATE(this%lexc(mesh%nrow, mesh%ncol))
-        CASE ('prr') 
-          this%prr_flag = .true.
-          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
-        CASE ('prd') 
-          this%prd_flag = .true.
-          ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
-        CASE ('qr') 
-          this%qr_flag = .true.
-          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
-        CASE ('qd') 
-          this%qd_flag = .true.
-          ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
-        END SELECT
-      END IF
-      IF (setup%hydrological_module .EQ. 'grd') THEN
-        SELECT CASE  (wkeys(i)) 
-        CASE ('ei') 
-          this%ei_flag = .true.
-          ALLOCATE(this%ei(mesh%nrow, mesh%ncol))
-          WRITE(*, *) this%ei_flag
-        CASE ('pn') 
-          this%pn_flag = .true.
-          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
-        CASE ('en') 
-          this%en_flag = .true.
-          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
-        CASE ('pr') 
-          this%pr_flag = .true.
-          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
-        CASE ('perc') 
-          this%perc_flag = .true.
-          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
-        CASE ('prr') 
-          this%prr_flag = .true.
-          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
-        CASE ('qr') 
-          this%qr_flag = .true.
-          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
-        END SELECT
-      END IF
-      IF (setup%hydrological_module .EQ. 'loieau') THEN
-        SELECT CASE  (wkeys(i)) 
-        CASE ('ei') 
-          this%ei_flag = .true.
-          ALLOCATE(this%ei(mesh%nrow, mesh%ncol))
-        CASE ('pn') 
-          this%pn_flag = .true.
-          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
-        CASE ('en') 
-          this%en_flag = .true.
-          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
-        CASE ('pr') 
-          this%pr_flag = .true.
-          ALLOCATE(this%pr(mesh%nrow, mesh%ncol))
-        CASE ('perc') 
-          this%perc_flag = .true.
-          ALLOCATE(this%perc(mesh%nrow, mesh%ncol))
-        CASE ('prr') 
-          this%prr_flag = .true.
-          ALLOCATE(this%prr(mesh%nrow, mesh%ncol))
-        CASE ('prd') 
-          this%prd_flag = .true.
-          ALLOCATE(this%prd(mesh%nrow, mesh%ncol))
-        CASE ('qr') 
-          this%qr_flag = .true.
-          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
-        CASE ('qd') 
-          this%qd_flag = .true.
-          ALLOCATE(this%qd(mesh%nrow, mesh%ncol))
-        END SELECT
-      END IF
-      IF (setup%hydrological_module .EQ. 'vic3l') THEN
-        SELECT CASE  (wkeys(i)) 
-        CASE ('pn') 
-          this%pn_flag = .true.
-          ALLOCATE(this%pn(mesh%nrow, mesh%ncol))
-        CASE ('en') 
-          this%en_flag = .true.
-          ALLOCATE(this%en(mesh%nrow, mesh%ncol))
-        CASE ('qr') 
-          this%qr_flag = .true.
-          ALLOCATE(this%qr(mesh%nrow, mesh%ncol))
-        CASE ('qb') 
-          this%qb_flag = .true.
-          ALLOCATE(this%qb(mesh%nrow, mesh%ncol))
-        END SELECT
-      END IF
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
 
@@ -16679,17 +16554,25 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIMESTEP
 
-  SUBROUTINE COMPUTE_STATS(mesh, returns, ntime_step, t, fx)
+  SUBROUTINE COMPUTE_STATS(mesh, returns, ntime_step, t, fx, fx_name)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
     INTEGER, INTENT(IN) :: ntime_step
+    INTEGER, INTENT(IN) :: t
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: fx
+    CHARACTER(len=*), INTENT(IN) :: fx_name
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%ng, ntime_step) :: mean, var, minimum, &
 &   maximum
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
-    INTEGER :: j, t, npos_val
+    INTEGER :: i, j, npos_val
     REAL(sp) :: m
+    INTRINSIC TRIM
+    i = 1
+    DO WHILE (TRIM(returns%stats%keys(i)) .NE. fx_name)
+      i = i + 1
+    END DO
+    PRINT*, i
   END SUBROUTINE COMPUTE_STATS
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -17011,9 +16894,22 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+!~                 print *, "en =", returns%en
+!~                 print *, "pn =", returns%pn
         CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    pn)
+&                    internal_fluxes(:, :, 1), 'pn')
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    internal_fluxes(:, :, 2), 'en')
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    internal_fluxes(:, :, 3), 'perc')
       CASE ('gr5') 
+!~                 do i = 1, setup%nfx
+!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
+!internal_fluxes(:,:,i)
+!keys(i)
+!values(:,:,:,i)
+!~                 end do
+!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
@@ -17451,8 +17347,17 @@ CONTAINS
         END IF
         CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   kexc, hi, hp, ht, qt(:, :, zq), returns)
+!~                 print *, "en =", returns%en
+!~                 print *, "pn =", returns%pn
         CALL PUSHCONTROL3B(1)
       CASE ('gr5') 
+!~                 do i = 1, setup%nfx
+!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
+!internal_fluxes(:,:,i)
+!keys(i)
+!values(:,:,:,i)
+!~                 end do
+!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         IF (ALLOCATED(qt)) THEN
           CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
@@ -18202,9 +18107,22 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+!~                 print *, "en =", returns%en
+!~                 print *, "pn =", returns%pn
         CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    pn)
+&                    internal_fluxes(:, :, 1), 'pn')
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    internal_fluxes(:, :, 2), 'en')
+        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
+&                    internal_fluxes(:, :, 3), 'perc')
       CASE ('gr5') 
+!~                 do i = 1, setup%nfx
+!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
+!internal_fluxes(:,:,i)
+!keys(i)
+!values(:,:,:,i)
+!~                 end do
+!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)

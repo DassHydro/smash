@@ -21,6 +21,7 @@
 	"mwd_serr_sigma_parameters": "_mwd_serr_sigma_parameters",
 	"mwd_setup": "_mwd_setup",
 	"mwd_sparse_matrix": "_mwd_sparse_matrix",
+	"mwd_stats": "_mwd_stats",
 	"mwd_u_response_data": "_mwd_u_response_data",
 	"mwd_bayesian_tools": "_mwd_bayesian_tools",
 	"mw_forward": "_mw_forward",

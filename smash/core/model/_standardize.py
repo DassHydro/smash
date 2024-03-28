@@ -24,6 +24,7 @@ from smash._constant import (
     SNOW_MODULE,
     STRUCTURE_RR_PARAMETERS,
     STRUCTURE_RR_STATES,
+    INTERNAL_FLUXES,
 )
 
 if TYPE_CHECKING:
@@ -439,6 +440,7 @@ def _standardize_model_setup_finalize(setup: dict):
     setup["nsep_mu"] = len(SERR_MU_MAPPING_PARAMETERS[setup["serr_mu_mapping"]])
     setup["nsep_sigma"] = len(SERR_SIGMA_MAPPING_PARAMETERS[setup["serr_sigma_mapping"]])
     setup["nd"] = setup["descriptor_name"].size
+    setup["nfx"] = len(INTERNAL_FLUXES[setup["hydrological_module"]])
 
     setup["start_time"] = setup["start_time"].strftime("%Y-%m-%d %H:%M")
     setup["end_time"] = setup["end_time"].strftime("%Y-%m-%d %H:%M")

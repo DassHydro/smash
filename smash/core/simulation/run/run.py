@@ -3,6 +3,10 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
+from smash._constant import (
+    INTERNAL_FLUXES
+)
+
 import numpy as np
 
 from smash._constant import (
@@ -159,7 +163,9 @@ def _forward_run(
         return_options["nmts"],
         return_options["fkeys"],
     )
-
+    
+    wrap_returns.stats.keys = INTERNAL_FLUXES[model.setup.hydrological_module]
+    
     # % Map cost_options dict to derived type
     _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 

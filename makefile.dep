@@ -34,6 +34,7 @@ f90 : \
     obj/mwd_serr_sigma_parameters.o \
     obj/mwd_setup.o \
     obj/mwd_sparse_matrix.o \
+    obj/mwd_stats.o \
     obj/mwd_u_response_data.o \
     obj/mwd_bayesian_tools.o \
     obj/forward.o \
@@ -80,9 +81,9 @@ obj/md_stats.o : \
     obj/md_constant.o \
 
 obj/mwd_atmos_data.o : \
+    obj/mwd_sparse_matrix.o \
     obj/md_constant.o \
     obj/mwd_setup.o \
-    obj/mwd_sparse_matrix.o \
     obj/mwd_mesh.o \
 
 obj/mwd_common_options.o : \
@@ -92,18 +93,18 @@ obj/mwd_control.o : \
 
 obj/mwd_cost_options.o : \
     obj/md_constant.o \
+    obj/mwd_mesh.o \
     obj/mwd_setup.o \
     obj/mwd_bayesian_tools.o \
-    obj/mwd_mesh.o \
 
 obj/mwd_input_data.o : \
-    obj/mwd_setup.o \
     obj/mwd_physio_data.o \
     obj/mwd_u_response_data.o \
-    obj/md_constant.o \
-    obj/mwd_response_data.o \
-    obj/mwd_mesh.o \
+    obj/mwd_setup.o \
     obj/mwd_atmos_data.o \
+    obj/md_constant.o \
+    obj/mwd_mesh.o \
+    obj/mwd_response_data.o \
 
 obj/mwd_mesh.o : \
     obj/md_constant.o \
@@ -116,26 +117,26 @@ obj/mwd_optimize_options.o : \
 obj/mwd_options.o : \
     obj/mwd_optimize_options.o \
     obj/mwd_setup.o \
+    obj/mwd_cost_options.o \
     obj/mwd_mesh.o \
     obj/mwd_common_options.o \
-    obj/mwd_cost_options.o \
 
 obj/mwd_output.o : \
     obj/mwd_setup.o \
-    obj/mwd_response.o \
+    obj/mwd_rr_states.o \
     obj/md_constant.o \
     obj/mwd_mesh.o \
-    obj/mwd_rr_states.o \
+    obj/mwd_response.o \
 
 obj/mwd_parameters.o : \
-    obj/mwd_rr_parameters.o \
-    obj/mwd_setup.o \
     obj/mwd_serr_sigma_parameters.o \
-    obj/mwd_serr_mu_parameters.o \
-    obj/md_constant.o \
-    obj/mwd_mesh.o \
+    obj/mwd_setup.o \
     obj/mwd_control.o \
     obj/mwd_rr_states.o \
+    obj/md_constant.o \
+    obj/mwd_mesh.o \
+    obj/mwd_serr_mu_parameters.o \
+    obj/mwd_rr_parameters.o \
 
 obj/mwd_physio_data.o : \
     obj/md_constant.o \
@@ -153,9 +154,10 @@ obj/mwd_response_data.o : \
     obj/mwd_mesh.o \
 
 obj/mwd_returns.o : \
-    obj/md_constant.o \
-    obj/mwd_rr_states.o \
+    obj/mwd_stats.o \
     obj/mwd_setup.o \
+    obj/mwd_rr_states.o \
+    obj/md_constant.o \
     obj/mwd_mesh.o \
 
 obj/mwd_rr_parameters.o : \
@@ -184,6 +186,11 @@ obj/mwd_setup.o : \
 obj/mwd_sparse_matrix.o : \
     obj/md_constant.o \
 
+obj/mwd_stats.o : \
+    obj/md_constant.o \
+    obj/mwd_setup.o \
+    obj/mwd_mesh.o \
+
 obj/mwd_u_response_data.o : \
     obj/md_constant.o \
     obj/mwd_setup.o \
@@ -192,136 +199,139 @@ obj/mwd_u_response_data.o : \
 obj/mwd_bayesian_tools.o : \
 
 obj/forward.o : \
-    obj/mwd_parameters.o \
-    obj/mwd_setup.o \
-    obj/mwd_output.o \
     obj/md_simulation.o \
-    obj/mwd_input_data.o \
     obj/mwd_cost.o \
     obj/mwd_options.o \
+    obj/mwd_setup.o \
+    obj/mwd_parameters.o \
+    obj/mwd_output.o \
     obj/md_constant.o \
     obj/mwd_parameters_manipulation.o \
     obj/mwd_mesh.o \
+    obj/mwd_input_data.o \
     obj/mwd_returns.o \
 
 obj/forward_db.o : \
-    obj/mwd_optimize_options.o \
+    obj/mwd_stats.o \
     obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mwd_response.o \
+    obj/mwd_optimize_options.o \
     obj/md_constant.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
-    obj/mwd_common_options.o \
     obj/mwd_sparse_matrix_manipulation.o \
+    obj/mwd_common_options.o \
+    obj/mwd_response.o \
 
 obj/md_simulation.o : \
     obj/md_gr_operator.o \
-    obj/mwd_parameters.o \
-    obj/mwd_setup.o \
-    obj/mwd_output.o \
-    obj/md_vic3l_operator.o \
-    obj/mwd_input_data.o \
     obj/md_snow_operator.o \
-    obj/mwd_parameters_manipulation.o \
-    obj/mwd_options.o \
-    obj/md_constant.o \
-    obj/mwd_mesh.o \
+    obj/md_vic3l_operator.o \
     obj/md_routing_operator.o \
-    obj/mwd_returns.o \
+    obj/mwd_options.o \
+    obj/mwd_setup.o \
+    obj/mwd_parameters.o \
+    obj/mwd_output.o \
+    obj/md_constant.o \
+    obj/mwd_parameters_manipulation.o \
+    obj/mwd_mesh.o \
+    obj/mwd_input_data.o \
     obj/mwd_sparse_matrix_manipulation.o \
+    obj/mwd_returns.o \
 
 obj/mw_forward.o : \
-    obj/mwd_parameters.o \
-    obj/mwd_setup.o \
-    obj/mwd_output.o \
-    obj/mwd_input_data.o \
     obj/mwd_options.o \
+    obj/mwd_setup.o \
+    obj/mwd_parameters.o \
+    obj/mwd_output.o \
     obj/md_constant.o \
-    obj/m_screen_display.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
     obj/mwd_returns.o \
+    obj/m_screen_display.o \
 
 obj/md_gr_operator.o : \
-    obj/mwd_options.o \
     obj/mwd_setup.o \
+    obj/mwd_options.o \
     obj/md_constant.o \
+    obj/mwd_returns.o \
     obj/mwd_mesh.o \
 
 obj/md_routing_operator.o : \
-    obj/mwd_options.o \
     obj/mwd_setup.o \
     obj/md_constant.o \
+    obj/mwd_options.o \
     obj/mwd_mesh.o \
 
 obj/md_snow_operator.o : \
-    obj/mwd_options.o \
     obj/mwd_setup.o \
     obj/md_constant.o \
+    obj/mwd_options.o \
     obj/mwd_mesh.o \
 
 obj/md_vic3l_operator.o : \
-    obj/mwd_options.o \
     obj/mwd_setup.o \
+    obj/mwd_options.o \
     obj/md_constant.o \
+    obj/mwd_returns.o \
     obj/mwd_mesh.o \
 
 obj/md_regularization.o : \
-    obj/mwd_parameters.o \
     obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mwd_parameters_manipulation.o \
     obj/mwd_options.o \
+    obj/mwd_parameters.o \
     obj/md_constant.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
+    obj/mwd_parameters_manipulation.o \
 
 obj/mw_optimize.o : \
-    obj/m_array_manipulation.o \
-    obj/mwd_parameters.o \
-    obj/mwd_setup.o \
-    obj/mwd_output.o \
-    obj/mwd_input_data.o \
     obj/mw_forward.o \
-    obj/mwd_parameters_manipulation.o \
     obj/mwd_options.o \
-    obj/md_constant.o \
-    obj/m_screen_display.o \
-    obj/mwd_mesh.o \
-    obj/mwd_returns.o \
+    obj/mwd_setup.o \
+    obj/mwd_parameters.o \
     obj/mwd_control.o \
+    obj/md_constant.o \
+    obj/mwd_output.o \
+    obj/mwd_parameters_manipulation.o \
+    obj/mwd_mesh.o \
+    obj/m_array_manipulation.o \
+    obj/mwd_input_data.o \
+    obj/mwd_returns.o \
+    obj/m_screen_display.o \
 
 obj/mwd_cost.o : \
-    obj/md_regularization.o \
-    obj/mwd_parameters.o \
-    obj/mwd_signatures.o \
-    obj/mwd_output.o \
     obj/mwd_metrics.o \
-    obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mwd_bayesian_tools.o \
-    obj/mwd_options.o \
-    obj/md_constant.o \
-    obj/mwd_mesh.o \
-    obj/mwd_returns.o \
+    obj/mwd_signatures.o \
     obj/md_stats.o \
+    obj/mwd_options.o \
+    obj/mwd_setup.o \
+    obj/mwd_parameters.o \
+    obj/mwd_output.o \
+    obj/md_constant.o \
+    obj/mwd_input_data.o \
+    obj/mwd_mesh.o \
+    obj/md_regularization.o \
+    obj/mwd_returns.o \
+    obj/mwd_bayesian_tools.o \
 
 obj/mw_atmos_statistic.o : \
     obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mwd_atmos_manipulation.o \
-    obj/mw_mask.o \
     obj/md_constant.o \
+    obj/mw_mask.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
     obj/mwd_sparse_matrix_manipulation.o \
+    obj/mwd_atmos_manipulation.o \
 
 obj/mw_interception_capacity.o : \
     obj/md_gr_operator.o \
+    obj/m_array_creation.o \
     obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mwd_atmos_manipulation.o \
     obj/md_constant.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
     obj/mwd_sparse_matrix_manipulation.o \
-    obj/m_array_creation.o \
+    obj/mwd_atmos_manipulation.o \
 
 obj/mw_mask.o : \
     obj/md_constant.o \
@@ -329,45 +339,45 @@ obj/mw_mask.o : \
 
 obj/mwd_atmos_manipulation.o : \
     obj/mwd_setup.o \
-    obj/mwd_input_data.o \
     obj/md_constant.o \
+    obj/mwd_input_data.o \
     obj/mwd_mesh.o \
     obj/mwd_sparse_matrix_manipulation.o \
 
 obj/mwd_parameters_manipulation.o : \
-    obj/mwd_parameters.o \
-    obj/mwd_rr_parameters.o \
+    obj/mwd_serr_sigma_parameters.o \
+    obj/mwd_options.o \
     obj/mwd_setup.o \
+    obj/mwd_parameters.o \
+    obj/mwd_rr_states.o \
+    obj/md_constant.o \
+    obj/mwd_control.o \
     obj/mwd_output.o \
     obj/mwd_input_data.o \
-    obj/mwd_serr_sigma_parameters.o \
-    obj/mwd_bayesian_tools.o \
-    obj/mwd_serr_mu_parameters.o \
-    obj/mwd_options.o \
-    obj/md_constant.o \
     obj/mwd_mesh.o \
     obj/mwd_returns.o \
-    obj/mwd_control.o \
-    obj/mwd_rr_states.o \
+    obj/mwd_serr_mu_parameters.o \
+    obj/mwd_rr_parameters.o \
+    obj/mwd_bayesian_tools.o \
 
 obj/mwd_sparse_matrix_manipulation.o : \
-    obj/md_constant.o \
     obj/mwd_sparse_matrix.o \
+    obj/md_constant.o \
     obj/mwd_mesh.o \
 
 obj/mw_prcp_indices.o : \
-    obj/mwd_setup.o \
-    obj/mwd_input_data.o \
-    obj/mw_mask.o \
-    obj/md_constant.o \
-    obj/mwd_mesh.o \
     obj/md_stats.o \
+    obj/mwd_setup.o \
+    obj/md_constant.o \
+    obj/mw_mask.o \
+    obj/mwd_input_data.o \
+    obj/mwd_mesh.o \
     obj/mwd_sparse_matrix_manipulation.o \
 
 obj/mwd_metrics.o : \
     obj/md_constant.o \
 
 obj/mwd_signatures.o : \
-    obj/md_constant.o \
     obj/md_stats.o \
+    obj/md_constant.o \
 

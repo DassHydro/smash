@@ -136,6 +136,7 @@ module mwd_setup
         integer :: nrrs = -99
         integer :: nsep_mu = -99
         integer :: nsep_sigma = -99
+        integer :: nfx = -99
 
     end type SetupDT
 

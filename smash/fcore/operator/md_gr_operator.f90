@@ -187,15 +187,17 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%pn_flag) returns%pn(row, col) = pn
-                if (returns%en_flag) returns%en(row, col) = en
-                if (returns%pr_flag) returns%pr(row, col) = pr
-                if (returns%perc_flag) returns%perc(row, col) = perc
-                if (returns%lexc_flag) returns%lexc(row, col) = l
-                if (returns%prr_flag) returns%prr(row, col) = prr
-                if (returns%prd_flag) returns%prd(row, col) = prd
-                if (returns%qr_flag) returns%qr(row, col) = qr
-                if (returns%qd_flag) returns%qd(row, col) = qd
+                if (returns%internal_fluxes_flag) then
+                    returns%internal_fluxes(row, col, 1) = pn
+                    returns%internal_fluxes(row, col, 2) = en
+                    returns%internal_fluxes(row, col, 3) = pr
+                    returns%internal_fluxes(row, col, 4) = perc
+                    returns%internal_fluxes(row, col, 5) = l
+                    returns%internal_fluxes(row, col, 6) = prr
+                    returns%internal_fluxes(row, col, 7) = prd
+                    returns%internal_fluxes(row, col, 8) = qr
+                    returns%internal_fluxes(row, col, 9) = qd
+                end if
                 !$AD end-exclude
             end do
         end do
@@ -257,15 +259,17 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%pn_flag) returns%pn(row, col) = pn
-                if (returns%en_flag) returns%en(row, col) = en
-                if (returns%pr_flag) returns%pr(row, col) = pr
-                if (returns%perc_flag) returns%perc(row, col) = perc
-                if (returns%lexc_flag) returns%lexc(row, col) = l
-                if (returns%prr_flag) returns%prr(row, col) = prr
-                if (returns%prd_flag) returns%prd(row, col) = prd
-                if (returns%qr_flag) returns%qr(row, col) = qr
-                if (returns%qd_flag) returns%qd(row, col) = qd
+                if (returns%internal_fluxes_flag) then
+                    returns%internal_fluxes(row, col, 1) = pn
+                    returns%internal_fluxes(row, col, 2) = en
+                    returns%internal_fluxes(row, col, 3) = pr
+                    returns%internal_fluxes(row, col, 4) = perc
+                    returns%internal_fluxes(row, col, 5) = l
+                    returns%internal_fluxes(row, col, 6) = prr
+                    returns%internal_fluxes(row, col, 7) = prd
+                    returns%internal_fluxes(row, col, 8) = qr
+                    returns%internal_fluxes(row, col, 9) = qd
+                end if
                 !$AD end-exclude
             end do
         end do
@@ -325,13 +329,15 @@ contains
                 
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%ei_flag) returns%ei(row, col) = ei
-                if (returns%pn_flag) returns%pn(row, col) = pn
-                if (returns%en_flag) returns%en(row, col) = en
-                if (returns%pr_flag) returns%pr(row, col) = pr
-                if (returns%perc_flag) returns%perc(row, col) = perc
-                if (returns%prr_flag) returns%prr(row, col) = prr
-                if (returns%qr_flag) returns%qr(row, col) = qr
+                if (returns%internal_fluxes_flag) then
+                    returns%internal_fluxes(row, col, 1) = ei
+                    returns%internal_fluxes(row, col, 2) = pn
+                    returns%internal_fluxes(row, col, 3) = en
+                    returns%internal_fluxes(row, col, 4) = pr
+                    returns%internal_fluxes(row, col, 5) = perc
+                    returns%internal_fluxes(row, col, 6) = prr
+                    returns%internal_fluxes(row, col, 7) = qr
+                end if
                 !$AD end-exclude
             end do
         end do
@@ -394,15 +400,17 @@ contains
             
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%ei_flag) returns%ei(row, col) = ei
-                if (returns%pn_flag) returns%pn(row, col) = pn
-                if (returns%en_flag) returns%en(row, col) = en
-                if (returns%pr_flag) returns%pr(row, col) = pr
-                if (returns%perc_flag) returns%perc(row, col) = perc
-                if (returns%prr_flag) returns%prr(row, col) = prr
-                if (returns%prd_flag) returns%prd(row, col) = prd
-                if (returns%qr_flag) returns%qr(row, col) = qr
-                if (returns%qd_flag) returns%qd(row, col) = qd
+                if (returns%internal_fluxes_flag) then
+                    returns%internal_fluxes(row, col, 1) = ei
+                    returns%internal_fluxes(row, col, 2) = pn
+                    returns%internal_fluxes(row, col, 3) = en
+                    returns%internal_fluxes(row, col, 4) = pr
+                    returns%internal_fluxes(row, col, 5) = perc
+                    returns%internal_fluxes(row, col, 6) = prr
+                    returns%internal_fluxes(row, col, 7) = prd
+                    returns%internal_fluxes(row, col, 8) = qr
+                    returns%internal_fluxes(row, col, 9) = qd
+                end if
                 !$AD end-exclude
             
             end do

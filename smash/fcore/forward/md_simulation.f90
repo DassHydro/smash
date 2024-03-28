@@ -130,36 +130,35 @@ contains
 
     end subroutine store_timestep
     
-    subroutine compute_stats(mesh, returns, ntime_step, t, fx)
+    subroutine compute_stats(mesh, returns, ntime_step, t, fx, fx_name)
         implicit none
 
         type(MeshDT), intent(in) :: mesh
         integer, intent(in) :: ntime_step
+        integer, intent(in) :: t
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: fx
+        character(*), intent(in) :: fx_name
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%ng, ntime_step) :: mean, var, minimum, maximum
         logical, dimension(mesh%nrow, mesh%ncol) :: mask
-        integer :: j, t, npos_val
+        integer :: i, j, npos_val
         real(sp) :: m
         
+        i = 1
+        do while (trim(returns%stats%keys(i)) .ne. fx_name)
+            i = i + 1
+        end do
+        print *, i
         !$AD start-exclude
         do j = 1, mesh%ng
             mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
             npos_val = count(mask) 
             m = sum(fx, mask = mask) / npos_val 
-            mean(j, t) = m
-            var(j, t) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
-            minimum(j, t) = minval(fx, mask = mask)
-            maximum(j, t) = maxval(fx, mask = mask)
-    !~                         if (mod(npos_val, 2) .eq. 0) med(j, t) =   
+            returns%stats%values(j, t, 1, i) = m
+            returns%stats%values(j, t, 2, i) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
+            returns%stats%values(j, t, 3, i) = minval(fx, mask = mask)
+            returns%stats%values(j, t, 4, i) = maxval(fx, mask = mask)
         end do
-        if (returns%stats_flag) then
-            returns%stats(:, :, 1) = mean
-            returns%stats(:, :, 2) = var
-            returns%stats(:, :, 3) = minimum
-            returns%stats(:, :, 4) = maximum
-    !~                      returns%stats(:, :, 5) = med
-        end if
         !$AD end-exclude
     end subroutine
     
@@ -381,8 +380,18 @@ contains
                 call set_rr_states(output%rr_final_states, "hi", hi)
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
-
-                call compute_stats(mesh, returns, setup%ntime_step, t, returns%pn)
+!~                 print *, "en =", returns%en
+!~                 print *, "pn =", returns%pn
+                call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,1), "pn")
+                call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,2), "en")
+                call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,3), "perc")
+!~                 do i = 1, setup%nfx
+!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
+                    !internal_fluxes(:,:,i)
+                    !keys(i)
+                    !values(:,:,:,i)
+!~                 end do
+!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
                 
                 ! 'gr5' module
             case ("gr5")
