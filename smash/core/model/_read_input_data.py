@@ -466,15 +466,28 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             miss.append(name)
 
         else:
-            input_data.physio_data.descriptor[..., i] = _read_windowed_raster(path[0], mesh)
-            input_data.physio_data.l_descriptor[i] = np.min(input_data.physio_data.descriptor[..., i])
-            input_data.physio_data.u_descriptor[i] = np.max(input_data.physio_data.descriptor[..., i])
-            # % Check if descriptors are uniform
-            if input_data.physio_data.l_descriptor[i] == input_data.physio_data.u_descriptor[i]:
+            desc = _read_windowed_raster(path[0], mesh)
+            mask = desc != -99.0
+
+            # % Check if descriptor contains only no data
+            if not np.any(mask):
                 raise ValueError(
-                    f"Reading spatially uniform descriptor '{name}'. It must be removed to perform "
-                    f"optimization"
+                    f"Invalid descriptor '{name}'. It contains only missing values on the selected domain"
                 )
+
+            low = np.min(desc, where=mask, initial=np.inf)
+            upp = np.max(desc, where=mask, initial=-np.inf)
+
+            # % Check if descriptor is uniform
+            if low == upp:
+                raise ValueError(
+                    f"Invalid descriptor '{name}'. Spatially uniform values on the selected domain. It must "
+                    "be removed to perform optimization"
+                )
+            # % Assign values
+            input_data.physio_data.descriptor[..., i] = desc
+            input_data.physio_data.l_descriptor[i] = low
+            input_data.physio_data.u_descriptor[i] = upp
 
     if miss:
         warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}", stacklevel=2)
