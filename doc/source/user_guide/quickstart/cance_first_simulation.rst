@@ -670,17 +670,19 @@ First, several information were displayed on the screen during optimization
 
 .. code-block:: text
 
-    At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-    At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-    At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-    At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+    At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+    At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
+    At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
+    At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
+    At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
+    At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
+    At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
+    At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 These lines show the different iterations of the optimization with information on the number of iterations, the number of cumulative evaluations ``nfg`` 
 (number of foward runs performed within each iteration of the optimization algorithm), the value of the cost function to minimize ``J`` and the value of the adaptive descent step ``ddx`` of this heuristic search algorihtm. 
-So, to summarize, the optimization algorithm has converged after 5 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required to perform 152 forward run evaluations and leads to a final cost function value on the order of 0.04.
+So, to summarize, the optimization algorithm has converged after 7 iterations by reaching the descent step tolerance criterion of 0.01. This optimization required to perform 216 forward run evaluations and leads to a final cost function value on the order of 0.04.
 
 Then, we can ask which cost function ``J`` has been minimized and which parameters have been optimized. So, by default, the cost function to be minimized is one minus the Nash-Sutcliffe efficiency ``nse`` (:math:`1 - \text{NSE}`)
 and the optimized parameters are the set of rainfall-runoff parameters (``cp``, ``ct``, ``kexc`` and ``llr``). In the current configuration spatially
