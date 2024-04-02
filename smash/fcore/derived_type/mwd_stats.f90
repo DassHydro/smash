@@ -64,24 +64,4 @@ contains
         this_copy = this
 
     end subroutine StatsDT_copy
-
-    
-    subroutine get_stats(this, key, stats)
-    
-        implicit none
-        
-        type(StatsDT), intent(in) :: this
-        character(*), intent(in) :: key
-        real(sp), dimension(:, :, :), intent(out) :: stats
-        integer :: i
-        
-        i = 1
-        do while (trim(this%keys(i)) .ne. key)
-            i = i + 1
-        end do
-        stats = this%values(:, :, :, i)
-
-    end subroutine get_stats
-
-
-end module mwd_stats
+end module

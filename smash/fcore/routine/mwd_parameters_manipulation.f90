@@ -74,6 +74,7 @@ module mwd_parameters_manipulation
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_control !% only: ControlDT_initialise, ControlDT_finalise
+    use mwd_stats !% only: StatsDT 
 
     implicit none
 
@@ -234,7 +235,34 @@ contains
         ! Should be unreachable
 
     end subroutine get_serr_sigma_parameters
+    
+    subroutine get_stats(stats, key, vle)
 
+    implicit none
+
+    type(StatsDT), intent(in) :: stats
+    character(*), intent(in) :: key
+    real(sp), dimension(:, :, :), intent(inout) :: vle
+
+    integer :: i
+
+    ! Linear search on keys
+    do i = 1, size(stats%keys)
+
+        if (trim(stats%keys(i)) .eq. key) then
+        
+            vle = stats%values(:, :, :, i)
+            return
+        
+        end if
+
+    end do
+
+    ! Should be unreachable
+
+    end subroutine get_stats
+    
+    
     subroutine set_rr_parameters(rr_parameters, key, vle)
 
         implicit none
