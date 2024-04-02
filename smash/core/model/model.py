@@ -1167,8 +1167,8 @@ class Model:
         >>> ind
         0
         >>> model.response.q[ind, :]
-        array([1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
-               3.2118713e+01, 3.1965160e+01], dtype=float32)
+        array([1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 2.2796249e+01,
+               2.2655941e+01, 2.2517307e+01], dtype=float32)
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
@@ -1223,11 +1223,13 @@ class Model:
         `get_rr_final_states <Model.get_rr_final_states>`
 
         >>> model.get_rr_final_states("hp")
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
 
         .. note::
             Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states.
@@ -2032,11 +2034,13 @@ class Model:
         Access to a specific rainfall-runoff final state grid
 
         >>> model.get_rr_final_states("hp")
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
 
         .. note::
             This method is equivalent to directly slicing the ``rr_final_states.values`` array (as shown
@@ -2056,11 +2060,13 @@ class Model:
         Slice the ``rr_final_states.values`` array on the last axis
 
         >>> model.rr_final_states.values[..., ind]
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
         """
 
         key = _standardize_get_rr_final_states_args(self, key)
@@ -2238,18 +2244,18 @@ class Model:
         Set arbitrary values to structural error mu parameters
 
         >>> model.set_serr_mu_parameters("mg0", 1)
-        >>> model.set_serr_mu_paramters("mg1", 2)
+        >>> model.set_serr_mu_parameters("mg1", 2)
 
         Retrieve the mu value with the `get_serr_mu <Model.get_serr_mu>` method
 
         >>> mu = model.get_serr_mu()
         >>> mu
-        array([[ 1.0039653,  1.0000002,  1.       , ..., 65.5464   , 65.23743  ,
-                64.93032  ],
-               [ 1.0004755,  1.       ,  1.       , ..., 16.804424 , 16.740883 ,
-                16.677677 ],
-               [ 1.0000595,  1.       ,  1.       , ...,  5.186602 ,  5.1694865,
-                5.1524224]], dtype=float32)
+        array([[ 1.0039653,  1.0000002,  1.       , ..., 46.5925   , 46.311882 ,
+                46.034615 ],
+               [ 1.0004755,  1.       ,  1.       , ..., 10.65963  , 10.61587  ,
+                10.572574 ],
+               [ 1.0000595,  1.       ,  1.       , ...,  3.563775 ,  3.5520396,
+                 3.5404253]], dtype=float32)
 
         This is equivalent to
 
@@ -2309,12 +2315,12 @@ class Model:
 
         >>> sigma = model.get_serr_sigma()
         >>> sigma
-        array([[1.0003965, 1.       , 1.       , ..., 7.4546404, 7.423743 ,
-                7.393032 ],
-               [1.0000476, 1.       , 1.       , ..., 2.5804424, 2.5740883,
-                2.5677679],
-               [1.000006 , 1.       , 1.       , ..., 1.4186602, 1.4169487,
-                1.4152422]], dtype=float32)
+        array([[1.0003965, 1.       , 1.       , ..., 5.55925  , 5.5311885,
+                5.5034614],
+               [1.0000476, 1.       , 1.       , ..., 1.965963 , 1.9615871,
+                1.9572574],
+               [1.000006 , 1.       , 1.       , ..., 1.2563775, 1.255204 ,
+                1.2540425]], dtype=float32)
 
         This is equivalent to
 

@@ -154,46 +154,46 @@ def signatures(
     Access simulated flood event signatures as a `pandas.DataFrame`
 
     >>> sign.event
-           code  season               start  ...    Erch2r  Elt        Epf
-    0  V3524010  autumn 2014-11-03 03:00:00  ...  0.214772  3.0  85.736832
-    1  V3515010  autumn 2014-11-03 10:00:00  ...  0.202139  0.0  17.256138
-    2  V3517010  autumn 2014-11-03 08:00:00  ...  0.187440  1.0   4.770674
+           code  season               start  ...    Erch2r  Elt         Epf
+    0  V3524010  autumn 2014-11-03 03:00:00  ...  0.324836  3.0  100.448631
+    1  V3515010  autumn 2014-11-03 10:00:00  ...  0.339471  0.0   20.168104
+    2  V3517010  autumn 2014-11-03 08:00:00  ...  0.319605  1.0    5.356519
     [3 rows x 12 columns]
 
     Access simulated continuous signatures as a `pandas.DataFrame`
 
     >>> sign.cont
-           code       Crc     Crchf  ...     Cfp10     Cfp50      Cfp90
-    0  V3524010  0.316813  0.058713  ...  0.013092  5.895140  39.439846
-    1  V3515010  0.251831  0.048244  ...  0.001120  1.072775   9.016475
-    2  V3517010  0.251551  0.048258  ...  0.000020  0.242764   2.433439
+           code       Crc     Crchf  ...         Cfp10     Cfp50      Cfp90
+    0  V3524010  0.208410  0.064490  ...  6.270661e-04  1.767450  27.806826
+    1  V3515010  0.139829  0.049087  ...  4.919724e-05  0.150414   5.161743
+    2  V3517010  0.139431  0.047900  ...  6.545733e-07  0.031947   1.355473
     [3 rows x 9 columns]
 
     Access specific simulated continuous signature for each gauge
 
     >>> sign.cont["Crc"]
-    0    0.516206
-    1    0.509181s
-    2    0.514302
+    0    0.208410
+    1    0.139829
+    2    0.139431
     Name: Crc, dtype: float64
 
     Access all simulated continuous signatures for a single gauge
 
     >>> sign.cont[sign.cont["code"] == "V3524010"]
-           code       Crc     Crchf  ...   Cfp10   Cfp50      Cfp90
-    0  V3524010  0.516206  0.191349  ...  1.1709  3.3225  42.631798
+           code      Crc    Crchf  ...     Cfp10    Cfp50      Cfp90
+    0  V3524010  0.20841  0.06449  ...  0.000627  1.76745  27.806826
     [1 rows x 9 columns]
 
     Access specific simulated continuous signatures for a single gauge
 
     >>> sign.cont["Crc"][sign.cont["code"] == "V3524010"]
-    0    0.516206
+    0    0.20841
     Name: Crc, dtype: float64
 
     Use the `item <pandas.Series.item>` method to return the underlying data as a Python scalar
 
     >>> sign.cont["Crc"][sign.cont["code"] == "V3524010"].item()
-    0.5162064433097839
+    0.20841039717197418
     """
 
     cs, es, domain, event_seg = _standardize_signatures_args(sign, domain, event_seg)

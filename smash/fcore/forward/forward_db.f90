@@ -14791,7 +14791,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -14801,12 +14801,15 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
-!$OMP&, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, ac_kexc_d, &
-!$OMP&ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, k, pn, en, &
-!$OMP&pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, pr_d, perc_d, &
-!$OMP&l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), SCHEDULE(static)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, &
+!$OMP&ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, &
+!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), &
+!$OMP&                                             SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14817,8 +14820,8 @@ CONTAINS
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
+&                          , perc_d)
             CALL GR_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), ac_ht(k), &
 &                        ac_ht_d(k), l, l_d)
           ELSE
@@ -14882,7 +14885,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -14893,10 +14896,12 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
-!$OMP&, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, &
-!$OMP&qd), PRIVATE(chunk_start, chunk_end)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, &
+!$OMP&prd, qr, qd), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -14912,8 +14917,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
             CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
             CALL PUSHCONTROL1B(1)
           ELSE
@@ -14939,7 +14944,7 @@ CONTAINS
     END DO
     CALL PUSHREAL4(pn)
     CALL PUSHREAL4(prr)
-    CALL PUSHREAL4ARRAY(ac_pet, mesh%nac)
+    CALL PUSHREAL4(beta)
     CALL PUSHREAL4(en)
     CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
     CALL PUSHINTEGER4(time_step)
@@ -14947,17 +14952,17 @@ CONTAINS
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
-!$OMP&, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, ac_kexc_b, &
-!$OMP&ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, k, pn, en, &
-!$OMP&pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, pr_b, perc_b, &
-!$OMP&l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, chunk_end, &
-!$OMP&chunk_start)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, &
+!$OMP&ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, &
+!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
     CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
     CALL POPINTEGER4(time_step)
     CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
     CALL POPREAL4(en)
-    CALL POPREAL4ARRAY(ac_pet, mesh%nac)
+    CALL POPREAL4(beta)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
     pn_b = 0.0_4
@@ -15001,8 +15006,8 @@ CONTAINS
 &                        ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
+&                          , perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -15032,17 +15037,19 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
-!$OMP&, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, &
-!$OMP&qd), SCHEDULE(static)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, &
+!$OMP&prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15051,8 +15058,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
             CALL GR_EXCHANGE(ac_kexc(k), ac_ht(k), l)
           ELSE
             pr = 0._sp
@@ -15110,7 +15117,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en
+    REAL(sp) :: beta, pn, en
     REAL(sp) :: pn_d, en_d
     REAL(sp) :: temp
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15119,12 +15126,14 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
-!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_d, ac_prcp_d, ac_ci_d, &
-!$OMP&ac_cp_d, ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), &
-!$OMP&PRIVATE(row, col, k, pn, en), PRIVATE(pn_d, en_d), PRIVATE(temp), &
-!$OMP&                                                  SCHEDULE(static)
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, &
+!$OMP&ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_d, ac_prcp_d, &
+!$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, &
+!$OMP&ac_qt_d), PRIVATE(row, col, k, pn, en), PRIVATE(pn_d, en_d), &
+!$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15142,12 +15151,12 @@ CONTAINS
           END IF
           CALL GR_PRODUCTION_TRANSFER_MLP_ALG_D(layers, layers_d, &
 &                                         neurons, pn, pn_d, en, en_d, &
-&                                         ac_cp(k), ac_cp_d(k), 9._sp/&
-&                                         4._sp, ac_ct(k), ac_ct_d(k), &
-&                                         ac_kexc(k), ac_kexc_d(k), &
-&                                         5._sp, ac_prcp(k), ac_hp(k), &
-&                                         ac_hp_d(k), ac_ht(k), ac_ht_d(&
-&                                         k), ac_qt(k), ac_qt_d(k))
+&                                         ac_cp(k), ac_cp_d(k), beta, &
+&                                         ac_ct(k), ac_ct_d(k), ac_kexc(&
+&                                         k), ac_kexc_d(k), 5._sp, &
+&                                         ac_prcp(k), ac_hp(k), ac_hp_d(&
+&                                         k), ac_ht(k), ac_ht_d(k), &
+&                                         ac_qt(k), ac_qt_d(k))
 ! Transform from mm/dt to m3/s
           temp = 1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)
           ac_qt_d(k) = temp*ac_qt_d(k)/setup%dt
@@ -15192,7 +15201,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en
+    REAL(sp) :: beta, pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
     INTEGER :: chunk_start
@@ -15202,10 +15211,12 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), PRIVATE(&
-!$OMP&chunk_start, chunk_end)
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), PRIVATE&
+!$OMP&(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -15232,30 +15243,30 @@ CONTAINS
           CALL PUSHREAL4(ac_ht(k))
           CALL PUSHREAL4(ac_hp(k))
           CALL GR_PRODUCTION_TRANSFER_MLP_ALG(layers, neurons, pn, en, &
-&                                       ac_cp(k), 9._sp/4._sp, ac_ct(k)&
-&                                       , ac_kexc(k), 5._sp, ac_prcp(k)&
-&                                       , ac_hp(k), ac_ht(k), ac_qt(k))
+&                                       ac_cp(k), beta, ac_ct(k), &
+&                                       ac_kexc(k), 5._sp, ac_prcp(k), &
+&                                       ac_hp(k), ac_ht(k), ac_qt(k))
 ! Transform from mm/dt to m3/s
           CALL PUSHCONTROL1B(1)
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(beta)
     CALL PUSHREAL4ARRAY(ac_pet, mesh%nac)
-    CALL PUSHREAL4(en)
     CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
     CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
-!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), SHARED(layers_b, ac_prcp_b, ac_ci_b, ac_cp_b&
-!$OMP&, ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE&
-!$OMP&(row, col, k, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch, &
-!$OMP&chunk_end, chunk_start)
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_b, ac_prcp_b, ac_ci_b, &
+!$OMP&ac_cp_b, ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), &
+!$OMP&PRIVATE(row, col, k, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch&
+!$OMP&, chunk_end, chunk_start)
     CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
     CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
-    CALL POPREAL4(en)
     CALL POPREAL4ARRAY(ac_pet, mesh%nac)
+    CALL POPREAL4(beta)
     pn_b = 0.0_4
     en_b = 0.0_4
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
@@ -15271,12 +15282,12 @@ CONTAINS
           CALL POPREAL4(ac_qt(k))
           CALL GR_PRODUCTION_TRANSFER_MLP_ALG_B(layers, layers_b, &
 &                                         neurons, pn, pn_b, en, en_b, &
-&                                         ac_cp(k), ac_cp_b(k), 9._sp/&
-&                                         4._sp, ac_ct(k), ac_ct_b(k), &
-&                                         ac_kexc(k), ac_kexc_b(k), &
-&                                         5._sp, ac_prcp(k), ac_hp(k), &
-&                                         ac_hp_b(k), ac_ht(k), ac_ht_b(&
-&                                         k), ac_qt(k), ac_qt_b(k))
+&                                         ac_cp(k), ac_cp_b(k), beta, &
+&                                         ac_ct(k), ac_ct_b(k), ac_kexc(&
+&                                         k), ac_kexc_b(k), 5._sp, &
+&                                         ac_prcp(k), ac_hp(k), ac_hp_b(&
+&                                         k), ac_ht(k), ac_ht_b(k), &
+&                                         ac_qt(k), ac_qt_b(k))
           ac_qt_b(k) = 0.0_4
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 0) THEN
@@ -15315,16 +15326,18 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en
+    REAL(sp) :: beta, pn, en
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
-!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), SCHEDULE&
-!$OMP&                                           (static)
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, &
+!$OMP&ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en)&
+!$OMP&, SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15338,9 +15351,9 @@ CONTAINS
             en = 0._sp
           END IF
           CALL GR_PRODUCTION_TRANSFER_MLP_ALG(layers, neurons, pn, en, &
-&                                       ac_cp(k), 9._sp/4._sp, ac_ct(k)&
-&                                       , ac_kexc(k), 5._sp, ac_prcp(k)&
-&                                       , ac_hp(k), ac_ht(k), ac_qt(k))
+&                                       ac_cp(k), beta, ac_ct(k), &
+&                                       ac_kexc(k), 5._sp, ac_prcp(k), &
+&                                       ac_hp(k), ac_ht(k), ac_qt(k))
 ! Transform from mm/dt to m3/s
           ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col&
 &           )/setup%dt
@@ -15887,7 +15900,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MAX
     REAL(sp) :: temp
@@ -15897,11 +15910,13 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d&
-!$OMP&, ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), &
-!$OMP&PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, &
+!$OMP&ac_ct_d, ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d)&
+!$OMP&, PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
 !$OMP&PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), &
 !$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
@@ -15914,8 +15929,8 @@ CONTAINS
 &                            ac_ci(k), ac_ci_d(k), ac_hi(k), ac_hi_d(k)&
 &                            , pn, pn_d, en, en_d)
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_cp(k), ac_cp_d(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          ), beta, ac_hp(k), ac_hp_d(k), pr, pr_d, perc&
+&                          , perc_d)
             CALL GR_THRESHOLD_EXCHANGE_D(ac_kexc(k), ac_kexc_d(k), &
 &                                  ac_aexc(k), ac_aexc_d(k), ac_ht(k), &
 &                                  ac_ht_d(k), l, l_d)
@@ -15980,7 +15995,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
@@ -15991,10 +16006,12 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, &
-!$OMP&prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc&
+!$OMP&, l, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
     DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
@@ -16010,8 +16027,8 @@ CONTAINS
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
             CALL PUSHREAL4(ac_hp(k))
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
             CALL PUSHCONTROL1B(1)
@@ -16038,7 +16055,7 @@ CONTAINS
     END DO
     CALL PUSHREAL4(pn)
     CALL PUSHREAL4(prr)
-    CALL PUSHREAL4ARRAY(ac_pet, mesh%nac)
+    CALL PUSHREAL4(beta)
     CALL PUSHREAL4(en)
     CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
     CALL PUSHINTEGER4(time_step)
@@ -16046,17 +16063,17 @@ CONTAINS
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b&
-!$OMP&, ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), &
-!$OMP&PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, &
+!$OMP&ac_ct_b, ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b)&
+!$OMP&, PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
 !$OMP&PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), &
 !$OMP&PRIVATE(branch, chunk_end, chunk_start)
     CALL POPREAL4ARRAY(ac_aexc, mesh%nac)
     CALL POPINTEGER4(time_step)
     CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
     CALL POPREAL4(en)
-    CALL POPREAL4ARRAY(ac_pet, mesh%nac)
+    CALL POPREAL4(beta)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
     pn_b = 0.0_4
@@ -16101,8 +16118,8 @@ CONTAINS
 &                                  ac_ht_b(k), l, l_b)
             CALL POPREAL4(ac_hp(k))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_cp(k), ac_cp_b(k&
-&                          ), 9._sp/4._sp, ac_hp(k), ac_hp_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          ), beta, ac_hp(k), ac_hp_b(k), pr, pr_b, perc&
+&                          , perc_b)
             CALL POPREAL4(ac_hi(k))
             CALL POPREAL4(pn)
             CALL POPREAL4(en)
@@ -16133,17 +16150,19 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+    REAL(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, &
-!$OMP&ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, &
-!$OMP&prr, prd, qr, qd), SCHEDULE(static)
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc&
+!$OMP&, l, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16152,8 +16171,8 @@ CONTAINS
           IF (ac_prcp(k) .GE. 0._sp .AND. ac_pet(k) .GE. 0._sp) THEN
             CALL GR_INTERCEPTION(ac_prcp(k), ac_pet(k), ac_ci(k), ac_hi(&
 &                          k), pn, en)
-            CALL GR_PRODUCTION(pn, en, ac_cp(k), 9._sp/4._sp, ac_hp(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_cp(k), beta, ac_hp(k), pr, &
+&                        perc)
             CALL GR_THRESHOLD_EXCHANGE(ac_kexc(k), ac_aexc(k), ac_ht(k)&
 &                                , l)
           ELSE
@@ -16505,7 +16524,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
     REAL(sp) :: ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d
     INTRINSIC MIN
     INTRINSIC MAX
@@ -16516,12 +16535,14 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), SHARED&
-!$OMP&(ac_prcp_d, ac_ca_d, ac_cc_d, ac_kb_d, ac_ha_d, ac_hc_d, ac_qt_d)&
-!$OMP&, PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
-!$OMP&PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d, qd_d)&
-!$OMP&, PRIVATE(temp), SCHEDULE(static)
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&SHARED(ac_prcp_d, ac_ca_d, ac_cc_d, ac_kb_d, ac_ha_d, ac_hc_d, &
+!$OMP&ac_qt_d), PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr&
+!$OMP&, qd), PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d&
+!$OMP&, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16545,8 +16566,8 @@ CONTAINS
             en_d = -ei_d
             en = ac_pet(k) - ei
             CALL GR_PRODUCTION_D(pn, pn_d, en, en_d, ac_ca(k), ac_ca_d(k&
-&                          ), 9._sp/4._sp, ac_ha(k), ac_ha_d(k), pr, &
-&                          pr_d, perc, perc_d)
+&                          ), beta, ac_ha(k), ac_ha_d(k), pr, pr_d, perc&
+&                          , perc_d)
           ELSE
             pr = 0._sp
             perc = 0._sp
@@ -16602,7 +16623,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -16614,8 +16635,10 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
 !$OMP&PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
 !$OMP&PRIVATE(chunk_start, chunk_end)
     CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
@@ -16646,8 +16669,8 @@ CONTAINS
             CALL PUSHREAL4(en)
             en = ac_pet(k) - ei
             CALL PUSHREAL4(ac_ha(k))
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), 9._sp/4._sp, ac_ha(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
+&                        perc)
             CALL PUSHCONTROL1B(1)
           ELSE
             CALL PUSHCONTROL1B(0)
@@ -16676,6 +16699,7 @@ CONTAINS
     END DO
     CALL PUSHREAL4(pn)
     CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(beta)
     CALL PUSHREAL4(en)
     CALL PUSHREAL4(qr)
     CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
@@ -16684,16 +16708,17 @@ CONTAINS
 !$OMP END PARALLEL
     ac_prcp_b = 0.0_4
 !$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), SHARED&
-!$OMP&(ac_prcp_b, ac_ca_b, ac_cc_b, ac_kb_b, ac_ha_b, ac_hc_b, ac_qt_b)&
-!$OMP&, PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
-!$OMP&PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b)&
-!$OMP&, PRIVATE(branch, chunk_end, chunk_start)
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&SHARED(ac_prcp_b, ac_ca_b, ac_cc_b, ac_kb_b, ac_ha_b, ac_hc_b, &
+!$OMP&ac_qt_b), PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr&
+!$OMP&, qd), PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b&
+!$OMP&, qd_b), PRIVATE(branch, chunk_end, chunk_start)
     CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
     CALL POPINTEGER4(time_step)
     CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
     CALL POPREAL4(qr)
     CALL POPREAL4(en)
+    CALL POPREAL4(beta)
     CALL POPREAL4(prr)
     CALL POPREAL4(pn)
     ei_b = 0.0_4
@@ -16737,8 +16762,8 @@ CONTAINS
           IF (branch .NE. 0) THEN
             CALL POPREAL4(ac_ha(k))
             CALL GR_PRODUCTION_B(pn, pn_b, en, en_b, ac_ca(k), ac_ca_b(k&
-&                          ), 9._sp/4._sp, ac_ha(k), ac_ha_b(k), pr, &
-&                          pr_b, perc, perc_b)
+&                          ), beta, ac_ha(k), ac_ha_b(k), pr, pr_b, perc&
+&                          , perc_b)
             CALL POPREAL4(en)
             ei_b = -en_b
             CALL POPCONTROL1B(branch)
@@ -16774,7 +16799,7 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
+    REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16782,8 +16807,10 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+! Beta percolation parameter is time step dependent
+    beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
 !$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
-!$OMP&ac_prcp, ac_pet, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
 !$OMP&PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
 !$OMP&                                              SCHEDULE(static)
     DO col=1,mesh%ncol
@@ -16803,8 +16830,8 @@ CONTAINS
               pn = 0._sp
             END IF
             en = ac_pet(k) - ei
-            CALL GR_PRODUCTION(pn, en, ac_ca(k), 9._sp/4._sp, ac_ha(k), &
-&                        pr, perc)
+            CALL GR_PRODUCTION(pn, en, ac_ca(k), beta, ac_ha(k), pr, &
+&                        perc)
           ELSE
             pr = 0._sp
             perc = 0._sp
