@@ -3608,8 +3608,6 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: qt_flag=.false.
       TYPE(STATSDT) :: stats
       LOGICAL :: stats_flag=.false.
-      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: internal_fluxes
-      LOGICAL :: internal_fluxes_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3674,9 +3672,6 @@ CONTAINS
 ! mean, var, min, max, med
         this%stats_flag = .true.
         CALL STATSDT_INITIALISE(this%stats, setup, mesh)
-      CASE ('internal_fluxes') 
-        this%internal_fluxes_flag = .true.
-        ALLOCATE(this%internal_fluxes(mesh%nrow, mesh%ncol, setup%nfx))
       END SELECT
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
@@ -3927,6 +3922,39 @@ CONTAINS
       GOTO 10
     END IF
   END SUBROUTINE HEAP_SORT
+
+  RECURSIVE SUBROUTINE QUICKSORT(arr)
+    IMPLICIT NONE
+    REAL(sp), INTENT(INOUT) :: arr(:)
+    REAL :: pivot, temp
+    INTEGER, SAVE :: first=1, last
+    INTEGER :: i, j
+    INTRINSIC SIZE
+    last = SIZE(arr, 1)
+    pivot = arr((first+last)/2)
+    i = first
+    j = last
+    DO 
+      DO WHILE (arr(i) .LT. pivot)
+        i = i + 1
+      END DO
+      DO WHILE (pivot .LT. arr(j))
+        j = j - 1
+      END DO
+      IF (i .GE. j) THEN
+        IF (first .LT. i - 1) CALL QUICKSORT(arr(first:i-1))
+        IF (j + 1 .LT. last) CALL QUICKSORT(arr(j+1:last))
+        GOTO 100
+      ELSE
+        temp = arr(i)
+        arr(i) = arr(j)
+        arr(j) = temp
+        i = i + 1
+        j = j - 1
+      END IF
+    END DO
+ 100 CONTINUE
+  END SUBROUTINE QUICKSORT
 
 !  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: res
@@ -5455,6 +5483,8 @@ MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MWD_RETURNS_DIFF
 !% only: ControlDT_initialise, ControlDT_finalise
   USE MWD_CONTROL_DIFF
+!% only: StatsDT 
+  USE MWD_STATS
   IMPLICIT NONE
 
 CONTAINS
@@ -5662,6 +5692,24 @@ CONTAINS
       END IF
     END DO
   END SUBROUTINE GET_SERR_SIGMA_PARAMETERS
+
+  SUBROUTINE GET_STATS(stats, key, vle)
+    IMPLICIT NONE
+! Should be unreachable
+    TYPE(STATSDT), INTENT(IN) :: stats
+    CHARACTER(len=*), INTENT(IN) :: key
+    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: vle
+    INTEGER :: i
+    INTRINSIC SIZE
+    INTRINSIC TRIM
+! Linear search on keys
+    DO i=1,SIZE(stats%keys)
+      IF (TRIM(stats%keys(i)) .EQ. key) THEN
+        vle = stats%values(:, :, :, i)
+        RETURN
+      END IF
+    END DO
+  END SUBROUTINE GET_STATS
 
   SUBROUTINE SET_RR_PARAMETERS(rr_parameters, key, vle)
     IMPLICIT NONE
@@ -16554,25 +16602,16 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIMESTEP
 
-  SUBROUTINE COMPUTE_STATS(mesh, returns, ntime_step, t, fx, fx_name)
+  SUBROUTINE COMPUTE_STATS(mesh, returns, t, fx_pos)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: ntime_step
-    INTEGER, INTENT(IN) :: t
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: fx
-    CHARACTER(len=*), INTENT(IN) :: fx_name
+    INTEGER, INTENT(IN) :: t, fx_pos
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: fx
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%ng, ntime_step) :: mean, var, minimum, &
-&   maximum
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
     INTEGER :: i, j, npos_val
     REAL(sp) :: m
-    INTRINSIC TRIM
-    i = 1
-    DO WHILE (TRIM(returns%stats%keys(i)) .NE. fx_name)
-      i = i + 1
-    END DO
-    PRINT*, i
+    fx = returns%stats%internal_fluxes(:, :, fx_pos)
   END SUBROUTINE COMPUTE_STATS
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
@@ -16585,12 +16624,6 @@ CONTAINS
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
-!~         do j = 1, mesh%ng
-!~             write (*,*) mean(j, :)
-!~             write (*,*) ""
-!~         end do    
-!write (*,*) minimum
-!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -16600,7 +16633,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq, j, npos_val
+    INTEGER :: t, iret, zq, i
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_d
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -16894,22 +16927,8 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-!~                 print *, "en =", returns%en
-!~                 print *, "pn =", returns%pn
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 1), 'pn')
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 2), 'en')
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 3), 'perc')
+ 100    CONTINUE
       CASE ('gr5') 
-!~                 do i = 1, setup%nfx
-!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
-!internal_fluxes(:,:,i)
-!keys(i)
-!values(:,:,:,i)
-!~                 end do
-!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
 &                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
@@ -16918,6 +16937,7 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+ 110    CONTINUE
       CASE ('grd') 
 ! 'grd' module
         CALL GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
@@ -16925,6 +16945,7 @@ CONTAINS
 &                     , qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+ 120    CONTINUE
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
@@ -16932,6 +16953,7 @@ CONTAINS
 &                        hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
+ 130    CONTINUE
       CASE ('vic3l') 
 ! 'vic3l' module
         CALL VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
@@ -16944,6 +16966,7 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
         CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
+ 140    CONTINUE
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
@@ -16977,12 +17000,6 @@ CONTAINS
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
-!~         do j = 1, mesh%ng
-!~             write (*,*) mean(j, :)
-!~             write (*,*) ""
-!~         end do    
-!write (*,*) minimum
-!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -16992,7 +17009,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq, j, npos_val
+    INTEGER :: t, iret, zq, i
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
@@ -17347,17 +17364,8 @@ CONTAINS
         END IF
         CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   kexc, hi, hp, ht, qt(:, :, zq), returns)
-!~                 print *, "en =", returns%en
-!~                 print *, "pn =", returns%pn
         CALL PUSHCONTROL3B(1)
       CASE ('gr5') 
-!~                 do i = 1, setup%nfx
-!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
-!internal_fluxes(:,:,i)
-!keys(i)
-!values(:,:,:,i)
-!~                 end do
-!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         IF (ALLOCATED(qt)) THEN
           CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
@@ -17904,12 +17912,6 @@ CONTAINS
   SUBROUTINE SIMULATION(setup, mesh, input_data, parameters, output, &
 &   options, returns)
     IMPLICIT NONE
-!~         do j = 1, mesh%ng
-!~             write (*,*) mean(j, :)
-!~             write (*,*) ""
-!~         end do    
-!write (*,*) minimum
-!write (*,*) maximum
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -17917,7 +17919,7 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    INTEGER :: t, iret, zq, j, npos_val
+    INTEGER :: t, iret, zq, i
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
     REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
     REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
@@ -18107,40 +18109,37 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-!~                 print *, "en =", returns%en
-!~                 print *, "pn =", returns%pn
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 1), 'pn')
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 2), 'en')
-        CALL COMPUTE_STATS(mesh, returns, setup%ntime_step, t, returns%&
-&                    internal_fluxes(:, :, 3), 'perc')
+        DO i=1,setup%nfx
+          CALL COMPUTE_STATS(mesh, returns, t, i)
+        END DO
       CASE ('gr5') 
-!~                 do i = 1, setup%nfx
-!~                     call compute_stats(mesh, returns, setup%ntime_step, t, returns%internal_fluxes(:,:,i))
-!internal_fluxes(:,:,i)
-!keys(i)
-!values(:,:,:,i)
-!~                 end do
-!~                 call compute_stats(mesh, returns, setup%ntime_step, t, returns%en)
 ! 'gr5' module
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
 &                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+        DO i=1,setup%nfx
+          CALL COMPUTE_STATS(mesh, returns, t, i)
+        END DO
       CASE ('grd') 
 ! 'grd' module
         CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
 &                   ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
+        DO i=1,setup%nfx
+          CALL COMPUTE_STATS(mesh, returns, t, i)
+        END DO
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
 &                      , ha, hc, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
+        DO i=1,setup%nfx
+          CALL COMPUTE_STATS(mesh, returns, t, i)
+        END DO
       CASE ('vic3l') 
 ! 'vic3l' module
         CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
@@ -18150,6 +18149,9 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
         CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
+        DO i=1,setup%nfx
+          CALL COMPUTE_STATS(mesh, returns, t, i)
+        END DO
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 

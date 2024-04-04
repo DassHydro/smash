@@ -25,6 +25,7 @@ module md_simulation
     use md_vic3l_operator !% only: vic3l_timestep
     use md_routing_operator !% only: lag0_timestep, lr_timestep, kw_timestep
     use mwd_parameters_manipulation !% only: get_rr_parameters, get_rr_states, set_rr_states
+    use md_stats !% only: quicksort
     implicit none
 
 contains
@@ -136,21 +137,41 @@ contains
         type(MeshDT), intent(in) :: mesh
         integer, intent(in) :: t, fx_pos
         real(sp), dimension(mesh%nrow, mesh%ncol) :: fx
+        real(sp), dimension(:), allocatable :: fx_flat
         type(ReturnsDT), intent(inout) :: returns
         logical, dimension(mesh%nrow, mesh%ncol) :: mask
+        logical, dimension(:), allocatable :: mask_flat
         integer :: i, j, npos_val
         real(sp) :: m
 
         fx = returns%stats%internal_fluxes(:, :, fx_pos)
         !$AD start-exclude
         do j = 1, mesh%ng
-            mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
+            
+            if (returns%stats%keys(fx_pos) .eq. 'kexc') then
+                mask = mesh%mask_gauge(:, :, j)
+            else
+                mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
+            end if
+            
             npos_val = count(mask) 
             m = sum(fx, mask = mask) / npos_val 
             returns%stats%values(j, t, 1, fx_pos) = m
             returns%stats%values(j, t, 2, fx_pos) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
             returns%stats%values(j, t, 3, fx_pos) = minval(fx, mask = mask)
             returns%stats%values(j, t, 4, fx_pos) = maxval(fx, mask = mask)
+            
+            if (.not. allocated(fx_flat)) allocate (fx_flat(npos_val)) 
+            fx_flat = pack(fx, mask .eqv. .True.)
+
+            call quicksort(fx_flat)
+
+            if (mod(npos_val, 2) .ne. 0) then
+                returns%stats%values(j, t, 5, fx_pos) = fx_flat(npos_val / 2 + 1)
+            else
+                returns%stats%values(j, t, 5, fx_pos) = (fx_flat(npos_val / 2) + fx_flat(npos_val / 2 + 1)) / 2
+            end if
+            
         end do
         !$AD end-exclude
     end subroutine
