@@ -131,24 +131,23 @@ contains
 
     end subroutine store_timestep
     
-    subroutine compute_stats(mesh, returns, t, fx_pos)
+    subroutine compute_fluxes_stats(mesh, t, idx, returns)
         implicit none
 
         type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t, fx_pos
+        integer, intent(in) :: t, idx
+        type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol) :: fx
         real(sp), dimension(:), allocatable :: fx_flat
-        type(ReturnsDT), intent(inout) :: returns
         logical, dimension(mesh%nrow, mesh%ncol) :: mask
-        logical, dimension(:), allocatable :: mask_flat
-        integer :: i, j, npos_val
+        integer :: j, npos_val
         real(sp) :: m
 
-        fx = returns%stats%internal_fluxes(:, :, fx_pos)
+        fx = returns%stats%internal_fluxes(:, :, idx)
         !$AD start-exclude
         do j = 1, mesh%ng
             
-            if (returns%stats%keys(fx_pos) .eq. 'kexc') then
+            if (returns%stats%fluxes_keys(idx) .eq. 'kexc') then
                 mask = mesh%mask_gauge(:, :, j)
             else
                 mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
@@ -156,10 +155,12 @@ contains
             
             npos_val = count(mask) 
             m = sum(fx, mask = mask) / npos_val 
-            returns%stats%values(j, t, 1, fx_pos) = m
-            returns%stats%values(j, t, 2, fx_pos) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
-            returns%stats%values(j, t, 3, fx_pos) = minval(fx, mask = mask)
-            returns%stats%values(j, t, 4, fx_pos) = maxval(fx, mask = mask)
+            returns%stats%fluxes_values(j, t, 1, idx) = m
+            returns%stats%fluxes_values(j, t, 2, idx) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
+            returns%stats%fluxes_values(j, t, 3, idx) = minval(fx, mask = mask)
+            returns%stats%fluxes_values(j, t, 4, idx) = maxval(fx, mask = mask)
+            
+!~             print *, returns%stats%fluxes_values(j, t, 1, idx)
             
             if (.not. allocated(fx_flat)) allocate (fx_flat(npos_val)) 
             fx_flat = pack(fx, mask .eqv. .True.)
@@ -167,15 +168,56 @@ contains
             call quicksort(fx_flat)
 
             if (mod(npos_val, 2) .ne. 0) then
-                returns%stats%values(j, t, 5, fx_pos) = fx_flat(npos_val / 2 + 1)
+                returns%stats%fluxes_values(j, t, 5, idx) = fx_flat(npos_val / 2 + 1)
             else
-                returns%stats%values(j, t, 5, fx_pos) = (fx_flat(npos_val / 2) + fx_flat(npos_val / 2 + 1)) / 2
+                returns%stats%fluxes_values(j, t, 5, idx) = (fx_flat(npos_val / 2) + fx_flat(npos_val / 2 + 1)) / 2
+            end if
+            
+        end do
+!~         print *, returns%stats%fluxes_values
+        !$AD end-exclude
+    end subroutine
+    
+    subroutine compute_states_stats(mesh, output, t, idx, returns)
+        implicit none
+
+        type(MeshDT), intent(in) :: mesh
+        type(OutputDT), intent(in) :: output
+        integer, intent(in) :: t, idx
+        type(ReturnsDT), intent(inout) :: returns
+        real(sp), dimension(mesh%nrow, mesh%ncol) :: h
+        real(sp), dimension(:), allocatable :: h_flat
+        logical, dimension(mesh%nrow, mesh%ncol) :: mask
+        integer :: j, npos_val
+        real(sp) :: m
+        
+        h = output%rr_final_states%values(:, :, idx)
+        !$AD start-exclude
+        do j = 1, mesh%ng
+            
+            mask = (h .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
+            
+            npos_val = count(mask) 
+            m = sum(h, mask = mask) / npos_val 
+            returns%stats%rr_states_values(j, t, 1, idx) = m
+            returns%stats%rr_states_values(j, t, 2, idx) = sum((h - m) * (h - m), mask = mask) / npos_val 
+            returns%stats%rr_states_values(j, t, 3, idx) = minval(h, mask = mask)
+            returns%stats%rr_states_values(j, t, 4, idx) = maxval(h, mask = mask)
+            
+            if (.not. allocated(h_flat)) allocate (h_flat(npos_val)) 
+            h_flat = pack(h, mask .eqv. .True.)
+
+            call quicksort(h_flat)
+
+            if (mod(npos_val, 2) .ne. 0) then
+                returns%stats%rr_states_values(j, t, 5, idx) = h_flat(npos_val / 2 + 1)
+            else
+                returns%stats%rr_states_values(j, t, 5, idx) = (h_flat(npos_val / 2) + h_flat(npos_val / 2 + 1)) / 2
             end if
             
         end do
         !$AD end-exclude
     end subroutine
-    
     
     subroutine simulation(setup, mesh, input_data, parameters, output, options, returns)
 
@@ -395,10 +437,6 @@ contains
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
 
-                do i = 1, setup%nfx
-                    call compute_stats(mesh, returns, t, i)
-                end do
-
                 ! 'gr5' module
             case ("gr5")
 
@@ -408,10 +446,6 @@ contains
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
                 
-                do i = 1, setup%nfx
-                    call compute_stats(mesh, returns, t, i)
-                end do
-                
                 ! 'grd' module
             case ("grd")
 
@@ -420,10 +454,6 @@ contains
                 call set_rr_states(output%rr_final_states, "hp", hp)
                 call set_rr_states(output%rr_final_states, "ht", ht)
                 
-                do i = 1, setup%nfx
-                    call compute_stats(mesh, returns, t, i)
-                end do
-                
                 ! 'loieau' module
             case ("loieau")
 
@@ -431,10 +461,6 @@ contains
 
                 call set_rr_states(output%rr_final_states, "ha", ha)
                 call set_rr_states(output%rr_final_states, "hc", hc)
-                
-                do i = 1, setup%nfx
-                    call compute_stats(mesh, returns, t, i)
-                end do
                 
                 ! 'vic3l' module
             case ("vic3l")
@@ -447,11 +473,8 @@ contains
                 call set_rr_states(output%rr_final_states, "hmsl", hmsl)
                 call set_rr_states(output%rr_final_states, "hbsl", hbsl)
                 
-                do i = 1, setup%nfx
-                    call compute_stats(mesh, returns, t, i)
-                end do
-                
             end select
+            
 
             ! Routing module
             select case (setup%routing_module)
@@ -460,22 +483,32 @@ contains
             case ("lag0")
 
                 call lag0_timestep(setup, mesh, options, qt, q)
-
+                
                 ! 'lr' module
             case ("lr")
 
                 call lr_timestep(setup, mesh, options, qt, llr, hlr, q)
-
+                
                 call set_rr_states(output%rr_final_states, "hlr", hlr)
-
+                
                 ! 'kw' module
             case ("kw")
 
                 call kw_timestep(setup, mesh, options, qt, akw, bkw, q)
 
             end select
-
+        
             ! Store variables
+            if (returns%stats_flag) then
+                do i = 1, setup%nfx
+                    call compute_fluxes_stats(mesh, t, i, returns)
+                end do
+                
+                do i = 1, setup%nrrs
+                    call compute_states_stats(mesh, output, t, i, returns)
+                end do
+            end if
+            
             call store_timestep(mesh, output, returns, t, iret, qt(:, :, zq), q(:, :, zq))
 
         end do

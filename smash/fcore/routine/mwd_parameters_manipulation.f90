@@ -246,12 +246,12 @@ contains
 
     integer :: i
 
-    ! Linear search on keys
-    do i = 1, size(stats%keys)
+    ! Linear search on fluxes_keys
+    do i = 1, size(stats%fluxes_keys)
 
-        if (trim(stats%keys(i)) .eq. key) then
+        if (trim(stats%fluxes_keys(i)) .eq. key) then
         
-            vle = stats%values(:, :, :, i)
+            vle = stats%fluxes_values(:, :, :, i)
             return
         
         end if

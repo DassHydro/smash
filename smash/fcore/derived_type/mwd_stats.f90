@@ -28,9 +28,10 @@ module mwd_stats
 
     type StatsDT
 
-        character(lchar), dimension(:), allocatable :: keys !$F90W char-array
-        real(sp), dimension(:, :, :, :), allocatable :: values 
         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
+        character(lchar), dimension(:), allocatable :: fluxes_keys !$F90W char-array
+        real(sp), dimension(:, :, :, :), allocatable :: fluxes_values 
+        real(sp), dimension(:, :, :, :), allocatable :: rr_states_values ! rr_states_keys in Rr_StatesDT class
         
     end type StatsDT
 
@@ -44,13 +45,16 @@ contains
         type(StatsDT), intent(inout) :: this
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-
-        allocate (this%keys(setup%nfx))
-        this%keys = "..."
-
-        allocate (this%values(mesh%ng, setup%ntime_step, 5, setup%nfx))
         
         allocate (this%internal_fluxes(mesh%nrow, mesh%ncol, setup%nfx))
+        
+        allocate (this%fluxes_keys(setup%nfx))
+        this%fluxes_keys = "..."
+
+        allocate (this%fluxes_values(mesh%ng, setup%ntime_step, 5, setup%nfx))
+        
+        allocate (this%rr_states_values(mesh%ng, setup%ntime_step, 5, setup%nrrs))
+        
         
     end subroutine StatsDT_initialise
 

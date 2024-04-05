@@ -5702,10 +5702,10 @@ CONTAINS
     INTEGER :: i
     INTRINSIC SIZE
     INTRINSIC TRIM
-! Linear search on keys
-    DO i=1,SIZE(stats%keys)
-      IF (TRIM(stats%keys(i)) .EQ. key) THEN
-        vle = stats%values(:, :, :, i)
+! Linear search on fluxes_keys
+    DO i=1,SIZE(stats%fluxes_keys)
+      IF (TRIM(stats%fluxes_keys(i)) .EQ. key) THEN
+        vle = stats%fluxes_values(:, :, :, i)
         RETURN
       END IF
     END DO
@@ -16437,6 +16437,8 @@ MODULE MD_SIMULATION_DIFF
   USE MD_ROUTING_OPERATOR_DIFF
 !% only: get_rr_parameters, get_rr_states, set_rr_states
   USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: quicksort
+  USE MD_STATS_DIFF
   IMPLICIT NONE
 
 CONTAINS
@@ -16602,17 +16604,32 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIMESTEP
 
-  SUBROUTINE COMPUTE_STATS(mesh, returns, t, fx_pos)
+  SUBROUTINE COMPUTE_FLUXES_STATS(mesh, t, idx, returns)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t, fx_pos
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: fx
+    INTEGER, INTENT(IN) :: t, idx
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: fx
+    REAL(sp), DIMENSION(:), ALLOCATABLE :: fx_flat
     LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
-    INTEGER :: i, j, npos_val
+    INTEGER :: j, npos_val
     REAL(sp) :: m
-    fx = returns%stats%internal_fluxes(:, :, fx_pos)
-  END SUBROUTINE COMPUTE_STATS
+    fx = returns%stats%internal_fluxes(:, :, idx)
+  END SUBROUTINE COMPUTE_FLUXES_STATS
+
+  SUBROUTINE COMPUTE_STATES_STATS(mesh, output, t, idx, returns)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    INTEGER, INTENT(IN) :: t, idx
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: h
+    REAL(sp), DIMENSION(:), ALLOCATABLE :: h_flat
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
+    INTEGER :: j, npos_val
+    REAL(sp) :: m
+    h = output%rr_final_states%values(:, :, idx)
+  END SUBROUTINE COMPUTE_STATES_STATS
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: *(output.response.q)
@@ -16927,7 +16944,6 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
- 100    CONTINUE
       CASE ('gr5') 
 ! 'gr5' module
         CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
@@ -16937,7 +16953,6 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
- 110    CONTINUE
       CASE ('grd') 
 ! 'grd' module
         CALL GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
@@ -16945,7 +16960,6 @@ CONTAINS
 &                     , qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
- 120    CONTINUE
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
@@ -16953,7 +16967,6 @@ CONTAINS
 &                        hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
- 130    CONTINUE
       CASE ('vic3l') 
 ! 'vic3l' module
         CALL VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
@@ -16966,7 +16979,6 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
         CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
- 140    CONTINUE
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
@@ -16983,7 +16995,8 @@ CONTAINS
         CALL KW_TIMESTEP_D(setup, mesh, options, qt, qt_d, akw, akw_d, &
 &                    bkw, bkw_d, q, q_d)
       END SELECT
-! Store variables
+ 100  CONTINUE
+ 110  CONTINUE
       CALL STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, qt&
 &                     (:, :, zq), q(:, :, zq), q_d(:, :, zq))
     END DO
@@ -17520,7 +17533,6 @@ CONTAINS
       CASE DEFAULT
         CALL PUSHCONTROL2B(0)
       END SELECT
-! Store variables
       CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
 &                   q(:, :, zq))
     END DO
@@ -18109,9 +18121,6 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-        DO i=1,setup%nfx
-          CALL COMPUTE_STATS(mesh, returns, t, i)
-        END DO
       CASE ('gr5') 
 ! 'gr5' module
         CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
@@ -18119,27 +18128,18 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-        DO i=1,setup%nfx
-          CALL COMPUTE_STATS(mesh, returns, t, i)
-        END DO
       CASE ('grd') 
 ! 'grd' module
         CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
 &                   ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-        DO i=1,setup%nfx
-          CALL COMPUTE_STATS(mesh, returns, t, i)
-        END DO
       CASE ('loieau') 
 ! 'loieau' module
         CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
 &                      , ha, hc, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
-        DO i=1,setup%nfx
-          CALL COMPUTE_STATS(mesh, returns, t, i)
-        END DO
       CASE ('vic3l') 
 ! 'vic3l' module
         CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
@@ -18149,9 +18149,6 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
         CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
-        DO i=1,setup%nfx
-          CALL COMPUTE_STATS(mesh, returns, t, i)
-        END DO
       END SELECT
 ! Routing module
       SELECT CASE  (setup%routing_module) 
@@ -18167,6 +18164,14 @@ CONTAINS
         CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
       END SELECT
 ! Store variables
+      IF (returns%stats_flag) THEN
+        DO i=1,setup%nfx
+          CALL COMPUTE_FLUXES_STATS(mesh, t, i, returns)
+        END DO
+        DO i=1,setup%nrrs
+          CALL COMPUTE_STATES_STATS(mesh, output, t, i, returns)
+        END DO
+      END IF
       CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
 &                   q(:, :, zq))
     END DO
