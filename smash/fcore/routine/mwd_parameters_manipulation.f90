@@ -236,33 +236,6 @@ contains
 
     end subroutine get_serr_sigma_parameters
     
-    subroutine get_stats(stats, key, vle)
-
-    implicit none
-
-    type(StatsDT), intent(in) :: stats
-    character(*), intent(in) :: key
-    real(sp), dimension(:, :, :), intent(inout) :: vle
-
-    integer :: i
-
-    ! Linear search on fluxes_keys
-    do i = 1, size(stats%fluxes_keys)
-
-        if (trim(stats%fluxes_keys(i)) .eq. key) then
-        
-            vle = stats%fluxes_values(:, :, :, i)
-            return
-        
-        end if
-
-    end do
-
-    ! Should be unreachable
-
-    end subroutine get_stats
-    
-    
     subroutine set_rr_parameters(rr_parameters, key, vle)
 
         implicit none
