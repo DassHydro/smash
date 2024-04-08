@@ -159,9 +159,7 @@ contains
             returns%stats%fluxes_values(j, t, 2, idx) = sum((fx - m) * (fx - m), mask = mask) / npos_val 
             returns%stats%fluxes_values(j, t, 3, idx) = minval(fx, mask = mask)
             returns%stats%fluxes_values(j, t, 4, idx) = maxval(fx, mask = mask)
-            
-!~             print *, returns%stats%fluxes_values(j, t, 1, idx)
-            
+                        
             if (.not. allocated(fx_flat)) allocate (fx_flat(npos_val)) 
             fx_flat = pack(fx, mask .eqv. .True.)
 
@@ -174,7 +172,6 @@ contains
             end if
             
         end do
-!~         print *, returns%stats%fluxes_values
         !$AD end-exclude
     end subroutine
     

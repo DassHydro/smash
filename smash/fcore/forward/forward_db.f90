@@ -5693,24 +5693,6 @@ CONTAINS
     END DO
   END SUBROUTINE GET_SERR_SIGMA_PARAMETERS
 
-  SUBROUTINE GET_STATS(stats, key, vle)
-    IMPLICIT NONE
-! Should be unreachable
-    TYPE(STATSDT), INTENT(IN) :: stats
-    CHARACTER(len=*), INTENT(IN) :: key
-    REAL(sp), DIMENSION(:, :, :), INTENT(INOUT) :: vle
-    INTEGER :: i
-    INTRINSIC SIZE
-    INTRINSIC TRIM
-! Linear search on fluxes_keys
-    DO i=1,SIZE(stats%fluxes_keys)
-      IF (TRIM(stats%fluxes_keys(i)) .EQ. key) THEN
-        vle = stats%fluxes_values(:, :, :, i)
-        RETURN
-      END IF
-    END DO
-  END SUBROUTINE GET_STATS
-
   SUBROUTINE SET_RR_PARAMETERS(rr_parameters, key, vle)
     IMPLICIT NONE
 ! Should be unreachable

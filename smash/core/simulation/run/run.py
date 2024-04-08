@@ -4,7 +4,8 @@ from copy import deepcopy
 from typing import TYPE_CHECKING
 
 from smash._constant import (
-    INTERNAL_FLUXES
+    INTERNAL_FLUXES,
+    STRUCTURE_RR_STATES,
 )
 
 import numpy as np
@@ -163,8 +164,9 @@ def _forward_run(
         return_options["nmts"],
         return_options["fkeys"],
     )
-    
+
     wrap_returns.stats.fluxes_keys = INTERNAL_FLUXES[model.setup.hydrological_module]
+    wrap_returns.stats.rr_states_keys = STRUCTURE_RR_STATES[model.setup.structure]
     
     # % Map cost_options dict to derived type
     _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)

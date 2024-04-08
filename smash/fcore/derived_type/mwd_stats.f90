@@ -30,7 +30,8 @@ module mwd_stats
 
         real(sp), dimension(:, :, :), allocatable :: internal_fluxes
         character(lchar), dimension(:), allocatable :: fluxes_keys !$F90W char-array
-        real(sp), dimension(:, :, :, :), allocatable :: fluxes_values 
+        real(sp), dimension(:, :, :, :), allocatable :: fluxes_values
+        character(lchar), dimension(:), allocatable :: rr_states_keys !$F90W char-array
         real(sp), dimension(:, :, :, :), allocatable :: rr_states_values ! rr_states_keys in Rr_StatesDT class
         
     end type StatsDT
@@ -52,6 +53,9 @@ contains
         this%fluxes_keys = "..."
 
         allocate (this%fluxes_values(mesh%ng, setup%ntime_step, 5, setup%nfx))
+        
+        allocate (this%rr_states_keys(setup%nrrs))
+        this%rr_states_keys = "..."
         
         allocate (this%rr_states_values(mesh%ng, setup%ntime_step, 5, setup%nrrs))
         
