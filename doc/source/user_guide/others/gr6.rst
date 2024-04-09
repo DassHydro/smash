@@ -38,7 +38,7 @@ Note that :math:`-h` is always negative and :math:`h_e=0` is the maximum.
 
 .. math::
 
-    q_{re}(x, t) = \max \left( 0, h_e(x, t^*)c_e(x) - c_e(x) \ln\left(1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) \right)
+    q_{re}(x, t) = \max \left( 0, h_e(x, t^*)c_e(x) - \ln\left(1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) c_e(x) \right)
 
 One can find details :ref:`hydrological module gr6 <math_num_documentation.forward_structure.hydrological_module.gr6>`.
 
