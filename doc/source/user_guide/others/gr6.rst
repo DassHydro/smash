@@ -30,15 +30,15 @@ We can express the loss of water between :math:`t^*` and  :math:`t` as :math:`h_
 
     & \exp \left( \frac{-h_e(x, t^*) + h(x,t)}{c_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{c_e(x)} \right) = \frac{t^* - t}{c_e(x)}
     
-    & \exp \left( \frac{h}{c_e(x)} \right) = 1 + \frac{t^* - t}{c_e(x)} \exp \left( \frac{h_e(x, t^*)}{c_e(x)}\right )
+    & \exp \left( \frac{h}{c_e(x)} \right) = 1 + \frac{t^* - t}{c_e(x)} \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right)
 
 
-If we choose the initial condition carefully, we can express the loss of water as :math:`h(x,t) = c_e(x) \ln\left(1 + \exp\left(\frac{h_e(x, t^*)}{c_e(x)}\right)\right)`.
+If we choose the initial condition carefully, we can express the loss of water as :math:`h(x,t) = c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right)`.
 Note that :math:`-h` is always negative and :math:`h_e=0` is the maximum.
 
 .. math::
 
-    q_{re}(x, t) = \max\left(0, h_e(x, t^*)c_e(x) - c_e(x) \ln\left(1 + \exp\left(\frac{h_e(x, t^*)}{c_e(x)}\right)\right)
+    q_{re}(x, t) = \max \left( 0, h_e(x, t^*)c_e(x) - c_e(x) \ln\left(1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) \right)
 
 One can find details :ref:`hydrological module gr6 <math_num_documentation.forward_structure.hydrological_module.gr6>`.
 
