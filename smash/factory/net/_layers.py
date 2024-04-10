@@ -182,7 +182,7 @@ class Dense(Layer):
             grad_weight = accum_grad.T.dot(self.layer_input)
             grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
 
-            # Update the layer weights
+            # Update weights and biases
             self.weight = self._weight_opt.update(self.weight, grad_weight)
             self.bias = self._bias_opt.update(self.bias, grad_bias)
 
