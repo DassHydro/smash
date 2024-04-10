@@ -158,8 +158,10 @@ class Dense(Layer):
 
     # TODO TYPE HINT: replace function by Callable
     def _initialize(self, optimizer: function):  # noqa: F821
-        _set_initialized_wb_to_layer(self, "weight")
-        _set_initialized_wb_to_layer(self, "bias")
+        if self.weight is None:
+            _set_initialized_wb_to_layer(self, "weight")
+        if self.bias is None:
+            _set_initialized_wb_to_layer(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
@@ -180,7 +182,7 @@ class Dense(Layer):
             grad_weight = accum_grad.T.dot(self.layer_input)
             grad_bias = np.sum(accum_grad, axis=0, keepdims=True)
 
-            # Update weights and biases
+            # Update the layer weights
             self.weight = self._weight_opt.update(self.weight, grad_weight)
             self.bias = self._bias_opt.update(self.bias, grad_bias)
 
@@ -217,8 +219,10 @@ class Conv2D(Layer):
         self.bias_initializer = bias_initializer
 
     def _initialize(self, optimizer):
-        _set_initialized_wb_to_layer(self, "weight")
-        _set_initialized_wb_to_layer(self, "bias")
+        if self.weight is None:
+            _set_initialized_wb_to_layer(self, "weight")
+        if self.bias is None:
+            _set_initialized_wb_to_layer(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
