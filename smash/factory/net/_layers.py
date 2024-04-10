@@ -201,9 +201,11 @@ class Dense(Layer):
 
     # TODO TYPE HINT: replace function by Callable
     def _initialize(self, optimizer: function):  # noqa: F821
-        # Initialize weights and biases
-        _wb_initialization(self, "weight")
-        _wb_initialization(self, "bias")
+        # Initialize weights and biases if not initialized
+        if self.weight is None:
+            _wb_initialization(self, "weight")
+        if self.bias is None:
+            _wb_initialization(self, "bias")
 
         # Set optimizer
         self._weight_opt = copy.copy(optimizer)
@@ -226,9 +228,9 @@ class Dense(Layer):
             grad_w = self.layer_input.T.dot(accum_grad)
             grad_w0 = np.sum(accum_grad, axis=0, keepdims=True)
 
-        # Update the layer weights
-        self.weight = self._weight_opt.update(self.weight, grad_w)
-        self.bias = self._bias_opt.update(self.bias, grad_w0)
+            # Update the layer weights
+            self.weight = self._weight_opt.update(self.weight, grad_w)
+            self.bias = self._bias_opt.update(self.bias, grad_w0)
 
         # Return accumulated gradient for next layer
         # Calculated based on the weights used during the forward pass
