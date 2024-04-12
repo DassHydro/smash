@@ -50,7 +50,8 @@ def generate_mesh(
 
     bbox : `list[float, float, float, float]` or None, default None
         Bounding box with the following convention, ``(xmin, xmax, ymin, ymax)``.
-        The bounding box values must respect the ``CRS`` of the flow directions file.
+        The bounding box values must respect the ``CRS`` of the flow direction file. If the given bounding
+        box does not overlap the flow direction, the bounding box is padded to the nearest overlapping cell.
 
         .. note::
             If not given, **x**, **y** and **area** must be filled in.
@@ -188,7 +189,7 @@ def generate_mesh(
 
         .. note::
             The following variables, ``flwdst``, ``gauge_pos``, ``code``, ``area`` and ``area_dln``
-            are only returned if gauge coordinates are entered (i.e. **x**, **y**) and not just a bouding box
+            are only returned if gauge coordinates are entered (i.e. **x**, **y**) and not just a bounding box
             (i.e. **bbox**).
 
     See Also
@@ -206,7 +207,7 @@ def generate_mesh(
     flwdir
 
     Generate a mesh from gauge coordinates. The following coordinates used are those of the ``Cance``
-    catchment
+    dataset
 
     >>> mesh = generate_mesh(
         flwdir_path=flwdir,
@@ -225,7 +226,7 @@ def generate_mesh(
     >>> mesh["xres"], mesh["nac"], mesh["ng"]
     (1000.0, 383, 3)
 
-    Generate a mesh from a bounding box ``(xmin, xmax, ymin, ymax)``. The following bouding box used
+    Generate a mesh from a bounding box ``(xmin, xmax, ymin, ymax)``. The following bounding box used
     correspond to the France boundaries
 
     >>> mesh = generate_mesh(

@@ -83,6 +83,10 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: gdal.Dataset, bbox: ListLike
 
         bbox[3] = ymax
 
+    # % Pad the bounding box so that the origins overlap
+    bbox[0:2] = xmin + np.rint((bbox[0:2] - xmin) / xres) * xres
+    bbox[2:4] = ymax - np.rint((ymax - bbox[2:4]) / yres) * yres
+
     return bbox
 
 
@@ -114,7 +118,7 @@ def _standardize_generate_mesh_x_y_area(
     if (x.size != y.size) or (y.size != area.size):
         raise ValueError(f"Inconsistent sizes between x ({x.size}), y ({y.size}) and area ({area.size})")
 
-    xmin, xmax, xres, ymin, ymax, yres = _get_transform(flwdir_dataset)
+    xmin, xmax, _, ymin, ymax, _ = _get_transform(flwdir_dataset)
 
     if np.any((x < xmin) | (x > xmax)):
         raise ValueError(f"x {x} value(s) out of flow directions bounds {xmin, xmax}")

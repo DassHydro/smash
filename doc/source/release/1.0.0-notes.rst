@@ -145,7 +145,7 @@ Below is the table of equivalence between the two versions:
     * - ``gr-a``
       - No equivalence
     * - ``gr-b``
-      - ``zero`` - ``gr4`` - ``lr``
+      - No equivalence
     * - ``gr-c``
       - No equivalence
     * - ``gr-d``
@@ -160,6 +160,25 @@ direction file over a region to speed up calculations. Now, before delineating a
 file is clipped by taking as its maximum extension the number of cells required to delineate a hypothetically
 rectangular catchment one cell wide. In this way, it is possible to create a mesh of a French catchment using
 worldwide flow direction.
+
+Reading of atmospheric and physiograhic data
+********************************************
+
+The reading of geo-referenced data (i.e. precipitation, snow, descriptor, etc) has been improved to manage:
+
+- ``Resolution missmatch``
+    Nearest-Neighbour resample algorithm is used to match the resolution of the data and the resolution of the
+    mesh.
+
+- ``Overlap missmatch``
+    The reading window is correctly shifted to overlap the data and the mesh on the nearest overlapping cell.
+
+- ``Out Of Bound``
+    In the previous version, when the mesh extent was larger than the data extent a not a very informative
+    error was returned. It is now possible to read data whose extent partially include the mesh extent. The
+    corresponding out of bound extent will be filled in with no data.
+
+A warning is returned if one of the 3 cases below is encountered when reading the data.
 
 Mean atmospheric data
 *********************
@@ -334,7 +353,10 @@ The precipitation partitioning can be selected using the ``prcp_partitioning`` s
 New hydrological modules
 ************************
 
-3 new hydrological modules have been introduced:
+4 new hydrological modules have been introduced:
+
+- ``gr4``
+    This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
 
 - ``gr5``
     This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
