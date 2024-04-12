@@ -47,8 +47,7 @@ Potential evapotranspiration
 
 The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` 
 will recursively search in the ``pet_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``. The spatial resolution and the projection 
-between the potential evapotranspiration files and the flow direction file must be **identical**.
+An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``.
 
 .. note::
     ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
@@ -67,8 +66,7 @@ Snow
 
 The snow files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
 search in the ``snow_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``. The spatial resolution and the projection 
-between the snow files and the flow direction file must be **identical**.
+An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``.
 
 .. note::
     ``%Y%m%d%H%M`` is a unique key, the ``snow_directory`` (and all subdirectories) can not contains files with similar dates.
@@ -78,8 +76,7 @@ Temperature
 
 The temperature files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
 search in the ``temp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``. The spatial resolution and the projection 
-between the temperature files and the flow direction file must be **identical**.
+An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``.
 
 .. note::
     ``%Y%m%d%H%M`` is a unique key, the ``temp_directory`` (and all subdirectories) can not contains files with similar dates.
@@ -89,8 +86,7 @@ Descriptor
 
 The catchment descriptors files must be stored in ``tif`` format. For each descriptor name filled in the setup argument ``descriptor_name``,
 `smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``descriptor_name.tif``.
-An example of file name in tif format for the slope descriptor: ``slope.tif``. The spatial resolution and the projection 
-between the decriptor files and the flow direction file must be **identical**.
+An example of file name in tif format for the slope descriptor: ``slope.tif``.
 
 .. note::
     ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
