@@ -133,12 +133,13 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt, returns)
+    subroutine gr4_timestep(setup, mesh, t, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: t
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
@@ -198,6 +199,16 @@ contains
                     returns%stats%internal_fluxes(row, col, 8) = qr
                     returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
+!~                 print *, returns%all_fluxes_flag
+                if (returns%pn_flag) returns%pn(row, col, t) = pn
+                if (returns%en_flag) returns%en(row, col, t) = en
+                if (returns%pr_flag) returns%pr(row, col, t) = pr
+                if (returns%perc_flag) returns%perc(row, col, t) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, t) = l
+                if (returns%prr_flag) returns%prr(row, col, t) = prr
+                if (returns%prd_flag) returns%prd(row, col, t) = prd
+                if (returns%qr_flag) returns%qr(row, col, t) = qr
+                if (returns%qd_flag) returns%qd(row, col, t) = qd
                 !$AD end-exclude
             end do
         end do
@@ -205,12 +216,13 @@ contains
 
     end subroutine gr4_timestep
 
-    subroutine gr5_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt, returns)
+    subroutine gr5_timestep(setup, mesh, t, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: t
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
@@ -270,6 +282,15 @@ contains
                     returns%stats%internal_fluxes(row, col, 8) = qr
                     returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
+                if (returns%pn_flag) returns%pn(row, col, t) = pn
+                if (returns%en_flag) returns%en(row, col, t) = en
+                if (returns%pr_flag) returns%pr(row, col, t) = pr
+                if (returns%perc_flag) returns%perc(row, col, t) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, t) = l
+                if (returns%prr_flag) returns%prr(row, col, t) = prr
+                if (returns%prd_flag) returns%prd(row, col, t) = prd
+                if (returns%qr_flag) returns%qr(row, col, t) = qr
+                if (returns%qd_flag) returns%qd(row, col, t) = qd
                 !$AD end-exclude
             end do
         end do
@@ -277,12 +298,13 @@ contains
 
     end subroutine gr5_timestep
 
-    subroutine grd_timestep(setup, mesh, options, prcp, pet, cp, ct, hp, ht, qt, returns)
+    subroutine grd_timestep(setup, mesh, t, options, prcp, pet, cp, ct, hp, ht, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: t
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
@@ -338,6 +360,13 @@ contains
                     returns%stats%internal_fluxes(row, col, 6) = prr
                     returns%stats%internal_fluxes(row, col, 7) = qr
                 end if
+                if (returns%ei_flag) returns%ei(row, col, t) = ei
+                if (returns%pn_flag) returns%pn(row, col, t) = pn
+                if (returns%en_flag) returns%en(row, col, t) = en
+                if (returns%pr_flag) returns%pr(row, col, t) = pr
+                if (returns%perc_flag) returns%perc(row, col, t) = perc
+                if (returns%prr_flag) returns%prr(row, col, t) = prr
+                if (returns%qr_flag) returns%qr(row, col, t) = qr
                 !$AD end-exclude
             end do
         end do
@@ -345,12 +374,13 @@ contains
 
     end subroutine grd_timestep
 
-    subroutine loieau_timestep(setup, mesh, options, prcp, pet, ca, cc, kb, ha, hc, qt, returns)
+    subroutine loieau_timestep(setup, mesh, t, options, prcp, pet, ca, cc, kb, ha, hc, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: t
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
@@ -411,6 +441,15 @@ contains
                     returns%stats%internal_fluxes(row, col, 8) = qr
                     returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
+                if (returns%ei_flag) returns%ei(row, col, t) = ei
+                if (returns%pn_flag) returns%pn(row, col, t) = pn
+                if (returns%en_flag) returns%en(row, col, t) = en
+                if (returns%pr_flag) returns%pr(row, col, t) = pr
+                if (returns%perc_flag) returns%perc(row, col, t) = perc
+                if (returns%prr_flag) returns%prr(row, col, t) = prr
+                if (returns%prd_flag) returns%prd(row, col, t) = prd
+                if (returns%qr_flag) returns%qr(row, col, t) = qr
+                if (returns%qd_flag) returns%qd(row, col, t) = qd
                 !$AD end-exclude
             
             end do

@@ -523,6 +523,94 @@ RETURN_OPTIONS_BASE_DOC = {
         Whether to return stats : mean, var, min, max, med on internal fluxes.
         """,
     ),
+    "pn": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux pn.
+        """,
+    ),
+    "ei": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux ei.
+        """,
+    ),
+    "en": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux en.
+        """,
+    ),
+    "pr": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux pr.
+        """,
+    ),
+    "perc": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux perc.
+        """,
+    ),
+    "lexc": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux lexc.
+        """,
+    ),
+    "prr": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux prr.
+        """,
+    ),
+    "prd": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux prd.
+        """,
+    ),
+    "qr": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux qr.
+        """,
+    ),
+    "qd": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux qd.
+        """,
+    ),
+    "qb": (
+        """
+        `bool`, default False
+        """,
+        """
+        Whether to return internal flux qb.
+        """,
+    ),
     "iter_cost": (
         """
         `bool`, default False

@@ -3574,7 +3574,7 @@ MODULE MWD_RETURNS_DIFF
 !%only: StatsDT
   USE MWD_STATS
   IMPLICIT NONE
-! internal fluxes
+! stats target on fluxes and states
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
@@ -3608,6 +3608,28 @@ MODULE MWD_RETURNS_DIFF
       LOGICAL :: qt_flag=.false.
       TYPE(STATSDT) :: stats
       LOGICAL :: stats_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: ei
+      LOGICAL :: ei_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: pn
+      LOGICAL :: pn_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: en
+      LOGICAL :: en_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: pr
+      LOGICAL :: pr_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: perc
+      LOGICAL :: perc_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: lexc
+      LOGICAL :: lexc_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: prr
+      LOGICAL :: prr_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: prd
+      LOGICAL :: prd_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qr
+      LOGICAL :: qr_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qd
+      LOGICAL :: qd_flag=.false.
+      REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: qb
+      LOGICAL :: qb_flag=.false.
   END TYPE RETURNSDT
 
 CONTAINS
@@ -3673,6 +3695,110 @@ CONTAINS
         this%stats_flag = .true.
         CALL STATSDT_INITIALISE(this%stats, setup, mesh)
       END SELECT
+      IF (setup%hydrological_module .EQ. 'gr4' .OR. setup%&
+&         hydrological_module .EQ. 'gr5') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('lexc') 
+          this%lexc_flag = .true.
+          ALLOCATE(this%lexc(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('prd') 
+          this%prd_flag = .true.
+          ALLOCATE(this%prd(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qd') 
+          this%qd_flag = .true.
+          ALLOCATE(this%qd(mesh%nrow, mesh%ncol, setup%ntime_step))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'grd') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('ei') 
+          this%ei_flag = .true.
+          ALLOCATE(this%ei(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'loieau') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('ei') 
+          this%ei_flag = .true.
+          ALLOCATE(this%ei(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('pr') 
+          this%pr_flag = .true.
+          ALLOCATE(this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('perc') 
+          this%perc_flag = .true.
+          ALLOCATE(this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('prr') 
+          this%prr_flag = .true.
+          ALLOCATE(this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('prd') 
+          this%prd_flag = .true.
+          ALLOCATE(this%prd(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qd') 
+          this%qd_flag = .true.
+          ALLOCATE(this%qd(mesh%nrow, mesh%ncol, setup%ntime_step))
+        END SELECT
+      END IF
+      IF (setup%hydrological_module .EQ. 'vic3l') THEN
+        SELECT CASE  (wkeys(i)) 
+        CASE ('pn') 
+          this%pn_flag = .true.
+          ALLOCATE(this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('en') 
+          this%en_flag = .true.
+          ALLOCATE(this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qr') 
+          this%qr_flag = .true.
+          ALLOCATE(this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
+        CASE ('qb') 
+          this%qb_flag = .true.
+          ALLOCATE(this%qb(mesh%nrow, mesh%ncol, setup%ntime_step))
+        END SELECT
+      END IF
     END DO
   END SUBROUTINE RETURNSDT_INITIALISE
 
@@ -12334,12 +12460,13 @@ CONTAINS
 !   variations   of useful results: qt hi hp ht
 !   with respect to varying inputs: kexc qt prcp hi hp ht ci cp
 !                ct
-  SUBROUTINE GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
-&   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht, &
+  SUBROUTINE GR4_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&   ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d, hp, hp_d, ht, &
 &   ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12417,12 +12544,13 @@ CONTAINS
 !   gradient     of useful results: kexc qt hi hp ht ci cp ct
 !   with respect to varying inputs: kexc qt prcp hi hp ht ci cp
 !                ct
-  SUBROUTINE GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
-&   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht, &
+  SUBROUTINE GR4_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
+&   ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, hi_b, hp, hp_b, ht, &
 &   ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12558,11 +12686,12 @@ CONTAINS
 !$OMP END PARALLEL
   END SUBROUTINE GR4_TIMESTEP_B
 
-  SUBROUTINE GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&   kexc, hi, hp, ht, qt, returns)
+  SUBROUTINE GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&   , kexc, hi, hp, ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12615,12 +12744,13 @@ CONTAINS
 !   variations   of useful results: qt hi hp ht
 !   with respect to varying inputs: aexc kexc qt prcp hi hp ht
 !                ci cp ct
-  SUBROUTINE GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
-&   , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, hi_d, hp&
-&   , hp_d, ht, ht_d, qt, qt_d, returns)
+  SUBROUTINE GR5_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&   ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, aexc_d, hi, hi_d, &
+&   hp, hp_d, ht, ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12700,12 +12830,13 @@ CONTAINS
 !                ct
 !   with respect to varying inputs: aexc kexc qt prcp hi hp ht
 !                ci cp ct
-  SUBROUTINE GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, ci&
-&   , ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, hi, hi_b, hp&
-&   , hp_b, ht, ht_b, qt, qt_b, returns)
+  SUBROUTINE GR5_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
+&   ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc, aexc_b, hi, hi_b, &
+&   hp, hp_b, ht, ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12844,11 +12975,12 @@ CONTAINS
 !$OMP END PARALLEL
   END SUBROUTINE GR5_TIMESTEP_B
 
-  SUBROUTINE GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&   kexc, aexc, hi, hp, ht, qt, returns)
+  SUBROUTINE GR5_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&   , kexc, aexc, hi, hp, ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12901,11 +13033,12 @@ CONTAINS
 !  Differentiation of grd_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: qt hp ht
 !   with respect to varying inputs: qt prcp hp ht cp ct
-  SUBROUTINE GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
-&   , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt, qt_d, returns)
+  SUBROUTINE GRD_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&   cp, cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -12978,11 +13111,12 @@ CONTAINS
 !  Differentiation of grd_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: qt hp ht cp ct
 !   with respect to varying inputs: qt prcp hp ht cp ct
-  SUBROUTINE GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
-&   , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b, returns)
+  SUBROUTINE GRD_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
+&   cp, cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -13116,11 +13250,12 @@ CONTAINS
 !$OMP END PARALLEL
   END SUBROUTINE GRD_TIMESTEP_B
 
-  SUBROUTINE GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&   ht, qt, returns)
+  SUBROUTINE GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
+&   , ht, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -13172,11 +13307,13 @@ CONTAINS
 !  Differentiation of loieau_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !   variations   of useful results: qt ha hc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
-&   ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d, returns)
+  SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, &
+&   pet, ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d, &
+&   returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -13260,11 +13397,13 @@ CONTAINS
 !  Differentiation of loieau_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
 !   gradient     of useful results: kb qt ha hc ca cc
 !   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
-&   ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b, returns)
+  SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, &
+&   pet, ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b, &
+&   returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -13429,11 +13568,12 @@ CONTAINS
 !$OMP END PARALLEL
   END SUBROUTINE LOIEAU_TIMESTEP_B
 
-  SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&   , ha, hc, qt, returns)
+  SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
+&   , kb, ha, hc, qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -16100,13 +16240,14 @@ CONTAINS
 !   variations   of useful results: hbsl qt hcl husl hmsl
 !   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
 !                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
-&   , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, &
+  SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet&
+&   , b, b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, &
 &   pbc_d, dsm, dsm_d, ds, ds_d, ws, ws_d, hcl, hcl_d, husl, husl_d, &
 &   hmsl, hmsl_d, hbsl, hbsl_d, qt, qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -16183,13 +16324,14 @@ CONTAINS
 !                ks cbsl pbc husl dsm hmsl b
 !   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
 !                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, b&
-&   , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, &
+  SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
+&   , b, b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, &
 &   pbc_b, dsm, dsm_b, ds, ds_b, ws, ws_b, hcl, hcl_b, husl, husl_b, &
 &   hmsl, hmsl_b, hbsl, hbsl_b, qt, qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -16326,12 +16468,13 @@ CONTAINS
 !$OMP END PARALLEL
   END SUBROUTINE VIC3L_TIMESTEP_B
 
-  SUBROUTINE VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
-&   cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, returns&
-& )
+  SUBROUTINE VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
+&   , cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, &
+&   returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
@@ -16919,17 +17062,17 @@ CONTAINS
       SELECT CASE  (setup%hydrological_module) 
       CASE ('gr4') 
 ! 'gr4' module
-        CALL GR4_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
-&                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, hi_d&
-&                     , hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :, zq)&
-&                     , returns)
+        CALL GR4_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&                     ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, &
+&                     hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :&
+&                     , zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('gr5') 
 ! 'gr5' module
-        CALL GR5_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, ci&
-&                     , ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
+        CALL GR5_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&                     ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
 &                     aexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
 &                     , qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
@@ -16937,26 +17080,26 @@ CONTAINS
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('grd') 
 ! 'grd' module
-        CALL GRD_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, cp&
-&                     , cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
-&                     , qt_d(:, :, zq), returns)
+        CALL GRD_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
+&                     cp, cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt(:, :, &
+&                     zq), qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
-        CALL LOIEAU_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, &
-&                        ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, &
-&                        hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
+        CALL LOIEAU_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, &
+&                        pet, ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc&
+&                        , hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
 ! 'vic3l' module
-        CALL VIC3L_TIMESTEP_D(setup, mesh, options, prcp, prcp_d, pet, b&
-&                       , b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d&
-&                       , ks, ks_d, pbc, pbc_d, ds, ds_d, dsm, dsm_d, ws&
-&                       , ws_d, hcl, hcl_d, husl, husl_d, hmsl, hmsl_d, &
-&                       hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :, zq), &
-&                       returns)
+        CALL VIC3L_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet&
+&                       , b, b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, &
+&                       cbsl_d, ks, ks_d, pbc, pbc_d, ds, ds_d, dsm, &
+&                       dsm_d, ws, ws_d, hcl, hcl_d, husl, husl_d, hmsl&
+&                       , hmsl_d, hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :&
+&                       , zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
@@ -17357,8 +17500,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, hi, hp, ht, qt(:, :, zq), returns)
+        CALL GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&                   , kexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(1)
       CASE ('gr5') 
 ! 'gr5' module
@@ -17386,8 +17529,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
+        CALL GR5_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&                   , kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(2)
       CASE ('grd') 
 ! 'grd' module
@@ -17409,8 +17552,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&                   ht, qt(:, :, zq), returns)
+        CALL GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
+&                   , ht, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(3)
       CASE ('loieau') 
 ! 'loieau' module
@@ -17432,8 +17575,8 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&                      , ha, hc, qt(:, :, zq), returns)
+        CALL LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
+&                      , kb, ha, hc, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(4)
       CASE ('vic3l') 
 ! 'vic3l' module
@@ -17467,9 +17610,9 @@ CONTAINS
         ELSE
           CALL PUSHCONTROL1B(0)
         END IF
-        CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
-&                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
-&                     , hbsl, qt(:, :, zq), returns)
+        CALL VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
+&                     , cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
+&                     hmsl, hbsl, qt(:, :, zq), returns)
         CALL PUSHCONTROL3B(5)
       CASE DEFAULT
         CALL PUSHCONTROL3B(0)
@@ -17562,10 +17705,10 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
 &                                         )*SIZE(qt, 2))
-          CALL GR4_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
-&                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi, &
-&                       hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:, &
-&                       :, zq), returns)
+          CALL GR4_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
+&                       , ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi&
+&                       , hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:&
+&                       , :, zq), returns)
         ELSE
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi&
@@ -17579,10 +17722,10 @@ CONTAINS
           CALL POPCONTROL1B(branch)
           IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
 &                                         )*SIZE(qt, 2))
-          CALL GR5_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
-&                       ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, aexc&
-&                       , aexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt(:, :&
-&                       , zq), qt_b(:, :, zq), returns)
+          CALL GR5_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
+&                       , ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, &
+&                       aexc, aexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt(:&
+&                       , :, zq), qt_b(:, :, zq), returns)
         END IF
       ELSE IF (branch .EQ. 3) THEN
         CALL POPCONTROL1B(branch)
@@ -17594,9 +17737,9 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL GRD_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, cp&
-&                     , cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt(:, :, zq)&
-&                     , qt_b(:, :, zq), returns)
+        CALL GRD_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
+&                     cp, cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt(:, :, &
+&                     zq), qt_b(:, :, zq), returns)
       ELSE IF (branch .EQ. 4) THEN
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(ha, SIZE(ha, 1)*SIZE(ha, 2&
@@ -17607,9 +17750,9 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL LOIEAU_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, &
-&                        ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, &
-&                        hc_b, qt(:, :, zq), qt_b(:, :, zq), returns)
+        CALL LOIEAU_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, &
+&                        pet, ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc&
+&                        , hc_b, qt(:, :, zq), qt_b(:, :, zq), returns)
       ELSE
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(hcl, SIZE(hcl, 1)*SIZE(hcl&
@@ -17626,12 +17769,12 @@ CONTAINS
         CALL POPCONTROL1B(branch)
         IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
 &                                       SIZE(qt, 2))
-        CALL VIC3L_TIMESTEP_B(setup, mesh, options, prcp, prcp_b, pet, b&
-&                       , b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b&
-&                       , ks, ks_b, pbc, pbc_b, ds, ds_b, dsm, dsm_b, ws&
-&                       , ws_b, hcl, hcl_b, husl, husl_b, hmsl, hmsl_b, &
-&                       hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :, zq), &
-&                       returns)
+        CALL VIC3L_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
+&                       , b, b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, &
+&                       cbsl_b, ks, ks_b, pbc, pbc_b, ds, ds_b, dsm, &
+&                       dsm_b, ws, ws_b, hcl, hcl_b, husl, husl_b, hmsl&
+&                       , hmsl_b, hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :&
+&                       , zq), returns)
       END IF
       CALL POPCONTROL1B(branch)
       IF (branch .NE. 0) THEN
@@ -18098,35 +18241,35 @@ CONTAINS
       SELECT CASE  (setup%hydrological_module) 
       CASE ('gr4') 
 ! 'gr4' module
-        CALL GR4_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, hi, hp, ht, qt(:, :, zq), returns)
+        CALL GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&                   , kexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('gr5') 
 ! 'gr5' module
-        CALL GR5_TIMESTEP(setup, mesh, options, prcp, pet, ci, cp, ct, &
-&                   kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
+        CALL GR5_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
+&                   , kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('grd') 
 ! 'grd' module
-        CALL GRD_TIMESTEP(setup, mesh, options, prcp, pet, cp, ct, hp, &
-&                   ht, qt(:, :, zq), returns)
+        CALL GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
+&                   , ht, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
         CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
       CASE ('loieau') 
 ! 'loieau' module
-        CALL LOIEAU_TIMESTEP(setup, mesh, options, prcp, pet, ca, cc, kb&
-&                      , ha, hc, qt(:, :, zq), returns)
+        CALL LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
+&                      , kb, ha, hc, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
         CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
       CASE ('vic3l') 
 ! 'vic3l' module
-        CALL VIC3L_TIMESTEP(setup, mesh, options, prcp, pet, b, cusl, &
-&                     cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl&
-&                     , hbsl, qt(:, :, zq), returns)
+        CALL VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
+&                     , cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
+&                     hmsl, hbsl, qt(:, :, zq), returns)
         CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
         CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
         CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)

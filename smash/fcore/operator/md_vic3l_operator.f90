@@ -178,13 +178,14 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_timestep(setup, mesh, options, prcp, pet, b, cusl, & 
+    subroutine vic3l_timestep(setup, mesh, t, options, prcp, pet, b, cusl, & 
     & cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
+        integer, intent(in) :: t
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
@@ -236,7 +237,11 @@ contains
                     returns%stats%internal_fluxes(row, col, 2) = en
                     returns%stats%internal_fluxes(row, col, 3) = qr
                     returns%stats%internal_fluxes(row, col, 4) = qb
-                end if 
+                end if
+                if (returns%pn_flag) returns%pn(row, col, t) = pn
+                if (returns%en_flag) returns%en(row, col, t) = en
+                if (returns%qr_flag) returns%qr(row, col, t) = qr
+                if (returns%qb_flag) returns%qb(row, col, t) = qb
                 !$AD end-exclude
             end do
         end do
