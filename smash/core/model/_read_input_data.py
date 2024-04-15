@@ -61,8 +61,6 @@ def _find_index_files_containing_date(
     return ind
 
 
-# FIXME UnboundLocalError: cannot access local variable 'ind' where it is not associated with a value. It
-# happens when there is no files associated to the date range is access method is defined.
 def _get_atmos_files(
     dir: str,
     fmt: str,
@@ -90,35 +88,125 @@ def _get_atmos_files(
             re_match = re.search(regex_pattern, f)
             fdate = pd.Timestamp(re_match.group())
             if fdate >= date_range[0]:
-                ind = i
-                break
+                return files[i:]
 
-    return files[ind:]
+    # % Return an empty list in case we did not return ealier. It means that we do not have files
+    # % that match the time period. It will return a missing warning in the corresponding read atmos function.
+    return []
 
 
-def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> np.ndarray:
+def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> tuple[np.ndarray, dict[str, int]]:
     gdal.UseExceptions()
+
+    warning = {"res": 0, "overlap": 0, "outofbound": 0}
+
+    # % Get raster information
     ds = gdal.Open(path)
-
+    band = ds.GetRasterBand(1)
     transform = ds.GetGeoTransform()
-
     xmin = transform[0]
     ymax = transform[3]
     xres = transform[1]
     yres = -transform[5]
 
-    col_off = (mesh.xmin - xmin) / xres
-    row_off = (ymax - mesh.ymax) / yres
+    # % Manage absolute tolerance wrt to xres or yres value
+    atol = 1e-2
+    xatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(xres))))
+    yatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(yres))))
 
-    band = ds.GetRasterBand(1)
+    # % Resolution missmatch
+    if not np.isclose(mesh.xres, xres, atol=xatol) or not np.isclose(mesh.yres, yres, atol=yatol):
+        warning["res"] = 1
 
+    # % Overlap missmatch
+    dxmin = mesh.xmin - xmin
+    dymax = ymax - mesh.ymax
+    xol_match = np.abs(dxmin / xres - np.round(dxmin / xres))
+    yol_match = np.abs(dymax / yres - np.round(dymax / yres))
+    if not np.isclose(xol_match, 0, atol=xatol) or not np.isclose(yol_match, 0, atol=yatol):
+        warning["overlap"] = 1
+
+    # % Allocate buffer
+    arr = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32)
+    arr.fill(np.float32(-99))
+
+    # % Pad offset to the nearest integer
+    xoff = np.rint((mesh.xmin - xmin) / xres)
+    yoff = np.rint((ymax - mesh.ymax) / yres)
+
+    # % Resolution ratio
+    xres_ratio = mesh.xres / xres
+    yres_ratio = mesh.yres / yres
+
+    # Reading window
+    win_xsize = np.rint(mesh.ncol * xres_ratio)
+    win_ysize = np.rint(mesh.nrow * yres_ratio)
+
+    # % Totally out of bound
+    # % Return the buffer with no data
+    if xoff >= band.XSize or yoff >= band.YSize or xoff + win_xsize <= 0 or yoff + win_ysize <= 0:
+        warning["outofbound"] = 2
+        return arr, warning
+
+    # % Partially out of bound
+    if xoff < 0 or yoff < 0 or xoff + win_xsize > band.XSize or yoff + win_ysize > band.YSize:
+        warning["outofbound"] = 1
+
+    # % Readjust offset
+    pxoff = max(0, xoff)
+    pyoff = max(0, yoff)
+
+    # % Readjust reading window
+    pwin_xsize = min(win_xsize + min(0, xoff), band.XSize - pxoff)
+    pwin_ysize = min(win_ysize + min(0, yoff), band.YSize - pyoff)
+
+    # % Buffer slices
+    xs = pxoff - xoff
+    ys = pyoff - yoff
+    xe = xs + pwin_xsize
+    ye = ys + pwin_ysize
+    arr_xslice = slice(int(xs * 1 / xres_ratio), int(xe * 1 / xres_ratio))
+    arr_yslice = slice(int(ys * 1 / yres_ratio), int(ye * 1 / yres_ratio))
+
+    # % Reading and writting into buffer
+    band.ReadAsArray(pxoff, pyoff, pwin_xsize, pwin_ysize, buf_obj=arr[arr_yslice, arr_xslice])
+
+    # % Manage NoData
     nodata = band.GetNoDataValue()
+    if nodata is not None:
+        arr = np.where(arr == nodata, -99.0, arr)
 
-    arr = band.ReadAsArray(col_off, row_off, mesh.ncol, mesh.nrow)
+    return arr, warning
 
-    arr = np.where(arr == nodata, -99.0, arr)
 
-    return arr
+def _get_reading_warning_message(reading_warning: dict[str, int | list[str]]) -> str:
+    msg = []
+
+    if reading_warning["miss"]:
+        msg.append(
+            f"Missing warning: missing {len(reading_warning['miss'])} file(s): " f"{reading_warning['miss']}"
+        )
+
+    if reading_warning["res"]:
+        msg.append(
+            "Resolution warning: resolution missmatch between mesh and at least one raster file. Nearest "
+            "neighbour resampling algorithm has been used to match mesh resolution"
+        )
+
+    if reading_warning["overlap"]:
+        msg.append(
+            "Overlap warning: overlap missmatch between mesh and at least one raster file. Cropping domain "
+            "has been updated to the nearest overlapping cell"
+        )
+
+    if reading_warning["outofbound"]:
+        kind = "partially" if reading_warning["outofbound"] == 1 else "totally"
+        msg.append(
+            f"Out of bound warning: mesh is {kind} out of bound for at least one raster file. Out of bound "
+            f"domain has been filled in with no data"
+        )
+
+    return "\n".join(msg)
 
 
 def _read_qobs(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -174,7 +262,8 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
-    miss = []
+
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.prcp_format == "tif":
         files = _get_atmos_files(setup.prcp_directory, setup.prcp_format, setup.prcp_access, date_range)
@@ -183,7 +272,7 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
-                miss.append(date.strftime("%Y-%m-%d %H:%M"))
+                reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     matrix.fill(np.float32(-99))
@@ -198,7 +287,9 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     input_data.atmos_data.prcp[..., i] = np.float32(-99)
 
             else:
-                matrix = _read_windowed_raster(files[ind], mesh) * setup.prcp_conversion_factor
+                matrix, warning = _read_windowed_raster(files[ind], mesh)
+                matrix *= setup.prcp_conversion_factor
+                reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
@@ -217,8 +308,10 @@ def _read_prcp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     elif setup.prcp_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
 
-    if miss:
-        warnings.warn(f"Missing {len(miss)} precipitation file(s) for date(s): {miss}", stacklevel=2)
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to precipitation reading.\n{msg}", stacklevel=2)
 
 
 def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -227,7 +320,8 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
-    miss = []
+
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.pet_format == "tif":
         files = _get_atmos_files(
@@ -258,13 +352,13 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     ind = _find_index_files_containing_date(files, day, setup.dt, setup.daily_interannual_pet)
 
                     if ind == -1:
-                        miss.append(day.strftime("%m-%d"))
+                        reading_warning["miss"].append(day.strftime("%m-%d"))
                         missing_day = np.append(missing_day, day.day_of_year)
 
                     else:
-                        matrix_dip[..., i] = (
-                            _read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
-                        )
+                        matrix_dip[..., i], warning = _read_windowed_raster(files[ind], mesh)
+                        matrix_dip[..., i] *= setup.pet_conversion_factor
+                        reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
                         files = files[ind + 1 :]
 
@@ -302,7 +396,7 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                 ind = _find_index_files_containing_date(files, date, setup.dt, setup.daily_interannual_pet)
 
                 if ind == -1:
-                    miss.append(date.strftime("%Y-%m-%d %H:%M"))
+                    reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
                     if setup.sparse_storage:
                         matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                         matrix.fill(np.float32(-99))
@@ -317,7 +411,9 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                         input_data.atmos_data.pet[..., i] = np.float32(-99)
 
                 else:
-                    matrix = _read_windowed_raster(files[ind], mesh) * setup.pet_conversion_factor
+                    matrix, warning = _read_windowed_raster(files[ind], mesh)
+                    matrix *= setup.pet_conversion_factor
+                    reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
                     if setup.sparse_storage:
                         wrap_matrix_to_sparse_matrix(
@@ -336,9 +432,10 @@ def _read_pet(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     elif setup.pet_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
 
-    if miss:
-        pet_kind = "daily interannual" if setup.daily_interannual_pet else ""
-        warnings.warn(f"Missing {len(miss)} {pet_kind} pet file(s) for date(s): {miss}", stacklevel=2)
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to potential evapotranspiration reading.\n{msg}", stacklevel=2)
 
 
 def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -347,7 +444,8 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
-    miss = []
+
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.snow_format == "tif":
         files = _get_atmos_files(setup.snow_directory, setup.snow_format, setup.snow_access, date_range)
@@ -356,7 +454,7 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
-                miss.append(date.strftime("%Y-%m-%d %H:%M"))
+                reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     matrix.fill(np.float32(-99))
@@ -371,7 +469,9 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     input_data.atmos_data.snow[..., i] = np.float32(-99)
 
             else:
-                matrix = _read_windowed_raster(files[ind], mesh) * setup.snow_conversion_factor
+                matrix, warning = _read_windowed_raster(files[ind], mesh)
+                matrix *= setup.snow_conversion_factor
+                reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
@@ -390,8 +490,10 @@ def _read_snow(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     elif setup.snow_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
 
-    if miss:
-        warnings.warn(f"Missing {len(miss)} snow file(s) for date(s): {miss}", stacklevel=2)
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to snow reading.\n{msg}", stacklevel=2)
 
 
 def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
@@ -400,7 +502,8 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         end=setup.end_time,
         freq=f"{int(setup.dt)}s",
     )[1:]
-    miss = []
+
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
 
     if setup.temp_format == "tif":
         files = _get_atmos_files(setup.temp_directory, setup.temp_format, setup.temp_access, date_range)
@@ -409,7 +512,7 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             ind = _find_index_files_containing_date(files, date, setup.dt)
 
             if ind == -1:
-                miss.append(date.strftime("%Y-%m-%d %H:%M"))
+                reading_warning["miss"].append(date.strftime("%Y-%m-%d %H:%M"))
                 if setup.sparse_storage:
                     matrix = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32, order="F")
                     # We can assume that -99 is too cold
@@ -425,7 +528,8 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
                     input_data.atmos_data.temp[..., i] = np.float32(-99)
 
             else:
-                matrix = _read_windowed_raster(files[ind], mesh)
+                matrix, warning = _read_windowed_raster(files[ind], mesh)
+                reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
 
                 if setup.sparse_storage:
                     wrap_matrix_to_sparse_matrix(
@@ -444,12 +548,14 @@ def _read_temp(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     elif setup.temp_format == "nc":
         raise NotImplementedError("NetCDF format not implemented yet")
 
-    if miss:
-        warnings.warn(f"Missing {len(miss)} temperature file(s) for date(s): {miss}", stacklevel=2)
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to temperature reading.\n{msg}", stacklevel=2)
 
 
 def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
-    miss = []
+    reading_warning = {"miss": [], "res": 0, "overlap": 0, "outofbound": 0}
     for i, name in enumerate(setup.descriptor_name):
         path = glob.glob(
             f"{setup.descriptor_directory}/**/{name}.tif*",
@@ -457,10 +563,11 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
         )
 
         if len(path) == 0:
-            miss.append(name)
+            reading_warning["miss"].append(name)
 
         else:
-            desc = _read_windowed_raster(path[0], mesh)
+            desc, warning = _read_windowed_raster(path[0], mesh)
+            reading_warning.update({k: v for k, v in warning.items() if not reading_warning[k]})
             mask = desc != -99.0
 
             # % Check if descriptor contains only no data
@@ -483,5 +590,7 @@ def _read_descriptor(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
             input_data.physio_data.l_descriptor[i] = low
             input_data.physio_data.u_descriptor[i] = upp
 
-    if miss:
-        warnings.warn(f"Missing {len(miss)} descriptor file(s): {miss}", stacklevel=2)
+    msg = _get_reading_warning_message(reading_warning)
+
+    if msg:
+        warnings.warn(f"Warning(s) linked to physiographic descriptor reading.\n{msg}", stacklevel=2)
