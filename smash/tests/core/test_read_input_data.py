@@ -54,7 +54,7 @@ def test_missing_read_input_data():
         model = smash.Model(setup, mesh)
 
     # % Check no data for missing files
-        assert np.all(model.atmos_data.prcp < 0), "missing_read_input_data.prcp_totally_no_data"
+    assert np.all(model.atmos_data.prcp < 0), "missing_read_input_data.prcp_totally_no_data"
 
 def test_resolution_read_input_data():
     setup, _ = smash.factory.load_dataset("france")
