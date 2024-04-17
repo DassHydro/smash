@@ -52,8 +52,8 @@ contains
 
             ind = day_index(t)
 
-            daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + mat_prcp
-            daily_pet(:, :, ind) = daily_pet(:, :, ind) + mat_pet
+            where (mat_prcp .ge. 0._sp) daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + mat_prcp
+            where (mat_pet .ge. 0._sp) daily_pet(:, :, ind) = daily_pet(:, :, ind) + mat_pet
 
         end do
 
