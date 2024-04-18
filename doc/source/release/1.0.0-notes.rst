@@ -745,3 +745,11 @@ Error when computing min and max of physiograhic descriptor
 
 There was an error when computing the min and max of a physiograhic descriptor if there is no data (i.e., 
 sea in the domain). No data from tif file are converted to -99 which leads to a wrong minimal value.
+
+Interception reservoir capacity calculation
+*******************************************
+
+Missing values were not properly taken into account in the calculation of the interception reservoir. Missing
+values in Fortran for precipitation and potential evapotranspiration are stored as -99, resulting in
+erroneous values. This was fixed simply by not incorporating these values into the calculation.
+
