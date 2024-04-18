@@ -185,6 +185,11 @@ To get into more details, this ``setup`` is composed of:
 - ``dt``
     The simulation time step in **second**,
 
+.. note::
+    The convention of `smash` is that ``start_time`` is the date used to initialize the model's states. All 
+    the modeled state-flux variables (i.e. discharge, states, internal fluxes) will be computed over the
+    period ``start_time + 1dt`` and ``end_time``
+
 - ``hydrological_module``
     The hydrological module, to be chosen from [``gr4``, ``gr5``, ``grd``, ``loieau``, ``vic3l``],
 
@@ -389,7 +394,7 @@ An important step after generating the ``mesh`` is to check that the stations ha
 
     (mesh["area"] - mesh["area_dln"]) / mesh["area"] * 100 # Relative error in %
 
-For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstrea gauge to -10% for the most upstream one
+For this ``mesh``, we have a negative relative error on the simulated drainage area that varies from -0.3% for the most downstream gauge to -10% for the most upstream one
 (which can be explained by the fact that small upstream catchments are more sensitive to the relatively coarse ``mesh`` resolution).
 
 .. TODO FC link to automatic meshing
@@ -398,7 +403,7 @@ Save setup and mesh
 *******************
 
 Before constructing the `smash.Model` object, we can save (serialize) the ``setup`` and the ``mesh`` to avoid having to do it every time you want to run a simulation on the same case,
-with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the `mesh` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.
+with the two following functions, `smash.io.save_setup` and `smash.io.save_mesh`. It will save the ``setup`` in `YAML <https://yaml.org/>`__ format and the ``mesh`` in `HDF5 <https://www.hdfgroup.org/solutions/hdf5>`__ format.
 
 .. ipython:: python
 
