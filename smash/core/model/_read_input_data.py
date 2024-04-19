@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import glob
+import os
 import re
 import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
-from osgeo import gdal
+import rasterio
 from tqdm import tqdm
 
 from smash._constant import RATIO_PET_HOURLY
@@ -47,7 +48,7 @@ def _find_index_files_containing_date(
     ind = -1
     regex_pattern = _get_date_regex_pattern(dt, daily_interannual)
     for i, f in enumerate(files):
-        re_match = re.search(regex_pattern, f)
+        re_match = re.search(regex_pattern, os.path.basename(f))
         if daily_interannual:
             fdate = pd.Timestamp(f"{date.year}{re_match.group()}")
         else:
@@ -85,7 +86,7 @@ def _get_atmos_files(
         # % Adjust list by removing files that are ealier than start_time
         regex_pattern = _get_date_regex_pattern(date_range.freq.n, daily_interannual)
         for i, f in enumerate(files):
-            re_match = re.search(regex_pattern, f)
+            re_match = re.search(regex_pattern, os.path.basename(f))
             fdate = pd.Timestamp(re_match.group())
             if fdate >= date_range[0]:
                 return files[i:]
@@ -96,87 +97,88 @@ def _get_atmos_files(
 
 
 def _read_windowed_raster(path: FilePath, mesh: MeshDT) -> tuple[np.ndarray, dict[str, int]]:
-    gdal.UseExceptions()
-
     warning = {"res": 0, "overlap": 0, "outofbound": 0}
 
     # % Get raster information
-    ds = gdal.Open(path)
-    band = ds.GetRasterBand(1)
-    transform = ds.GetGeoTransform()
-    xmin = transform[0]
-    ymax = transform[3]
-    xres = transform[1]
-    yres = -transform[5]
+    with rasterio.open(path) as ds:
+        transform = ds.get_transform()
+        xmin = transform[0]
+        ymax = transform[3]
+        xres = transform[1]
+        yres = -transform[5]
 
-    # % Manage absolute tolerance wrt to xres or yres value
-    atol = 1e-2
-    xatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(xres))))
-    yatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(yres))))
+        # % Manage absolute tolerance wrt to xres or yres value
+        atol = 1e-2
+        xatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(xres))))
+        yatol = atol * 10 ** min(0, np.floor(np.log10(np.abs(yres))))
 
-    # % Resolution missmatch
-    if not np.isclose(mesh.xres, xres, atol=xatol) or not np.isclose(mesh.yres, yres, atol=yatol):
-        warning["res"] = 1
+        # % Resolution missmatch
+        if not np.isclose(mesh.xres, xres, atol=xatol) or not np.isclose(mesh.yres, yres, atol=yatol):
+            warning["res"] = 1
 
-    # % Overlap missmatch
-    dxmin = mesh.xmin - xmin
-    dymax = ymax - mesh.ymax
-    xol_match = np.abs(dxmin / xres - np.round(dxmin / xres))
-    yol_match = np.abs(dymax / yres - np.round(dymax / yres))
-    if not np.isclose(xol_match, 0, atol=xatol) or not np.isclose(yol_match, 0, atol=yatol):
-        warning["overlap"] = 1
+        # % Overlap missmatch
+        dxmin = mesh.xmin - xmin
+        dymax = ymax - mesh.ymax
+        xol_match = np.abs(dxmin / xres - np.round(dxmin / xres))
+        yol_match = np.abs(dymax / yres - np.round(dymax / yres))
+        if not np.isclose(xol_match, 0, atol=xatol) or not np.isclose(yol_match, 0, atol=yatol):
+            warning["overlap"] = 1
 
-    # % Allocate buffer
-    arr = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32)
-    arr.fill(np.float32(-99))
+        # # % Allocate buffer
+        arr = np.zeros(shape=(mesh.nrow, mesh.ncol), dtype=np.float32)
+        arr.fill(np.float32(-99))
 
-    # % Pad offset to the nearest integer
-    xoff = np.rint((mesh.xmin - xmin) / xres)
-    yoff = np.rint((ymax - mesh.ymax) / yres)
+        # % Pad offset to the nearest integer
+        xoff = np.rint((mesh.xmin - xmin) / xres)
+        yoff = np.rint((ymax - mesh.ymax) / yres)
 
-    # % Resolution ratio
-    xres_ratio = mesh.xres / xres
-    yres_ratio = mesh.yres / yres
+        # % Resolution ratio
+        xres_ratio = mesh.xres / xres
+        yres_ratio = mesh.yres / yres
 
-    # Reading window
-    win_xsize = np.rint(mesh.ncol * xres_ratio)
-    win_ysize = np.rint(mesh.nrow * yres_ratio)
+        # Reading window
+        win_xsize = np.rint(mesh.ncol * xres_ratio)
+        win_ysize = np.rint(mesh.nrow * yres_ratio)
 
-    # % Totally out of bound
-    # % Return the buffer with no data
-    if xoff >= band.XSize or yoff >= band.YSize or xoff + win_xsize <= 0 or yoff + win_ysize <= 0:
-        warning["outofbound"] = 2
+        # % Totally out of bound
+        # % Return the buffer with no data
+        if xoff >= ds.width or yoff >= ds.height or xoff + win_xsize <= 0 or yoff + win_ysize <= 0:
+            warning["outofbound"] = 2
+            return arr, warning
+
+        # % Partially out of bound
+        if xoff < 0 or yoff < 0 or xoff + win_xsize > ds.width or yoff + win_ysize > ds.height:
+            warning["outofbound"] = 1
+
+        # % Readjust offset
+        pxoff = max(0, xoff)
+        pyoff = max(0, yoff)
+
+        # % Readjust reading window
+        pwin_xsize = min(win_xsize + min(0, xoff), ds.width - pxoff)
+        pwin_ysize = min(win_ysize + min(0, yoff), ds.height - pyoff)
+
+        # % Buffer slices
+        xs = pxoff - xoff
+        ys = pyoff - yoff
+        xe = xs + pwin_xsize
+        ye = ys + pwin_ysize
+        arr_xslice = slice(int(xs * 1 / xres_ratio), int(xe * 1 / xres_ratio))
+        arr_yslice = slice(int(ys * 1 / yres_ratio), int(ye * 1 / yres_ratio))
+
+        # % Reading and writting into buffer
+        ds.read(
+            1,
+            window=rasterio.windows.Window(pxoff, pyoff, pwin_xsize, pwin_ysize),
+            out=arr[arr_yslice, arr_xslice],
+        )
+
+        # % Manage NoData
+        nodata = ds.nodata
+        if nodata is not None:
+            arr = np.where(arr == nodata, -99.0, arr)
+
         return arr, warning
-
-    # % Partially out of bound
-    if xoff < 0 or yoff < 0 or xoff + win_xsize > band.XSize or yoff + win_ysize > band.YSize:
-        warning["outofbound"] = 1
-
-    # % Readjust offset
-    pxoff = max(0, xoff)
-    pyoff = max(0, yoff)
-
-    # % Readjust reading window
-    pwin_xsize = min(win_xsize + min(0, xoff), band.XSize - pxoff)
-    pwin_ysize = min(win_ysize + min(0, yoff), band.YSize - pyoff)
-
-    # % Buffer slices
-    xs = pxoff - xoff
-    ys = pyoff - yoff
-    xe = xs + pwin_xsize
-    ye = ys + pwin_ysize
-    arr_xslice = slice(int(xs * 1 / xres_ratio), int(xe * 1 / xres_ratio))
-    arr_yslice = slice(int(ys * 1 / yres_ratio), int(ye * 1 / yres_ratio))
-
-    # % Reading and writting into buffer
-    band.ReadAsArray(pxoff, pyoff, pwin_xsize, pwin_ysize, buf_obj=arr[arr_yslice, arr_xslice])
-
-    # % Manage NoData
-    nodata = band.GetNoDataValue()
-    if nodata is not None:
-        arr = np.where(arr == nodata, -99.0, arr)
-
-    return arr, warning
 
 
 def _get_reading_warning_message(reading_warning: dict[str, int | list[str]]) -> str:

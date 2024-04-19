@@ -11,10 +11,9 @@ dependencies:
     - gfortran
 
     # required dependencies
-    - wheel
     - numpy>=1.13
     - f90wrap
-    - gdal
+    - rasterio
     - pandas
     - h5py
     - tqdm

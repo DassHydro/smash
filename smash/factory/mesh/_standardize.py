@@ -6,7 +6,7 @@ import warnings
 from typing import TYPE_CHECKING
 
 import numpy as np
-from osgeo import gdal
+import rasterio
 
 from smash.factory.mesh._tools import _get_transform
 
@@ -28,7 +28,7 @@ def _standardize_generate_mesh_flwdir_path(flwdir_path: FilePath) -> str:
     return flwdir_path
 
 
-def _standardize_generate_mesh_bbox(flwdir_dataset: gdal.Dataset, bbox: ListLike) -> np.ndarray:
+def _standardize_generate_mesh_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: ListLike) -> np.ndarray:
     # % Bounding Box (xmin, xmax, ymin, ymax)
 
     if not isinstance(bbox, (list, tuple, np.ndarray)):
@@ -91,7 +91,7 @@ def _standardize_generate_mesh_bbox(flwdir_dataset: gdal.Dataset, bbox: ListLike
 
 
 def _standardize_generate_mesh_x_y_area(
-    flwdir_dataset: gdal.Dataset,
+    flwdir_dataset: rasterio.DatasetReader,
     x: Numeric | ListLike,
     y: Numeric | ListLike,
     area: Numeric | ListLike,
@@ -183,11 +183,9 @@ def _standardize_generate_mesh_args(
     max_depth: Numeric,
     epsg: AlphaNumeric | None,
 ) -> AnyTuple:
-    gdal.UseExceptions()
-
     flwdir_path = _standardize_generate_mesh_flwdir_path(flwdir_path)
 
-    flwdir_dataset = gdal.Open(flwdir_path)
+    flwdir_dataset = rasterio.open(flwdir_path)
 
     if x is None and bbox is None:
         raise ValueError("bbox argument or (x, y, area) arguments must be defined")

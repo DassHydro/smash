@@ -59,8 +59,11 @@ This release was made possible thanks to the contributions of:
 Compatibilities
 ---------------
 
-- The `wheel <https://wheel.readthedocs.io/en/stable/>`__ package has been added to the list of dependencies
-  to build GDAL.
+- the `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
+  `rasterio <https://rasterio.readthedocs.io/en/stable/>`__. This change has been made purely to improve
+  the distribution of `smash`. Despite the better performance in terms of raster reading time, gdal does
+  not provide a binary wheel directly, unlike rasterio
+  (see `discussion <https://github.com/OSGeo/gdal/issues/3060>`__).
 
 - The `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__ plugin has been added to the list of
   dependencies to perform test coverage.

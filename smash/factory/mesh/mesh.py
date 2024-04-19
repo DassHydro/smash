@@ -9,7 +9,7 @@ from smash.factory.mesh._standardize import _standardize_generate_mesh_args
 from smash.factory.mesh._tools import (
     _get_array,
     _get_catchment_slice_window,
-    _get_srs,
+    _get_crs,
     _get_transform,
     _trim_mask_2d,
     _xy_to_rowcol,
@@ -18,7 +18,7 @@ from smash.factory.mesh._tools import (
 if TYPE_CHECKING:
     from typing import Any
 
-    from osgeo import gdal
+    import rasterio
 
     from smash.util._typing import AlphaNumeric, FilePath, ListLike, Numeric
 
@@ -250,7 +250,7 @@ def generate_mesh(
 
 
 def _generate_mesh_from_xy(
-    flwdir_dataset: gdal.Dataset,
+    flwdir_dataset: rasterio.DatasetReader,
     x: np.ndarray,
     y: np.ndarray,
     area: np.ndarray,
@@ -260,12 +260,15 @@ def _generate_mesh_from_xy(
 ) -> dict:
     (xmin, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
-    srs = _get_srs(flwdir_dataset, epsg)
+    crs = _get_crs(flwdir_dataset, epsg)
 
     flwdir = _get_array(flwdir_dataset)
 
+    # % Can close dataset
+    flwdir_dataset.close()
+
     # % Accepting arrays for dx and dy in case of unstructured meshing
-    if srs.GetAttrValue("UNIT") == "degree":
+    if crs.units_factor[0].lower() == "degree":
         dx, dy = mw_mesh.latlon_dxdy(*flwdir.shape, xres, yres, ymax)
 
     else:
@@ -364,17 +367,20 @@ def _generate_mesh_from_xy(
     return mesh
 
 
-def _generate_mesh_from_bbox(flwdir_dataset: gdal.Dataset, bbox: np.ndarray, epsg: int) -> dict:
+def _generate_mesh_from_bbox(flwdir_dataset: rasterio.DatasetReader, bbox: np.ndarray, epsg: int) -> dict:
     (_, _, xres, _, ymax, yres) = _get_transform(flwdir_dataset)
 
-    srs = _get_srs(flwdir_dataset, epsg)
+    crs = _get_crs(flwdir_dataset, epsg)
 
     flwdir = _get_array(flwdir_dataset, bbox)
+
+    # % Can close dataset
+    flwdir_dataset.close()
 
     flwdir = np.ma.masked_array(flwdir, mask=(flwdir < 1))
 
     # % Accepting arrays for dx and dy in case of unstructured meshing
-    if srs.GetAttrValue("UNIT") == "degree":
+    if crs.units_factor[0].lower() == "degree":
         dx, dy = mw_mesh.latlon_dxdy(*flwdir.shape, xres, yres, ymax)
 
     else:
@@ -417,7 +423,7 @@ def _generate_mesh_from_bbox(flwdir_dataset: gdal.Dataset, bbox: np.ndarray, eps
 
 
 def _generate_mesh(
-    flwdir_dataset: gdal.Dataset,
+    flwdir_dataset: rasterio.DatasetReader,
     bbox: np.ndarray | None,
     x: np.ndarray | None,
     y: np.ndarray | None,
