@@ -311,11 +311,12 @@ def _standardize_simulation_optimize_options_descriptor(
 
 
 def _standardize_simulation_optimize_options_net(
-    model: Model, bounds: dict, net: Net | None, **kwargs
+    model: Model, parameters: np.ndarray, bounds: dict, net: Net | None, **kwargs
 ) -> Net:
+    bounds = {key: bounds[key] for key in parameters}  # reorder bounds by parameters
     bound_values = list(bounds.values())
-    ncv = len(bound_values)
 
+    ncv = len(parameters)
     nd = model.setup.nd
 
     active_mask = np.where(model.mesh.active_cell == 1)
@@ -387,7 +388,7 @@ def _standardize_simulation_optimize_options_net(
 
             diff = np.not_equal(net_bounds, bound_values)
 
-            for i, name in enumerate(bounds.keys()):
+            for i, name in enumerate(parameters):
                 if diff[i].any():
                     warnings.warn(
                         f"net optimize_options: Inconsistent value(s) between the bound in scaling layer and "
