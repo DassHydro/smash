@@ -59,7 +59,7 @@ This release was made possible thanks to the contributions of:
 Compatibilities
 ---------------
 
-- the `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
+- The `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
   `rasterio <https://rasterio.readthedocs.io/en/stable/>`__. This change has been made purely to improve
   the distribution of `smash`. Despite the better performance in terms of raster reading time, gdal does
   not provide a binary wheel directly, unlike rasterio
