@@ -250,6 +250,8 @@ def _standardize_simulation_optimize_options_bounds(
                 f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
             )
 
+    bounds = {key: bounds[key] for key in parameters}
+
     return bounds
 
 
@@ -313,10 +315,10 @@ def _standardize_simulation_optimize_options_descriptor(
 def _standardize_simulation_optimize_options_net(
     model: Model, bounds: dict, net: Net | None, **kwargs
 ) -> Net:
+    nd = model.setup.nd
+
     bound_values = list(bounds.values())
     ncv = len(bound_values)
-
-    nd = model.setup.nd
 
     active_mask = np.where(model.mesh.active_cell == 1)
     ntrain = active_mask[0].shape[0]
