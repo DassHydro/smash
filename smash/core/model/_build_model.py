@@ -4,6 +4,7 @@ from typing import TYPE_CHECKING
 
 import numpy as np
 import pandas as pd
+import rasterio
 
 from f90wrap.runtime import FortranDerivedType
 from smash._constant import (
@@ -84,23 +85,24 @@ def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):
     if setup.read_qobs:
         _read_qobs(setup, mesh, input_data)
 
-    if setup.read_prcp:
-        _read_prcp(setup, mesh, input_data)
+    with rasterio.Env():
+        if setup.read_prcp:
+            _read_prcp(setup, mesh, input_data)
 
-    if setup.read_pet:
-        _read_pet(setup, mesh, input_data)
+        if setup.read_pet:
+            _read_pet(setup, mesh, input_data)
 
-    if setup.read_snow:
-        _read_snow(setup, mesh, input_data)
+        if setup.read_snow:
+            _read_snow(setup, mesh, input_data)
 
-    if setup.read_temp:
-        _read_temp(setup, mesh, input_data)
+        if setup.read_temp:
+            _read_temp(setup, mesh, input_data)
+
+        if setup.read_descriptor:
+            _read_descriptor(setup, mesh, input_data)
 
     if setup.prcp_partitioning:
         wrap_compute_prcp_partitioning(setup, mesh, input_data)  # % Fortran subroutine
-
-    if setup.read_descriptor:
-        _read_descriptor(setup, mesh, input_data)
 
     if setup.compute_mean_atmos:
         print("</> Computing mean atmospheric data")

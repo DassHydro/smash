@@ -33,14 +33,11 @@ jobs:
 
         - name: Install dependencies
           run: |
-            sudo apt-add-repository ppa:ubuntugis/ubuntugis-unstable
             sudo apt-get update
-            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            sudo apt-get install build-essential gfortran
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip
-            pip install wheel numpy
-            pip install gdal==$(gdal-config --version)
             pip install -r requirements-dev.txt
 
         - name: Build
