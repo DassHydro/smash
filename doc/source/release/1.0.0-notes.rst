@@ -59,8 +59,11 @@ This release was made possible thanks to the contributions of:
 Compatibilities
 ---------------
 
-- The `wheel <https://wheel.readthedocs.io/en/stable/>`__ package has been added to the list of dependencies
-  to build GDAL.
+- The `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
+  `rasterio <https://rasterio.readthedocs.io/en/stable/>`__. This change has been made purely to improve
+  the distribution of `smash`. Despite the better performance in terms of raster reading time, gdal does
+  not provide a binary wheel directly, unlike rasterio
+  (see `discussion <https://github.com/OSGeo/gdal/issues/3060>`__).
 
 - The `pytest-cov <https://pytest-cov.readthedocs.io/en/latest/>`__ plugin has been added to the list of
   dependencies to perform test coverage.
@@ -145,7 +148,7 @@ Below is the table of equivalence between the two versions:
     * - ``gr-a``
       - No equivalence
     * - ``gr-b``
-      - ``zero`` - ``gr4`` - ``lr``
+      - No equivalence
     * - ``gr-c``
       - No equivalence
     * - ``gr-d``
@@ -160,6 +163,25 @@ direction file over a region to speed up calculations. Now, before delineating a
 file is clipped by taking as its maximum extension the number of cells required to delineate a hypothetically
 rectangular catchment one cell wide. In this way, it is possible to create a mesh of a French catchment using
 worldwide flow direction.
+
+Reading of atmospheric and physiograhic data
+********************************************
+
+The reading of geo-referenced data (i.e. precipitation, snow, descriptor, etc) has been improved to manage:
+
+- ``Resolution missmatch``
+    Nearest-Neighbour resample algorithm is used to match the resolution of the data and the resolution of the
+    mesh.
+
+- ``Overlap missmatch``
+    The reading window is correctly shifted to overlap the data and the mesh on the nearest overlapping cell.
+
+- ``Out Of Bound``
+    In the previous version, when the mesh extent was larger than the data extent a not a very informative
+    error was returned. It is now possible to read data whose extent partially include the mesh extent. The
+    corresponding out of bound extent will be filled in with no data.
+
+A warning is returned if one of the 3 cases below is encountered when reading the data.
 
 Mean atmospheric data
 *********************
@@ -334,7 +356,10 @@ The precipitation partitioning can be selected using the ``prcp_partitioning`` s
 New hydrological modules
 ************************
 
-3 new hydrological modules have been introduced:
+4 new hydrological modules have been introduced:
+
+- ``gr4``
+    This hydrological module is derived from the GR4 model :cite:p:`perrin2003improvement`.
 
 - ``gr5``
     This hydrological module is derived from the GR5 model :cite:p:`LeMoine_2008`.
@@ -723,3 +748,11 @@ Error when computing min and max of physiograhic descriptor
 
 There was an error when computing the min and max of a physiograhic descriptor if there is no data (i.e., 
 sea in the domain). No data from tif file are converted to -99 which leads to a wrong minimal value.
+
+Interception reservoir capacity calculation
+*******************************************
+
+Missing values were not properly taken into account in the calculation of the interception reservoir. Missing
+values in Fortran for precipitation and potential evapotranspiration are stored as -99, resulting in
+erroneous values. This was fixed simply by not incorporating these values into the calculation.
+

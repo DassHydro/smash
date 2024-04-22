@@ -182,6 +182,11 @@ class Model:
         end_time : `str`, `datetime.date` or `pandas.Timestamp`
             End time date. **end_time** must be later than **start_time**
 
+        .. note::
+            The convention of `smash` is that **start_time** is the date used to initialize the model's
+            states. All the modeled state-flux variables :math:`\\boldsymbol{U}(x,t)` (i.e. discharge, states,
+            internal fluxes) will be computed over the period **start_time + 1dt** and **end_time**
+
         adjust_interception : `bool`, default True
             Whether or not to adjust the maximum capacity of the interception reservoir.
             This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and

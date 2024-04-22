@@ -1,12 +1,7 @@
 from __future__ import annotations
 
-from typing import TYPE_CHECKING
-
 import numpy as np
-from osgeo import osr
-
-if TYPE_CHECKING:
-    from osgeo import gdal
+import rasterio
 
 
 def _xy_to_rowcol(x: float, y: float, xmin: float, ymax: float, xres: float, yres: float) -> tuple:
@@ -69,8 +64,11 @@ def _trim_mask_2d(
         return array
 
 
-def _get_array(flwdir_dataset: gdal.Dataset, bbox: np.ndarray | None = None) -> np.ndarray:
-    if bbox is not None:
+def _get_array(flwdir_dataset: rasterio.DatasetReader, bbox: np.ndarray | None = None) -> np.ndarray:
+    if bbox is None:
+        flwdir = flwdir_dataset.read(1)
+
+    else:
         xmin, _, xres, _, ymax, yres = _get_transform(flwdir_dataset)
 
         col_off = int((bbox[0] - xmin) / xres)
@@ -78,19 +76,16 @@ def _get_array(flwdir_dataset: gdal.Dataset, bbox: np.ndarray | None = None) -> 
         ncol = int((bbox[1] - bbox[0]) / xres)
         nrow = int((bbox[3] - bbox[2]) / yres)
 
-        flwdir = flwdir_dataset.GetRasterBand(1).ReadAsArray(col_off, row_off, ncol, nrow)
-
-    else:
-        flwdir = flwdir_dataset.GetRasterBand(1).ReadAsArray()
+        flwdir = flwdir_dataset.read(1, window=rasterio.windows.Window(col_off, row_off, ncol, nrow))
 
     return flwdir
 
 
-def _get_transform(flwdir_dataset: gdal.Dataset) -> tuple:
-    nrow = flwdir_dataset.RasterYSize
-    ncol = flwdir_dataset.RasterXSize
+def _get_transform(flwdir_dataset: rasterio.DatasetReader) -> tuple:
+    nrow = flwdir_dataset.height
+    ncol = flwdir_dataset.width
 
-    transform = flwdir_dataset.GetGeoTransform()
+    transform = flwdir_dataset.get_transform()
 
     xmin = transform[0]
     xres = transform[1]
@@ -103,21 +98,14 @@ def _get_transform(flwdir_dataset: gdal.Dataset) -> tuple:
     return (xmin, xmax, xres, ymin, ymax, yres)
 
 
-def _get_srs(flwdir_dataset: gdal.Dataset, epsg: int) -> osr.SpatialReference:
-    projection = flwdir_dataset.GetProjection()
-
-    if projection:
-        srs = osr.SpatialReference(wkt=projection)
-
-    else:
+def _get_crs(flwdir_dataset: rasterio.DatasetReader, epsg: int) -> rasterio.CRS:
+    crs = flwdir_dataset.crs
+    if not crs:
         if epsg:
-            srs = osr.SpatialReference()
-            srs.ImportFromEPSG(epsg)
-
+            crs = rasterio.CRS.from_epsg(epsg)
         else:
             raise ValueError(
                 "Flow direction file does not contain spatial reference information. Can be specified with "
                 "the 'epsg' argument"
             )
-
-    return srs
+    return crs
