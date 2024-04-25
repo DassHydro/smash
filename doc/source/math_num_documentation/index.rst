@@ -38,3 +38,4 @@ and estimation algorithms.
     cost_function
     optimization_algorithm
     bayesian_estimation
+    hortonian_production
