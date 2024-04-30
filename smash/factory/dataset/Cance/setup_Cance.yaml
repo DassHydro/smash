@@ -1,0 +1,23 @@
+hydrological_module: gr4
+routing_module: lr
+
+dt: 3_600
+start_time: 2014-09-15 00:00
+end_time: 2014-11-14 00:00
+
+read_qobs: True
+qobs_directory: qobs
+
+read_prcp: True
+prcp_format: tif
+prcp_conversion_factor: 0.1
+prcp_directory: prcp
+
+read_pet: True
+pet_format: tif
+pet_conversion_factor: 1
+daily_interannual_pet: True
+pet_directory: pet
+
+read_descriptor: True
+descriptor_name: ["slope", "dd"]

@@ -8,6 +8,12 @@
    height: 50px;
 }
 
+.corporate-logo img {
+    margin-bottom: 0;
+    padding-right: 40px;
+    height: 50px;
+}
+
 .bd-sidebar-primary {
    max-width: 20%;
 }

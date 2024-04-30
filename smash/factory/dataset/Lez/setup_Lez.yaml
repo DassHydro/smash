@@ -1,0 +1,20 @@
+hydrological_module: gr4
+routing_module: lr
+
+dt: 86_400
+start_time: 2012-08-01
+end_time: 2013-07-31
+
+read_qobs: True
+qobs_directory: qobs
+
+read_prcp: True
+prcp_format: tif
+prcp_directory: prcp
+
+read_pet: True
+pet_format: tif
+pet_directory: pet
+
+read_descriptor: True
+descriptor_name: ["slope", "drainage_density", "karst", "woodland", "urban", "soil_water_storage"]

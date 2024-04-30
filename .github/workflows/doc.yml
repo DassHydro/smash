@@ -1,4 +1,4 @@
-# This workflow will generate the documentation
+# This workflow will build the doc
 name: Documentation
 
 on:
@@ -17,25 +17,33 @@ on:
 
 jobs:
     ubuntu:
-        name: (${{ matrix.os }})
-        runs-on: ${{ matrix.os }}
-        strategy:
-          matrix:
-            os: ["ubuntu-20.04", "ubuntu-22.04"]
+        name: Documentation ubuntu-latest
+        runs-on: ubuntu-latest
         steps:
-        - uses: actions/checkout@v3
-            
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.11'
+
         - name: Install dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            sudo apt-get install build-essential gfortran
+            python -m venv test
+            . test/bin/activate
             python -m pip install --upgrade pip
-            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        
-        - name: Build and Install
+            pip install -r requirements-dev.txt
+
+        - name: Build
           run: |
+            . test/bin/activate
             make
-        
-        - name: Generate Documentation
+
+        - name: Build Documentation
           run: |
+            . test/bin/activate
             make doc

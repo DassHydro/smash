@@ -17,25 +17,36 @@ on:
 
 jobs:
     ubuntu:
-        name: (${{ matrix.os }})
-        runs-on: ${{ matrix.os }}
+        name: Unit tests ubuntu-latest py-${{ matrix.python-version }})
+        runs-on: ubuntu-latest
         strategy:
           matrix:
-            os: ["ubuntu-20.04", "ubuntu-22.04"]
+            python-version: ['3.9', '3.10', '3.11']
         steps:
-        - uses: actions/checkout@v3
-            
+        - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python ${{ matrix.python-version }}
+          uses: actions/setup-python@v5
+          with:
+            python-version: ${{ matrix.python-version }}
+
         - name: Install dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install build-essential make gcc gfortran gdal-bin libgdal-dev
+            sudo apt-get install build-essential gfortran
+            python -m venv test
+            . test/bin/activate
             python -m pip install --upgrade pip
-            if [ -f requirements-dev.txt ]; then pip install -r requirements-dev.txt; fi
-        
-        - name: Build and Install
+            pip install -r requirements-dev.txt
+
+        - name: Build
           run: |
+            . test/bin/activate
             make
-        
+
         - name: Run Tests
           run: |
+            . test/bin/activate
             make test

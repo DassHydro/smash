@@ -1,9 +1,19 @@
+<h1 align="center">
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/corporate_logo_dark.svg">
+  <img src="doc/source/_static/corporate_logo.svg" width="300", hspace=30>
+</picture>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/logo_smash_dark.svg">
+  <img src="doc/source/_static/logo_smash.svg" width="300", hspace=30>
+</picture>
+</h1><br>
+
 - **Documentation:** https://smash.recover.inrae.fr
-- **Source code:** https://github.com/DassHydro-dev/smash
-- **Contributors and contact:** https://smash.recover.inrae.fr/contributors/index.html
-- **Contributing:** https://smash.recover.inrae.fr/developers_guide/index.html
+- **Source code:** https://github.com/DassHydro/smash
+- **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
 - **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
-- **Bug reports:** https://github.com/DassHydro-dev/smash/issues
+- **Bug reports:** https://github.com/DassHydro/smash/issues
 
 **smash** is a Python library, that provides a variety of user-friendly routines for hydrological modeling, including data preprocessing, high-dimensional optimization tools, sensitivity and signatures analysis, all interfaced with an efficient Fortran solver.
 

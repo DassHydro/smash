@@ -28,4 +28,4 @@ clean:
 	@rm -rf $(BUILDDIR)
 	@rm -rf $(SOURCEDIR)/savefig
 	@rm -rf *.hdf5 *yaml
-	@rm -rf $(SOURCEDIR)/api_reference/smash
+	@find $(SOURCEDIR)/api_reference/ -type d -name "smash" -exec rm -rf {} +

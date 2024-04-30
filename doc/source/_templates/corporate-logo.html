@@ -1,0 +1,6 @@
+<a class="corporate-logo" href="https://www6.paca.inrae.fr/recover/Qui-sommes-nous/Nos-equipes/RHAX" rel="noopener" target="_blank">
+  {% set image_light = pathto('_static/' + 'corporate_logo.svg', 1) %}
+  {% set image_dark = pathto('_static/' + 'corporate_logo_dark.svg', 1) %}
+    <img src="{{ image_light }}" class="logo_image only-light" alt="corporate logo">
+    <img src="{{ image_dark }}" class="logo_image only-dark" alt="corporate logo">
+</a>

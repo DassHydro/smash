@@ -1,23 +1,29 @@
-from smash.core.model import Model
-from smash.core.net import Net
-from smash.core.signatures import SignResult, SignSensResult
-from smash.core.prcp_indices import PrcpIndicesResult
-from smash.core.generate_samples import generate_samples, SampleResult
-from smash.core.simulation.multiple_run import MultipleRunResult
-from smash.core.simulation.bayes_optimize import BayesResult
-from smash.core.utils import sparse_matrix_to_vector, sparse_vector_to_matrix
-
-from smash.mesh.meshing import generate_mesh
-
-from smash.io.setup_io import save_setup, read_setup
-from smash.io.mesh_io import save_mesh, read_mesh
-from smash.io.model_io import save_model, read_model
-from smash.io.model_ddt_io import save_model_ddt, read_model_ddt
-from smash.io.hdf5_io import save_smash_model_to_hdf5, load_hdf5_file
-
-from smash.dataset.load import load_dataset
-
-from . import _version
+from smash import factory, io
+from smash._version_meson import __version__
+from smash.core.model.model import Model
+from smash.core.signal_analysis.metrics.metrics import metrics
+from smash.core.signal_analysis.prcp_indices.prcp_indices import PrecipitationIndices, precipitation_indices
+from smash.core.signal_analysis.segmentation.segmentation import hydrograph_segmentation
+from smash.core.signal_analysis.signatures.signatures import Signatures, signatures
+from smash.core.simulation.control import (
+    bayesian_optimize_control_info,
+    optimize_control_info,
+)
+from smash.core.simulation.estimate.estimate import MultisetEstimate, multiset_estimate
+from smash.core.simulation.optimize.optimize import (
+    BayesianOptimize,
+    MultipleOptimize,
+    Optimize,
+    bayesian_optimize,
+    multiple_optimize,
+    optimize,
+)
+from smash.core.simulation.options import (
+    default_bayesian_optimize_options,
+    default_optimize_options,
+)
+from smash.core.simulation.run.run import ForwardRun, MultipleForwardRun, forward_run, multiple_forward_run
+from smash.factory.samples.samples import Samples
 
 
 def __getattr__(name):
@@ -26,30 +32,31 @@ def __getattr__(name):
 
 __all__ = [
     "Model",
-    "Net",
-    "SignResult",
-    "SignSensResult",
-    "PrcpIndicesResult",
-    "SampleResult",
-    "MultipleRunResult",
-    "BayesResult",
-    "generate_samples",
-    "sparse_matrix_to_vector",
-    "sparse_vector_to_matrix",
-    "generate_mesh",
-    "save_setup",
-    "read_setup",
-    "save_mesh",
-    "read_mesh",
-    "save_model",
-    "read_model",
-    "save_model_ddt",
-    "read_model_ddt",
-    "save_smash_model_to_hdf5",
-    "load_hdf5_file",
-    "load_dataset",
+    "metrics",
+    "hydrograph_segmentation",
+    "signatures",
+    "precipitation_indices",
+    "forward_run",
+    "multiple_forward_run",
+    "optimize",
+    "multiple_optimize",
+    "bayesian_optimize",
+    "default_optimize_options",
+    "default_bayesian_optimize_options",
+    "optimize_control_info",
+    "bayesian_optimize_control_info",
+    "multiset_estimate",
+    "io",
+    "factory",
+    "ForwardRun",
+    "MultipleForwardRun",
+    "Optimize",
+    "MultipleOptimize",
+    "BayesianOptimize",
+    "MultisetEstimate",
+    "Signatures",
+    "PrecipitationIndices",
+    "Samples",
 ]
 
-__version__ = _version.get_versions()["version"]
-
-__all__.extend(["__version__"])
+__all__ += ["__version__"]

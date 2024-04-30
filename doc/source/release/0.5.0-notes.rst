@@ -61,8 +61,6 @@ Spatial disaggregation/aggregation of the input raster
 
 If the resolution of the input raster is different from the resolution of the model mesh, the input rasters are automatically reprojected by gdal. In that case the reading of the input can be slower. For best performances, it can be useful to preprocess the input files (precipitations).
 
-See API Reference section :ref:`api_reference.raster_handler`.
-
 -----
 Fixes
 -----
@@ -73,7 +71,7 @@ Boundary conditions checking
 The boundary condition checking previously used a tolerance of 1e-6, which caused issues in certain cases due to machine precision when passing from Python to Fortran via the f90wrapper.
 To address this problem, the tolerance has been decreased to 1e-3.
 
-See issue `#23 <https://github.com/DassHydro-dev/smash/issues/23>`__.
+See issue `#23 <https://github.com/DassHydro/smash/issues/23>`__.
 
 Bug fixes when generating the l-curve.
 **************************************
@@ -85,7 +83,7 @@ Event signatures computation
 
 The bug related to the computation of flood event signatures has been resolved for specific cases where the peak event is observed during the last time steps in the time window.
 
-See issue `#28 <https://github.com/DassHydro-dev/smash/issues/28>`__.
+See issue `#28 <https://github.com/DassHydro/smash/issues/28>`__.
 
 Segmentation algorithm
 **********************
@@ -98,25 +96,25 @@ Catchment delineation segmentation fault
 An error occured when two neighboring cells have antagonistic flow directions ``(1, 5)``, ``(2, 6)``, ``(3, 7)``, ``(4, 8)``. This should be corrected directly in the flow direction file but to avoid 
 segmentation faults when the maximum number of recursions has been reached, a check is added to the code to exit recursion in that case.
 
-See issue `#31 <https://github.com/DassHydro-dev/smash/issues/31>`__.
+See issue `#31 <https://github.com/DassHydro/smash/issues/31>`__.
 
 Catchment flow distances on adjacent non-nested catchments
 **********************************************************
 
 There is a bug when calculating flow distances when two adjacent catchments are considered in the mesh but non-nested. During calculation, a flag is set around the 8 adjacent cells of each upstream cell and not on the upstream cell in particular. As a result, a gauge stuck to a cell of another catchment will not be considered as a non-nested gauge and will be filled with -99. The bug has been solved by flagging only the upstream cell and not the 8 adjacent cells.
 
-See issue `#38 <https://github.com/DassHydro-dev/smash/issues/38>`__.
+See issue `#38 <https://github.com/DassHydro/smash/issues/38>`__.
 
 Correctly handle Nodata value during the spatial disaggregation of the rainfall
 *******************************************************************************
 
 A crash occured during the disaggregation of the rainfall. The creation of a GDAL virtual-destination failed when the parent geotiff file has its Nodata value unset (None type). When this is the case, the Nodata value of the disaggregation rainfall is automatically set to -99.
 
-See issue `#40 <https://github.com/DassHydro-dev/smash/issues/40>`__.
+See issue `#40 <https://github.com/DassHydro/smash/issues/40>`__.
 
 Stop the execution of smash when ``start_time`` is equal to ``end_time``
 ************************************************************************
 
 When ``start_time`` is equal to ``end_time``, the code crashes during the data reading with no obvious reason. Now just stop the code execution and return an error when this case occurs.
 
-See issue `#41 <https://github.com/DassHydro-dev/smash/issues/41>`__.
+See issue `#41 <https://github.com/DassHydro/smash/issues/41>`__.

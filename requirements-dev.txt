@@ -1,14 +1,16 @@
-# required dependencies
+# required dependencies 
+meson
+meson-python
+ninja
+numpy
 f90wrap
-numpy>=1.13
+versioneer[toml]
+rasterio
 pandas
-matplotlib
 h5py
 tqdm
-gdal
 scipy
 pyyaml
-SALib>=1.4.5
 terminaltables
 
 # documentation
@@ -19,10 +21,12 @@ ipython
 sphinxcontrib-bibtex
 sphinx-design
 sphinx-autosummary-accessors
+matplotlib
 
 # test
 pytest
+pytest-cov
 
 # format
-black
+ruff
 fprettify

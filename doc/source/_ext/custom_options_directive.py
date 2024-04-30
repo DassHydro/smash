@@ -1,3 +1,5 @@
+# ruff: noqa
+
 import pydoc
 import sphinx
 import inspect
@@ -30,9 +32,9 @@ def _option_required_str(x):
 def _import_object_interface(name):
     parts = name.split(".")
     if parts[0] == "Model":
-        module_name = "smash.core.model.Model"
+        module_name = "smash.core.model.model.Model"
     elif parts[0] == "Net":
-        module_name = "smash.core.net.Net"
+        module_name = "smash.factory.net.net.Net"
     else:
         raise ValueError(f"Unknown object interface {name}")
     obj = getattr(eval(module_name), parts[-1])
@@ -52,9 +54,7 @@ class SmashModelOptimize(PythonDomain):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.directives = dict(self.directives)
-        self.directives["function"] = wrap_mangling_directive(
-            self.directives["function"]
-        )
+        self.directives["function"] = wrap_mangling_directive(self.directives["function"])
 
 
 class SmashNetAdd(PythonDomain):
@@ -63,9 +63,7 @@ class SmashNetAdd(PythonDomain):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.directives = dict(self.directives)
-        self.directives["function"] = wrap_mangling_directive(
-            self.directives["function"]
-        )
+        self.directives["function"] = wrap_mangling_directive(self.directives["function"])
 
 
 class SmashNetCompile(PythonDomain):
@@ -74,9 +72,7 @@ class SmashNetCompile(PythonDomain):
     def __init__(self, *a, **kw):
         super().__init__(*a, **kw)
         self.directives = dict(self.directives)
-        self.directives["function"] = wrap_mangling_directive(
-            self.directives["function"]
-        )
+        self.directives["function"] = wrap_mangling_directive(self.directives["function"])
 
 
 BLURB = """
@@ -107,9 +103,7 @@ def wrap_mangling_directive(base_directive):
             # Format signature taking implementation into account
             args = list(args)
 
-            if (
-                defaults is not None
-            ):  # only remove args and set default if defaults is not None
+            if defaults is not None:  # only remove args and set default if defaults is not None
                 defaults = list(defaults)
 
                 def set_default(arg, value):
@@ -134,9 +128,7 @@ def wrap_mangling_directive(base_directive):
                         options.append(
                             (
                                 opt_name,
-                                impl_defaults[
-                                    len(impl_defaults) - (len(impl_args) - j)
-                                ],
+                                impl_defaults[len(impl_defaults) - (len(impl_args) - j)],
                             )
                         )
                     else:
@@ -167,10 +159,7 @@ def wrap_mangling_directive(base_directive):
                 for parameters in signature.parameters.values():
                     if parameters.name == "self":
                         continue
-                    elif (
-                        parameters.name == "mapping"
-                        and self.options["alg"] == "l-bfgs-b"
-                    ):
+                    elif parameters.name == "mapping" and self.options["alg"] == "l-bfgs-b":
                         default = "'distributed'"
                     elif parameters.name == "optimizer":
                         default = f"'{self.options['opt']}'"

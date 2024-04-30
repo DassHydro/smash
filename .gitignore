@@ -1,12 +1,74 @@
-**/__pycache__
-__pycache__
+# https://github.com/github/gitignore/blob/main/Python.gitignore
 
-**/.f2py*
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# C extensions
+*.so
+
+# Distribution / packaging
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+wheelhouse/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Unit test / coverage reports
+htmlcov/
+.tox/
+.nox/
+.coverage
+.coverage.*
+.cache
+nosetests.xml
+coverage.xml
+*.cover
+*.py,cover
+.hypothesis/
+.pytest_cache/
+cover/
+
+# Compiled Object files
+*.slo
+*.lo
+*.o
+*.obj
+
+# Fortran module files
+*.mod
+*.smod
+
+# Fortran wrapping files
 .f2py*
+src.*
+f90wrap*.f90
+**/fcore/_m*.py
 
+# Tapenade files
 tapenade/*.msg*
 tapenade/*.f90*
 tapenade/*~
 
-**/tmp*
+# Temporary files
 tmp*
+*.kate-swp
+
+# Documentation files
+doc/source/api_reference/**/smash
+doc/*-dataset
