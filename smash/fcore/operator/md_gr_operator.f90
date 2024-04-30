@@ -133,6 +133,28 @@ contains
 
     end subroutine gr_transfer
 
+    subroutine exponential_transfer(he, pre, ce, qre)
+
+        implicit none
+
+        real(sp), intent(in) :: pre, ce
+        real(sp), intent(inout) :: he
+        real(sp), intent(out) :: qre
+        real(sp) :: he_star, AR
+        
+        he_star = he + pre
+        AR = he_star / ce
+        if (AR .lt. -7._sp) then
+            qre = ce * exp(AR)
+        elseif (AR .gt. 7._sp) then
+            qre = he_star + ce / exp(AR)
+        else
+            qre = ce * log(exp(AR) + 1._sp)
+        end if
+        he = he_star - qre
+
+    end subroutine exponential_transfer
+    
     subroutine gr4_timestep(setup, mesh, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt)
 
         implicit none
@@ -258,10 +280,9 @@ contains
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, ce, kexc, aexc
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hi, hp, ht, he
         real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
-
-        integer :: row, col
-        real(sp) :: pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre, AR, he_star
         
+        integer :: row, col
+        real(sp) :: pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, ce, kexc, aexc, hi, hp, ht, he, qt) &
         !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, pre, qr, qd, qre)
@@ -293,12 +314,8 @@ contains
                 
                 call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
                 
-                he_star = max(1.e-6_sp, he(row, col) + pre / ce(row, col))
-                AR = he_star / ce(row, col)
-                qre = he(row, col) * ce(row, col) - log(1. + exp(AR)) * ce(row, col)
-                qre = max(0._sp, qre)
-                he(row, col) = he_star - qre / ce(row, col)
-                
+                call exponential_transfer(he(row, col), pre, ce(row, col), qre)
+
                 qd = max(0._sp, prd + l)
                 
                 qt(row, col) = qr + qd + qre

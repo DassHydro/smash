@@ -440,8 +440,7 @@ Transfer
 
 .. math::
     
-    h_e(x, t^*) = \max\left(0, h_e(x, t - 1) + \frac{p_{re}(x, t)}{c_e(x)}\right)
-
+    h_e(x, t^*) = h_e(x, t - 1) + p_{re}
 
 - Compute the exponential branch elemental discharge :math:`q_{re}`
 
@@ -450,15 +449,25 @@ Transfer
 
     \begin{eqnarray}
 
-        q_{re}(x, t) = \max\left(0, h_e(x, t^*)c_e(x) - \log\left(1. + \exp\left(\frac{h_e(x, t^*)}{c_e(x)}\right)\right)c_e(x)\right)
-        
+        q_{re}(x, t) =
+        \begin{cases}
+            
+            c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{c_e(x)} \lt 7 \\
+
+            c_e(x) * \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{c_e(x)} \lt -7 \\
+
+            h_e(x, t^*) + \frac{ c_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) } \; &\text{otherwise}.
+
+        \end{cases}
+
     \end{eqnarray}
 
 - Update the exponential reservoir state :math:`h_e`
 
 .. math::
 
-    h_e(x, t) = h_e(x, t^*) - \frac{q_{re}(x, t)}{c_e(x)}
+    h_e(x, t) = h_e(x, t^*) - q_{re}
+
 
 - Compute the direct branch elemental discharge :math:`q_d`
 

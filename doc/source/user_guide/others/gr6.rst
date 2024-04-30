@@ -12,11 +12,11 @@ in a continuous manner using expression :
 .. math::
     
     \begin{eqnarray}
-        q_{re}(x, t) = \exp\left(\frac{h_e(x, t)}{c_e(x)}\right)
+        q(x, t) = \exp\left(\frac{h_e(x, t)}{c_e(x)}\right)
     \end{eqnarray}
 
-with :math:`c_e` capacity of the reservoir and the level is :math:`h_e`. We assume that :math:`c_e` is always positive and :math:`h_e` always negative.
-:cite:p:`michel2003` suggests considering the continuity equation :math:`dh_e = -q_{re}ds` over a given period, between two time steps :math:`t^*` and :math:`t`.
+with :math:`c_e` the characteristic time of the water level recession and the level is :math:`h_e` (:math:`mm`).
+:cite:p:`michel2003` suggests considering the continuity equation :math:`dh_e = -q ds` over a given period, between two time steps :math:`t^*` and :math:`t`.
 
 .. math::
 
@@ -24,21 +24,40 @@ with :math:`c_e` capacity of the reservoir and the level is :math:`h_e`. We assu
     
     & - c_e(x) \left( \exp \left( \frac{-h_e(x, t)}{c_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{c_e(x)} \right) \right) = t - t^*
         
-We can express the loss of water between :math:`t^*` and  :math:`t` as :math:`h_e(x, t) = h_e(x, t^*) - h(x,t)`.
+We can express the loss of water between :math:`t^*` and  :math:`t` as :math:`h_e(x, t) = h_e(x, t^*) - q_{re}(x, t)`.
 
 .. math::
 
-    & \exp \left( \frac{-h_e(x, t^*) + h(x,t)}{c_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{c_e(x)} \right) = \frac{t^* - t}{c_e(x)}
+    & \exp \left( \frac{-h_e(x, t^*) + q_{re}(x,t)}{c_e(x)} \right) - \exp \left( \frac{-h_e(x, t^*)}{c_e(x)} \right) = \frac{t^* - t}{c_e(x)}
     
-    & \exp \left( \frac{h}{c_e(x)} \right) = 1 + \frac{t^* - t}{c_e(x)} \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right)
+    & \exp \left( \frac{q_{re}}{c_e(x)} \right) = 1 + \frac{t^* - t}{c_e(x)} \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right)
 
 
-If we choose the initial condition carefully, we can express the loss of water as :math:`h(x,t) = c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right)`.
-Note that :math:`-h` is always negative and :math:`h_e=0` is the maximum.
+If we choose the initial condition carefully, we can express the loss of water as :
 
 .. math::
 
-    q_{re}(x, t) = \max \left( 0, h_e(x, t^*)c_e(x) - \ln\left(1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) c_e(x) \right)
+    q_{re}(x,t) = c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right).
+
+In the GR6 module from airGR package https://hydrogr.github.io/airGR, they suggest some treatments of the asymptotic behaviors of the quantity :math:`q_{re}`, as follow :
+
+.. math::
+    :nowrap:
+
+    \begin{eqnarray}
+
+        q_{re}(x, t) =
+        \begin{cases}
+            
+            c_e(x) \ln \left( 1 + \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) \right) &\text{if} \; -7 \lt \frac{h_e(x, t^*)}{c_e(x)} \lt 7 \\
+
+            c_e(x) * \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) &\text{if} \; \frac{h_e(x, t^*)}{c_e(x)} \lt -7 \\
+
+            h_e(x, t^*) + \frac{ c_e(x) }{ \exp \left( \frac{h_e(x, t^*)}{c_e(x)} \right) } \; &\text{otherwise}.
+
+        \end{cases}
+
+    \end{eqnarray}
 
 One can find details :ref:`hydrological module gr6 <math_num_documentation.forward_structure.hydrological_module.gr6>`.
 
@@ -152,7 +171,7 @@ This part is only dedicated to the post-processing. First, for sake of clarity, 
 Discharge run
 *************
 
-We compare the output discharges of GR6 and GR5 models... ADD COMMENTS
+We compare the output discharges of GR6 and GR5 models.
 
 .. ipython:: python
 
@@ -178,6 +197,7 @@ We can show NSE and KGE errors on the distributed solution.
         perf.loc["GR6", m] = smash.metrics(model_gr6, metric=m)[0]
     perf 
 
+By direct computation, GR6 is better than GR5 comparing the NSE : 0.53 > 0.36 and KGE : 0.49 > 0.25. 
 
 Optimized discharge
 *******************
@@ -213,7 +233,7 @@ and the values for metrics of optimized discharges are similar.
 Parameters mapping
 ******************
 
-Finally, we can draw the parameter map. The capacity of the reservoir exponential is in the range of values exhibit by :cite:p:`pushpalatha`, between 5 mm and 10 mm.
+Finally, we can draw the parameter map.
 
 .. ipython:: python
 
