@@ -42,25 +42,25 @@ and :math:`\alpha_1` in :math:`mm` per time unit.
 
     &p_s& &=& &\int_{t-\Delta t}^{t} (1 - \eta) dt\\
 
-    && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt\\
+    && &=& &\int_{t-\Delta t}^{t} \left(1 - (1-\gamma) \left(\frac{h_p}{c_p} \right)^2 \right) dt - \int_{t-\Delta t}^{t} \gamma dt\\
     
-    && &=& &\left[ \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
+    && &=& &\left[ \frac{ c_p }{ \sqrt{1-\gamma} } \tanh \left( \frac{\sqrt{1-\gamma} \  h_p}{c_p} \right) \right]_{t-\Delta t}^t - \gamma \Delta t
     
     \end{eqnarray}
 
 
-We denote :math:`\beta := \sqrt{1 - \gamma}`, then
+We denote :math:`\lambda := \sqrt{1 - \gamma}`, then
 
 .. math::
     :nowrap:
     
     \begin{eqnarray}
 
-    \tanh \left( \beta \frac{h_p + p_n}{c_p} \right) - \tanh\left( \beta \frac{h_p}{c_p} \right) &=& 
-    \tanh \left( \beta \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \beta \frac{h_p + p_n}{c_p} \right) \tanh \left( \beta \frac{h_p}{c_p} \right) \right) \\
-    &=& \tanh \left( \beta \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \beta \frac{h_p}{c_p} \right) + \tanh \left( \beta \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \beta \frac{h_p}{c_p} \right) \tanh \left( \beta \frac{p_n}{c_p} \right) } \tanh \left( \beta \frac{h_p}{c_p} \right) \right) \\
-    &\sim& \tanh \left( \beta \frac{p_n}{c_p} \right) \left(1 - \frac{ \beta \frac{h_p}{c_p} + \tanh \left( \beta \frac{p_n}{c_p} \right) } { 1 + \beta \frac{h_p}{c_p} \tanh \left( \beta \frac{p_n}{c_p} \right) }  \beta \frac{h_p}{c_p} \right) \\
-    &=& \tanh \left( \beta \frac{p_n}{c_p} \right) \frac{1 - \left( \beta \frac{h_p}{c_p} \right)^2}{1 + \beta \frac{h_p}{c_p} \tanh \left( \beta \frac{p_n}{c_p} \right)}
+    \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) - \tanh\left( \lambda \frac{h_p}{c_p} \right) &=& 
+    \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \tanh \left( \lambda \frac{h_p + p_n}{c_p} \right) \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+    &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \tanh \left( \lambda \frac{h_p}{c_p} \right) + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \tanh \left( \lambda \frac{h_p}{c_p} \right) \tanh \left( \lambda \frac{p_n}{c_p} \right) } \tanh \left( \lambda \frac{h_p}{c_p} \right) \right) \\
+    &\sim& \tanh \left( \lambda \frac{p_n}{c_p} \right) \left(1 - \frac{ \lambda \frac{h_p}{c_p} + \tanh \left( \lambda \frac{p_n}{c_p} \right) } { 1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right) }  \lambda \frac{h_p}{c_p} \right) \\
+    &=& \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)}
     \end{eqnarray}
     
 Thus
@@ -70,7 +70,7 @@ Thus
     
     \begin{eqnarray}
 
-    p_s &=& \tanh \left( \beta \frac{p_n}{c_p} \right) \frac{1 - \left( \beta \frac{h_p}{c_p} \right)^2}{1 + \beta \frac{h_p}{c_p} \tanh \left( \beta \frac{p_n}{c_p} \right)} - \gamma \Delta t
+    p_s &=& \frac{c_p}{\lambda} \tanh \left( \lambda \frac{p_n}{c_p} \right) \frac{1 - \left( \lambda \frac{h_p}{c_p} \right)^2}{1 + \lambda \frac{h_p}{c_p} \tanh \left( \lambda \frac{p_n}{c_p} \right)} - \gamma \Delta t
     \end{eqnarray}
 
 
