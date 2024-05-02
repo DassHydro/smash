@@ -9,6 +9,10 @@ smash 1.0.0 Release Notes
 The smash 1.0.0 release brings major updates aimed at simplifying the user experience while continuing the 
 ongoing work to improve the handling, fix possible bugs, clarify the documentation. The highlights are:
 
+- ``PyPI installation``
+    `smash` is now available on `PyPI <https://pypi.org/>`__ with the following distribution name
+    ``hydro-smash``.
+
 - ``CPU parallel computation``
     CPU parallel computation in simulation and optimization. This has been made possible using the 
     `OpenMP <https://www.openmp.org/>`__ library, whose most of the directives are handled by Tapenade to
@@ -54,10 +58,17 @@ This release was made possible thanks to the contributions of:
 - Thomas de Fournas (`<https://github.com/ThomasdeFournas>`__)
 - Apolline El Baz (`<https://github.com/asjeb>`__)
 - Pierre-André Garambois (`<https://github.com/pag13>`__)
+- Maxime Jay-Allemand (`<https://github.com/maximejay>`__)
 
 ---------------
 Compatibilities
 ---------------
+
+- The `smash` package is now available on `PyPI <https://pypi.org/>`__ and can be installed as follows:
+  
+  .. code-block:: none
+
+    pip install hydro-smash
 
 - The `gdal <https://gdal.org/api/python_bindings.html>`__ package has been replaced by
   `rasterio <https://rasterio.readthedocs.io/en/stable/>`__. This change has been made purely to improve
@@ -755,4 +766,3 @@ Interception reservoir capacity calculation
 Missing values were not properly taken into account in the calculation of the interception reservoir. Missing
 values in Fortran for precipitation and potential evapotranspiration are stored as -99, resulting in
 erroneous values. This was fixed simply by not incorporating these values into the calculation.
-
