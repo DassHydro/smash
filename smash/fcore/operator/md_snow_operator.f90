@@ -55,10 +55,11 @@ contains
 
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "snow", ac_snow)
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "temp", ac_temp)
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_snow, ac_temp, ac_kmlt, ac_hs, ac_mlt) &
         !$OMP& private(row, col, k)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -78,8 +79,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine ssn_time_step
 
 end module md_snow_operator

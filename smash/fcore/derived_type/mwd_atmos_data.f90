@@ -12,15 +12,15 @@
 !%          ``prcp``                 Precipitation field                         [mm]
 !%          ``pet``                  Potential evapotranspiration field          [mm]
 !%          ``snow``                 Snow field                                  [mm]
-!%          ``temp``                 Temperature field                           [°C]
+!%          ``temp``                 Temperature field                           [C]
 !%          ``sparse_prcp``          Sparse precipitation field                  [mm]
 !%          ``sparse_pet``           Sparse potential evapotranspiration field   [mm]
 !%          ``sparse_snow``          Sparse snow field                           [mm]
-!%          ``sparse_temp``          Sparse temperature field                    [°C]
+!%          ``sparse_temp``          Sparse temperature field                    [C]
 !%          ``mean_prcp``            Mean precipitation at gauge                 [mm]
 !%          ``mean_pet``             Mean potential evapotranspiration at gauge  [mm]
 !%          ``mean_snow``            Mean snow at gauge                          [mm]
-!%          ``mean_temp``            Mean temperature at gauge                   [°C]
+!%          ``mean_temp``            Mean temperature at gauge                   [C]
 !%          ======================== =======================================
 !%
 !%      Subroutine

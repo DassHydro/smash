@@ -146,9 +146,11 @@ contains
             ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
             ! is duplicated ... Maybe there is another way to do it.
             if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+#ifdef _OPENMP
                 !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
                 !$OMP& shared(setup, mesh, ac_qtz, ac_qz, i) &
                 !$OMP& private(j, row, col, k, qup)
+#endif
                 do j = 1, mesh%ncpar(i)
 
                     row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
@@ -162,8 +164,9 @@ contains
                     ac_qz(k, setup%nqz) = ac_qz(k, setup%nqz) + qup
 
                 end do
+#ifdef _OPENMP
                 !$OMP end parallel do
-
+#endif
             else
 
                 do j = 1, mesh%ncpar(i)
@@ -209,9 +212,11 @@ contains
             ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
             ! is duplicated ... Maybe there is another way to do it.
             if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+#ifdef _OPENMP
                 !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
                 !$OMP& shared(setup, mesh, ac_qtz, ac_llr, ac_hlr, ac_qz, i) &
                 !$OMP& private(j, row, col, k, qup)
+#endif
                 do j = 1, mesh%ncpar(i)
 
                     row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
@@ -226,8 +231,9 @@ contains
                     & ac_llr(k), ac_hlr(k), qup, ac_qz(k, setup%nqz))
 
                 end do
+#ifdef _OPENMP
                 !$OMP end parallel do
-
+#endif
             else
 
                 do j = 1, mesh%ncpar(i)
@@ -273,9 +279,11 @@ contains
             ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
             ! is duplicated ... Maybe there is another way to do it.
             if (mesh%ncpar(i) .ge. options%comm%ncpu) then
+#ifdef _OPENMP
                 !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
                 !$OMP& shared(setup, mesh, ac_qtz, ac_akw, ac_bkw, ac_qz, i) &
                 !$OMP& private(j, row, col, k, qlijm1, qlij, qim1j, qijm1)
+#endif
                 do j = 1, mesh%ncpar(i)
 
                     row = mesh%cpar_to_rowcol(mesh%cscpar(i) + j, 1)
@@ -294,8 +302,9 @@ contains
                     & ac_akw(k), ac_bkw(k), qlijm1, qlij, qim1j, qijm1, ac_qz(k, setup%nqz))
 
                 end do
+#ifdef _OPENMP
                 !$OMP end parallel do
-
+#endif
             else
 
                 do j = 1, mesh%ncpar(i)
