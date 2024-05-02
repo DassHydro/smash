@@ -46,7 +46,7 @@ test-baseline:
 #% Format Python files with ruff and Fortran files with fprettify
 format:
 	ruff format
-	fprettify -e forward_db.f90 -e f90wrap -f .f90 --indent 4 -r smash
+	fprettify -e forward_db.f90 -e forward_openmp_db.f90 -e f90wrap -f .f90 --indent 4 -r smash
 
 #% Check Python files with ruff linters
 check:

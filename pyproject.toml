@@ -13,7 +13,7 @@ dynamic = ["version"]
 description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology platform."
 readme = "README.md"
 authors = [
-    {name = "INRAE RECOVER RHAX Team", email = "pierre.javelle@inrae.fr"},
+    {name = "INRAE RECOVER RHAX Team", email = "francois.colleoni@inrae.fr"},
 ]
 license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
