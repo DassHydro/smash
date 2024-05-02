@@ -17,6 +17,15 @@ def f90wrap_getter_char(func):
     return wrapper
 
 
+#! setter is identical
+def f90wrap_setter_char(func):
+    @functools.wraps(func)
+    def wrapper(self, value):
+        func(self, value)
+
+    return wrapper
+
+
 def f90wrap_getter_char_array(func):
     @functools.wraps(func)
     def wrapper(self):
@@ -86,6 +95,10 @@ def f90wrap_setter_index(func):
     return wrapper
 
 
+def f90wrap_getter_index_array(func):
+    return f90wrap_getter_index(func)
+
+
 #! setter completly rewrite (func is not called)
 def f90wrap_setter_index_array(func):
     @functools.wraps(func)
@@ -108,7 +121,3 @@ def f90wrap_setter_index_array(func):
         ptr[...] = arr
 
     return wrapper
-
-
-def f90wrap_getter_index_array(func):
-    return f90wrap_getter_index(func)

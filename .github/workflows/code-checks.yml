@@ -17,14 +17,12 @@ on:
         
 jobs:
     ubuntu:
-        name: (${{ matrix.os }})
-        runs-on: ${{ matrix.os }}
-        strategy:
-          matrix:
-            os: ["ubuntu-20.04", "ubuntu-22.04"]
-
+        name: Code checks ubuntu-latest
+        runs-on: ubuntu-latest
         steps:
         - uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
 
         - name: Set up Python
           uses: actions/setup-python@v5
@@ -34,7 +32,7 @@ jobs:
         - name: Install dependencies
           run: |
             sudo apt-get update
-            sudo apt-get install build-essential openjdk-11-jre-headless
+            sudo apt-get install build-essential openjdk-17-jdk
             python -m venv test
             . test/bin/activate
             python -m pip install --upgrade pip

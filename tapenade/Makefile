@@ -29,7 +29,7 @@ bd:
 	-tgtvarname %_d \
 	-o forward \
 	-head "base_forward_run(parameters.control.x)\(output.cost)" \
-	-O $(PWD) $(FILES)
+	$(FILES)
 
 post-sed:
 	# sed

@@ -1,4 +1,5 @@
 from smash import factory, io
+from smash._version_meson import __version__
 from smash.core.model.model import Model
 from smash.core.signal_analysis.metrics.metrics import metrics
 from smash.core.signal_analysis.prcp_indices.prcp_indices import (
@@ -31,8 +32,6 @@ from smash.core.simulation.run.run import (
     multiple_forward_run,
 )
 from smash.factory.samples.samples import Samples
-
-from . import _version
 
 
 def __getattr__(name):
@@ -67,7 +66,5 @@ __all__ = [
     "PrecipitationIndices",
     "Samples",
 ]
-
-__version__ = _version.get_versions()["version"]
 
 __all__ += ["__version__"]

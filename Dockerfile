@@ -1,23 +1,15 @@
-FROM ubuntu:22.04
+# Derived from Pandas
+FROM python:3.11
+WORKDIR /home/smash
 
-ADD . /app/
-
-WORKDIR /app
-
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get -y upgrade
+RUN apt-get install -y \
     build-essential \
-    make \
-    openjdk-11-jre-headless \
-    gcc \
-    gfortran \
-    gdal-bin \
-    libgdal-dev \
-    python3-pip
-    
-ENV JAVA_HOME /usr/lib/jvm/java-11-openjdk-amd64/
+    openjdk-17-jdk \
+    gfortran
 
-RUN export JAVA_HOME
-
-RUN pip3 install -r requirements-dev.txt
-
-RUN make
+RUN python -m pip install --upgrade pip
+COPY requirements-dev.txt /tmp
+RUN python -m pip install -r /tmp/requirements-dev.txt
+RUN git config --global --add safe.directory /home/smash
+CMD ["/bin/bash"]
