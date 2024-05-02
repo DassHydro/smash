@@ -190,11 +190,12 @@ contains
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, ac_ds, &
         !$OMP& ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt) &
         !$OMP& private(row, col, k, pn, en, qr, qb)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -230,8 +231,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine vic3l_time_step
 
 end module md_vic3l_operator

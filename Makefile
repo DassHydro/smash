@@ -1,18 +1,27 @@
+#% Meson options (see meson.options)
+use-openmp := true
+
 #% Build smash
 all:
-	pip install .
+	pip install -Csetup-args=-Duse-openmp=$(use-openmp) .
 
 #% Build smash in editable mode
 edit:
-	pip install --no-build-isolation --config-settings=editable-verbose=true --editable .
+	pip install -Csetup-args=-Duse-openmp=$(use-openmp) --no-build-isolation --config-settings=editable-verbose=true --editable .
 
-#% Generate tapenade file (adjoint and tangent linear models)
+TAP_FILES := $(addprefix smash/fcore/*/,mwd_*.f90 md_*.f90 forward.f90)
+
+#% Generate tapenade files (adjoint and tangent linear models)
 tap:
-	make -C tapenade
+	python tapenade/generate_tapenade.py $(TAP_FILES) --build-dir smash/fcore/forward --openmp -m forward_openmp
+	python tapenade/generate_tapenade.py $(TAP_FILES) --build-dir smash/fcore/forward -m forward
 
-#% Compare tapenade file
+#% Compare tapenade files
 tap-cmp:
-	make tap-cmp -C tapenade
+	python tapenade/generate_tapenade.py $(TAP_FILES) --build-dir tapenade --openmp -m forward_openmp
+	python tapenade/generate_tapenade.py $(TAP_FILES) --build-dir tapenade -m forward
+	cmp tapenade/forward_openmp_db.f90 smash/fcore/forward/forward_openmp_db.f90
+	cmp tapenade/forward_db.f90 smash/fcore/forward/forward_db.f90
 
 #% Generate sphinx documentation
 doc:
