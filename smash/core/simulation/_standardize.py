@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import warnings
 from typing import TYPE_CHECKING
 
@@ -956,6 +957,11 @@ def _standardize_simulation_common_options_ncpu(ncpu: Numeric) -> int:
             )
     else:
         raise TypeError("ncpu common_options must be of Numeric type (int, float)")
+
+    # Parallel computation not supported on Windows
+    if platform.system() == "Windows" and ncpu > 1:
+        ncpu = 1
+        warnings.warn("Parallel computation is not supported on Windows. ncpu is set to 1", stacklevel=2)
 
     return ncpu
 

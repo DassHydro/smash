@@ -449,6 +449,9 @@ COMMON_OPTIONS_BASE_DOC = {
         """,
         """
         Number of CPU(s) to perform a parallel computation.
+
+        .. warning::
+            Parallel computation is not supported on ``Windows``.
         """,
     ),
 }
