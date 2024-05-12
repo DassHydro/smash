@@ -1,6 +1,11 @@
 #include <stdio.h>
 #include <stdlib.h>
+#ifdef _OPENMP
 #include "omp.h"
+#else
+#define omp_get_num_threads() 0
+#define omp_get_thread_num() 0
+#endif
 #include "adStack.h"
 #include "adOMP.h"
 
@@ -89,7 +94,9 @@ void getStaticSchedule(int lo, int hi, int stride, int* threadlo, int* threadhi)
    consider using larger chunks or a static schedule. */
 static int numChunks, previousIter, thisChunkStart ;
 static char isFirstIter ;
+#ifdef _OPENMP
 #pragma omp threadprivate(numChunks, previousIter, isFirstIter, thisChunkStart)
+#endif
 
 void initDynamicSchedule() {
   isFirstIter = 1 ;

@@ -201,20 +201,20 @@ def generate_py_mod_names(fortran_files: list[str]) -> None:
 
 
 def generate_f90wrap_files(fortran_files: list[str], kind_map_file: str, module: str) -> None:
-    subprocess.run(
-        [
-            "f90wrap",
-            "-k",
-            kind_map_file,
-            "--py-mod-names",
-            "py_mod_names",
-            "--package",
-            "-m",
-            module,
-        ]
-        + fortran_files,
-        check=True,
-    )
+    cmd_args = [
+        "f90wrap",
+        "-k",
+        kind_map_file,
+        "--py-mod-names",
+        "py_mod_names",
+        "--package",
+        "-m",
+        module,
+    ]
+
+    cmd_args.extend(fortran_files)
+
+    subprocess.run(cmd_args, check=True)
 
 
 def patch_f90wrap_files(fortran_files: list[str], module: str) -> None:

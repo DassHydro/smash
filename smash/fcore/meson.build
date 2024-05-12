@@ -87,8 +87,17 @@ mwd_f90_sources = [
 
 f90_sources = [
     'forward/forward.f90',
-    'forward/forward_db.f90',
 ] + m_f90_sources + md_f90_sources + mw_f90_sources + mwd_f90_sources
+
+if host_machine.system() == 'windows'
+    f90_sources += 'forward/forward_db.f90'
+else
+    if get_option('use-openmp')
+        f90_sources += 'forward/forward_openmp_db.f90'
+    else
+        f90_sources += 'forward/forward_db.f90'
+    endif
+endif
 
 f90wrap = [
     py,
@@ -137,12 +146,23 @@ py.install_sources(
     preserve_path: true,
 )
 
+link_args = []
+dependencies = [fortranobject_dep]
+if host_machine.system() == 'windows'
+    link_args += ['-lquadmath', '-static']
+else
+    if get_option('use-openmp')
+        dependencies += openmp_dep
+    endif
+endif
+
 py.extension_module(
     '_libfcore',
     c_sources, f77_sources, f90_sources, f90wrap_f90_sources, f2py_f90wrap_sources,
     c_args: ['-O3', c_ignore_warnings],
-    fortran_args: ['-O3', '-march=native', fortran_ignore_warnings],
-    dependencies: [fortranobject_dep, openmp_dep],
+    fortran_args: ['-O3', '-march=native', '-cpp', fortran_ignore_warnings],
+    link_args: link_args,
+    dependencies: dependencies,
     install: true,
     subdir: 'smash' / 'fcore',
 )

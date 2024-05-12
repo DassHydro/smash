@@ -335,11 +335,12 @@ contains
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
         !$OMP& ac_qt) &
         !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -378,8 +379,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine gr4_time_step
 
     subroutine gr4_mlp_alg_time_step(setup, mesh, input_data, options, time_step, layers, neurons, &
@@ -593,11 +595,12 @@ contains
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hi, &
         !$OMP& ac_hp, ac_ht, ac_qt) &
         !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -636,8 +639,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine gr5_time_step
 
     subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
@@ -663,10 +667,11 @@ contains
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt) &
         !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, qr)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -702,8 +707,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine grd_time_step
 
     subroutine loieau_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ca, ac_cc, ac_kb, &
@@ -732,10 +738,11 @@ contains
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt) &
         !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -774,8 +781,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine loieau_time_step
 
 end module md_gr_operator

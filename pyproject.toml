@@ -8,12 +8,12 @@ requires = [
 build-backend = "mesonpy"
 
 [project]
-name = "smash"
+name = "hydro-smash"
 dynamic = ["version"]
 description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology platform."
 readme = "README.md"
 authors = [
-    {name = "INRAE RECOVER RHAX Team", email = "pierre.javelle@inrae.fr"},
+    {name = "INRAE RECOVER RHAX Team", email = "francois.colleoni@inrae.fr"},
 ]
 license = {text = "GPL-3.0"}
 requires-python = ">=3.9"
@@ -42,6 +42,7 @@ classifiers = [
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Operating System :: Unix',
+    'Operating System :: Microsoft :: Windows',
 ]
 
 [project.optional-dependencies]
@@ -77,9 +78,13 @@ tag_prefix = "v"
 parentdir_prefix = "smash-"
 
 [tool.cibuildwheel]
-skip = "cp36-* cp37-* cp38-* cp312-* pp* *_i686 *_ppc64le *_s390x "
+skip = "cp36-* cp37-* cp38-* cp312-* pp* *_i686 *_ppc64le *_s390x"
 test-command = 'python -c "import smash; print(smash.__version__)"'
 build-verbosity = 3
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
 
 [tool.ruff]
 line-length = 110

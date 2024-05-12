@@ -130,7 +130,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d Cance")
+    os.system("python3 generate_dataset.py -d Cance")
 
 Imports
 -------
@@ -143,6 +143,14 @@ We will first import everything we need in this tutorial: `smash` of course, the
     import numpy as np
     import pandas as pd
     import matplotlib.pyplot as plt
+
+.. hint::
+
+    The visualization library `matplotlib <https://matplotlib.org/>`__ is not installed by default but can be installed with pip as follows:
+    
+    .. code-block:: none
+
+        pip install matplotlib
 
 Model creation
 --------------

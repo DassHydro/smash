@@ -40,7 +40,7 @@ CONTAINS
     ALLOCATE(this%par(n))
   END SUBROUTINE PRIORTYPE_INITIALISE
 
-!  Differentiation of compute_loglkh in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_loglkh in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: loglkh
 !   with respect to varying inputs: sigma_gamma mu_gamma sim
 ! subroutine PriorListType_initialise(this, n)
@@ -118,7 +118,7 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_LOGLKH_D
 
-!  Differentiation of compute_loglkh in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_loglkh in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: loglkh
 !   with respect to varying inputs: sigma_gamma mu_gamma sim
 ! subroutine PriorListType_initialise(this, n)
@@ -271,7 +271,7 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_LOGLKH
 
-!  Differentiation of compute_logprior in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logprior in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: logprior
 !   with respect to varying inputs: sigma_gamma mu_gamma theta
   SUBROUTINE COMPUTE_LOGPRIOR_D(theta, theta_d, theta_prior, mu_gamma, &
@@ -325,7 +325,7 @@ CONTAINS
     END IF
   END SUBROUTINE COMPUTE_LOGPRIOR_D
 
-!  Differentiation of compute_logprior in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logprior in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: sigma_gamma mu_gamma logprior
 !   with respect to varying inputs: sigma_gamma mu_gamma theta
   SUBROUTINE COMPUTE_LOGPRIOR_B(theta, theta_b, theta_prior, mu_gamma, &
@@ -441,7 +441,7 @@ CONTAINS
     isnull = .false.
   END SUBROUTINE COMPUTE_LOGH
 
-!  Differentiation of compute_logpost in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logpost in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: logpost
 !   with respect to varying inputs: sigma_gamma mu_gamma theta
 !                sim
@@ -493,7 +493,7 @@ CONTAINS
     END IF
   END SUBROUTINE COMPUTE_LOGPOST_D
 
-!  Differentiation of compute_logpost in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logpost in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: logpost
 !   with respect to varying inputs: sigma_gamma mu_gamma theta
 !                sim
@@ -592,7 +592,7 @@ CONTAINS
     END IF
   END SUBROUTINE COMPUTE_LOGPOST
 
-!  Differentiation of compute_logprior_engine in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logprior_engine in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: logprior
 !   with respect to varying inputs: x
   SUBROUTINE COMPUTE_LOGPRIOR_ENGINE_D(x, x_d, x_prior, logprior, &
@@ -634,7 +634,7 @@ CONTAINS
     END IF
   END SUBROUTINE COMPUTE_LOGPRIOR_ENGINE_D
 
-!  Differentiation of compute_logprior_engine in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_logprior_engine in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: x logprior
 !   with respect to varying inputs: x
   SUBROUTINE COMPUTE_LOGPRIOR_ENGINE_B(x, x_b, x_prior, logprior, &
@@ -929,7 +929,7 @@ CONTAINS
     END IF
   END SUBROUTINE GETPARFEAS
 
-!  Differentiation of getpdf in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of getpdf in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: pdf
 !   with respect to varying inputs: x
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1048,7 +1048,7 @@ CONTAINS
     END IF
   END SUBROUTINE GETPDF_D
 
-!  Differentiation of getpdf in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of getpdf in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: x pdf
 !   with respect to varying inputs: x
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1286,7 +1286,7 @@ CONTAINS
     END IF
   END SUBROUTINE GETPDF
 
-!  Differentiation of sigmafunk_apply in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of sigmafunk_apply in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y par
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1413,7 +1413,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE SIGMAFUNK_APPLY_D
 
-!  Differentiation of sigmafunk_apply in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of sigmafunk_apply in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y par
 !   with respect to varying inputs: y par
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1651,7 +1651,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE SIGMAFUNK_APPLY
 
-!  Differentiation of mufunk_apply in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of mufunk_apply in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y par
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1708,7 +1708,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE MUFUNK_APPLY_D
 
-!  Differentiation of mufunk_apply in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of mufunk_apply in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y par
 !   with respect to varying inputs: y par
 !%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -2855,7 +2855,7 @@ MODULE MWD_METRICS_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of nse in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of nse in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION NSE_D(x, y, y_d, res) RESULT (RES_D)
@@ -2897,7 +2897,7 @@ CONTAINS
     res = 1._sp - num/den
   END FUNCTION NSE_D
 
-!  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of nse in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE NSE_B(x, y, y_b, res_b)
@@ -2972,7 +2972,7 @@ CONTAINS
     res = 1._sp - num/den
   END FUNCTION NSE
 
-!  Differentiation of nnse in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of nnse in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION NNSE_D(x, y, y_d, res) RESULT (RES_D)
@@ -2988,7 +2988,7 @@ CONTAINS
     res = 1._sp/(2._sp-result1)
   END FUNCTION NNSE_D
 
-!  Differentiation of nnse in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of nnse in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE NNSE_B(x, y, y_b, res_b)
@@ -3013,7 +3013,7 @@ CONTAINS
     res = 1._sp/(2._sp-result1)
   END FUNCTION NNSE
 
-!  Differentiation of kge_components in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of kge_components in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: r a b
 !   with respect to varying inputs: y
   SUBROUTINE KGE_COMPONENTS_D(x, y, y_d, r, r_d, a, a_d, b, b_d)
@@ -3090,7 +3090,7 @@ CONTAINS
     b = mean_y/mean_x
   END SUBROUTINE KGE_COMPONENTS_D
 
-!  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of kge_components in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: r y a b
 !   with respect to varying inputs: y
   SUBROUTINE KGE_COMPONENTS_B(x, y, y_b, r, r_b, a, a_b, b, b_b)
@@ -3210,7 +3210,7 @@ CONTAINS
     b = mean_y/mean_x
   END SUBROUTINE KGE_COMPONENTS
 
-!  Differentiation of kge in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of kge in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION KGE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3243,7 +3243,7 @@ CONTAINS
     res = 1._sp - result1
   END FUNCTION KGE_D
 
-!  Differentiation of kge in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of kge in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE KGE_B(x, y, y_b, res_b)
@@ -3293,7 +3293,7 @@ CONTAINS
     res = 1._sp - result1
   END FUNCTION KGE
 
-!  Differentiation of mae in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of mae in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION MAE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3328,7 +3328,7 @@ CONTAINS
     res = res/n
   END FUNCTION MAE_D
 
-!  Differentiation of mae in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of mae in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE MAE_B(x, y, y_b, res_b)
@@ -3399,7 +3399,7 @@ CONTAINS
     res = res/n
   END FUNCTION MAE
 
-!  Differentiation of mape in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of mape in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION MAPE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3434,7 +3434,7 @@ CONTAINS
     res = res/n
   END FUNCTION MAPE_D
 
-!  Differentiation of mape in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of mape in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE MAPE_B(x, y, y_b, res_b)
@@ -3505,7 +3505,7 @@ CONTAINS
     res = res/n
   END FUNCTION MAPE
 
-!  Differentiation of se in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of se in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION SE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3526,7 +3526,7 @@ CONTAINS
     END DO
   END FUNCTION SE_D
 
-!  Differentiation of se in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of se in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE SE_B(x, y, y_b, res_b)
@@ -3565,7 +3565,7 @@ CONTAINS
     END DO
   END FUNCTION SE
 
-!  Differentiation of mse in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of mse in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION MSE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3587,7 +3587,7 @@ CONTAINS
     res = result1/n
   END FUNCTION MSE_D
 
-!  Differentiation of mse in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of mse in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE MSE_B(x, y, y_b, res_b0)
@@ -3639,7 +3639,7 @@ CONTAINS
     res = result1/n
   END FUNCTION MSE
 
-!  Differentiation of rmse in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of rmse in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION RMSE_D(x, y, y_d, res) RESULT (RES_D)
@@ -3662,7 +3662,7 @@ CONTAINS
     res = temp
   END FUNCTION RMSE_D
 
-!  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of rmse in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE RMSE_B(x, y, y_b, res_b)
@@ -3693,7 +3693,7 @@ CONTAINS
     res = SQRT(result1)
   END FUNCTION RMSE
 
-!  Differentiation of lgrm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of lgrm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: y
   FUNCTION LGRM_D(x, y, y_d, res) RESULT (RES_D)
@@ -3727,7 +3727,7 @@ CONTAINS
     END DO
   END FUNCTION LGRM_D
 
-!  Differentiation of lgrm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of lgrm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res y
 !   with respect to varying inputs: y
   SUBROUTINE LGRM_B(x, y, y_b, res_b)
@@ -3828,7 +3828,7 @@ MODULE MD_STATS_DIFF
 
 
 CONTAINS
-!  Differentiation of heap_sort in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of heap_sort in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: arr
 !   with respect to varying inputs: arr
   SUBROUTINE HEAP_SORT_D(n, arr, arr_d)
@@ -3876,7 +3876,7 @@ CONTAINS
     arr(1) = arr_l
   END SUBROUTINE HEAP_SORT_D
 
-!  Differentiation of heap_sort in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of heap_sort in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: arr
 !   with respect to varying inputs: arr
   SUBROUTINE HEAP_SORT_B(n, arr, arr_b)
@@ -4028,7 +4028,7 @@ CONTAINS
     END IF
   END SUBROUTINE HEAP_SORT
 
-!  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: dat
   FUNCTION QUANTILE1D_R_SCL_D(dat, dat_d, p, res) RESULT (RES_D)
@@ -4073,7 +4073,7 @@ CONTAINS
     END IF
   END FUNCTION QUANTILE1D_R_SCL_D
 
-!  Differentiation of quantile1d_r_scl in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of quantile1d_r_scl in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res
 !   with respect to varying inputs: dat
   SUBROUTINE QUANTILE1D_R_SCL_B(dat, dat_b, p, res_b)
@@ -4211,7 +4211,7 @@ MODULE MWD_SIGNATURES_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of baseflow_separation in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of baseflow_separation in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: bt qft
 !   with respect to varying inputs: streamflow
   SUBROUTINE BASEFLOW_SEPARATION_D(streamflow, streamflow_d, bt, bt_d, &
@@ -4298,7 +4298,7 @@ CONTAINS
     END DO
   END SUBROUTINE BASEFLOW_SEPARATION_D
 
-!  Differentiation of baseflow_separation in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of baseflow_separation in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: streamflow bt qft
 !   with respect to varying inputs: streamflow
   SUBROUTINE BASEFLOW_SEPARATION_B(streamflow, streamflow_b, bt, bt_b, &
@@ -4495,7 +4495,7 @@ CONTAINS
     END DO
   END SUBROUTINE BASEFLOW_SEPARATION
 
-!  Differentiation of rc in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of rc in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION RC_D(p, q, q_d, res) RESULT (RES_D)
@@ -4528,7 +4528,7 @@ CONTAINS
     END IF
   END FUNCTION RC_D
 
-!  Differentiation of rc in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of rc in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE RC_B(p, q, q_b, res_b)
@@ -4583,7 +4583,7 @@ CONTAINS
     IF (denom .GT. 0._sp) res = numer/denom
   END FUNCTION RC
 
-!  Differentiation of rchf in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of rchf in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION RCHF_D(p, q, q_d, res) RESULT (RES_D)
@@ -4635,7 +4635,7 @@ CONTAINS
     END IF
   END FUNCTION RCHF_D
 
-!  Differentiation of rchf in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of rchf in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE RCHF_B(p, q, q_b, res_b)
@@ -4735,7 +4735,7 @@ CONTAINS
     END IF
   END FUNCTION RCHF
 
-!  Differentiation of rclf in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of rclf in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION RCLF_D(p, q, q_d, res) RESULT (RES_D)
@@ -4787,7 +4787,7 @@ CONTAINS
     END IF
   END FUNCTION RCLF_D
 
-!  Differentiation of rclf in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of rclf in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE RCLF_B(p, q, q_b, res_b)
@@ -4887,7 +4887,7 @@ CONTAINS
     END IF
   END FUNCTION RCLF
 
-!  Differentiation of rch2r in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of rch2r in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION RCH2R_D(p, q, q_d, res) RESULT (RES_D)
@@ -4939,7 +4939,7 @@ CONTAINS
     END IF
   END FUNCTION RCH2R_D
 
-!  Differentiation of rch2r in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of rch2r in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE RCH2R_B(p, q, q_b, res_b)
@@ -5042,7 +5042,7 @@ CONTAINS
     END IF
   END FUNCTION RCH2R
 
-!  Differentiation of cfp in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of cfp in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION CFP_D(q, q_d, quant, res) RESULT (RES_D)
@@ -5075,7 +5075,7 @@ CONTAINS
     END IF
   END FUNCTION CFP_D
 
-!  Differentiation of cfp in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of cfp in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE CFP_B(q, q_b, quant, res_b0)
@@ -5143,7 +5143,7 @@ CONTAINS
     IF (j .GT. 1) res = QUANTILE1D_R(nonnegative_q(1:j), quant)
   END FUNCTION CFP
 
-!  Differentiation of eff in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of eff in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION EFF_D(q, q_d, res) RESULT (RES_D)
@@ -5180,7 +5180,7 @@ CONTAINS
     END IF
   END FUNCTION EFF_D
 
-!  Differentiation of eff in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of eff in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE EFF_B(q, q_b, res_b)
@@ -5258,7 +5258,7 @@ CONTAINS
     END IF
   END FUNCTION EFF
 
-!  Differentiation of ebf in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of ebf in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION EBF_D(q, q_d, res) RESULT (RES_D)
@@ -5295,7 +5295,7 @@ CONTAINS
     END IF
   END FUNCTION EBF_D
 
-!  Differentiation of ebf in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of ebf in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE EBF_B(q, q_b, res_b)
@@ -5373,7 +5373,7 @@ CONTAINS
     END IF
   END FUNCTION EBF
 
-!  Differentiation of epf in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of epf in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: q
   FUNCTION EPF_D(q, q_d, res) RESULT (RES_D)
@@ -5395,7 +5395,7 @@ CONTAINS
     END DO
   END FUNCTION EPF_D
 
-!  Differentiation of epf in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of epf in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res q
 !   with respect to varying inputs: q
   SUBROUTINE EPF_B(q, q_b, res_b)
@@ -5752,7 +5752,7 @@ CONTAINS
     CALL INV_SIGMOIDE(xw, res)
   END SUBROUTINE INV_SCALED_SIGMOID
 
-!  Differentiation of sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: x
   SUBROUTINE SIGMOIDE2D_D(x, x_d, res, res_d)
@@ -5768,7 +5768,7 @@ CONTAINS
     res = temp
   END SUBROUTINE SIGMOIDE2D_D
 
-!  Differentiation of sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res
 !   with respect to varying inputs: x
   SUBROUTINE SIGMOIDE2D_B(x, x_b, res, res_b)
@@ -5792,7 +5792,7 @@ CONTAINS
     res = 1._sp/(1._sp+EXP(-x))
   END SUBROUTINE SIGMOIDE2D
 
-!  Differentiation of scaled_sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of scaled_sigmoide2d in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: x
   SUBROUTINE SCALED_SIGMOIDE2D_D(x, x_d, l, u, res, res_d)
@@ -5807,7 +5807,7 @@ CONTAINS
     res = res*(u-l) + l
   END SUBROUTINE SCALED_SIGMOIDE2D_D
 
-!  Differentiation of scaled_sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of scaled_sigmoide2d in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res
 !   with respect to varying inputs: x
   SUBROUTINE SCALED_SIGMOIDE2D_B(x, x_b, l, u, res, res_b)
@@ -5833,7 +5833,7 @@ CONTAINS
     res = res*(u-l) + l
   END SUBROUTINE SCALED_SIGMOIDE2D
 
-!  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of sbs_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -5872,7 +5872,7 @@ CONTAINS
     END DO
   END SUBROUTINE SBS_CONTROL_TFM_D
 
-!  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of sbs_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -5968,7 +5968,7 @@ CONTAINS
     END DO
   END SUBROUTINE SBS_CONTROL_TFM
 
-!  Differentiation of sbs_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of sbs_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
@@ -6010,7 +6010,7 @@ CONTAINS
     END DO
   END SUBROUTINE SBS_INV_CONTROL_TFM_D
 
-!  Differentiation of sbs_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of sbs_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
@@ -6101,7 +6101,7 @@ CONTAINS
     parameters%control%u = parameters%control%u_bkg
   END SUBROUTINE SBS_INV_CONTROL_TFM
 
-!  Differentiation of normalize_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of normalize_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -6120,7 +6120,7 @@ CONTAINS
     END WHERE
   END SUBROUTINE NORMALIZE_CONTROL_TFM_D
 
-!  Differentiation of normalize_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of normalize_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -6149,7 +6149,7 @@ CONTAINS
     END WHERE
   END SUBROUTINE NORMALIZE_CONTROL_TFM
 
-!  Differentiation of normalize_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of normalize_inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
@@ -6169,7 +6169,7 @@ CONTAINS
     END WHERE
   END SUBROUTINE NORMALIZE_INV_CONTROL_TFM_D
 
-!  Differentiation of normalize_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of normalize_inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l_bkg:in
@@ -6199,7 +6199,7 @@ CONTAINS
     END WHERE
   END SUBROUTINE NORMALIZE_INV_CONTROL_TFM
 
-!  Differentiation of control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
@@ -6218,7 +6218,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE CONTROL_TFM_D
 
-!  Differentiation of control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
@@ -6259,7 +6259,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE CONTROL_TFM
 
-!  Differentiation of inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of inv_control_tfm in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
@@ -6278,7 +6278,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE INV_CONTROL_TFM_D
 
-!  Differentiation of inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of inv_control_tfm in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.control.l:in
@@ -6919,8 +6919,8 @@ CONTAINS
     parameters%control%u_bkg = parameters%control%u
   END SUBROUTINE FILL_CONTROL
 
-!  Differentiation of uniform_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of uniform_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -6950,8 +6950,8 @@ CONTAINS
     END DO
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of uniform_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of uniform_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7012,7 +7012,7 @@ CONTAINS
   END SUBROUTINE UNIFORM_RR_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of uniform_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE cont
-!ext):
+!ext OpenMP):
 !   variations   of useful results: *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7043,7 +7043,7 @@ CONTAINS
   END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
 !  Differentiation of uniform_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE cont
-!ext):
+!ext OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7104,7 +7104,7 @@ CONTAINS
   END SUBROUTINE UNIFORM_RR_INITIAL_STATES_FILL_PARAMETERS
 
 !  Differentiation of distributed_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE cont
-!ext):
+!ext OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7137,7 +7137,7 @@ CONTAINS
   END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS_D
 
 !  Differentiation of distributed_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE cont
-!ext):
+!ext OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7215,7 +7215,7 @@ CONTAINS
   END SUBROUTINE DISTRIBUTED_RR_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of distributed_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE 
-!context):
+!context OpenMP):
 !   variations   of useful results: *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7248,7 +7248,7 @@ CONTAINS
   END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
 !  Differentiation of distributed_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE 
-!context):
+!context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7326,7 +7326,7 @@ CONTAINS
   END SUBROUTINE DISTRIBUTED_RR_INITIAL_STATES_FILL_PARAMETERS
 
 !  Differentiation of multi_linear_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE con
-!text):
+!text OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7372,7 +7372,7 @@ CONTAINS
   END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS_D
 
 !  Differentiation of multi_linear_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE con
-!text):
+!text OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7494,7 +7494,7 @@ CONTAINS
   END SUBROUTINE MULTI_LINEAR_RR_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of multi_linear_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
-! context):
+! context OpenMP):
 !   variations   of useful results: *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7541,7 +7541,7 @@ CONTAINS
   END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
 !  Differentiation of multi_linear_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
-! context):
+! context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7664,7 +7664,7 @@ CONTAINS
   END SUBROUTINE MULTI_LINEAR_RR_INITIAL_STATES_FILL_PARAMETERS
 
 !  Differentiation of multi_polynomial_rr_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE
-! context):
+! context OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7720,7 +7720,7 @@ CONTAINS
   END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS_D
 
 !  Differentiation of multi_polynomial_rr_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE
-! context):
+! context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_parameters.values:in
@@ -7849,7 +7849,7 @@ CONTAINS
   END SUBROUTINE MULTI_POLYNOMIAL_RR_PARAMETERS_FILL_PARAMETERS
 
 !  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in forward (tangent) mode (with options fixinterface noI
-!SIZE context):
+!SIZE context OpenMP):
 !   variations   of useful results: *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -7906,7 +7906,7 @@ CONTAINS
   END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS_D
 
 !  Differentiation of multi_polynomial_rr_initial_states_fill_parameters in reverse (adjoint) mode (with options fixinterface noI
-!SIZE context):
+!SIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.control.x:in parameters.rr_initial_states.values:in
@@ -8035,7 +8035,8 @@ CONTAINS
     END DO
   END SUBROUTINE MULTI_POLYNOMIAL_RR_INITIAL_STATES_FILL_PARAMETERS
 
-!  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of serr_mu_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context Ope
+!nMP):
 !   variations   of useful results: *(parameters.serr_mu_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
@@ -8067,7 +8068,8 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of serr_mu_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of serr_mu_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context Ope
+!nMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.serr_mu_parameters.values:in
@@ -8140,8 +8142,8 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_MU_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of serr_sigma_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of serr_sigma_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   variations   of useful results: *(parameters.serr_sigma_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
@@ -8173,8 +8175,8 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of serr_sigma_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of serr_sigma_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.serr_sigma_parameters.values)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in parameters.serr_sigma_parameters.values:in
@@ -8247,7 +8249,7 @@ CONTAINS
     END DO
   END SUBROUTINE SERR_SIGMA_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of nn_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of nn_parameters_fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(*(parameters.nn_parameters.layers).weight)
 !                *(*(parameters.nn_parameters.layers).bias)
 !   with respect to varying inputs: *(parameters.control.x)
@@ -8290,7 +8292,7 @@ CONTAINS
     END DO
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS_D
 
-!  Differentiation of nn_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of nn_parameters_fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(*(parameters.nn_parameters.layers).weight)
 !                *(*(parameters.nn_parameters.layers).bias)
 !   with respect to varying inputs: *(parameters.control.x)
@@ -8369,7 +8371,7 @@ CONTAINS
     END DO
   END SUBROUTINE NN_PARAMETERS_FILL_PARAMETERS
 
-!  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of fill_parameters in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(*(parameters.nn_parameters.layers).weight)
@@ -8437,7 +8439,7 @@ CONTAINS
 &                                 )
   END SUBROUTINE FILL_PARAMETERS_D
 
-!  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of fill_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(*(parameters.nn_parameters.layers).weight)
@@ -8690,7 +8692,7 @@ CONTAINS
     CALL CONTROL_TFM(parameters, options)
   END SUBROUTINE PARAMETERS_TO_CONTROL
 
-!  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of control_to_parameters in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(*(parameters.nn_parameters.layers).weight)
@@ -8730,7 +8732,7 @@ CONTAINS
     END IF
   END SUBROUTINE CONTROL_TO_PARAMETERS_D
 
-!  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of control_to_parameters in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(*(parameters.nn_parameters.layers).weight)
@@ -8849,7 +8851,7 @@ MODULE MD_REGULARIZATION_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of prior_regularization in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of prior_regularization in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -8870,7 +8872,7 @@ CONTAINS
     res = SUM(dbkg*dbkg)
   END FUNCTION PRIOR_REGULARIZATION_D
 
-!  Differentiation of prior_regularization in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of prior_regularization in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res *(parameters.control.x)
 !   with respect to varying inputs: *(parameters.control.x)
 !   Plus diff mem management of: parameters.control.x:in
@@ -8902,8 +8904,8 @@ CONTAINS
     res = SUM(dbkg*dbkg)
   END FUNCTION PRIOR_REGULARIZATION
 
-!  Differentiation of smoothing_regularization_spatial_loop in forward (tangent) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of smoothing_regularization_spatial_loop in forward (tangent) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   variations   of useful results: res
 !   with respect to varying inputs: matrix
   FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D(mesh, matrix, &
@@ -8959,8 +8961,8 @@ CONTAINS
     END DO
   END FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP_D
 
-!  Differentiation of smoothing_regularization_spatial_loop in reverse (adjoint) mode (with options fixinterface noISIZE context)
-!:
+!  Differentiation of smoothing_regularization_spatial_loop in reverse (adjoint) mode (with options fixinterface noISIZE context 
+!OpenMP):
 !   gradient     of useful results: res
 !   with respect to varying inputs: matrix
   SUBROUTINE SMOOTHING_REGULARIZATION_SPATIAL_LOOP_B(mesh, matrix, &
@@ -9115,7 +9117,7 @@ CONTAINS
     END DO
   END FUNCTION SMOOTHING_REGULARIZATION_SPATIAL_LOOP
 
-!  Differentiation of smoothing_regularization in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of smoothing_regularization in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res *(parameters.control.x)
 !                *(parameters.rr_parameters.values) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
@@ -9193,7 +9195,7 @@ CONTAINS
     END DO
   END FUNCTION SMOOTHING_REGULARIZATION_D
 
-!  Differentiation of smoothing_regularization in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of smoothing_regularization in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: res *(parameters.control.x)
 !                *(parameters.rr_parameters.values) *(parameters.rr_initial_states.values)
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
@@ -9504,7 +9506,7 @@ CONTAINS
  110 CONTINUE
   END FUNCTION GET_RANGE_EVENT
 
-!  Differentiation of discharge_tranformation in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of discharge_tranformation in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qs
 !   with respect to varying inputs: qs
   SUBROUTINE DISCHARGE_TRANFORMATION_D(tfm, qo, qs, qs_d)
@@ -9544,7 +9546,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE DISCHARGE_TRANFORMATION_D
 
-!  Differentiation of discharge_tranformation in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of discharge_tranformation in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: qs
 !   with respect to varying inputs: qs
   SUBROUTINE DISCHARGE_TRANFORMATION_B(tfm, qo, qs, qs_b)
@@ -9600,7 +9602,7 @@ CONTAINS
     END SELECT
   END SUBROUTINE DISCHARGE_TRANFORMATION
 
-!  Differentiation of bayesian_compute_cost in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of bayesian_compute_cost in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
@@ -9699,7 +9701,7 @@ CONTAINS
     output_d%cost = -(REAL(log_post_d, sp)/temp)
   END SUBROUTINE BAYESIAN_COMPUTE_COST_D
 
-!  Differentiation of bayesian_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of bayesian_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.serr_mu_parameters.values)
 !                *(parameters.serr_sigma_parameters.values) *(output.response.q)
@@ -9890,7 +9892,7 @@ CONTAINS
     output%cost = -(1._sp*REAL(log_post, sp)/SIZE(obs))
   END SUBROUTINE BAYESIAN_COMPUTE_COST
 
-!  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_jobs in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: jobs
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
@@ -10263,7 +10265,7 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JOBS_D
 
-!  Differentiation of classical_compute_jobs in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_jobs in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: jobs
 !   with respect to varying inputs: *(output.response.q)
 !   Plus diff mem management of: output.response.q:in
@@ -11364,7 +11366,7 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JOBS
 
-!  Differentiation of classical_compute_jreg in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_jreg in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: jreg
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
@@ -11421,7 +11423,7 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG_D
 
-!  Differentiation of classical_compute_jreg in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_jreg in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: jreg
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
@@ -11627,7 +11629,7 @@ CONTAINS
     END IF
   END SUBROUTINE CLASSICAL_COMPUTE_JREG
 
-!  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_cost in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
@@ -11662,7 +11664,7 @@ CONTAINS
     output_d%cost = jobs_d + options%cost%wjreg*jreg_d
   END SUBROUTINE CLASSICAL_COMPUTE_COST_D
 
-!  Differentiation of classical_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of classical_compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
@@ -11761,7 +11763,7 @@ CONTAINS
     output%cost = jobs + options%cost%wjreg*jreg
   END SUBROUTINE CLASSICAL_COMPUTE_COST
 
-!  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_cost in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
@@ -11797,7 +11799,7 @@ CONTAINS
     END IF
   END SUBROUTINE COMPUTE_COST_D
 
-!  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of compute_cost in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x) *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(parameters.serr_mu_parameters.values)
@@ -11973,7 +11975,7 @@ CONTAINS
     END DO
   END SUBROUTINE COMPUTE_ROWCOL_TO_IND_AC
 
-!  Differentiation of matrix_to_ac_vector in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of matrix_to_ac_vector in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_vector
 !   with respect to varying inputs: ac_vector matrix
   SUBROUTINE MATRIX_TO_AC_VECTOR_D(mesh, matrix, matrix_d, ac_vector, &
@@ -11996,7 +11998,7 @@ CONTAINS
     END DO
   END SUBROUTINE MATRIX_TO_AC_VECTOR_D
 
-!  Differentiation of matrix_to_ac_vector in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of matrix_to_ac_vector in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_vector matrix
 !   with respect to varying inputs: ac_vector matrix
   SUBROUTINE MATRIX_TO_AC_VECTOR_B(mesh, matrix, matrix_b, ac_vector, &
@@ -12424,7 +12426,7 @@ MODULE MD_ALGEBRA_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of solve_linear_system_2vars in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of solve_linear_system_2vars in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: x
 !   with respect to varying inputs: x a b
   SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_D(a, a_d, x, x_d, b, b_d)
@@ -12463,7 +12465,7 @@ CONTAINS
     END IF
   END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_D
 
-!  Differentiation of solve_linear_system_2vars in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of solve_linear_system_2vars in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: x a b
 !   with respect to varying inputs: x a b
   SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS_B(a, a_b, x, x_b, b, b_b)
@@ -12533,7 +12535,7 @@ CONTAINS
     END IF
   END SUBROUTINE SOLVE_LINEAR_SYSTEM_2VARS
 
-!  Differentiation of dot_product_2d_1d in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of dot_product_2d_1d in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: b
 !   with respect to varying inputs: x a
   SUBROUTINE DOT_PRODUCT_2D_1D_D(a, a_d, x, x_d, b, b_d)
@@ -12556,7 +12558,7 @@ CONTAINS
     END DO
   END SUBROUTINE DOT_PRODUCT_2D_1D_D
 
-!  Differentiation of dot_product_2d_1d in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of dot_product_2d_1d in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: x a b
 !   with respect to varying inputs: x a
   SUBROUTINE DOT_PRODUCT_2D_1D_B(a, a_b, x, x_b, b, b_b)
@@ -12581,6 +12583,7 @@ CONTAINS
     DO j=ad_to0,1,-1
       CALL POPINTEGER4(ad_to)
       DO i=ad_to,1,-1
+!$OMP   ATOMIC update
         a_b(i, j) = a_b(i, j) + x(j)*b_b(i)
         x_b(j) = x_b(j) + a(i, j)*b_b(i)
       END DO
@@ -12620,7 +12623,7 @@ MODULE MD_NEURAL_NETWORK_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of forward_mlp in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of forward_mlp in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: output_layer
 !   with respect to varying inputs: input_layer *(layers.weight)
 !                *(layers.bias)
@@ -12682,7 +12685,7 @@ CONTAINS
     END DO
   END SUBROUTINE FORWARD_MLP_D
 
-!  Differentiation of forward_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of forward_mlp in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: output_layer *(layers.weight)
 !                *(layers.bias)
 !   with respect to varying inputs: input_layer *(layers.weight)
@@ -12771,6 +12774,7 @@ CONTAINS
             f_out_b(j) = 0.01_sp*f_out_b(j)
           END IF
         END IF
+!$OMP   ATOMIC update
         layers_b(i)%bias(j) = layers_b(i)%bias(j) + f_out_b(j)
       END DO
       CALL DOT_PRODUCT_2D_1D_B(layers(i)%weight, layers_b(i)%weight, &
@@ -12867,7 +12871,7 @@ MODULE MD_GR_OPERATOR_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of gr_interception in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_interception in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hi en pn
 !   with respect to varying inputs: prcp hi ci
   SUBROUTINE GR_INTERCEPTION_D(prcp, prcp_d, pet, ci, ci_d, hi, hi_d, pn&
@@ -12905,7 +12909,7 @@ CONTAINS
     hi = hi + temp
   END SUBROUTINE GR_INTERCEPTION_D
 
-!  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_interception in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: prcp hi en ci pn
 !   with respect to varying inputs: prcp hi ci
   SUBROUTINE GR_INTERCEPTION_B(prcp, prcp_b, pet, ci, ci_b, hi, hi_b, pn&
@@ -12940,15 +12944,21 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     temp_b = hi_b/ci
+!$OMP ATOMIC update
     prcp_b = prcp_b + temp_b
     ei_b = -temp_b - en_b
+!$OMP ATOMIC update
     pn_b = pn_b - temp_b
+!$OMP ATOMIC update
     ci_b = ci_b - (prcp-ei-pn)*temp_b/ci
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(pn)
+!$OMP ATOMIC update
       prcp_b = prcp_b + pn_b
+!$OMP ATOMIC update
       ci_b = ci_b - (1._sp-hi)*pn_b
+!$OMP ATOMIC update
       hi_b = hi_b + ci*pn_b
       ei_b = ei_b - pn_b
     ELSE
@@ -12956,8 +12966,11 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       prcp_b = prcp_b + ei_b
+!$OMP ATOMIC update
       hi_b = hi_b + ci*ei_b
+!$OMP ATOMIC update
       ci_b = ci_b + hi*ei_b
     END IF
   END SUBROUTINE GR_INTERCEPTION_B
@@ -12984,7 +12997,7 @@ CONTAINS
     hi = hi + (prcp-ei-pn)/ci
   END SUBROUTINE GR_INTERCEPTION
 
-!  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hp perc pr
 !   with respect to varying inputs: hp en cp pn
   SUBROUTINE GR_PRODUCTION_D(pn, pn_d, en, en_d, cp, cp_d, beta, hp, &
@@ -13045,7 +13058,7 @@ CONTAINS
     hp = hp_imd - perc*inv_cp
   END SUBROUTINE GR_PRODUCTION_D
 
-!  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: hp cp perc pr
 !   with respect to varying inputs: hp en cp pn
   SUBROUTINE GR_PRODUCTION_B(pn, pn_b, en, en_b, cp, cp_b, beta, hp, &
@@ -13096,6 +13109,7 @@ CONTAINS
     inv_cp = 1._sp/cp
     perc_b = perc_b - inv_cp*hp_b
     inv_cp_b = -(perc*hp_b)
+!$OMP ATOMIC update
     cp_b = cp_b + hp_imd*(1._sp-pwr1)*perc_b
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
@@ -13106,6 +13120,7 @@ CONTAINS
       pn_b = pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
+!$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
@@ -13119,12 +13134,14 @@ CONTAINS
     temp_b3 = es_b/temp3
     temp_b = (2._sp-hp)*temp1*temp_b3
     temp_b0 = -(temp0*temp1*temp_b3/temp3)
+!$OMP ATOMIC update
     hp_b = hp_b + hp_imd_b + cp*temp_b - hp*cp*temp1*temp_b3 - temp4*&
 &     temp_b0
     ps_b = inv_cp*hp_imd_b
     temp_b4 = (1.0-TANH(en*inv_cp)**2)*temp0*temp_b3
     temp_b5 = (1.0-TANH(en*inv_cp)**2)*(1._sp-hp)*temp_b0
     en_b = inv_cp*temp_b5 + inv_cp*temp_b4
+!$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b
     temp = TANH(pn*inv_cp)
     temp0 = hp*temp + 1._sp
@@ -13133,10 +13150,12 @@ CONTAINS
     temp_b = ps_b/temp0
     temp_b0 = (1.0-TANH(pn*inv_cp)**2)*temp2*temp_b
     temp_b1 = -(temp2*temp1*temp_b/temp0)
+!$OMP ATOMIC update
     hp_b = hp_b + temp*temp_b1 - 2*hp*cp*temp1*temp_b
     temp_b2 = (1.0-TANH(pn*inv_cp)**2)*hp*temp_b1
     inv_cp_b = inv_cp_b + (ps-es)*hp_imd_b + en*temp_b5 + en*temp_b4 + &
 &     pn*temp_b2 + pn*temp_b0
+!$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp1*temp_b - inv_cp_b/cp**2
     pn_b = pn_b + inv_cp*temp_b2 + inv_cp*temp_b0
   END SUBROUTINE GR_PRODUCTION_B
@@ -13163,7 +13182,7 @@ CONTAINS
     hp = hp_imd - perc*inv_cp
   END SUBROUTINE GR_PRODUCTION
 
-!  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_exchange in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: l
 !   with respect to varying inputs: kexc ht
   SUBROUTINE GR_EXCHANGE_D(kexc, kexc_d, ht, ht_d, l, l_d)
@@ -13180,7 +13199,7 @@ CONTAINS
     l = kexc*temp
   END SUBROUTINE GR_EXCHANGE_D
 
-!  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: l kexc ht
 !   with respect to varying inputs: kexc ht
   SUBROUTINE GR_EXCHANGE_B(kexc, kexc_b, ht, ht_b, l, l_b)
@@ -13191,7 +13210,9 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*l_b
+!$OMP ATOMIC update
     ht_b = ht_b + 3.5_sp*ht**2.5*kexc*l_b
   END SUBROUTINE GR_EXCHANGE_B
 
@@ -13203,7 +13224,7 @@ CONTAINS
     l = kexc*ht**3.5_sp
   END SUBROUTINE GR_EXCHANGE
 
-!  Differentiation of gr_threshold_exchange in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_threshold_exchange in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: l
 !   with respect to varying inputs: aexc kexc ht
   SUBROUTINE GR_THRESHOLD_EXCHANGE_D(kexc, kexc_d, aexc, aexc_d, ht, &
@@ -13219,7 +13240,7 @@ CONTAINS
     l = kexc*(ht-aexc)
   END SUBROUTINE GR_THRESHOLD_EXCHANGE_D
 
-!  Differentiation of gr_threshold_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_threshold_exchange in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: aexc l kexc ht
 !   with respect to varying inputs: aexc kexc ht
   SUBROUTINE GR_THRESHOLD_EXCHANGE_B(kexc, kexc_b, aexc, aexc_b, ht, &
@@ -13231,7 +13252,9 @@ CONTAINS
     REAL(sp), INTENT(INOUT) :: ht_b
     REAL(sp) :: l
     REAL(sp) :: l_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + (ht-aexc)*l_b
+!$OMP ATOMIC update
     ht_b = ht_b + kexc*l_b
     aexc_b = aexc_b - kexc*l_b
   END SUBROUTINE GR_THRESHOLD_EXCHANGE_B
@@ -13244,7 +13267,7 @@ CONTAINS
     l = kexc*(ht-aexc)
   END SUBROUTINE GR_THRESHOLD_EXCHANGE
 
-!  Differentiation of gr_transfer in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_transfer in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: q ht
 !   with respect to varying inputs: ht ct pr
   SUBROUTINE GR_TRANSFER_D(n, prcp, pr, pr_d, ct, ct_d, ht, ht_d, q, q_d&
@@ -13349,7 +13372,7 @@ CONTAINS
     q = (ht_imd-ht)*ct
   END SUBROUTINE GR_TRANSFER_D
 
-!  Differentiation of gr_transfer in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_transfer in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: q ht ct
 !   with respect to varying inputs: ht ct pr
   SUBROUTINE GR_TRANSFER_B(n, prcp, pr, pr_b, ct, ct_b, ht, ht_b, q, q_b&
@@ -13423,6 +13446,7 @@ CONTAINS
     pwy2 = -nm1
     d1pnm1 = 1._sp/nm1
     pwy3 = -d1pnm1
+!$OMP ATOMIC update
     ht_b = ht_b - ct*q_b
     pwr3_b = ht_b/ct
     IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
@@ -13441,8 +13465,10 @@ CONTAINS
     END IF
     ht_imd_b = ct*q_b + ct*pwx1_b
     IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
+!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
     ELSE
+!$OMP ATOMIC update
       ct_b = ct_b + (ht_imd-ht)*q_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*&
 &       ht_b/ct**2 + ht_imd*pwx1_b
     END IF
@@ -13456,6 +13482,7 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ht_b = ht_imd_b
       pr_imd_b = ht_imd_b/ct
+!$OMP ATOMIC update
       ct_b = ct_b - pr_imd*ht_imd_b/ct**2
     ELSE
       ht_b = 0.0_4
@@ -13480,11 +13507,14 @@ CONTAINS
       ELSE
         pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
       END IF
+!$OMP ATOMIC update
       ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
       IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
 &     THEN
+!$OMP   ATOMIC update
         ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
       ELSE
+!$OMP   ATOMIC update
         ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
       END IF
       pr_b = 0.0_4
@@ -13538,7 +13568,8 @@ CONTAINS
     q = (ht_imd-ht)*ct
   END SUBROUTINE GR_TRANSFER
 
-!  Differentiation of gr_production_transfer_mlp_alg in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_mlp_alg in forward (tangent) mode (with options fixinterface noISIZE context OpenMP)
+!:
 !   variations   of useful results: q hp ht
 !   with respect to varying inputs: kexc hp ht en *(layers.weight)
 !                *(layers.bias) cp pn ct
@@ -13734,7 +13765,8 @@ CONTAINS
     q = (ht_imd-ht)*ct + max1
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_D
 
-!  Differentiation of gr_production_transfer_mlp_alg in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_mlp_alg in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP)
+!:
 !   gradient     of useful results: q kexc hp ht *(layers.weight)
 !                *(layers.bias) cp ct
 !   with respect to varying inputs: kexc hp ht en *(layers.weight)
@@ -13866,7 +13898,9 @@ CONTAINS
     d1pnm1 = 1._sp/nm1
     pwy3 = -d1pnm1
     ht_imd_b = ct*q_b
+!$OMP ATOMIC update
     ht_b = ht_b - ct*q_b
+!$OMP ATOMIC update
     ct_b = ct_b + (ht_imd-ht)*q_b
     max1_b = q_b
     CALL POPCONTROL1B(branch)
@@ -13878,8 +13912,10 @@ CONTAINS
     output_layer_b = 0.0_4
     temp_b4 = 0.1_sp*qd_b
     temp_b3 = ht**3.5_sp*qd_b
+!$OMP ATOMIC update
     ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*qd_b
     output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
+!$OMP ATOMIC update
     kexc_b = kexc_b + output_layer(5)*temp_b3
     output_layer_b(3) = output_layer_b(3) + pr*temp_b4
     pr_b = output_layer(3)*temp_b4
@@ -13904,8 +13940,10 @@ CONTAINS
       pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
     END IF
     IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) THEN
+!$OMP ATOMIC update
       ct_b = ct_b + ht_imd*pwx1_b - pwr3*ht_b/ct**2
     ELSE
+!$OMP ATOMIC update
       ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - pwr3*ht_b/ct**2 + ht_imd*&
 &       pwx1_b
     END IF
@@ -13918,6 +13956,7 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ht_b = ht_imd_b
       pr_imd_b = ht_imd_b/ct
+!$OMP ATOMIC update
       ct_b = ct_b - pr_imd*ht_imd_b/ct**2
     ELSE
       ht_b = 0.0_4
@@ -13927,8 +13966,10 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       temp_b4 = 0.9_sp*pr_imd_b
       temp_b3 = ht**3.5_sp*pr_imd_b
+!$OMP ATOMIC update
       ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*pr_imd_b
       output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
+!$OMP ATOMIC update
       kexc_b = kexc_b + output_layer(5)*temp_b3
       output_layer_b(3) = output_layer_b(3) + pr*temp_b4
       pr_b = pr_b + output_layer(3)*temp_b4
@@ -13951,11 +13992,14 @@ CONTAINS
       ELSE
         pwx1_b = pwy1*pwx1**(pwy1-1)*pwr1_b
       END IF
+!$OMP ATOMIC update
       ht_b = ht_b + ct*pwx1_b - ct*pr_imd_b
       IF (ct .LE. 0.0 .AND. (pwy2 .EQ. 0.0 .OR. pwy2 .NE. INT(pwy2))) &
 &     THEN
+!$OMP   ATOMIC update
         ct_b = ct_b + ht*pwx1_b - ht*pr_imd_b
       ELSE
+!$OMP   ATOMIC update
         ct_b = ct_b + pwy2*ct**(pwy2-1)*pwr2_b - ht*pr_imd_b + ht*pwx1_b
       END IF
       pwx1 = 1._sp + (hp_imd/beta)**4
@@ -13965,12 +14009,14 @@ CONTAINS
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
     hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
 &     4
+!$OMP ATOMIC update
     cp_b = cp_b + perc*hp_b/cp**2 + hp_imd*(1._sp-pwr1)*perc_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       pn_b = pr_b
       hp_imd_b = hp_imd_b - cp*pr_b
       hp_b = cp*pr_b
+!$OMP ATOMIC update
       cp_b = cp_b - (hp_imd-hp)*pr_b
     ELSE
       hp_b = 0.0_4
@@ -13989,10 +14035,12 @@ CONTAINS
     temp_b1 = (1.0-TANH(temp1)**2)*temp5*temp_b/cp
     temp_b0 = -(temp5*temp0*temp_b/temp2)
     temp_b3 = (1.0-TANH(temp4)**2)*(1._sp-hp)*temp_b0/cp
+!$OMP ATOMIC update
     hp_b = hp_b + hp_imd_b - hp*cp*temp0*temp_b - temp3*temp_b0
     output_layer_b(1) = output_layer_b(1) + ps*temp_b4
     ps_b = output_layer(1)*temp_b4
     output_layer_b(2) = output_layer_b(2) - es*temp_b4
+!$OMP ATOMIC update
     cp_b = cp_b + hp*temp_b2 - (output_layer(1)*ps-output_layer(2)*es)*&
 &     temp_b4/cp - temp4*temp_b3 - temp1*temp_b1
     temp = pn/cp
@@ -14007,14 +14055,18 @@ CONTAINS
 &                input_layer_b, output_layer, output_layer_b)
     en_b = temp_b3 + temp_b1 + input_layer_b(4)
     temp_b1 = -(temp4*temp3*temp_b/temp1)
+!$OMP ATOMIC update
     hp_b = hp_b + cp*temp_b2 + temp0*temp_b1 - 2*hp*cp*temp3*temp_b + &
 &     input_layer_b(1)
     temp_b2 = (1.0-TANH(temp)**2)*hp*temp_b1/cp
+!$OMP ATOMIC update
     cp_b = cp_b + (1._sp-hp**2)*temp3*temp_b - temp*temp_b2 - temp2*&
 &     temp_b0
+!$OMP ATOMIC update
     pn_b = pn_b + temp_b2 + temp_b0 + input_layer_b(3)
     input_layer_b(4) = 0.0_4
     input_layer_b(3) = 0.0_4
+!$OMP ATOMIC update
     ht_b = ht_b + input_layer_b(2)
     input_layer_b(2) = 0.0_4
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG_B
@@ -14097,7 +14149,7 @@ CONTAINS
     q = (ht_imd-ht)*ct + max1
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ALG
 
-!  Differentiation of gr_production_transfer_ode in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_ode in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: q hp ht
 !   with respect to varying inputs: kexc hp ht en cp pn ct
   SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D(pn, pn_d, en, en_d, cp, cp_d, &
@@ -14195,7 +14247,7 @@ CONTAINS
     q = ct*temp0 + 0.1_sp*(pn*(hp*hp)) + kexc*temp
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_D
 
-!  Differentiation of gr_production_transfer_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_ode in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: q kexc hp ht cp ct
 !   with respect to varying inputs: kexc hp ht en cp pn ct
   SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B(pn, pn_b, en, en_b, cp, cp_b, &
@@ -14288,10 +14340,14 @@ CONTAINS
  100  CALL PUSHCONTROL1B(1)
       CALL PUSHINTEGER4(ad_count)
  110 CONTINUE
+!$OMP ATOMIC update
     ct_b = ct_b + ht**5*q_b
+!$OMP ATOMIC update
     ht_b = ht_b + (5*ht**4*ct+3.5_sp*ht**2.5*kexc)*q_b
     pn_b = hp**2*0.1_sp*q_b
+!$OMP ATOMIC update
     hp_b = hp_b + 2*hp*pn*0.1_sp*q_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*q_b
     en_b = 0.0_4
     dh_b = 0.0_4
@@ -14331,46 +14387,64 @@ CONTAINS
         tmp_j_b = dt*jacob_b(2, 2)
         jacob_b(2, 2) = 0.0_4
         temp_b = -(ht**2.5_sp*3.5_sp*tmp_j_b/ct)
+!$OMP   ATOMIC update
         kexc_b = kexc_b + temp_b
+!$OMP   ATOMIC update
         ct_b = ct_b - kexc*temp_b/ct
         CALL POPREAL4(jacob(2, 1))
         temp_b = dt*1.8_sp*jacob_b(2, 1)/ct
         jacob_b(2, 1) = 0.0_4
+!$OMP   ATOMIC update
         pn_b = pn_b + hp*temp_b
+!$OMP   ATOMIC update
         hp_b = hp_b + pn*temp_b
+!$OMP   ATOMIC update
         ct_b = ct_b - pn*hp*temp_b/ct
         CALL POPREAL4(jacob(1, 2))
         jacob_b(1, 2) = 0.0_4
         CALL POPREAL4(jacob(1, 1))
         temp_b = dt*2._sp*jacob_b(1, 1)/cp
         jacob_b(1, 1) = 0.0_4
+!$OMP   ATOMIC update
         hp_b = hp_b + (pn-en)*temp_b
+!$OMP   ATOMIC update
         pn_b = pn_b + hp*temp_b
+!$OMP   ATOMIC update
         en_b = en_b + (1.0-hp)*temp_b
+!$OMP   ATOMIC update
         cp_b = cp_b - (hp*(pn-en)+en)*temp_b/cp
         CALL POPREAL4(dh(2))
         ht0_b = ht0_b - dh_b(2)
         temp_b = dt*dh_b(2)/ct
         fht_b = temp_b
+!$OMP   ATOMIC update
         ht_b = ht_b + (4*ht**3*5._sp-2.5_sp*ht**1.5*kexc*3.5_sp/ct)*&
 &         tmp_j_b + dh_b(2) + (5*ht**4*ct-3.5_sp*ht**2.5*kexc)*fht_b
         dh_b(2) = 0.0_4
+!$OMP   ATOMIC update
         ct_b = ct_b + ht**5*fht_b - fht*temp_b/ct
         CALL POPREAL4(fht)
+!$OMP   ATOMIC update
         kexc_b = kexc_b - ht**3.5_sp*fht_b
         fhp = (1._sp-hp**2)*pn - hp*(2._sp-hp)*en
         CALL POPREAL4(dh(1))
         hp0_b = hp0_b - dh_b(1)
         temp_b = -(dt*dh_b(1)/cp)
         fhp_b = temp_b
+!$OMP   ATOMIC update
         pn_b = pn_b + (1._sp-hp**2)*fhp_b - hp**2*0.9_sp*fht_b
+!$OMP   ATOMIC update
         hp_b = hp_b + dh_b(1) - 2*hp*pn*0.9_sp*fht_b + (hp*en-en*(2._sp-&
 &         hp)-2*hp*pn)*fhp_b
         dh_b(1) = 0.0_4
+!$OMP   ATOMIC update
         cp_b = cp_b - fhp*temp_b/cp
+!$OMP   ATOMIC update
         en_b = en_b - hp*(2._sp-hp)*fhp_b
  120  CONTINUE
+!$OMP ATOMIC update
       ht_b = ht_b + ht0_b
+!$OMP ATOMIC update
       hp_b = hp_b + hp0_b
     END DO
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE_B
@@ -14419,7 +14493,8 @@ CONTAINS
     q = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
   END SUBROUTINE GR_PRODUCTION_TRANSFER_ODE
 
-!  Differentiation of gr_production_transfer_mlp_ode in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_mlp_ode in forward (tangent) mode (with options fixinterface noISIZE context OpenMP)
+!:
 !   variations   of useful results: q hp ht
 !   with respect to varying inputs: kexc hp ht en *(layers.weight)
 !                *(layers.bias) cp pn ct
@@ -14504,7 +14579,8 @@ CONTAINS
     q = ct*temp0 + 0.1_sp*(pn*(hp*hp)) + kexc*temp
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_D
 
-!  Differentiation of gr_production_transfer_mlp_ode in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr_production_transfer_mlp_ode in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP)
+!:
 !   gradient     of useful results: q kexc hp ht *(layers.weight)
 !                *(layers.bias) cp ct
 !   with respect to varying inputs: kexc hp ht en *(layers.weight)
@@ -14578,10 +14654,14 @@ CONTAINS
         CALL PUSHCONTROL1B(0)
       END IF
     END DO
+!$OMP ATOMIC update
     ct_b = ct_b + ht**5*q_b
+!$OMP ATOMIC update
     ht_b = ht_b + (5*ht**4*ct+3.5_sp*ht**2.5*kexc)*q_b
     pn_b = hp**2*0.1_sp*q_b
+!$OMP ATOMIC update
     hp_b = hp_b + 2*hp*pn*0.1_sp*q_b
+!$OMP ATOMIC update
     kexc_b = kexc_b + ht**3.5_sp*q_b
     en_b = 0.0_4
     output_layer_b = 0.0_4
@@ -14593,18 +14673,23 @@ CONTAINS
       CALL POPREAL4(ht)
       temp_b1 = dt*ht_b/ct
       fht_b = temp_b1
+!$OMP ATOMIC update
       hp_b = hp_b + 2*hp*output_layer(3)*pn*0.9_sp*fht_b
       temp_b0 = -(ht**5*fht_b)
+!$OMP ATOMIC update
       ct_b = ct_b + output_layer(4)*temp_b0 - fht*temp_b1/ct
       CALL POPREAL4(fht)
       temp_b1 = hp**2*0.9_sp*fht_b
+!$OMP ATOMIC update
       ht_b = ht_b + (3.5_sp*ht**2.5*output_layer(5)*kexc-5*ht**4*&
 &       output_layer(4)*ct)*fht_b
       temp_b = ht**3.5_sp*fht_b
       output_layer_b(5) = output_layer_b(5) + kexc*temp_b
+!$OMP ATOMIC update
       kexc_b = kexc_b + output_layer(5)*temp_b
       output_layer_b(4) = output_layer_b(4) + ct*temp_b0
       output_layer_b(3) = output_layer_b(3) + pn*temp_b1
+!$OMP ATOMIC update
       pn_b = pn_b + output_layer(3)*temp_b1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) hp_b = 0.0_4
@@ -14613,26 +14698,32 @@ CONTAINS
       CALL POPREAL4(hp)
       temp_b1 = dt*hp_b/cp
       fhp_b = temp_b1
+!$OMP ATOMIC update
       cp_b = cp_b - fhp*temp_b1/cp
       CALL POPREAL4(fhp)
       temp_b = (1._sp-hp**2)*fhp_b
       temp_b0 = -(output_layer(2)*(2._sp-hp)*fhp_b)
       temp_b1 = -(en*hp*fhp_b)
+!$OMP ATOMIC update
       hp_b = hp_b + en*temp_b0 - 2*hp*output_layer(1)*pn*fhp_b - &
 &       output_layer(2)*temp_b1
       output_layer_b(2) = output_layer_b(2) + (2._sp-hp)*temp_b1
       en_b = en_b + hp*temp_b0
       output_layer_b(1) = output_layer_b(1) + pn*temp_b
+!$OMP ATOMIC update
       pn_b = pn_b + output_layer(1)*temp_b
     END DO
     CALL FORWARD_MLP_B(layers, layers_b, neurons, input_layer, &
 &                input_layer_b, output_layer, output_layer_b)
     en_b = en_b + input_layer_b(4)
     input_layer_b(4) = 0.0_4
+!$OMP ATOMIC update
     pn_b = pn_b + input_layer_b(3)
     input_layer_b(3) = 0.0_4
+!$OMP ATOMIC update
     ht_b = ht_b + input_layer_b(2)
     input_layer_b(2) = 0.0_4
+!$OMP ATOMIC update
     hp_b = hp_b + input_layer_b(1)
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE_B
 
@@ -14672,7 +14763,7 @@ CONTAINS
     q = ct*ht**5 + 0.1_sp*pn*hp**2 + kexc*ht**3.5_sp
   END SUBROUTINE GR_PRODUCTION_TRANSFER_MLP_ODE
 
-!  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt
@@ -14712,6 +14803,13 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, &
+!$OMP&ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_d, en_d, &
+!$OMP&pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), PRIVATE(temp), &
+!$OMP&                                             SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14758,7 +14856,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_TIME_STEP_D
 
-!  Differentiation of gr4_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
@@ -14791,6 +14889,8 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -14798,7 +14898,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, &
+!$OMP&prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -14837,8 +14942,40 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(beta)
+    CALL PUSHREAL4(en)
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHINTEGER4(time_step)
+    CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, &
+!$OMP&ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, &
+!$OMP&k, pn, en, pr, perc, l, prr, prd, qr, qd), PRIVATE(pn_b, en_b, &
+!$OMP&pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+    CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
+    CALL POPINTEGER4(time_step)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL POPREAL4(en)
+    CALL POPREAL4(beta)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    l_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -14881,6 +15018,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR4_TIME_STEP_B
 
@@ -14908,6 +15046,10 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp&
+!$OMP&, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc, l, prr, &
+!$OMP&prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -14942,7 +15084,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_TIME_STEP
 
-!  Differentiation of gr4_mlp_alg_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_alg_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi *(layers.weight) *(layers.bias) ac_hp ac_ht
@@ -14953,7 +15095,6 @@ CONTAINS
 &   ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, &
 &   ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_qt, ac_qt_d)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -14987,10 +15128,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, &
+!$OMP&ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_d, ac_prcp_d, &
+!$OMP&ac_ci_d, ac_cp_d, ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, &
+!$OMP&ac_qt_d), PRIVATE(row, col, k, pn, en), PRIVATE(pn_d, en_d), &
+!$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15023,7 +15166,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_MLP_ALG_TIME_STEP_D
 
-!  Differentiation of gr4_mlp_alg_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_alg_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi *(layers.weight) *(layers.bias) ac_hp ac_ht
 !                ac_mlt
@@ -15036,7 +15179,6 @@ CONTAINS
 &   ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, &
 &   ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_qt, ac_qt_b)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15062,6 +15204,8 @@ CONTAINS
     REAL(sp) :: beta, pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15069,11 +15213,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), PRIVATE&
+!$OMP&(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15106,8 +15251,26 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(beta)
+    CALL PUSHREAL4ARRAY(ac_pet, mesh%nac)
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_b, ac_prcp_b, ac_ci_b, &
+!$OMP&ac_cp_b, ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), &
+!$OMP&PRIVATE(row, col, k, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch&
+!$OMP&, chunk_end, chunk_start)
+    CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL POPREAL4ARRAY(ac_pet, mesh%nac)
+    CALL POPREAL4(beta)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15141,6 +15304,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR4_MLP_ALG_TIME_STEP_B
 
@@ -15148,7 +15312,6 @@ CONTAINS
 &   time_step, layers, neurons, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
 &   ac_hi, ac_hp, ac_ht, ac_qt)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15171,10 +15334,10 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, &
+!$OMP&ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en)&
+!$OMP&, SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15199,7 +15362,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_MLP_ALG_TIME_STEP
 
-!  Differentiation of gr4_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt
@@ -15208,7 +15371,6 @@ CONTAINS
 &   ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, &
 &   ac_ht_d, ac_qt, ac_qt_d)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15237,10 +15399,11 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
-!$OMP& ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
+!$OMP&, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, ac_ct_d, ac_kexc_d, &
+!$OMP&ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(row, col, k, pn, en)&
+!$OMP&, PRIVATE(pn_d, en_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15270,7 +15433,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_ODE_TIME_STEP_D
 
-!  Differentiation of gr4_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
@@ -15280,7 +15443,6 @@ CONTAINS
 &   ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, &
 &   ac_ht_b, ac_qt, ac_qt_b)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15303,16 +15465,19 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
-!$OMP& ac_qt) &
-!$OMP& private(row, col, k, pn, en)
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
+!$OMP&, ac_qt), PRIVATE(row, col, k, pn, en), PRIVATE(chunk_start, &
+!$OMP&chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15344,8 +15509,23 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHINTEGER4(time_step)
+    CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
+!$OMP&, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, ac_ct_b, ac_kexc_b, &
+!$OMP&ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(row, col, k, pn, en)&
+!$OMP&, PRIVATE(pn_b, en_b), PRIVATE(branch, chunk_end, chunk_start)
+    CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
+    CALL POPINTEGER4(time_step)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15376,6 +15556,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR4_ODE_TIME_STEP_B
 
@@ -15383,7 +15564,6 @@ CONTAINS
 &   time_step, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
 &   , ac_qt)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15402,10 +15582,9 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
-!$OMP& ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht&
+!$OMP&, ac_qt), PRIVATE(row, col, k, pn, en), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15429,7 +15608,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_ODE_TIME_STEP
 
-!  Differentiation of gr4_mlp_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_ode_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi *(layers.weight) *(layers.bias) ac_hp ac_ht
@@ -15440,7 +15619,6 @@ CONTAINS
 &   ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, ac_kexc, ac_kexc_d, ac_hi, &
 &   ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, ac_qt, ac_qt_d)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15472,10 +15650,12 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(layers_d, ac_prcp_d, ac_ci_d, &
+!$OMP&ac_cp_d, ac_ct_d, ac_kexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d), &
+!$OMP&PRIVATE(row, col, k, pn, en), PRIVATE(pn_d, en_d), PRIVATE(temp), &
+!$OMP&                                                  SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15507,7 +15687,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_MLP_ODE_TIME_STEP_D
 
-!  Differentiation of gr4_mlp_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr4_mlp_ode_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi *(layers.weight) *(layers.bias) ac_hp ac_ht
 !                ac_mlt
@@ -15520,7 +15700,6 @@ CONTAINS
 &   ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, ac_kexc, ac_kexc_b, ac_hi, &
 &   ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, ac_qt, ac_qt_b)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15546,16 +15725,19 @@ CONTAINS
     REAL(sp) :: pn, en
     REAL(sp) :: pn_b, en_b
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, &
+!$OMP&ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), PRIVATE(&
+!$OMP&chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15587,8 +15769,22 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(en)
+    CALL PUSHINTEGER4(time_step)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, layers&
+!$OMP&, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, &
+!$OMP&ac_hp, ac_ht, ac_qt), SHARED(layers_b, ac_prcp_b, ac_ci_b, ac_cp_b&
+!$OMP&, ac_ct_b, ac_kexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE&
+!$OMP&(row, col, k, pn, en), PRIVATE(pn_b, en_b), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+    CALL POPINTEGER4(time_step)
+    CALL POPREAL4(en)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15621,6 +15817,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR4_MLP_ODE_TIME_STEP_B
 
@@ -15628,7 +15825,6 @@ CONTAINS
 &   time_step, layers, neurons, ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, &
 &   ac_hi, ac_hp, ac_ht, ac_qt)
     IMPLICIT NONE
-!$OMP end parallel do
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
@@ -15649,10 +15845,10 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-!$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-!$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
-!$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
-!$OMP& private(row, col, k, pn, en)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en), SCHEDULE&
+!$OMP&                                           (static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15676,7 +15872,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR4_MLP_ODE_TIME_STEP
 
-!  Differentiation of gr5_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr5_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hi ac_hp ac_ht
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt ac_aexc
@@ -15716,6 +15912,13 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_d, ac_ci_d, ac_cp_d, &
+!$OMP&ac_ct_d, ac_kexc_d, ac_aexc_d, ac_hi_d, ac_hp_d, ac_ht_d, ac_qt_d)&
+!$OMP&, PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(pn_d, en_d, pr_d, perc_d, l_d, prr_d, prd_d, qr_d, qd_d), &
+!$OMP&PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15763,7 +15966,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR5_TIME_STEP_D
 
-!  Differentiation of gr5_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of gr5_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kexc ac_ci ac_cp ac_ct ac_qt
 !                ac_hi ac_hp ac_ht ac_mlt ac_aexc
 !   with respect to varying inputs: ac_kexc ac_ci ac_cp ac_ct ac_qt
@@ -15796,6 +15999,8 @@ CONTAINS
     REAL(sp) :: pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MAX
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15803,7 +16008,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc&
+!$OMP&, l, prr, prd, qr, qd), PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -15843,8 +16053,40 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(beta)
+    CALL PUSHREAL4(en)
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHINTEGER4(time_step)
+    CALL PUSHREAL4ARRAY(ac_aexc, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), SHARED(ac_prcp_b, ac_ci_b, ac_cp_b, &
+!$OMP&ac_ct_b, ac_kexc_b, ac_aexc_b, ac_hi_b, ac_hp_b, ac_ht_b, ac_qt_b)&
+!$OMP&, PRIVATE(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd), &
+!$OMP&PRIVATE(pn_b, en_b, pr_b, perc_b, l_b, prr_b, prd_b, qr_b, qd_b), &
+!$OMP&PRIVATE(branch, chunk_end, chunk_start)
+    CALL POPREAL4ARRAY(ac_aexc, mesh%nac)
+    CALL POPINTEGER4(time_step)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL POPREAL4(en)
+    CALL POPREAL4(beta)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    l_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -15888,6 +16130,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR5_TIME_STEP_B
 
@@ -15916,6 +16159,10 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, &
+!$OMP&ac_hi, ac_hp, ac_ht, ac_qt), PRIVATE(row, col, k, pn, en, pr, perc&
+!$OMP&, l, prr, prd, qr, qd), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -15951,7 +16198,7 @@ CONTAINS
     END DO
   END SUBROUTINE GR5_TIME_STEP
 
-!  Differentiation of grd_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of grd_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_hp ac_ht
 !   with respect to varying inputs: ac_cp ac_ct ac_qt ac_hp ac_ht
 !                ac_mlt
@@ -15986,6 +16233,11 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), SHARED(&
+!$OMP&ac_prcp_d, ac_cp_d, ac_ct_d, ac_hp_d, ac_ht_d, ac_qt_d), PRIVATE(&
+!$OMP&row, col, k, ei, pn, en, pr, perc, prr, qr), PRIVATE(ei_d, pn_d, &
+!$OMP&en_d, pr_d, perc_d, prr_d, qr_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16032,7 +16284,7 @@ CONTAINS
     END DO
   END SUBROUTINE GRD_TIME_STEP_D
 
-!  Differentiation of grd_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of grd_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_cp ac_ct ac_qt ac_hp ac_ht
 !                ac_mlt
 !   with respect to varying inputs: ac_cp ac_ct ac_qt ac_hp ac_ht
@@ -16062,12 +16314,19 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), PRIVATE(row, &
+!$OMP&col, k, ei, pn, en, pr, perc, prr, qr), PRIVATE(chunk_start, &
+!$OMP&chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -16112,8 +16371,33 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(en)
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), SHARED(&
+!$OMP&ac_prcp_b, ac_cp_b, ac_ct_b, ac_hp_b, ac_ht_b, ac_qt_b), PRIVATE(&
+!$OMP&row, col, k, ei, pn, en, pr, perc, prr, qr), PRIVATE(ei_b, pn_b, &
+!$OMP&en_b, pr_b, perc_b, prr_b, qr_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start)
+    CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL POPREAL4(en)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    ei_b = 0.0_4
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    prr_b = 0.0_4
+    qr_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -16140,6 +16424,7 @@ CONTAINS
             IF (branch .EQ. 0) THEN
               CALL POPREAL4(pn)
               ac_prcp_b(k) = ac_prcp_b(k) + pn_b
+!$OMP         ATOMIC update
               ei_b = ei_b - pn_b
             ELSE
               CALL POPREAL4(pn)
@@ -16150,6 +16435,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GRD_TIME_STEP_B
 
@@ -16175,6 +16461,9 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt), PRIVATE(row, &
+!$OMP&col, k, ei, pn, en, pr, perc, prr, qr), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16210,7 +16499,7 @@ CONTAINS
     END DO
   END SUBROUTINE GRD_TIME_STEP
 
-!  Differentiation of loieau_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of loieau_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qt ac_ha ac_hc
 !   with respect to varying inputs: ac_ca ac_cc ac_kb ac_qt ac_ha
 !                ac_hc ac_mlt
@@ -16248,6 +16537,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&SHARED(ac_prcp_d, ac_ca_d, ac_cc_d, ac_kb_d, ac_ha_d, ac_hc_d, &
+!$OMP&ac_qt_d), PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr&
+!$OMP&, qd), PRIVATE(ei_d, pn_d, en_d, pr_d, perc_d, prr_d, prd_d, qr_d&
+!$OMP&, qd_d), PRIVATE(temp), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16303,7 +16598,7 @@ CONTAINS
     END DO
   END SUBROUTINE LOIEAU_TIME_STEP_D
 
-!  Differentiation of loieau_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of loieau_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_ca ac_cc ac_kb ac_qt ac_ha
 !                ac_hc ac_mlt
 !   with respect to varying inputs: ac_ca ac_cc ac_kb ac_qt ac_ha
@@ -16333,6 +16628,8 @@ CONTAINS
     INTRINSIC MIN
     INTRINSIC MAX
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -16340,7 +16637,12 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -16395,14 +16697,48 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(prr)
+    CALL PUSHREAL4(beta)
+    CALL PUSHREAL4(en)
+    CALL PUSHREAL4(qr)
+    CALL PUSHREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL PUSHINTEGER4(time_step)
+    CALL PUSHREAL4ARRAY(ac_mlt, mesh%nac)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&SHARED(ac_prcp_b, ac_ca_b, ac_cc_b, ac_kb_b, ac_ha_b, ac_hc_b, &
+!$OMP&ac_qt_b), PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr&
+!$OMP&, qd), PRIVATE(ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b&
+!$OMP&, qd_b), PRIVATE(branch, chunk_end, chunk_start)
+    CALL POPREAL4ARRAY(ac_mlt, mesh%nac)
+    CALL POPINTEGER4(time_step)
+    CALL POPREAL4ARRAY(ac_prcp, mesh%nac)
+    CALL POPREAL4(qr)
+    CALL POPREAL4(en)
+    CALL POPREAL4(beta)
+    CALL POPREAL4(prr)
+    CALL POPREAL4(pn)
+    ei_b = 0.0_4
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    pr_b = 0.0_4
+    perc_b = 0.0_4
+    prr_b = 0.0_4
+    prd_b = 0.0_4
+    qr_b = 0.0_4
+    qd_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
           k = mesh%rowcol_to_ind_ac(row, col)
           ac_qt_b(k) = mesh%dx(row, col)*1e-3_sp*mesh%dy(row, col)*&
 &           ac_qt_b(k)/setup%dt
+!$OMP     ATOMIC update
           ac_kb_b(k) = ac_kb_b(k) + (qr+qd)*ac_qt_b(k)
           qr_b = ac_kb(k)*ac_qt_b(k)
           qd_b = ac_kb(k)*ac_qt_b(k)
@@ -16434,6 +16770,7 @@ CONTAINS
             IF (branch .EQ. 0) THEN
               CALL POPREAL4(pn)
               ac_prcp_b(k) = ac_prcp_b(k) + pn_b
+!$OMP         ATOMIC update
               ei_b = ei_b - pn_b
             ELSE
               CALL POPREAL4(pn)
@@ -16444,6 +16781,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE LOIEAU_TIME_STEP_B
 
@@ -16471,6 +16809,10 @@ CONTAINS
     ac_prcp = ac_prcp + ac_mlt
 ! Beta percolation parameter is time step dependent
     beta = 9._sp/4._sp*(86400._sp/setup%dt)**0.25_sp
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt), &
+!$OMP&PRIVATE(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd), &
+!$OMP&                                              SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -16537,7 +16879,7 @@ MODULE MD_ROUTING_OPERATOR_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of upstream_discharge in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qup
 !   with respect to varying inputs: ac_q
   SUBROUTINE UPSTREAM_DISCHARGE_D(mesh, row, col, ac_q, ac_q_d, qup, &
@@ -16568,7 +16910,7 @@ CONTAINS
     END DO
   END SUBROUTINE UPSTREAM_DISCHARGE_D
 
-!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of upstream_discharge in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_q qup
 !   with respect to varying inputs: ac_q
   SUBROUTINE UPSTREAM_DISCHARGE_B(mesh, row, col, ac_q, ac_q_b, qup, &
@@ -16603,7 +16945,10 @@ CONTAINS
     DO i=8,1,-1
       CALL POPCONTROL2B(branch)
       IF (branch .NE. 0) THEN
-        IF (branch .NE. 1) ac_q_b(k) = ac_q_b(k) + qup_b
+        IF (branch .NE. 1) THEN
+!$OMP     ATOMIC update
+          ac_q_b(k) = ac_q_b(k) + qup_b
+        END IF
         CALL POPINTEGER4(k)
       END IF
     END DO
@@ -16630,7 +16975,7 @@ CONTAINS
     END DO
   END SUBROUTINE UPSTREAM_DISCHARGE
 
-!  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of linear_routing in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hlr q
 !   with respect to varying inputs: hlr q qup llr
   SUBROUTINE LINEAR_ROUTING_D(dx, dy, dt, flwacc, llr, llr_d, hlr, hlr_d&
@@ -16663,7 +17008,7 @@ CONTAINS
     q = q + temp*((hlr_imd-hlr)/dt)
   END SUBROUTINE LINEAR_ROUTING_D
 
-!  Differentiation of linear_routing in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of linear_routing in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: hlr q llr
 !   with respect to varying inputs: hlr q qup llr
   SUBROUTINE LINEAR_ROUTING_B(dx, dy, dt, flwacc, llr, llr_b, hlr, hlr_b&
@@ -16685,9 +17030,11 @@ CONTAINS
     arg1 = -(dt/(llr*60._sp))
     arg1 = -(dt/(llr*60._sp))
     temp_b = (flwacc-dx*dy)*1e-3_sp*q_b/dt
+!$OMP ATOMIC update
     hlr_b = hlr_b - temp_b
     hlr_imd_b = temp_b + EXP(arg1)*hlr_b
     arg1_b = EXP(arg1)*hlr_imd*hlr_b
+!$OMP ATOMIC update
     llr_b = llr_b + dt*arg1_b/(llr**2*60._sp)
     hlr_b = hlr_imd_b
     qup_b = hlr_imd_b
@@ -16709,7 +17056,7 @@ CONTAINS
     q = q + (hlr_imd-hlr)*1e-3_sp*(flwacc-dx*dy)/dt
   END SUBROUTINE LINEAR_ROUTING
 
-!  Differentiation of kinematic_wave1d in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of kinematic_wave1d in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qij
 !   with respect to varying inputs: qim1j bkw qijm1 qlij akw qlijm1
   SUBROUTINE KINEMATIC_WAVE1D_D(dx, dy, dt, akw, akw_d, bkw, bkw_d, &
@@ -16807,7 +17154,7 @@ CONTAINS
     qij = temp
   END SUBROUTINE KINEMATIC_WAVE1D_D
 
-!  Differentiation of kinematic_wave1d in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of kinematic_wave1d in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: bkw akw qij
 !   with respect to varying inputs: qim1j bkw qijm1 qlij akw qlijm1
   SUBROUTINE KINEMATIC_WAVE1D_B(dx, dy, dt, akw, akw_b, bkw, bkw_b, &
@@ -16898,6 +17245,7 @@ CONTAINS
     temp_b = dtddx*n3_b/2._sp
     wqlijm1_b = temp_b
     wqlij_b = temp_b
+!$OMP ATOMIC update
     akw_b = akw_b + bkw*pwr1*d2_b
     pwr1_b = akw*bkw*d2_b
     IF (pwx1 .LE. 0.0 .AND. (pwy1 .EQ. 0.0 .OR. pwy1 .NE. INT(pwy1))) &
@@ -16913,6 +17261,7 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     bkw_b = bkw_b + akw*pwr1*d2_b + pwy1_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -17000,7 +17349,7 @@ CONTAINS
     qij = (n1+n2+n3)/(d1+d2)
   END SUBROUTINE KINEMATIC_WAVE1D
 
-!  Differentiation of lag0_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of lag0_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qz
 !   with respect to varying inputs: ac_qz ac_qtz
   SUBROUTINE LAG0_TIME_STEP_D(setup, mesh, options, ac_qtz, ac_qtz_d, &
@@ -17023,6 +17372,9 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_qz, i), SHARED(ac_qtz_d, ac_qz_d), PRIVATE(j, row, col&
+!$OMP&, k, qup), PRIVATE(qup_d), SCHEDULE(static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17052,7 +17404,7 @@ CONTAINS
     END DO
   END SUBROUTINE LAG0_TIME_STEP_D
 
-!  Differentiation of lag0_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of lag0_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_qz ac_qtz
 !   with respect to varying inputs: ac_qz ac_qtz
   SUBROUTINE LAG0_TIME_STEP_B(setup, mesh, options, ac_qtz, ac_qtz_b, &
@@ -17070,6 +17422,8 @@ CONTAINS
     REAL(sp) :: qup_b
     INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     INTEGER :: ad_to0
     ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
 ! Skip the first partition because boundary cells are not routed
@@ -17077,7 +17431,12 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
-        DO j=1,mesh%ncpar(i)
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_qz, i), PRIVATE(j, row, col, k, qup), PRIVATE(ad_to, &
+!$OMP&chunk_start, chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
           k = mesh%rowcol_to_ind_ac(row, col)
@@ -17092,6 +17451,8 @@ CONTAINS
           END IF
         END DO
         CALL PUSHINTEGER4(j - 1)
+        CALL PUSHINTEGER4(i)
+!$OMP   END PARALLEL
         CALL PUSHCONTROL1B(1)
       ELSE
         DO j=1,mesh%ncpar(i)
@@ -17128,8 +17489,16 @@ CONTAINS
           END IF
         END DO
       ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_qz, i), SHARED(ac_qtz_b, ac_qz_b), PRIVATE(j, row, col&
+!$OMP&, k, qup), PRIVATE(qup_b), PRIVATE(ad_to, branch, chunk_end, &
+!$OMP&chunk_start)
+        CALL POPINTEGER4(i)
+        qup_b = 0.0_4
         CALL POPINTEGER4(ad_to)
-        DO j=ad_to,1,-1
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
@@ -17140,6 +17509,7 @@ CONTAINS
 &                               ), ac_qz_b(:, setup%nqz), qup, qup_b)
           END IF
         END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     ac_qtz_b(:, setup%nqz) = ac_qtz_b(:, setup%nqz) + ac_qz_b(:, setup%&
@@ -17162,6 +17532,8 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_qz, i), PRIVATE(j, row, col, k, qup), SCHEDULE(static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17189,7 +17561,7 @@ CONTAINS
     END DO
   END SUBROUTINE LAG0_TIME_STEP
 
-!  Differentiation of lr_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of lr_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qz ac_hlr
 !   with respect to varying inputs: ac_llr ac_qz ac_hlr ac_qtz
   SUBROUTINE LR_TIME_STEP_D(setup, mesh, options, ac_qtz, ac_qtz_d, &
@@ -17216,6 +17588,10 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_llr, ac_hlr, ac_qz, i), SHARED(ac_qtz_d, ac_llr_d, &
+!$OMP&ac_hlr_d, ac_qz_d), PRIVATE(j, row, col, k, qup), PRIVATE(qup_d), &
+!$OMP&                                                  SCHEDULE(static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17251,7 +17627,7 @@ CONTAINS
     END DO
   END SUBROUTINE LR_TIME_STEP_D
 
-!  Differentiation of lr_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of lr_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_llr ac_qz ac_hlr ac_qtz
 !   with respect to varying inputs: ac_llr ac_qz ac_hlr ac_qtz
   SUBROUTINE LR_TIME_STEP_B(setup, mesh, options, ac_qtz, ac_qtz_b, &
@@ -17273,6 +17649,8 @@ CONTAINS
     REAL(sp) :: qup_b
     INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     INTEGER :: ad_to0
     ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
 ! Skip the first partition because boundary cells are not routed
@@ -17280,7 +17658,12 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
-        DO j=1,mesh%ncpar(i)
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_llr, ac_hlr, ac_qz, i), PRIVATE(j, row, col, k, qup), &
+!$OMP&PRIVATE(ad_to, chunk_start, chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
           k = mesh%rowcol_to_ind_ac(row, col)
@@ -17299,6 +17682,8 @@ CONTAINS
           END IF
         END DO
         CALL PUSHINTEGER4(j - 1)
+        CALL PUSHINTEGER4(i)
+!$OMP   END PARALLEL
         CALL PUSHCONTROL1B(1)
       ELSE
         DO j=1,mesh%ncpar(i)
@@ -17345,8 +17730,16 @@ CONTAINS
           END IF
         END DO
       ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_llr, ac_hlr, ac_qz, i), SHARED(ac_qtz_b, ac_llr_b, &
+!$OMP&ac_hlr_b, ac_qz_b), PRIVATE(j, row, col, k, qup), PRIVATE(qup_b), &
+!$OMP&PRIVATE(ad_to, branch, chunk_end, chunk_start)
+        CALL POPINTEGER4(i)
+        qup_b = 0.0_4
         CALL POPINTEGER4(ad_to)
-        DO j=ad_to,1,-1
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
@@ -17363,6 +17756,7 @@ CONTAINS
 &                               ), ac_qz_b(:, setup%nqz), qup, qup_b)
           END IF
         END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     ac_qtz_b(:, setup%nqz) = ac_qtz_b(:, setup%nqz) + ac_qz_b(:, setup%&
@@ -17388,6 +17782,9 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_llr, ac_hlr, ac_qz, i), PRIVATE(j, row, col, k, qup), &
+!$OMP&                                                 SCHEDULE(static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17419,7 +17816,7 @@ CONTAINS
     END DO
   END SUBROUTINE LR_TIME_STEP
 
-!  Differentiation of kw_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of kw_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qz
 !   with respect to varying inputs: ac_akw ac_qz ac_qtz ac_bkw
   SUBROUTINE KW_TIME_STEP_D(setup, mesh, options, ac_qtz, ac_qtz_d, &
@@ -17444,6 +17841,11 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_akw, ac_bkw, ac_qz, i), SHARED(ac_qtz_d, ac_akw_d, &
+!$OMP&ac_bkw_d, ac_qz_d), PRIVATE(j, row, col, k, qlijm1, qlij, qim1j, &
+!$OMP&qijm1), PRIVATE(qlijm1_d, qlij_d, qim1j_d, qijm1_d), SCHEDULE(&
+!$OMP&                                     static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17495,7 +17897,7 @@ CONTAINS
     END DO
   END SUBROUTINE KW_TIME_STEP_D
 
-!  Differentiation of kw_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of kw_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_akw ac_qz ac_qtz ac_bkw
 !   with respect to varying inputs: ac_akw ac_qz ac_qtz ac_bkw
   SUBROUTINE KW_TIME_STEP_B(setup, mesh, options, ac_qtz, ac_qtz_b, &
@@ -17515,6 +17917,8 @@ CONTAINS
     REAL(sp) :: qlijm1_b, qlij_b, qim1j_b, qijm1_b
     INTEGER :: ad_to
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     INTEGER :: ad_to0
     ac_qz(:, setup%nqz) = ac_qtz(:, setup%nqz)
 ! Skip the first partition because boundary cells are not routed
@@ -17522,7 +17926,12 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
-        DO j=1,mesh%ncpar(i)
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_akw, ac_bkw, ac_qz, i), PRIVATE(j, row, col, k, qlijm1&
+!$OMP&, qlij, qim1j, qijm1), PRIVATE(ad_to, chunk_start, chunk_end)
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_start,chunk_end
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
           k = mesh%rowcol_to_ind_ac(row, col)
@@ -17544,6 +17953,10 @@ CONTAINS
           END IF
         END DO
         CALL PUSHINTEGER4(j - 1)
+        CALL PUSHREAL4(qijm1)
+        CALL PUSHINTEGER4(i)
+        CALL PUSHREAL4(qim1j)
+!$OMP   END PARALLEL
         CALL PUSHCONTROL1B(1)
       ELSE
         DO j=1,mesh%ncpar(i)
@@ -17602,8 +18015,22 @@ CONTAINS
           END IF
         END DO
       ELSE
+!$OMP   PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_akw, ac_bkw, ac_qz, i), SHARED(ac_qtz_b, ac_akw_b, &
+!$OMP&ac_bkw_b, ac_qz_b), PRIVATE(j, row, col, k, qlijm1, qlij, qim1j, &
+!$OMP&qijm1), PRIVATE(qlijm1_b, qlij_b, qim1j_b, qijm1_b), PRIVATE(ad_to&
+!$OMP&, branch, chunk_end, chunk_start)
+        CALL POPREAL4(qim1j)
+        CALL POPINTEGER4(i)
+        CALL POPREAL4(qijm1)
+        qlijm1_b = 0.0_4
+        qlij_b = 0.0_4
+        qim1j_b = 0.0_4
+        qijm1_b = 0.0_4
         CALL POPINTEGER4(ad_to)
-        DO j=ad_to,1,-1
+        CALL GETSTATICSCHEDULE(1, mesh%ncpar(i), 1, chunk_start, &
+&                        chunk_end)
+        DO j=chunk_end,chunk_start,-1
           CALL POPCONTROL1B(branch)
           IF (branch .NE. 0) THEN
             row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
@@ -17623,12 +18050,16 @@ CONTAINS
 &                               ), ac_qz_b(:, setup%nqz), qim1j, qim1j_b&
 &                              )
             CALL POPREAL4(qijm1)
+!$OMP       ATOMIC update
             ac_qz_b(k, setup%nqz-1) = ac_qz_b(k, setup%nqz-1) + qijm1_b
+!$OMP       ATOMIC update
             ac_qtz_b(k, setup%nqz) = ac_qtz_b(k, setup%nqz) + qlij_b
+!$OMP       ATOMIC update
             ac_qtz_b(k, setup%nqz-1) = ac_qtz_b(k, setup%nqz-1) + &
 &             qlijm1_b
           END IF
         END DO
+!$OMP   END PARALLEL
       END IF
     END DO
     ac_qtz_b(:, setup%nqz) = ac_qtz_b(:, setup%nqz) + ac_qz_b(:, setup%&
@@ -17653,6 +18084,9 @@ CONTAINS
 ! Tapenade does not accept 'IF' condition within OMP directive. Therefore, the routing loop
 ! is duplicated ... Maybe there is another way to do it.
       IF (mesh%ncpar(i) .GE. options%comm%ncpu) THEN
+!$OMP   PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_qtz, ac_akw, ac_bkw, ac_qz, i), PRIVATE(j, row, col, k, qlijm1&
+!$OMP&, qlij, qim1j, qijm1), SCHEDULE(static)
         DO j=1,mesh%ncpar(i)
           row = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 1)
           col = mesh%cpar_to_rowcol(mesh%cscpar(i)+j, 2)
@@ -17715,7 +18149,7 @@ MODULE MD_SNOW_OPERATOR_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of simple_snow in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of simple_snow in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: mlt hs
 !   with respect to varying inputs: hs kmlt
   SUBROUTINE SIMPLE_SNOW_D(snow, temp, kmlt, kmlt_d, hs, hs_d, mlt, &
@@ -17747,7 +18181,7 @@ CONTAINS
     hs = hs - mlt
   END SUBROUTINE SIMPLE_SNOW_D
 
-!  Differentiation of simple_snow in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of simple_snow in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: mlt hs kmlt
 !   with respect to varying inputs: hs kmlt
   SUBROUTINE SIMPLE_SNOW_B(snow, temp, kmlt, kmlt_b, hs, hs_b, mlt, &
@@ -17777,15 +18211,18 @@ CONTAINS
     ELSE
       CALL PUSHCONTROL1B(1)
     END IF
+!$OMP ATOMIC update
     mlt_b = mlt_b - hs_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       hs_b = hs_b + mlt_b
       mlt_b = 0.0_4
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(mlt)
+!$OMP ATOMIC update
       kmlt_b = kmlt_b + temp*mlt_b
     ELSE
       CALL POPREAL4(mlt)
@@ -17813,7 +18250,7 @@ CONTAINS
     hs = hs - mlt
   END SUBROUTINE SIMPLE_SNOW
 
-!  Differentiation of ssn_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of ssn_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_hs ac_mlt
 !   with respect to varying inputs: ac_kmlt ac_hs ac_mlt
   SUBROUTINE SSN_TIME_STEP_D(setup, mesh, input_data, options, time_step&
@@ -17836,6 +18273,9 @@ CONTAINS
 &                              , 'snow', ac_snow)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'temp', ac_temp)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_snow, ac_temp, ac_kmlt, ac_hs, ac_mlt), SHARED(ac_kmlt_d, &
+!$OMP&ac_hs_d, ac_mlt_d), PRIVATE(row, col, k), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17854,7 +18294,7 @@ CONTAINS
     END DO
   END SUBROUTINE SSN_TIME_STEP_D
 
-!  Differentiation of ssn_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of ssn_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_kmlt ac_hs ac_mlt
 !   with respect to varying inputs: ac_kmlt ac_hs ac_mlt
   SUBROUTINE SSN_TIME_STEP_B(setup, mesh, input_data, options, time_step&
@@ -17874,11 +18314,17 @@ CONTAINS
     INTEGER :: row, col, k
     REAL(sp), DIMENSION(mesh%nac) :: ac_snow, ac_temp
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'snow', ac_snow)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'temp', ac_temp)
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_snow, ac_temp, ac_kmlt, ac_hs, ac_mlt), PRIVATE(row, col, k), &
+!$OMP&PRIVATE(chunk_start, chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -17897,7 +18343,13 @@ CONTAINS
         END IF
       END DO
     END DO
-    DO col=mesh%ncol,1,-1
+!$OMP END PARALLEL
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_snow, ac_temp, ac_kmlt, ac_hs, ac_mlt), SHARED(ac_kmlt_b, &
+!$OMP&ac_hs_b, ac_mlt_b), PRIVATE(row, col, k), PRIVATE(branch, &
+!$OMP&chunk_end, chunk_start)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL2B(branch)
         IF (branch .NE. 0) THEN
@@ -17916,6 +18368,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
   END SUBROUTINE SSN_TIME_STEP_B
 
   SUBROUTINE SSN_TIME_STEP(setup, mesh, input_data, options, time_step, &
@@ -17935,6 +18388,9 @@ CONTAINS
 &                              , 'snow', ac_snow)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'temp', ac_temp)
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_snow, ac_temp, ac_kmlt, ac_hs, ac_mlt), PRIVATE(row, col, k), &
+!$OMP&                                                 SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -17969,7 +18425,7 @@ MODULE MD_VIC3L_OPERATOR_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of vic3l_canopy_interception in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_canopy_interception in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hcl en pn
 !   with respect to varying inputs: hcl prcp
   SUBROUTINE VIC3L_CANOPY_INTERCEPTION_D(prcp, prcp_d, pet, ccl, hcl, &
@@ -18027,7 +18483,7 @@ CONTAINS
     END IF
   END SUBROUTINE VIC3L_CANOPY_INTERCEPTION_D
 
-!  Differentiation of vic3l_canopy_interception in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_canopy_interception in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: hcl prcp en pn
 !   with respect to varying inputs: hcl prcp
   SUBROUTINE VIC3L_CANOPY_INTERCEPTION_B(prcp, prcp_b, pet, ccl, hcl, &
@@ -18079,13 +18535,16 @@ CONTAINS
     IF (branch .NE. 0) hcl_b = 0.0_4
     CALL POPREAL4(hcl)
     temp_b = hcl_b/ccl
+!$OMP ATOMIC update
     prcp_b = prcp_b + temp_b
     ec_b = -temp_b - en_b
     pn_b = pn_b - temp_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       CALL POPREAL4(pn)
+!$OMP ATOMIC update
       prcp_b = prcp_b + pn_b
+!$OMP ATOMIC update
       hcl_b = hcl_b + ccl*pn_b
       ec_b = ec_b - pn_b
     ELSE
@@ -18093,13 +18552,17 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       prcp_b = prcp_b + ec_b
+!$OMP ATOMIC update
       hcl_b = hcl_b + ccl*ec_b
     ELSE
       pwr1_b = pet*ec_b
       IF (.NOT.(hcl .LE. 0.0 .AND. (2._sp/3._sp .EQ. 0.0 .OR. 2._sp/&
-&         3._sp .NE. INT(2._sp/3._sp)))) hcl_b = hcl_b + 2._sp*hcl**(&
-&         2._sp/3._sp-1)*pwr1_b/3._sp
+&         3._sp .NE. INT(2._sp/3._sp)))) THEN
+!$OMP   ATOMIC update
+        hcl_b = hcl_b + 2._sp*hcl**(2._sp/3._sp-1)*pwr1_b/3._sp
+      END IF
     END IF
   END SUBROUTINE VIC3L_CANOPY_INTERCEPTION_B
 
@@ -18138,7 +18601,8 @@ CONTAINS
     END IF
   END SUBROUTINE VIC3L_CANOPY_INTERCEPTION
 
-!  Differentiation of vic3l_upper_soil_layer_evaporation in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_upper_soil_layer_evaporation in forward (tangent) mode (with options fixinterface noISIZE context Ope
+!nMP):
 !   variations   of useful results: husl
 !   with respect to varying inputs: cusl en husl b
 ! https://github.com/UW-Hydro/VIC/blob/master/vic/vic_run/src/arno_evap.c
@@ -18225,7 +18689,8 @@ CONTAINS
     husl = husl - es/cusl
   END SUBROUTINE VIC3L_UPPER_SOIL_LAYER_EVAPORATION_D
 
-!  Differentiation of vic3l_upper_soil_layer_evaporation in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_upper_soil_layer_evaporation in reverse (adjoint) mode (with options fixinterface noISIZE context Ope
+!nMP):
 !   gradient     of useful results: cusl husl b
 !   with respect to varying inputs: cusl en husl b
 ! https://github.com/UW-Hydro/VIC/blob/master/vic/vic_run/src/arno_evap.c
@@ -18278,10 +18743,13 @@ CONTAINS
       es = es
     END IF
     es_b = -(husl_b/cusl)
+!$OMP ATOMIC update
     cusl_b = cusl_b + es*husl_b/cusl**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       husl_b = husl_b + cusl*es_b
+!$OMP ATOMIC update
       cusl_b = cusl_b + husl*es_b
       es_b = 0.0_4
     END IF
@@ -18296,6 +18764,7 @@ CONTAINS
       DO i=npe,1,-1
         pwr1 = ratio**i
         temp_b = pe_value_b/(i+b)
+!$OMP   ATOMIC update
         b_b = b_b + (pwr1-b*pwr1/(i+b))*temp_b
         pwr1_b = b*temp_b
         IF (.NOT.(ratio .LE. 0.0 .AND. (i .EQ. 0.0 .OR. i .NE. INT(i)))&
@@ -18304,7 +18773,10 @@ CONTAINS
       pwr1_b = -as_b
       IF (.NOT.(ratio .LE. 0.0 .AND. (b .EQ. 0.0 .OR. b .NE. INT(b)))) &
 &       ratio_b = ratio_b + b*ratio**(b-1)*pwr1_b
-      IF (.NOT.ratio .LE. 0.0) b_b = b_b + ratio**b*LOG(ratio)*pwr1_b
+      IF (.NOT.ratio .LE. 0.0) THEN
+!$OMP   ATOMIC update
+        b_b = b_b + ratio**b*LOG(ratio)*pwr1_b
+      END IF
       pwy1 = 1._sp/(1._sp+b)
       pwr1 = pwx1**pwy1
       ifl0_b = -(ratio_b/iflm)
@@ -18327,8 +18799,11 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     b_b = b_b + cusl*iflm_b - pwy1_b/(b+1._sp)**2
+!$OMP ATOMIC update
     husl_b = husl_b - pwx1_b
+!$OMP ATOMIC update
     cusl_b = cusl_b + (b+1._sp)*iflm_b
   END SUBROUTINE VIC3L_UPPER_SOIL_LAYER_EVAPORATION_B
 
@@ -18371,7 +18846,7 @@ CONTAINS
     husl = husl - es/cusl
   END SUBROUTINE VIC3L_UPPER_SOIL_LAYER_EVAPORATION
 
-!  Differentiation of vic3l_infiltration in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_infiltration in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qr husl hmsl
 !   with respect to varying inputs: cusl cmsl husl pn hmsl b
   SUBROUTINE VIC3L_INFILTRATION_D(pn, pn_d, b, b_d, cusl, cusl_d, cmsl, &
@@ -18468,7 +18943,7 @@ CONTAINS
     qr = pn - (ifl_usl+ifl_msl)
   END SUBROUTINE VIC3L_INFILTRATION_D
 
-!  Differentiation of vic3l_infiltration in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_infiltration in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: qr cusl cmsl husl hmsl b
 !   with respect to varying inputs: cusl cmsl husl pn hmsl b
   SUBROUTINE VIC3L_INFILTRATION_B(pn, pn_b, b, b_b, cusl, cusl_b, cmsl, &
@@ -18535,14 +19010,18 @@ CONTAINS
     pn_b = qr_b
     ifl_usl_b = husl_b/cusl - qr_b
     ifl_msl_b = hmsl_b/cmsl - qr_b
+!$OMP ATOMIC update
     cmsl_b = cmsl_b - ifl_msl*hmsl_b/cmsl**2
+!$OMP ATOMIC update
     cusl_b = cusl_b - ifl_usl*husl_b/cusl**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       ifl_b = ifl_msl_b
       ifl_usl_b = ifl_usl_b - ifl_msl_b
     ELSE
+!$OMP ATOMIC update
       hmsl_b = hmsl_b - cmsl*ifl_msl_b
+!$OMP ATOMIC update
       cmsl_b = cmsl_b + (1._sp-hmsl)*ifl_msl_b
       ifl_b = 0.0_4
     END IF
@@ -18550,7 +19029,9 @@ CONTAINS
     IF (branch .EQ. 0) THEN
       ifl_b = ifl_b + ifl_usl_b
     ELSE
+!$OMP ATOMIC update
       husl_b = husl_b - cusl*ifl_usl_b
+!$OMP ATOMIC update
       cusl_b = cusl_b + (1._sp-husl)*ifl_usl_b
     END IF
     CALL POPCONTROL1B(branch)
@@ -18578,6 +19059,7 @@ CONTAINS
       ELSE
         pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
       END IF
+!$OMP ATOMIC update
       b_b = b_b + pwy1_b
       temp_b = -(pwx1_b/iflm)
       ifl0_b = temp_b
@@ -18605,13 +19087,18 @@ CONTAINS
     ELSE
       pwy1_b = pwx1**pwy1*LOG(pwx1)*pwr1_b
     END IF
+!$OMP ATOMIC update
     b_b = b_b + cumsl*iflm_b - pwy1_b/(b+1._sp)**2
     humsl_b = -pwx1_b
     cumsl_b = cumsl_b + (b+1._sp)*iflm_b - wumsl*humsl_b/cumsl**2
     wumsl_b = wumsl_b + humsl_b/cumsl
+!$OMP ATOMIC update
     husl_b = husl_b + cusl*wumsl_b
+!$OMP ATOMIC update
     cusl_b = cusl_b + husl*wumsl_b + cumsl_b
+!$OMP ATOMIC update
     hmsl_b = hmsl_b + cmsl*wumsl_b
+!$OMP ATOMIC update
     cmsl_b = cmsl_b + hmsl*wumsl_b + cumsl_b
   END SUBROUTINE VIC3L_INFILTRATION_B
 
@@ -18661,7 +19148,7 @@ CONTAINS
     qr = pn - (ifl_usl+ifl_msl)
   END SUBROUTINE VIC3L_INFILTRATION
 
-!  Differentiation of vic3l_drainage_2l in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_drainage_2l in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hl hu
 !   with respect to varying inputs: hl ks hu pbc cl cu
   SUBROUTINE VIC3L_DRAINAGE_2L_D(cu, cu_d, cl, cl_d, ks, ks_d, pbc, &
@@ -18719,7 +19206,7 @@ CONTAINS
     hl = hl + d/cl
   END SUBROUTINE VIC3L_DRAINAGE_2L_D
 
-!  Differentiation of vic3l_drainage_2l in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_drainage_2l in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: hl ks hu pbc cl cu
 !   with respect to varying inputs: hl ks hu pbc cl cu
   SUBROUTINE VIC3L_DRAINAGE_2L_B(cu, cu_b, cl, cl_b, ks, ks_b, pbc, &
@@ -18763,7 +19250,9 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     d_b = hl_b/cl - hu_b/cu
+!$OMP ATOMIC update
     cl_b = cl_b - d*hl_b/cl**2
+!$OMP ATOMIC update
     cu_b = cu_b + d*hu_b/cu**2
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
@@ -18774,6 +19263,7 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
+!$OMP ATOMIC update
       cl_b = cl_b + y1_b
       wl_b = -y1_b
       wu_b = 0.0_4
@@ -18781,17 +19271,28 @@ CONTAINS
       wu_b = y1_b
       wl_b = 0.0_4
     END IF
+!$OMP ATOMIC update
     hl_b = hl_b + cl*wl_b
+!$OMP ATOMIC update
     cl_b = cl_b + hl*wl_b
+!$OMP ATOMIC update
     hu_b = hu_b + cu*wu_b
+!$OMP ATOMIC update
     cu_b = cu_b + hu*wu_b
+!$OMP ATOMIC update
     ks_b = ks_b + hpbc*d_b
     hpbc_b = ks*d_b
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       IF (.NOT.(hu .LE. 0.0 .AND. (pbc .EQ. 0.0 .OR. pbc .NE. INT(pbc)))&
-&     ) hu_b = hu_b + pbc*hu**(pbc-1)*hpbc_b
-      IF (.NOT.hu .LE. 0.0) pbc_b = pbc_b + hu**pbc*LOG(hu)*hpbc_b
+&     ) THEN
+!$OMP   ATOMIC update
+        hu_b = hu_b + pbc*hu**(pbc-1)*hpbc_b
+      END IF
+      IF (.NOT.hu .LE. 0.0) THEN
+!$OMP   ATOMIC update
+        pbc_b = pbc_b + hu**pbc*LOG(hu)*hpbc_b
+      END IF
     END IF
   END SUBROUTINE VIC3L_DRAINAGE_2L_B
 
@@ -18827,7 +19328,7 @@ CONTAINS
     hl = hl + d/cl
   END SUBROUTINE VIC3L_DRAINAGE_2L
 
-!  Differentiation of vic3l_drainage in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_drainage in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: hbsl husl hmsl
 !   with respect to varying inputs: hbsl cusl cmsl ks cbsl pbc
 !                husl hmsl
@@ -18844,7 +19345,7 @@ CONTAINS
 &                      pbc_d, hmsl, hmsl_d, hbsl, hbsl_d)
   END SUBROUTINE VIC3L_DRAINAGE_D
 
-!  Differentiation of vic3l_drainage in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_drainage in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: hbsl cusl cmsl ks cbsl pbc
 !                husl hmsl
 !   with respect to varying inputs: hbsl cusl cmsl ks cbsl pbc
@@ -18880,7 +19381,7 @@ CONTAINS
     CALL VIC3L_DRAINAGE_2L(cmsl, cbsl, ks, pbc, hmsl, hbsl)
   END SUBROUTINE VIC3L_DRAINAGE
 
-!  Differentiation of vic3l_baseflow in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_baseflow in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: qb hbsl
 !   with respect to varying inputs: ws hbsl ds cbsl dsm
   SUBROUTINE VIC3L_BASEFLOW_D(cbsl, cbsl_d, ds, ds_d, dsm, dsm_d, ws, &
@@ -18921,7 +19422,7 @@ CONTAINS
     hbsl = hbsl - qb/cbsl
   END SUBROUTINE VIC3L_BASEFLOW_D
 
-!  Differentiation of vic3l_baseflow in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_baseflow in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: qb ws hbsl ds cbsl dsm
 !   with respect to varying inputs: ws hbsl ds cbsl dsm
   SUBROUTINE VIC3L_BASEFLOW_B(cbsl, cbsl_b, ds, ds_b, dsm, dsm_b, ws, &
@@ -18958,20 +19459,27 @@ CONTAINS
       CALL PUSHCONTROL1B(1)
     END IF
     qb_b = qb_b - hbsl_b/cbsl
+!$OMP ATOMIC update
     cbsl_b = cbsl_b + qb*hbsl_b/cbsl**2
     CALL POPCONTROL1B(branch)
     IF (branch .NE. 0) THEN
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + cbsl*qb_b
+!$OMP ATOMIC update
       cbsl_b = cbsl_b + hbsl*qb_b
       qb_b = 0.0_4
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       temp1 = hbsl/ws
+!$OMP ATOMIC update
       dsm_b = dsm_b + ds*temp1*qb_b
+!$OMP ATOMIC update
       ds_b = ds_b + dsm*temp1*qb_b
       temp_b1 = dsm*ds*qb_b/ws
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + temp_b1
+!$OMP ATOMIC update
       ws_b = ws_b - temp1*temp_b1
     ELSE
       temp = hbsl/ws
@@ -18979,11 +19487,15 @@ CONTAINS
       temp1 = ds/ws
       temp_b = dsm*ds*qb_b/ws
       temp_b0 = temp0**2._sp*qb_b
+!$OMP ATOMIC update
       dsm_b = dsm_b + ds*temp*qb_b + (1._sp-temp1)*temp_b0
       temp_b2 = 2._sp*temp0*dsm*(1._sp-temp1)*qb_b/(1._sp-ws)
+!$OMP ATOMIC update
       hbsl_b = hbsl_b + temp_b2 + temp_b
       temp_b1 = -(dsm*temp_b0/ws)
+!$OMP ATOMIC update
       ds_b = ds_b + dsm*temp*qb_b + temp_b1
+!$OMP ATOMIC update
       ws_b = ws_b + (temp0-1.0)*temp_b2 - temp1*temp_b1 - temp*temp_b
     END IF
   END SUBROUTINE VIC3L_BASEFLOW_B
@@ -19008,7 +19520,7 @@ CONTAINS
     hbsl = hbsl - qb/cbsl
   END SUBROUTINE VIC3L_BASEFLOW
 
-!  Differentiation of vic3l_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_hbsl ac_husl ac_qt ac_hmsl
 !                ac_hcl
 !   with respect to varying inputs: ac_hbsl ac_cusl ac_b ac_cmsl
@@ -19050,6 +19562,14 @@ CONTAINS
 &                              , 'pet', ac_pet)
     ac_prcp_d = ac_mlt_d
     ac_prcp = ac_prcp + ac_mlt
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, &
+!$OMP&ac_ds, ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt), &
+!$OMP&SHARED(ac_prcp_d, ac_b_d, ac_cusl_d, ac_cmsl_d, ac_cbsl_d, ac_ks_d&
+!$OMP&, ac_pbc_d, ac_ds_d, ac_dsm_d, ac_ws_d, ac_hcl_d, ac_husl_d, &
+!$OMP&ac_hmsl_d, ac_hbsl_d, ac_qt_d), PRIVATE(row, col, k, pn, en, qr, &
+!$OMP&qb), PRIVATE(pn_d, en_d, qr_d, qb_d), PRIVATE(temp), SCHEDULE(&
+!$OMP&                                     static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19092,7 +19612,7 @@ CONTAINS
     END DO
   END SUBROUTINE VIC3L_TIME_STEP_D
 
-!  Differentiation of vic3l_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of vic3l_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_hbsl ac_cusl ac_b ac_cmsl
 !                ac_pbc ac_ws ac_cbsl ac_dsm ac_ds ac_husl ac_qt
 !                ac_hmsl ac_ks ac_mlt ac_hcl
@@ -19129,12 +19649,20 @@ CONTAINS
     REAL(sp) :: pn, en, qr, qb
     REAL(sp) :: pn_b, en_b, qr_b, qb_b
     INTEGER :: branch
+    INTEGER :: chunk_start
+    INTEGER :: chunk_end
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
-    DO col=1,mesh%ncol
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, &
+!$OMP&ac_ds, ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt), &
+!$OMP&PRIVATE(row, col, k, pn, en, qr, qb), PRIVATE(chunk_start, &
+!$OMP&chunk_end)
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_start,chunk_end
       DO row=1,mesh%nrow
         IF (mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
 &           local_active_cell(row, col) .EQ. 0) THEN
@@ -19173,8 +19701,26 @@ CONTAINS
         END IF
       END DO
     END DO
+    CALL PUSHREAL4(pn)
+    CALL PUSHREAL4(en)
+!$OMP END PARALLEL
     ac_prcp_b = 0.0_4
-    DO col=mesh%ncol,1,-1
+!$OMP PARALLEL NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, &
+!$OMP&ac_ds, ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt), &
+!$OMP&SHARED(ac_prcp_b, ac_b_b, ac_cusl_b, ac_cmsl_b, ac_cbsl_b, ac_ks_b&
+!$OMP&, ac_pbc_b, ac_ds_b, ac_dsm_b, ac_ws_b, ac_hcl_b, ac_husl_b, &
+!$OMP&ac_hmsl_b, ac_hbsl_b, ac_qt_b), PRIVATE(row, col, k, pn, en, qr, &
+!$OMP&qb), PRIVATE(pn_b, en_b, qr_b, qb_b), PRIVATE(branch, chunk_end, &
+!$OMP&chunk_start)
+    CALL POPREAL4(en)
+    CALL POPREAL4(pn)
+    pn_b = 0.0_4
+    en_b = 0.0_4
+    qr_b = 0.0_4
+    qb_b = 0.0_4
+    CALL GETSTATICSCHEDULE(1, mesh%ncol, 1, chunk_start, chunk_end)
+    DO col=chunk_end,chunk_start,-1
       DO row=mesh%nrow,1,-1
         CALL POPCONTROL1B(branch)
         IF (branch .NE. 0) THEN
@@ -19220,6 +19766,7 @@ CONTAINS
         END IF
       END DO
     END DO
+!$OMP END PARALLEL
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE VIC3L_TIME_STEP_B
 
@@ -19246,6 +19793,10 @@ CONTAINS
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'pet', ac_pet)
     ac_prcp = ac_prcp + ac_mlt
+!$OMP PARALLEL DO NUM_THREADS(options%comm%ncpu), SHARED(setup, mesh, &
+!$OMP&ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, &
+!$OMP&ac_ds, ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt), &
+!$OMP&PRIVATE(row, col, k, pn, en, qr, qb), SCHEDULE(static)
     DO col=1,mesh%ncol
       DO row=1,mesh%nrow
         IF (.NOT.(mesh%active_cell(row, col) .EQ. 0 .OR. mesh%&
@@ -19322,7 +19873,7 @@ MODULE MD_SIMULATION_DIFF
   IMPLICIT NONE
 
 CONTAINS
-!  Differentiation of roll_discharge in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of roll_discharge in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: ac_qz
 !   with respect to varying inputs: ac_qz
   SUBROUTINE ROLL_DISCHARGE_D(ac_qz, ac_qz_d)
@@ -19344,7 +19895,7 @@ CONTAINS
     END DO
   END SUBROUTINE ROLL_DISCHARGE_D
 
-!  Differentiation of roll_discharge in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of roll_discharge in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: ac_qz
 !   with respect to varying inputs: ac_qz
   SUBROUTINE ROLL_DISCHARGE_B(ac_qz, ac_qz_b)
@@ -19383,7 +19934,7 @@ CONTAINS
     END DO
   END SUBROUTINE ROLL_DISCHARGE
 
-!  Differentiation of store_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of store_time_step in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
@@ -19410,7 +19961,7 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIME_STEP_D
 
-!  Differentiation of store_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of store_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
 !   with respect to varying inputs: *(checkpoint_variable.ac_qz)
@@ -19459,7 +20010,7 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIME_STEP
 
-!  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
 !                *(checkpoint_variable.ac_qz) *(output.response.q)
@@ -19953,7 +20504,7 @@ CONTAINS
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT_D
 
-!  Differentiation of simulation_checkpoint in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of simulation_checkpoint in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(*(parameters.nn_parameters.layers).weight)
 !                *(*(parameters.nn_parameters.layers).bias) *(checkpoint_variable.ac_rr_parameters)
 !                *(checkpoint_variable.ac_rr_states) *(checkpoint_variable.ac_mlt)
@@ -21166,7 +21717,7 @@ CONTAINS
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT
 
-!  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(*(parameters.nn_parameters.layers).weight)
@@ -21258,7 +21809,7 @@ CONTAINS
     END DO
   END SUBROUTINE SIMULATION_D
 
-!  Differentiation of simulation in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of simulation in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values) *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
@@ -21476,7 +22027,7 @@ CONTAINS
 
 END MODULE MD_SIMULATION_DIFF
 
-!  Differentiation of base_forward_run in forward (tangent) mode (with options fixinterface noISIZE context):
+!  Differentiation of base_forward_run in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):in-killed
@@ -21541,7 +22092,7 @@ SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 &               , output, output_d, options, options_d, returns)
 END SUBROUTINE BASE_FORWARD_RUN_D
 
-!  Differentiation of base_forward_run in reverse (adjoint) mode (with options fixinterface noISIZE context):
+!  Differentiation of base_forward_run in reverse (adjoint) mode (with options fixinterface noISIZE context OpenMP):
 !   gradient     of useful results: output.cost
 !   with respect to varying inputs: *(parameters.control.x)
 !   RW status of diff variables: parameters.control.x:(loc) *(parameters.control.x):out

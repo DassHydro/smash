@@ -61,7 +61,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d France")
+    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------

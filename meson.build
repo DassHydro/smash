@@ -1,4 +1,4 @@
-project('smash',
+project('hydro-smash',
     'c',
     version: run_command(['generate_version.py', '--print'], check: true).stdout().strip(),
     license: 'GPL-3.0',
