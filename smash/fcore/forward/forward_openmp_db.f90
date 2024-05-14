@@ -2377,7 +2377,7 @@ CONTAINS
 ! fixed NN input size
     INTEGER, SAVE :: n_in=4
 ! fixed NN output size
-    INTEGER, SAVE :: n_out=5
+    INTEGER, SAVE :: n_out=4
     ALLOCATE(this%layers(setup%nhl+1))
     ALLOCATE(this%neurons(setup%nhl+2))
     this%neurons(1) = n_in
@@ -6435,7 +6435,7 @@ CONTAINS
 ! fixed NN input size
     INTEGER, SAVE :: n_in=4
 ! fixed NN output size
-    INTEGER, SAVE :: n_out=5
+    INTEGER, SAVE :: n_out=4
     n = 0
     n_in_layer = n_in
     DO i=1,setup%nhl
@@ -13589,12 +13589,12 @@ CONTAINS
     REAL(sp), DIMENSION(4) :: input_layer
     REAL(sp), DIMENSION(4) :: input_layer_d
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
-    REAL(sp), DIMENSION(5) :: output_layer_d
+    REAL(sp), DIMENSION(4) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer_d
     REAL(sp) :: pr, perc, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1, &
-&   qd
+&   qd, fk
     REAL(sp) :: pr_d, perc_d, ps_d, es_d, hp_imd_d, pr_imd_d, ht_imd_d, &
-&   qd_d
+&   qd_d, fk_d
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: max1
@@ -13629,6 +13629,7 @@ CONTAINS
     input_layer(4) = en
     CALL FORWARD_MLP_D(layers, layers_d, neurons, input_layer, &
 &                input_layer_d, output_layer, output_layer_d)
+!% Production
     pr = 0._sp
     temp = pn/cp
     temp0 = TANH(temp)
@@ -13669,8 +13670,13 @@ CONTAINS
     perc = hp_imd*cp*(1._sp-pwr1)
     hp_d = hp_imd_d - (perc_d-perc*cp_d/cp)/cp
     hp = hp_imd - perc/cp
+!% Transfer
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
+    temp4 = ht**3.5_sp
+    fk_d = temp4*(kexc*output_layer_d(4)+output_layer(4)*kexc_d) + &
+&     output_layer(4)*kexc*3.5_sp*ht**2.5*ht_d
+    fk = output_layer(4)*kexc*temp4
     IF (prcp .LT. 0._sp) THEN
       pwx1_d = ct*ht_d + ht*ct_d
       pwx1 = ht*ct
@@ -13703,13 +13709,9 @@ CONTAINS
       pr_imd_d = pwr3_d - ct*ht_d - ht*ct_d
       pr_imd = pwr3 - ht*ct
     ELSE
-      temp4 = ht**3.5_sp
-      pr_imd_d = 0.9_sp*(pr*output_layer_d(3)+output_layer(3)*pr_d+perc*&
-&       output_layer_d(4)+output_layer(4)*perc_d) + temp4*(kexc*&
-&       output_layer_d(5)+output_layer(5)*kexc_d) + output_layer(5)*kexc&
-&       *3.5_sp*ht**2.5*ht_d
-      pr_imd = 0.9_sp*(output_layer(3)*pr+output_layer(4)*perc) + &
-&       output_layer(5)*kexc*temp4
+      pr_imd_d = (1._sp-0.1_sp*output_layer(3))*(pr_d+perc_d) - (pr+perc&
+&       )*0.1_sp*output_layer_d(3) + fk_d
+      pr_imd = (1._sp-0.1_sp*output_layer(3))*(pr+perc) + fk
     END IF
     IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
       ht_imd_d = ht_d + (pr_imd_d-pr_imd*ct_d/ct)/ct
@@ -13747,16 +13749,12 @@ CONTAINS
     pwr3 = pwx3**pwy3
     ht_d = (pwr3_d-pwr3*ct_d/ct)/ct
     ht = pwr3/ct
-    temp4 = ht**3.5_sp
-    qd_d = 0.1_sp*(pr*output_layer_d(3)+output_layer(3)*pr_d+perc*&
-&     output_layer_d(4)+output_layer(4)*perc_d) + temp4*(kexc*&
-&     output_layer_d(5)+output_layer(5)*kexc_d) + output_layer(5)*kexc*&
-&     3.5_sp*ht**2.5*ht_d
-    qd = 0.1_sp*(output_layer(3)*pr+output_layer(4)*perc) + output_layer&
-&     (5)*kexc*temp4
-    IF (0._sp .LT. qd) THEN
-      max1_d = qd_d
-      max1 = qd
+    qd_d = 0.1_sp*((pr+perc)*output_layer_d(3)+output_layer(3)*(pr_d+&
+&     perc_d))
+    qd = 0.1_sp*output_layer(3)*(pr+perc)
+    IF (0._sp .LT. qd + fk) THEN
+      max1_d = qd_d + fk_d
+      max1 = qd + fk
     ELSE
       max1 = 0._sp
       max1_d = 0.0_4
@@ -13787,12 +13785,12 @@ CONTAINS
     REAL(sp), DIMENSION(4) :: input_layer
     REAL(sp), DIMENSION(4) :: input_layer_b
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
-    REAL(sp), DIMENSION(5) :: output_layer_b
+    REAL(sp), DIMENSION(4) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer_b
     REAL(sp) :: pr, perc, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1, &
-&   qd
+&   qd, fk
     REAL(sp) :: pr_b, perc_b, ps_b, es_b, hp_imd_b, pr_imd_b, ht_imd_b, &
-&   qd_b
+&   qd_b, fk_b
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: max1
@@ -13829,6 +13827,7 @@ CONTAINS
     input_layer(3) = pn
     input_layer(4) = en
     CALL FORWARD_MLP(layers, neurons, input_layer, output_layer)
+!% Production
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn/cp)/(1._sp+hp*TANH(pn/cp))
     es = hp*cp*(2._sp-hp)*TANH(en/cp)/(1._sp+(1._sp-hp)*TANH(en/cp))
@@ -13842,8 +13841,10 @@ CONTAINS
     pwx1 = 1._sp + (hp_imd/beta)**4
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
+!% Transfer
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
+    fk = output_layer(4)*kexc*ht**3.5_sp
     IF (prcp .LT. 0._sp) THEN
       pwx1 = ht*ct
       pwy1 = -nm1
@@ -13857,8 +13858,7 @@ CONTAINS
       pr_imd = pwr3 - ht*ct
       CALL PUSHCONTROL1B(1)
     ELSE
-      pr_imd = 0.9_sp*(output_layer(3)*pr+output_layer(4)*perc) + &
-&       output_layer(5)*kexc*ht**3.5_sp
+      pr_imd = (1._sp-0.1_sp*output_layer(3))*(pr+perc) + fk
       CALL PUSHCONTROL1B(0)
     END IF
     IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
@@ -13884,9 +13884,8 @@ CONTAINS
     pwr3 = pwx3**pwy3
     CALL PUSHREAL4(ht)
     ht = pwr3/ct
-    qd = 0.1_sp*(output_layer(3)*pr+output_layer(4)*perc) + output_layer&
-&     (5)*kexc*ht**3.5_sp
-    IF (0._sp .LT. qd) THEN
+    qd = 0.1_sp*output_layer(3)*(pr+perc)
+    IF (0._sp .LT. qd + fk) THEN
       CALL PUSHCONTROL1B(0)
     ELSE
       CALL PUSHCONTROL1B(1)
@@ -13906,21 +13905,16 @@ CONTAINS
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
       qd_b = max1_b
+      fk_b = max1_b
     ELSE
       qd_b = 0.0_4
+      fk_b = 0.0_4
     END IF
     output_layer_b = 0.0_4
-    temp_b4 = 0.1_sp*qd_b
-    temp_b3 = ht**3.5_sp*qd_b
-!$OMP ATOMIC update
-    ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*qd_b
-    output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
-!$OMP ATOMIC update
-    kexc_b = kexc_b + output_layer(5)*temp_b3
-    output_layer_b(3) = output_layer_b(3) + pr*temp_b4
-    pr_b = output_layer(3)*temp_b4
-    output_layer_b(4) = output_layer_b(4) + perc*temp_b4
-    perc_b = output_layer(4)*temp_b4
+    output_layer_b(3) = output_layer_b(3) + (pr+perc)*0.1_sp*qd_b
+    temp_b4 = output_layer(3)*0.1_sp*qd_b
+    pr_b = temp_b4
+    perc_b = temp_b4
     CALL POPREAL4(ht)
     pwr3_b = ht_b/ct
     IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
@@ -13964,17 +13958,11 @@ CONTAINS
     END IF
     CALL POPCONTROL1B(branch)
     IF (branch .EQ. 0) THEN
-      temp_b4 = 0.9_sp*pr_imd_b
-      temp_b3 = ht**3.5_sp*pr_imd_b
-!$OMP ATOMIC update
-      ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(5)*kexc*pr_imd_b
-      output_layer_b(5) = output_layer_b(5) + kexc*temp_b3
-!$OMP ATOMIC update
-      kexc_b = kexc_b + output_layer(5)*temp_b3
-      output_layer_b(3) = output_layer_b(3) + pr*temp_b4
-      pr_b = pr_b + output_layer(3)*temp_b4
-      output_layer_b(4) = output_layer_b(4) + perc*temp_b4
-      perc_b = perc_b + output_layer(4)*temp_b4
+      output_layer_b(3) = output_layer_b(3) - 0.1_sp*(pr+perc)*pr_imd_b
+      temp_b4 = (1._sp-0.1_sp*output_layer(3))*pr_imd_b
+      fk_b = fk_b + pr_imd_b
+      pr_b = pr_b + temp_b4
+      perc_b = perc_b + temp_b4
     ELSE
       pwr3_b = pr_imd_b
       IF (pwx3 .LE. 0.0 .AND. (pwy3 .EQ. 0.0 .OR. pwy3 .NE. INT(pwy3))) &
@@ -14007,6 +13995,12 @@ CONTAINS
     perc_b = perc_b - hp_b/cp
     pwr1_b = -(hp_imd*cp*perc_b)
     pwx1_b = -(0.25_sp*pwx1**(-1.25)*pwr1_b)
+    temp_b4 = ht**3.5_sp*fk_b
+!$OMP ATOMIC update
+    ht_b = ht_b + 3.5_sp*ht**2.5*output_layer(4)*kexc*fk_b
+    output_layer_b(4) = output_layer_b(4) + kexc*temp_b4
+!$OMP ATOMIC update
+    kexc_b = kexc_b + output_layer(4)*temp_b4
     hp_imd_b = hp_b + cp*(1._sp-pwr1)*perc_b + 4*hp_imd**3*pwx1_b/beta**&
 &     4
 !$OMP ATOMIC update
@@ -14081,9 +14075,9 @@ CONTAINS
 ! fixed NN input size
     REAL(sp), DIMENSION(4) :: input_layer
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer
     REAL(sp) :: pr, perc, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1, &
-&   qd
+&   qd, fk
     INTRINSIC TANH
     INTRINSIC MAX
     REAL(sp) :: max1
@@ -14100,6 +14094,7 @@ CONTAINS
     input_layer(3) = pn
     input_layer(4) = en
     CALL FORWARD_MLP(layers, neurons, input_layer, output_layer)
+!% Production
     pr = 0._sp
     ps = cp*(1._sp-hp*hp)*TANH(pn/cp)/(1._sp+hp*TANH(pn/cp))
     es = hp*cp*(2._sp-hp)*TANH(en/cp)/(1._sp+(1._sp-hp)*TANH(en/cp))
@@ -14109,8 +14104,10 @@ CONTAINS
     pwr1 = pwx1**(-0.25_sp)
     perc = hp_imd*cp*(1._sp-pwr1)
     hp = hp_imd - perc/cp
+!% Transfer
     nm1 = n - 1._sp
     d1pnm1 = 1._sp/nm1
+    fk = output_layer(4)*kexc*ht**3.5_sp
     IF (prcp .LT. 0._sp) THEN
       pwx1 = ht*ct
       pwy1 = -nm1
@@ -14122,8 +14119,7 @@ CONTAINS
       pwr3 = pwx3**pwy3
       pr_imd = pwr3 - ht*ct
     ELSE
-      pr_imd = 0.9_sp*(output_layer(3)*pr+output_layer(4)*perc) + &
-&       output_layer(5)*kexc*ht**3.5_sp
+      pr_imd = (1._sp-0.1_sp*output_layer(3))*(pr+perc) + fk
     END IF
     IF (1.e-6_sp .LT. ht + pr_imd/ct) THEN
       ht_imd = ht + pr_imd/ct
@@ -14139,10 +14135,9 @@ CONTAINS
     pwy3 = -d1pnm1
     pwr3 = pwx3**pwy3
     ht = pwr3/ct
-    qd = 0.1_sp*(output_layer(3)*pr+output_layer(4)*perc) + output_layer&
-&     (5)*kexc*ht**3.5_sp
-    IF (0._sp .LT. qd) THEN
-      max1 = qd
+    qd = 0.1_sp*output_layer(3)*(pr+perc)
+    IF (0._sp .LT. qd + fk) THEN
+      max1 = qd + fk
     ELSE
       max1 = 0._sp
     END IF
@@ -14514,8 +14509,8 @@ CONTAINS
     REAL(sp), DIMENSION(4) :: input_layer
     REAL(sp), DIMENSION(4) :: input_layer_d
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
-    REAL(sp), DIMENSION(5) :: output_layer_d
+    REAL(sp), DIMENSION(4) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer_d
     REAL(sp) :: dt, fhp, fht
     REAL(sp) :: fhp_d, fht_d
     INTEGER :: i
@@ -14554,13 +14549,13 @@ CONTAINS
       END IF
       temp = ht**5
       temp0 = ht**3.5_sp
-      fht_d = 0.9_sp*(hp**2*(pn*output_layer_d(3)+output_layer(3)*pn_d)+&
-&       output_layer(3)*pn*2*hp*hp_d) - temp*(ct*output_layer_d(4)+&
-&       output_layer(4)*ct_d) - (output_layer(4)*ct*5*ht**4-output_layer&
-&       (5)*kexc*3.5_sp*ht**2.5)*ht_d + temp0*(kexc*output_layer_d(5)+&
-&       output_layer(5)*kexc_d)
-      fht = 0.9_sp*(output_layer(3)*pn*(hp*hp)) - output_layer(4)*ct*&
-&       temp + output_layer(5)*kexc*temp0
+      fht_d = 0.9_sp*(hp**2*(pn*output_layer_d(1)+output_layer(1)*pn_d)+&
+&       output_layer(1)*pn*2*hp*hp_d) - temp*(ct*output_layer_d(3)+&
+&       output_layer(3)*ct_d) - (output_layer(3)*ct*5*ht**4-output_layer&
+&       (4)*kexc*3.5_sp*ht**2.5)*ht_d + temp0*(kexc*output_layer_d(4)+&
+&       output_layer(4)*kexc_d)
+      fht = 0.9_sp*(output_layer(1)*pn*(hp*hp)) - output_layer(3)*ct*&
+&       temp + output_layer(4)*kexc*temp0
       ht_d = ht_d + dt*(fht_d-fht*ct_d/ct)/ct
       ht = ht + dt*fht/ct
       IF (ht .LE. 0._sp) THEN
@@ -14601,8 +14596,8 @@ CONTAINS
     REAL(sp), DIMENSION(4) :: input_layer
     REAL(sp), DIMENSION(4) :: input_layer_b
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
-    REAL(sp), DIMENSION(5) :: output_layer_b
+    REAL(sp), DIMENSION(4) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer_b
     REAL(sp) :: dt, fhp, fht
     REAL(sp) :: fhp_b, fht_b
     INTEGER :: i
@@ -14637,8 +14632,8 @@ CONTAINS
         CALL PUSHCONTROL1B(1)
       END IF
       CALL PUSHREAL4(fht)
-      fht = output_layer(3)*0.9_sp*pn*hp**2 - output_layer(4)*ct*ht**5 +&
-&       output_layer(5)*kexc*ht**3.5_sp
+      fht = 0.9_sp*output_layer(1)*pn*hp**2 - output_layer(3)*ct*ht**5 +&
+&       output_layer(4)*kexc*ht**3.5_sp
       CALL PUSHREAL4(ht)
       ht = ht + dt*fht/ct
       IF (ht .LE. 0._sp) THEN
@@ -14674,23 +14669,23 @@ CONTAINS
       temp_b1 = dt*ht_b/ct
       fht_b = temp_b1
 !$OMP ATOMIC update
-      hp_b = hp_b + 2*hp*output_layer(3)*pn*0.9_sp*fht_b
+      hp_b = hp_b + 2*hp*output_layer(1)*pn*0.9_sp*fht_b
       temp_b0 = -(ht**5*fht_b)
 !$OMP ATOMIC update
-      ct_b = ct_b + output_layer(4)*temp_b0 - fht*temp_b1/ct
+      ct_b = ct_b + output_layer(3)*temp_b0 - fht*temp_b1/ct
       CALL POPREAL4(fht)
       temp_b1 = hp**2*0.9_sp*fht_b
 !$OMP ATOMIC update
-      ht_b = ht_b + (3.5_sp*ht**2.5*output_layer(5)*kexc-5*ht**4*&
-&       output_layer(4)*ct)*fht_b
+      ht_b = ht_b + (3.5_sp*ht**2.5*output_layer(4)*kexc-5*ht**4*&
+&       output_layer(3)*ct)*fht_b
       temp_b = ht**3.5_sp*fht_b
-      output_layer_b(5) = output_layer_b(5) + kexc*temp_b
+      output_layer_b(4) = output_layer_b(4) + kexc*temp_b
 !$OMP ATOMIC update
-      kexc_b = kexc_b + output_layer(5)*temp_b
-      output_layer_b(4) = output_layer_b(4) + ct*temp_b0
-      output_layer_b(3) = output_layer_b(3) + pn*temp_b1
+      kexc_b = kexc_b + output_layer(4)*temp_b
+      output_layer_b(3) = output_layer_b(3) + ct*temp_b0
+      output_layer_b(1) = output_layer_b(1) + pn*temp_b1
 !$OMP ATOMIC update
-      pn_b = pn_b + output_layer(3)*temp_b1
+      pn_b = pn_b + output_layer(1)*temp_b1
       CALL POPCONTROL1B(branch)
       IF (branch .EQ. 0) hp_b = 0.0_4
       CALL POPCONTROL1B(branch)
@@ -14737,7 +14732,7 @@ CONTAINS
 ! fixed NN input size
     REAL(sp), DIMENSION(4) :: input_layer
 ! fixed NN output size
-    REAL(sp), DIMENSION(5) :: output_layer
+    REAL(sp), DIMENSION(4) :: output_layer
     REAL(sp) :: dt, fhp, fht
     INTEGER :: i
     INTEGER, SAVE :: n_subtimesteps=4
@@ -14754,8 +14749,8 @@ CONTAINS
       hp = hp + dt*fhp/cp
       IF (hp .LE. 0._sp) hp = 1.e-6_sp
       IF (hp .GE. 1._sp) hp = 1._sp - 1.e-6_sp
-      fht = output_layer(3)*0.9_sp*pn*hp**2 - output_layer(4)*ct*ht**5 +&
-&       output_layer(5)*kexc*ht**3.5_sp
+      fht = 0.9_sp*output_layer(1)*pn*hp**2 - output_layer(3)*ct*ht**5 +&
+&       output_layer(4)*kexc*ht**3.5_sp
       ht = ht + dt*fht/ct
       IF (ht .LE. 0._sp) ht = 1.e-6_sp
       IF (ht .GE. 1._sp) ht = 1._sp - 1.e-6_sp

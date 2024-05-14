@@ -154,8 +154,8 @@ contains
         real(sp), intent(inout) :: hp, ht, q
 
         real(sp), dimension(4) :: input_layer  ! fixed NN input size
-        real(sp), dimension(5) :: output_layer  ! fixed NN output size
-        real(sp) :: pr, perc, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1, qd
+        real(sp), dimension(4) :: output_layer  ! fixed NN output size
+        real(sp) :: pr, perc, ps, es, hp_imd, pr_imd, ht_imd, nm1, d1pnm1, qd, fk
 
         input_layer(1) = hp
         input_layer(2) = ht
@@ -163,6 +163,8 @@ contains
         input_layer(4) = en
 
         call forward_mlp(layers, neurons, input_layer, output_layer)
+
+        !% Production
 
         pr = 0._sp
 
@@ -182,8 +184,12 @@ contains
 
         hp = hp_imd - perc/cp
 
+        !% Transfer
+
         nm1 = n - 1._sp
         d1pnm1 = 1._sp/nm1
+
+        fk = output_layer(4)*kexc*(ht**3.5_sp)
 
         if (prcp .lt. 0._sp) then
 
@@ -191,8 +197,7 @@ contains
 
         else
 
-            pr_imd = 0.9_sp*(output_layer(3)*pr + output_layer(4)*perc) &
-            & + output_layer(5)*kexc*(ht**3.5_sp)
+            pr_imd = (1._sp - 0.1_sp*output_layer(3))*(pr + perc) + fk
 
         end if
 
@@ -200,9 +205,9 @@ contains
 
         ht = (((ht_imd*ct)**(-nm1) + ct**(-nm1))**(-d1pnm1))/ct
 
-        qd = 0.1_sp*(output_layer(3)*pr + output_layer(4)*perc) + output_layer(5)*kexc*(ht**3.5_sp)
+        qd = 0.1_sp*output_layer(3)*(pr + perc)
 
-        q = (ht_imd - ht)*ct + max(0._sp, qd)
+        q = (ht_imd - ht)*ct + max(0._sp, qd + fk)
 
     end subroutine gr_production_transfer_mlp_alg
 
@@ -276,7 +281,7 @@ contains
         real(sp), intent(inout) :: hp, ht, q
 
         real(sp), dimension(4) :: input_layer  ! fixed NN input size
-        real(sp), dimension(5) :: output_layer  ! fixed NN output size
+        real(sp), dimension(4) :: output_layer  ! fixed NN output size
         real(sp) :: dt, fhp, fht
         integer :: i
         integer :: n_subtimesteps = 4
@@ -297,8 +302,8 @@ contains
             if (hp .le. 0._sp) hp = 1.e-6_sp
             if (hp .ge. 1._sp) hp = 1._sp - 1.e-6_sp
 
-            fht = output_layer(3)*0.9_sp*pn*hp**2 - output_layer(4)*ct*ht**5 + &
-            & output_layer(5)*kexc*ht**3.5_sp
+            fht = 0.9_sp*output_layer(1)*pn*hp**2 - output_layer(3)*ct*ht**5 + &
+            & output_layer(4)*kexc*ht**3.5_sp
             ht = ht + dt*fht/ct
             if (ht .le. 0._sp) ht = 1.e-6_sp
             if (ht .ge. 1._sp) ht = 1._sp - 1.e-6_sp
@@ -412,11 +417,12 @@ contains
 
         ! Beta percolation parameter is time step dependent
         beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, &
         !$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
         !$OMP& private(row, col, k, pn, en)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -445,7 +451,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
+#endif
 
     end subroutine gr4_mlp_alg_time_step
 
@@ -472,11 +480,12 @@ contains
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
         !$OMP& ac_qt) &
         !$OMP& private(row, col, k, pn, en)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -504,7 +513,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
+#endif
 
     end subroutine gr4_ode_time_step
 
@@ -533,11 +544,12 @@ contains
         call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
 
         ac_prcp = ac_prcp + ac_mlt
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
         !$OMP& shared(setup, mesh, layers, neurons, ac_prcp, ac_pet, ac_ci, ac_cp, ac_ct, ac_kexc, &
         !$OMP& ac_hi, ac_hp, ac_ht, ac_qt) &
         !$OMP& private(row, col, k, pn, en)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
@@ -565,7 +577,9 @@ contains
 
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
+#endif
 
     end subroutine gr4_mlp_ode_time_step
 

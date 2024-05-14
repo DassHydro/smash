@@ -90,7 +90,7 @@ contains
 
         integer :: i, n_in_layer
         integer :: n_in = 4  ! fixed NN input size
-        integer :: n_out = 5  ! fixed NN output size
+        integer :: n_out = 4  ! fixed NN output size
 
         allocate (this%layers(setup%nhl + 1))
         allocate (this%neurons(setup%nhl + 2))
