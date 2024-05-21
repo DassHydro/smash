@@ -13641,8 +13641,6 @@ CONTAINS
           prr = (1-q9)*(pr+perc) + l
           prd_d = (pr+perc)*q9_d + q9*(pr_d+perc_d)
           prd = q9*(pr+perc)
-!~                 prr = 0.9_sp*(pr + perc) + l
-!~                 prd = 0.1_sp*(pr + perc)
           CALL GR_TRANSFER_D(5._sp, ac_prcp(k), prr, prr_d, ac_ct(k), &
 &                      ac_ct_d(k), ac_ht(k), ac_ht_d(k), qr, qr_d)
           IF (0._sp .LT. prd + l) THEN
@@ -13747,8 +13745,6 @@ CONTAINS
           CALL PUSHREAL4(prr)
           prr = (1-q9)*(pr+perc) + l
           prd = q9*(pr+perc)
-!~                 prr = 0.9_sp*(pr + perc) + l
-!~                 prd = 0.1_sp*(pr + perc)
           CALL PUSHREAL4(ac_ht(k))
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
@@ -13901,8 +13897,6 @@ CONTAINS
           q9 = 0.9_sp*TANH(alpha2*pn)**2 + 0.1
           prr = (1-q9)*(pr+perc) + l
           prd = q9*(pr+perc)
-!~                 prr = 0.9_sp*(pr + perc) + l
-!~                 prd = 0.1_sp*(pr + perc)
           CALL GR_TRANSFER(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), &
 &                    qr)
           IF (0._sp .LT. prd + l) THEN
