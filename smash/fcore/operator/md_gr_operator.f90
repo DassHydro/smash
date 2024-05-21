@@ -78,6 +78,48 @@ contains
         hp = hp_imd - perc*inv_cp
 
     end subroutine gr_production
+    
+    
+    subroutine hortonian_production(pn, en, cp, beta, hp, pr, perc, dt)
+
+        implicit none
+
+        real(sp), intent(in) :: pn, en, cp, beta
+        real(sp), intent(in) :: dt
+        real(sp), intent(inout) :: hp
+        real(sp), intent(out) :: pr, perc
+        
+        real(sp) :: inv_cp, ps, es, hp_imd
+        real(sp) :: lambda, gam, inv_lambda, alpha1
+        
+        alpha1 = 0.0001_sp
+        
+        inv_cp = 1._sp / cp
+        pr = 0._sp
+        gam = 1 - exp(-pn * alpha1)
+        lambda = sqrt(1 - gam)
+        inv_lambda = 1._sp / lambda
+        
+        ps = cp * inv_lambda * tanh(lambda * pn * inv_cp) * (1._sp - (lambda * hp) ** 2) &
+        & / (1._sp + lambda * hp * tanh(lambda * pn * inv_cp)) - gam * dt
+
+        es = (hp*cp)*(2._sp - hp)*tanh(en*inv_cp)/ &
+        & (1._sp + (1._sp - hp)*tanh(en*inv_cp))
+
+        hp_imd = hp + (ps - es)*inv_cp
+
+        if (pn .gt. 0) then
+
+            pr = pn - (hp_imd - hp)*cp
+
+        end if
+
+        perc = (hp_imd*cp)*(1._sp - (1._sp + (hp_imd/beta)**4)**(-0.25_sp))
+
+        hp = hp_imd - perc*inv_cp
+
+    end subroutine hortonian_production
+
 
     subroutine gr_exchange(kexc, ht, l)
 
@@ -279,6 +321,87 @@ contains
         !$OMP end parallel do
 
     end subroutine gr5_time_step
+
+
+
+    subroutine gr5_hortonian_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
+        real(sp) :: beta, alpha2, pn, en, pr, perc, l, prr, prd, qr, qd, Q9
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+        
+        alpha2 = 0.01_sp
+        
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call hortonian_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc, setup%dt)
+
+                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+                
+                Q9 = 0.9_sp * tanh(alpha2 * pn) ** 2 + 0.1 
+                
+                prr = (1 - Q9) * (pr + perc) + l
+                prd = Q9 * (pr + perc)
+            
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+            end do
+        end do
+        !$OMP end parallel do
+
+    end subroutine gr5_hortonian_time_step
+    
+    
 
     subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
     & ac_ht, ac_qt)
