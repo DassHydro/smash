@@ -1,17 +1,33 @@
 [build-system]
-requires = ["setuptools", "setuptools-scm", "versioneer[toml]"]
-build-backend = "setuptools.build_meta"
+requires = [
+    "meson-python",
+    "numpy",
+    "f90wrap",
+    "versioneer[toml]"
+]
+build-backend = "mesonpy"
 
 [project]
-name = "smash"
-dynamic = ["version", "dependencies"]
+name = "hydro-smash"
+dynamic = ["version"]
 description = "An open source, Python library interfacing the Fortran Spatially distributed Modelling and ASsimilation for Hydrology platform."
 readme = "README.md"
 authors = [
-    {name = "INRAE RECOVER RHAX Team", email = "pierre.javelle@inrae.fr"},
+    {name = "INRAE RECOVER RHAX Team", email = "francois.colleoni@inrae.fr"},
 ]
-requires-python = ">=3.8"
 license = {text = "GPL-3.0"}
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "f90wrap",
+    "rasterio",
+    "pandas",
+    "h5py",
+    "tqdm",
+    "scipy",
+    "pyyaml",
+    "terminaltables",
+]
 classifiers = [
     'Development Status :: 5 - Production/Stable',  
     'Intended Audience :: Science/Research',
@@ -20,22 +36,34 @@ classifiers = [
     'Programming Language :: Fortran',
     'Programming Language :: Python',
     'Programming Language :: Python :: 3',
-    'Programming Language :: Python :: 3.8',
     'Programming Language :: Python :: 3.9',
     'Programming Language :: Python :: 3.10',
     'Programming Language :: Python :: 3.11',
     'Programming Language :: Python :: 3 :: Only',
     'Topic :: Scientific/Engineering',
     'Operating System :: Unix',
+    'Operating System :: Microsoft :: Windows',
 ]
 
-[tool.setuptools.packages.find]
-include = ["smash", "smash.*"]
-namespaces = false
-
-[tool.setuptools.dynamic]
-dependencies = {file = ["requirements.txt"]}
-optional-dependencies = {dev = { file = ["requirements-dev.txt"] }}
+[project.optional-dependencies]
+test = [
+    "pytest",
+    "pytest-cov",
+]
+doc = [
+    "sphinx",
+    "numpydoc",
+    "pydata-sphinx-theme",
+    "ipython",
+    "sphinxcontrib-bibtex",
+    "sphinx-design",
+    "sphinx-autosummary-accessors",
+    "matplotlib"
+]
+dev = [
+    "ruff",
+    "fprettify",
+]
 
 [project.urls]
 documentation = "https://smash.recover.inrae.fr"
@@ -49,11 +77,20 @@ versionfile_build = "smash/_version.py"
 tag_prefix = "v"
 parentdir_prefix = "smash-"
 
+[tool.cibuildwheel]
+skip = "cp36-* cp37-* cp38-* cp312-* pp* *_i686 *_ppc64le *_s390x"
+test-command = 'python -c "import smash; print(smash.__version__)"'
+build-verbosity = 3
+
+[tool.cibuildwheel.windows]
+before-build = "pip install delvewheel"
+repair-wheel-command = "delvewheel repair -w {dest_dir} {wheel}"
+
 [tool.ruff]
 line-length = 110
-target-version = "py38"
+target-version = "py311"
 
-# ruff lint rules retrieved from pandas
+# ruff lint rules derived from Pandas
 [tool.ruff.lint]
 select = [
   # pyflakes

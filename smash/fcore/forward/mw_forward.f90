@@ -138,11 +138,12 @@ contains
         options%comm%verbose = .false.
 
         if (verbose) call display_iteration_progress(iter, niter, task)
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(ncpu) &
         !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
         !$OMP& shared(samples, samples_kind, samples_ind, iter, niter, cost, q) &
         !$OMP& private(i, parameters_thread, output_thread)
+#endif
         do i = 1, niter
 
             parameters_thread = parameters
@@ -151,18 +152,21 @@ contains
             call multiple_forward_run_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
 
             call forward_run(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
-
+#ifdef _OPENMP
             !$OMP critical
+#endif
             cost(i) = output_thread%cost
             q(:, :, i) = output_thread%response%q
 
             iter = iter + 1
             if (verbose) call display_iteration_progress(iter, niter, task)
+#ifdef _OPENMP
             !$OMP end critical
-
+#endif
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine multiple_forward_run
 
 end module mw_forward

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import os
+import platform
 import warnings
 from typing import TYPE_CHECKING
 
@@ -250,6 +251,8 @@ def _standardize_simulation_optimize_options_bounds(
                 f"included in the feasible domain ]{low}, {upp}[ in bounds optimize_options"
             )
 
+    bounds = {key: bounds[key] for key in parameters}
+
     return bounds
 
 
@@ -313,10 +316,10 @@ def _standardize_simulation_optimize_options_descriptor(
 def _standardize_simulation_optimize_options_net(
     model: Model, bounds: dict, net: Net | None, **kwargs
 ) -> Net:
+    nd = model.setup.nd
+
     bound_values = list(bounds.values())
     ncv = len(bound_values)
-
-    nd = model.setup.nd
 
     active_mask = np.where(model.mesh.active_cell == 1)
     ntrain = active_mask[0].shape[0]
@@ -955,6 +958,11 @@ def _standardize_simulation_common_options_ncpu(ncpu: Numeric) -> int:
     else:
         raise TypeError("ncpu common_options must be of Numeric type (int, float)")
 
+    # Parallel computation not supported on Windows
+    if platform.system() == "Windows" and ncpu > 1:
+        ncpu = 1
+        warnings.warn("Parallel computation is not supported on Windows. ncpu is set to 1", stacklevel=2)
+
     return ncpu
 
 
@@ -1266,10 +1274,17 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
     st = pd.Timestamp(model.setup.start_time)
 
     mask_time_step = np.zeros(shape=model.setup.ntime_step, dtype=bool)
+    time_step_to_returns_time_step = np.zeros(shape=model.setup.ntime_step, dtype=np.int32) - np.int32(99)
 
     for date in return_options["time_step"]:
         ind = int((date - st).total_seconds() / model.setup.dt) - 1
         mask_time_step[ind] = True
+
+    ind = 0
+    for i in range(model.setup.ntime_step):
+        if mask_time_step[i]:
+            time_step_to_returns_time_step[i] = ind
+            ind += 1
 
     # % To pass character array to Fortran.
     keys = [k for k, v in return_options.items() if k != "time_step" and v]
@@ -1286,13 +1301,16 @@ def _standardize_simulation_return_options_finalize(model: Model, return_options
         {
             "nmts": np.count_nonzero(mask_time_step),
             "mask_time_step": mask_time_step,
+            "time_step_to_returns_time_step": time_step_to_returns_time_step,
             "fkeys": fkeys,
             "keys": keys,
         }
     )
 
     pop_keys = [
-        k for k in return_options.keys() if k not in ["nmts", "mask_time_step", "time_step", "fkeys", "keys"]
+        k
+        for k in return_options.keys()
+        if k not in ["nmts", "mask_time_step", "time_step_to_returns_time_step", "time_step", "fkeys", "keys"]
     ]
     for key in pop_keys:
         return_options.pop(key)

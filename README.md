@@ -1,18 +1,17 @@
 <h1 align="center">
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/corporate_logo_dark.svg">
-  <img src="doc/source/_static/corporate_logo.svg" width="300", hspace=30>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo_dark.svg">
+  <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/corporate_logo.svg" width="300", hspace=30>
 </picture>
 <picture>
-  <source media="(prefers-color-scheme: dark)" srcset="doc/source/_static/logo_smash_dark.svg">
-  <img src="doc/source/_static/logo_smash.svg" width="300", hspace=30>
+  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash_dark.svg">
+  <img src="https://raw.githubusercontent.com/DassHydro/smash/main/doc/source/_static/logo_smash.svg" width="300", hspace=30>
 </picture>
 </h1><br>
 
 - **Documentation:** https://smash.recover.inrae.fr
 - **Source code:** https://github.com/DassHydro/smash
-- **Contributors and contact:** https://smash.recover.inrae.fr/contributors/index.html
-- **Contributing:** https://smash.recover.inrae.fr/developers_guide/index.html
+- **Contributing:** https://smash.recover.inrae.fr/contributor_guide/index.html
 - **Scientific references from latest version:** https://smash.recover.inrae.fr/bibliography/index.html
 - **Bug reports:** https://github.com/DassHydro/smash/issues
 
@@ -20,6 +19,7 @@
 
 **smash** offers a range of advanced optimization techniques, including Variational Data Assimilation (VDA), Bayesian estimation, and Artificial Neural Network (ANN) approaches, using an adjoint model generated with the **Tapenade** Automatic Differentiation Engine.
 
+- **Tapenade** website: https://team.inria.fr/ecuador/en/tapenade/
 - **Tapenade** article: https://doi.org/10.1145/2450153.2450158
 - **Tapenade** source code: https://gitlab.inria.fr/tapenade/tapenade.git
 

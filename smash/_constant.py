@@ -110,6 +110,11 @@ ROUTING_MODULE_RR_STATES = dict(
 # % Following MODULE order
 MODULE_RR_STATES = dict(**SNOW_MODULE_RR_STATES, **HYDROLOGICAL_MODULE_RR_STATES, **ROUTING_MODULE_RR_STATES)
 
+# % Following ROUTING_MODULE order
+ROUTING_MODULE_NQZ = dict(
+    zip(ROUTING_MODULE, [1, 1, 2])  # % lag0  # % lr  # % kw
+)
+
 ### STRUCTURE ###
 #################
 
@@ -239,7 +244,7 @@ FEASIBLE_RR_INITIAL_STATES = dict(
 
 # % Following RR_PARAMETERS order
 # % if ci is used (depending on model structure), it will be recomputed automatically by a Fortran routine;
-# % while llr is conversed by a factor depending on the timestep.
+# % while llr is conversed by a factor depending on the time step.
 DEFAULT_RR_PARAMETERS = dict(
     zip(
         RR_PARAMETERS,

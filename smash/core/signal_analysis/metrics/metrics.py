@@ -62,23 +62,25 @@ def metrics(model: Model, metric: str = "nse", end_warmup: str | Timestamp | Non
 
     >>> model.optimize()
     </> Optimize
-        At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-        At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-        At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-        At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-        At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-        At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+        At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+        At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
+        At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
+        At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
+        At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
+        At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
+        At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
+        At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
         CONVERGENCE: DDX < 0.01
 
     Compute the Mean Squared Error for all catchments
 
     >>> smash.metrics(model, metric="mse")
-    array([49.50750351,  4.31146955,  0.57386672])
+    array([44.78328323,  4.38410997,  0.50611502])
 
     The Kling-Gupta Efficiency
 
     >>> smash.metrics(model, metric="kge")
-    array([0.96001273, 0.86749017, 0.81862521])
+    array([0.94752783, 0.84582865, 0.8045246 ])
 
     Add end warm-up date (1 month)
 
@@ -89,9 +91,9 @@ def metrics(model: Model, metric: str = "nse", end_warmup: str | Timestamp | Non
     Compute the Nash-Sutcliffe Efficiency with and without warm-up
 
     >>> smash.metrics(model, metric="nse")
-    array([0.95939589, 0.90611488, 0.82942516])
+    array([0.96327233, 0.90453297, 0.84956211])
     >>> smash.metrics(model, metric="nse", end_warmup=end_warmup)
-    array([0.9774977 , 0.92978942, 0.87382156])
+    array([0.97294462, 0.91321117, 0.86573941])
     """
     metric, end_warmup = _standardize_metrics_args(metric, end_warmup, model.setup)
 

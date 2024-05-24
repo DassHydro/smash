@@ -13,7 +13,7 @@ module mw_atmos_statistic
     use mwd_setup, only: SetupDT
     use mwd_mesh, only: MeshDT
     use mwd_input_data, only: Input_DataDT
-    use mwd_atmos_manipulation, only: get_atmos_data_timestep, set_atmos_data_timestep
+    use mwd_atmos_manipulation, only: get_atmos_data_time_step, set_atmos_data_time_step
     use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix, matrix_to_sparse_matrix
     use mw_mask, only: mask_upstream_cells
 
@@ -91,12 +91,12 @@ contains
 
         do t = 1, setup%ntime_step
 
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "prcp", mat_prcp)
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "pet", mat_pet)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
             if (setup%snow_module_present) then
-                call get_atmos_data_timestep(setup, mesh, input_data, t, "snow", mat_snow)
-                call get_atmos_data_timestep(setup, mesh, input_data, t, "temp", mat_temp)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "temp", mat_temp)
             end if
 
             mask_prcp = (mat_prcp .ge. 0._sp)
@@ -139,9 +139,9 @@ contains
 
         do t = 1, setup%ntime_step
 
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "prcp", mat_prcp)
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "snow", mat_snow)
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "temp", mat_temp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "temp", mat_temp)
 
             where (mat_snow .ge. 0._sp) mat_prcp = mat_prcp + mat_snow
 
@@ -167,8 +167,8 @@ contains
 
             end where
 
-            call set_atmos_data_timestep(setup, mesh, input_data, t, "prcp", mat_prcp)
-            call set_atmos_data_timestep(setup, mesh, input_data, t, "snow", mat_snow)
+            call set_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call set_atmos_data_time_step(setup, mesh, input_data, t, "snow", mat_snow)
 
         end do
 

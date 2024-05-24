@@ -61,7 +61,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d France")
+    os.system("python3 generate_dataset.py -d France")
 
 Imports
 -------
@@ -103,7 +103,7 @@ simulation period is different.
 Model mesh creation
 *******************
 
-For the ``mesh``, we only need the flow direction file and the mainland France bouding box ``bbox`` to pass to the `smash.factory.generate_mesh`
+For the ``mesh``, we only need the flow direction file and the mainland France bounding box ``bbox`` to pass to the `smash.factory.generate_mesh`
 function. A bouding box in `smash` is a list of 4 values (``xmin``, ``xmax``, ``ymin``, ``ymax``), each of which corresponds respectively to 
 the x minimum value, the x maximum value, the y mimimum value and the y maximum value. The values must be in the same unit and projection as the 
 flow direction.

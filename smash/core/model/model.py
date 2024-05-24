@@ -172,6 +172,11 @@ class Model:
         end_time : `str`, `datetime.date` or `pandas.Timestamp`
             End time date. **end_time** must be later than **start_time**
 
+        .. note::
+            The convention of `smash` is that **start_time** is the date used to initialize the model's
+            states. All the modeled state-flux variables :math:`\\boldsymbol{U}(x,t)` (i.e. discharge, states,
+            internal fluxes) will be computed over the period **start_time + 1dt** and **end_time**
+
         adjust_interception : `bool`, default True
             Whether or not to adjust the maximum capacity of the interception reservoir.
             This option is only applicable if **hydrological_module** is set to ``'gr4'`` or ``'gr5'`` and
@@ -1134,8 +1139,8 @@ class Model:
         >>> ind
         0
         >>> model.response.q[ind, :]
-        array([1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
-               3.2118713e+01, 3.1965160e+01], dtype=float32)
+        array([1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 2.2796249e+01,
+               2.2655941e+01, 2.2517307e+01], dtype=float32)
 
         If you are using IPython, tab completion allows you to visualize all the attributes and methods
 
@@ -1190,11 +1195,13 @@ class Model:
         `get_rr_final_states <Model.get_rr_final_states>`
 
         >>> model.get_rr_final_states("hp")
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
 
         .. note::
             Unlike rainfall-runoff initial states, there is no setter for rainfall-runoff final states.
@@ -1595,7 +1602,7 @@ class Model:
               dtype=float32)
 
         .. note::
-            This method is equivalent to directly slicing the ``rr_inital_states.values`` array (as shown
+            This method is equivalent to directly slicing the ``rr_initial_states.values`` array (as shown
             below) and change the values but is simpler and ``safer`` to use
 
         Access the rainfall-runoff initial state keys
@@ -1885,6 +1892,7 @@ class Model:
         --------
         >>> from smash.factory import load_dataset
         >>> setup, mesh = load_dataset("cance")
+        >>> model = smash.Model(setup, mesh)
 
         Set a specific value to a structural error sigma parameter vector
 
@@ -1954,7 +1962,7 @@ class Model:
         ValueError: Invalid value for model serr_sigma_parameter 'sg0'. serr_sigma_parameter domain [-1, -1]
         is not included in the feasible domain ]0, inf[
 
-        Finally, trying to run the Model with a negative value set to the structural error mu parameter
+        Finally, trying to run the Model with a negative value set to the structural error sigma parameter
         ``'sg0'`` leads to the same error
 
         >>> model.forward_run()
@@ -1998,11 +2006,13 @@ class Model:
         Access to a specific rainfall-runoff final state grid
 
         >>> model.get_rr_final_states("hp")
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
 
         .. note::
             This method is equivalent to directly slicing the ``rr_final_states.values`` array (as shown
@@ -2022,11 +2032,13 @@ class Model:
         Slice the ``rr_final_states.values`` array on the last axis
 
         >>> model.rr_final_states.values[..., ind]
-        array([[0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.01      , 0.01      , 0.01      ,
-                0.01      , 0.01      , 0.5892611 , 0.60285664, 0.01      ,
+        array([[-99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                -99.        , -99.        , -99.        , -99.        ,
+                  0.8682228 ,   0.88014543, -99.        , -99.        ,
                 ...
-                0.01      , 0.01      , 0.01      ]], dtype=float32)
+                -99.        , -99.        , -99.        , -99.        ]],
+              dtype=float32)
         """
 
         key = _standardize_get_rr_final_states_args(self, key)
@@ -2085,7 +2097,7 @@ class Model:
          'ht': (1e-06, 0.999999), 'hlr': (1e-06, 1000.0)}
 
         .. note::
-            This method allows you to find out the default bounds for the rainfall-runoff inital states.
+            This method allows you to find out the default bounds for the rainfall-runoff initial states.
             These bounds are used during optimization if they are not modified in the optimization method
             argument.
         """
@@ -2172,7 +2184,7 @@ class Model:
         -------
         value : `numpy.ndarray`
             An array of shape *(ng, ntime_step)* representing the values of the structural error mu for each
-            gauge and each timestep.
+            gauge and each time step.
 
         Examples
         --------
@@ -2204,18 +2216,18 @@ class Model:
         Set arbitrary values to structural error mu parameters
 
         >>> model.set_serr_mu_parameters("mg0", 1)
-        >>> model.set_serr_mu_paramters("mg1", 2)
+        >>> model.set_serr_mu_parameters("mg1", 2)
 
         Retrieve the mu value with the `get_serr_mu <Model.get_serr_mu>` method
 
         >>> mu = model.get_serr_mu()
         >>> mu
-        array([[ 1.0039653,  1.0000002,  1.       , ..., 65.5464   , 65.23743  ,
-                64.93032  ],
-               [ 1.0004755,  1.       ,  1.       , ..., 16.804424 , 16.740883 ,
-                16.677677 ],
-               [ 1.0000595,  1.       ,  1.       , ...,  5.186602 ,  5.1694865,
-                5.1524224]], dtype=float32)
+        array([[ 1.0039653,  1.0000002,  1.       , ..., 46.5925   , 46.311882 ,
+                46.034615 ],
+               [ 1.0004755,  1.       ,  1.       , ..., 10.65963  , 10.61587  ,
+                10.572574 ],
+               [ 1.0000595,  1.       ,  1.       , ...,  3.563775 ,  3.5520396,
+                 3.5404253]], dtype=float32)
 
         This is equivalent to
 
@@ -2242,7 +2254,7 @@ class Model:
         -------
         value : `numpy.ndarray`
             An array of shape *(ng, ntime_step)* representing the values of the structural error sigma for
-            each gauge and each timestep.
+            each gauge and each time step.
 
         Examples
         --------
@@ -2275,12 +2287,12 @@ class Model:
 
         >>> sigma = model.get_serr_sigma()
         >>> sigma
-        array([[1.0003965, 1.       , 1.       , ..., 7.4546404, 7.423743 ,
-                7.393032 ],
-               [1.0000476, 1.       , 1.       , ..., 2.5804424, 2.5740883,
-                2.5677679],
-               [1.000006 , 1.       , 1.       , ..., 1.4186602, 1.4169487,
-                1.4152422]], dtype=float32)
+        array([[1.0003965, 1.       , 1.       , ..., 5.55925  , 5.5311885,
+                5.5034614],
+               [1.0000476, 1.       , 1.       , ..., 1.965963 , 1.9615871,
+                1.9572574],
+               [1.000006 , 1.       , 1.       , ..., 1.2563775, 1.255204 ,
+                1.2540425]], dtype=float32)
 
         This is equivalent to
 

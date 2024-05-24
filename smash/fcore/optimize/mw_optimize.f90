@@ -480,11 +480,12 @@ contains
         options%comm%verbose = .false.
 
         if (verbose) call display_iteration_progress(iter, niter, task)
-
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(ncpu) &
         !$OMP& shared(setup, mesh, input_data, parameters, output, options, returns) &
         !$OMP& shared(samples, samples_kind, samples_ind, iter, niter, cost, q, optimized_parameters) &
         !$OMP& private(i, parameters_thread, output_thread)
+#endif
         do i = 1, niter
 
             parameters_thread = parameters
@@ -493,19 +494,22 @@ contains
             call multiple_optimize_sample_to_parameters(samples(:, i), samples_kind, samples_ind, parameters_thread)
 
             call optimize(setup, mesh, input_data, parameters_thread, output_thread, options, returns)
-
+#ifdef _OPENMP
             !$OMP critical
+#endif
             cost(i) = output_thread%cost
             q(:, :, i) = output_thread%response%q
             call multiple_optimize_save_parameters(setup, parameters_thread, options, optimized_parameters(:, :, :, i))
 
             iter = iter + 1
             if (verbose) call display_iteration_progress(iter, niter, task)
+#ifdef _OPENMP
             !$OMP end critical
-
+#endif
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
+#endif
     end subroutine multiple_optimize
 
 end module mw_optimize

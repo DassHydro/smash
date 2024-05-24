@@ -449,6 +449,9 @@ COMMON_OPTIONS_BASE_DOC = {
         """,
         """
         Number of CPU(s) to perform a parallel computation.
+
+        .. warning::
+            Parallel computation is not supported on ``Windows``.
         """,
     ),
 }
@@ -804,12 +807,12 @@ Run the direct Model
 Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
-array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
-        3.2118713e+01, 3.1965160e+01],
-       [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
-        7.8704414e+00, 7.8388391e+00],
-       [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
-        2.0847433e+00, 2.0762112e+00]], dtype=float32)
+array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 2.2796249e+01,
+        2.2655941e+01, 2.2517307e+01],
+       [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 4.8298149e+00,
+        4.8079352e+00, 4.7862868e+00],
+       [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 1.2818875e+00,
+        1.2760198e+00, 1.2702127e+00]], dtype=float32)
 """
 )
 
@@ -923,23 +926,25 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Optimize
-    At iterate      0    nfg =     1    J =      0.643190    ddx = 0.64
-    At iterate      1    nfg =    30    J =      0.097397    ddx = 0.64
-    At iterate      2    nfg =    59    J =      0.052158    ddx = 0.32
-    At iterate      3    nfg =    88    J =      0.043086    ddx = 0.08
-    At iterate      4    nfg =   118    J =      0.040684    ddx = 0.02
-    At iterate      5    nfg =   152    J =      0.040604    ddx = 0.01
+    At iterate      0    nfg =     1    J =      0.695010    ddx = 0.64
+    At iterate      1    nfg =    30    J =      0.098411    ddx = 0.64
+    At iterate      2    nfg =    59    J =      0.045409    ddx = 0.32
+    At iterate      3    nfg =    88    J =      0.038182    ddx = 0.16
+    At iterate      4    nfg =   117    J =      0.037362    ddx = 0.08
+    At iterate      5    nfg =   150    J =      0.037087    ddx = 0.02
+    At iterate      6    nfg =   183    J =      0.036800    ddx = 0.02
+    At iterate      7    nfg =   216    J =      0.036763    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
-array([[1.9826430e-03, 1.3466669e-07, 6.7617895e-12, ..., 3.2273201e+01,
-        3.2118713e+01, 3.1965160e+01],
-       [2.3777038e-04, 7.3761623e-09, 1.7551447e-13, ..., 7.9022121e+00,
-        7.8704414e+00, 7.8388391e+00],
-       [2.9721676e-05, 5.4272520e-10, 8.4623445e-15, ..., 2.0933011e+00,
-        2.0847433e+00, 2.0762112e+00]], dtype=float32)
+array([[5.8217382e-04, 4.7552516e-04, 3.5390016e-04, ..., 1.9439360e+01,
+        1.9214035e+01, 1.8993553e+01],
+       [1.2144950e-04, 6.6219603e-05, 3.0706105e-05, ..., 4.8059664e+00,
+        4.7563825e+00, 4.7077618e+00],
+       [1.9631827e-05, 6.9778653e-06, 2.2202073e-06, ..., 1.2523955e+00,
+        1.2394531e+00, 1.2267693e+00]], dtype=float32)
 """
 )
 
@@ -1030,12 +1035,12 @@ Estimate Model on multiple sets of solutions
 Get the simulated discharges
 
 >>> %(model_example_response)s.response.q
-array([[9.4456947e-05, 9.3808041e-05, 9.3033530e-05, ..., 1.7851851e+01,
-        1.7691467e+01, 1.7528925e+01],
-       [2.5728115e-05, 2.4717448e-05, 2.3537395e-05, ..., 3.9668279e+00,
-        3.9301457e+00, 3.8938913e+00],
-       [5.9592148e-06, 5.0831463e-06, 4.2117308e-06, ..., 9.8274386e-01,
-        9.7398454e-01, 9.6534210e-01]], dtype=float32)
+array([[9.4571486e-05, 9.3920688e-05, 9.3143637e-05, ..., 1.7423288e+01,
+        1.7193638e+01, 1.6963835e+01],
+       [2.5758292e-05, 2.4744744e-05, 2.3561088e-05, ..., 3.6616585e+00,
+        3.6165960e+00, 3.5724759e+00],
+       [5.9654208e-06, 5.0872231e-06, 4.2139386e-06, ..., 9.0600485e-01,
+        8.9525825e-01, 8.8473159e-01]], dtype=float32)
 """
 )
 
@@ -1142,26 +1147,24 @@ Optimize the Model
 
 >>> %(model_example_func)s
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     26.510803    ddx = 0.64
-    At iterate      1    nfg =    68    J =      2.536702    ddx = 0.64
-    At iterate      2    nfg =   136    J =      2.402311    ddx = 0.16
-    At iterate      3    nfg =   202    J =      2.329653    ddx = 0.16
-    At iterate      4    nfg =   270    J =      2.277469    ddx = 0.04
-    At iterate      5    nfg =   343    J =      2.271495    ddx = 0.02
-    At iterate      6    nfg =   416    J =      2.270596    ddx = 0.01
-    At iterate      7    nfg =   488    J =      2.269927    ddx = 0.01
-    At iterate      8    nfg =   561    J =      2.269505    ddx = 0.01
+    At iterate      0    nfg =     1    J =     77.049133    ddx = 0.64
+    At iterate      1    nfg =    68    J =      2.584603    ddx = 0.64
+    At iterate      2    nfg =   135    J =      2.324317    ddx = 0.32
+    At iterate      3    nfg =   202    J =      2.304130    ddx = 0.08
+    At iterate      4    nfg =   269    J =      2.262191    ddx = 0.08
+    At iterate      5    nfg =   343    J =      2.260251    ddx = 0.01
+    At iterate      6    nfg =   416    J =      2.258220    ddx = 0.00
     CONVERGENCE: DDX < 0.01
 
 Get the simulated discharges:
 
 >>> %(model_example_response)s.response.q
-array([[2.8263923e-04, 2.6972688e-04, 2.5154054e-04, ..., 2.2405909e+01,
-        2.2121796e+01, 2.1843649e+01],
-       [7.0431546e-05, 5.6386390e-05, 4.1599422e-05, ..., 5.3495941e+00,
-        5.2908549e+00, 5.2333012e+00],
-       [1.3507083e-05, 7.9051424e-06, 4.3033124e-06, ..., 1.3771975e+00,
-        1.3625814e+00, 1.3482267e+00]], dtype=float32)
+array([[3.8725851e-04, 3.5436003e-04, 3.0995562e-04, ..., 1.9623451e+01,
+        1.9391096e+01, 1.9163759e+01],
+       [9.0669761e-05, 6.3609077e-05, 3.9684928e-05, ..., 4.7896295e+00,
+        4.7395453e+00, 4.6904192e+00],
+       [1.6137006e-05, 7.8192916e-06, 3.4578904e-06, ..., 1.2418083e+00,
+        1.2288600e+00, 1.2161492e+00]], dtype=float32)
 """
 )
 
@@ -1232,7 +1235,7 @@ Run Model with multiple sets of parameters
 Get the cost values through multiple forward runs
 
 >>> mfr.cost
-array([1.17112  , 1.0390087, 1.2135248, 1.2491335, 1.2172333], dtype=float32)
+array([1.2170078, 1.0733036, 1.2239422, 1.2506678, 1.2261102], dtype=float32)
     """
 )
 
@@ -1354,7 +1357,7 @@ Run multiple optimization processes
 Get the cost values through multiple runs of optimization
 
 >>> mopt.cost
-array([0.5622911 , 0.0809496 , 0.16873538], dtype=float32)
+array([0.51374453, 0.0528878 , 0.15056956], dtype=float32)
 """
 )
 
@@ -1736,13 +1739,12 @@ uniform optimization
         },
     )
 </> Bayesian Optimize
-    At iterate      0    nfg =     1    J =     29.988619    ddx = 0.64
-    At iterate      1    nfg =    68    J =      2.749650    ddx = 0.64
-    At iterate      2    nfg =   135    J =      2.580721    ddx = 0.32
-    At iterate      3    nfg =   202    J =      2.473113    ddx = 0.16
-    At iterate      4    nfg =   269    J =      2.432616    ddx = 0.08
-    At iterate      5    nfg =   342    J =      2.430271    ddx = 0.02
-    At iterate      6    nfg =   416    J =      2.429243    ddx = 0.01
+    At iterate      0    nfg =     1    J =     80.526947    ddx = 0.64
+    At iterate      1    nfg =    68    J =      3.029253    ddx = 0.64
+    At iterate      2    nfg =   135    J =      2.764919    ddx = 0.32
+    At iterate      3    nfg =   203    J =      2.760564    ddx = 0.04
+    At iterate      4    nfg =   271    J =      2.755039    ddx = 0.02
+    At iterate      5    nfg =   344    J =      2.754198    ddx = 0.01
     CONVERGENCE: DDX < 0.01
 """
 )

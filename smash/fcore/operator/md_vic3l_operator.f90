@@ -16,8 +16,10 @@ module md_vic3l_operator
     use md_constant !% only: sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnDT
+    use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
     implicit none
 
@@ -178,44 +180,56 @@ contains
 
     end subroutine vic3l_baseflow
 
-    subroutine vic3l_timestep(setup, mesh, t, options, prcp, pet, b, cusl, & 
-    & cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, returns)
+    subroutine vic3l_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_b, ac_cusl, ac_cmsl, &
+    & ac_cbsl, ac_ks, ac_pbc, ac_dsm, ac_ds, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hcl, husl, hmsl, hbsl
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, &
+        & ac_pbc, ac_ds, ac_dsm, ac_ws
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hcl, ac_husl, ac_hmsl, ac_hbsl
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: pn, en, qr, qb
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, hmsl, hbsl, qt) &
-        !$OMP& private(row, col, pn, en, qr, qb)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, ac_ds, &
+        !$OMP& ac_dsm, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt) &
+        !$OMP& private(row, col, k, pn, en, qr, qb)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
                     ! Canopy maximum capacity is (0.2 * LAI). Here we fix maximum capacity to 1 mm
-                    call vic3l_canopy_interception(prcp(row, col), pet(row, col), 1._sp, hcl(row, col), pn, en)
+                    call vic3l_canopy_interception(ac_prcp(k), ac_pet(k), 1._sp, ac_hcl(k), pn, en)
 
-                    call vic3l_upper_soil_layer_evaporation(en, b(row, col), cusl(row, col), husl(row, col))
+                    call vic3l_upper_soil_layer_evaporation(en, ac_b(k), ac_cusl(k), ac_husl(k))
 
-                    call vic3l_infiltration(pn, b(row, col), cusl(row, col), cmsl(row, col), husl(row, col), &
-                    & hmsl(row, col), qr)
+                    call vic3l_infiltration(pn, ac_b(k), ac_cusl(k), ac_cmsl(k), ac_husl(k), &
+                    & ac_hmsl(k), qr)
 
-                    call vic3l_drainage(cusl(row, col), cmsl(row, col), cbsl(row, col), ks(row, col), pbc(row, col), &
-                    & husl(row, col), hmsl(row, col), hbsl(row, col))
+                    call vic3l_drainage(ac_cusl(k), ac_cmsl(k), ac_cbsl(k), ac_ks(k), ac_pbc(k), &
+                    & ac_husl(k), ac_hmsl(k), ac_hbsl(k))
 
                 else
 
@@ -223,12 +237,12 @@ contains
 
                 end if
 
-                call vic3l_baseflow(cbsl(row, col), ds(row, col), dsm(row, col), ws(row, col), hbsl(row, col), qb)
+                call vic3l_baseflow(ac_cbsl(k), ac_ds(k), ac_dsm(k), ac_ws(k), ac_hbsl(k), qb)
 
-                qt(row, col) = qr + qb
+                ac_qt(k) = qr + qb
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
                 
                 !$AD start-exclude
                 !internal fluxes
@@ -238,15 +252,16 @@ contains
                     returns%stats%internal_fluxes(row, col, 3) = qr
                     returns%stats%internal_fluxes(row, col, 4) = qb
                 end if
-                if (returns%pn_flag) returns%pn(row, col, t) = pn
-                if (returns%en_flag) returns%en(row, col, t) = en
-                if (returns%qr_flag) returns%qr(row, col, t) = qr
-                if (returns%qb_flag) returns%qb(row, col, t) = qb
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qb_flag) returns%qb(row, col, time_step) = qb
                 !$AD end-exclude
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
-    end subroutine vic3l_timestep
+#endif
+    end subroutine vic3l_time_step
 
 end module md_vic3l_operator

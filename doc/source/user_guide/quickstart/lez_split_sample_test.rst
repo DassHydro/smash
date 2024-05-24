@@ -65,7 +65,7 @@ Open a Python interface:
     :suppress:
 
     import os
-    os.system("python3 gen_dataset.py -d Lez")
+    os.system("python3 generate_dataset.py -d Lez")
 
 Imports
 -------
@@ -179,7 +179,7 @@ Optimization
 First, we will optimize both models for each period to generate two sets of optimized rainfall-runoff parameters.
 So far, to optimize, we have called the method associated with the `smash.Model` object `Model.optimize <smash.Model.optimize>`. This method
 will modify the associated object in place (i.e. the values of the rainfall-runoff parameters after calling this function are modified). Here, we
-want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the method
+want to optimize the model but still keep this model object to run the validation afterwards. To do this, instead of calling the
 `Model.optimize <smash.Model.optimize>` method, we can call the `smash.optimize` function, which is identical but takes a
 `smash.Model` object as input and returns a copy of it. This method allows you to optimize a `smash.Model` object and store the results in 
 another object without modifying the initial one.

@@ -8,19 +8,25 @@
 !%      - gr_exchange
 !%      - gr_threshold_exchange
 !%      - gr_transfer
-!%      - gr4_timestep
-!%      - gr5_timestep
-!%      - grd_timestep
-!%      - loieau_timestep
+!%      - gr4_time_step
+!%      - gr5_time_step
+!%      - grd_time_step
+!%      - loieau_time_step
 
 module md_gr_operator
 
     use md_constant !% only : sp
     use mwd_setup !% only: SetupDT
     use mwd_mesh !% only: MeshDT
+    use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
+<<<<<<< HEAD
     use mwd_returns !% only: ReturnDT
     
+=======
+    use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
+
+>>>>>>> main
     implicit none
 
 contains
@@ -133,38 +139,54 @@ contains
 
     end subroutine gr_transfer
 
-    subroutine gr4_timestep(setup, mesh, t, options, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt, returns)
+    subroutine gr4_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
-        real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
+        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, &
+        !$OMP& ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
 
-                    call gr_exchange(kexc(row, col), ht(row, col), l)
+                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+
+                    call gr_exchange(ac_kexc(k), ac_ht(k), l)
 
                 else
 
@@ -177,14 +199,114 @@ contains
                 prr = 0.9_sp*(pr + perc) + l
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
                 qd = max(0._sp, prd + l)
 
-                qt(row, col) = qr + qd
+                ac_qt(k) = qr + qd
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
+                !$AD start-exclude
+                !internal fluxes
+                if (returns%stats_flag) then
+                    returns%stats%internal_fluxes(row, col, 1) = pn
+                    returns%stats%internal_fluxes(row, col, 2) = en
+                    returns%stats%internal_fluxes(row, col, 3) = pr
+                    returns%stats%internal_fluxes(row, col, 4) = perc
+                    returns%stats%internal_fluxes(row, col, 5) = l
+                    returns%stats%internal_fluxes(row, col, 6) = prr
+                    returns%stats%internal_fluxes(row, col, 7) = prd
+                    returns%stats%internal_fluxes(row, col, 8) = qr
+                    returns%stats%internal_fluxes(row, col, 9) = qd
+                end if
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, time_step) = l
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
+                !$AD end-exclude
+
+            end do
+        end do
+#ifdef _OPENMP
+        !$OMP end parallel do
+#endif
+    end subroutine gr4_time_step
+
+    subroutine gr5_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ci, ac_cp, ac_ct, &
+    & ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, ac_qt, returns)
+
+        implicit none
+
+        type(SetupDT), intent(in) :: setup
+        type(MeshDT), intent(in) :: mesh
+        type(Input_DataDT), intent(in) :: input_data
+        type(OptionsDT), intent(in) :: options
+        type(ReturnsDT), intent(inout) :: returns
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hi, ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
+
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
+        real(sp) :: beta, pn, en, pr, perc, l, prr, prd, qr, qd
+
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
+        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ci, ac_cp, beta, ac_ct, ac_kexc, ac_aexc, ac_hi, &
+        !$OMP& ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, pn, en, pr, perc, l, prr, prd, qr, qd)
+#endif
+        do col = 1, mesh%ncol
+            do row = 1, mesh%nrow
+
+                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
+
+                k = mesh%rowcol_to_ind_ac(row, col)
+
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
+
+                    call gr_interception(ac_prcp(k), ac_pet(k), ac_ci(k), &
+                    & ac_hi(k), pn, en)
+
+                    call gr_production(pn, en, ac_cp(k), beta, ac_hp(k), pr, perc)
+
+                    call gr_threshold_exchange(ac_kexc(k), ac_aexc(k), ac_ht(k), l)
+
+                else
+
+                    pr = 0._sp
+                    perc = 0._sp
+                    l = 0._sp
+
+                end if
+
+                prr = 0.9_sp*(pr + perc) + l
+                prd = 0.1_sp*(pr + perc)
+
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
+
+                qd = max(0._sp, prd + l)
+
+                ac_qt(k) = qr + qd
+
+                ! Transform from mm/dt to m3/s
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
                 
                 !$AD start-exclude
                 !internal fluxes
@@ -199,139 +321,69 @@ contains
                     returns%stats%internal_fluxes(row, col, 8) = qr
                     returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
-!~                 print *, returns%all_fluxes_flag
-                if (returns%pn_flag) returns%pn(row, col, t) = pn
-                if (returns%en_flag) returns%en(row, col, t) = en
-                if (returns%pr_flag) returns%pr(row, col, t) = pr
-                if (returns%perc_flag) returns%perc(row, col, t) = perc
-                if (returns%lexc_flag) returns%lexc(row, col, t) = l
-                if (returns%prr_flag) returns%prr(row, col, t) = prr
-                if (returns%prd_flag) returns%prd(row, col, t) = prd
-                if (returns%qr_flag) returns%qr(row, col, t) = qr
-                if (returns%qd_flag) returns%qd(row, col, t) = qd
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%lexc_flag) returns%lexc(row, col, time_step) = l
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
                 !$AD end-exclude
+
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
+#endif
+    end subroutine gr5_time_step
 
-    end subroutine gr4_timestep
-
-    subroutine gr5_timestep(setup, mesh, t, options, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt, returns)
+    subroutine grd_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_cp, ac_ct, ac_hp, &
+    & ac_ht, ac_qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: ci, cp, ct, kexc, aexc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hi, hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in) :: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in) :: ac_cp, ac_ct
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_hp, ac_ht
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
-        real(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
-
-        !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ci, cp, ct, kexc, aexc, hi, hp, ht, qt) &
-        !$OMP& private(row, col, pn, en, pr, perc, l, prr, prd, qr, qd)
-        do col = 1, mesh%ncol
-            do row = 1, mesh%nrow
-
-                if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
-
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
-
-                    call gr_interception(prcp(row, col), pet(row, col), ci(row, col), hi(row, col), pn, en)
-
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
-
-                    call gr_threshold_exchange(kexc(row, col), aexc(row, col), ht(row, col), l)
-
-                else
-
-                    pr = 0._sp
-                    perc = 0._sp
-                    l = 0._sp
-
-                end if
-
-                prr = 0.9_sp*(pr + perc) + l
-                prd = 0.1_sp*(pr + perc)
-
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
-
-                qd = max(0._sp, prd + l)
-
-                qt(row, col) = qr + qd
-
-                ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
-                !$AD start-exclude
-                !internal fluxes
-                if (returns%stats_flag) then
-                    returns%stats%internal_fluxes(row, col, 1) = pn
-                    returns%stats%internal_fluxes(row, col, 2) = en
-                    returns%stats%internal_fluxes(row, col, 3) = pr
-                    returns%stats%internal_fluxes(row, col, 4) = perc
-                    returns%stats%internal_fluxes(row, col, 5) = l
-                    returns%stats%internal_fluxes(row, col, 6) = prr
-                    returns%stats%internal_fluxes(row, col, 7) = prd
-                    returns%stats%internal_fluxes(row, col, 8) = qr
-                    returns%stats%internal_fluxes(row, col, 9) = qd
-                end if
-                if (returns%pn_flag) returns%pn(row, col, t) = pn
-                if (returns%en_flag) returns%en(row, col, t) = en
-                if (returns%pr_flag) returns%pr(row, col, t) = pr
-                if (returns%perc_flag) returns%perc(row, col, t) = perc
-                if (returns%lexc_flag) returns%lexc(row, col, t) = l
-                if (returns%prr_flag) returns%prr(row, col, t) = prr
-                if (returns%prd_flag) returns%prd(row, col, t) = prd
-                if (returns%qr_flag) returns%qr(row, col, t) = qr
-                if (returns%qd_flag) returns%qd(row, col, t) = qd
-                !$AD end-exclude
-            end do
-        end do
-        !$OMP end parallel do
-
-    end subroutine gr5_timestep
-
-    subroutine grd_timestep(setup, mesh, t, options, prcp, pet, cp, ct, hp, ht, qt, returns)
-
-        implicit none
-
-        type(SetupDT), intent(in) :: setup
-        type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t
-        type(OptionsDT), intent(in) :: options
-        type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: cp, ct
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: hp, ht
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
-
-        integer :: row, col
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
         real(sp) :: ei, pn, en, pr, perc, prr, qr
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, cp, ct, hp, ht, qt) &
-        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, qr)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt) &
+        !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, qr)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    ei = min(pet(row, col), prcp(row, col))
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    pn = max(0._sp, prcp(row, col) - ei)
+                    ei = min(ac_pet(k), ac_prcp(k))
 
-                    en = pet(row, col) - ei
+                    pn = max(0._sp, ac_prcp(k) - ei)
 
-                    call gr_production(pn, en, cp(row, col), 9._sp/4._sp, hp(row, col), pr, perc)
+                    en = ac_pet(k) - ei
+
+                    call gr_production(pn, en, ac_cp(k), 1000._sp, ac_hp(k), pr, perc)
 
                 else
 
@@ -342,13 +394,13 @@ contains
 
                 prr = pr + perc
 
-                call gr_transfer(5._sp, prcp(row, col), prr, ct(row, col), ht(row, col), qr)
+                call gr_transfer(5._sp, ac_prcp(k), prr, ac_ct(k), ac_ht(k), qr)
 
-                qt(row, col) = qr
+                ac_qt(k) = qr
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%stats_flag) then
@@ -360,54 +412,70 @@ contains
                     returns%stats%internal_fluxes(row, col, 6) = prr
                     returns%stats%internal_fluxes(row, col, 7) = qr
                 end if
-                if (returns%ei_flag) returns%ei(row, col, t) = ei
-                if (returns%pn_flag) returns%pn(row, col, t) = pn
-                if (returns%en_flag) returns%en(row, col, t) = en
-                if (returns%pr_flag) returns%pr(row, col, t) = pr
-                if (returns%perc_flag) returns%perc(row, col, t) = perc
-                if (returns%prr_flag) returns%prr(row, col, t) = prr
-                if (returns%qr_flag) returns%qr(row, col, t) = qr
+                if (returns%ei_flag) returns%ei(row, col, time_step) = ei
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
                 !$AD end-exclude
+
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
+#endif
+    end subroutine grd_time_step
 
-    end subroutine grd_timestep
-
-    subroutine loieau_timestep(setup, mesh, t, options, prcp, pet, ca, cc, kb, ha, hc, qt, returns)
+    subroutine loieau_time_step(setup, mesh, input_data, options, time_step, ac_mlt, ac_ca, ac_cc, ac_kb, &
+    & ac_ha, ac_hc, ac_qt, returns)
 
         implicit none
 
         type(SetupDT), intent(in) :: setup
         type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t
+        type(Input_DataDT), intent(in) :: input_data
         type(OptionsDT), intent(in) :: options
         type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: prcp, pet
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in):: ca, cc, kb
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout):: ha, hc
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(inout) :: qt
+        integer, intent(in) :: time_step
+        real(sp), dimension(mesh%nac), intent(in):: ac_mlt
+        real(sp), dimension(mesh%nac), intent(in):: ac_ca, ac_cc, ac_kb
+        real(sp), dimension(mesh%nac), intent(inout):: ac_ha, ac_hc
+        real(sp), dimension(mesh%nac), intent(inout) :: ac_qt
 
-        integer :: row, col
-        real(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
+        real(sp), dimension(mesh%nac) :: ac_prcp, ac_pet
+        integer :: row, col, k
+        real(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
 
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "prcp", ac_prcp)
+        call get_ac_atmos_data_time_step(setup, mesh, input_data, time_step, "pet", ac_pet)
+
+        ac_prcp = ac_prcp + ac_mlt
+
+        ! Beta percolation parameter is time step dependent
+        beta = (9._sp/4._sp)*(86400._sp/setup%dt)**0.25_sp
+#ifdef _OPENMP
         !$OMP parallel do schedule(static) num_threads(options%comm%ncpu) &
-        !$OMP& shared(setup, mesh, prcp, pet, ca, cc, kb, ha, hc, qt) &
-        !$OMP& private(row, col, ei, pn, en, pr, perc, prr, prd, qr, qd)
+        !$OMP& shared(setup, mesh, ac_prcp, ac_pet, ac_ca, beta, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt) &
+        !$OMP& private(row, col, k, ei, pn, en, pr, perc, prr, prd, qr, qd)
+#endif
         do col = 1, mesh%ncol
             do row = 1, mesh%nrow
 
                 if (mesh%active_cell(row, col) .eq. 0 .or. mesh%local_active_cell(row, col) .eq. 0) cycle
 
-                if (prcp(row, col) .ge. 0._sp .and. pet(row, col) .ge. 0._sp) then
+                k = mesh%rowcol_to_ind_ac(row, col)
 
-                    ei = min(pet(row, col), prcp(row, col))
+                if (ac_prcp(k) .ge. 0._sp .and. ac_pet(k) .ge. 0._sp) then
 
-                    pn = max(0._sp, prcp(row, col) - ei)
+                    ei = min(ac_pet(k), ac_prcp(k))
 
-                    en = pet(row, col) - ei
+                    pn = max(0._sp, ac_prcp(k) - ei)
 
-                    call gr_production(pn, en, ca(row, col), 9._sp/4._sp, ha(row, col), pr, perc)
+                    en = ac_pet(k) - ei
+
+                    call gr_production(pn, en, ac_ca(k), beta, ac_ha(k), pr, perc)
 
                 else
 
@@ -419,14 +487,14 @@ contains
                 prr = 0.9_sp*(pr + perc)
                 prd = 0.1_sp*(pr + perc)
 
-                call gr_transfer(4._sp, prcp(row, col), prr, cc(row, col), hc(row, col), qr)
+                call gr_transfer(4._sp, ac_prcp(k), prr, ac_cc(k), ac_hc(k), qr)
 
                 qd = max(0._sp, prd)
 
-                qt(row, col) = kb(row, col)*(qr + qd)
+                ac_qt(k) = ac_kb(k)*(qr + qd)
 
                 ! Transform from mm/dt to m3/s
-                qt(row, col) = qt(row, col)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
+                ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
             
                 !$AD start-exclude
                 !internal fluxes
@@ -441,21 +509,22 @@ contains
                     returns%stats%internal_fluxes(row, col, 8) = qr
                     returns%stats%internal_fluxes(row, col, 9) = qd
                 end if
-                if (returns%ei_flag) returns%ei(row, col, t) = ei
-                if (returns%pn_flag) returns%pn(row, col, t) = pn
-                if (returns%en_flag) returns%en(row, col, t) = en
-                if (returns%pr_flag) returns%pr(row, col, t) = pr
-                if (returns%perc_flag) returns%perc(row, col, t) = perc
-                if (returns%prr_flag) returns%prr(row, col, t) = prr
-                if (returns%prd_flag) returns%prd(row, col, t) = prd
-                if (returns%qr_flag) returns%qr(row, col, t) = qr
-                if (returns%qd_flag) returns%qd(row, col, t) = qd
+                if (returns%ei_flag) returns%ei(row, col, time_step) = ei
+                if (returns%pn_flag) returns%pn(row, col, time_step) = pn
+                if (returns%en_flag) returns%en(row, col, time_step) = en
+                if (returns%pr_flag) returns%pr(row, col, time_step) = pr
+                if (returns%perc_flag) returns%perc(row, col, time_step) = perc
+                if (returns%prr_flag) returns%prr(row, col, time_step) = prr
+                if (returns%prd_flag) returns%prd(row, col, time_step) = prd
+                if (returns%qr_flag) returns%qr(row, col, time_step) = qr
+                if (returns%qd_flag) returns%qd(row, col, time_step) = qd
                 !$AD end-exclude
-            
+
             end do
         end do
+#ifdef _OPENMP
         !$OMP end parallel do
-
-    end subroutine loieau_timestep
+#endif
+    end subroutine loieau_time_step
 
 end module md_gr_operator

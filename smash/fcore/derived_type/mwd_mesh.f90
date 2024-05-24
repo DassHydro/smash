@@ -48,7 +48,7 @@ module mwd_mesh
 
     implicit none
 
-    type :: MeshDT
+    type MeshDT
 
         real(sp) :: xres
         real(sp) :: yres
@@ -81,7 +81,7 @@ module mwd_mesh
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln
 
-        integer, dimension(:, :), allocatable :: rowcol_to_ind_ac
+        integer, dimension(:, :), allocatable :: rowcol_to_ind_ac !$F90W index-array
         integer, dimension(:, :), allocatable :: local_active_cell
         
         logical, dimension(:, :, :), allocatable :: mask_gauge

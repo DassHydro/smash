@@ -5,60 +5,7 @@ Input Data Convention
 =====================
 
 The aim of this section is to describe the conventions that apply to all input data used in `smash`
-(i.e. precipitation, observed discharge, descriptor, etc)
-
-Precipitation
--------------
-
-The precipitation files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``prcp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``. The spatial resolution and the projection 
-between the precipitation files and the flow direction file must be **identical**.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``prcp_directory`` (and all subdirectories) can not contains files with similar dates.
-
-Potential evapotranspiration
-----------------------------
-
-The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` 
-will recursively search in the ``pet_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``. The spatial resolution and the projection 
-between the potential evapotranspiration files and the flow direction file must be **identical**.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
-    
-In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name 
-structure: ``*%m%d*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the day 09-15: ``dia_pet_0915.tif``. This file will be disaggregated to the corresponding 
-time step ``dt`` using the following distribution.
-
-.. image:: ../../_static/daily_pet_ratio.png
-    :align: center
-    :width: 500
-
-Snow
-----
-
-The snow files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``snow_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``. The spatial resolution and the projection 
-between the snow files and the flow direction file must be **identical**.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``snow_directory`` (and all subdirectories) can not contains files with similar dates.
-
-Temperature
------------
-
-The temperature files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
-search in the ``temp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
-An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``. The spatial resolution and the projection 
-between the temperature files and the flow direction file must be **identical**.
-
-.. note::
-    ``%Y%m%d%H%M`` is a unique key, the ``temp_directory`` (and all subdirectories) can not contains files with similar dates.
+(i.e. observed discharge, precipitation, descriptor, etc)
 
 Observed discharge
 ------------------
@@ -84,17 +31,84 @@ gauge which is filled in the ``mesh`` (see the `smash.factory.generate_mesh` met
     The time step of the header does not have to match the first simulation time step. `smash` manages to read the corresponding lines 
     from the ``setup`` variables, ``start_time``, ``end_time`` and ``dt``.
 
+
+Precipitation
+-------------
+
+The precipitation files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``prcp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``prcp_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``prcp_directory`` (and all subdirectories) can not contains files with similar dates.
+
+Potential evapotranspiration
+----------------------------
+
+The potential evapotranspiration files must be stored for each each time step of the simulation in ``tif`` format. For one time step, `smash` 
+will recursively search in the ``pet_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``pet_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``pet_directory`` (and all subdirectories) can not contains files with similar dates.
+    
+In case of ``daily_interannual_pet``, `smash` will recursively search in the ``pet_directory``, a file with the following name 
+structure: ``*%m%d*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the day 09-15: ``dia_pet_0915.tif``. This file will be disaggregated to the corresponding 
+time step ``dt`` using the following distribution.
+
+.. image:: ../../_static/daily_pet_ratio.png
+    :align: center
+    :width: 500
+
+Snow
+----
+
+The snow files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``snow_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``snow_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``snow_directory`` (and all subdirectories) can not contains files with similar dates.
+
+Temperature
+-----------
+
+The temperature files must be stored for each time step of the simulation in ``tif`` format. For one time step, `smash` will recursively 
+search in the ``temp_directory``, a file with the following name structure: ``*%Y%m%d%H%M*.tif`` (``*`` means that we can match any character).
+An example of file name in tif format for the date 2014-09-15 00:00: ``temp_201409150000.tif``.
+
+.. note::
+    ``%Y%m%d%H%M`` is a unique key, the ``temp_directory`` (and all subdirectories) can not contains files with similar dates.
+
 Descriptor
 ----------
 
 The catchment descriptors files must be stored in ``tif`` format. For each descriptor name filled in the setup argument ``descriptor_name``,
 `smash` will recursively search in the ``descriptor_directory``, a file with the following name structure: ``descriptor_name.tif``.
-An example of file name in tif format for the slope descriptor: ``slope.tif``. The spatial resolution and the projection 
-between the decriptor files and the flow direction file must be **identical**.
+An example of file name in tif format for the slope descriptor: ``slope.tif``.
 
 .. note::
-    
     ``descriptor_name`` is a unique key, the ``descriptor_directory`` (and all subdirectories) can not contains files with similar decriptor name.
+
+.. warning::
+    There are 4 possible warnings when reading geo-referenced data (i.e. precipitation, descriptor, etc):
+
+    - ``Missing Warning``
+        A file (or more) is missing. It will be interpreted as no data.
+
+    - ``Resolution Warning``
+        A file (or more) has a spatial resolution different from the mesh resolution (i.e. the flow direction resolution).
+        It will be resampled using a Nearest Neighbour algorithm.
+
+    - ``Overlap Warning``
+        A file (or more) has an origin that does not overlap with the mesh origin (i.e. the flow direction origin).
+        The reading window is shifted towards the nearest overlapping cell.
+
+    - ``Out Of Bound Warning``
+        A file (or more) has an extent that does not include, partially or totally, the mesh extent.
+        It will be interpreted as no data where the mesh extent is out of bound.
+
 
 Directory structure
 -------------------
@@ -130,7 +144,7 @@ Below is the most basic directory structure you can have, with one subdirectory 
     │   ├── V3504010.csv
     │   └── ...
     └── descriptor
-        ├── slope.ti
+        ├── slope.tif
         └── dd.tif
 
 This results in the following ``setup``:

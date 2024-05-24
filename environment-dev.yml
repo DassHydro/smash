@@ -5,23 +5,22 @@ dependencies:
     - python=3.11
     - pip
 
-    # compile
-    - make
-    - gcc
-    - gfortran
-
     # required dependencies
-    - wheel
-    - numpy>=1.13
+    - compilers
+    - openjdk
+    - meson
+    - meson-python
+    - ninja
+    - numpy
     - f90wrap
-    - gdal
+    - versioneer[toml]
+    - rasterio
     - pandas
     - h5py
     - tqdm
     - scipy
     - pyyaml
     - terminaltables
-    - matplotlib  # (optional: only used for plotting and visualization)
 
     # documentation
     - sphinx
@@ -31,6 +30,7 @@ dependencies:
     - sphinxcontrib-bibtex
     - sphinx-design
     - sphinx-autosummary-accessors
+    - matplotlib
 
     # test
     - pytest

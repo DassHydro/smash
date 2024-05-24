@@ -14,7 +14,7 @@ module mw_interception_capacity
     use mwd_sparse_matrix_manipulation, only: sparse_matrix_to_matrix
     use md_gr_operator, only: gr_interception
     use m_array_creation, only: arange
-    use mwd_atmos_manipulation, only: get_atmos_data_timestep
+    use mwd_atmos_manipulation, only: get_atmos_data_time_step
 
     implicit none
 
@@ -47,13 +47,13 @@ contains
 
         do t = 1, setup%ntime_step
 
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "prcp", mat_prcp)
-            call get_atmos_data_timestep(setup, mesh, input_data, t, "pet", mat_pet)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+            call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
             ind = day_index(t)
 
-            daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + mat_prcp
-            daily_pet(:, :, ind) = daily_pet(:, :, ind) + mat_pet
+            where (mat_prcp .ge. 0._sp) daily_prcp(:, :, ind) = daily_prcp(:, :, ind) + mat_prcp
+            where (mat_pet .ge. 0._sp) daily_pet(:, :, ind) = daily_pet(:, :, ind) + mat_pet
 
         end do
 
@@ -91,8 +91,8 @@ contains
 
             do t = 1, setup%ntime_step
 
-                call get_atmos_data_timestep(setup, mesh, input_data, t, "prcp", mat_prcp)
-                call get_atmos_data_timestep(setup, mesh, input_data, t, "pet", mat_pet)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "prcp", mat_prcp)
+                call get_atmos_data_time_step(setup, mesh, input_data, t, "pet", mat_pet)
 
                 do col = 1, mesh%ncol
                     do row = 1, mesh%nrow
