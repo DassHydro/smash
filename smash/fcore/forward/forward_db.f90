@@ -2169,6 +2169,7 @@ MODULE MWD_OUTPUT_DIFF
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
       TYPE(RESPONSEDT) :: response
+      TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
   END TYPE OUTPUTDT_DIFF
 
@@ -2619,8 +2620,8 @@ MODULE MWD_RETURNS_DIFF
 !%only: StatsDT
   USE MWD_STATS
   IMPLICIT NONE
-! stats target on fluxes and states
 !$F90W index-array
+! stats target on fluxes and states
   TYPE RETURNSDT
       INTEGER :: nmts
       LOGICAL, DIMENSION(:), ALLOCATABLE :: mask_time_step
@@ -4096,7 +4097,6 @@ CONTAINS
  100 CONTINUE
   END SUBROUTINE QUICKSORT
 
-!  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
 !  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: res
 !   with respect to varying inputs: dat
@@ -12826,12 +12826,13 @@ CONTAINS
   SUBROUTINE GR4_TIME_STEP_D(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, &
 &   ac_kexc, ac_kexc_d, ac_hi, ac_hi_d, ac_hp, ac_hp_d, ac_ht, ac_ht_d, &
-&   ac_qt, ac_qt_d)
+&   ac_qt, ac_qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -12913,12 +12914,13 @@ CONTAINS
   SUBROUTINE GR4_TIME_STEP_B(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, &
 &   ac_kexc, ac_kexc_b, ac_hi, ac_hi_b, ac_hp, ac_hp_b, ac_ht, ac_ht_b, &
-&   ac_qt, ac_qt_b)
+&   ac_qt, ac_qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13031,29 +13033,15 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GR4_TIME_STEP_B
 
-  SUBROUTINE GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
-&   , kexc, hi, hp, ht, qt, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ci, cp, ct&
-&   , kexc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hi, hp, &
-&   ht
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    INTEGER :: row, col
-    REAL(sp) :: pn, en, pr, perc, l, prr, prd, qr, qd
   SUBROUTINE GR4_TIME_STEP(setup, mesh, input_data, options, time_step, &
-&   ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt)
+&   ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_hi, ac_hp, ac_ht, ac_qt, &
+&   returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
@@ -13112,12 +13100,13 @@ CONTAINS
   SUBROUTINE GR5_TIME_STEP_D(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_d, ac_ci, ac_ci_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, &
 &   ac_kexc, ac_kexc_d, ac_aexc, ac_aexc_d, ac_hi, ac_hi_d, ac_hp, &
-&   ac_hp_d, ac_ht, ac_ht_d, ac_qt, ac_qt_d)
+&   ac_hp_d, ac_ht, ac_ht_d, ac_qt, ac_qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -13200,12 +13189,13 @@ CONTAINS
   SUBROUTINE GR5_TIME_STEP_B(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_b, ac_ci, ac_ci_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, &
 &   ac_kexc, ac_kexc_b, ac_aexc, ac_aexc_b, ac_hi, ac_hi_b, ac_hp, &
-&   ac_hp_b, ac_ht, ac_ht_b, ac_qt, ac_qt_b)
+&   ac_hp_b, ac_ht, ac_ht_b, ac_qt, ac_qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13322,12 +13312,13 @@ CONTAINS
 
   SUBROUTINE GR5_TIME_STEP(setup, mesh, input_data, options, time_step, &
 &   ac_mlt, ac_ci, ac_cp, ac_ct, ac_kexc, ac_aexc, ac_hi, ac_hp, ac_ht, &
-&   ac_qt)
+&   ac_qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ci, ac_cp, ac_ct, &
@@ -13386,12 +13377,13 @@ CONTAINS
 !                ac_mlt
   SUBROUTINE GRD_TIME_STEP_D(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_d, ac_cp, ac_cp_d, ac_ct, ac_ct_d, ac_hp, ac_hp_d, &
-&   ac_ht, ac_ht_d, ac_qt, ac_qt_d)
+&   ac_ht, ac_ht_d, ac_qt, ac_qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -13461,29 +13453,6 @@ CONTAINS
     END DO
   END SUBROUTINE GRD_TIME_STEP_D
 
-<<<<<<< HEAD
-!  Differentiation of grd_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: qt hp ht cp ct
-!   with respect to varying inputs: qt prcp hp ht cp ct
-  SUBROUTINE GRD_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
-&   cp, cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt, qt_b, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: cp_b, ct_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hp, ht
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hp_b, &
-&   ht_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_b
-    INTEGER :: row, col
-=======
 !  Differentiation of grd_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_cp ac_ct ac_qt ac_hp ac_ht
 !                ac_mlt
@@ -13491,12 +13460,13 @@ CONTAINS
 !                ac_mlt
   SUBROUTINE GRD_TIME_STEP_B(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_mlt_b, ac_cp, ac_cp_b, ac_ct, ac_ct_b, ac_hp, ac_hp_b, &
-&   ac_ht, ac_ht_b, ac_qt, ac_qt_b)
+&   ac_ht, ac_ht_b, ac_qt, ac_qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13509,7 +13479,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
->>>>>>> main
     REAL(sp) :: ei, pn, en, pr, perc, prr, qr
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, qr_b
     INTRINSIC MIN
@@ -13606,28 +13575,14 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE GRD_TIME_STEP_B
 
-<<<<<<< HEAD
-  SUBROUTINE GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
-&   , ht, qt, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: cp, ct
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hp, ht
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    INTEGER :: row, col
-=======
   SUBROUTINE GRD_TIME_STEP(setup, mesh, input_data, options, time_step, &
-&   ac_mlt, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt)
+&   ac_mlt, ac_cp, ac_ct, ac_hp, ac_ht, ac_qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_cp, ac_ct
@@ -13635,7 +13590,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
->>>>>>> main
     REAL(sp) :: ei, pn, en, pr, perc, prr, qr
     INTRINSIC MIN
     INTRINSIC MAX
@@ -13679,42 +13633,19 @@ CONTAINS
     END DO
   END SUBROUTINE GRD_TIME_STEP
 
-!  Differentiation of loieau_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: qt ha hc
-!   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, &
-&   pet, ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc, hc_d, qt, qt_d, &
-&   returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca_d, cc_d&
-&   , kb_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha, hc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha_d, &
-&   hc_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_d
-    INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
 !  Differentiation of loieau_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_qt ac_ha ac_hc
 !   with respect to varying inputs: ac_ca ac_cc ac_kb ac_qt ac_ha
 !                ac_hc ac_mlt
   SUBROUTINE LOIEAU_TIME_STEP_D(setup, mesh, input_data, options, &
 &   time_step, ac_mlt, ac_mlt_d, ac_ca, ac_ca_d, ac_cc, ac_cc_d, ac_kb, &
-&   ac_kb_d, ac_ha, ac_ha_d, ac_hc, ac_hc_d, ac_qt, ac_qt_d)
+&   ac_kb_d, ac_ha, ac_ha_d, ac_hc, ac_hc_d, ac_qt, ac_qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -13796,31 +13727,6 @@ CONTAINS
     END DO
   END SUBROUTINE LOIEAU_TIME_STEP_D
 
-<<<<<<< HEAD
-!  Differentiation of loieau_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: kb qt ha hc ca cc
-!   with respect to varying inputs: kb qt ha hc prcp ca cc
-  SUBROUTINE LOIEAU_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, &
-&   pet, ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc, hc_b, qt, qt_b, &
-&   returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: ca_b, cc_b, kb_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha, hc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha_b, &
-&   hc_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_b
-    INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
-=======
 !  Differentiation of loieau_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_ca ac_cc ac_kb ac_qt ac_ha
 !                ac_hc ac_mlt
@@ -13828,12 +13734,13 @@ CONTAINS
 !                ac_hc ac_mlt
   SUBROUTINE LOIEAU_TIME_STEP_B(setup, mesh, input_data, options, &
 &   time_step, ac_mlt, ac_mlt_b, ac_ca, ac_ca_b, ac_cc, ac_cc_b, ac_kb, &
-&   ac_kb_b, ac_ha, ac_ha_b, ac_hc, ac_hc_b, ac_qt, ac_qt_b)
+&   ac_kb_b, ac_ha, ac_ha_b, ac_hc, ac_hc_b, ac_qt, ac_qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -13847,7 +13754,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
     REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
->>>>>>> main
     REAL(sp) :: ei_b, pn_b, en_b, pr_b, perc_b, prr_b, prd_b, qr_b, qd_b
     INTRINSIC MIN
     INTRINSIC MAX
@@ -13966,29 +13872,15 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE LOIEAU_TIME_STEP_B
 
-<<<<<<< HEAD
-  SUBROUTINE LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
-&   , kb, ha, hc, qt, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: ca, cc, kb
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: ha, hc
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    INTEGER :: row, col
-    REAL(sp) :: ei, pn, en, pr, perc, prr, prd, qr, qd
-=======
   SUBROUTINE LOIEAU_TIME_STEP(setup, mesh, input_data, options, &
-&   time_step, ac_mlt, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt)
+&   time_step, ac_mlt, ac_ca, ac_cc, ac_kb, ac_ha, ac_hc, ac_qt, returns&
+& )
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_ca, ac_cc, ac_kb
@@ -13997,7 +13889,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
     REAL(sp) :: beta, ei, pn, en, pr, perc, prr, prd, qr, qd
->>>>>>> main
     INTRINSIC MIN
     INTRINSIC MAX
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
@@ -15512,13 +15403,10 @@ MODULE MD_VIC3L_OPERATOR_DIFF
   USE MWD_INPUT_DATA
 !% only: OptionsDT
   USE MWD_OPTIONS_DIFF
-<<<<<<< HEAD
 !% only: ReturnDT
   USE MWD_RETURNS_DIFF
-=======
 !% get_ac_atmos_data_time_step
   USE MWD_ATMOS_MANIPULATION_DIFF
->>>>>>> main
   IMPLICIT NONE
 
 CONTAINS
@@ -16561,35 +16449,6 @@ CONTAINS
     hbsl = hbsl - qb/cbsl
   END SUBROUTINE VIC3L_BASEFLOW
 
-<<<<<<< HEAD
-!  Differentiation of vic3l_timestep in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-!   variations   of useful results: hbsl qt hcl husl hmsl
-!   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
-!                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet&
-&   , b, b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, cbsl_d, ks, ks_d, pbc, &
-&   pbc_d, dsm, dsm_d, ds, ds_d, ws, ws_d, hcl, hcl_d, husl, husl_d, &
-&   hmsl, hmsl_d, hbsl, hbsl_d, qt, qt_d, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
-&   cmsl, cbsl, ks, pbc, ds, dsm, ws
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b_d, cusl_d&
-&   , cmsl_d, cbsl_d, ks_d, pbc_d, ds_d, dsm_d, ws_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hcl, &
-&   husl, hmsl, hbsl
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hcl_d, &
-&   husl_d, hmsl_d, hbsl_d
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_d
-    INTEGER :: row, col
-=======
 !  Differentiation of vic3l_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: ac_hbsl ac_husl ac_qt ac_hmsl
 !                ac_hcl
@@ -16601,12 +16460,13 @@ CONTAINS
 &   ac_cmsl, ac_cmsl_d, ac_cbsl, ac_cbsl_d, ac_ks, ac_ks_d, ac_pbc, &
 &   ac_pbc_d, ac_dsm, ac_dsm_d, ac_ds, ac_ds_d, ac_ws, ac_ws_d, ac_hcl, &
 &   ac_hcl_d, ac_husl, ac_husl_d, ac_hmsl, ac_hmsl_d, ac_hbsl, ac_hbsl_d&
-&   , ac_qt, ac_qt_d)
+&   , ac_qt, ac_qt_d, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt_d
@@ -16623,7 +16483,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_d
     INTEGER :: row, col, k
->>>>>>> main
     REAL(sp) :: pn, en, qr, qb
     REAL(sp) :: pn_d, en_d, qr_d, qb_d
     REAL(sp) :: temp
@@ -16675,36 +16534,6 @@ CONTAINS
     END DO
   END SUBROUTINE VIC3L_TIME_STEP_D
 
-<<<<<<< HEAD
-!  Differentiation of vic3l_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: ws hbsl ds qt cusl hcl cmsl
-!                ks cbsl pbc husl dsm hmsl b
-!   with respect to varying inputs: ws hbsl ds qt cusl hcl prcp
-!                cmsl ks cbsl pbc husl dsm hmsl b
-  SUBROUTINE VIC3L_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
-&   , b, b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, cbsl_b, ks, ks_b, pbc, &
-&   pbc_b, dsm, dsm_b, ds, ds_b, ws, ws_b, hcl, hcl_b, husl, husl_b, &
-&   hmsl, hmsl_b, hbsl, hbsl_b, qt, qt_b, returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
-&   cmsl, cbsl, ks, pbc, ds, dsm, ws
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: b_b, cusl_b, cmsl_b, &
-&   cbsl_b, ks_b, pbc_b, ds_b, dsm_b, ws_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hcl, &
-&   husl, hmsl, hbsl
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hcl_b, &
-&   husl_b, hmsl_b, hbsl_b
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt_b
-    INTEGER :: row, col
-=======
 !  Differentiation of vic3l_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: ac_hbsl ac_cusl ac_b ac_cmsl
 !                ac_pbc ac_ws ac_cbsl ac_dsm ac_ds ac_husl ac_qt
@@ -16717,12 +16546,13 @@ CONTAINS
 &   ac_cmsl, ac_cmsl_b, ac_cbsl, ac_cbsl_b, ac_ks, ac_ks_b, ac_pbc, &
 &   ac_pbc_b, ac_dsm, ac_dsm_b, ac_ds, ac_ds_b, ac_ws, ac_ws_b, ac_hcl, &
 &   ac_hcl_b, ac_husl, ac_husl_b, ac_hmsl, ac_hmsl_b, ac_hbsl, ac_hbsl_b&
-&   , ac_qt, ac_qt_b)
+&   , ac_qt, ac_qt_b, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac) :: ac_mlt_b
@@ -16739,7 +16569,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp_b
     INTEGER :: row, col, k
->>>>>>> main
     REAL(sp) :: pn, en, qr, qb
     REAL(sp) :: pn_b, en_b, qr_b, qb_b
     INTEGER :: branch
@@ -16837,32 +16666,15 @@ CONTAINS
     ac_mlt_b = ac_mlt_b + ac_prcp_b
   END SUBROUTINE VIC3L_TIME_STEP_B
 
-<<<<<<< HEAD
-  SUBROUTINE VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
-&   , cmsl, cbsl, ks, pbc, dsm, ds, ws, hcl, husl, hmsl, hbsl, qt, &
-&   returns)
-    IMPLICIT NONE
-    TYPE(SETUPDT), INTENT(IN) :: setup
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t
-    TYPE(OPTIONSDT), INTENT(IN) :: options
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: b, cusl, &
-&   cmsl, cbsl, ks, pbc, ds, dsm, ws
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: hcl, &
-&   husl, hmsl, hbsl
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(INOUT) :: qt
-    INTEGER :: row, col
-=======
   SUBROUTINE VIC3L_TIME_STEP(setup, mesh, input_data, options, time_step&
 &   , ac_mlt, ac_b, ac_cusl, ac_cmsl, ac_cbsl, ac_ks, ac_pbc, ac_dsm, &
-&   ac_ds, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt)
+&   ac_ds, ac_ws, ac_hcl, ac_husl, ac_hmsl, ac_hbsl, ac_qt, returns)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(INPUT_DATADT), INTENT(IN) :: input_data
     TYPE(OPTIONSDT), INTENT(IN) :: options
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
     INTEGER, INTENT(IN) :: time_step
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_mlt
     REAL(sp), DIMENSION(mesh%nac), INTENT(IN) :: ac_b, ac_cusl, ac_cmsl&
@@ -16872,7 +16684,6 @@ CONTAINS
     REAL(sp), DIMENSION(mesh%nac), INTENT(INOUT) :: ac_qt
     REAL(sp), DIMENSION(mesh%nac) :: ac_prcp, ac_pet
     INTEGER :: row, col, k
->>>>>>> main
     REAL(sp) :: pn, en, qr, qb
     CALL GET_AC_ATMOS_DATA_TIME_STEP(setup, mesh, input_data, time_step&
 &                              , 'prcp', ac_prcp)
@@ -16920,6 +16731,8 @@ END MODULE MD_VIC3L_OPERATOR_DIFF
 !%      - store_time_step
 !%      - simulation_checkpoint
 !%      - simulation
+!%      - get_atmos_data_timstep
+!%      - get_extended_atmos_data_timestep
 MODULE MD_SIMULATION_DIFF
 !% only: sp
   USE MD_CONSTANT
@@ -16939,6 +16752,10 @@ MODULE MD_SIMULATION_DIFF
   USE MWD_OPTIONS_DIFF
 !% only: ReturnsDT
   USE MWD_RETURNS_DIFF
+!% only: get_rr_parameters, get_rr_states, set_rr_states
+  USE MWD_PARAMETERS_MANIPULATION_DIFF
+!% only: quicksort
+  USE MD_STATS_DIFF
 !% only: Checkpoint_VariableDT
   USE MD_CHECKPOINT_VARIABLE_DIFF
 !% only: ssn_time_step
@@ -16949,15 +16766,8 @@ MODULE MD_SIMULATION_DIFF
   USE MD_VIC3L_OPERATOR_DIFF
 !% only: lag0_time_step, lr_time_step, kw_time_step
   USE MD_ROUTING_OPERATOR_DIFF
-<<<<<<< HEAD
-!% only: get_rr_parameters, get_rr_states, set_rr_states
-  USE MWD_PARAMETERS_MANIPULATION_DIFF
-!% only: quicksort
-  USE MD_STATS_DIFF
-=======
-!% only: matrix_to_ac_vector, &
+!% only: matrix_to_ac_vector, ac_vector_to_matrix
   USE MWD_SPARSE_MATRIX_MANIPULATION_DIFF
->>>>>>> main
   IMPLICIT NONE
 
 CONTAINS
@@ -17024,37 +16834,22 @@ CONTAINS
 
 !  Differentiation of store_time_step in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(output.response.q)
-<<<<<<< HEAD
-!   with respect to varying inputs: q *(output.response.q)
-!   Plus diff mem management of: output.response.q:in
-  SUBROUTINE STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, &
-&   qt, q, q_d)
-=======
 !   with respect to varying inputs: *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
   SUBROUTINE STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
-&   checkpoint_variable, checkpoint_variable_d, time_step)
->>>>>>> main
+&   checkpoint_variable, checkpoint_variable_d, time_step, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER, INTENT(IN) :: t
-    INTEGER, INTENT(INOUT) :: iret
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q_d
-    INTEGER :: i
-=======
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable_d
     INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
->>>>>>> main
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -17065,14 +16860,6 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIME_STEP_D
 
-<<<<<<< HEAD
-!  Differentiation of store_timestep in reverse (adjoint) mode (with options fixinterface noISIZE OpenMP context):
-!   gradient     of useful results: q *(output.response.q)
-!   with respect to varying inputs: q *(output.response.q)
-!   Plus diff mem management of: output.response.q:in
-  SUBROUTINE STORE_TIMESTEP_B(mesh, output, output_b, returns, t, iret, &
-&   qt, q, q_b)
-=======
 !  Differentiation of store_time_step in reverse (adjoint) mode (with options fixinterface noISIZE context):
 !   gradient     of useful results: *(checkpoint_variable.ac_qz)
 !                *(output.response.q)
@@ -17080,35 +16867,21 @@ CONTAINS
 !                *(output.response.q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
   SUBROUTINE STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
-&   checkpoint_variable, checkpoint_variable_b, time_step)
->>>>>>> main
+&   checkpoint_variable, checkpoint_variable_b, time_step, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER, INTENT(IN) :: t
-    INTEGER, INTENT(INOUT) :: iret
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: q_b
-    INTEGER :: i
-    DO i=mesh%ng,1,-1
-      q_b(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, 2)) = q_b(mesh%&
-&       gauge_pos(i, 1), mesh%gauge_pos(i, 2)) + output_b%response%q(i, &
-&       t)
-      output_b%response%q(i, t) = 0.0_4
-=======
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
->>>>>>> main
     END DO
     DO i=mesh%ng,1,-1
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
@@ -17119,28 +16892,17 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIME_STEP_B
 
-<<<<<<< HEAD
-  SUBROUTINE STORE_TIMESTEP(mesh, output, returns, t, iret, qt, q)
-=======
   SUBROUTINE STORE_TIME_STEP(setup, mesh, output, returns, &
-&   checkpoint_variable, time_step)
->>>>>>> main
+&   checkpoint_variable, time_step, qt)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER, INTENT(IN) :: t
-    INTEGER, INTENT(INOUT) :: iret
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: q
-    INTEGER :: i
-=======
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     INTEGER, INTENT(IN) :: time_step
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
->>>>>>> main
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
 &       2))
@@ -17149,7 +16911,6 @@ CONTAINS
     END DO
   END SUBROUTINE STORE_TIME_STEP
 
-<<<<<<< HEAD
   SUBROUTINE COMPUTE_FLUXES_STATS(mesh, t, idx, returns)
     IMPLICIT NONE
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -17177,8 +16938,6 @@ CONTAINS
     h = output%rr_final_states%values(:, :, idx)
   END SUBROUTINE COMPUTE_STATES_STATS
 
-!  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE OpenMP context):
-=======
 !  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context):
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
 !                *(checkpoint_variable.ac_mlt) *(checkpoint_variable.ac_qtz)
@@ -17190,7 +16949,7 @@ CONTAINS
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.rr_final_states.values:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , output, output_d, options, returns, checkpoint_variable, &
 &   checkpoint_variable_d, start_time_step, end_time_step)
@@ -17206,7 +16965,7 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable_d
     INTEGER, INTENT(IN) :: start_time_step, end_time_step
-    INTEGER :: t, rr_parameters_inc, rr_states_inc
+    INTEGER :: t, rr_parameters_inc, rr_states_inc, i
 ! % Might add any number if needed
     REAL(sp), DIMENSION(mesh%nac) :: h1, h2, h3, h4
     REAL(sp), DIMENSION(mesh%nac) :: h1_d, h2_d, h3_d, h4_d
@@ -17279,7 +17038,7 @@ CONTAINS
 &                      ac_rr_parameters(:, rr_parameters_inc+4), h1, &
 &                      h1_d, h2, h2_d, h3, h3_d, checkpoint_variable%&
 &                      ac_qtz(:, setup%nqz), checkpoint_variable_d%&
-&                      ac_qtz(:, setup%nqz))
+&                      ac_qtz(:, setup%nqz), returns)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17327,7 +17086,7 @@ CONTAINS
 &                      ac_rr_parameters(:, rr_parameters_inc+5), h1, &
 &                      h1_d, h2, h2_d, h3, h3_d, checkpoint_variable%&
 &                      ac_qtz(:, setup%nqz), checkpoint_variable_d%&
-&                      ac_qtz(:, setup%nqz))
+&                      ac_qtz(:, setup%nqz), returns)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17359,7 +17118,7 @@ CONTAINS
 &                      ac_rr_parameters(:, rr_parameters_inc+2), h1, &
 &                      h1_d, h2, h2_d, checkpoint_variable%ac_qtz(:, &
 &                      setup%nqz), checkpoint_variable_d%ac_qtz(:, setup&
-&                      %nqz))
+&                      %nqz), returns)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17394,7 +17153,7 @@ CONTAINS
 &                         ac_rr_parameters(:, rr_parameters_inc+3), h1, &
 &                         h1_d, h2, h2_d, checkpoint_variable%ac_qtz(:, &
 &                         setup%nqz), checkpoint_variable_d%ac_qtz(:, &
-&                         setup%nqz))
+&                         setup%nqz), returns)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17461,7 +17220,8 @@ CONTAINS
 &                        ac_rr_parameters(:, rr_parameters_inc+9), h1, &
 &                        h1_d, h2, h2_d, h3, h3_d, h4, h4_d, &
 &                        checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                        checkpoint_variable_d%ac_qtz(:, setup%nqz))
+&                        checkpoint_variable_d%ac_qtz(:, setup%nqz), &
+&                        returns)
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+1) = h1_d
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable_d%ac_rr_states(:, rr_states_inc+2) = h2_d
@@ -17513,8 +17273,11 @@ CONTAINS
 &                     checkpoint_variable%ac_qz, checkpoint_variable_d%&
 &                     ac_qz)
       END SELECT
+ 100  CONTINUE
+ 110  CONTINUE
       CALL STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
-&                      checkpoint_variable, checkpoint_variable_d, t)
+&                      checkpoint_variable, checkpoint_variable_d, t, &
+&                      checkpoint_variable%ac_qtz)
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT_D
 
@@ -17530,7 +17293,7 @@ CONTAINS
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in
+!                output.response.q:in output.rr_final_states.values:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , output, output_b, options, returns, checkpoint_variable, &
 &   checkpoint_variable_b, start_time_step, end_time_step)
@@ -17546,7 +17309,7 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: start_time_step, end_time_step
-    INTEGER :: t, rr_parameters_inc, rr_states_inc
+    INTEGER :: t, rr_parameters_inc, rr_states_inc, i
 ! % Might add any number if needed
     REAL(sp), DIMENSION(mesh%nac) :: h1, h2, h3, h4
     REAL(sp), DIMENSION(mesh%nac) :: h1_b, h2_b, h3_b, h4_b
@@ -17621,7 +17384,7 @@ CONTAINS
 &                    ac_rr_parameters(:, rr_parameters_inc+3), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+4), h1, h2, h3, &
-&                    checkpoint_variable%ac_qtz(:, setup%nqz))
+&                    checkpoint_variable%ac_qtz(:, setup%nqz), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -17661,7 +17424,8 @@ CONTAINS
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+4), checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+5), h1, h2, &
-&                    h3, checkpoint_variable%ac_qtz(:, setup%nqz))
+&                    h3, checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                    returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -17690,7 +17454,7 @@ CONTAINS
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), h1, h2, checkpoint_variable%&
-&                    ac_qtz(:, setup%nqz))
+&                    ac_qtz(:, setup%nqz), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         CALL PUSHINTEGER4(rr_parameters_inc)
@@ -17720,7 +17484,8 @@ CONTAINS
 &                       checkpoint_variable%ac_rr_parameters(:, &
 &                       rr_parameters_inc+2), checkpoint_variable%&
 &                       ac_rr_parameters(:, rr_parameters_inc+3), h1, h2&
-&                       , checkpoint_variable%ac_qtz(:, setup%nqz))
+&                       , checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                       returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         CALL PUSHINTEGER4(rr_parameters_inc)
@@ -17774,7 +17539,7 @@ CONTAINS
 &                      rr_parameters_inc+8), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+9), h1, h2&
 &                      , h3, h4, checkpoint_variable%ac_qtz(:, setup%nqz&
-&                      ))
+&                      ), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -17830,11 +17595,12 @@ CONTAINS
         CALL PUSHCONTROL2B(0)
       END SELECT
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
-&                    checkpoint_variable, t)
+&                    checkpoint_variable, t, checkpoint_variable%ac_qtz)
     END DO
     DO t=end_time_step,start_time_step,-1
       CALL STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
-&                      checkpoint_variable, checkpoint_variable_b, t)
+&                      checkpoint_variable, checkpoint_variable_b, t, &
+&                      checkpoint_variable%ac_qtz)
       CALL POPCONTROL2B(branch)
       IF (branch .LT. 2) THEN
         IF (branch .NE. 0) THEN
@@ -17920,7 +17686,8 @@ CONTAINS
 &                          ac_rr_parameters(:, rr_parameters_inc+4), h1&
 &                          , h1_b, h2, h2_b, h3, h3_b, &
 &                          checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                          checkpoint_variable_b%ac_qtz(:, setup%nqz))
+&                          checkpoint_variable_b%ac_qtz(:, setup%nqz), &
+&                          returns)
             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
 &             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
 &             h3_b
@@ -17973,7 +17740,8 @@ CONTAINS
 &                          ac_rr_parameters(:, rr_parameters_inc+5), h1&
 &                          , h1_b, h2, h2_b, h3, h3_b, &
 &                          checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                          checkpoint_variable_b%ac_qtz(:, setup%nqz))
+&                          checkpoint_variable_b%ac_qtz(:, setup%nqz), &
+&                          returns)
             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
 &             checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) + &
 &             h3_b
@@ -18008,7 +17776,7 @@ CONTAINS
 &                      ac_rr_parameters(:, rr_parameters_inc+2), h1, &
 &                      h1_b, h2, h2_b, checkpoint_variable%ac_qtz(:, &
 &                      setup%nqz), checkpoint_variable_b%ac_qtz(:, setup&
-&                      %nqz))
+&                      %nqz), returns)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
 &         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + h2_b
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
@@ -18040,7 +17808,7 @@ CONTAINS
 &                         ac_rr_parameters(:, rr_parameters_inc+3), h1, &
 &                         h1_b, h2, h2_b, checkpoint_variable%ac_qtz(:, &
 &                         setup%nqz), checkpoint_variable_b%ac_qtz(:, &
-&                         setup%nqz))
+&                         setup%nqz), returns)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) = &
 &         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+2) + h2_b
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+1) = &
@@ -18098,7 +17866,8 @@ CONTAINS
 &                        ac_rr_parameters(:, rr_parameters_inc+9), h1, &
 &                        h1_b, h2, h2_b, h3, h3_b, h4, h4_b, &
 &                        checkpoint_variable%ac_qtz(:, setup%nqz), &
-&                        checkpoint_variable_b%ac_qtz(:, setup%nqz))
+&                        checkpoint_variable_b%ac_qtz(:, setup%nqz), &
+&                        returns)
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+4) = &
 &         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+4) + h4_b
         checkpoint_variable_b%ac_rr_states(:, rr_states_inc+3) = &
@@ -18150,7 +17919,7 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(INOUT) :: checkpoint_variable
     INTEGER, INTENT(IN) :: start_time_step, end_time_step
-    INTEGER :: t, rr_parameters_inc, rr_states_inc
+    INTEGER :: t, rr_parameters_inc, rr_states_inc, i
 ! % Might add any number if needed
     REAL(sp), DIMENSION(mesh%nac) :: h1, h2, h3, h4
     DO t=start_time_step,end_time_step
@@ -18205,7 +17974,7 @@ CONTAINS
 &                    ac_rr_parameters(:, rr_parameters_inc+3), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+4), h1, h2, h3, &
-&                    checkpoint_variable%ac_qtz(:, setup%nqz))
+&                    checkpoint_variable%ac_qtz(:, setup%nqz), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -18237,7 +18006,8 @@ CONTAINS
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+4), checkpoint_variable%&
 &                    ac_rr_parameters(:, rr_parameters_inc+5), h1, h2, &
-&                    h3, checkpoint_variable%ac_qtz(:, setup%nqz))
+&                    h3, checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                    returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -18259,7 +18029,7 @@ CONTAINS
 &                    ac_rr_parameters(:, rr_parameters_inc+1), &
 &                    checkpoint_variable%ac_rr_parameters(:, &
 &                    rr_parameters_inc+2), h1, h2, checkpoint_variable%&
-&                    ac_qtz(:, setup%nqz))
+&                    ac_qtz(:, setup%nqz), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         rr_parameters_inc = rr_parameters_inc + 2
@@ -18282,7 +18052,8 @@ CONTAINS
 &                       checkpoint_variable%ac_rr_parameters(:, &
 &                       rr_parameters_inc+2), checkpoint_variable%&
 &                       ac_rr_parameters(:, rr_parameters_inc+3), h1, h2&
-&                       , checkpoint_variable%ac_qtz(:, setup%nqz))
+&                       , checkpoint_variable%ac_qtz(:, setup%nqz), &
+&                       returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         rr_parameters_inc = rr_parameters_inc + 3
@@ -18327,7 +18098,7 @@ CONTAINS
 &                      rr_parameters_inc+8), checkpoint_variable%&
 &                      ac_rr_parameters(:, rr_parameters_inc+9), h1, h2&
 &                      , h3, h4, checkpoint_variable%ac_qtz(:, setup%nqz&
-&                      ))
+&                      ), returns)
         checkpoint_variable%ac_rr_states(:, rr_states_inc+1) = h1
         checkpoint_variable%ac_rr_states(:, rr_states_inc+2) = h2
         checkpoint_variable%ac_rr_states(:, rr_states_inc+3) = h3
@@ -18365,18 +18136,26 @@ CONTAINS
 &                   checkpoint_variable%ac_qz)
         rr_parameters_inc = rr_parameters_inc + 1
       END SELECT
+      IF (returns%stats_flag) THEN
+        DO i=1,setup%nfx
+          CALL COMPUTE_FLUXES_STATS(mesh, t, i, returns)
+        END DO
+        DO i=1,setup%nrrs
+          CALL COMPUTE_STATES_STATS(mesh, output, t, i, returns)
+        END DO
+      END IF
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
-&                    checkpoint_variable, t)
+&                    checkpoint_variable, t, checkpoint_variable%ac_qtz)
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT
 
 !  Differentiation of simulation in forward (tangent) mode (with options fixinterface noISIZE context):
->>>>>>> main
 !   variations   of useful results: *(output.response.q)
 !   with respect to varying inputs: *(parameters.rr_parameters.values)
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
+!                output.rr_final_states.values:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -18389,357 +18168,6 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_d
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER :: t, iret, zq, i
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_d
-    REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
-    REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_d, qt_d
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt_d
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: snow, temp
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: kmlt, ci, cp, ct, kexc, &
-&   aexc, ca, cc, kb, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, &
-&   akw, bkw
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: kmlt_d, ci_d, cp_d, ct_d, &
-&   kexc_d, aexc_d, ca_d, cc_d, kb_d, b_d, cusl_d, cmsl_d, cbsl_d, ks_d&
-&   , pbc_d, ds_d, dsm_d, ws_d, llr_d, akw_d, bkw_d
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs, hi, hp, ht, ha, hc, &
-&   hcl, husl, hmsl, hbsl, hlr
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs_d, hi_d, hp_d, ht_d, &
-&   ha_d, hc_d, hcl_d, husl_d, hmsl_d, hbsl_d, hlr_d
-    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
-&   , maximum, med
-! Snow module initialisation
-    SELECT CASE  (setup%snow_module) 
-    CASE ('zero') 
-
-    CASE ('ssn') 
-! 'zero' snow module
-! Nothing to do
-! 'ssn' snow module
-! Snow related atmospheric data ; snow and temp
-      ALLOCATE(snow(mesh%nrow, mesh%ncol))
-      ALLOCATE(temp(mesh%nrow, mesh%ncol))
-! Melt grid
-      ALLOCATE(mlt_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(mlt(mesh%nrow, mesh%ncol))
-! Snow module rr parameters
-      ALLOCATE(kmlt_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(kmlt(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'kmlt', kmlt, kmlt_d)
-! Snow module rr states
-      ALLOCATE(hs_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hs(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hs', hs, hs_d)
-    END SELECT
-! Hydrological module initialisation
-    SELECT CASE  (setup%hydrological_module) 
-    CASE ('gr4') 
-! 'gr4' module
-! Hydrological module rr parameters
-      ALLOCATE(ci_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ci', ci, ci_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cp', cp, cp_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ct', ct, ct_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'kexc', kexc, kexc_d)
-! Hydrological module rr states
-      ALLOCATE(hi_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hi', hi, hi_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hp', hp, hp_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'ht', ht, ht_d)
-    CASE ('gr5') 
-! 'gr5' module
-! Hydrological module rr parameters
-      ALLOCATE(ci_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      ALLOCATE(aexc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(aexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ci', ci, ci_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cp', cp, cp_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ct', ct, ct_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'kexc', kexc, kexc_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'aexc', aexc, aexc_d)
-! Hydrological module rr states
-      ALLOCATE(hi_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hi', hi, hi_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hp', hp, hp_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'ht', ht, ht_d)
-    CASE ('grd') 
-! 'grd' module
-! Hydrological module rr parameters
-      ALLOCATE(cp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cp', cp, cp_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ct', ct, ct_d)
-! Hydrological module rr states
-      ALLOCATE(hp_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hp', hp, hp_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'ht', ht, ht_d)
-    CASE ('loieau') 
-! 'loieau' module
-! Hydrological module rr parameters
-      ALLOCATE(ca_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ca(mesh%nrow, mesh%ncol))
-      ALLOCATE(cc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cc(mesh%nrow, mesh%ncol))
-      ALLOCATE(kb_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(kb(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ca', ca, ca_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cc', cc, cc_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'kb', kb, kb_d)
-! Hydrological module rr states
-      ALLOCATE(ha_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ha(mesh%nrow, mesh%ncol))
-      ALLOCATE(hc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'ha', ha, ha_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hc', hc, hc_d)
-    CASE ('vic3l') 
-! 'vic3l' module
-! Hydrological module rr parameters
-      ALLOCATE(b_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(b(mesh%nrow, mesh%ncol))
-      ALLOCATE(cusl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cusl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cmsl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cbsl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(cbsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(ks_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ks(mesh%nrow, mesh%ncol))
-      ALLOCATE(pbc_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(pbc(mesh%nrow, mesh%ncol))
-      ALLOCATE(ds_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ds(mesh%nrow, mesh%ncol))
-      ALLOCATE(dsm_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(dsm(mesh%nrow, mesh%ncol))
-      ALLOCATE(ws_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(ws(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'b', b, b_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cusl', cusl, cusl_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cmsl', cmsl, cmsl_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'cbsl', cbsl, cbsl_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ks', ks, ks_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'pbc', pbc, pbc_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ds', ds, ds_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'dsm', dsm, dsm_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'ws', ws, ws_d)
-! Hydrological module rr states
-      ALLOCATE(hcl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hcl(mesh%nrow, mesh%ncol))
-      ALLOCATE(husl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(husl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hmsl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hbsl_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hbsl(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hcl', hcl, hcl_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'husl', husl, husl_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hmsl', hmsl, hmsl_d)
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hbsl', hbsl, hbsl_d)
-    END SELECT
-! Routing module initialisation
-    SELECT CASE  (setup%routing_module) 
-    CASE ('lag0') 
-! 'lag0' module
-! Discharge buffer depth
-      zq = 1
-    CASE ('lr') 
-! 'lr' module
-! Discharge buffer depth
-      zq = 1
-! Routing module rr parameters
-      ALLOCATE(llr_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(llr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'llr', llr, llr_d)
-! Routing module rr states
-      ALLOCATE(hlr_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(hlr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES_D(parameters%rr_initial_states, parameters_d%&
-&                    rr_initial_states, 'hlr', hlr, hlr_d)
-    CASE ('kw') 
-! 'kw' module
-! Discharge buffer depth
-      zq = 2
-! Routing module rr parameters
-      ALLOCATE(akw_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(akw(mesh%nrow, mesh%ncol))
-      ALLOCATE(bkw_d(mesh%nrow, mesh%ncol))
-      ALLOCATE(bkw(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'akw', akw, akw_d)
-      CALL GET_RR_PARAMETERS_D(parameters%rr_parameters, parameters_d%&
-&                        rr_parameters, 'bkw', bkw, bkw_d)
-    END SELECT
-! Discharge grids
-    ALLOCATE(qt_d(mesh%nrow, mesh%ncol, zq))
-    ALLOCATE(qt(mesh%nrow, mesh%ncol, zq))
-    ALLOCATE(q_d(mesh%nrow, mesh%ncol, zq))
-    ALLOCATE(q(mesh%nrow, mesh%ncol, zq))
-    qt_d = 0.0_4
-    qt = 0._sp
-    q_d = 0.0_4
-    q = 0._sp
-    output_d%response%q = 0.0_4
-! Start time loop
-    DO t=1,setup%ntime_step
-! Swap discharge buffer
-      CALL SWAP_DISCHARGE_BUFFER_D(qt, qt_d, q, q_d)
-! Get atmospheric data ; prcp and pet
-      CALL GET_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t, prcp, pet&
-&                           )
-! Snow module
-      SELECT CASE  (setup%snow_module) 
-      CASE ('zero') 
-        prcp_d = 0.0_4
-      CASE ('ssn') 
-! Nothing to do
-! Get extended atmospheric data ; snow and temp
-        CALL GET_EXTENDED_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t&
-&                                       , snow, temp)
-        CALL SSN_TIMESTEP_D(setup, mesh, options, snow, temp, kmlt, &
-&                     kmlt_d, hs, hs_d, mlt, mlt_d)
-        prcp_d = mlt_d
-        prcp = prcp + mlt
-      CASE DEFAULT
-        prcp_d = 0.0_4
-      END SELECT
-! Hydrological module
-      SELECT CASE  (setup%hydrological_module) 
-      CASE ('gr4') 
-! 'gr4' module
-        CALL GR4_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
-&                     ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, hi, &
-&                     hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq), qt_d(:, :&
-&                     , zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('gr5') 
-! 'gr5' module
-        CALL GR5_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
-&                     ci, ci_d, cp, cp_d, ct, ct_d, kexc, kexc_d, aexc, &
-&                     aexc_d, hi, hi_d, hp, hp_d, ht, ht_d, qt(:, :, zq)&
-&                     , qt_d(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('grd') 
-! 'grd' module
-        CALL GRD_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet, &
-&                     cp, cp_d, ct, ct_d, hp, hp_d, ht, ht_d, qt(:, :, &
-&                     zq), qt_d(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('loieau') 
-! 'loieau' module
-        CALL LOIEAU_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, &
-&                        pet, ca, ca_d, cc, cc_d, kb, kb_d, ha, ha_d, hc&
-&                        , hc_d, qt(:, :, zq), qt_d(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
-        CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
-      CASE ('vic3l') 
-! 'vic3l' module
-        CALL VIC3L_TIMESTEP_D(setup, mesh, t, options, prcp, prcp_d, pet&
-&                       , b, b_d, cusl, cusl_d, cmsl, cmsl_d, cbsl, &
-&                       cbsl_d, ks, ks_d, pbc, pbc_d, ds, ds_d, dsm, &
-&                       dsm_d, ws, ws_d, hcl, hcl_d, husl, husl_d, hmsl&
-&                       , hmsl_d, hbsl, hbsl_d, qt(:, :, zq), qt_d(:, :&
-&                       , zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
-        CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
-        CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
-        CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
-      END SELECT
-! Routing module
-      SELECT CASE  (setup%routing_module) 
-      CASE ('lag0') 
-! 'lag0' module
-        CALL LAG0_TIMESTEP_D(setup, mesh, options, qt, qt_d, q, q_d)
-      CASE ('lr') 
-! 'lr' module
-        CALL LR_TIMESTEP_D(setup, mesh, options, qt, qt_d, llr, llr_d, &
-&                    hlr, hlr_d, q, q_d)
-        CALL SET_RR_STATES(output%rr_final_states, 'hlr', hlr)
-      CASE ('kw') 
-! 'kw' module
-        CALL KW_TIMESTEP_D(setup, mesh, options, qt, qt_d, akw, akw_d, &
-&                    bkw, bkw_d, q, q_d)
-      END SELECT
- 100  CONTINUE
- 110  CONTINUE
-      CALL STORE_TIMESTEP_D(mesh, output, output_d, returns, t, iret, qt&
-&                     (:, :, zq), q(:, :, zq), q_d(:, :, zq))
-=======
     INTEGER :: ncheckpoint, checkpoint_size, i, start_time_step, &
 &   end_time_step
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable
@@ -18807,7 +18235,6 @@ CONTAINS
 &                            output, output_d, options, returns, &
 &                            checkpoint_variable, checkpoint_variable_d&
 &                            , start_time_step, end_time_step)
->>>>>>> main
     END DO
   END SUBROUTINE SIMULATION_D
 
@@ -18818,6 +18245,7 @@ CONTAINS
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
+!                output.rr_final_states.values:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -18830,658 +18258,6 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output_b
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER :: t, iret, zq, i
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp_b
-    REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
-    REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q_b, qt_b
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt_b
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: snow, temp
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: kmlt, ci, cp, ct, kexc, &
-&   aexc, ca, cc, kb, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, &
-&   akw, bkw
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: kmlt_b, ci_b, cp_b, ct_b, &
-&   kexc_b, aexc_b, ca_b, cc_b, kb_b, b_b, cusl_b, cmsl_b, cbsl_b, ks_b&
-&   , pbc_b, ds_b, dsm_b, ws_b, llr_b, akw_b, bkw_b
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs, hi, hp, ht, ha, hc, &
-&   hcl, husl, hmsl, hbsl, hlr
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs_b, hi_b, hp_b, ht_b, &
-&   ha_b, hc_b, hcl_b, husl_b, hmsl_b, hbsl_b, hlr_b
-    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
-&   , maximum, med
-    INTEGER :: branch
-! Snow module initialisation
-    SELECT CASE  (setup%snow_module) 
-    CASE ('zero') 
-      CALL PUSHCONTROL1B(0)
-    CASE ('ssn') 
-! 'zero' snow module
-! Nothing to do
-! 'ssn' snow module
-! Snow related atmospheric data ; snow and temp
-      ALLOCATE(snow(mesh%nrow, mesh%ncol))
-      ALLOCATE(temp(mesh%nrow, mesh%ncol))
-! Melt grid
-      ALLOCATE(mlt_b(mesh%nrow, mesh%ncol))
-      mlt_b = 0.0_4
-      ALLOCATE(mlt(mesh%nrow, mesh%ncol))
-! Snow module rr parameters
-      ALLOCATE(kmlt_b(mesh%nrow, mesh%ncol))
-      kmlt_b = 0.0_4
-      ALLOCATE(kmlt(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kmlt', kmlt)
-! Snow module rr states
-      ALLOCATE(hs_b(mesh%nrow, mesh%ncol))
-      hs_b = 0.0_4
-      ALLOCATE(hs(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hs', hs)
-      CALL PUSHCONTROL1B(1)
-    CASE DEFAULT
-      CALL PUSHCONTROL1B(0)
-    END SELECT
-! Hydrological module initialisation
-    SELECT CASE  (setup%hydrological_module) 
-    CASE ('gr4') 
-! 'gr4' module
-! Hydrological module rr parameters
-      ALLOCATE(ci_b(mesh%nrow, mesh%ncol))
-      ci_b = 0.0_4
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp_b(mesh%nrow, mesh%ncol))
-      cp_b = 0.0_4
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_b(mesh%nrow, mesh%ncol))
-      ct_b = 0.0_4
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc_b(mesh%nrow, mesh%ncol))
-      kexc_b = 0.0_4
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ci', ci)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kexc', kexc)
-! Hydrological module rr states
-      ALLOCATE(hi_b(mesh%nrow, mesh%ncol))
-      hi_b = 0.0_4
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp_b(mesh%nrow, mesh%ncol))
-      hp_b = 0.0_4
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_b(mesh%nrow, mesh%ncol))
-      ht_b = 0.0_4
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hi', hi)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-      CALL PUSHCONTROL3B(1)
-    CASE ('gr5') 
-! 'gr5' module
-! Hydrological module rr parameters
-      ALLOCATE(ci_b(mesh%nrow, mesh%ncol))
-      ci_b = 0.0_4
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp_b(mesh%nrow, mesh%ncol))
-      cp_b = 0.0_4
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_b(mesh%nrow, mesh%ncol))
-      ct_b = 0.0_4
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc_b(mesh%nrow, mesh%ncol))
-      kexc_b = 0.0_4
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      ALLOCATE(aexc_b(mesh%nrow, mesh%ncol))
-      aexc_b = 0.0_4
-      ALLOCATE(aexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ci', ci)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kexc', kexc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'aexc', aexc)
-! Hydrological module rr states
-      ALLOCATE(hi_b(mesh%nrow, mesh%ncol))
-      hi_b = 0.0_4
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp_b(mesh%nrow, mesh%ncol))
-      hp_b = 0.0_4
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_b(mesh%nrow, mesh%ncol))
-      ht_b = 0.0_4
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hi', hi)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-      CALL PUSHCONTROL3B(2)
-    CASE ('grd') 
-! 'grd' module
-! Hydrological module rr parameters
-      ALLOCATE(cp_b(mesh%nrow, mesh%ncol))
-      cp_b = 0.0_4
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct_b(mesh%nrow, mesh%ncol))
-      ct_b = 0.0_4
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-! Hydrological module rr states
-      ALLOCATE(hp_b(mesh%nrow, mesh%ncol))
-      hp_b = 0.0_4
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht_b(mesh%nrow, mesh%ncol))
-      ht_b = 0.0_4
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-      CALL PUSHCONTROL3B(3)
-    CASE ('loieau') 
-! 'loieau' module
-! Hydrological module rr parameters
-      ALLOCATE(ca_b(mesh%nrow, mesh%ncol))
-      ca_b = 0.0_4
-      ALLOCATE(ca(mesh%nrow, mesh%ncol))
-      ALLOCATE(cc_b(mesh%nrow, mesh%ncol))
-      cc_b = 0.0_4
-      ALLOCATE(cc(mesh%nrow, mesh%ncol))
-      ALLOCATE(kb_b(mesh%nrow, mesh%ncol))
-      kb_b = 0.0_4
-      ALLOCATE(kb(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ca', ca)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cc', cc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kb', kb)
-! Hydrological module rr states
-      ALLOCATE(ha_b(mesh%nrow, mesh%ncol))
-      ha_b = 0.0_4
-      ALLOCATE(ha(mesh%nrow, mesh%ncol))
-      ALLOCATE(hc_b(mesh%nrow, mesh%ncol))
-      hc_b = 0.0_4
-      ALLOCATE(hc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ha', ha)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hc', hc)
-      CALL PUSHCONTROL3B(4)
-    CASE ('vic3l') 
-! 'vic3l' module
-! Hydrological module rr parameters
-      ALLOCATE(b_b(mesh%nrow, mesh%ncol))
-      b_b = 0.0_4
-      ALLOCATE(b(mesh%nrow, mesh%ncol))
-      ALLOCATE(cusl_b(mesh%nrow, mesh%ncol))
-      cusl_b = 0.0_4
-      ALLOCATE(cusl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cmsl_b(mesh%nrow, mesh%ncol))
-      cmsl_b = 0.0_4
-      ALLOCATE(cmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cbsl_b(mesh%nrow, mesh%ncol))
-      cbsl_b = 0.0_4
-      ALLOCATE(cbsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(ks_b(mesh%nrow, mesh%ncol))
-      ks_b = 0.0_4
-      ALLOCATE(ks(mesh%nrow, mesh%ncol))
-      ALLOCATE(pbc_b(mesh%nrow, mesh%ncol))
-      pbc_b = 0.0_4
-      ALLOCATE(pbc(mesh%nrow, mesh%ncol))
-      ALLOCATE(ds_b(mesh%nrow, mesh%ncol))
-      ds_b = 0.0_4
-      ALLOCATE(ds(mesh%nrow, mesh%ncol))
-      ALLOCATE(dsm_b(mesh%nrow, mesh%ncol))
-      dsm_b = 0.0_4
-      ALLOCATE(dsm(mesh%nrow, mesh%ncol))
-      ALLOCATE(ws_b(mesh%nrow, mesh%ncol))
-      ws_b = 0.0_4
-      ALLOCATE(ws(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'b', b)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cusl', cusl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cmsl', cmsl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cbsl', cbsl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ks', ks)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'pbc', pbc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ds', ds)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'dsm', dsm)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ws', ws)
-! Hydrological module rr states
-      ALLOCATE(hcl_b(mesh%nrow, mesh%ncol))
-      hcl_b = 0.0_4
-      ALLOCATE(hcl(mesh%nrow, mesh%ncol))
-      ALLOCATE(husl_b(mesh%nrow, mesh%ncol))
-      husl_b = 0.0_4
-      ALLOCATE(husl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hmsl_b(mesh%nrow, mesh%ncol))
-      hmsl_b = 0.0_4
-      ALLOCATE(hmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hbsl_b(mesh%nrow, mesh%ncol))
-      hbsl_b = 0.0_4
-      ALLOCATE(hbsl(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hcl', hcl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'husl', husl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hmsl', hmsl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hbsl', hbsl)
-      CALL PUSHCONTROL3B(5)
-    CASE DEFAULT
-      CALL PUSHCONTROL3B(0)
-    END SELECT
-! Routing module initialisation
-    SELECT CASE  (setup%routing_module) 
-    CASE ('lag0') 
-      CALL PUSHCONTROL2B(0)
-! 'lag0' module
-! Discharge buffer depth
-      zq = 1
-    CASE ('lr') 
-! 'lr' module
-! Discharge buffer depth
-      zq = 1
-! Routing module rr parameters
-      ALLOCATE(llr_b(mesh%nrow, mesh%ncol))
-      llr_b = 0.0_4
-      ALLOCATE(llr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'llr', llr)
-! Routing module rr states
-      ALLOCATE(hlr_b(mesh%nrow, mesh%ncol))
-      hlr_b = 0.0_4
-      ALLOCATE(hlr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hlr', hlr)
-      CALL PUSHCONTROL2B(1)
-    CASE ('kw') 
-! 'kw' module
-! Discharge buffer depth
-      zq = 2
-! Routing module rr parameters
-      ALLOCATE(akw_b(mesh%nrow, mesh%ncol))
-      akw_b = 0.0_4
-      ALLOCATE(akw(mesh%nrow, mesh%ncol))
-      ALLOCATE(bkw_b(mesh%nrow, mesh%ncol))
-      bkw_b = 0.0_4
-      ALLOCATE(bkw(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'akw', akw)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'bkw', bkw)
-      CALL PUSHCONTROL2B(2)
-    CASE DEFAULT
-      CALL PUSHCONTROL2B(0)
-    END SELECT
-! Discharge grids
-    ALLOCATE(qt_b(mesh%nrow, mesh%ncol, zq))
-    qt_b = 0.0_4
-    ALLOCATE(qt(mesh%nrow, mesh%ncol, zq))
-    ALLOCATE(q_b(mesh%nrow, mesh%ncol, zq))
-    q_b = 0.0_4
-    ALLOCATE(q(mesh%nrow, mesh%ncol, zq))
-    qt = 0._sp
-    q = 0._sp
-! Start time loop
-    DO t=1,setup%ntime_step
-! Swap discharge buffer
-      IF (ALLOCATED(qt)) THEN
-        CALL PUSHREAL4ARRAY(qt, SIZE(qt, 1)*SIZE(qt, 2)*SIZE(qt, 3))
-        CALL PUSHCONTROL1B(1)
-      ELSE
-        CALL PUSHCONTROL1B(0)
-      END IF
-      CALL SWAP_DISCHARGE_BUFFER(qt, q)
-! Get atmospheric data ; prcp and pet
-      CALL PUSHREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL PUSHREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL GET_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t, prcp, pet&
-&                           )
-! Snow module
-      SELECT CASE  (setup%snow_module) 
-      CASE ('zero') 
-        CALL PUSHCONTROL1B(0)
-      CASE ('ssn') 
-! Nothing to do
-! Get extended atmospheric data ; snow and temp
-        IF (ALLOCATED(temp)) THEN
-          CALL PUSHREAL4ARRAY(temp, SIZE(temp, 1)*SIZE(temp, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(snow)) THEN
-          CALL PUSHREAL4ARRAY(snow, SIZE(snow, 1)*SIZE(snow, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL GET_EXTENDED_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t&
-&                                       , snow, temp)
-        IF (ALLOCATED(hs)) THEN
-          CALL PUSHREAL4ARRAY(hs, SIZE(hs, 1)*SIZE(hs, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL SSN_TIMESTEP(setup, mesh, options, snow, temp, kmlt, hs, &
-&                   mlt)
-        prcp = prcp + mlt
-        CALL PUSHCONTROL1B(1)
-      CASE DEFAULT
-        CALL PUSHCONTROL1B(0)
-      END SELECT
-! Hydrological module
-      SELECT CASE  (setup%hydrological_module) 
-      CASE ('gr4') 
-! 'gr4' module
-        IF (ALLOCATED(qt)) THEN
-          CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(ht)) THEN
-          CALL PUSHREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hp)) THEN
-          CALL PUSHREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hi)) THEN
-          CALL PUSHREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
-&                   , kexc, hi, hp, ht, qt(:, :, zq), returns)
-        CALL PUSHCONTROL3B(1)
-      CASE ('gr5') 
-! 'gr5' module
-        IF (ALLOCATED(qt)) THEN
-          CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(ht)) THEN
-          CALL PUSHREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hp)) THEN
-          CALL PUSHREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hi)) THEN
-          CALL PUSHREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL GR5_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
-&                   , kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
-        CALL PUSHCONTROL3B(2)
-      CASE ('grd') 
-! 'grd' module
-        IF (ALLOCATED(qt)) THEN
-          CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(ht)) THEN
-          CALL PUSHREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hp)) THEN
-          CALL PUSHREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
-&                   , ht, qt(:, :, zq), returns)
-        CALL PUSHCONTROL3B(3)
-      CASE ('loieau') 
-! 'loieau' module
-        IF (ALLOCATED(qt)) THEN
-          CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hc)) THEN
-          CALL PUSHREAL4ARRAY(hc, SIZE(hc, 1)*SIZE(hc, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(ha)) THEN
-          CALL PUSHREAL4ARRAY(ha, SIZE(ha, 1)*SIZE(ha, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
-&                      , kb, ha, hc, qt(:, :, zq), returns)
-        CALL PUSHCONTROL3B(4)
-      CASE ('vic3l') 
-! 'vic3l' module
-        IF (ALLOCATED(qt)) THEN
-          CALL PUSHREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*SIZE(qt, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hbsl)) THEN
-          CALL PUSHREAL4ARRAY(hbsl, SIZE(hbsl, 1)*SIZE(hbsl, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hmsl)) THEN
-          CALL PUSHREAL4ARRAY(hmsl, SIZE(hmsl, 1)*SIZE(hmsl, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(husl)) THEN
-          CALL PUSHREAL4ARRAY(husl, SIZE(husl, 1)*SIZE(husl, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hcl)) THEN
-          CALL PUSHREAL4ARRAY(hcl, SIZE(hcl, 1)*SIZE(hcl, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
-&                     , cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
-&                     hmsl, hbsl, qt(:, :, zq), returns)
-        CALL PUSHCONTROL3B(5)
-      CASE DEFAULT
-        CALL PUSHCONTROL3B(0)
-      END SELECT
-! Routing module
-      SELECT CASE  (setup%routing_module) 
-      CASE ('lag0') 
-! 'lag0' module
-        IF (ALLOCATED(q)) THEN
-          CALL PUSHREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*SIZE(q, 3))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL LAG0_TIMESTEP(setup, mesh, options, qt, q)
-        CALL PUSHCONTROL2B(1)
-      CASE ('lr') 
-! 'lr' module
-        IF (ALLOCATED(q)) THEN
-          CALL PUSHREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*SIZE(q, 3))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        IF (ALLOCATED(hlr)) THEN
-          CALL PUSHREAL4ARRAY(hlr, SIZE(hlr, 1)*SIZE(hlr, 2))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL LR_TIMESTEP(setup, mesh, options, qt, llr, hlr, q)
-        CALL PUSHCONTROL2B(2)
-      CASE ('kw') 
-! 'kw' module
-        IF (ALLOCATED(q)) THEN
-          CALL PUSHREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*SIZE(q, 3))
-          CALL PUSHCONTROL1B(1)
-        ELSE
-          CALL PUSHCONTROL1B(0)
-        END IF
-        CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
-        CALL PUSHCONTROL2B(3)
-      CASE DEFAULT
-        CALL PUSHCONTROL2B(0)
-      END SELECT
-      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
-&                   q(:, :, zq))
-    END DO
-    DO t=setup%ntime_step,1,-1
-      CALL STORE_TIMESTEP_B(mesh, output, output_b, returns, t, iret, qt&
-&                     (:, :, zq), q(:, :, zq), q_b(:, :, zq))
-      CALL POPCONTROL2B(branch)
-      IF (branch .LT. 2) THEN
-        IF (branch .NE. 0) THEN
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)&
-&                                         *SIZE(q, 3))
-          CALL LAG0_TIMESTEP_B(setup, mesh, options, qt, qt_b, q, q_b)
-        END IF
-      ELSE IF (branch .EQ. 2) THEN
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hlr, SIZE(hlr, 1)*SIZE(hlr&
-&                                       , 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*&
-&                                       SIZE(q, 3))
-        CALL LR_TIMESTEP_B(setup, mesh, options, qt, qt_b, llr, llr_b, &
-&                    hlr, hlr_b, q, q_b)
-      ELSE
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(q, SIZE(q, 1)*SIZE(q, 2)*&
-&                                       SIZE(q, 3))
-        CALL KW_TIMESTEP_B(setup, mesh, options, qt, qt_b, akw, akw_b, &
-&                    bkw, bkw_b, q, q_b)
-      END IF
-      CALL POPCONTROL3B(branch)
-      IF (branch .LT. 3) THEN
-        IF (branch .EQ. 0) THEN
-          prcp_b = 0.0_4
-        ELSE IF (branch .EQ. 1) THEN
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
-&                                         )*SIZE(qt, 2))
-          CALL GR4_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
-&                       , ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, hi&
-&                       , hi_b, hp, hp_b, ht, ht_b, qt(:, :, zq), qt_b(:&
-&                       , :, zq), returns)
-        ELSE
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(hi, SIZE(hi, 1)*SIZE(hi&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht&
-&                                         , 2))
-          CALL POPCONTROL1B(branch)
-          IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1&
-&                                         )*SIZE(qt, 2))
-          CALL GR5_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
-&                       , ci, ci_b, cp, cp_b, ct, ct_b, kexc, kexc_b, &
-&                       aexc, aexc_b, hi, hi_b, hp, hp_b, ht, ht_b, qt(:&
-&                       , :, zq), qt_b(:, :, zq), returns)
-        END IF
-      ELSE IF (branch .EQ. 3) THEN
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hp, SIZE(hp, 1)*SIZE(hp, 2&
-&                                       ))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(ht, SIZE(ht, 1)*SIZE(ht, 2&
-&                                       ))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
-&                                       SIZE(qt, 2))
-        CALL GRD_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet, &
-&                     cp, cp_b, ct, ct_b, hp, hp_b, ht, ht_b, qt(:, :, &
-&                     zq), qt_b(:, :, zq), returns)
-      ELSE IF (branch .EQ. 4) THEN
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(ha, SIZE(ha, 1)*SIZE(ha, 2&
-&                                       ))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hc, SIZE(hc, 1)*SIZE(hc, 2&
-&                                       ))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
-&                                       SIZE(qt, 2))
-        CALL LOIEAU_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, &
-&                        pet, ca, ca_b, cc, cc_b, kb, kb_b, ha, ha_b, hc&
-&                        , hc_b, qt(:, :, zq), qt_b(:, :, zq), returns)
-      ELSE
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hcl, SIZE(hcl, 1)*SIZE(hcl&
-&                                       , 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(husl, SIZE(husl, 1)*SIZE(&
-&                                       husl, 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hmsl, SIZE(hmsl, 1)*SIZE(&
-&                                       hmsl, 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hbsl, SIZE(hbsl, 1)*SIZE(&
-&                                       hbsl, 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt(:, :, zq), SIZE(qt, 1)*&
-&                                       SIZE(qt, 2))
-        CALL VIC3L_TIMESTEP_B(setup, mesh, t, options, prcp, prcp_b, pet&
-&                       , b, b_b, cusl, cusl_b, cmsl, cmsl_b, cbsl, &
-&                       cbsl_b, ks, ks_b, pbc, pbc_b, ds, ds_b, dsm, &
-&                       dsm_b, ws, ws_b, hcl, hcl_b, husl, husl_b, hmsl&
-&                       , hmsl_b, hbsl, hbsl_b, qt(:, :, zq), qt_b(:, :&
-&                       , zq), returns)
-      END IF
-      CALL POPCONTROL1B(branch)
-      IF (branch .NE. 0) THEN
-        mlt_b = mlt_b + prcp_b
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(hs, SIZE(hs, 1)*SIZE(hs, 2&
-&                                       ))
-        CALL SSN_TIMESTEP_B(setup, mesh, options, snow, temp, kmlt, &
-&                     kmlt_b, hs, hs_b, mlt, mlt_b)
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(snow, SIZE(snow, 1)*SIZE(&
-&                                       snow, 2))
-        CALL POPCONTROL1B(branch)
-        IF (branch .EQ. 1) CALL POPREAL4ARRAY(temp, SIZE(temp, 1)*SIZE(&
-&                                       temp, 2))
-      END IF
-      CALL POPREAL4ARRAY(prcp, mesh%nrow*mesh%ncol)
-      CALL POPREAL4ARRAY(pet, mesh%nrow*mesh%ncol)
-      CALL POPCONTROL1B(branch)
-      IF (branch .EQ. 1) CALL POPREAL4ARRAY(qt, SIZE(qt, 1)*SIZE(qt, 2)*&
-&                                     SIZE(qt, 3))
-      CALL SWAP_DISCHARGE_BUFFER_B(qt, qt_b, q, q_b)
-=======
     INTEGER :: ncheckpoint, checkpoint_size, i, start_time_step, &
 &   end_time_step
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable
@@ -19536,7 +18312,6 @@ CONTAINS
       CALL MATRIX_TO_AC_VECTOR(mesh, parameters%rr_initial_states%values&
 &                        (:, :, i), checkpoint_variable%ac_rr_states(:, &
 &                        i))
->>>>>>> main
     END DO
 ! % Checkpoints loop
     DO i=1,ncheckpoint
@@ -19615,251 +18390,6 @@ CONTAINS
     TYPE(OUTPUTDT), INTENT(INOUT) :: output
     TYPE(OPTIONSDT), INTENT(IN) :: options
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
-<<<<<<< HEAD
-    INTEGER :: t, iret, zq, i
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: prcp, pet
-    REAL(sp), DIMENSION(:, :, :), ALLOCATABLE :: q, qt
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: mlt
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: snow, temp
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: kmlt, ci, cp, ct, kexc, &
-&   aexc, ca, cc, kb, b, cusl, cmsl, cbsl, ks, pbc, ds, dsm, ws, llr, &
-&   akw, bkw
-    REAL(sp), DIMENSION(:, :), ALLOCATABLE :: hs, hi, hp, ht, ha, hc, &
-&   hcl, husl, hmsl, hbsl, hlr
-    REAL(sp), DIMENSION(mesh%ng, setup%ntime_step) :: mean, var, minimum&
-&   , maximum, med
-! Snow module initialisation
-    SELECT CASE  (setup%snow_module) 
-    CASE ('zero') 
-
-    CASE ('ssn') 
-! 'zero' snow module
-! Nothing to do
-! 'ssn' snow module
-! Snow related atmospheric data ; snow and temp
-      ALLOCATE(snow(mesh%nrow, mesh%ncol))
-      ALLOCATE(temp(mesh%nrow, mesh%ncol))
-! Melt grid
-      ALLOCATE(mlt(mesh%nrow, mesh%ncol))
-! Snow module rr parameters
-      ALLOCATE(kmlt(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kmlt', kmlt)
-! Snow module rr states
-      ALLOCATE(hs(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hs', hs)
-    END SELECT
-! Hydrological module initialisation
-    SELECT CASE  (setup%hydrological_module) 
-    CASE ('gr4') 
-! 'gr4' module
-! Hydrological module rr parameters
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ci', ci)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kexc', kexc)
-! Hydrological module rr states
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hi', hi)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-    CASE ('gr5') 
-! 'gr5' module
-! Hydrological module rr parameters
-      ALLOCATE(ci(mesh%nrow, mesh%ncol))
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      ALLOCATE(kexc(mesh%nrow, mesh%ncol))
-      ALLOCATE(aexc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ci', ci)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kexc', kexc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'aexc', aexc)
-! Hydrological module rr states
-      ALLOCATE(hi(mesh%nrow, mesh%ncol))
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hi', hi)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-    CASE ('grd') 
-! 'grd' module
-! Hydrological module rr parameters
-      ALLOCATE(cp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ct(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cp', cp)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ct', ct)
-! Hydrological module rr states
-      ALLOCATE(hp(mesh%nrow, mesh%ncol))
-      ALLOCATE(ht(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hp', hp)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ht', ht)
-    CASE ('loieau') 
-! 'loieau' module
-! Hydrological module rr parameters
-      ALLOCATE(ca(mesh%nrow, mesh%ncol))
-      ALLOCATE(cc(mesh%nrow, mesh%ncol))
-      ALLOCATE(kb(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ca', ca)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cc', cc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'kb', kb)
-! Hydrological module rr states
-      ALLOCATE(ha(mesh%nrow, mesh%ncol))
-      ALLOCATE(hc(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'ha', ha)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hc', hc)
-    CASE ('vic3l') 
-! 'vic3l' module
-! Hydrological module rr parameters
-      ALLOCATE(b(mesh%nrow, mesh%ncol))
-      ALLOCATE(cusl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(cbsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(ks(mesh%nrow, mesh%ncol))
-      ALLOCATE(pbc(mesh%nrow, mesh%ncol))
-      ALLOCATE(ds(mesh%nrow, mesh%ncol))
-      ALLOCATE(dsm(mesh%nrow, mesh%ncol))
-      ALLOCATE(ws(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'b', b)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cusl', cusl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cmsl', cmsl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'cbsl', cbsl)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ks', ks)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'pbc', pbc)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ds', ds)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'dsm', dsm)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'ws', ws)
-! Hydrological module rr states
-      ALLOCATE(hcl(mesh%nrow, mesh%ncol))
-      ALLOCATE(husl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hmsl(mesh%nrow, mesh%ncol))
-      ALLOCATE(hbsl(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hcl', hcl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'husl', husl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hmsl', hmsl)
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hbsl', hbsl)
-    END SELECT
-! Routing module initialisation
-    SELECT CASE  (setup%routing_module) 
-    CASE ('lag0') 
-! 'lag0' module
-! Discharge buffer depth
-      zq = 1
-    CASE ('lr') 
-! 'lr' module
-! Discharge buffer depth
-      zq = 1
-! Routing module rr parameters
-      ALLOCATE(llr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'llr', llr)
-! Routing module rr states
-      ALLOCATE(hlr(mesh%nrow, mesh%ncol))
-      CALL GET_RR_STATES(parameters%rr_initial_states, 'hlr', hlr)
-    CASE ('kw') 
-! 'kw' module
-! Discharge buffer depth
-      zq = 2
-! Routing module rr parameters
-      ALLOCATE(akw(mesh%nrow, mesh%ncol))
-      ALLOCATE(bkw(mesh%nrow, mesh%ncol))
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'akw', akw)
-      CALL GET_RR_PARAMETERS(parameters%rr_parameters, 'bkw', bkw)
-    END SELECT
-! Discharge grids
-    ALLOCATE(qt(mesh%nrow, mesh%ncol, zq))
-    ALLOCATE(q(mesh%nrow, mesh%ncol, zq))
-    iret = 0
-    qt = 0._sp
-    q = 0._sp
-! Start time loop
-    DO t=1,setup%ntime_step
-! Swap discharge buffer
-      CALL SWAP_DISCHARGE_BUFFER(qt, q)
-! Get atmospheric data ; prcp and pet
-      CALL GET_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t, prcp, pet&
-&                           )
-! Snow module
-      SELECT CASE  (setup%snow_module) 
-      CASE ('zero') 
-
-      CASE ('ssn') 
-! Nothing to do
-! Get extended atmospheric data ; snow and temp
-        CALL GET_EXTENDED_ATMOS_DATA_TIMESTEP(setup, mesh, input_data, t&
-&                                       , snow, temp)
-        CALL SSN_TIMESTEP(setup, mesh, options, snow, temp, kmlt, hs, &
-&                   mlt)
-        prcp = prcp + mlt
-      END SELECT
-! Hydrological module
-      SELECT CASE  (setup%hydrological_module) 
-      CASE ('gr4') 
-! 'gr4' module
-        CALL GR4_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
-&                   , kexc, hi, hp, ht, qt(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('gr5') 
-! 'gr5' module
-        CALL GR5_TIMESTEP(setup, mesh, t, options, prcp, pet, ci, cp, ct&
-&                   , kexc, aexc, hi, hp, ht, qt(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hi', hi)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('grd') 
-! 'grd' module
-        CALL GRD_TIMESTEP(setup, mesh, t, options, prcp, pet, cp, ct, hp&
-&                   , ht, qt(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hp', hp)
-        CALL SET_RR_STATES(output%rr_final_states, 'ht', ht)
-      CASE ('loieau') 
-! 'loieau' module
-        CALL LOIEAU_TIMESTEP(setup, mesh, t, options, prcp, pet, ca, cc&
-&                      , kb, ha, hc, qt(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'ha', ha)
-        CALL SET_RR_STATES(output%rr_final_states, 'hc', hc)
-      CASE ('vic3l') 
-! 'vic3l' module
-        CALL VIC3L_TIMESTEP(setup, mesh, t, options, prcp, pet, b, cusl&
-&                     , cmsl, cbsl, ks, pbc, ds, dsm, ws, hcl, husl, &
-&                     hmsl, hbsl, qt(:, :, zq), returns)
-        CALL SET_RR_STATES(output%rr_final_states, 'hcl', hcl)
-        CALL SET_RR_STATES(output%rr_final_states, 'husl', husl)
-        CALL SET_RR_STATES(output%rr_final_states, 'hmsl', hmsl)
-        CALL SET_RR_STATES(output%rr_final_states, 'hbsl', hbsl)
-      END SELECT
-! Routing module
-      SELECT CASE  (setup%routing_module) 
-      CASE ('lag0') 
-! 'lag0' module
-        CALL LAG0_TIMESTEP(setup, mesh, options, qt, q)
-      CASE ('lr') 
-! 'lr' module
-        CALL LR_TIMESTEP(setup, mesh, options, qt, llr, hlr, q)
-        CALL SET_RR_STATES(output%rr_final_states, 'hlr', hlr)
-      CASE ('kw') 
-! 'kw' module
-        CALL KW_TIMESTEP(setup, mesh, options, qt, akw, bkw, q)
-      END SELECT
-! Store variables
-      IF (returns%stats_flag) THEN
-        DO i=1,setup%nfx
-          CALL COMPUTE_FLUXES_STATS(mesh, t, i, returns)
-        END DO
-        DO i=1,setup%nrrs
-          CALL COMPUTE_STATES_STATS(mesh, output, t, i, returns)
-        END DO
-      END IF
-      CALL STORE_TIMESTEP(mesh, output, returns, t, iret, qt(:, :, zq), &
-&                   q(:, :, zq))
-=======
     INTEGER :: ncheckpoint, checkpoint_size, i, start_time_step, &
 &   end_time_step
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable
@@ -19911,7 +18441,6 @@ CONTAINS
       CALL SIMULATION_CHECKPOINT(setup, mesh, input_data, parameters, &
 &                          output, options, returns, checkpoint_variable&
 &                          , start_time_step, end_time_step)
->>>>>>> main
     END DO
   END SUBROUTINE SIMULATION
 
@@ -19930,7 +18459,7 @@ END MODULE MD_SIMULATION_DIFF
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.rr_final_states.values:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
@@ -19992,7 +18521,7 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                options.cost.wjreg_cmpt:in
+!                output.rr_final_states.values:in options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
 !% only: sp
