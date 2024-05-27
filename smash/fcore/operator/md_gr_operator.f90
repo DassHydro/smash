@@ -20,13 +20,9 @@ module md_gr_operator
     use mwd_mesh !% only: MeshDT
     use mwd_input_data !% only: Input_DataDT
     use mwd_options !% only: OptionsDT
-<<<<<<< HEAD
     use mwd_returns !% only: ReturnDT
-    
-=======
     use mwd_atmos_manipulation !% get_ac_atmos_data_time_step
 
->>>>>>> main
     implicit none
 
 contains

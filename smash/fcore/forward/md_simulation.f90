@@ -99,7 +99,7 @@ contains
                     & returns%q_domain(:, :, time_step_returns))
                 end if
                 
-                if (return%qt_flag) then
+                if (returns%qt_flag) then
                     returns%qt(:, :, time_step_returns) = qt
                 end if
 
@@ -210,7 +210,7 @@ contains
         type(Checkpoint_VariableDT), intent(inout) :: checkpoint_variable
         integer, intent(in) :: start_time_step, end_time_step
 
-        integer :: t, rr_parameters_inc, rr_states_inc
+        integer :: t, rr_parameters_inc, rr_states_inc, i
         ! % Might add any number if needed
         real(sp), dimension(mesh%nac) :: h1, h2, h3, h4
 
@@ -477,7 +477,7 @@ contains
                 end do
             end if
 
-            call store_time_step(setup, mesh, output, returns, checkpoint_variable, t)
+            call store_time_step(setup, mesh, output, returns, checkpoint_variable, t, checkpoint_variable%ac_qtz)
 
         end do
 
