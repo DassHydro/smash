@@ -83,7 +83,7 @@ def _map_dict_to_fortran_derived_type(dct: dict, fdt: FortranDerivedType, skip: 
 def _build_mesh(setup: SetupDT, mesh: MeshDT):
     wrap_compute_rowcol_to_ind_ac(mesh)  # % Fortran subroutine
     mesh.local_active_cell = mesh.active_cell.copy()
-    wrap_compute_mask_gauge(mesh) # % Fortran subroutine
+    wrap_compute_mask_gauge(mesh)  # % Fortran subroutine
 
 
 def _build_input_data(setup: SetupDT, mesh: MeshDT, input_data: Input_DataDT):

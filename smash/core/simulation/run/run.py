@@ -164,11 +164,11 @@ def _forward_run(
         return_options["nmts"],
         return_options["fkeys"],
     )
-    
+
     if wrap_returns.stats_flag:
         wrap_returns.stats.fluxes_keys = INTERNAL_FLUXES[model.setup.hydrological_module]
         wrap_returns.stats.rr_states_keys = STRUCTURE_RR_STATES[model.setup.structure]
-    
+
     # % Map cost_options dict to derived type
     _map_dict_to_fortran_derived_type(cost_options, wrap_options.cost)
 

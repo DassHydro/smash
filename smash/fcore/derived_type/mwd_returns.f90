@@ -103,11 +103,11 @@ module mwd_returns
 
         real(sp), dimension(:, :, :), allocatable :: qt
         logical :: qt_flag = .false.
-        
+
         ! stats target on fluxes and states
-        type (StatsDT) :: stats
+        type(StatsDT) :: stats
         logical :: stats_flag = .false.
-        
+
         real(sp), dimension(:, :, :), allocatable :: ei
         logical :: ei_flag = .false.
 
@@ -134,10 +134,10 @@ module mwd_returns
 
         real(sp), dimension(:, :, :), allocatable :: qr
         logical :: qr_flag = .false.
-        
+
         real(sp), dimension(:, :, :), allocatable :: qd
         logical :: qd_flag = .false.
-        
+
         real(sp), dimension(:, :, :), allocatable :: qb
         logical :: qb_flag = .false.
 
@@ -229,24 +229,24 @@ contains
             case ("qt")
                 this%qt_flag = .true.
                 allocate (this%qt(mesh%nrow, mesh%ncol, this%nmts))
-            
-            ! internal fluxes      
-            case("stats") ! mean, var, min, max, med
+
+                ! internal fluxes
+            case ("stats") ! mean, var, min, max, med
                 this%stats_flag = .true.
                 call StatsDT_initialise(this%stats, setup, mesh)
-            
+
             end select
-            
+
             if ((setup%hydrological_module == "gr4") .or. (setup%hydrological_module == "gr5")) then
                 select case (wkeys(i))
                 case ("pn")
                     this%pn_flag = .true.
                     allocate (this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("en")
                     this%en_flag = .true.
                     allocate (this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("pr")
                     this%pr_flag = .true.
                     allocate (this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -254,43 +254,43 @@ contains
                 case ("perc")
                     this%perc_flag = .true.
                     allocate (this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("lexc")
                     this%lexc_flag = .true.
                     allocate (this%lexc(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("prr")
                     this%prr_flag = .true.
                     allocate (this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("prd")
                     this%prd_flag = .true.
                     allocate (this%prd(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 case ("qr")
                     this%qr_flag = .true.
                     allocate (this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("qd")
                     this%qd_flag = .true.
                     allocate (this%qd(mesh%nrow, mesh%ncol, setup%ntime_step))
                 end select
             end if
-            
+
             if (setup%hydrological_module == "grd") then
                 select case (wkeys(i))
                 case ("ei")
                     this%ei_flag = .true.
                     allocate (this%ei(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("pn")
                     this%pn_flag = .true.
                     allocate (this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("en")
                     this%en_flag = .true.
                     allocate (this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("pr")
                     this%pr_flag = .true.
                     allocate (this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -298,7 +298,7 @@ contains
                 case ("perc")
                     this%perc_flag = .true.
                     allocate (this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("prr")
                     this%prr_flag = .true.
                     allocate (this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -306,24 +306,24 @@ contains
                 case ("qr")
                     this%qr_flag = .true.
                     allocate (this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 end select
             end if
-            
-            if (setup%hydrological_module == "loieau") then 
+
+            if (setup%hydrological_module == "loieau") then
                 select case (wkeys(i))
                 case ("ei")
                     this%ei_flag = .true.
                     allocate (this%ei(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("pn")
                     this%pn_flag = .true.
                     allocate (this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("en")
                     this%en_flag = .true.
                     allocate (this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("pr")
                     this%pr_flag = .true.
                     allocate (this%pr(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -331,11 +331,11 @@ contains
                 case ("perc")
                     this%perc_flag = .true.
                     allocate (this%perc(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("prr")
                     this%prr_flag = .true.
                     allocate (this%prr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("prd")
                     this%prd_flag = .true.
                     allocate (this%prd(mesh%nrow, mesh%ncol, setup%ntime_step))
@@ -343,35 +343,35 @@ contains
                 case ("qr")
                     this%qr_flag = .true.
                     allocate (this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 case ("qd")
                     this%qd_flag = .true.
                     allocate (this%qd(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 end select
             end if
-            
-            if (setup%hydrological_module == "vic3l") then 
+
+            if (setup%hydrological_module == "vic3l") then
                 select case (wkeys(i))
                 case ("pn")
                     this%pn_flag = .true.
                     allocate (this%pn(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("en")
                     this%en_flag = .true.
                     allocate (this%en(mesh%nrow, mesh%ncol, setup%ntime_step))
-                    
+
                 case ("qr")
                     this%qr_flag = .true.
                     allocate (this%qr(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 case ("qb")
                     this%qb_flag = .true.
                     allocate (this%qb(mesh%nrow, mesh%ncol, setup%ntime_step))
-                
+
                 end select
             end if
-            
+
         end do
 
     end subroutine ReturnsDT_initialise

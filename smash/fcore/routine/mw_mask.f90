@@ -40,8 +40,6 @@ contains
 
     end subroutine mask_upstream_cells
 
-
-    
     subroutine compute_mask_gauge(mesh)
 
         implicit none
@@ -58,7 +56,7 @@ contains
             & mesh%gauge_pos(i, 2), mesh%mask_gauge(:, :, i))
 
         end do
-        
+
     end subroutine compute_mask_gauge
-    
+
 end module mw_mask

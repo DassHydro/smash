@@ -83,7 +83,7 @@ module mwd_mesh
 
         integer, dimension(:, :), allocatable :: rowcol_to_ind_ac !$F90W index-array
         integer, dimension(:, :), allocatable :: local_active_cell
-        
+
         logical, dimension(:, :, :), allocatable :: mask_gauge
 
     end type MeshDT

@@ -113,46 +113,44 @@ contains
         goto 10
 
     end subroutine heap_sort
-    
 
     recursive subroutine quicksort(arr)
-        
+
         implicit none
-        
+
         real(sp), intent(inout) :: arr(:)
-        
+
         real pivot, temp
         integer :: first = 1, last
         integer i, j
 
         last = size(arr, 1)
-        pivot = arr((first + last) / 2)
+        pivot = arr((first + last)/2)
         i = first
         j = last
-        
+
         do
             do while (arr(i) .lt. pivot)
                 i = i + 1
             end do
-            
+
             do while (pivot .lt. arr(j))
                 j = j - 1
             end do
-            
+
             if (i .ge. j) exit
-            
-            temp = arr(i);  arr(i) = arr(j);  arr(j) = temp
-            
+
+            temp = arr(i); arr(i) = arr(j); arr(j) = temp
+
             i = i + 1
             j = j - 1
         end do
-        
-        if (first < i - 1) call quicksort(arr(first : i - 1))
-        if (j + 1 < last) call quicksort(arr(j + 1 : last))
-        
+
+        if (first < i - 1) call quicksort(arr(first:i - 1))
+        if (j + 1 < last) call quicksort(arr(j + 1:last))
+
     end subroutine quicksort
 
-    
     function quantile1d_r_scl(dat, p) result(res)
 
         !% Notes

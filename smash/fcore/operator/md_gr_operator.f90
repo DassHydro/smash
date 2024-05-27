@@ -303,7 +303,7 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%stats_flag) then
@@ -491,7 +491,7 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-            
+
                 !$AD start-exclude
                 !internal fluxes
                 if (returns%stats_flag) then

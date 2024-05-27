@@ -243,10 +243,10 @@ contains
 
                 ! Transform from mm/dt to m3/s
                 ac_qt(k) = ac_qt(k)*1e-3_sp*mesh%dx(row, col)*mesh%dy(row, col)/setup%dt
-                
+
                 !$AD start-exclude
                 !internal fluxes
-                if (returns%stats_flag) then 
+                if (returns%stats_flag) then
                     returns%stats%internal_fluxes(row, col, 1) = pn
                     returns%stats%internal_fluxes(row, col, 2) = en
                     returns%stats%internal_fluxes(row, col, 3) = qr
