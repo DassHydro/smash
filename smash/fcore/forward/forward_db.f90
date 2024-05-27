@@ -2745,7 +2745,7 @@ CONTAINS
         this%qt_flag = .true.
         ALLOCATE(this%qt(mesh%nrow, mesh%ncol, this%nmts))
       CASE ('stats') 
-! internal fluxes      
+! internal fluxes
 ! mean, var, min, max, med
         this%stats_flag = .true.
         CALL STATSDT_INITIALISE(this%stats, setup, mesh)
@@ -5624,7 +5624,7 @@ MODULE MWD_PARAMETERS_MANIPULATION_DIFF
   USE MWD_RETURNS_DIFF
 !% only: ControlDT_initialise, ControlDT_finalise
   USE MWD_CONTROL_DIFF
-!% only: StatsDT 
+!% only: StatsDT
   USE MWD_STATS
   IMPLICIT NONE
 
