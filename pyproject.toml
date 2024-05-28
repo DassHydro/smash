@@ -2,7 +2,7 @@
 requires = [
     "meson-python",
     "numpy",
-    "f90wrap",
+    "f90wrap<0.2.14",  # temporary upper bound until v0.2.15 is released
     "versioneer[toml]"
 ]
 build-backend = "mesonpy"
