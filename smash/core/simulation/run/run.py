@@ -3,15 +3,12 @@ from __future__ import annotations
 from copy import deepcopy
 from typing import TYPE_CHECKING
 
-from smash._constant import (
-    INTERNAL_FLUXES,
-    STRUCTURE_RR_STATES,
-)
-
 import numpy as np
 
 from smash._constant import (
+    INTERNAL_FLUXES,
     SIMULATION_RETURN_OPTIONS_TIME_STEP_KEYS,
+    STRUCTURE_RR_STATES,
 )
 from smash.core.model._build_model import _map_dict_to_fortran_derived_type
 from smash.core.simulation._doc import (

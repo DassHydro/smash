@@ -35,12 +35,11 @@ from smash.fcore._mw_atmos_statistic import (
 from smash.fcore._mw_interception_capacity import (
     adjust_interception_capacity as wrap_adjust_interception_capacity,
 )
-from smash.fcore._mwd_sparse_matrix_manipulation import (
-    compute_rowcol_to_ind_ac as wrap_compute_rowcol_to_ind_ac,
-)
-
 from smash.fcore._mw_mask import (
     compute_mask_gauge as wrap_compute_mask_gauge,
+)
+from smash.fcore._mwd_sparse_matrix_manipulation import (
+    compute_rowcol_to_ind_ac as wrap_compute_rowcol_to_ind_ac,
 )
 
 if TYPE_CHECKING:

@@ -1,9 +1,6 @@
 from __future__ import annotations
 
 from smash.fcore._mwd_stats import StatsDT
-from smash._constant import INTERNAL_FLUXES
-
-import numpy as np
 
 
 def _get_idx(stats: StatsDT, name):
