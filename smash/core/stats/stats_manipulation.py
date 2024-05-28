@@ -1,7 +1,9 @@
 from __future__ import annotations
 
-from smash.fcore._mwd_stats import StatsDT
+from typing import TYPE_CHECKING
 
+if TYPE_CHECKING:
+    from smash.fcore._mwd_stats import StatsDT
 
 def _get_idx(stats: StatsDT, name):
     for i, key in enumerate(stats.fluxes_keys):
@@ -29,10 +31,3 @@ def get(stats: StatsDT, name):
         maximum = stats.rr_states_values[:, :, 3, i]
         median = stats.rr_states_values[:, :, 4, i]
     return mean, var, minimum, maximum, median
-
-
-"""
-def get_states(stats:StatsDT, name):
-    for i, key in enumerate()
-    return 
-"""
