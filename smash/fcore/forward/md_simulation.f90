@@ -464,7 +464,7 @@ contains
                 rr_parameters_inc = rr_parameters_inc + 1
 
             end select
-
+            !$AD start-exclude
             if (returns%stats_flag) then
                 do i = 1, setup%nfx
                     call compute_fluxes_stats(mesh, t, i, returns)
@@ -474,7 +474,7 @@ contains
                     call compute_states_stats(mesh, output, t, i, returns)
                 end do
             end if
-
+            !$AD end-exclude
             call store_time_step(setup, mesh, output, returns, checkpoint_variable, t, checkpoint_variable%ac_qtz)
 
         end do
