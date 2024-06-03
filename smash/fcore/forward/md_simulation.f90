@@ -22,7 +22,7 @@ module md_simulation
     use mwd_options !% only: OptionsDT
     use mwd_returns !% only: ReturnsDT
     use mwd_parameters_manipulation !% only: get_rr_parameters, get_rr_states, set_rr_states
-    use md_stats !% only: quicksort
+    use md_stats !% only: quicksort, compute_fluxes_stats, compute_states_stats
     use md_checkpoint_variable !% only: Checkpoint_VariableDT
     use md_snow_operator !% only: ssn_time_step
     use md_gr_operator !% only: gr4_time_step, gr5_time_step, grd_time_step, loieau_time_step
@@ -55,7 +55,7 @@ contains
 
     end subroutine roll_discharge
 
-    subroutine store_time_step(setup, mesh, output, returns, checkpoint_variable, time_step, qt)
+    subroutine store_time_step(setup, mesh, output, returns, checkpoint_variable, time_step)
 
         implicit none
 
@@ -65,7 +65,6 @@ contains
         type(ReturnsDT), intent(inout) :: returns
         type(Checkpoint_VariableDT), intent(in) :: checkpoint_variable
         integer, intent(in) :: time_step
-        real(sp), dimension(mesh%nrow, mesh%ncol), intent(in) :: qt
 
         integer :: i, k, time_step_returns
 
@@ -99,7 +98,8 @@ contains
                 end if
 
                 if (returns%qt_flag) then
-                    returns%qt(:, :, time_step_returns) = qt
+                    call ac_vector_to_matrix(mesh, checkpoint_variable%ac_qtz(:, setup%nqz), &
+                    & returns%qt(:, :, time_step_returns))
                 end if
 
             end if
@@ -107,91 +107,6 @@ contains
         !$AD end-exclude
 
     end subroutine store_time_step
-
-    subroutine compute_fluxes_stats(mesh, t, idx, returns)
-        implicit none
-
-        type(MeshDT), intent(in) :: mesh
-        integer, intent(in) :: t, idx
-        type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: fx
-        real(sp), dimension(:), allocatable :: fx_flat
-        logical, dimension(mesh%nrow, mesh%ncol) :: mask
-        integer :: j, npos_val
-        real(sp) :: m
-
-        fx = returns%stats%internal_fluxes(:, :, idx)
-        !$AD start-exclude
-        do j = 1, mesh%ng
-
-            if (returns%stats%fluxes_keys(idx) .eq. 'kexc') then
-                mask = mesh%mask_gauge(:, :, j)
-            else
-                mask = (fx .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
-            end if
-
-            npos_val = count(mask)
-            m = sum(fx, mask=mask)/npos_val
-            returns%stats%fluxes_values(j, t, 1, idx) = m
-            returns%stats%fluxes_values(j, t, 2, idx) = sum((fx - m)*(fx - m), mask=mask)/npos_val
-            returns%stats%fluxes_values(j, t, 3, idx) = minval(fx, mask=mask)
-            returns%stats%fluxes_values(j, t, 4, idx) = maxval(fx, mask=mask)
-
-            if (.not. allocated(fx_flat)) allocate (fx_flat(npos_val))
-            fx_flat = pack(fx, mask .eqv. .True.)
-
-            call quicksort(fx_flat)
-
-            if (mod(npos_val, 2) .ne. 0) then
-                returns%stats%fluxes_values(j, t, 5, idx) = fx_flat(npos_val/2 + 1)
-            else
-                returns%stats%fluxes_values(j, t, 5, idx) = (fx_flat(npos_val/2) + fx_flat(npos_val/2 + 1))/2
-            end if
-
-        end do
-        !$AD end-exclude
-    end subroutine
-
-    subroutine compute_states_stats(mesh, output, t, idx, returns)
-        implicit none
-
-        type(MeshDT), intent(in) :: mesh
-        type(OutputDT), intent(in) :: output
-        integer, intent(in) :: t, idx
-        type(ReturnsDT), intent(inout) :: returns
-        real(sp), dimension(mesh%nrow, mesh%ncol) :: h
-        real(sp), dimension(:), allocatable :: h_flat
-        logical, dimension(mesh%nrow, mesh%ncol) :: mask
-        integer :: j, npos_val
-        real(sp) :: m
-
-        h = output%rr_final_states%values(:, :, idx)
-        !$AD start-exclude
-        do j = 1, mesh%ng
-
-            mask = (h .ge. 0._sp .and. mesh%mask_gauge(:, :, j))
-
-            npos_val = count(mask)
-            m = sum(h, mask=mask)/npos_val
-            returns%stats%rr_states_values(j, t, 1, idx) = m
-            returns%stats%rr_states_values(j, t, 2, idx) = sum((h - m)*(h - m), mask=mask)/npos_val
-            returns%stats%rr_states_values(j, t, 3, idx) = minval(h, mask=mask)
-            returns%stats%rr_states_values(j, t, 4, idx) = maxval(h, mask=mask)
-
-            if (.not. allocated(h_flat)) allocate (h_flat(npos_val))
-            h_flat = pack(h, mask .eqv. .True.)
-
-            call quicksort(h_flat)
-
-            if (mod(npos_val, 2) .ne. 0) then
-                returns%stats%rr_states_values(j, t, 5, idx) = h_flat(npos_val/2 + 1)
-            else
-                returns%stats%rr_states_values(j, t, 5, idx) = (h_flat(npos_val/2) + h_flat(npos_val/2 + 1))/2
-            end if
-
-        end do
-        !$AD end-exclude
-    end subroutine
 
     subroutine simulation_checkpoint(setup, mesh, input_data, parameters, output, options, returns, &
     & checkpoint_variable, start_time_step, end_time_step)
@@ -475,7 +390,7 @@ contains
                 end do
             end if
             !$AD end-exclude
-            call store_time_step(setup, mesh, output, returns, checkpoint_variable, t, checkpoint_variable%ac_qtz)
+            call store_time_step(setup, mesh, output, returns, checkpoint_variable, t)
 
         end do
 

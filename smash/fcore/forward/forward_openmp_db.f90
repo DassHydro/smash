@@ -2169,7 +2169,6 @@ MODULE MWD_OUTPUT_DIFF
   END TYPE OUTPUTDT
   TYPE OUTPUTDT_DIFF
       TYPE(RESPONSEDT) :: response
-      TYPE(RR_STATESDT) :: rr_final_states
       REAL(sp) :: cost
   END TYPE OUTPUTDT_DIFF
 
@@ -3848,6 +3847,12 @@ END MODULE MWD_METRICS_DIFF
 MODULE MD_STATS_DIFF
 !% only: sp
   USE MD_CONSTANT
+!% only: MeshDT
+  USE MWD_MESH
+!% only: OutputDT
+  USE MWD_OUTPUT_DIFF
+!% only: ReturnsDT
+  USE MWD_RETURNS_DIFF
   IMPLICIT NONE
   INTERFACE QUANTILE1D_R
       MODULE PROCEDURE QUANTILE1D_R_SCL
@@ -4096,6 +4101,33 @@ CONTAINS
     END DO
  100 CONTINUE
   END SUBROUTINE QUICKSORT
+
+  SUBROUTINE COMPUTE_FLUXES_STATS(mesh, t, idx, returns)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    INTEGER, INTENT(IN) :: t, idx
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: fx
+    REAL(sp), DIMENSION(:), ALLOCATABLE :: fx_flat
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
+    INTEGER :: j, npos_val
+    REAL(sp) :: m
+    fx = returns%stats%internal_fluxes(:, :, idx)
+  END SUBROUTINE COMPUTE_FLUXES_STATS
+
+  SUBROUTINE COMPUTE_STATES_STATS(mesh, output, t, idx, returns)
+    IMPLICIT NONE
+    TYPE(MESHDT), INTENT(IN) :: mesh
+    TYPE(OUTPUTDT), INTENT(IN) :: output
+    INTEGER, INTENT(IN) :: t, idx
+    TYPE(RETURNSDT), INTENT(INOUT) :: returns
+    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: h
+    REAL(sp), DIMENSION(:), ALLOCATABLE :: h_flat
+    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
+    INTEGER :: j, npos_val
+    REAL(sp) :: m
+    h = output%rr_final_states%values(:, :, idx)
+  END SUBROUTINE COMPUTE_STATES_STATS
 
 !  Differentiation of quantile1d_r_scl in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: res
@@ -17252,7 +17284,7 @@ CONTAINS
 !                *(output.response.q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
   SUBROUTINE STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
-&   checkpoint_variable, checkpoint_variable_d, time_step, qt)
+&   checkpoint_variable, checkpoint_variable_d, time_step)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -17262,7 +17294,6 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable_d
     INTEGER, INTENT(IN) :: time_step
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
@@ -17281,7 +17312,7 @@ CONTAINS
 !                *(output.response.q)
 !   Plus diff mem management of: checkpoint_variable.ac_qz:in output.response.q:in
   SUBROUTINE STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
-&   checkpoint_variable, checkpoint_variable_b, time_step, qt)
+&   checkpoint_variable, checkpoint_variable_b, time_step)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -17291,7 +17322,6 @@ CONTAINS
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     TYPE(CHECKPOINT_VARIABLEDT) :: checkpoint_variable_b
     INTEGER, INTENT(IN) :: time_step
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
@@ -17307,7 +17337,7 @@ CONTAINS
   END SUBROUTINE STORE_TIME_STEP_B
 
   SUBROUTINE STORE_TIME_STEP(setup, mesh, output, returns, &
-&   checkpoint_variable, time_step, qt)
+&   checkpoint_variable, time_step)
     IMPLICIT NONE
     TYPE(SETUPDT), INTENT(IN) :: setup
     TYPE(MESHDT), INTENT(IN) :: mesh
@@ -17315,7 +17345,6 @@ CONTAINS
     TYPE(RETURNSDT), INTENT(INOUT) :: returns
     TYPE(CHECKPOINT_VARIABLEDT), INTENT(IN) :: checkpoint_variable
     INTEGER, INTENT(IN) :: time_step
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol), INTENT(IN) :: qt
     INTEGER :: i, k, time_step_returns
     DO i=1,mesh%ng
       k = mesh%rowcol_to_ind_ac(mesh%gauge_pos(i, 1), mesh%gauge_pos(i, &
@@ -17324,33 +17353,6 @@ CONTAINS
 &       setup%nqz)
     END DO
   END SUBROUTINE STORE_TIME_STEP
-
-  SUBROUTINE COMPUTE_FLUXES_STATS(mesh, t, idx, returns)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    INTEGER, INTENT(IN) :: t, idx
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: fx
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: fx_flat
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
-    INTEGER :: j, npos_val
-    REAL(sp) :: m
-    fx = returns%stats%internal_fluxes(:, :, idx)
-  END SUBROUTINE COMPUTE_FLUXES_STATS
-
-  SUBROUTINE COMPUTE_STATES_STATS(mesh, output, t, idx, returns)
-    IMPLICIT NONE
-    TYPE(MESHDT), INTENT(IN) :: mesh
-    TYPE(OUTPUTDT), INTENT(IN) :: output
-    INTEGER, INTENT(IN) :: t, idx
-    TYPE(RETURNSDT), INTENT(INOUT) :: returns
-    REAL(sp), DIMENSION(mesh%nrow, mesh%ncol) :: h
-    REAL(sp), DIMENSION(:), ALLOCATABLE :: h_flat
-    LOGICAL, DIMENSION(mesh%nrow, mesh%ncol) :: mask
-    INTEGER :: j, npos_val
-    REAL(sp) :: m
-    h = output%rr_final_states%values(:, :, idx)
-  END SUBROUTINE COMPUTE_STATES_STATS
 
 !  Differentiation of simulation_checkpoint in forward (tangent) mode (with options fixinterface noISIZE context OpenMP):
 !   variations   of useful results: *(checkpoint_variable.ac_rr_states)
@@ -17363,7 +17365,7 @@ CONTAINS
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in output.rr_final_states.values:in
+!                output.response.q:in
   SUBROUTINE SIMULATION_CHECKPOINT_D(setup, mesh, input_data, parameters&
 &   , output, output_d, options, returns, checkpoint_variable, &
 &   checkpoint_variable_d, start_time_step, end_time_step)
@@ -17687,11 +17689,8 @@ CONTAINS
 &                     checkpoint_variable%ac_qz, checkpoint_variable_d%&
 &                     ac_qz)
       END SELECT
- 100  CONTINUE
- 110  CONTINUE
       CALL STORE_TIME_STEP_D(setup, mesh, output, output_d, returns, &
-&                      checkpoint_variable, checkpoint_variable_d, t, &
-&                      checkpoint_variable%ac_qtz)
+&                      checkpoint_variable, checkpoint_variable_d, t)
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT_D
 
@@ -17707,7 +17706,7 @@ CONTAINS
 !   Plus diff mem management of: checkpoint_variable.ac_rr_parameters:in
 !                checkpoint_variable.ac_rr_states:in checkpoint_variable.ac_mlt:in
 !                checkpoint_variable.ac_qtz:in checkpoint_variable.ac_qz:in
-!                output.response.q:in output.rr_final_states.values:in
+!                output.response.q:in
   SUBROUTINE SIMULATION_CHECKPOINT_B(setup, mesh, input_data, parameters&
 &   , output, output_b, options, returns, checkpoint_variable, &
 &   checkpoint_variable_b, start_time_step, end_time_step)
@@ -18009,12 +18008,11 @@ CONTAINS
         CALL PUSHCONTROL2B(0)
       END SELECT
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
-&                    checkpoint_variable, t, checkpoint_variable%ac_qtz)
+&                    checkpoint_variable, t)
     END DO
     DO t=end_time_step,start_time_step,-1
       CALL STORE_TIME_STEP_B(setup, mesh, output, output_b, returns, &
-&                      checkpoint_variable, checkpoint_variable_b, t, &
-&                      checkpoint_variable%ac_qtz)
+&                      checkpoint_variable, checkpoint_variable_b, t)
       CALL POPCONTROL2B(branch)
       IF (branch .LT. 2) THEN
         IF (branch .NE. 0) THEN
@@ -18550,16 +18548,8 @@ CONTAINS
 &                   checkpoint_variable%ac_qz)
         rr_parameters_inc = rr_parameters_inc + 1
       END SELECT
-      IF (returns%stats_flag) THEN
-        DO i=1,setup%nfx
-          CALL COMPUTE_FLUXES_STATS(mesh, t, i, returns)
-        END DO
-        DO i=1,setup%nrrs
-          CALL COMPUTE_STATES_STATS(mesh, output, t, i, returns)
-        END DO
-      END IF
       CALL STORE_TIME_STEP(setup, mesh, output, returns, &
-&                    checkpoint_variable, t, checkpoint_variable%ac_qtz)
+&                    checkpoint_variable, t)
     END DO
   END SUBROUTINE SIMULATION_CHECKPOINT
 
@@ -18569,7 +18559,6 @@ CONTAINS
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
-!                output.rr_final_states.values:in
   SUBROUTINE SIMULATION_D(setup, mesh, input_data, parameters, &
 &   parameters_d, output, output_d, options, returns)
     IMPLICIT NONE
@@ -18659,7 +18648,6 @@ CONTAINS
 !                *(parameters.rr_initial_states.values)
 !   Plus diff mem management of: parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in output.response.q:in
-!                output.rr_final_states.values:in
   SUBROUTINE SIMULATION_B(setup, mesh, input_data, parameters, &
 &   parameters_b, output, output_b, options, returns)
     IMPLICIT NONE
@@ -18873,7 +18861,7 @@ END MODULE MD_SIMULATION_DIFF
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                output.rr_final_states.values:in options.cost.wjreg_cmpt:in
+!                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_D(setup, mesh, input_data, parameters, &
 & parameters_d, output, output_d, options, options_d, returns)
 !% only: sp
@@ -18935,7 +18923,7 @@ END SUBROUTINE BASE_FORWARD_RUN_D
 !                parameters.control.u_bkg:in parameters.rr_parameters.values:in
 !                parameters.rr_initial_states.values:in parameters.serr_mu_parameters.values:in
 !                parameters.serr_sigma_parameters.values:in output.response.q:in
-!                output.rr_final_states.values:in options.cost.wjreg_cmpt:in
+!                options.cost.wjreg_cmpt:in
 SUBROUTINE BASE_FORWARD_RUN_B(setup, mesh, input_data, parameters, &
 & parameters_b, output, output_b, options, options_b, returns)
 !% only: sp
