@@ -77,7 +77,7 @@ module mwd_mesh
 
         integer :: ng
         integer, dimension(:, :), allocatable :: gauge_pos !$F90W index-array
-        character(20), dimension(:), allocatable :: code !$F90W char-array
+        character(lchar), dimension(:), allocatable :: code !$F90W char-array
         real(sp), dimension(:), allocatable :: area
         real(sp), dimension(:), allocatable :: area_dln
 
