@@ -33,7 +33,8 @@ def f90wrap_getter_char_array(func):
         shape = value.shape
         arr = np.empty(shape=shape[1:], dtype=f"U{shape[0]}")
         for idx in np.ndindex(shape[1:]):
-            arr[idx] = value[:, *idx].tobytes(order="F").decode().strip()
+            slc = (slice(shape[0]), *idx)
+            arr[idx] = value[slc].tobytes(order="F").decode().strip()
         return arr
 
     return wrapper
@@ -72,11 +73,13 @@ def f90wrap_setter_char_array(func):
                 item = list(value.item().encode("ascii"))
                 litem = len(item)
                 for idx in np.ndindex(shape[1:]):
-                    arr[:litem, *idx] = item
+                    slc = (slice(litem), *idx)
+                    arr[slc] = item
             else:
                 for idx in np.ndindex(shape[1:]):
                     item = list(value[idx].encode("ascii"))
-                    arr[: len(item), *idx] = item
+                    slc = (slice(len(item)), *idx)
+                    arr[slc] = item
 
         if array_handle in self._arrays:
             ptr = self._arrays[array_handle]
