@@ -17200,7 +17200,7 @@ MODULE MD_SIMULATION_DIFF
   USE MWD_RETURNS_DIFF
 !% only: get_rr_parameters, get_rr_states, set_rr_states
   USE MWD_PARAMETERS_MANIPULATION_DIFF
-!% only: quicksort
+!% only: quicksort, compute_fluxes_stats, compute_states_stats
   USE MD_STATS_DIFF
 !% only: Checkpoint_VariableDT
   USE MD_CHECKPOINT_VARIABLE_DIFF
