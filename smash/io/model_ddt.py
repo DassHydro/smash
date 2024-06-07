@@ -10,8 +10,6 @@ from smash._constant import MODEL_DDT_IO_ATTR_KEYS
 from smash.io._error import ReadHDF5MethodError
 from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
 
-from typing import TYPE_CHECKING
-
 if TYPE_CHECKING:
     from typing import Any
 
