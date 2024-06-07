@@ -8,14 +8,7 @@ import h5py
 
 from smash._constant import MODEL_DDT_IO_ATTR_KEYS
 from smash.io._error import ReadHDF5MethodError
-from smash.io.handler._hdf5_handler import (
-    _dump_dict,
-    _load_hdf5_to_dict,
-)
-
-import h5py
-import errno
-import os
+from smash.io.handler._hdf5_handler import _dump_dict, _load_hdf5_to_dict
 
 from typing import TYPE_CHECKING
 
@@ -50,7 +43,8 @@ def save_model_ddt(model: Model, path: FilePath):
       are only stored if a snow module has been selected)
     - ``keys``, ``values`` from `Model.rr_parameters <smash.Model.rr_parameters>`
     - ``keys``, ``values`` from `Model.rr_initial_states <smash.Model.rr_initial_states>`
-    - ``layers``, ``neurons`` from `Model.nn_parameters <smash.Model.nn_parameters>` (depending on hydrological module)
+    - ``weight_1``, ``bias_1``, ``weight_2``, ``bias_2`` from `Model.nn_parameters <smash.Model.nn_parameters>`
+      (depending on the hydrological module)
     - ``keys``, ``values`` from `Model.serr_mu_parameters <smash.Model.serr_mu_parameters>`
     - ``keys``, ``values`` from `Model.serr_sigma_parameters <smash.Model.serr_sigma_parameters>`
     - ``q`` from `Model.response <smash.Model.response>`

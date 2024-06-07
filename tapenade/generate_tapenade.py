@@ -94,20 +94,12 @@ def patch_tapenade_file(module: str) -> None:
             r"TYPE\(RR_PARAMETERSDT_DIFF\)",
             r"TYPE\(RR_STATESDT_DIFF\)",
             r"TYPE\(OUTPUTDT_DIFF\)",
-            # r"SIZE\(parameters_b%nn_parameters%layers\(ii1\)%weight, 1\)",
-            # r"SIZE\(parameters_b%nn_parameters%layers\(ii1\)%bias, 1\)",
-            # r"SIZE\(parameters_d%nn_parameters%layers\(ii1\)%weight, 1\)",
-            # r"SIZE\(parameters_d%nn_parameters%layers\(ii1\)%bias, 1\)",
         ],
         [
             "TYPE(PARAMETERSDT)",
             "TYPE(RR_PARAMETERSDT)",
             "TYPE(RR_STATESDT)",
             "TYPE(OUTPUTDT)",
-            # "SIZE(parameters_b%nn_parameters%layers, 1)",
-            # "SIZE(parameters_b%nn_parameters%layers, 1)",
-            # "SIZE(parameters_d%nn_parameters%layers, 1)",
-            # "SIZE(parameters_d%nn_parameters%layers, 1)",
         ],
     )
     tapenade_file = module + "_db.f90"

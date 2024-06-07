@@ -104,7 +104,7 @@ def _dump_fortran_derived_type_array(name: str, fdta: FortranDerivedTypeArray, h
     if len(fdta) == 0:
         return
 
-    # % Sparse_MatrixDT case
+    # % Sparse_MatrixDT
     if isinstance(fdta[0], Sparse_MatrixDT):
         nc = np.amax([fdt.values.shape for fdt in fdta.items()])
         ntime_step = len(fdta)
@@ -128,10 +128,6 @@ def _dump_fortran_derived_type_array(name: str, fdta: FortranDerivedTypeArray, h
                     pass
 
         _dump_dict(name, attr_arr, h5)
-
-    # % Should be unreachable
-    else:
-        pass
 
 
 def _load_hdf5_dataset_to_npndarray(ds: h5py.Dataset) -> np.ndarray:
